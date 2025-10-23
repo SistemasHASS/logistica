@@ -7,6 +7,7 @@ import { RouterModule } from '@angular/router';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { ConnectivityService } from '../../services/connectivity.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
+import { UserService } from '@/app/shared/services/user.service';
 
 @Component({
   selector: 'app-layout',
@@ -25,10 +26,13 @@ export class LayoutComponent {
     private router: Router,
     private connectivityService : ConnectivityService,
     private dexieService: DexieService,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private userService: UserService
   ) {}
   
   async ngOnInit() {
+    this.usuario = await this.dexieService.showUsuario();
+    this.userService.setUsuario(this.usuario);
     this.connectivityService.isOnline.subscribe((status: boolean) => {
       this.isOnline = status;
     });
@@ -129,8 +133,7 @@ export class LayoutComponent {
     const currentUrl = this.router.url.split('/').filter(Boolean);
     const pathMap: { [key: string]: string } = {
       'parametros': 'Parámetros',
-      'configuracionaprobaciones': 'Roles de aprobación',
-      'mantenedorincidencias': 'Mantenedor incidencias',
+      'requerimiento_consumo': 'Requerimientos de consumo',
       'planillas' : 'Planillas',
       'reportes': 'Asistencias',
       'adicional': 'Planilla adicional',

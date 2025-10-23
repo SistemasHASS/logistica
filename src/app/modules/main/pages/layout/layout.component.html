@@ -1,6 +1,6 @@
 <!--  Body Wrapper -->
-<div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" 
-  data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed">
+<div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
+  data-sidebar-position="fixed" data-header-position="fixed">
   <!-- Sidebar Start -->
   <aside class="left-sidebar">
     <!-- Sidebar scroll-->
@@ -32,7 +32,8 @@
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Configuración</span>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('SUTAR')" class="sidebar-item" (click)="toggleSidebar()">
+          <!-- <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')"  class="sidebar-item" (click)="toggleSidebar()">-->
+          <li class="sidebar-item" (click)="toggleSidebar()">
             <a routerLink="./parametros" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class="icon icon-equalizer"></i>
@@ -40,28 +41,32 @@
               <span class="hide-menu"> Parámetros</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ADTAR')" class="sidebar-item" (click)="toggleSidebar()">
-            <a routerLink="./configuracionaprobaciones" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./configuracionaprobaciones" routerLinkActive="active" class="sidebar-link"
+              aria-expanded="false">
               <span>
                 <i class="icon icon-cog6"></i>
               </span>
               <span class="hide-menu"> Roles de aprobación</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ADTAR')" class="sidebar-item" (click)="toggleSidebar()">
-            <a routerLink="./mantenedorincidencias" routerLinkActive="active" 
-              class="sidebar-link" aria-expanded="false">
+          <!-- <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')" class="sidebar-item" (click)="toggleSidebar()"> -->
+          <li class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./requerimiento_consumo" routerLinkActive="active" class="sidebar-link"
+              aria-expanded="false">
               <span>
                 <i class="icon icon-stack"></i>
               </span>
-              <span class="hide-menu"> Mantenedor incidencias</span>
+              <span class="hide-menu"> Requerimiento de consumo</span>
             </a>
           </li>
-          <li class="nav-small-cap">
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Procesos</span>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('SUTAR')" class="sidebar-item" (click)="toggleSidebar()">
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
             <a routerLink="./planillas" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class="icon icon-grid4"></i>
@@ -69,7 +74,7 @@
               <span class="hide-menu"> Planilla principal</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('SUTAR')" class="sidebar-item" (click)="toggleSidebar()">
+          <li class="sidebar-item" (click)="toggleSidebar()">
             <a routerLink="./adicional" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class='icon icon-plus2'></i>
@@ -93,7 +98,7 @@
               <span class="hide-menu"> Bonos</span>
             </a>
           </li> -->
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ADTAR')" class="sidebar-item" (click)="toggleSidebar()">
+          <li class="sidebar-item" (click)="toggleSidebar()">
             <a routerLink="./gestionplanillas" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class='icon icon-users4'></i>
@@ -101,7 +106,7 @@
               <span class="hide-menu"> Administración planillas</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ADTAR')" class="sidebar-item" (click)="toggleSidebar()">
+          <li class="sidebar-item" (click)="toggleSidebar()">
             <a routerLink="./gestionadicionales" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class='icon icon-users4'></i>
@@ -109,7 +114,7 @@
               <span class="hide-menu"> Administración adicionales</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ADTAR')" class="sidebar-item" (click)="toggleSidebar()">
+          <li class="sidebar-item" (click)="toggleSidebar()">
             <a routerLink="./aprobaciones" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class='icon icon-file-check'></i>
@@ -121,7 +126,7 @@
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Reportes</span>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('SUTAR') || usuario?.idrol.includes('ADTAR') || usuario?.idrol.includes('GETAR')" class="sidebar-item" (click)="toggleSidebar()">
+          <li class="sidebar-item" (click)="toggleSidebar()">
             <a routerLink="./reportes" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class="icon-stats-bars3"></i>
@@ -160,8 +165,9 @@
             </li>
             <div class="info-nav">
               <li class="nav-item dropdown" style="max-width: 50%;">
-                <span class="currentPath" [ngClass]="{'text-danger' : !isOnline}" 
-                  style="font-size: 15px;color: black;">{{!isOnline ? 'Modo Offline...' : fechaHoy}} <i [ngClass]="!isOnline ? 'bx-wifi-off' : 'bx-wifi'" class='bx'></i></span>
+                <span class="currentPath" [ngClass]="{'text-danger' : !isOnline}"
+                  style="font-size: 15px;color: black;">{{!isOnline ? 'Modo Offline...' : fechaHoy}} <i
+                    [ngClass]="!isOnline ? 'bx-wifi-off' : 'bx-wifi'" class='bx'></i></span>
               </li>
               <li class="nav-item dropdown">
                 <span class="nombre2"><i class="icon-pin"></i>{{this.usuario?.razonSocial}}</span>

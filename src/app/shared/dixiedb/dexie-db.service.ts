@@ -33,7 +33,7 @@ export class DexieService extends Dexie {
     super('Tareo');
     console.log('DexieService Constructor - Base de datos inicializada');
     this.version(1).stores({
-      usuario: `id,sociedad,ruc,razonSocial,idProyecto,proyecto,documentoIdentidad,usuario,
+      usuario: `id,sociedad,idempresa,ruc,razonSocial,idProyecto,proyecto,documentoIdentidad,usuario,
       clave,nombre,idrol,rol`,
       configuracion: `id,idfundo,idcultivo,idacopio,fechatareo,idceco,idlabor,fechainiciorefrigerio,
       horainiciorefrigerio,fechafinrefrigerio,horafinrefrigerio,horainiciojornada,idturno`,

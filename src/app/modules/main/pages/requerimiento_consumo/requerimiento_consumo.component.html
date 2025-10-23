@@ -1,0 +1,54 @@
+<div class="requerimiento_consumo-container">
+    <div class="requerimiento_consumo-header">
+        <div>
+            <h6>Fecha: {{ fecha | date: 'yyyy-MM-dd' }}</h6>
+        </div>
+        <div class="empresa-info">
+            <!-- <span class="empresa">{{ usuario?.razonSocial || 'Hass Peru S.A.' }}</span> -->
+            <span class="empresa">{{ usuario?.razonSocial }}</span>
+            <span class="fecha">{{ fecha | date: 'yyyy-MM-dd' }}</span>
+        </div>
+    </div>
+
+    <div class="requerimiento_consumo-form">
+        <div class="row g-3">
+            <div class="col-6">
+                <label>Fundo <span class="text-danger">*</span></label>
+                <select class="form-select" [(ngModel)]="fundoSeleccionado">
+                    <option value="">Seleccione un fundo</option>
+                    <option *ngFor="let f of fundos" [value]="f">{{f.nombreFundo}}</option>
+                </select>
+            </div>
+
+            <div class="col-6">
+                <label>Área</label>
+                <select class="form-select" [(ngModel)]="areaSeleccionada">
+                    <option value="">Seleccione un turno</option>
+                    <option *ngFor="let a of areas" [value]="a">{{a}}</option>
+                </select>
+            </div>
+
+            <div class="col-6">
+                <label>Almacén</label>
+                <select class="form-select" [(ngModel)]="almacenSeleccionado">
+                    <option value="">Seleccione un ceco</option>
+                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+                </select>
+            </div>
+
+            <div class="col-6">
+                <label>Clasificación</label>
+                <select class="form-select" [(ngModel)]="almacenSeleccionado">
+                    <option value="">Seleccione un ceco</option>
+                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+                </select>
+            </div>
+
+            <div class="mt-3">
+                <button class="btn btn-primary me-2" (click)="sincronizar()">Sincronizar</button>
+                <button class="btn btn-success" (click)="guardar()">Guardar</button>
+            </div>
+
+        </div>
+    </div>
+</div>

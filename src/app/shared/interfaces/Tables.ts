@@ -2,6 +2,7 @@
 export interface Usuario {
     id: string;
     sociedad: number;
+    idempresa: string;
     ruc: string;
     razonSocial: string;
     idProyecto: string;
