@@ -34,6 +34,16 @@ export class AlertService {
     })
   }
 
+  mostrarInfo(mensaje: string) {
+    Swal.fire({
+      title: 'Información',
+      text: mensaje,
+      icon: 'info',
+      timer: 2000,
+      showConfirmButton: false
+    });
+  }
+
   mostrarModalCarga() {
     Swal.fire({
       title: 'Espere, por favor...',
@@ -47,7 +57,7 @@ export class AlertService {
   }
 
   cerrarModalCarga() {
-    Swal.close();
+    Swal.close()
   }
 
   /**

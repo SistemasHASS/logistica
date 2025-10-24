@@ -40,6 +40,12 @@ export interface Fundo {
     nombreFundo: string
 }
 
+export interface Almacen {
+    id: number;
+    idalmacen: number;
+    almacen: string
+}
+
 export interface Cultivo {
     id: number;
     empresa: number;

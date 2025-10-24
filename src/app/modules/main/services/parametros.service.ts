@@ -37,7 +37,6 @@ export class ParametrosService {
         }
     }
 
-
     // 🟢 Obtener fundos desde la base local (IndexedDB)
     async getFundosLocal(): Promise<any[]> {
         return await this.dexieService.showFundos();
@@ -46,5 +45,33 @@ export class ParametrosService {
     // 🟢 Guardar manualmente (opcional)
     async saveFundosLocal(fundos: any[]): Promise<void> {
         await this.dexieService.saveFundos(fundos);
+    }
+
+    // 🟢 Sincronizar almacenes con el backend
+    async sincronizarAlmacenes(ruc: string): Promise<any[]> {
+        const url = `${this.baseUrl}/api/Maestros/get-almacen`;
+        const body = [{ ruc }]; // mandas ruc al backend
+
+        try {
+            const response = await lastValueFrom(this.http.post<any[]>(url, body));
+
+            // Guardar localmente
+            await this.dexieService.saveAlmacenes(response);
+
+            return response;
+        } catch (error: any) {
+            console.error('Error al sincronizar almacenes:', error);
+            throw new Error(error.error?.message || 'No se pudo sincronizar los almacenes');
+        }
+    }
+
+    // 🟢 Obtener almacenes desde la base local (IndexedDB)
+    async getAlmacenesLocal(): Promise<any[]> {
+        return await this.dexieService.showAlmacenes();
+    }
+
+    // 🟢 Guardar manualmente (opcional)
+    async saveAlmacenesLocal(almacenes: any[]): Promise<void> {
+        await this.dexieService.saveAlmacenes(almacenes);
     }
 }

@@ -122,7 +122,8 @@ export class ParametrosComponent implements OnInit {
       // 🔹 Llamar en paralelo a ambos servicios
       const [fundos, almacenes] = await Promise.all([
         this.parametrosService.sincronizarFundos(this.usuario.idempresa, this.usuario.sociedad),
-        this.logisticaService.listarAlmacenes(this.usuario.ruc).toPromise()
+        this.parametrosService.sincronizarAlmacenes(this.usuario.ruc)
+        // this.logisticaService.listarAlmacenes(this.usuario.ruc).toPromise()
       ]);
 
       // 🔹 Cerrar el modal de carga

@@ -2,40 +2,25 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Almacen } from '../../model/almacen.model';
+import { LogisticaService } from '../../services/logistica.service';
 import { UserService } from '@/app/shared/services/user.service';
+import { ParametrosService } from '../../services/parametros.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 
-interface LineaDetalle {
-    codigo: string;
-    producto: string;
-    cantidad: number;
-    proyecto: string;
-    ceco: string;
-    turno: string;
-    labor: string;
-}
-
 @Component({
-    selector: 'app-requerimiento_consumo',
+    selector: 'app-requerimiento_transferencia',
     standalone: true,
     imports: [CommonModule, FormsModule, DatePipe],
-    templateUrl: './requerimiento_consumo.component.html',
-    styleUrls: ['./requerimiento_consumo.component.scss']
+    templateUrl: './requerimiento_transferencia.component.html',
+    styleUrls: ['./requerimiento_transferencia.component.scss']
 })
-export class RequerimientoConsumoComponent implements OnInit {
+export class RequerimientoTransferenciaComponent implements OnInit {
     fecha = new Date();
     mensajeFundos: String = '';
     usuario: any;
     fundos: any[] = []; // Se llena al sincronizar
     areas = ['Mañana', 'Tarde', 'Noche'];
     almacenes: Almacen[] = [];
-    clasificaciones = ['Consumo', 'Transferencia'];
-    glosa: string = '';
-    detalle: LineaDetalle[] = [];
-
-    modalAbierto: boolean = false;
-    lineaTemp: LineaDetalle = this.nuevaLinea();
-    editIndex: number = -1;
 
     fundoSeleccionado = '';
     cultivoSeleccionado = '';
@@ -45,7 +30,9 @@ export class RequerimientoConsumoComponent implements OnInit {
     // sincronizado = false; // habilita guardar y fundo
 
     constructor(
+        private logisticaService: LogisticaService,
         private userService: UserService,
+        private parametrosService: ParametrosService,
         private alertService: AlertService // ✅ inyectar el servicio
     ) { }
 
@@ -55,45 +42,44 @@ export class RequerimientoConsumoComponent implements OnInit {
         console.log('Usuario logueado desde parametros:', this.usuario);
     }
 
-    nuevaLinea(): LineaDetalle {
-        return {
-            codigo: '',
-            producto: '',
-            cantidad: 0,
-            proyecto: '',
-            ceco: '',
-            turno: '',
-            labor: ''
-        };
-    }
-
-    abrirModal(): void {
-        this.modalAbierto = true;
-        if (this.editIndex === -1) this.lineaTemp = this.nuevaLinea();
-    }
-
-    cerrarModal(): void {
-        this.modalAbierto = false;
-        this.editIndex = -1;
-    }
-
-    guardarLinea(): void {
-        if (this.editIndex >= 0) {
-            this.detalle[this.editIndex] = { ...this.lineaTemp };
-        } else {
-            this.detalle.push({ ...this.lineaTemp });
+    async sincronizar() {
+        if (!this.usuario?.idempresa || !this.usuario?.sociedad || !this.usuario?.ruc) {
+            this.alertService.showAlert('Error', 'No se pudo obtener la empresa, sociedad o RUC del usuario', 'error');
+            return;
         }
-        this.cerrarModal();
-    }
 
-    editarLinea(index: number): void {
-        this.editIndex = index;
-        this.lineaTemp = { ...this.detalle[index] };
-        this.modalAbierto = true;
-    }
+        try {
+            // 🔹 Mostrar mensaje de carga
+            this.alertService.mostrarModalCarga();
 
-    eliminarLinea(index: number): void {
-        this.detalle.splice(index, 1);
+            // 🔹 Llamar en paralelo a ambos servicios
+            const [fundos, almacenes] = await Promise.all([
+                this.parametrosService.sincronizarFundos(this.usuario.idempresa, this.usuario.sociedad),
+                this.logisticaService.listarAlmacenes(this.usuario.ruc).toPromise()
+            ]);
+
+            // 🔹 Cerrar el modal de carga
+            this.alertService.cerrarModalCarga();
+
+            // 🔹 Actualizar listas
+            this.fundos = fundos || [];
+            this.fundoSeleccionado = '';
+
+            this.almacenes = almacenes || [];
+            this.almacenSeleccionado = '';
+
+            console.log('✅ Fundos sincronizados:', fundos);
+            console.log('✅ Almacenes sincronizados:', almacenes);
+
+            // 🔹 Mostrar mensaje final de éxito
+            this.alertService.showAlert('Sincronización completa', 'Los fundos y almacenes se actualizaron correctamente.', 'success');
+
+        } catch (err) {
+            console.error('❌ Error al sincronizar fundos y almacenes:', err);
+            // Cerrar el modal en caso de error también
+            this.alertService.cerrarModalCarga();
+            this.alertService.showAlert('Error', 'Ocurrió un error al sincronizar los datos.', 'error');
+        }
     }
 
     async guardar() {
@@ -134,22 +120,4 @@ export class RequerimientoConsumoComponent implements OnInit {
         }
     }
 
-    cancelar(): void {
-        const confirmar = confirm('¿Seguro que deseas cancelar los cambios? Se perderán los datos no guardados.');
-        if (!confirmar) return;
-
-        this.fundoSeleccionado = '';
-        this.cultivoSeleccionado = '';
-        this.almacenSeleccionado = '';
-
-        // Si también quieres vaciar los combos:
-        // this.fundos = [];
-        // this.almacenes = [];
-
-        // Si deseas recargar la vista original del usuario
-        // this.ngOnInit();
-
-        console.log('Formulario de parámetros reiniciado');
-        this.alertService.mostrarInfo('Los cambios han sido cancelados.');
-    }
 }

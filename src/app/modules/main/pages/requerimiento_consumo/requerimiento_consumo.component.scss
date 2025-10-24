@@ -1,4 +1,4 @@
-.parametros-container {
+.requerimiento_consumo-container {
   padding: 1rem;
   font-family: 'Inter', sans-serif;
   background: #fff;
@@ -8,7 +8,7 @@
   margin: auto;
 }
 
-.parametros-header {
+.requerimiento_consumo-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -34,7 +34,15 @@
   }
 }
 
-.parametros-form {
+.cantidad {
+  width: 100%;
+  border: 1px solid #bbb;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.requerimiento_consumo-form {
   label {
     font-weight: 600;
     font-size: 13px;
@@ -47,4 +55,50 @@
     padding: 10px;
     font-size: 13px;
   }
+}
+
+.table th,
+.table td {
+  vertical-align: middle;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.modal-header {
+  border-bottom: 1px solid #dee2e6;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 500px;
+  max-width: 90%;
+}
+
+.modal-content .form-group {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }

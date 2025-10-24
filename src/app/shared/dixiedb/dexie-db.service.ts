@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Usuario,Configuracion,Fundo,Cultivo,Acopio,Ceco,Labor, 
+import { Usuario,Configuracion,Fundo,Almacen,Cultivo,Acopio,Ceco,Labor, 
   Trabajador, Incidencia,IncidenciaPersona, TareoAsistencia,
   TrabajadorPlanilla,PlanillasAdicional,MotivoSalida,PersonaFlujoAprobacion,
   BonosPersona,
@@ -14,6 +14,7 @@ export class DexieService extends Dexie {
   public usuario!: Dexie.Table<Usuario, number>;
   public configuracion!: Dexie.Table<Configuracion, number>;
   public fundos!: Dexie.Table<Fundo, number>;
+  public almacenes!: Dexie.Table<Almacen, number>;
   public cultivos!: Dexie.Table<Cultivo, number>;
   public turnos!: Dexie.Table<Turno, number>;
   public acopios!: Dexie.Table<Acopio, string>
@@ -38,6 +39,7 @@ export class DexieService extends Dexie {
       configuracion: `id,idfundo,idcultivo,idacopio,fechatareo,idceco,idlabor,fechainiciorefrigerio,
       horainiciorefrigerio,fechafinrefrigerio,horafinrefrigerio,horainiciojornada,idturno`,
       fundos: `id,codigoFundo,empresa,fundo,nombreFundo`,
+      almacenes: `id,idalmacen,almacen`,
       cultivos: `id,cultivo,codigo,descripcion,empresa`,
       turnos: 'id,codTurno,turno,nombreTurno,modulo',
       acopios: `id,nave,codigoAcopio,acopio`,
@@ -62,6 +64,7 @@ export class DexieService extends Dexie {
     this.usuario = this.table('usuario');
     this.configuracion = this.table('configuracion');
     this.fundos = this.table('fundos');
+    this.almacenes = this.table('almacenes');
     this.cultivos = this.table('cultivos');
     this.acopios = this.table('acopios');
     this.cecos = this.table('cecos');
@@ -86,6 +89,12 @@ export class DexieService extends Dexie {
   async showFundos() {return await this.fundos.toArray();}
   async showFundoById(id: number) {return await this.fundos.where('id').equals(id).first()}
   async clearFundos() {await this.fundos.clear();}
+  //
+  async saveAlmacen(almacen: Almacen) {await this.almacenes.put(almacen);}
+  async saveAlmacenes(almacenes: Almacen[]) {await this.almacenes.bulkPut(almacenes);}
+  async showAlmacenes() {return await this.almacenes.toArray();}
+  async showAlmaceneById(id: number) {return await this.almacenes.where('id').equals(id).first()}
+  async clearAlmacenes() {await this.almacenes.clear();}
   //
   async saveCultivo(cultivo: Cultivo) {await this.cultivos.put(cultivo);}  
   async saveCultivos(cultivos: Cultivo[]) {await this.cultivos.bulkPut(cultivos);}

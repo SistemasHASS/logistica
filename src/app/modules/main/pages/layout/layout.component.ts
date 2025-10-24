@@ -134,12 +134,9 @@ export class LayoutComponent {
     const pathMap: { [key: string]: string } = {
       'parametros': 'Parámetros',
       'requerimiento_consumo': 'Requerimientos de consumo',
-      'planillas' : 'Planillas',
-      'reportes': 'Asistencias',
-      'adicional': 'Planilla adicional',
-      'incidencias': 'Incidencias',
-      'bonos': 'Bonos',
-      'aprobaciones': 'Aprobaciones'
+      'requerimiento_transferencia' : 'Requerimiento de transferencia',
+      'aprobaciones': 'Aprobaciones',
+      'reportes': 'Lista de requerimientos'
     };
     
     this.currentPath = pathMap[currentUrl[currentUrl.length - 1]] || '';

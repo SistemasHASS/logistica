@@ -14,13 +14,11 @@ export class LogisticaService {
 
   listarAlmacenes(ruc: string): Observable<Almacen[]> {
     // Enviamos el RUC al backend como arreglo, que es lo que espera el SP
-    // return this.http.post<Almacen[]>(`${this.apiUrl}/listar-almacen`, [{ ruc: "20481121966" }]);
     return this.http.post<Almacen[]>(`${this.apiUrl}/listar-almacen`, [{ ruc }]);
   }
 
   listarFundos(idEmpresa: string): Observable<any[]> {
     // Enviamos el idempresa al backend como arreglo, que es lo que espera el SP
-    // return this.http.post<any[]>(`${this.apiUrl}/listar-fundo`, [{ idempresa: "000008" }]);
     return this.http.post<any[]>(`${this.apiUrl}/listar-fundo`, [{ idEmpresa }]);
   }
 

@@ -44,11 +44,131 @@
                 </select>
             </div>
 
-            <div class="mt-3">
-                <button class="btn btn-primary me-2" (click)="sincronizar()">Sincronizar</button>
-                <button class="btn btn-success" (click)="guardar()">Guardar</button>
+            <!-- Glosa -->
+            <div class="mb-3">
+                <label for="glosa" class="form-label fw-semibold">Glosa</label>
+                <textarea id="glosa" class="form-control" rows="3" [(ngModel)]="glosa"
+                    placeholder="Escriba aquí la glosa..."></textarea>
             </div>
 
+            <!-- Botón agregar detalle -->
+            <div class="d-flex justify-content-end mb-3">
+                <button class="btn btn-primary" (click)="abrirModal()">
+                    <i class="bi bi-plus-circle me-1"></i> Agregar línea detalle
+                </button>
+            </div>
+
+            <!-- Tabla -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped align-middle text-center">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Proyecto</th>
+                            <th>CECO</th>
+                            <th>Turno</th>
+                            <th>Labor</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let item of detalle; let i = index">
+                            <td>{{ item.codigo }}</td>
+                            <td>{{ item.producto }}</td>
+                            <td>{{ item.cantidad }}</td>
+                            <td>{{ item.proyecto }}</td>
+                            <td>{{ item.ceco }}</td>
+                            <td>{{ item.turno }}</td>
+                            <td>{{ item.labor }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning me-2" (click)="editarLinea(i)">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" (click)="eliminarLinea(i)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr *ngIf="detalle.length === 0">
+                            <td colspan="8" class="text-muted">No hay detalles agregados</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Modal de edición -->
+            <!-- Modal -->
+            <div class="modal-backdrop" *ngIf="modalAbierto">
+                <div class="modal-content">
+                    <h5>Registrar Línea de Detalle</h5>
+                    <div class="form-group">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label>Producto <span class="text-danger">*</span></label>
+                                <select class="form-select" [(ngModel)]="almacenSeleccionado">
+                                    <option value="">Seleccione un producto</option>
+                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+                                </select>
+                                <!-- <input type="text" class="form-control" [(ngModel)]="lineaTemp.producto"
+                                    placeholder="Nombre del producto" /> -->
+                            </div>
+
+                            <div class="col-6">
+                                <label>Cantidad <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control cantidad" [(ngModel)]="lineaTemp.cantidad" min="1" />
+                            </div>
+
+                            <div class="col-6">
+                                <label>Proyecto</label>
+                                <select class="form-select" [(ngModel)]="almacenSeleccionado">
+                                    <option value="">Seleccione un proyecto</option>
+                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+                                </select>
+                                <!-- <input type="text" class="form-control" [(ngModel)]="lineaTemp.proyecto" /> -->
+                            </div>
+
+                            <div class="col-6">
+                                <label>CECO</label>
+                                <select class="form-select" [(ngModel)]="almacenSeleccionado">
+                                    <option value="">Seleccione un ceco</option>
+                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+                                </select>
+                                <!-- <input type="text" class="form-control" [(ngModel)]="lineaTemp.ceco" /> -->
+                            </div>
+
+                            <div class="col-6">
+                                <label>Turno</label>
+                                <select class="form-select" [(ngModel)]="almacenSeleccionado">
+                                    <option value="">Seleccione un turno</option>
+                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+                                </select>
+                                <!-- <input type="text" class="form-control" [(ngModel)]="lineaTemp.turno" /> -->
+                            </div>
+
+                            <div class="col-6">
+                                <label>Labor</label>
+                                <select class="form-select" [(ngModel)]="almacenSeleccionado">
+                                    <option value="">Seleccione un labor</option>
+                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+                                </select>
+                                <!-- <input type="text" class="form-control" [(ngModel)]="lineaTemp.labor" /> -->
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-center">
+                            <button class="btn btn-success me-2" (click)="guardarLinea()">Guardar</button>
+                            <button class="btn btn-danger" (click)="cerrarModal()">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <button class="btn btn-success me-2" (click)="guardar()">Guardar</button>
+            <button class="btn btn-danger m-2" (click)="cancelar()">Cancelar</button>
         </div>
     </div>
 </div>

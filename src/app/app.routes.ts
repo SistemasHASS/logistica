@@ -3,6 +3,7 @@ import { Error404PageComponent } from './shared/pages/error404-page/error404-pag
 import { LayoutComponent } from './modules/main/pages/layout/layout.component';
 import { ParametrosComponent } from './modules/main/pages/parametros/parametros.component';
 import { RequerimientoConsumoComponent } from './modules/main/pages/requerimiento_consumo/requerimiento_consumo.component';
+import { RequerimientoTransferenciaComponent } from './modules/main/pages/requerimiento_transferencia/requerimiento_transferencia.component';
 import { AuthGuard } from './modules/auth/guard/auth.guard';
 
 export const routes: Routes = [
@@ -25,6 +26,10 @@ export const routes: Routes = [
     children: [
       { path: 'parametros', component: ParametrosComponent },
       { path: 'requerimiento_consumo', component: RequerimientoConsumoComponent },
+      { path: 'requerimiento_transferencia', component: RequerimientoTransferenciaComponent },
+      { path: 'requerimiento_transferencia', component: RequerimientoTransferenciaComponent },
+      { path: 'aprobaciones', component: RequerimientoTransferenciaComponent },
+      { path: 'reportes', component: RequerimientoTransferenciaComponent },
       { path: '**', redirectTo: 'auth/login' }
     ],
     canActivate: [AuthGuard]
