@@ -16,20 +16,27 @@ export interface Usuario {
 }
 
 export interface Configuracion {
-    id: string
-    idfundo: number
-    idcultivo: number
-    idacopio: number
-    fechatareo: string
-    idceco: string
-    idlabor: string
-    fechainiciorefrigerio: string
-    horainiciorefrigerio: string
-    fechafinrefrigerio: string
-    horafinrefrigerio: string
-    horainiciojornada: string
-    fecha_compensa: string
-    idturno: string
+    id: string;
+    idempresa: string;
+    idfundo: string;
+    idcultivo: string;
+    idarea: string;
+    idalmacen: string;
+    idproyecto: string;
+    idacopio: number; 
+    idceco: string;
+    idlabor: string;
+    iditem: string;
+    idturno: string;
+    idclasificacion: string;
+}
+
+export interface Empresa {
+    id: string;
+    idempresa: string;
+    ruc: string;
+    razonsocial: string;
+    empresa: number;
 }
 
 export interface Fundo {
@@ -46,31 +53,54 @@ export interface Almacen {
     almacen: string
 }
 
-export interface Cultivo {
+export interface Area {
+    idarea: number;
+    ruc: string;
+    descripcion: number;
+    estado: number
+}
+
+export interface Proyecto {
     id: number;
-    empresa: number;
-    codigo: string;
-    descripcion: string;
+    ruc: string;
+    afe: string;
+    proyectoio: string;
+    esinverison: number;
+    estado: number
+}
+
+export interface Cultivo {
+    id: number,
+    empresa: number,
+    codigo: string,
+    descripcion: string,
 }
 
 export interface Acopio{
-    id : string
-    nave: string
-    codigoAcopio: string
-    acopio: string
+    id : string;
+    nave: string;
+    codigoAcopio: string;
+    acopio: string;
 }
 
 export interface Ceco{
-    id : string
-    costcenter: string
-    localname: string
+    id : string;    
+    turno: string;
+    costcenter: string;
+    localname: string;
+    codTurno: string;
+    nombreTurno: string;
+    modulo: number;
+    
+    idcultivo: string;
+    idproyecto: string;
 }
 
 export interface Labor{
-    id : string
-    costcenterdestinationgroup: string
-    costcenterdestination: string
-    localname: string
+    id : string;
+    idgrupolabor: string;
+    idlabor: string;
+    labor: string;
 }
 
 export interface Turno {
@@ -81,18 +111,18 @@ export interface Turno {
     modulo: number;
 }
 
-export interface Incidencia{
-    idincidencia: string,
-    incidencia: string,
-    estado: string,
-    ruc: string
+export interface ItemComodity {
+    id: number;
+    tipoclasificacion: string;
+    codigo: string;
+    descripcion: string;
 }
 
-export interface MotivoSalida{
-    idmotivo: number,
-    ruc: string,
-    motivo: string,
-    estado: number
+export interface Clasificacion {
+    id: number;
+    idclasificacion: string;
+    descripcion_clasificacion: string;
+    tipoClasificacion: string;
 }
 
 export interface Trabajador {
@@ -218,50 +248,4 @@ export interface PersonaFlujoAprobacion {
     rol: string
     idrol: string
     movimientos: []
-}
-
-export interface BonosPersona{
-    nrodocumento: string
-    nombres: string
-    ceco: string
-    labor: string
-    turno: string
-    monto: number
-    totalH: string
-    eliminado: number
-}
-
-export interface TareoSupervisor {
-    idtareo_asistencia: string,
-    fundo: number,
-    codfundo: string,
-    cultivo: number,
-    codcultivo: string,
-    fecha_registrobd: string,
-    ruc: string,
-    nrodocumentosupervisor: string,
-    tipo: number,
-    fecha_tareo: string,
-    eliminado: number,
-    origen: string,
-    planilla: TareoSupervisorDetalle[]
-}
-
-export interface TareoSupervisorDetalle {
-    idtareo_asistencia: string,
-    nrodocumento: string,
-    fecha_registrobd: string,
-    fecha_iniciotareo: string,
-    hora_inicio: string,
-    fecha_fintareo: string,
-    hora_fin: string,
-    turno: number,
-    motivosalida: number,
-    acopio: number,
-    bloqueado: number,
-    eliminado: number,
-    compensa: number,
-    fechahora_iniciotareo: string,
-    fechahora_fintareo: string,
-    labores: any[]
 }

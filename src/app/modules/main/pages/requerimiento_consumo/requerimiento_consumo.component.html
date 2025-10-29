@@ -1,14 +1,13 @@
 <div class="requerimiento_consumo-container">
-    <div class="requerimiento_consumo-header">
+    <!-- <div class="requerimiento_consumo-header">
         <div>
             <h6>Fecha: {{ fecha | date: 'yyyy-MM-dd' }}</h6>
         </div>
         <div class="empresa-info">
-            <!-- <span class="empresa">{{ usuario?.razonSocial || 'Hass Peru S.A.' }}</span> -->
             <span class="empresa">{{ usuario?.razonSocial }}</span>
             <span class="fecha">{{ fecha | date: 'yyyy-MM-dd' }}</span>
         </div>
-    </div>
+    </div> -->
 
     <div class="requerimiento_consumo-form">
         <div class="row g-3">
@@ -24,23 +23,23 @@
                 <label>Área</label>
                 <select class="form-select" [(ngModel)]="areaSeleccionada">
                     <option value="">Seleccione un turno</option>
-                    <option *ngFor="let a of areas" [value]="a">{{a}}</option>
+                    <option *ngFor="let a of areas" [value]="a.idarea">{{a.descripcion}}</option>
                 </select>
             </div>
 
             <div class="col-6">
                 <label>Almacén</label>
                 <select class="form-select" [(ngModel)]="almacenSeleccionado">
-                    <option value="">Seleccione un ceco</option>
+                    <option value="">Seleccione un almacen</option>
                     <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
                 </select>
             </div>
 
             <div class="col-6">
                 <label>Clasificación</label>
-                <select class="form-select" [(ngModel)]="almacenSeleccionado">
-                    <option value="">Seleccione un ceco</option>
-                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+                <select class="form-select" [(ngModel)]="clasificacionSeleccionado">
+                    <option value="">Seleccione un clasificación</option>
+                    <option *ngFor="let c of clasificaciones" [value]="c.idclasificacion">{{ c.descripcion_clasificacion }}</option>
                 </select>
             </div>
 
@@ -107,12 +106,10 @@
                         <div class="row g-3">
                             <div class="col-6">
                                 <label>Producto <span class="text-danger">*</span></label>
-                                <select class="form-select" [(ngModel)]="almacenSeleccionado">
+                                <select class="form-select" [(ngModel)]="itemSeleccionado">
                                     <option value="">Seleccione un producto</option>
-                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+                                    <option *ngFor="let it of items" [value]="it.iditem">{{ it.descripcion }}</option>
                                 </select>
-                                <!-- <input type="text" class="form-control" [(ngModel)]="lineaTemp.producto"
-                                    placeholder="Nombre del producto" /> -->
                             </div>
 
                             <div class="col-6">
@@ -126,7 +123,6 @@
                                     <option value="">Seleccione un proyecto</option>
                                     <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
                                 </select>
-                                <!-- <input type="text" class="form-control" [(ngModel)]="lineaTemp.proyecto" /> -->
                             </div>
 
                             <div class="col-6">
@@ -135,7 +131,6 @@
                                     <option value="">Seleccione un ceco</option>
                                     <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
                                 </select>
-                                <!-- <input type="text" class="form-control" [(ngModel)]="lineaTemp.ceco" /> -->
                             </div>
 
                             <div class="col-6">
@@ -144,7 +139,6 @@
                                     <option value="">Seleccione un turno</option>
                                     <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
                                 </select>
-                                <!-- <input type="text" class="form-control" [(ngModel)]="lineaTemp.turno" /> -->
                             </div>
 
                             <div class="col-6">
@@ -153,7 +147,6 @@
                                     <option value="">Seleccione un labor</option>
                                     <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
                                 </select>
-                                <!-- <input type="text" class="form-control" [(ngModel)]="lineaTemp.labor" /> -->
                             </div>
                         </div>
 

@@ -1,9 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Usuario,Configuracion,Fundo,Almacen,Cultivo,Acopio,Ceco,Labor, 
-  Trabajador, Incidencia,IncidenciaPersona, TareoAsistencia,
-  TrabajadorPlanilla,PlanillasAdicional,MotivoSalida,PersonaFlujoAprobacion,
-  BonosPersona,
-  Turno} from '../interfaces/Tables'
+import { Usuario,Configuracion,Empresa,Fundo,Almacen,Area,Proyecto,ItemComodity,Clasificacion,Cultivo,Acopio,Ceco,Labor, 
+  Trabajador,Turno} from '../interfaces/Tables'
 import Dexie from 'dexie';
 
 @Injectable({
@@ -13,202 +10,160 @@ import Dexie from 'dexie';
 export class DexieService extends Dexie {
   public usuario!: Dexie.Table<Usuario, number>;
   public configuracion!: Dexie.Table<Configuracion, number>;
+  public empresas!: Dexie.Table<Empresa, number>;
   public fundos!: Dexie.Table<Fundo, number>;
   public almacenes!: Dexie.Table<Almacen, number>;
+  public areas!: Dexie.Table<Area, number>;
   public cultivos!: Dexie.Table<Cultivo, number>;
+  public proyectos!: Dexie.Table<Proyecto, number>;
   public turnos!: Dexie.Table<Turno, number>;
   public acopios!: Dexie.Table<Acopio, string>
   public cecos!: Dexie.Table<Ceco, number>;
-  public labor!: Dexie.Table<Labor, number>;
+  public labores!: Dexie.Table<Labor, number>;
+  public clasificaciones!: Dexie.Table<Clasificacion, number>;
   public trabajadores!: Dexie.Table<Trabajador, string>;
-  public trabajadoresPlanilla!: Dexie.Table<TrabajadorPlanilla, string>;
-  public incidenciaPersona!: Dexie.Table<IncidenciaPersona, string>;
-  public tareoAsistencia!: Dexie.Table<TareoAsistencia,string>;
-  public planillasAdicional!: Dexie.Table<PlanillasAdicional, string>;
-  public incidencias!: Dexie.Table<Incidencia, string>;
-  public motivoSalida!: Dexie.Table<MotivoSalida, number>;
-  public personaFlujo!: Dexie.Table<PersonaFlujoAprobacion, number>;
-  public bonosPersona!: Dexie.Table<BonosPersona, string>
+  public itemComoditys!: Dexie.Table<ItemComodity, string>
   
   constructor() {
-    super('Tareo');
+    super('Logistica');
     console.log('DexieService Constructor - Base de datos inicializada');
     this.version(1).stores({
       usuario: `id,sociedad,idempresa,ruc,razonSocial,idProyecto,proyecto,documentoIdentidad,usuario,
       clave,nombre,idrol,rol`,
-      configuracion: `id,idfundo,idcultivo,idacopio,fechatareo,idceco,idlabor,fechainiciorefrigerio,
-      horainiciorefrigerio,fechafinrefrigerio,horafinrefrigerio,horainiciojornada,idturno`,
+      configuracion: `id,idempresa,idfundo,idcultivo,idarea,idacopio,idceco,idlabor,idalmacen`,
+      empresas: `id,ruc,razonsocial`,
       fundos: `id,codigoFundo,empresa,fundo,nombreFundo`,
       almacenes: `id,idalmacen,almacen`,
+      areas: `id,ruc,descripcion,estado`,
+      proyectos: `id,ruc,afe,proyecto,esinverison,estado`,
       cultivos: `id,cultivo,codigo,descripcion,empresa`,
       turnos: 'id,codTurno,turno,nombreTurno,modulo',
       acopios: `id,nave,codigoAcopio,acopio`,
       cecos: `id,costcenter,localname`,
-      labor: `id,costcenterdestinationgroup,costcenterdestination,localname`,
+      labores: `id,idlabor,idgrupolabor,labor`,
+      itemComoditys: `id,tipoclasificacion,codigo,descripcion`,
+      clasificaciones: `id,idclasificacion,descripcion_clasificacion,tipoClasificacion`,
       trabajadores: `id,ruc,nrodocumento,nombres,apellidopaterno,apellidomaterno,estado,motivo,
       bloqueado,eliminado,idmotivo,motivosalida`,
-      trabajadoresPlanilla: `nrodocumento,nombre,fechatareo,idfundo,idcultivo,idacopio,hora_inicio,
-      fecha_fintareo,hora_fin,horas,fecha_iniciorefrigerio,hora_iniciorefrigerio,fecha_finrefrigerio,hora_finrefrigerio,
-      horas_refrigerio,turno,motivosalida,disabled,checked,eliminado,estado,cerrado,idmotivocierre,labores`,
-      tareoAsistencia: `idtareo_asistencia,ruc,nrodocumentosupervisor,fecha,tipo,fundo,codfundo,cultivo,codcultivo,planilla`,
-      incidenciaPersona: `nrodocumento,idincidencia,fechainicio,fechafin,nombrePersona,
-      nombreIncidencia,anular,glosa,aprobado,checked`,
-      planillasAdicional: `id,idfundo,idcultivo,idacopio,fechatareo,hora_inicio,fecha_fintareo,
-      hora_fin,horas,enviado,eliminado,trabajadores`,
-      incidencias: `idincidencia,incidencia,estado,ruc`,
-      motivoSalida: `idmotivo,ruc,motivo,estado`,
-      personaFlujo: `nrodocumento,nombrePersona,rol,movimientos`,
-      bonosPersona: `nrodocumento,nombres,ceco,labor,turno,monto,totalH,eliminado`
     });
 
     this.usuario = this.table('usuario');
     this.configuracion = this.table('configuracion');
+    this.empresas = this.table('empresas');
     this.fundos = this.table('fundos');
     this.almacenes = this.table('almacenes');
     this.cultivos = this.table('cultivos');
+    this.turnos = this.table('turnos');
+    this.proyectos = this.table('proyectos');
+    this.areas = this.table('areas');
     this.acopios = this.table('acopios');
     this.cecos = this.table('cecos');
-    this.labor = this.table('labor');
+    this.labores = this.table('labores');
+    this.itemComoditys = this.table('itemComoditys');
     this.trabajadores = this.table('trabajadores')
-    this.trabajadoresPlanilla = this.table('trabajadoresPlanilla')
-    this.incidenciaPersona = this.table('incidenciaPersona')
-    this.tareoAsistencia = this.table('tareoAsistencia')
-    this.planillasAdicional = this.table('planillasAdicional')
-    this.incidencias = this.table('incidencias')
-    this.motivoSalida = this.table('motivoSalida')
-    this.personaFlujo = this.table('personaFlujo')
-    this.bonosPersona = this.table('bonosPersona')
+    this.clasificaciones = this.table('clasificaciones')
   }
 
+  //Empresas
+  async saveEmpresa(empresa: Empresa) {await this.empresas.put(empresa);}
+  async saveEmpresas(empresas: Empresa[]) {await this.empresas.bulkPut(empresas);}
+  async showEmpresas() {return await this.empresas.orderBy('razonsocial').toArray();}
+  async showEmpresaById(id: number) {return await this.empresas.where('id').equals(id).first()}
+  async clearEmpresas() {await this.empresas.clear();}
+  //Usuarios
   async saveUsuario(usuario: Usuario) {await this.usuario.put(usuario);}
   async showUsuario() {return await this.usuario.toCollection().first()}
   async clearUsuario() {await this.usuario.clear();}
-
+  //Fundos
   async saveFundo(fundo: Fundo) {await this.fundos.put(fundo);}
   async saveFundos(fundos: Fundo[]) {await this.fundos.bulkPut(fundos);}
   async showFundos() {return await this.fundos.toArray();}
   async showFundoById(id: number) {return await this.fundos.where('id').equals(id).first()}
   async clearFundos() {await this.fundos.clear();}
-  //
+  //Almacenes
   async saveAlmacen(almacen: Almacen) {await this.almacenes.put(almacen);}
   async saveAlmacenes(almacenes: Almacen[]) {await this.almacenes.bulkPut(almacenes);}
   async showAlmacenes() {return await this.almacenes.toArray();}
   async showAlmaceneById(id: number) {return await this.almacenes.where('id').equals(id).first()}
   async clearAlmacenes() {await this.almacenes.clear();}
-  //
+  //Proyectos
+  async saveProyecto(proyecto: Proyecto) {await this.proyectos.put(proyecto);}
+  async saveProyectos(proyectos: Proyecto[]) {await this.proyectos.bulkPut(proyectos);}
+  async showProyectos() {return await this.proyectos.toArray();}
+  async showProyectoById(id: number) {return await this.proyectos.where('id').equals(id).first()}
+  async clearProyectos() {await this.proyectos.clear();}
+  //Item Comodity
+  async saveItemComodity(ItemComodity: ItemComodity) {await this.itemComoditys.put(ItemComodity);}
+  async saveItemComoditys(itemComoditys: ItemComodity[]) {await this.itemComoditys.bulkPut(itemComoditys);}
+  async showItemComoditys() {return await this.itemComoditys.toArray();}
+  async showItemComodityById(id: number) {return await this.itemComoditys.where('id').equals(id).first()}
+  async clearItemComoditys() {await this.itemComoditys.clear();}
+  //Areas
+  async saveArea(area: Area) {await this.areas.put(area);}
+  async saveAreas(areas: Area[]) {await this.areas.bulkPut(areas);}
+  async showAreas() {return await this.areas.toArray();}
+  async showAreaById(id: number) {return await this.areas.where('id').equals(id).first()}
+  async clearAreas() {await this.areas.clear();}
+  //Clasificaciones
+  async saveClasificacion(clasificacion: Clasificacion) {await this.clasificaciones.put(clasificacion);}
+  async saveClasificaciones(clasificaciones: Clasificacion[]) {await this.clasificaciones.bulkPut(clasificaciones);}
+  async showClasificaciones() {return await this.clasificaciones.toArray();}
+  async showClasificacionById(id: number) {return await this.clasificaciones.where('id').equals(id).first()}
+  async clearClasificaciones() {await this.clasificaciones.clear();}
+  //Cultivos
   async saveCultivo(cultivo: Cultivo) {await this.cultivos.put(cultivo);}  
   async saveCultivos(cultivos: Cultivo[]) {await this.cultivos.bulkPut(cultivos);}
   async showCultivos() {return await this.cultivos.toArray();}
   async showCultivoById(id: number) {return await this.cultivos.where('id').equals(id).first()}
   async clearCultivos() {await this.cultivos.clear();}
-  //
+  //Acopios
   async saveAcopios(params: Acopio[]) {await this.acopios.bulkPut(params);}
   async showAcopios() {return await this.acopios.toArray();}
   async clearAcopios() {await this.acopios.clear();}
-  //
-  async saveCecos(params: Ceco[]) {await this.cecos.bulkPut(params);}
+  //Cecos
+  async saveCeco(ceco: Ceco) {await this.cecos.put(ceco);}
+  async saveCecos(cecos: Ceco[]) {await this.cecos.bulkPut(cecos);}
   async showCecosById(id: any) {return await this.cecos.where('id').equals(id).first();}
   async showCecos() {return await this.cecos.toArray();}
   async clearCecos() {await this.cecos.clear();}
-  //
-  async saveLabores(params: Labor[]) {await this.labor.bulkPut(params);}
-  async showLaboresById(id: any) {return await this.labor.where('id').equals(id).first();}
-  async showLabores() {return await this.labor.toArray();}
-  async clearLabores() {await this.labor.clear();}
-  //
+  //Labores
+  async saveLabor(labor: Labor) {await this.labores.put(labor);}
+  async saveLabores(labores: Labor[]) {await this.labores.bulkPut(labores);}
+  async showLaboresById(id: any) {return await this.labores.where('id').equals(id).first();}
+  async showLabores() {return await this.labores.toArray();}
+  async clearLabores() {await this.labores.clear();}
+  //Turnos
   async saveTurno(turno: Turno) {await this.turnos.put(turno);}
   async saveTurnos(turnos: Turno[]) {await this.turnos.bulkPut(turnos);}
   async showTurnos() {return await this.turnos.toArray();}
   async showTurnoById(id: number) {return await this.turnos.where('id').equals(id).first()}
   async ShowTurnosByIdTurno(idturno: number) { return await this.turnos.filter(turno => turno.id == idturno).toArray()}
   async clearTurnos() {await this.turnos.clear();}
-  //
-  async saveIncidencias(params: Incidencia[]) {await this.incidencias.bulkPut(params);}
-  async showIncidencias() {return await this.incidencias.toArray();}
-  async showIncidenciasById(id: any) {return await this.incidencias.where('idincidencia').equals(id).first();}
-  //
+  //Trabajadores
   async saveTrabajadores(params: Trabajador[]) {await this.trabajadores.bulkPut(params);}
   async saveTrabajador(params: Trabajador) {await this.trabajadores.put(params);}
   async showTrabajadorById(id: any) { return await this.trabajadores.where('id').equals(id).first(); }
   async showTrabajadores() { return await this.trabajadores.toArray(); }
   async deleteTrabajador(id: any) { return await this.trabajadores.where('id').equals(id).delete(); }
-  //
-  async saveTareos(params: TareoAsistencia[]) { await this.tareoAsistencia.bulkPut(params); }
-  async saveTareo(params: TareoAsistencia) { await this.tareoAsistencia.put(params); }
-  async showTareosById(id: any) { return await this.tareoAsistencia.where('idtareo_asistencia').equals(id).first(); }
-  // async updateTareoEnviado(id: any, enviado: number) { await this.tareoAsistencia.update(id, { estado : enviado }) }
-  async showTareos() { return await this.tareoAsistencia.toArray(); }
-  //
-  async savePlanillaAdicionales(params: PlanillasAdicional[]) { await this.planillasAdicional.bulkPut(params); }
-  async savePlanillaAdicional(params: PlanillasAdicional) { await this.planillasAdicional.put(params); }
-  async showPlanillaAdicionalById(id: any) { return await this.planillasAdicional.where('id').equals(id).first(); }
-  async showPlanillaAdicionales() { return await this.planillasAdicional.toArray(); }
-  async updatePlanillaAdicionalEnviado(id:any){return await this.planillasAdicional.update(id, {estado : 1})}
-  async updateTrabajadoresPlanillaAdicional(id: any, trabajadores: any) { 
-    await this.planillasAdicional.update(id, { trabajadores : trabajadores }) }
-  async deletePlanillaAdicional(id: any) { 
-    await this.planillasAdicional.where('id').equals(id).delete(); }
-  //
-  async saveTrabajadoresPlanilla(params: TrabajadorPlanilla[]) {await this.trabajadoresPlanilla.bulkPut(params);}
-  async saveTrabajadorPlanilla(params: TrabajadorPlanilla) {await this.trabajadoresPlanilla.put(params);}
-  async showTrabajdorPlanillaById(id: any) {return await this.trabajadoresPlanilla.where('nrodocumento').equals(id).first();}
-  async showTrabajadoresPlanilla() {return await this.trabajadoresPlanilla.toArray();}
-  async updateCheckedTrabajadorPlanilla(id: any, checked: boolean){
-    await this.trabajadoresPlanilla.update(id, { checked : checked})}
-  async updateLaboresTrabajadorPlanilla(id: any, labores: any){ await this.trabajadoresPlanilla.update(id, { labores : labores})}
-  async updateHfinTrabajadoresPlanilla(id:string, date:string){await this.trabajadoresPlanilla.update(id, { hora_fin: date})}
-  async updateFfinTrabajadoresPlanilla(id:string, date:string){await this.trabajadoresPlanilla.update(id, { fecha_fintareo: date})}
-  async updateHorasTrabajadores(id:string, horas:number){await this.trabajadoresPlanilla.update(id, { horas: horas})}
-  async updateHorasRefrigerioTrabajadores(id:string, horas:number) {await this.trabajadoresPlanilla.update(id, { horas_refrigerio: horas})}
-  async updateDisabledTrabajadorPlanilla(id: string, dis: boolean){await this.trabajadoresPlanilla.update(id, { disabled : dis})}
-  async deleteTrabajadorPlanilla(nrodocumento: any,){await this.trabajadoresPlanilla.update(nrodocumento,{eliminado : 1})}
-  async clearTrabajadoresPlanilla() {await this.trabajadoresPlanilla.where('estado').equals(1).delete();}
-  async showTrabajadoresPlanillaSinEnviar() {return await this.trabajadoresPlanilla.where('estado')
-    .equals(0).filter(trabajador => trabajador.cerrado == false).toArray();}
-  async updateTrabajadorPlanillaEnviado(id:any, enviado: number){return await this.trabajadoresPlanilla.update(id,{estado : enviado})}
-  async updateHIRefrigerioTrabajadoresPlanilla(id:string, date:string){await this.trabajadoresPlanilla.update(id, { hora_iniciorefrigerio: date})}
-  async updateHFRefrigerioTrabajadoresPlanilla(id:string, date:string){await this.trabajadoresPlanilla.update(id, { hora_finrefrigerio: date})}
-  async updateFIRefrigerioTrabajadoresPlanilla(id:string, date:string){await this.trabajadoresPlanilla.update(id, { fecha_iniciorefrigerio: date})}
-  async updateFFRefrigerioTrabajadoresPlanilla(id:string, date:string){await this.trabajadoresPlanilla.update(id, { fecha_finrefrigerio: date})}
-  async updateFundoCultivo(id: string, idfundo: number, idcultivo: number) {await this.trabajadoresPlanilla.update(id, { idfundo: idfundo, idcultivo: idcultivo })}
-  async updateMotivoCierre(id: string,idmotivocierre: number,motivosalida: string) { await this.trabajadoresPlanilla.update(id, { idmotivocierre: idmotivocierre,motivosalida: motivosalida })}
-  //
-  async saveIncidenciaPersona(incidenciaPersona: IncidenciaPersona) {await this.incidenciaPersona.put(incidenciaPersona);}
-  async showIncidenciasPersona() {return await this.incidenciaPersona.toArray()}
-  async updateAIncidenciaPersona(dni:string, number:number) {return await this.incidenciaPersona.update(dni, { aprobado: number })}
-  async updateEstadoIncidenciaPersona(id:any, enviado: number){return await this.incidenciaPersona.update(id,{estado : enviado})}
-  async clearIncidenciaPersona() {await this.incidenciaPersona.clear();}
-  async deleteIncidenciaPersona(id: any){return await this.incidenciaPersona.delete(id)}
-  //
-  async saveMotivoSalida(params: MotivoSalida[]) {await this.motivoSalida.bulkPut(params);}
-  async showMotivosSalida() {return await this.motivoSalida.toArray();}
-  //
-  async savePersonaFlujo(personaFlujo: PersonaFlujoAprobacion) {await this.personaFlujo.put(personaFlujo);}
-  async showPersonaFlujo() {return await this.personaFlujo.toArray()}
-  async clearPersonaFlujo() {await this.personaFlujo.clear();}
-  async deletePersonaFlujo(id: any){return await this.personaFlujo.delete(id)}
-  //
-  async saveBonosPersona(bonoPersona: BonosPersona){await this.bonosPersona.put(bonoPersona)}
-  async showBonosPersonas(){return await this.bonosPersona.toArray()}
-  async updateBonosPersona(dni:string, data:BonosPersona){await this.bonosPersona.update( dni, data )}
-  async eliminarBonosPersona(dni:string){await this.bonosPersona.update(dni, { eliminado: 1 })}
-  //
+  //Configuracion
   async clearMaestras() {
     await this.clearFundos();
     await this.clearCultivos();
     await this.clearAcopios();
     await this.clearCecos();
     await this.clearLabores();
+    await this.clearTurnos();
+    await this.clearAlmacenes();
+    await this.clearAreas();
+    await this.clearProyectos();
+    await this.clearItemComoditys();
+    await this.clearClasificaciones();
     console.log('Todas las tablas de configuracion han sido limpiadas en indexedDB.');
   }
-  //
-  async clearDatosEnviados() {
-    await this.clearTrabajadoresPlanilla()
-    console.log('Todas los datos sincronizados han sido limpiadas en indexedDB.');
-  }
-  //
+  //Configuracion
   async saveConfiguracion(configuracion: Configuracion) { await this.configuracion.put(configuracion); }
   async obtenerConfiguracion() {return await this.configuracion.toArray();} 
+  async obtenerPrimeraConfiguracion() { return await this.configuracion.toCollection().first(); }
   async clearConfiguracion() {await this.configuracion.clear();}
 
 }

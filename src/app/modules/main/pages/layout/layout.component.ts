@@ -21,15 +21,15 @@ export class LayoutComponent {
   currentPath: string = '';
   usuario: any;
   isOnline: boolean = true;
-  
+
   constructor(
     private router: Router,
-    private connectivityService : ConnectivityService,
+    private connectivityService: ConnectivityService,
     private dexieService: DexieService,
     private alertService: AlertService,
     private userService: UserService
-  ) {}
-  
+  ) { }
+
   async ngOnInit() {
     this.usuario = await this.dexieService.showUsuario();
     this.userService.setUsuario(this.usuario);
@@ -38,64 +38,52 @@ export class LayoutComponent {
     });
 
     this.updateCurrentPath();
-    this.router.events.subscribe(()=>{
+    this.router.events.subscribe(() => {
       this.updateCurrentPath()
     })
     this.fechaHoy = this.getDate();
     this.usuario = await this.dexieService.showUsuario()
   }
   async logout() {
-    const sinenviar = await this.dexieService.showTrabajadoresPlanillaSinEnviar()
-    if(sinenviar.length > 0) {
-      Swal.fire({
-        title: 'Alerta!',
-        text: 'Por favor cierre toda su planilla y sincronice',
-        icon: 'info',
-        showConfirmButton: false,
-        timer: 2000
-      })
-    } else {
-      Swal.fire({
-        title: '¿Estás seguro?',
-        text: 'Confirma que desea cerrar sesión',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, deseo salir',
-        cancelButtonText: 'Cancelar',
-        customClass: {
-          confirmButton: 'btn btn-primary',
-          cancelButton: 'btn btn-warning'
-        },
-        buttonsStyling: false // para aplicar tus propias clases
-      }).then((result) => {
-        if (result.isConfirmed) {
-          this.router.navigate(['auth/login']);
-          localStorage.clear()
-          this.dexieService.clearConfiguracion();
-          this.dexieService.clearUsuario();
-          this.dexieService.clearMaestras();
-          this.dexieService.clearDatosEnviados();
-        }
-      });
-    }
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: 'Confirma que desea cerrar sesión',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, deseo salir',
+      cancelButtonText: 'Cancelar',
+      customClass: {
+        confirmButton: 'btn btn-primary',
+        cancelButton: 'btn btn-warning'
+      },
+      buttonsStyling: false // para aplicar tus propias clases
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.router.navigate(['auth/login']);
+        localStorage.clear()
+        this.dexieService.clearConfiguracion();
+        this.dexieService.clearUsuario();
+        this.dexieService.clearMaestras();
+      }
+    });
   }
 
   formatNombre(nombre: string): string {
     if (!nombre) return ''; // Verifica si el nombre está vacío
-  
+
     // Divide el nombre completo por espacios
     const partes = nombre.split(' ');
-  
+
     // Asegúrate de que haya al menos un nombre y un apellido
     if (partes.length < 2) return ''; // Si no hay apellido, no hace nada
-  
+
     // El primer nombre y el primer apellido
     const primerNombre = partes[0];
     const primerApellido = partes[1];
-  
+
     // Devuelve el primer nombre y el primer apellido con la primera letra en mayúscula y el resto en minúscula
     return primerNombre.charAt(0).toUpperCase() + primerNombre.slice(1).toLowerCase() + ' ' +
-          primerApellido.charAt(0).toUpperCase() + primerApellido.slice(1).toLowerCase();
+      primerApellido.charAt(0).toUpperCase() + primerApellido.slice(1).toLowerCase();
   }
 
   formatNombreInicio(nombre: string): string {
@@ -134,11 +122,11 @@ export class LayoutComponent {
     const pathMap: { [key: string]: string } = {
       'parametros': 'Parámetros',
       'requerimiento_consumo': 'Requerimientos de consumo',
-      'requerimiento_transferencia' : 'Requerimiento de transferencia',
+      'requerimiento_transferencia': 'Requerimiento de transferencia',
       'aprobaciones': 'Aprobaciones',
-      'reportes': 'Lista de requerimientos'
+      'reporte_logistico': 'Lista de requerimientos'
     };
-    
+
     this.currentPath = pathMap[currentUrl[currentUrl.length - 1]] || '';
   }
 

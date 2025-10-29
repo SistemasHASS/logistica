@@ -3,6 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Almacen } from '../../model/almacen.model';
 import { UserService } from '@/app/shared/services/user.service';
+import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 
 interface LineaDetalle {
@@ -18,7 +19,8 @@ interface LineaDetalle {
 @Component({
     selector: 'app-requerimiento_consumo',
     standalone: true,
-    imports: [CommonModule, FormsModule, DatePipe],
+    // imports: [CommonModule, FormsModule, DatePipe],
+    imports: [CommonModule, FormsModule],
     templateUrl: './requerimiento_consumo.component.html',
     styleUrls: ['./requerimiento_consumo.component.scss']
 })
@@ -26,10 +28,17 @@ export class RequerimientoConsumoComponent implements OnInit {
     fecha = new Date();
     mensajeFundos: String = '';
     usuario: any;
-    fundos: any[] = []; // Se llena al sincronizar
-    areas = ['Mañana', 'Tarde', 'Noche'];
-    almacenes: Almacen[] = [];
-    clasificaciones = ['Consumo', 'Transferencia'];
+    fundos: any[] = [];
+    cultivos: any[] = [];
+    areas: any[] = [];
+    proyectos: any[] = [];
+    items: any[] = [];
+    turnos: any[] = [];
+    labores: any[] = [];
+    cecos: any[] = [];
+    // almacenes: Almacen[] = [];
+    almacenes: any[] = [];
+    clasificaciones: any[] = [];
     glosa: string = '';
     detalle: LineaDetalle[] = [];
 
@@ -41,18 +50,65 @@ export class RequerimientoConsumoComponent implements OnInit {
     cultivoSeleccionado = '';
     areaSeleccionada = '';
     almacenSeleccionado = '';
-
-    // sincronizado = false; // habilita guardar y fundo
+    clasificacionSeleccionado = '';
 
     constructor(
         private userService: UserService,
+        private dexieService: DexieService,
         private alertService: AlertService // ✅ inyectar el servicio
     ) { }
 
-    ngOnInit(): void {
-        // Obtener usuario logueado desde el UserService
-        this.usuario = this.userService.getUsuario();
-        console.log('Usuario logueado desde parametros:', this.usuario);
+    async ngOnInit() {
+        await this.ListarFundos();
+        await this.ListarCultivos();
+        await this.ListarAreas();
+        await this.ListarAlmacenes();
+        await this.ListarProyectos();
+        await this.ListarItems();
+        await this.ListarTurnos();
+        await this.ListarLabores();
+        await this.ListarCecos();
+        await this.ListarClasificaciones();
+    }
+
+    async ListarFundos() {
+        this.fundos = await this.dexieService.showFundos()
+    }
+
+    async ListarCultivos() {
+        this.cultivos = await this.dexieService.showCultivos()
+    }
+
+    async ListarAreas() {
+        this.areas = await this.dexieService.showAreas()
+    }
+
+    async ListarAlmacenes() {
+        this.almacenes = await this.dexieService.showAlmacenes()
+    }
+
+    async ListarProyectos() {
+        this.proyectos = await this.dexieService.showProyectos()
+    }
+
+    async ListarItems() {
+        this.items = await this.dexieService.showItemComoditys()
+    }
+
+    async ListarClasificaciones() {
+        this.clasificaciones = await this.dexieService.showClasificaciones()
+    }
+
+    async ListarTurnos() {
+        this.turnos = await this.dexieService.showTurnos()
+    }
+
+    async ListarLabores() {
+        this.labores = await this.dexieService.showLabores()
+    }
+
+    async ListarCecos() {
+        this.cecos = await this.dexieService.showCecos()
     }
 
     nuevaLinea(): LineaDetalle {

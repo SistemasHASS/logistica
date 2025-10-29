@@ -1,216 +1,317 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
+import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
+import { Configuracion } from '@/app/shared/interfaces/Tables';
+import { MaestrasService } from '../../services/maestras.service';
 import { FormsModule } from '@angular/forms';
-import { Almacen } from '../../model/almacen.model';
+import { Usuario } from '@/app/shared/interfaces/Tables';
 import { LogisticaService } from '../../services/logistica.service';
 import { UserService } from '@/app/shared/services/user.service';
 import { ParametrosService } from '../../services/parametros.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 
+
 @Component({
   selector: 'app-parametros',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [CommonModule, FormsModule],
   templateUrl: './parametros.component.html',
   styleUrls: ['./parametros.component.scss']
 })
 export class ParametrosComponent implements OnInit {
-  fecha = new Date();
-  mensajeFundos: String = '';
-  usuario: any;
-  fundos: any[] = []; // Se llena al sincronizar
-  // areas = ['Mañana', 'Tarde', 'Noche'];
-  almacenes: Almacen[] = [];
-
-  fundoSeleccionado = '';
-  cultivoSeleccionado = '';
-  // areaSeleccionada = '';
-  almacenSeleccionado = '';
-
-  // sincronizado = false; // habilita guardar y fundo
-
   constructor(
+    private dexieService: DexieService,
+    private maestrasService: MaestrasService,
     private logisticaService: LogisticaService,
     private userService: UserService,
     private parametrosService: ParametrosService,
     private alertService: AlertService // ✅ inyectar el servicio
   ) { }
 
-  ngOnInit(): void {
-    // Obtener usuario logueado desde el UserService
-    this.usuario = this.userService.getUsuario();
-    console.log('Usuario logueado desde parametros:', this.usuario);
-    // if (this.usuario && this.usuario.ruc) {
-    // 🔹 Aquí pruebas con data real o simulada
-    // this.logisticaService.listarAlmacenes(this.usuario.ruc).subscribe({
-    //   next: (data) => {
-    //     this.almacenes = data;
-    //     console.log('Almacenes cargados:', data);
-    //   },
-    //   error: (err) => console.error('Error al cargar almacenes', err)
-    // });
-    // } else {
-    //   console.warn('No hay usuario logueado o el RUC no está definido.');
-    // }
-    // console.log('Usuario cargado es:', this.usuario);
-    // Esperamos a que el usuario tenga ruc e idEmpresa
-    // this.userService.usuario$
-    //   .pipe(
-    //     filter(u => !!u?.ruc && !!u?.idEmpresa),
-    //     take(1)
-    //   )
-    //   .subscribe(user => {
-    //     this.usuario = user;
-    //     this.cargarAlmacenes(); // almacenes siempre disponibles
-    //   });
-    // this.userService.usuario$.subscribe((usuario) => {
-    //   this.usuario = usuario;
-    // });
-    // this.cargarAlmacenes();
+  fecha = new Date();
+  mensajeFundos: String = '';
+  empresas: any[] = [];
+  sedes: any[] = [];
+  cultivos: any[] = [];
+  proyectos: any[] = [];
+  areas: any[] = [];
+  fundos: any[] = [];
+  almacenes: any[] = [];
+  items: any[] = [];
+  turnos: any[] = [];
+  labores: any[] = [];
+  cecos: any[] = [];
+  clasificaciones: any[] = [];
+
+  fundoSeleccionado = '';
+  cultivoSeleccionado = '';
+  areaSeleccionada = '';
+  almacenSeleccionado = '';
+  showValidation: boolean = false;
+
+  usuario: Usuario = {
+    id: "",
+    sociedad: 0,
+    idempresa: "",
+    ruc: "",
+    razonSocial: "",
+    idProyecto: "",
+    proyecto: "",
+    documentoIdentidad: "",
+    usuario: "",
+    clave: "",
+    nombre: "",
+    idrol: "",
+    rol: ""
   }
 
-  // cargarAlmacenes(): void {
-  //   if (!this.usuario?.ruc) return;
+  configuracion: Configuracion = {
+    id: "",
+    idempresa: "",
+    idfundo: "",
+    idcultivo: "",
+    idarea: "",
+    idalmacen: "",
+    idproyecto: "",
+    idacopio: 0,
+    idceco: "",
+    idlabor: "",
+    idturno: "",
+    iditem: "",
+    idclasificacion: "",
+  }
 
-  //   this.logisticaService.listarAlmacenes(this.usuario.ruc)
-  //     .subscribe({
-  //       next: data => this.almacenes = data,
-  //       error: err => console.error('Error al listar almacenes', err)
-  //     });
-  // }
+  async ngOnInit() {
+    await this.getUsuario()
+    await this.validarExisteConfiguracion()
+    await this.llenarDropdowns();
+  }
 
-  // Botón Sincronizar: llena solo el combo de fundos
-  // async sincronizar() {
-  //   // this.fundos = ['Fundo Norte', 'Fundo Sur', 'Fundo Central']; // o desde API si quieres
-  //   if (!this.usuario?.idempresa || !this.usuario?.sociedad) {
-  //     alert('No se pudo obtener la empresa del usuario');
-  //     return;
-  //   }
+  async getUsuario() {
+    const usuario = await this.dexieService.showUsuario();
+    if (usuario) { this.usuario = usuario } else { console.log('Error', 'Usuario not found', 'error'); }
+  }
 
-  //   try {
-  //     const data = await this.parametrosService.sincronizarFundos(this.usuario.idempresa, this.usuario.sociedad);
-  //     console.log('✅ Fundos recibidos:', data);
-  //     // Filtramos solo los fundos que pertenecen a la empresa del usuario
-  //     this.fundos = data;
-  //     this.fundoSeleccionado = ''; // reset selección
-
-  //     // 🔹 Cargar almacenes por RUC del usuario
-  //     this.logisticaService.listarAlmacenes(this.usuario.ruc).subscribe({
-  //       next: (data) => {
-  //         console.log('✅ Almacenes recibidos:', data);
-  //         this.almacenes = data;
-  //         this.almacenSeleccionado = '';
-  //       },
-  //       error: (err) => console.error('❌ Error al cargar almacenes:', err)
-  //     });
-  //   } catch (err) {
-  //     console.error('❌ Error al sincronizar fundos y almacenes:', err);
-  //     alert('Ocurrió un error al sincronizar fundos y almacenes.');
-  //   }
-  // }
-
-  async sincronizar() {
-    if (!this.usuario?.idempresa || !this.usuario?.sociedad || !this.usuario?.ruc) {
-      this.alertService.showAlert('Error', 'No se pudo obtener la empresa, sociedad o RUC del usuario', 'error');
-      return;
-    }
-
-    try {
-      // 🔹 Mostrar mensaje de carga
-      this.alertService.mostrarModalCarga();
-
-      // 🔹 Llamar en paralelo a ambos servicios
-      const [fundos, almacenes] = await Promise.all([
-        this.parametrosService.sincronizarFundos(this.usuario.idempresa, this.usuario.sociedad),
-        this.parametrosService.sincronizarAlmacenes(this.usuario.ruc)
-        // this.logisticaService.listarAlmacenes(this.usuario.ruc).toPromise()
-      ]);
-
-      // 🔹 Cerrar el modal de carga
-      this.alertService.cerrarModalCarga();
-
-      // 🔹 Actualizar listas
-      this.fundos = fundos || [];
-      this.fundoSeleccionado = '';
-
-      this.almacenes = almacenes || [];
-      this.almacenSeleccionado = '';
-
-      console.log('✅ Fundos sincronizados:', fundos);
-      console.log('✅ Almacenes sincronizados:', almacenes);
-
-      // 🔹 Mostrar mensaje final de éxito
-      this.alertService.showAlert('Sincronización completa', 'Los fundos y almacenes se actualizaron correctamente.', 'success');
-
-    } catch (err) {
-      console.error('❌ Error al sincronizar fundos y almacenes:', err);
-      // Cerrar el modal en caso de error también
-      this.alertService.cerrarModalCarga();
-      this.alertService.showAlert('Error', 'Ocurrió un error al sincronizar los datos.', 'error');
+  async validarExisteConfiguracion() {
+    const configuracion = await this.dexieService.obtenerPrimeraConfiguracion();
+    if (configuracion) {
+      this.configuracion = configuracion;
     }
   }
 
+  async llenarDropdowns() {
+    await this.ListarEmpresas();
+    await this.ListarFundos();
+    await this.ListarCultivos();
+    await this.ListarAreas();
+    await this.ListarAlmacenes();
+    await this.ListarProyectos();
+    await this.ListarItems();
+    await this.ListarTurnos();
+    await this.ListarLabores();
+    await this.ListarCecos();
+    await this.ListarClasificaciones();
+  }
 
-  // guardar(): void {
-  //   if (!this.fundoSeleccionado) {
-  //     alert('Debes seleccionar un Fundo antes de guardar.');
-  //     return;
-  //   }
-  //   if (!this.almacenSeleccionado) {
-  //     alert('Debes seleccionar Área y Almacén antes de guardar.');
-  //     return;
-  //   }
-  //   // if (!this.areaSeleccionada || !this.almacenSeleccionado) {
-  //   //   alert('Debes seleccionar Área y Almacén antes de guardar.');
-  //   //   return;
-  //   // }
-
-  //   // Aquí iría tu lógica de guardado
-  //   console.log('Guardando parámetros:', {
-  //     fundo: this.fundoSeleccionado,
-  //     // area: this.areaSeleccionada,
-  //     almacen: this.almacenSeleccionado
-  //   });
-
-  //   alert('Parámetros guardados correctamente.');
-  // }
-
-  async guardar() {
-    if (!this.fundoSeleccionado) {
-      this.alertService.showAlert('Atención', 'Debes seleccionar un Fundo antes de guardar.', 'warning');
-      return;
-    }
-
-    if (!this.almacenSeleccionado) {
-      this.alertService.showAlert('Atención', 'Debes seleccionar un Almacén antes de guardar.', 'warning');
-      return;
-    }
-
+  async sincronizarTablasMaestras() {
     try {
-      // 🔹 Mostrar modal de carga
       this.alertService.mostrarModalCarga();
+      const empresas = await this.maestrasService.getEmpresas([])
+      if (!!empresas && empresas.length) {
+        await this.dexieService.saveEmpresas(empresas)
+        await this.ListarEmpresas()
+      }
 
-      // 🔹 Simulación del guardado (aquí reemplaza por tu lógica real)
-      await new Promise(resolve => setTimeout(resolve, 1500)); // simulación de espera
+      const fundos = this.maestrasService.getFundos([{ idempresa: this.usuario.idempresa }])
+      fundos.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveFundos(resp);
+          await this.ListarFundos();
+          this.alertService.cerrarModalCarga()
+          this.alertService.showAlert('Exito!', 'Sincronizado con exito', 'success');
+        }
+      })
 
-      // 🔹 Cerrar modal de carga
-      this.alertService.cerrarModalCarga();
-
-      console.log('Guardando parámetros:', {
-        fundo: this.fundoSeleccionado,
-        almacen: this.almacenSeleccionado,
-        usuario: this.usuario?.nombre || 'Desconocido'
+      const cultivos = this.maestrasService.getCultivos([{ idempresa: this.usuario?.idempresa }])
+      cultivos.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveCultivos(resp);
+          await this.ListarCultivos();
+        }
       });
 
-      // 🔹 Mostrar éxito
-      this.alertService.showAlert('Éxito', 'Los parámetros se guardaron correctamente.', 'success');
-    } catch (err) {
-      console.error('❌ Error al guardar parámetros:', err);
+      const areas = this.maestrasService.getAreas([{ ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA'}])
+      areas.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveAreas(resp);
+          await this.ListarAreas();
+        }
+      });
 
-      // Cerrar modal y mostrar error
-      this.alertService.cerrarModalCarga();
-      this.alertService.showAlert('Error', 'Ocurrió un error al guardar los parámetros.', 'error');
+      const almacenes = this.maestrasService.getAlmacenes([{ ruc: this.usuario?.ruc }])
+      almacenes.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveAlmacenes(resp);
+          await this.ListarAlmacenes();
+        }
+      });
+
+      const proyectos = this.maestrasService.getProyectos([{ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA', esadmin: 0}])
+      proyectos.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveProyectos(resp);
+          await this.ListarProyectos();
+        }
+      });
+
+      const items = this.maestrasService.getItems([{ ruc: this.usuario?.ruc }])
+      items.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveItemComoditys(resp);
+          await this.ListarItems();
+        }
+      });
+
+      const clasificaciones = this.maestrasService.getClasificaciones([{ }])
+      clasificaciones.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveClasificaciones(resp);
+          await this.ListarClasificaciones();
+        }
+      });
+
+      const turnos = this.maestrasService.getTurnos([{ idempresa: this.usuario?.idempresa, aplicacion: 'LOGISTICA', esadmin: 0 }])
+      turnos.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveTurnos(resp);
+          await this.ListarTurnos();
+        }
+      });
+
+      const labores = await this.maestrasService.getLabores([{ aplicacion: 'LOGISTICA', esadmin: 0 }])
+      if (!!labores && labores.length) {
+        await this.dexieService.saveLabores(labores)
+        await this.ListarLabores()
+      }
+
+      const cecos = await this.maestrasService.getCecos([{ aplicacion: 'LOGISTICA', esadmin: 0 }])
+       cecos.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveCecos(resp);
+          await this.ListarCecos();
+        }
+      });
+
+    } catch (error: any) {
+      console.error(error);
+      this.alertService.showAlert('Error!', '<p>Ocurrio un error</p><p>', 'error');
     }
   }
 
+  async ListarEmpresas() {
+    this.empresas = await this.dexieService.showEmpresas();
+    this.configuracion.idempresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc)?.ruc || '';
+  }
+
+  async ListarFundos() {
+    const fundos = await this.dexieService.showFundos();
+    const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
+    this.fundos = fundos.filter((fundo: any) => fundo.empresa === empresa.empresa);
+    if (this.fundos.length == 1) {
+      this.configuracion.idfundo = this.fundos[0].codigoFundo;
+    }
+  }
+
+  async ListarCultivos() {
+    const cultivos = await this.dexieService.showCultivos();
+    const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
+    this.cultivos = cultivos.filter((cultivo: any) => cultivo.empresa === empresa.empresa);
+    if (this.cultivos.length == 1) {
+      this.configuracion.idcultivo = this.cultivos[0].codigo;
+    }
+  }
+
+  async ListarAreas() {
+    const areas = await this.dexieService.showAreas();
+    const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
+    this.areas = areas.filter((area: any) => area.ruc === empresa.ruc);
+    if (this.areas.length == 1) {
+      this.configuracion.idarea = this.areas[0].idarea;
+    }
+  }
+
+  async ListarProyectos() {
+    const proyectos = await this.dexieService.showProyectos();
+    const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
+    this.proyectos = proyectos.filter((proyecto: any) => proyecto.ruc === empresa.ruc);
+    if (this.proyectos.length == 1) {
+      this.configuracion.idproyecto = this.proyectos[0].id;
+    }
+  }
+
+  async ListarAlmacenes() {
+    const almacenes = await this.dexieService.showAlmacenes();
+    this.almacenes = almacenes;
+    if (this.almacenes.length == 1) {
+      this.configuracion.idalmacen = this.almacenes[0].idalmacen;
+    }
+  }
+
+  async ListarItems() {
+    const items = await this.dexieService.showItemComoditys();
+    this.items = items;
+    // const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
+    // this.items = items.filter((almacen: any) => almacen.empresa === empresa.empresa);
+    if (this.items.length == 1) {
+      this.configuracion.iditem = this.items[0].id;
+    }
+  }
+
+  async ListarClasificaciones() {
+    const clasificaciones = await this.dexieService.showClasificaciones();
+    this.clasificaciones = clasificaciones;
+    if (this.clasificaciones.length == 1) {
+      this.configuracion.idclasificacion = this.items[0].idclasificacion;
+    }
+  }
+
+  async ListarTurnos() {
+    const turnos = await this.dexieService.showTurnos();
+    this.turnos = turnos;
+    // const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
+    // this.turnos = turnos.filter((almacen: any) => almacen.empresa === empresa.empresa);
+    if (this.turnos.length == 1) {
+      this.configuracion.idturno = this.turnos[0].id;
+    }
+  }
+
+  async ListarLabores() {
+    const labores = await this.dexieService.showLabores();
+    const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
+    this.labores = labores.filter((almacen: any) => almacen.empresa === empresa.empresa);
+    if (this.labores.length == 1) {
+      this.configuracion.idlabor = this.labores[0].idlabor;
+    }
+  }
+
+  async ListarCecos() {
+    const cecos = await this.dexieService.showCecos();
+    this.cecos = cecos;
+    // const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
+    // this.cecos = cecos.filter((ceco: any) => ceco.empresa === empresa.empresa);
+    if (this.cecos.length == 1) {
+      this.configuracion.idceco = this.cecos[0].id;
+    }
+  }
+
+  async guardarConfiguracion() {
+    this.showValidation = true;
+    if (!this.configuracion.idempresa || !this.configuracion.idfundo || !this.configuracion.idcultivo) {
+      this.alertService.showAlert('Advertencia!', 'Debe seleccionar todos los campos', 'warning')
+    } else {
+      this.configuracion.id = this.usuario.ruc + this.usuario.documentoIdentidad;
+      await this.dexieService.saveConfiguracion(this.configuracion)
+      this.alertService.showAlert('¡Éxito!', 'La operación se completó correctamente', 'success')
+    }
+  }
 }

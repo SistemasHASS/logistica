@@ -29,7 +29,7 @@ export const routes: Routes = [
       { path: 'requerimiento_transferencia', component: RequerimientoTransferenciaComponent },
       { path: 'requerimiento_transferencia', component: RequerimientoTransferenciaComponent },
       { path: 'aprobaciones', component: RequerimientoTransferenciaComponent },
-      { path: 'reportes', component: RequerimientoTransferenciaComponent },
+      { path: 'reporte_logistico', component: RequerimientoTransferenciaComponent },
       { path: '**', redirectTo: 'auth/login' }
     ],
     canActivate: [AuthGuard]
