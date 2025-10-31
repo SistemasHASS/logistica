@@ -22,9 +22,6 @@ export class ParametrosComponent implements OnInit {
   constructor(
     private dexieService: DexieService,
     private maestrasService: MaestrasService,
-    private logisticaService: LogisticaService,
-    private userService: UserService,
-    private parametrosService: ParametrosService,
     private alertService: AlertService // ✅ inyectar el servicio
   ) { }
 
@@ -287,8 +284,9 @@ export class ParametrosComponent implements OnInit {
 
   async ListarLabores() {
     const labores = await this.dexieService.showLabores();
-    const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
-    this.labores = labores.filter((almacen: any) => almacen.empresa === empresa.empresa);
+    this.labores = labores;
+    // const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
+    // this.labores = labores.filter((almacen: any) => almacen.empresa === empresa.empresa);
     if (this.labores.length == 1) {
       this.configuracion.idlabor = this.labores[0].idlabor;
     }

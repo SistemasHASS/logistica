@@ -15,12 +15,12 @@
                 <label>Fundo <span class="text-danger">*</span></label>
                 <select class="form-select" [(ngModel)]="fundoSeleccionado">
                     <option value="">Seleccione un fundo</option>
-                    <option *ngFor="let f of fundos" [value]="f">{{f.nombreFundo}}</option>
+                    <option *ngFor="let f of fundos" [value]="f.nombreFundo">{{f.nombreFundo}}</option>
                 </select>
             </div>
 
             <div class="col-6">
-                <label>Área</label>
+                <label>Área <span class="text-danger">*</span></label>
                 <select class="form-select" [(ngModel)]="areaSeleccionada">
                     <option value="">Seleccione un turno</option>
                     <option *ngFor="let a of areas" [value]="a.idarea">{{a.descripcion}}</option>
@@ -28,7 +28,7 @@
             </div>
 
             <div class="col-6">
-                <label>Almacén</label>
+                <label>Almacén <span class="text-danger">*</span></label>
                 <select class="form-select" [(ngModel)]="almacenSeleccionado">
                     <option value="">Seleccione un almacen</option>
                     <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
@@ -36,10 +36,11 @@
             </div>
 
             <div class="col-6">
-                <label>Clasificación</label>
+                <label>Clasificación <span class="text-danger">*</span></label>
                 <select class="form-select" [(ngModel)]="clasificacionSeleccionado">
                     <option value="">Seleccione un clasificación</option>
-                    <option *ngFor="let c of clasificaciones" [value]="c.idclasificacion">{{ c.descripcion_clasificacion }}</option>
+                    <option *ngFor="let c of clasificaciones" [value]="c.idclasificacion">{{ c.descripcion_clasificacion
+                        }}</option>
                 </select>
             </div>
 
@@ -73,7 +74,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let item of detalle; let i = index">
+                        <tr *ngFor="let item of detalles; let i = index">
                             <td>{{ item.codigo }}</td>
                             <td>{{ item.producto }}</td>
                             <td>{{ item.cantidad }}</td>
@@ -83,14 +84,14 @@
                             <td>{{ item.labor }}</td>
                             <td>
                                 <button class="btn btn-sm btn-warning me-2" (click)="editarLinea(i)">
-                                    <i class="bi bi-pencil-square"></i>
+                                    <i class="icon-pencil"></i>
                                 </button>
                                 <button class="btn btn-sm btn-danger" (click)="eliminarLinea(i)">
-                                    <i class="bi bi-trash"></i>
+                                    <i class="icon-trash"></i>
                                 </button>
                             </td>
                         </tr>
-                        <tr *ngIf="detalle.length === 0">
+                        <tr *ngIf="detalles.length === 0">
                             <td colspan="8" class="text-muted">No hay detalles agregados</td>
                         </tr>
                     </tbody>
@@ -101,51 +102,63 @@
             <!-- Modal -->
             <div class="modal-backdrop" *ngIf="modalAbierto">
                 <div class="modal-content">
-                    <h5>Registrar Línea de Detalle</h5>
+                    <!-- <h5>Registrar Línea de Detalle</h5>     -->
+                    <h5>{{ editIndex >= 0 ? 'Editar Línea de Detalle' : 'Agregar Línea de Detalle' }}</h5>
+
                     <div class="form-group">
                         <div class="row g-3">
+                            <!-- <div class="col-6">
+                                <label>Código</label>
+                                <input type="text" class="form-control" [(ngModel)]="lineaTemp.codigo" readonly />
+                            </div> -->
+                            <!-- Campo CODIGO oculto -->
+                            <input type="hidden" [(ngModel)]="lineaTemp.codigo" name="codigo" />
                             <div class="col-6">
                                 <label>Producto <span class="text-danger">*</span></label>
-                                <select class="form-select" [(ngModel)]="itemSeleccionado">
+                                <select class="form-select" [(ngModel)]="lineaTemp.producto">
                                     <option value="">Seleccione un producto</option>
-                                    <option *ngFor="let it of items" [value]="it.iditem">{{ it.descripcion }}</option>
+                                    <option *ngFor="let it of items" [value]="it.descripcion">{{ it.descripcion }}
+                                    </option>
                                 </select>
                             </div>
 
                             <div class="col-6">
                                 <label>Cantidad <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control cantidad" [(ngModel)]="lineaTemp.cantidad" min="1" />
+                                <input type="number" class="form-control cantidad" [(ngModel)]="lineaTemp.cantidad"
+                                    min="1" />
                             </div>
 
                             <div class="col-6">
-                                <label>Proyecto</label>
-                                <select class="form-select" [(ngModel)]="almacenSeleccionado">
+                                <label>Proyecto <span class="text-danger">*</span></label>
+                                <select class="form-select" [(ngModel)]="lineaTemp.proyecto">
                                     <option value="">Seleccione un proyecto</option>
-                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+                                    <option *ngFor="let p of proyectos" [value]="p.proyectoio">{{ p.proyectoio }}
+                                    </option>
                                 </select>
                             </div>
 
                             <div class="col-6">
-                                <label>CECO</label>
-                                <select class="form-select" [(ngModel)]="almacenSeleccionado">
+                                <label>CECO <span class="text-danger">*</span></label>
+                                <select class="form-select" [(ngModel)]="lineaTemp.ceco">
                                     <option value="">Seleccione un ceco</option>
-                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+                                    <option *ngFor="let c of cecos" [value]="c.localname">{{ c.localname }}</option>
                                 </select>
                             </div>
 
                             <div class="col-6">
-                                <label>Turno</label>
-                                <select class="form-select" [(ngModel)]="almacenSeleccionado">
+                                <label>Turno <span class="text-danger">*</span></label>
+                                <select class="form-select" [(ngModel)]="lineaTemp.turno">
                                     <option value="">Seleccione un turno</option>
-                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+                                    <option *ngFor="let t of turnos" [value]="t.nombreTurno">{{ t.nombreTurno }}
+                                    </option>
                                 </select>
                             </div>
 
                             <div class="col-6">
-                                <label>Labor</label>
-                                <select class="form-select" [(ngModel)]="almacenSeleccionado">
+                                <label>Labor <span class="text-danger">*</span></label>
+                                <select class="form-select" [(ngModel)]="lineaTemp.labor">
                                     <option value="">Seleccione un labor</option>
-                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+                                    <option *ngFor="let l of labores" [value]="l.labor">{{ l.labor }}</option>
                                 </select>
                             </div>
                         </div>

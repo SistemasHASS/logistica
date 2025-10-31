@@ -179,7 +179,7 @@ export class MaestrasService {
   async getLabores(body: any): Promise<any> {
     const url = `${this.apiMaestra}/api/Maestros/get-labores`;
     try {
-      return this.http.post<any>(url, body);
+      return await lastValueFrom(this.http.post<any>(url, body).pipe());
     } catch (error: any) {
       throw new Error(error.error?.message || 'Error en el api: labores');
     }

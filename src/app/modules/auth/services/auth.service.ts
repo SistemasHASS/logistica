@@ -11,6 +11,8 @@ import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 export class AuthService {
 
   private readonly baseUrl: string = environment.baseUrl;
+  private readonly aplicacion: string = 'LOGISTICA';
+  private readonly baseUrlMaestra: string = environment.apiMaestra;
 
   constructor(
     private http: HttpClient,
@@ -19,9 +21,10 @@ export class AuthService {
 
   async login(usuario: string, clave: string, aplicacion: string): Promise<any> {
     
-    const url = `${this.baseUrl}/api/Maestros/get-usuarios`;
+    const url = `${this.baseUrlMaestra}/api/Maestros/get-usuarios`;
 
-    const body = [{ usuario, clave, aplicacion:'LOGISTICA' }];
+    // const body = [{ usuario, clave, aplicacion:'LOGISTICA' }];
+    const body = [{ usuario, clave, aplicacion: this.aplicacion }];
   
     try {
       const response = await lastValueFrom(this.http.post<any>(url, body));

@@ -5,6 +5,7 @@ import { ParametrosComponent } from './modules/main/pages/parametros/parametros.
 import { RequerimientoConsumoComponent } from './modules/main/pages/requerimiento_consumo/requerimiento_consumo.component';
 import { RequerimientoTransferenciaComponent } from './modules/main/pages/requerimiento_transferencia/requerimiento_transferencia.component';
 import { AuthGuard } from './modules/auth/guard/auth.guard';
+import { ReporteLogisticoComponent } from './modules/main/pages/reporte_logistico/reporte_logistico.component';
 
 export const routes: Routes = [
   {
@@ -27,9 +28,8 @@ export const routes: Routes = [
       { path: 'parametros', component: ParametrosComponent },
       { path: 'requerimiento_consumo', component: RequerimientoConsumoComponent },
       { path: 'requerimiento_transferencia', component: RequerimientoTransferenciaComponent },
-      { path: 'requerimiento_transferencia', component: RequerimientoTransferenciaComponent },
       { path: 'aprobaciones', component: RequerimientoTransferenciaComponent },
-      { path: 'reporte_logistico', component: RequerimientoTransferenciaComponent },
+      { path: 'reporte_logistico', component: ReporteLogisticoComponent },
       { path: '**', redirectTo: 'auth/login' }
     ],
     canActivate: [AuthGuard]

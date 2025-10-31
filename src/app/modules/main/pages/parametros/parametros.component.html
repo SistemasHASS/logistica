@@ -129,7 +129,7 @@
             <div class="col-lg-9">
               <select [(ngModel)]="configuracion.idclasificacion"
                 [ngClass]="{'is-invalid': showValidation && !configuracion.idclasificacion, 'is-valid': configuracion.idclasificacion}"
-                class="form-select mb-2" name="claisificacion">
+                class="form-select mb-2" name="clasificacion">
                 <option [ngValue]="''" [disabled]="true">Seleccione una opción</option>
                 <option *ngFor="let c of clasificaciones; let i = index" [ngValue]="c.id">
                   {{ c.descripcion_clasificacion }}
@@ -167,8 +167,8 @@
                 [ngClass]="{'is-invalid': showValidation && !configuracion.idlabor, 'is-valid': configuracion.idlabor}"
                 class="form-select mb-2" name="labor">
                 <option [ngValue]="''" [disabled]="true">Seleccione una opción</option>
-                <option *ngFor="let p of proyectos; let i = index" [ngValue]="p.id">
-                  {{ p.proyectoio }}
+                <option *ngFor="let l of labores; let i = index" [ngValue]="l.id">
+                  {{ l.labor }}
                 </option>
               </select>
             </div>

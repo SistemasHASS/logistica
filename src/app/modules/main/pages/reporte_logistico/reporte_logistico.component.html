@@ -1,0 +1,103 @@
+<div class="card">
+  <div class="card-header bg-white d-flex flex-column flex-md-row justify-content-between align-items-center">
+    <span class="mb-2 mb-md-0"></span>
+    <div class="d-flex flex-wrap align-items-center">
+      <div class="list-icons d-flex flex-wrap mr-3 totalAncho">
+        <label for="reporte-select">Requerimiento: </label>
+        <select name="" id="reporte-select" [(ngModel)]="activeTab" (change)="actualizarNombreReporte()" class="form-control mb-2 mb-sm-0">
+          <option value="" disabled selected>Seleccione reporte</option>
+          <option value="consumo">Reporte Consumo</option>
+          <option value="transferencia">Reporte Transferencia</option>
+        </select>
+      </div>
+
+      <div class="list-icons d-flex flex-wrap mr-3 totalAncho">
+        <label for="fdesde">Desde: </label><input [(ngModel)]="fdesde" type="date" class="form-control mb-2 mb-sm-0" />
+      </div>
+      <div class="list-icons d-flex flex-wrap mr-3 totalAncho">
+        <label for="fhasta">Hasta: </label><input [(ngModel)]="fhasta" type="date" class="form-control mb-2 mb-sm-0" />
+      </div>
+      <button (click)="listarReporte()" class="btn totalAncho bg-primary" style="color: white;margin-top: 21px;">
+        Listar <i class="icon icon-eye"></i>
+      </button>
+    </div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-body">
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item tablaEsconder">
+        <a class="nav-link" [class.active]="activeTab !== ''" role="tab">
+          {{ nombreReporte }}
+        </a>
+        <!-- <a class="nav-link" style="margin-right: 0;" [class.active]="activeTab === 'home'"
+          (click)="setActiveTab('home')" role="tab">
+          Reporte
+        </a> -->
+      </li>
+    </ul>
+
+    <!-- Botón para exportar -->
+    <div *ngIf="data.length > 0" class="mb-2 mt-4 d-flex justify-content-end gap-2">
+      <button class="btn btn-sm btn-success" (click)="exportarExcel()">
+        <i class="icon icon-file-excel"></i> Excel
+      </button>
+    </div>
+
+    <div class="row tablaEsconder" *ngIf="data.length > 0">
+      <div class="col-md-12">
+        <div class="table-responsive tabla-scroll">
+          <table class="table table-bordered table-striped table-sm tabla-compacta">
+            <thead style="position: sticky; top: 0; z-index: 1; background-color: white;">
+              <tr class="bg-primary text-white text-center">
+                <!-- Cabeceras dinámicas -->
+                <th *ngFor="let col of columnas">{{ col.toUpperCase().replace('_', ' ') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of data">
+                <!-- Filas dinámicas -->
+                <td *ngFor="let col of columnas" class="text-center">
+                  <!-- Tratamiento especial si la columna es "aprobado" -->
+                  {{ col.toLowerCase() === 'aprobado' ? (row[col] ? 'Aprobado' : 'No Aprobado') : row[col] }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <thead style="position: sticky; top: 0; z-index: 1; background-color: white;">
+            <tr class="bg-primary text-white text-center">
+              <th>#</th>
+              <th>Fecha</th>
+              <th>RUC</th>
+              <th>DNI Conductor</th>
+              <th>Conductor</th>
+              <th>Placa</th>
+              <th>Horario</th>
+              <th>Punto Inicio</th>
+              <th>Punto Fin</th>
+              <th>Cantidad</th>
+              <th>Estado</th>
+              <th>Usuario Aprobación</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of data; let i = index">
+              <td class="text-center">{{ i + 1 }}</td>
+              <td class="text-center">{{ row.fecharegistro }}</td>
+              <td class="text-center">{{ row.ruc }}</td>
+              <td class="text-center">{{ row.DNI_conductor }}</td>
+              <td>{{ row.conductor }}</td>
+              <td class="text-center">{{ row.placa }}</td>
+              <td class="text-center">{{ row.horario }}</td>
+              <td class="text-center">{{ row.puntoinicio }}</td>
+              <td class="text-center">{{ row.puntofin }}</td>
+              <td class="text-center">{{ row.cantidad }}</td>
+              <td class="text-center">{{ row.aprobado? 'Aprobado' : 'No Aprobado' }}</td>
+              <td class="text-center">{{ row.usuario_aprueba }}</td>
+            </tr>
+          </tbody>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

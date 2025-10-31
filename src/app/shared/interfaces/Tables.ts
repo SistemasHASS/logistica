@@ -23,7 +23,7 @@ export interface Configuracion {
     idarea: string;
     idalmacen: string;
     idproyecto: string;
-    idacopio: number; 
+    idacopio: number;
     idceco: string;
     idlabor: string;
     iditem: string;
@@ -76,28 +76,27 @@ export interface Cultivo {
     descripcion: string,
 }
 
-export interface Acopio{
-    id : string;
+export interface Acopio {
+    id: string;
     nave: string;
     codigoAcopio: string;
     acopio: string;
 }
 
-export interface Ceco{
-    id : string;    
+export interface Ceco {
+    id: string;
     turno: string;
     costcenter: string;
     localname: string;
     codTurno: string;
     nombreTurno: string;
     modulo: number;
-    
     idcultivo: string;
     idproyecto: string;
 }
 
-export interface Labor{
-    id : string;
+export interface Labor {
+    id: string;
     idgrupolabor: string;
     idlabor: string;
     labor: string;
@@ -123,6 +122,27 @@ export interface Clasificacion {
     idclasificacion: string;
     descripcion_clasificacion: string;
     tipoClasificacion: string;
+}
+
+export interface DetalleRequerimiento {
+    id?: number;
+    codigo: string;
+    producto: string;
+    cantidad: number;
+    proyecto: string;
+    ceco: string;
+    turno: string;
+    labor: string;
+}
+
+export interface Requerimiento {
+    id?: number;
+    fecha: string;
+    fundo: string;
+    almacen: string;
+    glosa: string;
+    tipo: string;
+    detalle: DetalleRequerimiento[];
 }
 
 export interface Trabajador {
@@ -190,12 +210,12 @@ export interface IncidenciaPersona {
     fechafin: string,
     anular: number,
     usuario_aprueba: string,
-    idaprobacion:  string,
-    glosa:  string,
+    idaprobacion: string,
+    glosa: string,
     pdf64: string,
-    idincidencia:  string,
-    nombrePersona:  string,
-    nombreIncidencia:  string,
+    idincidencia: string,
+    nombrePersona: string,
+    nombreIncidencia: string,
     aprobado: number,
     checked: false,
     estado: number
