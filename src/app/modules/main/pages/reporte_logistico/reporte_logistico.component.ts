@@ -31,7 +31,7 @@ export class ReporteLogisticoComponent {
         razonSocial: '',
         idProyecto: '',
         proyecto: '',
-        documentoIdentidad: '',
+        documentoidentidad: '',
         usuario: '',
         clave: '',
         nombre: '',
@@ -128,7 +128,7 @@ export class ReporteLogisticoComponent {
     async getFormatoReporte() {
         return [{
             ruc: this.usuario.ruc,
-            nrodocumento: this.usuario.documentoIdentidad,
+            nrodocumento: this.usuario.documentoidentidad,
             idrol: this.obtenerRol(),
             desde: this.formatDateViaje(this.fdesde),
             hasta: this.formatDateViaje(this.fhasta)

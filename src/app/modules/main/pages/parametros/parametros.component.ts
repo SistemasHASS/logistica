@@ -9,6 +9,7 @@ import { LogisticaService } from '../../services/logistica.service';
 import { UserService } from '@/app/shared/services/user.service';
 import { ParametrosService } from '../../services/parametros.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
+import { RequerimientosService } from '../../services/requerimientos.service';
 
 
 @Component({
@@ -22,7 +23,8 @@ export class ParametrosComponent implements OnInit {
   constructor(
     private dexieService: DexieService,
     private maestrasService: MaestrasService,
-    private alertService: AlertService // ✅ inyectar el servicio
+    private alertService: AlertService, // ✅ inyectar el servicio
+    private requerimientosService: RequerimientosService
   ) { }
 
   fecha = new Date();
@@ -54,7 +56,7 @@ export class ParametrosComponent implements OnInit {
     razonSocial: "",
     idProyecto: "",
     proyecto: "",
-    documentoIdentidad: "",
+    documentoidentidad: "",
     usuario: "",
     clave: "",
     nombre: "",
@@ -110,6 +112,12 @@ export class ParametrosComponent implements OnInit {
     await this.ListarClasificaciones();
   }
 
+  obtenerRol() {
+    if (this.usuario.idrol.includes('ALLOGIST')) return 'ALLOGIST'
+    if (this.usuario.idrol.includes('APLOGIST')) return 'APLOGIST'
+    return ''
+  }
+
   async sincronizarTablasMaestras() {
     try {
       this.alertService.mostrarModalCarga();
@@ -127,7 +135,7 @@ export class ParametrosComponent implements OnInit {
           this.alertService.cerrarModalCarga()
           this.alertService.showAlert('Exito!', 'Sincronizado con exito', 'success');
         }
-      })
+      });
 
       const cultivos = this.maestrasService.getCultivos([{ idempresa: this.usuario?.idempresa }])
       cultivos.subscribe(async (resp: any) => {
@@ -137,7 +145,7 @@ export class ParametrosComponent implements OnInit {
         }
       });
 
-      const areas = this.maestrasService.getAreas([{ ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA'}])
+      const areas = this.maestrasService.getAreas([{ ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA' }])
       areas.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveAreas(resp);
@@ -153,7 +161,7 @@ export class ParametrosComponent implements OnInit {
         }
       });
 
-      const proyectos = this.maestrasService.getProyectos([{ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA', esadmin: 0}])
+      const proyectos = this.maestrasService.getProyectos([{ ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA', esadmin: 0 }])
       proyectos.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveProyectos(resp);
@@ -169,7 +177,7 @@ export class ParametrosComponent implements OnInit {
         }
       });
 
-      const clasificaciones = this.maestrasService.getClasificaciones([{ }])
+      const clasificaciones = this.maestrasService.getClasificaciones([{}])
       clasificaciones.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveClasificaciones(resp);
@@ -192,10 +200,31 @@ export class ParametrosComponent implements OnInit {
       }
 
       const cecos = await this.maestrasService.getCecos([{ aplicacion: 'LOGISTICA', esadmin: 0 }])
-       cecos.subscribe(async (resp: any) => {
+      cecos.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveCecos(resp);
           await this.ListarCecos();
+        }
+      });
+
+      const requerimmientos = this.requerimientosService.getRequerimientos([{ ruc: this.usuario.ruc, idrol: this.obtenerRol() }])
+      requerimmientos.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveRequerimientos(resp)
+          // Ahora recorre cada requerimiento y guarda su detalle
+          for (const req of resp) {
+            if (req.detalle && req.detalle.length) {
+              for (const det of req.detalle) {
+                // Añadimos un campo idrequerimiento para enlazarlo
+                await this.dexieService.detalles.add({
+                  ...det,
+                  idrequerimiento: req.idrequerimiento
+                });
+              }
+            }
+          }
+
+          console.log('✅ Requerimientos y detalles guardados correctamente');
         }
       });
 
@@ -307,7 +336,7 @@ export class ParametrosComponent implements OnInit {
     if (!this.configuracion.idempresa || !this.configuracion.idfundo || !this.configuracion.idcultivo) {
       this.alertService.showAlert('Advertencia!', 'Debe seleccionar todos los campos', 'warning')
     } else {
-      this.configuracion.id = this.usuario.ruc + this.usuario.documentoIdentidad;
+      this.configuracion.id = this.usuario.ruc + this.usuario.documentoidentidad;
       await this.dexieService.saveConfiguracion(this.configuracion)
       this.alertService.showAlert('¡Éxito!', 'La operación se completó correctamente', 'success')
     }

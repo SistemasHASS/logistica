@@ -3,12 +3,13 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "node scripts/update-version.js && ng serve",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "dev": "ng serve --configuration=development",
     "build": "ng build --configuration=production",
-    "build:prod": "ng build --configuration production && node scripts/update-version.js"
+    "build:prod": "ng build --configuration production && node scripts/update-version.js",
+    "update-version": "node scripts/update-version.js"
   },
   "private": true,
   "dependencies": {

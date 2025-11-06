@@ -7,7 +7,7 @@ export interface Usuario {
     razonSocial: string;
     idProyecto: string;
     proyecto: string;
-    documentoIdentidad: string;
+    documentoidentidad: string;
     usuario: string;
     clave: string;
     nombre: string;
@@ -88,7 +88,7 @@ export interface Ceco {
     turno: string;
     costcenter: string;
     localname: string;
-    codTurno: string;
+    conTurno: string;
     nombreTurno: string;
     modulo: number;
     idcultivo: string;
@@ -133,15 +133,25 @@ export interface DetalleRequerimiento {
     ceco: string;
     turno: string;
     labor: string;
+    estado: number;
 }
 
 export interface Requerimiento {
     id?: number;
+    idrequerimiento: string;
+    ruc: string;
+    idfundo: string;
+    idarea: string;
+    idclasificacion: string;
+    nrodocumento: string;
+    idalmacen: string;
+    idalmacendestino: string;
+    idproyecto: string;
     fecha: string;
-    fundo: string;
     almacen: string;
     glosa: string;
     tipo: string;
+    estado: number;
     detalle: DetalleRequerimiento[];
 }
 

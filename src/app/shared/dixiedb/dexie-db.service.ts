@@ -29,7 +29,7 @@ export class DexieService extends Dexie {
   public requerimientos!: Dexie.Table<Requerimiento, number>
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 2; // ⬅️ cambia este número cuando modifiques el esquema
+  private static readonly DB_VERSION = 3; // ⬅️ cambia este número cuando modifiques el esquema
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -39,7 +39,7 @@ export class DexieService extends Dexie {
     try{
      this.version(DexieService.DB_VERSION).stores({
     // this.version(1).stores({
-      usuario: `id,sociedad,idempresa,ruc,razonSocial,idProyecto,proyecto,documentoIdentidad,usuario,
+      usuario: `id,sociedad,idempresa,ruc,razonSocial,idProyecto,proyecto,documentoidentidad,usuario,
       clave,nombre,idrol,rol`,
       configuracion: `id,idempresa,idfundo,idcultivo,idarea,idacopio,idceco,idlabor,idalmacen`,
       empresas: `id,ruc,razonsocial`,
@@ -50,14 +50,14 @@ export class DexieService extends Dexie {
       cultivos: `id,cultivo,codigo,descripcion,empresa`,
       turnos: 'id,codTurno,turno,nombreTurno,modulo',
       acopios: `id,nave,codigoAcopio,acopio`,
-      cecos: `id,costcenter,localname`,
+      cecos: `id,costcenter,localname,conturno,esinversion,estado`,
       labores: `id,idlabor,idgrupolabor,labor`,
       itemComoditys: `id,tipoclasificacion,codigo,descripcion`,
       clasificaciones: `id,idclasificacion,descripcion_clasificacion,tipoClasificacion`,
       trabajadores: `id,ruc,nrodocumento,nombres,apellidopaterno,apellidomaterno,estado,motivo,
       bloqueado,eliminado,idmotivo,motivosalida`,
       detalles: `++id,codigo,producto,cantidad,proyecto,ceco,turno,labor`,
-      requerimientos: `++id,fecha,fundo,almacen,glosa,detalle`,
+      requerimientos: `++id,fecha,idfundo,idarea,idalmacen,idproyecto,glosa,detalle`,
     });
 
     this.usuario = this.table('usuario');
@@ -189,7 +189,8 @@ export class DexieService extends Dexie {
   async saveRequerimiento(requerimiento: Requerimiento) { await this.requerimientos.put(requerimiento); }
   async saveRequerimientos(requerimientos: Requerimiento[]) { await this.requerimientos.bulkPut(requerimientos); }
   async showRequerimiento() { return await this.requerimientos.toArray(); }
-  async deleteRequerimiento(id: number) { return await this.requerimientos.where('id').equals(id).delete(); }
+  // async deleteRequerimiento(id: number) { return await this.requerimientos.where('id').equals(id).delete(); }
+  async deleteRequerimiento(idrequerimiento: string) { return await this.requerimientos.where('idrequerimiento').equals(idrequerimiento).delete(); }
   async clearRequerimiento() { await this.requerimientos.clear(); }
   async generarCodigo(): Promise<string> {
     const total = await this.requerimientos.count();
@@ -198,9 +199,11 @@ export class DexieService extends Dexie {
   }
   //Configuracion
   async clearMaestras() {
+    await this.clearUsuario();
     await this.clearFundos();
     await this.clearCultivos();
     await this.clearAcopios();
+    await this.clearEmpresas();
     await this.clearCecos();
     await this.clearLabores();
     await this.clearTurnos();
