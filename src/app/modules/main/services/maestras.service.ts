@@ -50,6 +50,22 @@ export class MaestrasService {
     }
   }
 
+  async saveComodityWithSubclas(comodity: any, subclasificaciones: any[]): Promise<void> {
+    try {
+      // Here you should implement the logic to save the comodity and its subclasificaciones
+      // This is a basic implementation - adjust according to your API requirements
+      const url = `${this.apiMaestra}/api/Maestros/save-comodity`;
+      const body = {
+        comodity,
+        subclasificaciones
+      };
+      
+      await lastValueFrom(this.http.post(url, body));
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error al guardar el comodity con sus subclasificaciones');
+    }
+  }
+
   getClasificaciones(body: any): Observable<any> {
     const url = `${this.apiMaestra}/api/Maestros/get-clas-rq`;
     try {
@@ -232,4 +248,14 @@ export class MaestrasService {
       throw new Error(error.error?.message || 'Error al obtener las labores');
     }
   }
+
+  // Add this to MaestrasService
+async maestrasDexieDeleteSub(id: number): Promise<any> {
+  const url = `${this.apiMaestra}/api/Maestros/delete-subclasificacion`; // Adjust the endpoint as needed
+  try {
+    return await lastValueFrom(this.http.post(url, { id }));
+  } catch (error: any) {
+    throw new Error(error.error?.message || 'Error eliminando subclasificación');
+  }
+}
 }

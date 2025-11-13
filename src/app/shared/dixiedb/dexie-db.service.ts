@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import {
   Usuario, Configuracion, Empresa, Fundo, Almacen, Area, Proyecto, ItemComodity, Clasificacion, Cultivo, Acopio, Ceco, Labor,
-  Trabajador, Turno, DetalleRequerimiento, Requerimiento
+  Trabajador, Turno, DetalleRequerimiento, Requerimiento, Item, Comodity, SubClasificacion
 } from '../interfaces/Tables'
 import Dexie from 'dexie';
 
@@ -27,9 +27,12 @@ export class DexieService extends Dexie {
   public itemComoditys!: Dexie.Table<ItemComodity, string>
   public detalles!: Dexie.Table<DetalleRequerimiento, number>
   public requerimientos!: Dexie.Table<Requerimiento, number>
+  public items!: Dexie.Table<Item, string>
+  public comodities!: Dexie.Table<Comodity, string>
+  public subClasificaciones!: Dexie.Table<SubClasificacion, string>
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 3; // ⬅️ cambia este número cuando modifiques el esquema
+  private static readonly DB_VERSION = 4; // ⬅️ cambia este número cuando modifiques el esquema
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -57,7 +60,10 @@ export class DexieService extends Dexie {
       trabajadores: `id,ruc,nrodocumento,nombres,apellidopaterno,apellidomaterno,estado,motivo,
       bloqueado,eliminado,idmotivo,motivosalida`,
       detalles: `++id,codigo,producto,cantidad,proyecto,ceco,turno,labor`,
-      requerimientos: `++id,fecha,idfundo,idarea,idalmacen,idproyecto,glosa,detalle`,
+      requerimientos: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle`,
+      items: `id,tipoclasificacion,codigo,descripcion`,
+      comodities: `id,tipoclasificacion,codigo,descripcion`,
+      subClasificaciones: `id,comodityId,subClase,descripcion,unidad,cuentaGasto,elementoGasto,clasificacionActivo,legacyNumber`,
     });
 
     this.usuario = this.table('usuario');
@@ -77,6 +83,9 @@ export class DexieService extends Dexie {
     this.clasificaciones = this.table('clasificaciones')
     this.detalles = this.table('detalles')
     this.requerimientos = this.table('requerimientos')
+    this.items = this.table('items')
+    this.comodities = this.table('comodities')
+    this.subClasificaciones = this.table('subClasificaciones')
 
     // 🔧 Manejo automático de errores por versión o corrupción
       this.open().catch(async (err) => {
@@ -108,6 +117,7 @@ export class DexieService extends Dexie {
   async saveUsuario(usuario: Usuario) { await this.usuario.put(usuario); }
   async showUsuario() { return await this.usuario.toCollection().first() }
   async clearUsuario() { await this.usuario.clear(); }
+  async getUsuarioLogueado() { return await this.usuario.toArray().then(res => res[0]); }
   //Fundos
   async saveFundo(fundo: Fundo) { await this.fundos.put(fundo); }
   async saveFundos(fundos: Fundo[]) { await this.fundos.bulkPut(fundos); }
@@ -197,6 +207,24 @@ export class DexieService extends Dexie {
     const siguiente = total + 1;
     return siguiente.toString().padStart(6, '0');
   }
+  //--------------------- Items ---------------------
+  async saveItem(item: Item) { await this.items.put(item); }
+  async saveItems(items: Item[]) { await this.items.bulkPut(items); }
+  async showItems() { return await this.items.toArray(); }
+  async showItemById(id: number) { return await this.items.where('id').equals(id).first() }
+  async clearItems() { await this.items.clear(); }
+  //--------------------- Comodities ---------------------
+  async saveComodity(comodity: Comodity) { await this.comodities.put(comodity); }
+  async saveComodities(comodities: Comodity[]) { await this.comodities.bulkPut(comodities); }
+  async showComodities() { return await this.comodities.toArray(); }
+  async showComodityById(id: number) { return await this.comodities.where('id').equals(id).first() }
+  async clearComodities() { await this.comodities.clear(); }
+  //--------------------- SubClasificaciones ---------------------
+  async saveSubClasificacion(subClasificacion: SubClasificacion) { await this.subClasificaciones.put(subClasificacion); }
+  async saveSubClasificaciones(subClasificaciones: SubClasificacion[]) { await this.subClasificaciones.bulkPut(subClasificaciones); }
+  async showSubClasificaciones() { return await this.subClasificaciones.toArray(); }
+  async showSubClasificacionById(id: number) { return await this.subClasificaciones.where('id').equals(id).first() }
+  async clearSubClasificaciones() { await this.subClasificaciones.clear(); }
   //Configuracion
   async clearMaestras() {
     await this.clearUsuario();

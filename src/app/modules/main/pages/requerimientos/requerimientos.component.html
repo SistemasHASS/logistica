@@ -1,0 +1,536 @@
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <button class="nav-link" [ngClass]="{ 'active': tabActiva === 'ITEM' }" (click)="cambiarTab('ITEM')">
+            Items
+        </button>
+    </li>
+
+    <li class="nav-item">
+        <button class="nav-link" [ngClass]="{ 'active': tabActiva === 'COMMODITY' }" (click)="cambiarTab('COMMODITY')">
+            Servicios
+        </button>
+    </li>
+
+    <li class="nav-item">
+        <button class="nav-link" [ngClass]="{ 'active': tabActiva === 'ACTIVOFIJO' }"
+            (click)="cambiarTab('ACTIVOFIJO')">
+            Activos Fijos
+        </button>
+    </li>
+</ul>
+
+<!-- ===================== -->
+<!-- TAB ITEM -->
+<!-- ===================== -->
+<div *ngIf="tabActiva === 'ITEM'">
+
+    <div class="requerimientos-container">
+        <div class="container py-4">
+            <div class="container mt-3">
+                <h2>Requerimientos Items</h2>
+                <!-- 🔹 Vista: LISTA DE REQUERIMIENTOS -->
+                <div *ngIf="!mostrarFormulario">
+                    <table class="table table-hover table-striped align-middle shadow-sm">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Fundo</th>
+                                <th>Área</th>
+                                <th>Almacén</th>
+                                <th>Glosa</th>
+                                <th>Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let req of requerimientos; let i = index">
+                                <td>{{ req.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+                                <td>{{ req.idfundo }}</td>
+                                <td>{{ req.idarea }}</td>
+                                <td>{{ req.almacen }}</td>
+                                <td>{{ req.glosa }}</td>
+                                <td>
+                                    <span class="badge"
+                                        [ngClass]="req.estado === 1 ? 'bg-success' : 'bg-warning text-dark'">
+                                        {{ req.estado === 1 ? 'Enviado' : 'Sin enviar' }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-warning me-2" (click)="editarRequerimiento(i)">
+                                        <i class="icon-pencil"></i> Editar
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" (click)="eliminarRequerimiento(i)">
+                                        <i class="icon-trash"></i> Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div *ngIf="requerimientos.length === 0" class="text-center text-muted py-3">
+                        <em>No hay requerimientos registrados.</em>
+                    </div>
+                </div>
+            </div>
+            <!-- ===================== -->
+            <!-- LISTA DE REQUERIMIENTOS -->
+            <!-- ===================== -->
+            <div *ngIf="!mostrarFormulario" class="requerimientos-lista">
+                <div class="botonGuardar mb-4 mt-4 d-flex align-items-center justify-content-center" style="gap: 1em;">
+                    <button (click)="mostrarFormulario = true; nuevoRequerimiento()"
+                        class="btn btn-success botonCelular">
+                        <i class="icon-file-plus"></i> Nuevo</button>
+                    <button class="btn btn-secondary" (click)="abrirModalConsolidacion()">Consolidar pendientes</button>
+                    <button (click)="sincronizarRequerimiento()" class="btn btn-primary botonCelular">
+                        <i class="icon icon-sync"></i> Sincronizar</button>
+                </div>
+            </div>
+
+            <!-- ===================== -->
+            <!-- FORMULARIO DE REQUERIMIENTO ITEMS-->
+            <!-- ===================== -->
+            <div *ngIf="mostrarFormulario" class="formulario mt-4 p-4 shadow rounded" @fadeSlide>
+                <!-- <h4 class="fw-bold mb-3">REGISTRAR REQUERIMIENTO</h4> -->
+                <h2>{{ modoEdicion ? 'Editar Requerimiento' : 'Registrar Requerimiento' }}</h2>
+
+
+                <!-- FORMULARIO COMPLETO DE REQUERIMIENTO ITEMS-->
+                <div class="requerimientos-form">
+                    <div class="row g-3">
+                        <!-- <div class="col-6">
+                            <label>Fundo <span class="text-danger">*</span></label>
+                            <select class="form-select" [(ngModel)]="fundoSeleccionado"
+                                (ngModelChange)="onFundoChange(true)">
+                                <option value="">Seleccione un fundo</option>
+                                <option *ngFor="let f of fundos" [value]="f.nombreFundo">{{ f.nombreFundo }}</option>
+                            </select>
+                        </div> -->
+
+                        <!-- <div class="col-6">
+                            <label>Área <span class="text-danger">*</span></label>
+                            <select class="form-select" [(ngModel)]="areaSeleccionada">
+                                <option value="">Seleccione un área</option>
+                                <option *ngFor="let a of areas" [value]="a.idarea">{{ a.descripcion }}</option>
+                            </select>
+                        </div> -->
+
+                        <div class="col-6">
+                            <div class="col-6" *ngIf="TipoSelecionado === 'CONSUMO'"></div>
+                            <label>Almacén <span class="text-danger">*</span></label>
+                            <select class="form-select" [(ngModel)]="almacenSeleccionado"
+                                [disabled]="TipoSelecionado === 'TRANSFERENCIA'">
+                                <option value="">Seleccione un almacén</option>
+                                <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+                            </select>
+                        </div>
+
+                        <!-- <div class="col-6">
+                            <label>Requerimiento: <span class="text-danger">*</span></label>
+                            <select [(ngModel)]="RequerimientoSelecionado" (change)="onClasificacionChange(true)"
+                                class="form-select">
+                                <option value="">Seleccione un requerimiento</option>
+                                <option value="I">Item</option>
+                                <option value="C">Comodity</option>
+                            </select>
+                        </div> -->
+
+                        <div class="col-6">
+                            <label>Tipo: <span class="text-danger">*</span></label>
+                            <select [(ngModel)]="TipoSelecionado" (ngModelChange)="onTipoChange()" class="form-select">
+                                <option value="">Seleccione un tipo de requerimiento</option>
+                                <option value="CONSUMO">Consumo</option>
+                                <option value="TRANSFERENCIA">Transferencia</option>
+                                <option value="COMPRA">Compra</option>
+                            </select>
+                        </div>
+
+                        <div class="col-6">
+                            <label>Clasificación <span class="text-danger">*</span></label>
+                            <select class="form-select" [(ngModel)]="clasificacionSeleccionado">
+                                <option value="">Seleccione una clasificación</option>
+                                <!-- <option *ngFor="let c of clasificaciones" [value]="c.idclasificacion">
+                                    {{ c.descripcion_clasificacion }}
+                                </option> -->
+                                <option *ngFor="let c of clasificacionesFiltrados" [value]="c.idclasificacion">
+                                    {{ c.descripcion_clasificacion }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Solo si es transferencia -->
+                        <div class="col-6">
+                            <div *ngIf="TipoSelecionado === 'TRANSFERENCIA'">
+                                <label>Almacén Origen:</label>
+                                <select [(ngModel)]="almacenOrigen" class="form-control">
+                                    <option value="">Seleccione una origen</option>
+                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{a.almacen}}</option>
+                                </select>
+                                <!-- <select [(ngModel)]="requerimiento.idalmacen" class="form-control">
+                                    <option value="">Seleccione una origen</option>
+                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{a.almacen}}</option>
+                                </select> -->
+                            </div>
+                        </div>
+
+                        <!-- Solo si es transferencia -->
+                        <div class="col-6">
+                            <div *ngIf="TipoSelecionado === 'TRANSFERENCIA'">
+                                <label>Almacén Destino:</label>
+                                <select [(ngModel)]="almacenDestino" class="form-control">
+                                    <option value="">Seleccione una destino</option>
+                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{a.almacen}}</option>
+                                </select>
+                                <!-- <select [(ngModel)]="requerimiento.idalmacendestino" class="form-control">
+                                    <option value="">Seleccione una destino</option>
+                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{a.almacen}}</option>
+                                </select> -->
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Glosa</label>
+                            <textarea class="form-control" rows="3" [(ngModel)]="glosa"
+                                placeholder="Escriba aquí la glosa..."></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end mb-3">
+                            <button class="btn btn-primary" (click)="abrirModal()">
+                                <i class="bi bi-plus-circle me-1"></i> Agregar línea detalle
+                            </button>
+                        </div>
+
+                        <!-- Tabla de detalle -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped align-middle text-center">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Producto</th>
+                                        <th>Cantidad</th>
+                                        <th>Proyecto</th>
+                                        <th>CECO</th>
+                                        <th>Turno</th>
+                                        <th>Labor</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let item of detalles; let i = index">
+                                        <td>{{ item.codigo }}</td>
+                                        <td>{{ item.producto }}</td>
+                                        <td>{{ item.cantidad }}</td>
+                                        <td>{{ item.proyecto }}</td>
+                                        <td>{{ item.ceco }}</td>
+                                        <td>{{ item.turno }}</td>
+                                        <td>{{ item.labor }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-warning me-2" (click)="editarLinea(i)">
+                                                <i class="icon-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" (click)="eliminarLinea(i)">
+                                                <i class="icon-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="detalles.length === 0">
+                                        <td colspan="8" class="text-muted">No hay detalles agregados</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Modal de edición -->
+                        <!-- Modal -->
+                        <div class="modal-backdrop" *ngIf="modalAbierto">
+                            <div class="modal-content">
+                                <!-- <h5>Registrar Línea de Detalle</h5>     -->
+                                <h5>{{ editIndex >= 0 ? 'Editar Línea de Detalle' : 'Agregar Línea de Detalle' }}</h5>
+
+                                <div class="form-group">
+                                    <div class="row g-3">
+                                        <!-- <div class="col-6">
+                                            <label>Código</label>
+                                            <input type="text" class="form-control" [(ngModel)]="lineaTemp.codigo" readonly />
+                                        </div> -->
+                                        <!-- Campo CODIGO oculto -->
+                                        <input type="hidden" [(ngModel)]="lineaTemp.codigo" name="codigo" />
+                                        <div class="col-6">
+                                            <label>Producto <span class="text-danger">*</span></label>
+                                            <select class="form-select" [(ngModel)]="lineaTemp.producto">
+                                                <option value="">Seleccione un producto</option>
+                                                <!-- <option *ngFor="let it of items" [value]="it.codigo">{{ it.descripcion }}
+                                                </option> -->
+                                                <option *ngFor="let it of itemsFiltrados" [value]="it.codigo">
+                                                    {{ it.descripcion }}
+                                                </option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-6">
+                                            <label>Cantidad <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control cantidad"
+                                                [(ngModel)]="lineaTemp.cantidad" min="1" />
+                                        </div>
+
+                                        <div class="col-6">
+                                            <label>Proyecto <span class="text-danger">*</span></label>
+                                            <select class="form-select" [(ngModel)]="lineaTemp.proyecto">
+                                                <option value="">Seleccione un proyecto</option>
+                                                <option *ngFor="let p of proyectos" [value]="p.proyectoio">{{
+                                                    p.proyectoio
+                                                    }}
+                                                </option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-6">
+                                            <label>CECO <span class="text-danger">*</span></label>
+                                            <select class="form-select" [(ngModel)]="lineaTemp.ceco">
+                                                <option value="">Seleccione un ceco</option>
+                                                <option *ngFor="let c of cecos" [value]="c.localname">{{ c.localname }}
+                                                </option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-6">
+                                            <label>Turno <span class="text-danger">*</span></label>
+                                            <select class="form-select" [(ngModel)]="lineaTemp.turno">
+                                                <option value="">Seleccione un turno</option>
+                                                <option *ngFor="let t of turnos" [value]="t.nombreTurno">{{
+                                                    t.nombreTurno }}
+                                                </option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-6">
+                                            <label>Labor <span class="text-danger">*</span></label>
+                                            <select class="form-select" [(ngModel)]="lineaTemp.labor">
+                                                <option value="">Seleccione un labor</option>
+                                                <option *ngFor="let l of labores" [value]="l.labor">{{ l.labor }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 text-center">
+                                        <button class="btn btn-success me-2" (click)="guardarLinea()">Guardar</button>
+                                        <button class="btn btn-danger" (click)="cerrarModal()">Cancelar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 text-end">
+                        <!-- <button class="btn btn-success me-2" (click)="guardar()">Guardar</button> -->
+                        <button class="btn btn-success me-2" (click)="guardar()"> {{ modoEdicion ? 'Actualizar' :
+                            'Registrar' }}</button>
+                        <button class="btn btn-danger" (click)="mostrarFormulario = false;cancelar()">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ===================== -->
+<!-- TAB COMMODITY -->
+<!-- ===================== -->
+<div *ngIf="tabActiva === 'COMMODITY'">
+
+    <div class="requerimientos-container">
+        <div class="container py-4">
+            <div class="container mt-3">
+                <h2>Requerimientos Servicios</h2>
+                <!-- LISTA COMMODITY -->
+                <div *ngIf="!mostrarFormularioCommodity">
+                    <table class="table table-hover table-striped align-middle shadow-sm">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Fundo</th>
+                                <th>Área</th>
+                                <th>Almacén</th>
+                                <th>Glosa</th>
+                                <th>Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let req of requerimientosCommodity; let i = index">
+                                <td>{{ req.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+                                <td>{{ req.idfundo }}</td>
+                                <td>{{ req.idarea }}</td>
+                                <td>{{ req.almacen }}</td>
+                                <td>{{ req.glosa }}</td>
+                                <td>
+                                    <span class="badge"
+                                        [ngClass]="req.estado === 1 ? 'bg-success' : 'bg-warning text-dark'">
+                                        {{ req.estado === 1 ? 'Enviado' : 'Sin enviar' }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-warning me-2" (click)="editarCommodity(i)">
+                                        <i class="icon-pencil"></i> Editar
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" (click)="eliminarCommodity(i)">
+                                        <i class="icon-trash"></i> Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div *ngIf="requerimientosCommodity.length === 0" class="text-center text-muted py-3">
+                        <em>No hay requerimientos de servico registrados.</em>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-success me-3" (click)="nuevoCommodity()">
+                            <i class="icon-file-plus"></i> Nuevo Servicio
+                        </button>
+                        <button (click)="sincronizarRequerimiento()" class="btn btn-primary botonCelular">
+                            <i class="icon icon-sync"></i> Sincronizar</button>
+                    </div>
+                </div>
+            </div>
+            <!-- FORMULARIO COMMODITY -->
+            <div *ngIf="mostrarFormularioCommodity" class="formulario mt-4 p-4 shadow rounded">
+                <h2>{{ modoEdicionCommodity ? 'Editar Servicios' : 'Registrar Servicios' }}</h2>
+
+                <label>Fundo:</label>
+                <input [(ngModel)]="fundoSeleccionado" class="form-control">
+
+                <label class="mt-2">Glosa:</label>
+                <input [(ngModel)]="glosa" class="form-control">
+
+                <button class="btn btn-success mt-2" (click)="abrirModalCommodity()">+ Agregar Detalle</button>
+
+                <table class="table mt-2" *ngIf="detallesCommodity.length > 0">
+                    <thead>
+                        <tr>
+                            <th>Descripción</th>
+                            <th>Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let d of detallesCommodity">
+                            <td>{{d.descripcion}}</td>
+                            <td>{{d.cantidad}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- BOTONES -->
+                <div class="mt-3 text-end">
+                    <button class="btn btn-success me-2" (click)="guardarCommodity()">
+                        {{ modoEdicionCommodity ? 'Actualizar' : 'Registrar' }}
+                    </button>
+                    <button class="btn btn-danger" (click)="cancelarCommodity()">Cancelar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ===================== -->
+<!-- TAB ACTIVO FIJO -->
+<!-- ===================== -->
+<div *ngIf="tabActiva === 'ACTIVOFIJO'">
+    <div class="requerimientos-container">
+        <div class="container py-4">
+            <div class="container mt-3">
+                <h2>Requerimientos Activo Fijo</h2>
+                <!-- LISTA ACTIVO FIJO -->
+                <div *ngIf="!mostrarFormularioActivoFijo">
+                    <table class="table table-hover table-striped align-middle shadow-sm">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Fundo</th>
+                                <th>Área</th>
+                                <th>Almacén</th>
+                                <th>Glosa</th>
+                                <th>Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let req of requerimientosActivoFijo; let i = index">
+                                <td>{{ req.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+                                <td>{{ req.idfundo }}</td>
+                                <td>{{ req.idarea }}</td>
+                                <td>{{ req.almacen }}</td>
+                                <td>{{ req.glosa }}</td>
+                                <td>
+                                    <span class="badge"
+                                        [ngClass]="req.estado === 1 ? 'bg-success' : 'bg-warning text-dark'">
+                                        {{ req.estado === 1 ? 'Enviado' : 'Sin enviar' }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-warning me-2" (click)="editarActivoFijo(i)">
+                                        <i class="icon-pencil"></i> Editar
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" (click)="eliminarActivoFijo(i)">
+                                        <i class="icon-trash"></i> Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div *ngIf="requerimientosActivoFijo.length === 0" class="text-center text-muted py-3">
+                        <em>No hay requerimientos Activos Fijos registrados.</em>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-success me-3" (click)="nuevoActivoFijo()">
+                            <i class="icon-file-plus"></i> Nuevo Activo Fijo
+                        </button>
+                        <button (click)="sincronizarRequerimiento()" class="btn btn-primary botonCelular">
+                            <i class="icon icon-sync"></i> Sincronizar</button>
+                    </div>
+                </div>
+            </div>
+            <!-- FORMULARIO ACTIVO FIJO -->
+            <div *ngIf="mostrarFormularioActivoFijo" class="formulario mt-4 p-4 shadow rounded">
+                <h2>{{ modoEdicionActivoFijo ? 'Editar Activo Fijo' : 'Registrar Activo Fijo' }}</h2>
+
+                <label>Fundo:</label>
+                <input [(ngModel)]="fundoSeleccionado" class="form-control">
+
+                <label class="mt-2">Glosa:</label>
+                <input [(ngModel)]="glosa" class="form-control">
+
+                <button class="btn btn-success mt-2" (click)="abrirModalActivoFijo()">+ Agregar Detalle</button>
+
+                <table class="table mt-2" *ngIf="detallesActivoFijo.length > 0">
+                    <thead>
+                        <tr>
+                            <th>Descripción</th>
+                            <th>Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let d of detallesActivoFijo">
+                            <td>{{d.descripcion}}</td>
+                            <td>{{d.cantidad}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- BOTONES -->
+                <div class="mt-3 text-end">
+                    <button class="btn btn-success me-2" (click)="guardarActivoFijo()">
+                        {{ modoEdicionActivoFijo ? 'Actualizar' : 'Registrar' }}
+                    </button>
+                    <button class="btn btn-danger" (click)="cancelarActivoFijo()">Cancelar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,135 @@
+<!-- botón abrir modal -->
+<div class="d-flex justify-content-end mb-2">
+  <button class="btn btn-primary btn-sm" (click)="nuevo()">Agregar Commodity</button>
+</div>
+
+<table class="table table-sm table-bordered">
+  <thead>
+    <tr>
+      <th>Código</th>
+      <th>Descripción Local</th>
+      <th>Estado</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let c of listaComodity">
+      <td>{{ c.codigo }}</td>
+      <td>{{ c.descripcion }}</td>
+      <td>{{ c.estado === 'A' ? 'Activo' : 'Inactivo' }}</td>
+      <td>
+        <button class="btn btn-warning btn-sm" (click)="editar(c)">Editar</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- MODAL (igual que el HTML detallado previamente) -->
+<div class="modal fade" id="modalMaestrosComodity" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+
+      <div class="modal-header bg-primary text-white py-2">
+        <h6 class="modal-title color-text">{{ modelo.id ? "Editar Commodity" : "Agregar Commodity" }}</h6>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <div class="row">
+          <div class="col-3">
+            <label><strong>Commodity</strong></label>
+            <input type="text" class="form-control" [(ngModel)]="modelo.codigo">
+          </div>
+
+          <div class="col-3">
+            <label><strong>Clasificación de Commodity</strong></label>
+            <select class="form-select" [(ngModel)]="modelo.clasificacion">
+              <option value="">Seleccione</option>
+              <option *ngFor="let c of listaClasificaciones" [value]="c.id">{{ c.descripcion }}</option>
+            </select>
+          </div>
+
+          <div class="col-3 d-flex align-items-end">
+            <div class="form-check me-3">
+              <input class="form-check-input" type="radio" name="estado" value="A" [(ngModel)]="modelo.estado">
+              <label class="form-check-label">Activo</label>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="estado" value="I" [(ngModel)]="modelo.estado">
+              <label class="form-check-label">Inactivo</label>
+            </div>
+          </div>
+
+          <div class="col-3">
+            <label>Última Modif.</label>
+            <input type="text" class="form-control" readonly [value]="usuarioActual">
+            <input type="date" class="form-control mt-1" readonly [value]="fechaHoy">
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-6">
+            <label>Descripción Local</label>
+            <input type="text" class="form-control" [(ngModel)]="modelo.descripcionLocal">
+          </div>
+
+          <div class="col-6">
+            <label>Descripción Ingles</label>
+            <input type="text" class="form-control" [(ngModel)]="modelo.descripcionIngles">
+          </div>
+        </div>
+
+        <div class="mt-4 border p-2">
+          <strong>Sub Clasificación</strong>
+
+          <table class="table table-bordered table-sm mt-2">
+            <thead class="table-light">
+              <tr>
+                <th>Sub Clase</th>
+                <th>Descripción</th>
+                <th>Uni</th>
+                <th>Cuenta Gastos</th>
+                <th>Elemento Gasto</th>
+                <th>Clasificación Activo</th>
+                <th>Legacy Number</th>
+                <th></th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let s of modelo.subClasificaciones; let i = index">
+                <td><input class="form-control" [(ngModel)]="s.subClase"></td>
+                <td><input class="form-control" [(ngModel)]="s.descripcion"></td>
+                <td><input class="form-control" [(ngModel)]="s.unidad"></td>
+                <td><input class="form-control" [(ngModel)]="s.cuentaGasto"></td>
+                <td>
+                  <select class="form-select" [(ngModel)]="s.elementoGasto">
+                    <option *ngFor="let e of elementosGasto" [value]="e.id">{{ e.descripcion }}</option>
+                  </select>
+                </td>
+                <td><input class="form-control" [(ngModel)]="s.clasificacionActivo"></td>
+                <td><input class="form-control" [(ngModel)]="s.legacyNumber"></td>
+                <td><button class="btn btn-danger btn-sm" (click)="eliminarSubClasificacion(i)">Eliminar</button></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="d-flex gap-2">
+            <button class="btn btn-secondary btn-sm" (click)="agregarSubClasificacion()">Insertar</button>
+            <button class="btn btn-outline-primary btn-sm">Selec. Cuenta</button>
+            <button class="btn btn-outline-secondary btn-sm">Clasificación</button>
+            <button class="btn btn-outline-success btn-sm">Partida</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-success" (click)="guardar()">Aceptar</button>
+        <button class="btn btn-outline-secondary" (click)="cerrarModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -20,6 +20,7 @@ export class LayoutComponent {
   fechaHoy: string = '';
   currentPath: string = '';
   usuario: any;
+  rol: string = '';
   isOnline: boolean = true;
 
   constructor(
@@ -32,6 +33,7 @@ export class LayoutComponent {
 
   async ngOnInit() {
     this.usuario = await this.dexieService.showUsuario();
+    this.rol = this.usuario?.idrol;
     this.userService.setUsuario(this.usuario);
     this.connectivityService.isOnline.subscribe((status: boolean) => {
       this.isOnline = status;
@@ -120,11 +122,11 @@ export class LayoutComponent {
   updateCurrentPath() {
     const currentUrl = this.router.url.split('/').filter(Boolean);
     const pathMap: { [key: string]: string } = {
+      'maestros': 'Maestros',
       'parametros': 'Parámetros',
-      'requerimiento_consumo': 'Requerimientos de consumo',
-      'requerimiento_transferencia': 'Requerimiento de transferencia',
+      'requerimientos': 'Requerimientos',
       'aprobaciones': 'Aprobaciones',
-      'reporte_logistico': 'Lista de requerimientos'
+      'reportes': 'Lista de requerimientos'
     };
 
     this.currentPath = pathMap[currentUrl[currentUrl.length - 1]] || '';

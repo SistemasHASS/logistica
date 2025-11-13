@@ -22,7 +22,7 @@ export interface Configuracion {
     idcultivo: string;
     idarea: string;
     idalmacen: string;
-    idproyecto: string;
+    idproyecto?: string;
     idacopio: number;
     idceco: string;
     idlabor: string;
@@ -88,7 +88,7 @@ export interface Ceco {
     turno: string;
     costcenter: string;
     localname: string;
-    conTurno: string;
+    conturno: string;
     nombreTurno: string;
     modulo: number;
     idcultivo: string;
@@ -104,10 +104,13 @@ export interface Labor {
 
 export interface Turno {
     id: number;
+    idcultivo: string;
     turno: number;
     codTurno: string;
     nombreTurno: string;
     modulo: number;
+    idproyecto: string;
+    conturno: string;
 }
 
 export interface ItemComodity {
@@ -151,6 +154,79 @@ export interface Requerimiento {
     almacen: string;
     glosa: string;
     tipo: string;
+    estados: string;
+    // tipo: 'CONSUMO' | 'TRANSFERENCIA';
+    // estados: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
+    estado: number;
+    detalle: DetalleRequerimiento[];
+}
+
+export interface DetalleRequerimientoActivoFijo {
+    id?: number;
+    codigo: string;
+    descripcion: string;
+    producto: string;
+    cantidad: number;
+    proyecto: string;
+    ceco: string;
+    turno: string;
+    labor: string;
+    estado: number;
+}
+
+export interface DetalleRequerimientoCommodity {
+    id?: number;
+    codigo: string;
+    descripcion: string;
+    producto: string;
+    cantidad: number;
+    proyecto: string;
+    ceco: string;
+    turno: string;
+    labor: string;
+    estado: number;
+}
+
+export interface RequerimientoActivoFijo {
+    id?: number;
+    idrequerimiento: string;
+    ruc: string;
+    idfundo: string;
+    idarea: string;
+    idclasificacion: string;
+    nrodocumento: string;
+    idalmacen: string;
+    idalmacendestino: string;
+    idproyecto: string;
+    fecha: string;
+    almacen: string;
+    glosa: string;
+    tipo: string;
+    estados: string;
+    // tipo: 'CONSUMO' | 'TRANSFERENCIA';
+    // estados: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
+    estado: number;
+    detalle: DetalleRequerimiento[];
+}
+
+export interface RequerimientoCommodity {
+    id?: number;
+    idrequerimiento: string;
+    ruc: string;
+    idfundo: string;
+    idarea: string;
+    idclasificacion: string;
+    nrodocumento: string;
+    idalmacen: string;
+    idalmacendestino: string;
+    idproyecto: string;
+    fecha: string;
+    almacen: string;
+    glosa: string;
+    tipo: string;
+    estados: string;
+    // tipo: 'CONSUMO' | 'TRANSFERENCIA';
+    // estados: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
     estado: number;
     detalle: DetalleRequerimiento[];
 }
@@ -278,4 +354,46 @@ export interface PersonaFlujoAprobacion {
     rol: string
     idrol: string
     movimientos: []
+}
+
+export interface AprobacionRequest {
+  requerimientoId: number;
+  tipo: string;
+  usuario: string;
+  accion: 'APROBAR' | 'RECHAZAR';
+  motivo: string;
+}
+
+export interface Item {
+    id: number;
+    codigo: string;
+    descripcionLocal: string;
+    descripcionCompleta: string;
+    unidadMedida: string;
+    unidadCompra: string;
+    unidadEmbalaje: string;
+    compania: string;
+    estado: string;
+    numeracion: string;
+    tipoclasificacion: string;
+}
+
+export interface Comodity {
+    id: number;
+    tipoclasificacion: string;
+    codigo: string;
+    descripcion: string;
+    estado?: string;  // 'A' for Active, 'I' for Inactive
+}
+
+export interface SubClasificacion {
+  id: number;             // PK (generado)
+  comodityId: number;     // FK al commodity
+  subClase?: string;
+  descripcion?: string;
+  unidad?: string;
+  cuentaGasto?: string;
+  elementoGasto?: number | string;
+  clasificacionActivo?: string;
+  legacyNumber?: string;
 }

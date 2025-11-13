@@ -1,16 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
-import { Configuracion } from '@/app/shared/interfaces/Tables';
+import { Configuracion, Ceco, Turno, Proyecto } from '@/app/shared/interfaces/Tables';
 import { MaestrasService } from '../../services/maestras.service';
 import { FormsModule } from '@angular/forms';
 import { Usuario } from '@/app/shared/interfaces/Tables';
-import { LogisticaService } from '../../services/logistica.service';
-import { UserService } from '@/app/shared/services/user.service';
-import { ParametrosService } from '../../services/parametros.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { RequerimientosService } from '../../services/requerimientos.service';
-
 
 @Component({
   selector: 'app-parametros',
@@ -29,6 +25,7 @@ export class ParametrosComponent implements OnInit {
 
   fecha = new Date();
   mensajeFundos: String = '';
+  nombreProyectoHeader: string = '';
   empresas: any[] = [];
   sedes: any[] = [];
   cultivos: any[] = [];
@@ -46,7 +43,18 @@ export class ParametrosComponent implements OnInit {
   cultivoSeleccionado = '';
   areaSeleccionada = '';
   almacenSeleccionado = '';
+
+  ocultarItem = true;
+  ocultarLabor = true;
+  ocultarCeco = true;
+  ocultarTurno = true;
+  ocultarProyecto = true;
   showValidation: boolean = false;
+
+  //Filtros 
+  filteredCecos: Ceco[] = [];
+  filteredTurnos: Turno[] = [];
+  filteredProyectos: Proyecto[] = [];
 
   usuario: Usuario = {
     id: "",
@@ -84,6 +92,12 @@ export class ParametrosComponent implements OnInit {
     await this.getUsuario()
     await this.validarExisteConfiguracion()
     await this.llenarDropdowns();
+    // Oculta todos al inicio
+    this.ocultarItem = true;
+    this.ocultarLabor = true;
+    this.ocultarCeco = true;
+    this.ocultarTurno = true;
+    this.ocultarProyecto = true;
   }
 
   async getUsuario() {
@@ -110,6 +124,7 @@ export class ParametrosComponent implements OnInit {
     await this.ListarLabores();
     await this.ListarCecos();
     await this.ListarClasificaciones();
+    await this.filtraCecoTurnoProyectoInicio();
   }
 
   obtenerRol() {
@@ -329,6 +344,46 @@ export class ParametrosComponent implements OnInit {
     if (this.cecos.length == 1) {
       this.configuracion.idceco = this.cecos[0].id;
     }
+  }
+
+  async onCecoTurnoProyectoChange(limpiar = false) {
+    if (limpiar) { this.configuracion.idturno = ''; this.configuracion.idceco = ''; this.configuracion.idlabor = ''; this.configuracion.idproyecto }
+    await this.filtraCecoTurnoProyecto();
+  }
+
+  async filtraCecoTurnoProyecto() {
+    this.filteredTurnos.length = 0;
+    this.configuracion.idturno = '';
+    if (this.configuracion.idcultivo) {
+      const cultivo = this.cultivos.find((e: any) => e.id == this.configuracion.idcultivo)
+      // const turnos = await this.dexieService.showTurnos()
+      this.filteredTurnos = this.turnos.filter((x: Turno) => x.idcultivo?.trim() === cultivo.codigo);
+    }
+  }
+
+  async darProyectoCecos(limpiar = false) {
+    this.filteredCecos.length = 0
+    if (limpiar) { this.configuracion.idceco = ''; this.configuracion.idlabor = ''; this.configuracion.idproyecto }
+    const turno = this.filteredTurnos.find((e: any) => e.codTurno === this.configuracion.idturno)
+    this.configuracion.idproyecto = turno?.idproyecto
+    if (this.configuracion.idproyecto) await this.nombreProyecto(this.configuracion.idproyecto)
+    if (this.configuracion.idturno) {
+      this.filteredCecos = this.cecos.filter((x: Ceco) => x.conturno.includes(turno?.conturno ?? ''));
+    }
+  }
+
+  async filtraCecoTurnoProyectoInicio() {
+    if (this.configuracion.idcultivo) {
+      const cultivo = this.cultivos.find((e: any) => e.id == this.configuracion.idcultivo)
+      this.filteredTurnos = this.turnos.filter((x: Turno) => x.idcultivo?.trim() === cultivo.codigo);
+      this.darProyectoCecos()
+    }
+  }
+
+  async nombreProyecto(idproyecto: string) {
+    const proyectos = await this.dexieService.showProyectos()
+    const proyecto = proyectos.find((x: Proyecto) => x.afe == idproyecto)
+    if (proyecto) this.nombreProyectoHeader = proyecto?.proyectoio
   }
 
   async guardarConfiguracion() {

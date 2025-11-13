@@ -5,24 +5,67 @@ import { UserService } from '@/app/shared/services/user.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { UtilsService } from '@/app/shared/utils/utils.service';
-import { Requerimiento, DetalleRequerimiento, Usuario } from 'src/app/shared/interfaces/Tables';
+import { Requerimiento, DetalleRequerimiento, Usuario, DetalleRequerimientoCommodity, DetalleRequerimientoActivoFijo } from 'src/app/shared/interfaces/Tables';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
 import { Ceco, Configuracion, Labor, Proyecto, Turno } from '@/app/shared/interfaces/Tables';
 import { Area, ItemComodity, Almacen, Clasificacion } from '@/app/shared/interfaces/Tables';
 
 @Component({
-    selector: 'app-requerimiento_consumo',
+    selector: 'app-requerimientos',
     standalone: true,
     imports: [CommonModule, FormsModule],
-    templateUrl: './requerimiento_consumo.component.html',
-    styleUrls: ['./requerimiento_consumo.component.scss']
+    templateUrl: './requerimientos.component.html',
+    styleUrls: ['./requerimientos.component.scss']
 })
-export class RequerimientoConsumoComponent implements OnInit {
+export class RequerimientosComponent implements OnInit {
+
+    // Control de tabs
+    tabActiva: 'ITEM' | 'COMMODITY' | 'ACTIVOFIJO' = 'ITEM';
+    // ====================
+    // FORMULARIOS VISIBLES
+    // ====================
+    //-------ITEMS----------
     mostrarFormulario = false;
     modoEdicion: boolean = false;
+    //-------Servicios----------
+    mostrarFormularioCommodity = false;
+    modoEdicionCommodity = false;
+    //-------Activo Fijo----------
+    mostrarFormularioActivoFijo = false;
+    modoEdicionActivoFijo = false;
+
+    // listas
+    requerimientos: Requerimiento[] = [];
+    requerimientosItems: any[] = [];         // ITEMS
+    requerimientosCommodity: any[] = [];     // SERVICIOS
+    requerimientosActivoFijo: any[] = [];    // ACTIVO FIJO
+
+    // detalles por cada requerimiento
+    detalles: DetalleRequerimiento[] = [];               // para ITEMS
+    detallesCommodity: DetalleRequerimientoCommodity[] = [];      // para SERVICIOS
+    detallesActivoFijo: DetalleRequerimientoActivoFijo[] = [];     // para ACTIVO FIJO
+
+    // modal (reutilizado)
+    //-----MODAL ITEMS----------
+    modalAbierto: boolean = false;
+    editIndex: number = -1;
+    //-----MODAL COMMODITY----------
+    modalAbiertoCommodity: boolean = false;
+    commodityEditIndex: number = -1;
+    //-----MODAL ACTIVO FIJO----------
+    modalAbiertoActivoFijo: boolean = false;
+    activoFijoEditIndex: number = -1;
+
+    cambiarTab(tab: 'ITEM' | 'COMMODITY' | 'ACTIVOFIJO') {
+        this.tabActiva = tab;
+        // cerrar cualquier formulario abierto para evitar confusión
+        this.mostrarFormulario = false;
+        this.mostrarFormularioCommodity = false;
+        this.mostrarFormularioActivoFijo = false;
+    }
+
     fecha = new Date();
     mensajeFundos: String = '';
-    // suario: any;
     fundos: any[] = [];
     cultivos: any[] = [];
     areas: any[] = [];
@@ -34,7 +77,6 @@ export class RequerimientoConsumoComponent implements OnInit {
     almacenes: any[] = [];
     clasificaciones: any[] = [];
     glosa: string = '';
-    requerimientos: Requerimiento[] = [];
 
     usuario: Usuario = {
         id: '',
@@ -51,9 +93,6 @@ export class RequerimientoConsumoComponent implements OnInit {
         idrol: '',
         rol: ''
     }
-    // detalle: LineaDetalle[] = [];
-    detalles: DetalleRequerimiento[] = [];
-
     detalle: DetalleRequerimiento = {
         // id: 0,
         codigo: "",
@@ -67,13 +106,13 @@ export class RequerimientoConsumoComponent implements OnInit {
     }
 
     requerimiento: Requerimiento = {
-        // id: 0,
         idrequerimiento: "",
         fecha: "",
         almacen: "",
         glosa: "",
         tipo: "",
         ruc: "",
+        estados: "PENDIENTE",
         idfundo: "",
         idarea: "",
         idclasificacion: "",
@@ -110,10 +149,11 @@ export class RequerimientoConsumoComponent implements OnInit {
     filteredClasificaciones: Clasificacion[] = [];
     filteredAlmacenes: Almacen[] = [];
 
-    modalAbierto: boolean = false;
     // lineaTemp: LineaDetalle = this.nuevaLinea();
     lineaTemp: DetalleRequerimiento = this.nuevaLinea();
-    editIndex: number = -1;
+    lineaTempCommodity: DetalleRequerimientoCommodity = this.nuevaLineaCommodity();
+    lineaTempActivoFijo: DetalleRequerimientoActivoFijo = this.nuevaLineaActivoFijo();
+    // editIndex: number = -1;
 
     fundoSeleccionado = '';
     cultivoSeleccionado = '';
@@ -125,8 +165,13 @@ export class RequerimientoConsumoComponent implements OnInit {
     cecoSeleccionado = '';
     turnoSeleccionado = '';
     laborSeleccionado = '';
+    TipoSelecionado = '';
+    almacenOrigen = '';
+    almacenDestino = '';
+    RequerimientoSelecionado = '';
     itemsFiltrados: any[] = [];
     clasificacionesFiltrados: any[] = [];
+    filtroClasificaciones: any[] = [];
 
     constructor(
         private userService: UserService,
@@ -143,9 +188,88 @@ export class RequerimientoConsumoComponent implements OnInit {
         // await this.cargarDetalles(); // 🔹 cargar detalles guardados
     }
 
+    nuevoCommodity() {
+        this.mostrarFormularioCommodity = true;
+        this.modoEdicionCommodity = false;
+    }
+
+    editarCommodity(index: number) {
+        this.mostrarFormularioCommodity = true;
+        this.modoEdicionCommodity = true;
+        this.commodityEditIndex = index;
+    }
+
+    eliminarCommodity(index: number) {
+        this.requerimientosCommodity.splice(index, 1);
+    }
+
+    guardarCommodity() {
+        if (this.modoEdicionCommodity) {
+            // actualiza
+        } else {
+            // registra nuevo
+            this.requerimientosCommodity.push({
+                fecha: new Date(),
+                idfundo: 'Ejemplo',
+                idarea: 'Área X',
+                almacen: 'A01',
+                glosa: 'Commodity registrado',
+                estado: 0
+            });
+        }
+        this.mostrarFormularioCommodity = false;
+    }
+
+    cancelarCommodity() {
+        this.mostrarFormularioCommodity = false;
+    }
+
+    nuevoActivoFijo() {
+        this.mostrarFormularioActivoFijo = true;
+        this.detallesActivoFijo = [];
+    }
+
+    editarActivoFijo(index: number) {
+        this.mostrarFormularioActivoFijo = true;
+        this.modoEdicionActivoFijo = true;
+        this.activoFijoEditIndex = index;
+    }
+
+    eliminarActivoFijo(index: number) {
+        this.requerimientosActivoFijo.splice(index, 1);
+    }
+
+    guardarActivoFijo() {
+        this.requerimientosActivoFijo.push({
+            fecha: new Date(),
+            fundo: this.fundoSeleccionado,
+            glosa: this.glosa,
+            detalles: this.detallesActivoFijo
+        });
+        this.mostrarFormularioActivoFijo = false;
+    }
+
+    cancelarActivoFijo() {
+        this.mostrarFormularioActivoFijo = false;
+    }
+
+    async onClasificacionChange(limpiar = false) {
+        if (limpiar) { this.configuracion.idturno = ''; this.configuracion.idceco = ''; this.configuracion.idlabor = ''; this.configuracion.idproyecto }
+        await this.filtrarClasificaciones();
+    }
+
     async onFundoChange(limpiar = false) {
         if (limpiar) { this.configuracion.idturno = ''; this.configuracion.idceco = ''; this.configuracion.idlabor = ''; this.configuracion.idproyecto }
         await this.filtraFundo();
+    }
+
+    onTipoChange() {
+        if (this.TipoSelecionado === 'TRANSFERENCIA') {
+            this.almacenSeleccionado = ''; // limpia almacén normal
+        } else if (this.TipoSelecionado === 'CONSUMO') {
+            this.almacenOrigen = ''; // limpia origen
+            this.almacenDestino = ''; // limpia destino
+        }
     }
 
     async filtraFundo() {
@@ -153,8 +277,16 @@ export class RequerimientoConsumoComponent implements OnInit {
         this.configuracion.idturno = '';
         if (this.configuracion.idcultivo) {
             const cultivo = this.cultivos.find((e: any) => e.id == this.configuracion.idcultivo)
+        }
+    }
+
+    async filtraCecoTurnoProyecto() {
+        this.filteredTurnos.length = 0;
+        this.configuracion.idturno = '';
+        if (this.configuracion.idcultivo) {
+            const cultivo = this.cultivos.find((e: any) => e.id == this.configuracion.idcultivo)
             // const turnos = await this.dexieService.showTurnos()
-            // this.filteredTurnos = this.turnos.filter((x: Turno) => x.idcultivo?.trim() === cultivo.codigo);
+            this.filteredTurnos = this.turnos.filter((x: Turno) => x.idcultivo?.trim() === cultivo.codigo);
         }
     }
 
@@ -163,13 +295,14 @@ export class RequerimientoConsumoComponent implements OnInit {
         this.configuracion.iditem = '';
         if (this.configuracion.idproyecto) {
             const proyecto = this.proyectos.find((e: any) => e.id == this.configuracion.idproyecto)
-            // const turnos = await this.dexieService.showTurnos()
-            // this.filteredTurnos = this.turnos.filter((x: Turno) => x.idproyecto?.trim() === proyecto.codigo);
         }
     }
 
     async filtrarClasificaciones() {
-        this.clasificacionesFiltrados = this.clasificaciones.filter(it => it.tipoClasificacion === 'I');
+        this.clasificacionesFiltrados = this.clasificaciones.filter(
+            it => it.tipoClasificacion === this.RequerimientoSelecionado
+        );
+        console.log(this.clasificacionesFiltrados);
     }
 
     nuevoRequerimiento(): void {
@@ -178,7 +311,7 @@ export class RequerimientoConsumoComponent implements OnInit {
             fecha: new Date().toISOString(),
             almacen: '',
             glosa: '',
-            tipo: 'Consumo',
+            tipo: '',
             ruc: this.usuario.ruc,
             idfundo: '',
             idarea: '',
@@ -188,6 +321,7 @@ export class RequerimientoConsumoComponent implements OnInit {
             idalmacendestino: '',
             idproyecto: '',
             estado: 0,
+            estados: 'PENDIENTE',
             detalle: []
         };
 
@@ -225,6 +359,9 @@ export class RequerimientoConsumoComponent implements OnInit {
             idalmacendestino: this.requerimiento.idalmacendestino || '',
             glosa: this.requerimiento.glosa || '',
             eliminado: 0,
+            tipo: this.requerimiento.tipo,
+            estados: 'PENDIENTE',
+            // usuario: this.usuario.usuario,
             detalle: this.requerimiento.detalle.map((d: any) => ({
                 codigo: d.codigo,
                 tipoclasificacion: d.tipoclasificacion,
@@ -279,8 +416,8 @@ export class RequerimientoConsumoComponent implements OnInit {
                 idproyecto: item.proyecto,
                 idcentrocosto: item.ceco,
                 idturno: item.turno,
-                idlabor: item.labor
-                // eliminado: 0
+                idlabor: item.labor,
+                eliminado: 0
             }
         })
         return requerimientos.filter((item: any) => item.estado == 0)
@@ -323,6 +460,7 @@ export class RequerimientoConsumoComponent implements OnInit {
 
     async ListarFundos() {
         this.fundos = await this.dexieService.showFundos()
+        console.log(this.fundos)
     }
 
     async ListarCultivos() {
@@ -348,7 +486,7 @@ export class RequerimientoConsumoComponent implements OnInit {
 
     async ListarClasificaciones() {
         this.clasificaciones = await this.dexieService.showClasificaciones()
-        this.clasificacionesFiltrados = this.clasificaciones.filter(it => it.tipoClasificacion === 'I');
+        // this.clasificacionesFiltrados = this.clasificaciones.filter(it => it.tipoClasificacion === 'I');
     }
 
     async ListarTurnos() {
@@ -366,6 +504,34 @@ export class RequerimientoConsumoComponent implements OnInit {
     nuevaLinea(): DetalleRequerimiento {
         return {
             codigo: '',
+            producto: '',
+            cantidad: 0,
+            proyecto: '',
+            ceco: '',
+            turno: '',
+            labor: '',
+            estado: 0
+        };
+    }
+
+    nuevaLineaCommodity(): DetalleRequerimientoCommodity {
+        return {
+            codigo: '',
+            descripcion: '',
+            producto: '',
+            cantidad: 0,
+            proyecto: '',
+            ceco: '',
+            turno: '',
+            labor: '',
+            estado: 0
+        };
+    }
+
+    nuevaLineaActivoFijo(): DetalleRequerimientoActivoFijo {
+        return {
+            codigo: '',
+            descripcion: '',
             producto: '',
             cantidad: 0,
             proyecto: '',
@@ -399,7 +565,62 @@ export class RequerimientoConsumoComponent implements OnInit {
         this.editIndex = -1;
     }
 
+    // Commodity
+    abrirModalCommodity() {
+        if (this.commodityEditIndex = -1) {
+            this.lineaTempCommodity = {
+                codigo: '',
+                descripcion: '',
+                producto: '',
+                cantidad: 1,
+                proyecto: '',
+                ceco: '',
+                turno: '',
+                labor: '',
+                estado: 0
+            };
+        }
+        this.modalAbiertoCommodity = true;
+    }
+
+    cerrarModalCommodity() {
+        this.modalAbiertoCommodity = false;
+    }
+
+    // Activo Fijo
+    abrirModalActivoFijo() {
+        if (this.activoFijoEditIndex = -1) {
+            this.lineaTempActivoFijo = {
+                codigo: '',
+                descripcion: '',
+                producto: '',
+                cantidad: 1,
+                proyecto: '',
+                ceco: '',
+                turno: '',
+                labor: '',
+                estado: 0
+            };
+        }
+        this.modalAbiertoActivoFijo = true;
+    }
+    cerrarModalActivoFijo() {
+        this.modalAbiertoActivoFijo = false;
+    }
+
     async guardarLinea() {
+
+        if (this.tabActiva === 'ITEM') {
+            this.detalles.push({ ...this.lineaTemp });
+        }
+
+        if (this.tabActiva === 'COMMODITY') {
+            this.detallesCommodity.push({ ...this.lineaTempCommodity });
+        }
+
+        if (this.tabActiva === 'ACTIVOFIJO') {
+            this.detallesActivoFijo.push({ ...this.lineaTempActivoFijo });
+        }
 
         // Buscar producto seleccionado
         const productoSeleccionado = this.items.find(
@@ -499,17 +720,16 @@ export class RequerimientoConsumoComponent implements OnInit {
         this.alertService.mostrarInfo('Línea eliminada.');
     }
 
-
     async guardar() {
         if (!this.fundoSeleccionado) {
             this.alertService.showAlert('Atención', 'Debes seleccionar un Fundo antes de guardar.', 'warning');
             return;
         }
 
-        if (!this.areaSeleccionada) {
-            this.alertService.showAlert('Atención', 'Debes seleccionar un Area antes de guardar.', 'warning');
-            return;
-        }
+        // if (!this.areaSeleccionada) {
+        //     this.alertService.showAlert('Atención', 'Debes seleccionar un Area antes de guardar.', 'warning');
+        //     return;
+        // }
 
         if (!this.almacenSeleccionado) {
             this.alertService.showAlert('Atención', 'Debes seleccionar un Almacén antes de guardar.', 'warning');
@@ -639,7 +859,6 @@ export class RequerimientoConsumoComponent implements OnInit {
         this.modalAbierto = false; // aseguramos que el modal detalle no esté abierto
     }
 
-
     async eliminarRequerimiento(index: number) {
         const confirmacion = await this.alertService.showConfirm(
             'Confirmación',
@@ -657,6 +876,23 @@ export class RequerimientoConsumoComponent implements OnInit {
             console.error('Error al eliminar requerimiento:', error);
             this.alertService.showAlert('Error', 'Ocurrió un error al eliminar el requerimiento.', 'error');
         }
+    }
+
+    // Abrir modal consolidacion (agrupa varios)
+    abrirModalConsolidacion() {
+        // tomamos todos los ATENDIDO_PARCIAL y GENERADO que tengan saldo > 0
+        const pendientes = this.requerimientosItems.filter(r => r.estado === 'ATENDIDO_PARCIAL' || r.estado === 'GENERADO');
+        if (pendientes.length === 0) { alert('No hay requerimientos pendientes para consolidar'); return; }
+
+        // consolidamos en uno (puedes mostrar UI para seleccionar)
+        const consolidado = {
+            id: 'CON_' + new Date().getTime(),
+            fecha: new Date(),
+            items: [].concat(...pendientes.map(p => p.detalles.filter((d: any) => d.saldo && d.saldo > 0).map((d: any) => ({ ...d, origenReq: p.id })))),
+            origenReqs: pendientes.map(p => p.id)
+        };
+
+        console.log('Consolidado:', consolidado);
     }
 
 }

@@ -1,0 +1,63 @@
+<div class="container mt-3">
+
+  <!-- TÍTULO DINÁMICO -->
+  <h4 class="mb-3 fw-bold text-primary">{{ titulo }}</h4>
+
+  <!-- TABS -->
+  <ul class="nav nav-tabs">
+    <li class="nav-item">
+      <a class="nav-link" routerLink="items" routerLinkActive="active">Items</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" routerLink="comodities" routerLinkActive="active">Commodities</a>
+    </li>
+  </ul>
+
+  <!-- CONTENIDO -->
+  <div class="mt-3">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>
+
+
+<!-- <div class="container mt-3"> -->
+
+  <!-- MENU / TABS SUPERIOR -->
+  <!-- <ul class="nav nav-tabs">
+    <li class="nav-item">
+      <a class="nav-link" routerLink="items" routerLinkActive="active">Items</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" routerLink="commodities" routerLinkActive="active">Commodities</a>
+    </li>
+  </ul> -->
+
+  <!-- RENDERIZA LOS HIJOS (items o commodities) -->
+  <!-- <div class="mt-3">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>
+ -->
+
+<!-- <div class="container mt-4">
+  <ul class="nav nav-tabs">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#itemsTab">ITEMS</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#comoditiesTab">COMODITIES</button>
+    </li>
+  </ul>
+
+  <div class="tab-content mt-3">
+    <div class="tab-pane fade show active" id="itemsTab">
+      <app-maestros-items></app-maestros-items>
+    </div>
+
+    <div class="tab-pane fade" id="comoditiesTab">
+      <app-maestros-comodities></app-maestros-comodities>
+    </div>
+  </div>
+</div> -->

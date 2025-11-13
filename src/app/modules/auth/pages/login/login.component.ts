@@ -13,16 +13,16 @@ import { AlertService } from '@/app/shared/alertas/alerts.service';
 })
 
 export class LoginComponent {
-  
+
   mostrarClave = false;
   usuario: any;
   clave = ''
   mensajeLogin: String = '';
-  isCharge : boolean = false;
+  isCharge: boolean = false;
   loginForm: FormGroup;
 
   constructor(
-    private router: Router, 
+    private router: Router,
     private fb: FormBuilder,
     private dexieService: DexieService,
     private alertService: AlertService,
@@ -36,14 +36,37 @@ export class LoginComponent {
 
   async ngOnInit() {
     this.usuario = await this.dexieService.showUsuario()
-    if(!!this.usuario) {
+    if (!!this.usuario) {
       this.login()
     }
   }
-  
-  login() {
-    this.router.navigate(['/main/parametros']);
+
+  async login() {
+    const user = await this.dexieService.showUsuario();
+    if (!user) return;
+
+    const rol = user.idrol;
+
+    if (rol.includes('TI')) {
+      this.router.navigate(['/main/parametros']);
+    }
+    else if (rol.includes('ADLOGIST')) {
+      this.router.navigate(['/main/maestros']);
+    }
+    else if (rol.includes('APLOGIST')) {
+      this.router.navigate(['/main/aprobaciones']);
+    }
+    else if (rol.includes('ALLOGIST')) {
+      this.router.navigate(['/main/parametros']);
+    }
+    else {
+      this.router.navigate(['/main/reporte_logistica']); // fallback
+    }
   }
+
+  // login() {
+  //   this.router.navigate(['/main/parametros']);
+  // }
 
   toggleClave(): void {
     this.mostrarClave = !this.mostrarClave; // Cambia entre mostrar y ocultar
@@ -54,7 +77,7 @@ export class LoginComponent {
     if (this.loginForm.valid) {
       const loginData = this.loginForm.value;
       try {
-        const resp =  await this.authService.login(loginData.usuario, loginData.clave, loginData.aplicacion);
+        const resp = await this.authService.login(loginData.usuario, loginData.clave, loginData.aplicacion);
         if (!!resp && resp.length > 0) {
           if (resp > 1) {
             this.mensajeLogin = 'El usuario cuenta con más de una cuenta, comuníquese con su administrador del servicio.';
@@ -62,7 +85,7 @@ export class LoginComponent {
             await this.dexieService.saveUsuario(resp[0]);
             this.login();
           }
-      
+
           this.isCharge = false;
         } else {
           this.isCharge = false;

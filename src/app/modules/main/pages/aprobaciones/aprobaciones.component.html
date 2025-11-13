@@ -1,0 +1,192 @@
+<div class="container mt-4">
+
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#items" (click)="currentTab = 'ITEM'">ITEMS</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#commodity" (click)="currentTab = 'COMMODITY'">SERVICIOS</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#activofijo" (click)="currentTab = 'ACTIVO FIJO'">ACTIVO
+                FIJO</a>
+        </li>
+    </ul>
+
+    <!-- ✅ CONTENEDOR OBLIGATORIO PARA TABS -->
+    <div class="tab-content mt-3">
+
+        <!-- TAB ITEMS -->
+        <div class="tab-pane fade show active" id="items">
+            <h5>Requerimientos Item (Jefe aprueba)</h5>
+            <div class="card firstCard p-2">
+                <div class="mb-2">
+                    <input type="checkbox" [(ngModel)]="allCheckedItems" (change)="seleccionarTodos('ITEM')">
+                    Seleccionar todo
+                    <button class="btn btn-success btn-sm ms-3" (click)="aprobarMasivo('ITEM')">Aprobar
+                        Seleccionados</button>
+                </div>
+
+                <div class="table-responsive" style="max-height: 60vh; overflow: auto;">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th><input type="checkbox" [(ngModel)]="allCheckedItems"
+                                        (change)="seleccionarTodos('ITEM')"></th>
+                                <th>#</th>
+                                <th>Tipo</th>
+                                <th>Almacén</th>
+                                <th>Usuario</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let req of requerimientosItems; let i = index">
+                                <td><input type="checkbox" [(ngModel)]="req.checked" (change)="simpleSelected('ITEM')"></td>
+                                <td>{{ i + 1 }}</td>
+                                <td>{{ req.tipo }}</td>
+                                <td>{{ req.idalmacen }}</td>
+                                <td>{{ req.nrodocumento }}</td>
+                                <td>{{ req.estados}}</td>
+                                <td>
+                                    <button class="btn btn-success btn-sm me-1"
+                                        (click)="aprobar(req, 'ITEM')">Aprobar</button>
+                                    <button class="btn btn-danger btn-sm"
+                                        (click)="rechazar(req, 'ITEM')">Rechazar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div *ngIf="!requerimientosItems.length" class="text-center text-muted mt-2">
+                        No hay requerimientos pendientes
+                    </div>
+                </div>
+
+                <div class="text-center mt-2">
+                    <button class="btn btn-success" (click)="aprobarRequerimientos()" [disabled]="!dataSelectedItems.length">
+                        ✅ Aprobar seleccionados
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB COMMODITY -->
+        <div class="tab-pane fade" id="commodity">
+            <h5>Requerimientos Servicios (por monto)</h5>
+            <div class="text-center mt-4">
+                <div class="mb-2">
+                    <input type="checkbox" [(ngModel)]="allCheckedCommodity" (change)="seleccionarTodos('COMMODITY')">
+                    Seleccionar todo
+                    <button class="btn btn-success btn-sm ms-3" (click)="aprobarMasivo('ITEM')">Aprobar
+                        Seleccionados</button>
+                </div>
+
+                <div class="table-responsive" style="max-height: 60vh; overflow: auto;">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th><input type="checkbox" [(ngModel)]="allCheckedCommodity"
+                                        (change)="seleccionarTodos('COMMODITY')"></th>
+                                <th>#</th>
+                                <th>Tipo</th>
+                                <th>Almacén Origen</th>
+                                <th>Almacén Destino</th>
+                                <th>Usuario</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let req of requerimientosCommodity; let i = index">
+                                <td><input type="checkbox" [(ngModel)]="req.checked" (change)="simpleSelected('COMMODITY')"></td>
+                                <td>{{ i + 1 }}</td>
+                                <td>{{ req.tipo }}</td>
+                                <td>{{ req.idalmacen }}</td>
+                                <td>{{ req.idalmacen_destino || '-' }}</td>
+                                <td>{{ req.nrodocumento }}</td>
+                                <td>{{ req.estados}}</td>
+                                <td>
+                                    <button class="btn btn-success btn-sm me-1"
+                                        (click)="aprobar(req, 'COMMODITY')">Aprobar</button>
+                                    <button class="btn btn-danger btn-sm"
+                                        (click)="rechazar(req, 'COMMODITY')">Rechazar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div *ngIf="!requerimientosCommodity.length" class="text-center text-muted mt-2">
+                        No hay requerimientos pendientes
+                    </div>
+                </div>
+
+                <div class="text-center mt-2">
+                    <button class="btn btn-success" (click)="aprobarRequerimientos()" [disabled]="!dataSelectedCommodity.length">
+                        ✅ Aprobar seleccionados
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB ACTIVO FIJO -->
+        <div class="tab-pane fade" id="activofijo">
+            <h5>Requerimientos activo fijo (por monto)</h5>
+            <div class="text-center mt-4">
+                <div class="mb-2">
+                    <input type="checkbox" [(ngModel)]="allCheckedActivo" (change)="seleccionarTodos('ACTIVO FIJO')">
+                    Seleccionar todo
+                    <button class="btn btn-success btn-sm ms-3" (click)="aprobarMasivo('ITEM')">Aprobar
+                        Seleccionados</button>
+                </div>
+
+                <div class="table-responsive" style="max-height: 60vh; overflow: auto;">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th><input type="checkbox" [(ngModel)]="allCheckedActivo"
+                                        (change)="seleccionarTodos('ACTIVO FIJO')"></th>
+                                <th>#</th>
+                                <th>Tipo</th>
+                                <th>Almacén Origen</th>
+                                <th>Almacén Destino</th>
+                                <th>Usuario</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let req of requerimientosActivoFijo; let i = index">
+                                <td><input type="checkbox" [(ngModel)]="req.checked" (change)="simpleSelected('ACTIVO FIJO')"></td>
+                                <td>{{ i + 1 }}</td>
+                                <td>{{ req.tipo }}</td>
+                                <td>{{ req.idalmacen }}</td>
+                                <td>{{ req.idalmacen_destino || '-' }}</td>
+                                <td>{{ req.nrodocumento }}</td>
+                                <td>{{ req.estados}}</td>
+                                <td>
+                                    <button class="btn btn-success btn-sm me-1"
+                                        (click)="aprobar(req, 'ACTIVO FIJO')">Aprobar</button>
+                                    <button class="btn btn-danger btn-sm"
+                                        (click)="rechazar(req, 'ACTIVO FIJO')">Rechazar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div *ngIf="!requerimientosActivoFijo.length" class="text-center text-muted mt-2">
+                        No hay requerimientos pendientes
+                    </div>
+                </div>
+
+                <div class="text-center mt-2">
+                    <button class="btn btn-success" (click)="aprobarRequerimientos()" [disabled]="!dataSelectedActivo.length">
+                        ✅ Aprobar seleccionados
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
