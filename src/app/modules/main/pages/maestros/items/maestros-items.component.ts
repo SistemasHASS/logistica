@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { Item } from '@/app/shared/interfaces/Tables';
+import * as XLSX from 'xlsx';
 // import bootstrap from 'bootstrap';
 
 @Component({
@@ -11,13 +12,12 @@ import { Item } from '@/app/shared/interfaces/Tables';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './maestros-items.component.html',
-  styleUrls: ['./maestros-items.component.scss']
+  styleUrls: ['./maestros-items.component.scss'],
 })
 export class MaestrosItemsComponent implements OnInit {
-
   @ViewChild('modalEdicion') modalEdicion!: ElementRef;
 
-  item: Item = { 
+  item: Item = {
     id: 0,
     codigo: '',
     descripcionLocal: '',
@@ -28,13 +28,13 @@ export class MaestrosItemsComponent implements OnInit {
     compania: '',
     estado: 'Activo',
     numeracion: '',
-    tipoclasificacion: 'ITEM'
+    tipoclasificacion: 'ITEM',
   };
   listaItems: Item[] = [];
 
   constructor(
     private dexieService: DexieService,
-    private alertService: AlertService,
+    private alertService: AlertService
   ) {}
 
   async ngOnInit() {
@@ -42,7 +42,19 @@ export class MaestrosItemsComponent implements OnInit {
   }
 
   nuevo() {
-    this.item = { id: 0, codigo: '', descripcionLocal: '', descripcionCompleta: '', unidadMedida: '', unidadCompra: '', unidadEmbalaje: '', compania: '', estado: 'Activo', numeracion: '', tipoclasificacion: 'ITEM' };
+    this.item = {
+      id: 0,
+      codigo: '',
+      descripcionLocal: '',
+      descripcionCompleta: '',
+      unidadMedida: '',
+      unidadCompra: '',
+      unidadEmbalaje: '',
+      compania: '',
+      estado: 'Activo',
+      numeracion: '',
+      tipoclasificacion: 'ITEM',
+    };
   }
 
   editar(data: Item) {
@@ -54,6 +66,53 @@ export class MaestrosItemsComponent implements OnInit {
   async guardar() {
     await this.dexieService.saveItem(this.item);
     this.listaItems = await this.dexieService.showItems();
-    this.alertService.showAlertAcept("Item guardado correctamente", "Item", "success");
+    this.alertService.showAlertAcept(
+      'Item guardado correctamente',
+      'Item',
+      'success'
+    );
+  }
+
+  openImportModal() {
+    const modal = document.getElementById('importModal');
+    (window as any).bootstrap.Modal.getOrCreateInstance(modal).show();
+  }
+
+  downloadTemplate() {
+    const plantilla = [
+      {
+        codigo: '',
+        descripcionLocal: '',
+        descripcionCompleta: '',
+        unidadMedida: '',
+        unidadCompra: '',
+        unidadEmbalaje: '',
+        compania: '',
+        estado: '',
+      },
+    ];
+
+    // Crear hoja
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      [
+        'codigo',
+        'descripcionLocal',
+        'descripcionCompleta',
+        'unidadMedida',
+        'unidadCompra',
+        'unidadEmbalaje',
+        'compania',
+        'estado',
+      ],
+    ]);
+
+    // Crear libro
+    const workbook = XLSX.utils.book_new();
+
+    // Agregar hoja
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Plantilla');
+
+    // Descargar
+    XLSX.writeFile(workbook, 'plantilla_items.xlsx');
   }
 }

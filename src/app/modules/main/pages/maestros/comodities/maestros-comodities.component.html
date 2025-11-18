@@ -1,6 +1,18 @@
-<!-- botón abrir modal -->
-<div class="d-flex justify-content-end mb-2">
-  <button class="btn btn-primary btn-sm" (click)="nuevo()">Agregar Commodity</button>
+<div class="d-flex gap-2">
+  <!-- botón abrir modal -->
+  <!-- <div class="d-flex justify-content-end mb-3"> -->
+    <button class="btn btn-primary mb-3" (click)="nuevo()">Agregar Commodity</button>
+  <!-- </div> -->
+
+  <!-- BOTÓN IMPORTAR -->
+  <button class="btn btn-success mb-3" (click)="openImportModal()">
+    Importar Excel
+  </button>
+
+  <!-- BOTÓN DESCARGAR PLANTILLA -->
+  <button class="btn btn-outline-secondary mb-3" (click)="downloadTemplate()">
+    Descargar Plantilla
+  </button>
 </div>
 
 <table class="table table-sm table-bordered">

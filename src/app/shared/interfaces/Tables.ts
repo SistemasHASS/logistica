@@ -29,6 +29,10 @@ export interface Configuracion {
     iditem: string;
     idturno: string;
     idclasificacion: string;
+    idgrupolabor: string;
+    idproveedor: string;
+    idtipoGasto: string;
+    idactivoFijo: string;
 }
 
 export interface Empresa {
@@ -70,10 +74,11 @@ export interface Proyecto {
 }
 
 export interface Cultivo {
-    id: number,
-    empresa: number,
-    codigo: string,
-    descripcion: string,
+    id: number;
+    empresa: number;
+    codigo: string;
+    descripcion: string;
+    estado: number;
 }
 
 export interface Acopio {
@@ -81,6 +86,7 @@ export interface Acopio {
     nave: string;
     codigoAcopio: string;
     acopio: string;
+    estado: number;
 }
 
 export interface Ceco {
@@ -89,6 +95,7 @@ export interface Ceco {
     costcenter: string;
     localname: string;
     conturno: string;
+    esinversion: number;
     nombreTurno: string;
     modulo: number;
     idcultivo: string;
@@ -98,19 +105,35 @@ export interface Ceco {
 export interface Labor {
     id: string;
     idgrupolabor: string;
+    ceco: string;
     idlabor: string;
     labor: string;
 }
 
+
+export interface Labor{
+    id: string;
+    idlabor: string;
+    ceco: string;
+    labor: string;
+    estado: number;
+}
+
+export interface GrupoLabor{
+    id : string;
+    LocalName: string;
+    CostCenterDestinationGroup: string;
+}
+
 export interface Turno {
     id: number;
-    idcultivo: string;
     turno: number;
     codTurno: string;
     nombreTurno: string;
-    modulo: number;
+    idcultivo: string;
     idproyecto: string;
     conturno: string;
+    estado: number;
 }
 
 export interface ItemComodity {
@@ -136,6 +159,8 @@ export interface DetalleRequerimiento {
     ceco: string;
     turno: string;
     labor: string;
+    esActivoFijo: boolean;
+    activoFijo: string;
     estado: number;
 }
 
@@ -155,8 +180,6 @@ export interface Requerimiento {
     glosa: string;
     tipo: string;
     estados: string;
-    // tipo: 'CONSUMO' | 'TRANSFERENCIA';
-    // estados: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
     estado: number;
     detalle: DetalleRequerimiento[];
 }
@@ -203,8 +226,6 @@ export interface RequerimientoActivoFijo {
     glosa: string;
     tipo: string;
     estados: string;
-    // tipo: 'CONSUMO' | 'TRANSFERENCIA';
-    // estados: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
     estado: number;
     detalle: DetalleRequerimiento[];
 }
@@ -396,4 +417,34 @@ export interface SubClasificacion {
   elementoGasto?: number | string;
   clasificacionActivo?: string;
   legacyNumber?: string;
+}
+
+export interface Proveedor {
+    id: number;
+    TipoPersona: string;
+    documento: string;
+    ruc: string;
+    Estado: string;
+    TipoPago: string;
+    MonedaPago: string;
+    detraccion: string;
+    TipoServicio: string;
+}
+
+export interface TipoGasto {
+    codigo: string;
+    descripcion: string;
+}
+
+export interface ActivoFijo {
+    id: number;
+    codigo: string;
+    descripcion: string;
+    codigoInterno: string;
+    ubicacion: string;
+    ceco: string;
+    localName: string;
+    tipoActivo: string;
+    Estado: string;
+    activo_descripcion?: string;
 }

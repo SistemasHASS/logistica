@@ -1,7 +1,19 @@
-<!-- BOTÓN ABRIR MODAL -->
-<button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalItem">
-  Nuevo Item
-</button>
+<div class="d-flex gap-2">
+  <!-- BOTÓN ABRIR MODAL -->
+  <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalItem">
+    Nuevo Item
+  </button>
+
+  <!-- BOTÓN IMPORTAR -->
+  <button class="btn btn-success  mb-3" (click)="openImportModal()">
+    Importar Excel
+  </button>
+
+  <!-- BOTÓN DESCARGAR PLANTILLA -->
+  <button class="btn btn-outline-secondary  mb-3" (click)="downloadTemplate()">
+    Descargar Plantilla
+  </button>
+</div>
 
 <table class="table table-sm table-bordered">
   <thead>
@@ -50,9 +62,12 @@
 
         <!-- TABS -->
         <ul class="nav nav-tabs" id="itemTabs" role="tablist">
-          <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#datosGenerales">🟦 Datos Generales</a></li>
-          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#infoAdicional">📄 Información Adicional</a></li>
-          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#caracteristicas">⚙ Características Especiales</a></li>
+          <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#datosGenerales">🟦 Datos
+              Generales</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#infoAdicional">📄 Información
+              Adicional</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#caracteristicas">⚙ Características
+              Especiales</a></li>
           <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#numeracion">🔢 Numeración</a></li>
         </ul>
 

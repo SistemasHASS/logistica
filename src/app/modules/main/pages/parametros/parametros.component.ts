@@ -1,19 +1,30 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
-import { Configuracion, Ceco, Turno, Proyecto } from '@/app/shared/interfaces/Tables';
+import {
+  Configuracion,
+  Ceco,
+  Turno,
+  Proyecto,
+  Labor,
+  Fundo,
+  Cultivo,
+  Item,
+  ActivoFijo,
+} from '@/app/shared/interfaces/Tables';
 import { MaestrasService } from '../../services/maestras.service';
 import { FormsModule } from '@angular/forms';
 import { Usuario } from '@/app/shared/interfaces/Tables';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { RequerimientosService } from '../../services/requerimientos.service';
+import { DropdownComponent } from '../../components/dropdown/dropdown.component';
 
 @Component({
   selector: 'app-parametros',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DropdownComponent],
   templateUrl: './parametros.component.html',
-  styleUrls: ['./parametros.component.scss']
+  styleUrls: ['./parametros.component.scss'],
 })
 export class ParametrosComponent implements OnInit {
   constructor(
@@ -21,7 +32,7 @@ export class ParametrosComponent implements OnInit {
     private maestrasService: MaestrasService,
     private alertService: AlertService, // ✅ inyectar el servicio
     private requerimientosService: RequerimientosService
-  ) { }
+  ) {}
 
   fecha = new Date();
   mensajeFundos: String = '';
@@ -38,6 +49,10 @@ export class ParametrosComponent implements OnInit {
   labores: any[] = [];
   cecos: any[] = [];
   clasificaciones: any[] = [];
+  tipoGastos: any[] = [];
+  proveedores: any[] = [];
+  servicios: any[] = [];
+  activosFijos: any[] = [];
 
   fundoSeleccionado = '';
   cultivoSeleccionado = '';
@@ -49,48 +64,57 @@ export class ParametrosComponent implements OnInit {
   ocultarCeco = true;
   ocultarTurno = true;
   ocultarProyecto = true;
+  ocultarClasificacion = false;
   showValidation: boolean = false;
 
-  //Filtros 
+  //Filtros
   filteredCecos: Ceco[] = [];
   filteredTurnos: Turno[] = [];
   filteredProyectos: Proyecto[] = [];
+  filteredLabores: Labor[] = [];
+  filteredFundos: Fundo[] = [];
+  filteredCultivos: Cultivo[] = [];
+  filteredItems: Item[] = [];
 
   usuario: Usuario = {
-    id: "",
+    id: '',
     sociedad: 0,
-    idempresa: "",
-    ruc: "",
-    razonSocial: "",
-    idProyecto: "",
-    proyecto: "",
-    documentoidentidad: "",
-    usuario: "",
-    clave: "",
-    nombre: "",
-    idrol: "",
-    rol: ""
-  }
+    idempresa: '',
+    ruc: '',
+    razonSocial: '',
+    idProyecto: '',
+    proyecto: '',
+    documentoidentidad: '',
+    usuario: '',
+    clave: '',
+    nombre: '',
+    idrol: '',
+    rol: '',
+  };
 
   configuracion: Configuracion = {
-    id: "",
-    idempresa: "",
-    idfundo: "",
-    idcultivo: "",
-    idarea: "",
-    idalmacen: "",
-    idproyecto: "",
+    id: '',
+    idempresa: '',
+    idfundo: '',
+    idcultivo: '',
+    idarea: '',
+    idalmacen: '',
+    idproyecto: '',
     idacopio: 0,
-    idceco: "",
-    idlabor: "",
-    idturno: "",
-    iditem: "",
-    idclasificacion: "",
-  }
+    idceco: '',
+    idlabor: '',
+    idturno: '',
+    iditem: '',
+    idclasificacion: '',
+    idgrupolabor: '',
+    idproveedor: '',
+    idtipoGasto: '',
+    idactivoFijo: '',
+  };
 
   async ngOnInit() {
-    await this.getUsuario()
-    await this.validarExisteConfiguracion()
+    await this.getUsuario();
+    await this.validarExisteConfiguracion();
     await this.llenarDropdowns();
     // Oculta todos al inicio
     this.ocultarItem = true;
@@ -102,7 +126,11 @@ export class ParametrosComponent implements OnInit {
 
   async getUsuario() {
     const usuario = await this.dexieService.showUsuario();
-    if (usuario) { this.usuario = usuario } else { console.log('Error', 'Usuario not found', 'error'); }
+    if (usuario) {
+      this.usuario = usuario;
+    } else {
+      console.log('Error', 'Usuario not found', 'error');
+    }
   }
 
   async validarExisteConfiguracion() {
@@ -124,35 +152,79 @@ export class ParametrosComponent implements OnInit {
     await this.ListarLabores();
     await this.ListarCecos();
     await this.ListarClasificaciones();
+    await this.ListarTipoGastos();
+    await this.ListarProveedores();
+    await this.ListarServicios();
+    await this.ListarActivosFijos();
+    await this.filtrarLaboresInicio();
     await this.filtraCecoTurnoProyectoInicio();
   }
 
   obtenerRol() {
-    if (this.usuario.idrol.includes('ALLOGIST')) return 'ALLOGIST'
-    if (this.usuario.idrol.includes('APLOGIST')) return 'APLOGIST'
-    return ''
+    if (this.usuario.idrol.includes('ALLOGIST')) return 'ALLOGIST';
+    if (this.usuario.idrol.includes('APLOGIST')) return 'APLOGIST';
+    return '';
+  }
+
+  async filtrarLaboresInicio() {
+    if (this.configuracion.idceco) {
+      const labores = await this.dexieService.showLabores();
+      this.filteredLabores = labores.filter(
+        (x: Labor) => x.ceco?.trim() === this.configuracion.idceco
+      );
+    }
+  }
+
+  async filtrarLabores() {
+    this.filteredLabores.length = 0;
+    this.configuracion.idlabor = '';
+    if (this.configuracion.idgrupolabor) {
+      const labores = await this.dexieService.showLabores();
+      const grupoLaborId = this.configuracion.idgrupolabor.trim();
+      this.filteredLabores = labores.filter(
+        (x: Labor) => x.idlabor?.trim() === grupoLaborId
+      );
+    }
+  }
+
+  async onCecoTurnoProyectoChange(limpiar = false) {
+    if (limpiar) {
+      this.configuracion.idturno = '';
+      this.configuracion.idceco = '';
+      this.configuracion.idlabor = '';
+      this.configuracion.idproyecto;
+    }
+    await this.filtraCecoTurnoProyecto();
   }
 
   async sincronizarTablasMaestras() {
     try {
       this.alertService.mostrarModalCarga();
-      const empresas = await this.maestrasService.getEmpresas([])
+      const empresas = await this.maestrasService.getEmpresas([]);
       if (!!empresas && empresas.length) {
-        await this.dexieService.saveEmpresas(empresas)
-        await this.ListarEmpresas()
+        await this.dexieService.saveEmpresas(empresas);
+        await this.ListarEmpresas();
       }
 
-      const fundos = this.maestrasService.getFundos([{ idempresa: this.usuario.idempresa }])
+      const fundos = this.maestrasService.getFundos([
+        { idempresa: this.usuario.idempresa },
+      ]);
       fundos.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveFundos(resp);
           await this.ListarFundos();
-          this.alertService.cerrarModalCarga()
-          this.alertService.showAlert('Exito!', 'Sincronizado con exito', 'success');
+          this.alertService.cerrarModalCarga();
+          this.alertService.showAlert(
+            'Exito!',
+            'Sincronizado con exito',
+            'success'
+          );
         }
       });
 
-      const cultivos = this.maestrasService.getCultivos([{ idempresa: this.usuario?.idempresa }])
+      const cultivos = this.maestrasService.getCultivos([
+        { idempresa: this.usuario?.idempresa },
+      ]);
       cultivos.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveCultivos(resp);
@@ -160,7 +232,9 @@ export class ParametrosComponent implements OnInit {
         }
       });
 
-      const areas = this.maestrasService.getAreas([{ ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA' }])
+      const areas = this.maestrasService.getAreas([
+        { ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA' },
+      ]);
       areas.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveAreas(resp);
@@ -168,7 +242,9 @@ export class ParametrosComponent implements OnInit {
         }
       });
 
-      const almacenes = this.maestrasService.getAlmacenes([{ ruc: this.usuario?.ruc }])
+      const almacenes = this.maestrasService.getAlmacenes([
+        { ruc: this.usuario?.ruc },
+      ]);
       almacenes.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveAlmacenes(resp);
@@ -176,7 +252,9 @@ export class ParametrosComponent implements OnInit {
         }
       });
 
-      const proyectos = this.maestrasService.getProyectos([{ ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA', esadmin: 0 }])
+      const proyectos = this.maestrasService.getProyectos([
+        { ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA', esadmin: 0 },
+      ]);
       proyectos.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveProyectos(resp);
@@ -184,7 +262,7 @@ export class ParametrosComponent implements OnInit {
         }
       });
 
-      const items = this.maestrasService.getItems([{ ruc: this.usuario?.ruc }])
+      const items = this.maestrasService.getItems([{ ruc: this.usuario?.ruc }]);
       items.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveItemComoditys(resp);
@@ -192,7 +270,7 @@ export class ParametrosComponent implements OnInit {
         }
       });
 
-      const clasificaciones = this.maestrasService.getClasificaciones([{}])
+      const clasificaciones = this.maestrasService.getClasificaciones([{}]);
       clasificaciones.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveClasificaciones(resp);
@@ -200,7 +278,13 @@ export class ParametrosComponent implements OnInit {
         }
       });
 
-      const turnos = this.maestrasService.getTurnos([{ idempresa: this.usuario?.idempresa, aplicacion: 'LOGISTICA', esadmin: 0 }])
+      const turnos = this.maestrasService.getTurnos([
+        {
+          idempresa: this.usuario?.idempresa,
+          aplicacion: 'LOGISTICA',
+          // esadmin: 0,
+        },
+      ]);
       turnos.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveTurnos(resp);
@@ -208,13 +292,17 @@ export class ParametrosComponent implements OnInit {
         }
       });
 
-      const labores = await this.maestrasService.getLabores([{ aplicacion: 'LOGISTICA', esadmin: 0 }])
+      const labores = await this.maestrasService.getLabores([
+        { aplicacion: 'LOGISTICA', esadmin: 0 },
+      ]);
       if (!!labores && labores.length) {
-        await this.dexieService.saveLabores(labores)
-        await this.ListarLabores()
+        await this.dexieService.saveLabores(labores);
+        await this.ListarLabores();
       }
 
-      const cecos = await this.maestrasService.getCecos([{ aplicacion: 'LOGISTICA', esadmin: 0 }])
+      const cecos = await this.maestrasService.getCecos([
+        { aplicacion: 'LOGISTICA', esadmin: 0 },
+      ]);
       cecos.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveCecos(resp);
@@ -222,10 +310,48 @@ export class ParametrosComponent implements OnInit {
         }
       });
 
-      const requerimmientos = this.requerimientosService.getRequerimientos([{ ruc: this.usuario.ruc, idrol: this.obtenerRol() }])
+      const proveedores = this.maestrasService.getProveedores([{},
+      ]);
+      proveedores.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveProveedores(resp);
+          await this.ListarProveedores();
+        }
+      });
+
+      const tipoGastos = this.maestrasService.getTipoGastos([{},
+      ]);
+      tipoGastos.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveTipoGastos(resp);
+          await this.ListarTipoGastos();
+        }
+      });
+
+      const servicios = this.maestrasService.getItems([{ ruc: this.usuario?.ruc },
+      ]);
+      servicios.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveComodities(resp);
+          await this.ListarServicios();
+        }
+      });
+
+      const activosFijos = this.maestrasService.getActivosFijos([{ idempresa: this.usuario?.idempresa },
+      ]);
+      activosFijos.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveActivosFijos(resp);
+          await this.ListarActivosFijos();
+        }
+      });
+
+      const requerimmientos = this.requerimientosService.getRequerimientos([
+        { ruc: this.usuario.ruc, idrol: this.obtenerRol() },
+      ]);
       requerimmientos.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
-          await this.dexieService.saveRequerimientos(resp)
+          await this.dexieService.saveRequerimientos(resp);
           // Ahora recorre cada requerimiento y guarda su detalle
           for (const req of resp) {
             if (req.detalle && req.detalle.length) {
@@ -233,7 +359,7 @@ export class ParametrosComponent implements OnInit {
                 // Añadimos un campo idrequerimiento para enlazarlo
                 await this.dexieService.detalles.add({
                   ...det,
-                  idrequerimiento: req.idrequerimiento
+                  idrequerimiento: req.idrequerimiento,
                 });
               }
             }
@@ -242,22 +368,31 @@ export class ParametrosComponent implements OnInit {
           console.log('✅ Requerimientos y detalles guardados correctamente');
         }
       });
-
     } catch (error: any) {
       console.error(error);
-      this.alertService.showAlert('Error!', '<p>Ocurrio un error</p><p>', 'error');
+      this.alertService.showAlert(
+        'Error!',
+        '<p>Ocurrio un error</p><p>',
+        'error'
+      );
     }
   }
 
   async ListarEmpresas() {
     this.empresas = await this.dexieService.showEmpresas();
-    this.configuracion.idempresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc)?.ruc || '';
+    this.configuracion.idempresa =
+      this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc)
+        ?.ruc || '';
   }
 
   async ListarFundos() {
     const fundos = await this.dexieService.showFundos();
-    const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
-    this.fundos = fundos.filter((fundo: any) => fundo.empresa === empresa.empresa);
+    const empresa = this.empresas.find(
+      (empresa: any) => empresa.ruc === this.usuario.ruc
+    );
+    this.fundos = fundos.filter(
+      (fundo: any) => fundo.empresa === empresa.empresa
+    );
     if (this.fundos.length == 1) {
       this.configuracion.idfundo = this.fundos[0].codigoFundo;
     }
@@ -265,8 +400,12 @@ export class ParametrosComponent implements OnInit {
 
   async ListarCultivos() {
     const cultivos = await this.dexieService.showCultivos();
-    const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
-    this.cultivos = cultivos.filter((cultivo: any) => cultivo.empresa === empresa.empresa);
+    const empresa = this.empresas.find(
+      (empresa: any) => empresa.ruc === this.usuario.ruc
+    );
+    this.cultivos = cultivos.filter(
+      (cultivo: any) => cultivo.empresa === empresa.empresa
+    );
     if (this.cultivos.length == 1) {
       this.configuracion.idcultivo = this.cultivos[0].codigo;
     }
@@ -274,7 +413,9 @@ export class ParametrosComponent implements OnInit {
 
   async ListarAreas() {
     const areas = await this.dexieService.showAreas();
-    const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
+    const empresa = this.empresas.find(
+      (empresa: any) => empresa.ruc === this.usuario.ruc
+    );
     this.areas = areas.filter((area: any) => area.ruc === empresa.ruc);
     if (this.areas.length == 1) {
       this.configuracion.idarea = this.areas[0].idarea;
@@ -283,8 +424,12 @@ export class ParametrosComponent implements OnInit {
 
   async ListarProyectos() {
     const proyectos = await this.dexieService.showProyectos();
-    const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
-    this.proyectos = proyectos.filter((proyecto: any) => proyecto.ruc === empresa.ruc);
+    const empresa = this.empresas.find(
+      (empresa: any) => empresa.ruc === this.usuario.ruc
+    );
+    this.proyectos = proyectos.filter(
+      (proyecto: any) => proyecto.ruc === empresa.ruc
+    );
     if (this.proyectos.length == 1) {
       this.configuracion.idproyecto = this.proyectos[0].id;
     }
@@ -301,8 +446,6 @@ export class ParametrosComponent implements OnInit {
   async ListarItems() {
     const items = await this.dexieService.showItemComoditys();
     this.items = items;
-    // const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
-    // this.items = items.filter((almacen: any) => almacen.empresa === empresa.empresa);
     if (this.items.length == 1) {
       this.configuracion.iditem = this.items[0].id;
     }
@@ -319,8 +462,6 @@ export class ParametrosComponent implements OnInit {
   async ListarTurnos() {
     const turnos = await this.dexieService.showTurnos();
     this.turnos = turnos;
-    // const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
-    // this.turnos = turnos.filter((almacen: any) => almacen.empresa === empresa.empresa);
     if (this.turnos.length == 1) {
       this.configuracion.idturno = this.turnos[0].id;
     }
@@ -329,8 +470,6 @@ export class ParametrosComponent implements OnInit {
   async ListarLabores() {
     const labores = await this.dexieService.showLabores();
     this.labores = labores;
-    // const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
-    // this.labores = labores.filter((almacen: any) => almacen.empresa === empresa.empresa);
     if (this.labores.length == 1) {
       this.configuracion.idlabor = this.labores[0].idlabor;
     }
@@ -339,61 +478,141 @@ export class ParametrosComponent implements OnInit {
   async ListarCecos() {
     const cecos = await this.dexieService.showCecos();
     this.cecos = cecos;
-    // const empresa = this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc);
-    // this.cecos = cecos.filter((ceco: any) => ceco.empresa === empresa.empresa);
     if (this.cecos.length == 1) {
       this.configuracion.idceco = this.cecos[0].id;
     }
   }
 
-  async onCecoTurnoProyectoChange(limpiar = false) {
-    if (limpiar) { this.configuracion.idturno = ''; this.configuracion.idceco = ''; this.configuracion.idlabor = ''; this.configuracion.idproyecto }
-    await this.filtraCecoTurnoProyecto();
+  async ListarTipoGastos() {
+    const tipoGastos = await this.dexieService.showTipoGastos();
+    this.tipoGastos = tipoGastos;
+    if (this.tipoGastos.length == 1) {
+      this.configuracion.idtipoGasto = this.tipoGastos[0].id;
+    }
+  }
+
+  async ListarProveedores() {
+    const proveedores = await this.dexieService.showProveedores();
+    this.proveedores = proveedores;
+    if (this.proveedores.length == 1) {
+      this.configuracion.idproveedor = this.proveedores[0].id;
+    }
+  }
+
+  async ListarServicios() {
+    const servicios = await this.dexieService.showComodities();
+    this.servicios = servicios;
+    if (this.servicios.length == 1) {
+      this.configuracion.idproveedor = this.proveedores[0].id;
+    }
+  }
+
+  async ListarActivosFijos() {
+    const activosFijos = await this.dexieService.showActivosFijos();
+    this.activosFijos = activosFijos;
+    if (this.activosFijos.length == 1) {
+      this.configuracion.idactivoFijo = this.activosFijos[0].id;
+    }
   }
 
   async filtraCecoTurnoProyecto() {
     this.filteredTurnos.length = 0;
     this.configuracion.idturno = '';
     if (this.configuracion.idcultivo) {
-      const cultivo = this.cultivos.find((e: any) => e.id == this.configuracion.idcultivo)
-      // const turnos = await this.dexieService.showTurnos()
-      this.filteredTurnos = this.turnos.filter((x: Turno) => x.idcultivo?.trim() === cultivo.codigo);
+      const cultivo = this.cultivos.find(
+        (e: any) => e.id == this.configuracion.idcultivo
+      );
+      this.filteredTurnos = this.turnos.filter(
+        (x: Turno) => x.idcultivo?.trim() === cultivo.codigo
+      );
     }
   }
 
   async darProyectoCecos(limpiar = false) {
-    this.filteredCecos.length = 0
-    if (limpiar) { this.configuracion.idceco = ''; this.configuracion.idlabor = ''; this.configuracion.idproyecto }
-    const turno = this.filteredTurnos.find((e: any) => e.codTurno === this.configuracion.idturno)
-    this.configuracion.idproyecto = turno?.idproyecto
-    if (this.configuracion.idproyecto) await this.nombreProyecto(this.configuracion.idproyecto)
+    this.filteredCecos.length = 0;
+    if (limpiar) {
+      this.configuracion.idceco = '';
+      this.configuracion.idlabor = '';
+      this.configuracion.idproyecto;
+    }
+    const turno = this.filteredTurnos.find(
+      (e: any) => e.codTurno === this.configuracion.idturno
+    );
+    this.configuracion.idproyecto = turno?.idproyecto;
+    this.filteredProyectos = this.proyectos.filter(
+      (e: any) => e.afe == turno?.idproyecto
+    );
+    console.log(this.filteredProyectos);
+    if (this.configuracion.idproyecto)
+      await this.nombreProyecto(this.configuracion.idproyecto);
     if (this.configuracion.idturno) {
-      this.filteredCecos = this.cecos.filter((x: Ceco) => x.conturno.includes(turno?.conturno ?? ''));
+      this.filteredCecos = this.cecos.filter((x: Ceco) =>
+        x.conturno.includes(turno?.conturno ?? '')
+      );
+    }
+  }
+
+  async darProyectoInversionLabor(limpiar = false) {
+    this.filteredProyectos.length = 0;
+    if (limpiar) {
+      this.configuracion.idlabor = '';
+    }
+    if (this.configuracion.idceco) {
+      const ceco = this.filteredCecos.find(
+        (e: any) => e.id === this.configuracion.idceco
+      );
+      if (ceco) {
+        if (ceco.esinversion === 1) {
+          this.configuracion.idproyecto = '';
+          const proyectos = await this.dexieService.showProyectos();
+          this.filteredProyectos = proyectos;
+        }
+        const labores = await this.dexieService.showLabores();
+        this.filteredLabores = labores.filter(
+          (x: Labor) => x.ceco == this.configuracion.idceco
+        );
+      }
     }
   }
 
   async filtraCecoTurnoProyectoInicio() {
     if (this.configuracion.idcultivo) {
-      const cultivo = this.cultivos.find((e: any) => e.id == this.configuracion.idcultivo)
-      this.filteredTurnos = this.turnos.filter((x: Turno) => x.idcultivo?.trim() === cultivo.codigo);
-      this.darProyectoCecos()
+      const cultivo = this.cultivos.find(
+        (e: any) => e.id == this.configuracion.idcultivo
+      );
+      this.filteredTurnos = this.turnos.filter(
+        (x: Turno) => x.idcultivo?.trim() === cultivo.codigo
+      );
+      this.darProyectoCecos();
     }
   }
 
   async nombreProyecto(idproyecto: string) {
-    const proyectos = await this.dexieService.showProyectos()
-    const proyecto = proyectos.find((x: Proyecto) => x.afe == idproyecto)
-    if (proyecto) this.nombreProyectoHeader = proyecto?.proyectoio
+    const proyecto = this.proyectos.find((p) => p.afe === idproyecto);
+    this.nombreProyectoHeader = proyecto?.proyectoio || '';
   }
 
   async guardarConfiguracion() {
     this.showValidation = true;
-    if (!this.configuracion.idempresa || !this.configuracion.idfundo || !this.configuracion.idcultivo) {
-      this.alertService.showAlert('Advertencia!', 'Debe seleccionar todos los campos', 'warning')
+    if (
+      !this.configuracion.idempresa ||
+      !this.configuracion.idfundo ||
+      !this.configuracion.idcultivo
+    ) {
+      this.alertService.showAlert(
+        'Advertencia!',
+        'Debe seleccionar todos los campos',
+        'warning'
+      );
     } else {
-      this.configuracion.id = this.usuario.ruc + this.usuario.documentoidentidad;
-      await this.dexieService.saveConfiguracion(this.configuracion)
-      this.alertService.showAlert('¡Éxito!', 'La operación se completó correctamente', 'success')
+      this.configuracion.id =
+        this.usuario.ruc + this.usuario.documentoidentidad;
+      await this.dexieService.saveConfiguracion(this.configuracion);
+      this.alertService.showAlert(
+        '¡Éxito!',
+        'La operación se completó correctamente',
+        'success'
+      );
     }
   }
 }

@@ -1,19 +1,18 @@
 <ul class="nav nav-tabs mb-3">
     <li class="nav-item">
-        <button class="nav-link" [ngClass]="{ 'active': tabActiva === 'ITEM' }" (click)="cambiarTab('ITEM')">
+        <button class="nav-link" [ngClass]="{ active: tabActiva === 'ITEM' }" (click)="cambiarTab('ITEM')">
             Items
         </button>
     </li>
 
     <li class="nav-item">
-        <button class="nav-link" [ngClass]="{ 'active': tabActiva === 'COMMODITY' }" (click)="cambiarTab('COMMODITY')">
+        <button class="nav-link" [ngClass]="{ active: tabActiva === 'COMMODITY' }" (click)="cambiarTab('COMMODITY')">
             Servicios
         </button>
     </li>
 
     <li class="nav-item">
-        <button class="nav-link" [ngClass]="{ 'active': tabActiva === 'ACTIVOFIJO' }"
-            (click)="cambiarTab('ACTIVOFIJO')">
+        <button class="nav-link" [ngClass]="{ active: tabActiva === 'ACTIVOFIJO' }" (click)="cambiarTab('ACTIVOFIJO')">
             Activos Fijos
         </button>
     </li>
@@ -23,7 +22,6 @@
 <!-- TAB ITEM -->
 <!-- ===================== -->
 <div *ngIf="tabActiva === 'ITEM'">
-
     <div class="requerimientos-container">
         <div class="container py-4">
             <div class="container mt-3">
@@ -33,6 +31,7 @@
                     <table class="table table-hover table-striped align-middle shadow-sm">
                         <thead class="table-dark">
                             <tr>
+                                <th>Editar</th>
                                 <th>Fecha</th>
                                 <th>Fundo</th>
                                 <th>Área</th>
@@ -44,23 +43,23 @@
                         </thead>
                         <tbody>
                             <tr *ngFor="let req of requerimientos; let i = index">
-                                <td>{{ req.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+                                <td><button class="btn btn-sm btn-warning me-2" (click)="editarRequerimiento(i)">
+                                        <i class="icon-pencil"></i>
+                                    </button></td>
+                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm" }}</td>
                                 <td>{{ req.idfundo }}</td>
                                 <td>{{ req.idarea }}</td>
                                 <td>{{ req.almacen }}</td>
                                 <td>{{ req.glosa }}</td>
                                 <td>
                                     <span class="badge"
-                                        [ngClass]="req.estado === 1 ? 'bg-success' : 'bg-warning text-dark'">
-                                        {{ req.estado === 1 ? 'Enviado' : 'Sin enviar' }}
+                                        [ngClass]=" req.estado === 1 ? 'bg-success' : 'bg-warning text-dark'">
+                                        {{ req.estado === 1 ? "Enviado" : "Sin enviar" }}
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    <button class="btn btn-sm btn-warning me-2" (click)="editarRequerimiento(i)">
-                                        <i class="icon-pencil"></i> Editar
-                                    </button>
                                     <button class="btn btn-sm btn-danger" (click)="eliminarRequerimiento(i)">
-                                        <i class="icon-trash"></i> Eliminar
+                                        <i class="icon-trash"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -76,13 +75,17 @@
             <!-- LISTA DE REQUERIMIENTOS -->
             <!-- ===================== -->
             <div *ngIf="!mostrarFormulario" class="requerimientos-lista">
-                <div class="botonGuardar mb-4 mt-4 d-flex align-items-center justify-content-center" style="gap: 1em;">
+                <div class="botonGuardar mb-4 mt-4 d-flex align-items-center justify-content-center" style="gap: 1em">
                     <button (click)="mostrarFormulario = true; nuevoRequerimiento()"
                         class="btn btn-success botonCelular">
-                        <i class="icon-file-plus"></i> Nuevo</button>
-                    <button class="btn btn-secondary" (click)="abrirModalConsolidacion()">Consolidar pendientes</button>
+                        <i class="icon-file-plus"></i> Nuevo
+                    </button>
+                    <button class="btn btn-secondary" (click)="abrirModalConsolidacion()">
+                        Consolidar pendientes
+                    </button>
                     <button (click)="sincronizarRequerimiento()" class="btn btn-primary botonCelular">
-                        <i class="icon icon-sync"></i> Sincronizar</button>
+                        <i class="icon icon-sync"></i> Sincronizar
+                    </button>
                 </div>
             </div>
 
@@ -91,48 +94,21 @@
             <!-- ===================== -->
             <div *ngIf="mostrarFormulario" class="formulario mt-4 p-4 shadow rounded" @fadeSlide>
                 <!-- <h4 class="fw-bold mb-3">REGISTRAR REQUERIMIENTO</h4> -->
-                <h2>{{ modoEdicion ? 'Editar Requerimiento' : 'Registrar Requerimiento' }}</h2>
-
+                <h2>
+                    {{ modoEdicion ? "Editar Requerimiento" : "Registrar Requerimiento" }}
+                </h2>
 
                 <!-- FORMULARIO COMPLETO DE REQUERIMIENTO ITEMS-->
                 <div class="requerimientos-form">
                     <div class="row g-3">
-                        <!-- <div class="col-6">
-                            <label>Fundo <span class="text-danger">*</span></label>
-                            <select class="form-select" [(ngModel)]="fundoSeleccionado"
-                                (ngModelChange)="onFundoChange(true)">
-                                <option value="">Seleccione un fundo</option>
-                                <option *ngFor="let f of fundos" [value]="f.nombreFundo">{{ f.nombreFundo }}</option>
-                            </select>
-                        </div> -->
-
-                        <!-- <div class="col-6">
-                            <label>Área <span class="text-danger">*</span></label>
-                            <select class="form-select" [(ngModel)]="areaSeleccionada">
-                                <option value="">Seleccione un área</option>
-                                <option *ngFor="let a of areas" [value]="a.idarea">{{ a.descripcion }}</option>
-                            </select>
-                        </div> -->
-
-                        <div class="col-6">
-                            <div class="col-6" *ngIf="TipoSelecionado === 'CONSUMO'"></div>
+                        <div class="col-6" *ngIf="TipoSelecionado !== 'TRANSFERENCIA'">
                             <label>Almacén <span class="text-danger">*</span></label>
-                            <select class="form-select" [(ngModel)]="almacenSeleccionado"
-                                [disabled]="TipoSelecionado === 'TRANSFERENCIA'">
-                                <option value="">Seleccione un almacén</option>
-                                <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
-                            </select>
+                            <app-dropdown [(ngModel)]="almacenSeleccionado"
+                                [required]="TipoSelecionado === 'CONSUMO' || TipoSelecionado === 'COMPRA'"
+                                [editable]="true" [data]="almacenes" [valueField]="'idalmacen'"
+                                [textShow2]="'un almacen'" [optionLabel]="'almacen'"
+                                [disabled]="TipoSelecionado === 'TRANSFERENCIA'" />
                         </div>
-
-                        <!-- <div class="col-6">
-                            <label>Requerimiento: <span class="text-danger">*</span></label>
-                            <select [(ngModel)]="RequerimientoSelecionado" (change)="onClasificacionChange(true)"
-                                class="form-select">
-                                <option value="">Seleccione un requerimiento</option>
-                                <option value="I">Item</option>
-                                <option value="C">Comodity</option>
-                            </select>
-                        </div> -->
 
                         <div class="col-6">
                             <label>Tipo: <span class="text-danger">*</span></label>
@@ -144,30 +120,36 @@
                             </select>
                         </div>
 
-                        <div class="col-6">
+                        <div class="col-6" hidden="true">
                             <label>Clasificación <span class="text-danger">*</span></label>
                             <select class="form-select" [(ngModel)]="clasificacionSeleccionado">
                                 <option value="">Seleccione una clasificación</option>
-                                <!-- <option *ngFor="let c of clasificaciones" [value]="c.idclasificacion">
-                                    {{ c.descripcion_clasificacion }}
-                                </option> -->
                                 <option *ngFor="let c of clasificacionesFiltrados" [value]="c.idclasificacion">
                                     {{ c.descripcion_clasificacion }}
                                 </option>
                             </select>
                         </div>
 
+                        <div class="col-6">
+                            <label>Referencia Gasto: <span class="text-danger">*</span></label>
+                            <app-dropdown [data]="tipoGastos" optionLabel="descripcion" valueField="codigo"
+                                [(ngModel)]="SeleccionaTipoGasto" textShow2="un tipo de gasto contable"
+                                [required]="true">
+                            </app-dropdown>
+                        </div>
+
                         <!-- Solo si es transferencia -->
                         <div class="col-6">
                             <div *ngIf="TipoSelecionado === 'TRANSFERENCIA'">
-                                <label>Almacén Origen:</label>
-                                <select [(ngModel)]="almacenOrigen" class="form-control">
+                                <label>Almacén Origen: <span class="text-danger">*</span></label>
+                                <app-dropdown [data]="almacenes" optionLabel="almacen" valueField="idalmacen"
+                                    [(ngModel)]="almacenOrigen" textShow2="un almacen origen" [required]="true">
+                                </app-dropdown>
+                                <!-- <select [(ngModel)]="almacenOrigen" class="form-control">
                                     <option value="">Seleccione una origen</option>
-                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{a.almacen}}</option>
-                                </select>
-                                <!-- <select [(ngModel)]="requerimiento.idalmacen" class="form-control">
-                                    <option value="">Seleccione una origen</option>
-                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{a.almacen}}</option>
+                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">
+                                        {{ a.almacen }}
+                                    </option>
                                 </select> -->
                             </div>
                         </div>
@@ -175,14 +157,15 @@
                         <!-- Solo si es transferencia -->
                         <div class="col-6">
                             <div *ngIf="TipoSelecionado === 'TRANSFERENCIA'">
-                                <label>Almacén Destino:</label>
-                                <select [(ngModel)]="almacenDestino" class="form-control">
+                                <label>Almacén Destino: <span class="text-danger">*</span></label>
+                                <app-dropdown [data]="almacenes" optionLabel="almacen" valueField="idalmacen"
+                                    [(ngModel)]="almacenDestino" textShow2="un almacen destino" [required]="true">
+                                </app-dropdown>
+                                <!-- <select [(ngModel)]="almacenDestino" class="form-control">
                                     <option value="">Seleccione una destino</option>
-                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{a.almacen}}</option>
-                                </select>
-                                <!-- <select [(ngModel)]="requerimiento.idalmacendestino" class="form-control">
-                                    <option value="">Seleccione una destino</option>
-                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">{{a.almacen}}</option>
+                                    <option *ngFor="let a of almacenes" [value]="a.idalmacen">
+                                        {{ a.almacen }}
+                                    </option>
                                 </select> -->
                             </div>
                         </div>
@@ -204,6 +187,7 @@
                             <table class="table table-bordered table-striped align-middle text-center">
                                 <thead class="table-light">
                                     <tr>
+                                        <th>Editar</th>
                                         <th>Código</th>
                                         <th>Producto</th>
                                         <th>Cantidad</th>
@@ -216,6 +200,9 @@
                                 </thead>
                                 <tbody>
                                     <tr *ngFor="let item of detalles; let i = index">
+                                        <td> <button class="btn btn-sm btn-warning me-2" (click)="editarLinea(i)">
+                                                <i class="icon-pencil"></i>
+                                            </button></td>
                                         <td>{{ item.codigo }}</td>
                                         <td>{{ item.producto }}</td>
                                         <td>{{ item.cantidad }}</td>
@@ -224,46 +211,43 @@
                                         <td>{{ item.turno }}</td>
                                         <td>{{ item.labor }}</td>
                                         <td>
-                                            <button class="btn btn-sm btn-warning me-2" (click)="editarLinea(i)">
-                                                <i class="icon-pencil"></i>
-                                            </button>
                                             <button class="btn btn-sm btn-danger" (click)="eliminarLinea(i)">
                                                 <i class="icon-trash"></i>
                                             </button>
                                         </td>
                                     </tr>
                                     <tr *ngIf="detalles.length === 0">
-                                        <td colspan="8" class="text-muted">No hay detalles agregados</td>
+                                        <td colspan="9" class="text-muted">
+                                            No hay detalles agregados
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        <!-- Modal de edición -->
-                        <!-- Modal -->
+                        <!-- Modal de edición Item - Detalle-->
+                        <!-- Modal Item - Detalle-->
                         <div class="modal-backdrop" *ngIf="modalAbierto">
                             <div class="modal-content">
                                 <!-- <h5>Registrar Línea de Detalle</h5>     -->
-                                <h5>{{ editIndex >= 0 ? 'Editar Línea de Detalle' : 'Agregar Línea de Detalle' }}</h5>
+                                <h5>
+                                    {{
+                                    editIndex >= 0
+                                    ? "Editar Línea de Detalle"
+                                    : "Agregar Línea de Detalle"
+                                    }}
+                                </h5>
 
                                 <div class="form-group">
                                     <div class="row g-3">
-                                        <!-- <div class="col-6">
-                                            <label>Código</label>
-                                            <input type="text" class="form-control" [(ngModel)]="lineaTemp.codigo" readonly />
-                                        </div> -->
                                         <!-- Campo CODIGO oculto -->
                                         <input type="hidden" [(ngModel)]="lineaTemp.codigo" name="codigo" />
+
                                         <div class="col-6">
                                             <label>Producto <span class="text-danger">*</span></label>
-                                            <select class="form-select" [(ngModel)]="lineaTemp.producto">
-                                                <option value="">Seleccione un producto</option>
-                                                <!-- <option *ngFor="let it of items" [value]="it.codigo">{{ it.descripcion }}
-                                                </option> -->
-                                                <option *ngFor="let it of itemsFiltrados" [value]="it.codigo">
-                                                    {{ it.descripcion }}
-                                                </option>
-                                            </select>
+                                            <app-dropdown [(ngModel)]="lineaTemp.producto" [required]="true"
+                                                [editable]="true" [data]="itemsFiltrados" [valueField]="'codigo'"
+                                                [textShow2]="'un producto'" [optionLabel]="'descripcion'" />
                                         </div>
 
                                         <div class="col-6">
@@ -273,48 +257,89 @@
                                         </div>
 
                                         <div class="col-6">
-                                            <label>Proyecto <span class="text-danger">*</span></label>
-                                            <select class="form-select" [(ngModel)]="lineaTemp.proyecto">
-                                                <option value="">Seleccione un proyecto</option>
-                                                <option *ngFor="let p of proyectos" [value]="p.proyectoio">{{
-                                                    p.proyectoio
-                                                    }}
+                                            <label>Turno <span class="text-danger">*</span></label>
+                                            <app-dropdown [data]="turnos" optionLabel="nombreTurno"
+                                                valueField="nombreTurno" [(ngModel)]="lineaTemp.turno" [editable]="true"
+                                                [required]="true">
+                                            </app-dropdown>
+                                            <!-- <select class="form-select" [(ngModel)]="lineaTemp.turno">
+                                                <option value="">Seleccione un turno</option>
+                                                <option *ngFor="let t of turnos" [value]="t.nombreTurno">
+                                                    {{ t.nombreTurno }}
                                                 </option>
-                                            </select>
+                                            </select> -->
                                         </div>
 
                                         <div class="col-6">
                                             <label>CECO <span class="text-danger">*</span></label>
-                                            <select class="form-select" [(ngModel)]="lineaTemp.ceco">
+                                            <app-dropdown [data]="cecos" optionLabel="localname" valueField="localname"
+                                                [(ngModel)]="lineaTemp.ceco" [editable]="true" [required]="true">
+                                            </app-dropdown>
+                                            <!-- <select class="form-select" [(ngModel)]="lineaTemp.ceco">
                                                 <option value="">Seleccione un ceco</option>
-                                                <option *ngFor="let c of cecos" [value]="c.localname">{{ c.localname }}
+                                                <option *ngFor="let c of cecos" [value]="c.localname">
+                                                    {{ c.localname }}
                                                 </option>
-                                            </select>
+                                            </select> -->
                                         </div>
 
                                         <div class="col-6">
-                                            <label>Turno <span class="text-danger">*</span></label>
-                                            <select class="form-select" [(ngModel)]="lineaTemp.turno">
-                                                <option value="">Seleccione un turno</option>
-                                                <option *ngFor="let t of turnos" [value]="t.nombreTurno">{{
-                                                    t.nombreTurno }}
+                                            <label>Proyecto <span class="text-danger">*</span></label>
+                                            <app-dropdown [data]="proyectos" optionLabel="proyectoio"
+                                                valueField="proyectoio" [(ngModel)]="lineaTemp.proyecto"
+                                                [editable]="true" [required]="true">
+                                            </app-dropdown>
+                                            <!-- <select class="form-select" [(ngModel)]="lineaTemp.proyecto">
+                                                <option value="">Seleccione un proyecto</option>
+                                                <option *ngFor="let p of proyectos" [value]="p.proyectoio">
+                                                    {{ p.proyectoio }}
                                                 </option>
-                                            </select>
+                                            </select> -->
                                         </div>
 
                                         <div class="col-6">
                                             <label>Labor <span class="text-danger">*</span></label>
-                                            <select class="form-select" [(ngModel)]="lineaTemp.labor">
+                                            <app-dropdown [data]="labores" optionLabel="labor" valueField="labor"
+                                                [(ngModel)]="lineaTemp.labor" [editable]="true" [required]="true">
+                                            </app-dropdown>
+                                            <!-- <select class="form-select" [(ngModel)]="lineaTemp.labor">
                                                 <option value="">Seleccione un labor</option>
-                                                <option *ngFor="let l of labores" [value]="l.labor">{{ l.labor }}
+                                                <option *ngFor="let l of labores" [value]="l.labor">
+                                                    {{ l.labor }}
                                                 </option>
-                                            </select>
+                                            </select> -->
+                                        </div>
+
+                                        <!-- 🔥 NUEVO CAMPO: Activo Fijo -->
+                                        <div class="col-6">
+                                            <label class="form-label d-block">Es para Activo Fijo</label>
+                                            <app-dropdown [data]="activosFijosFiltrados" optionLabel="activo_descripcion" valueField="activo"
+                                                [(ngModel)]="lineaTemp.activoFijo" [editable]="true" [required]="false">
+                                            </app-dropdown>
+
+                                            <!-- CHECK -->
+                                            <!-- <div class="form-check form-switch"> -->
+                                                <!-- <input class="form-check-input" type="checkbox" id="checkActivoFijo"
+                                                    [(ngModel)]="lineaTemp.esActivoFijo"
+                                                    (change)="!lineaTemp.esActivoFijo ? lineaTemp.activoFijo = '' : null">
+                                                <label class="form-check-label" for="checkActivoFijo">¿Es activo
+                                                    fijo?</label>
+                                            </div> -->
+
+                                            <!-- INPUT ACTIVADO SOLO SI CHECK = TRUE -->
+                                            <!-- <input type="text" class="form-control mt-2"
+                                                placeholder="Ingrese código de activo fijo"
+                                                [(ngModel)]="lineaTemp.activoFijo" [disabled]="!lineaTemp.esActivoFijo"> -->
                                         </div>
                                     </div>
 
                                     <div class="mt-4 text-center">
-                                        <button class="btn btn-success me-2" (click)="guardarLinea()">Guardar</button>
-                                        <button class="btn btn-danger" (click)="cerrarModal()">Cancelar</button>
+                                        <button class="btn btn-success me-2" (click)="guardarLinea()">
+                                            Guardar
+                                        </button>
+                                        <button class="btn btn-danger" (click)="cerrarModal()">
+                                            Cancelar
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -322,23 +347,23 @@
                     </div>
 
                     <div class="mt-3 text-end">
-                        <!-- <button class="btn btn-success me-2" (click)="guardar()">Guardar</button> -->
-                        <button class="btn btn-success me-2" (click)="guardar()"> {{ modoEdicion ? 'Actualizar' :
-                            'Registrar' }}</button>
-                        <button class="btn btn-danger" (click)="mostrarFormulario = false;cancelar()">Cancelar</button>
+                        <button class="btn btn-success me-2" (click)="guardar()">
+                            {{ modoEdicion ? "Actualizar" : "Registrar" }}
+                        </button>
+                        <button class="btn btn-danger" (click)="mostrarFormulario = false; cancelar()">
+                            Cancelar
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
 </div>
 
 <!-- ===================== -->
 <!-- TAB COMMODITY -->
 <!-- ===================== -->
 <div *ngIf="tabActiva === 'COMMODITY'">
-
     <div class="requerimientos-container">
         <div class="container py-4">
             <div class="container mt-3">
@@ -348,6 +373,7 @@
                     <table class="table table-hover table-striped align-middle shadow-sm">
                         <thead class="table-dark">
                             <tr>
+                                <th>Editar</th>
                                 <th>Fecha</th>
                                 <th>Fundo</th>
                                 <th>Área</th>
@@ -359,26 +385,28 @@
                         </thead>
                         <tbody>
                             <tr *ngFor="let req of requerimientosCommodity; let i = index">
-                                <td>{{ req.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+                                <td><button class="btn btn-sm btn-warning me-2" (click)="editarCommodity(i)">
+                                        <i class="icon-pencil"></i>
+                                    </button></td>
+                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm" }}</td>
                                 <td>{{ req.idfundo }}</td>
                                 <td>{{ req.idarea }}</td>
                                 <td>{{ req.almacen }}</td>
                                 <td>{{ req.glosa }}</td>
                                 <td>
-                                    <span class="badge"
-                                        [ngClass]="req.estado === 1 ? 'bg-success' : 'bg-warning text-dark'">
-                                        {{ req.estado === 1 ? 'Enviado' : 'Sin enviar' }}
+                                    <span class="badge" [ngClass]="
+                                    req.estado === 1 ? 'bg-success' : 'bg-warning text-dark'
+                                    ">
+                                        {{ req.estado === 1 ? "Enviado" : "Sin enviar" }}
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    <button class="btn btn-sm btn-warning me-2" (click)="editarCommodity(i)">
-                                        <i class="icon-pencil"></i> Editar
-                                    </button>
                                     <button class="btn btn-sm btn-danger" (click)="eliminarCommodity(i)">
-                                        <i class="icon-trash"></i> Eliminar
+                                        <i class="icon-trash"></i>
                                     </button>
                                 </td>
                             </tr>
+
                         </tbody>
                     </table>
 
@@ -391,46 +419,193 @@
                             <i class="icon-file-plus"></i> Nuevo Servicio
                         </button>
                         <button (click)="sincronizarRequerimiento()" class="btn btn-primary botonCelular">
-                            <i class="icon icon-sync"></i> Sincronizar</button>
+                            <i class="icon icon-sync"></i> Sincronizar
+                        </button>
                     </div>
                 </div>
             </div>
             <!-- FORMULARIO COMMODITY -->
             <div *ngIf="mostrarFormularioCommodity" class="formulario mt-4 p-4 shadow rounded">
-                <h2>{{ modoEdicionCommodity ? 'Editar Servicios' : 'Registrar Servicios' }}</h2>
+                <h2>
+                    {{
+                    modoEdicionCommodity ? "Editar Servicios" : "Registrar Servicios"
+                    }}
+                </h2>
 
-                <label>Fundo:</label>
-                <input [(ngModel)]="fundoSeleccionado" class="form-control">
+                <div class="form-group">
+                    <div class="row g-3">
+                        
+                        <div class="col-6">
+                            <label>Proveedor: <span class="text-danger">*</span></label>
+                            <app-dropdown [data]="proveedores" optionLabel="proveedor" valueField="id" [editable]="true"
+                                [(ngModel)]="seleccionaProveedor" textShow2="un proveedor" [required]="true">
+                            </app-dropdown>
+                        </div>
 
-                <label class="mt-2">Glosa:</label>
-                <input [(ngModel)]="glosa" class="form-control">
+                        <div class="col-6">
+                            <label>Servicio: <span class="text-danger">*</span></label>
+                            <app-dropdown [data]="commodityFiltrados" optionLabel="descripcion" valueField="codigo"
+                                [editable]="true" [(ngModel)]="SeleccionaServicio" textShow2="un servicio"
+                                [required]="true">
+                            </app-dropdown>
+                        </div>
 
-                <button class="btn btn-success mt-2" (click)="abrirModalCommodity()">+ Agregar Detalle</button>
+                        <div class="col-6">
+                            <label>Referencia Gasto: <span class="text-danger">*</span></label>
+                            <app-dropdown [data]="tipoGastos" optionLabel="descripcion" valueField="codigo"
+                                [(ngModel)]="SeleccionaTipoGasto" textShow2="un tipo de gasto contable"
+                                [required]="true">
+                            </app-dropdown>
+                        </div>
 
-                <table class="table mt-2" *ngIf="detallesCommodity.length > 0">
-                    <thead>
-                        <tr>
-                            <th>Descripción</th>
-                            <th>Cantidad</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let d of detallesCommodity">
-                            <td>{{d.descripcion}}</td>
-                            <td>{{d.cantidad}}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                        <label class="mt-2">Glosa:</label>
+                        <input [(ngModel)]="glosa" class="form-control" />
+
+                        <div class="d-flex justify-content-end mb-3">
+                            <button class="btn btn-primary" (click)="abrirModalCommodity()">
+                                <i class="bi bi-plus-circle me-1"></i> Agregar Detalle
+                            </button>
+                        </div>
+
+                        <!-- Tabla de detalle Commodity-->
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped align-middle text-center">
+                                <thead>
+                                    <tr>
+                                        <th>Editar</th>
+                                        <th>Descripción</th>
+                                        <th>Cantidad</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let d of detallesCommodity; let i = index">
+                                        <td><button class="btn btn-sm btn-danger" (click)="eliminarDetalleCommodity(i)">
+                                                <i class="icon-trash"></i>
+                                            </button></td>
+                                        <td>{{ d.descripcion }}</td>
+                                        <td>{{ d.cantidad }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-warning me-2"
+                                                (click)="editarDetalleCommodity(i)">
+                                                <i class="icon-pencil"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="detallesCommodity.length === 0">
+                                        <td colspan="4" class="text-muted">
+                                            No hay detalles agregados
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Modal de edición Commodity - Detalle-->
+                    <!-- Modal Commodity - Detalle-->
+                    <div class="modal-backdrop" *ngIf="modalAbiertoCommodity">
+                        <div class="modal-content">
+                            <!-- <h5>Registrar Línea de Detalle</h5>     -->
+                            <h5>
+                                {{
+                                editIndex >= 0
+                                ? "Editar Línea de Detalle - Servicios"
+                                : "Agregar Línea de Detalle - Servicios"
+                                }}
+                            </h5>
+
+                            <div class="form-group">
+                                <div class="row g-3">
+                                    <!-- Campo CODIGO oculto -->
+                                    <input type="hidden" [(ngModel)]="lineaTemp.codigo" name="codigo" />
+
+                                    <div class="col-12">
+                                        <label>Descripción <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" [(ngModel)]="lineaTempCommodity.descripcion" />
+                                    </div>
+
+                                    <div class="col-6">
+                                        <label>Cantidad <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control cantidad"
+                                            [(ngModel)]="lineaTemp.cantidad" min="1" />
+                                    </div>
+
+                                    <div class="col-6">
+                                        <label>Turno <span class="text-danger">*</span></label>
+                                        <app-dropdown [data]="turnos" optionLabel="nombreTurno" valueField="nombreTurno"
+                                            [(ngModel)]="lineaTemp.turno" [editable]="true" [required]="true">
+                                        </app-dropdown>
+                                    </div>
+
+                                    <div class="col-6">
+                                        <label>CECO <span class="text-danger">*</span></label>
+                                        <app-dropdown [data]="cecos" optionLabel="localname" valueField="localname"
+                                            [(ngModel)]="lineaTemp.ceco" [editable]="true" [required]="true">
+                                        </app-dropdown>
+                                    </div>
+
+                                    <div class="col-6">
+                                        <label>Proyecto <span class="text-danger">*</span></label>
+                                        <app-dropdown [data]="proyectos" optionLabel="proyectoio"
+                                            valueField="proyectoio" [(ngModel)]="lineaTemp.proyecto" [editable]="true"
+                                            [required]="true">
+                                        </app-dropdown>
+                                    </div>
+
+                                    <div class="col-6">
+                                        <label>Labor <span class="text-danger">*</span></label>
+                                        <app-dropdown [data]="labores" optionLabel="labor" valueField="labor"
+                                            [(ngModel)]="lineaTemp.labor" [editable]="true" [required]="true">
+                                        </app-dropdown>
+                                    </div>
+
+                                    <!-- 🔥 NUEVO CAMPO: Activo Fijo -->
+                                    <div class="col-6">
+                                        <label>Es para Activo Fijo</label>
+                                        <app-dropdown [data]="activosFijosServicioFiltrados" optionLabel="activo_descripcion" valueField="activo"
+                                            [(ngModel)]="lineaTemp.activoFijo" [editable]="true" [required]="false">
+                                        </app-dropdown>
+                                        <!-- <label class="form-label d-block">Es para Activo Fijo</label> -->
+                                        <!-- CHECK -->
+                                        <!-- <div class="form-check form-switch"> -->
+                                        <!-- <input class="form-check-input" type="checkbox" id="checkActivoFijo" [(ngModel)]="lineaTemp.esActivoFijo"
+                                                (change)="!lineaTemp.esActivoFijo ? lineaTemp.activoFijo = '' : null">
+                                            <label class="form-check-label" for="checkActivoFijo">¿Es activo
+                                                fijo?</label> -->
+
+                                        <!-- </div> -->
+
+                                        <!-- INPUT ACTIVADO SOLO SI CHECK = TRUE -->
+                                        <!-- <input type="text" class="form-control mt-2"
+                                            placeholder="Ingrese código de activo fijo"
+                                            [(ngModel)]="lineaTemp.activoFijo" [disabled]="!lineaTemp.esActivoFijo"> -->
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 text-center">
+                                    <button class="btn btn-success me-2" (click)="guardarLineaCommodity()">
+                                        Guardar
+                                    </button>
+                                    <button class="btn btn-danger" (click)="cerrarModalCommodity()">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- BOTONES -->
                 <div class="mt-3 text-end">
                     <button class="btn btn-success me-2" (click)="guardarCommodity()">
-                        {{ modoEdicionCommodity ? 'Actualizar' : 'Registrar' }}
+                        {{ modoEdicionCommodity ? "Actualizar" : "Registrar" }}
                     </button>
-                    <button class="btn btn-danger" (click)="cancelarCommodity()">Cancelar</button>
+                    <button class="btn btn-danger" (click)="cancelarCommodity()">
+                        Cancelar
+                    </button>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
@@ -459,23 +634,24 @@
                         </thead>
                         <tbody>
                             <tr *ngFor="let req of requerimientosActivoFijo; let i = index">
-                                <td>{{ req.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm" }}</td>
                                 <td>{{ req.idfundo }}</td>
                                 <td>{{ req.idarea }}</td>
                                 <td>{{ req.almacen }}</td>
                                 <td>{{ req.glosa }}</td>
                                 <td>
-                                    <span class="badge"
-                                        [ngClass]="req.estado === 1 ? 'bg-success' : 'bg-warning text-dark'">
-                                        {{ req.estado === 1 ? 'Enviado' : 'Sin enviar' }}
+                                    <span class="badge" [ngClass]="
+                                    req.estado === 1 ? 'bg-success' : 'bg-warning text-dark'
+                                    ">
+                                        {{ req.estado === 1 ? "Enviado" : "Sin enviar" }}
                                     </span>
                                 </td>
                                 <td class="text-center">
                                     <button class="btn btn-sm btn-warning me-2" (click)="editarActivoFijo(i)">
-                                        <i class="icon-pencil"></i> Editar
+                                        <i class="icon-pencil"></i>
                                     </button>
                                     <button class="btn btn-sm btn-danger" (click)="eliminarActivoFijo(i)">
-                                        <i class="icon-trash"></i> Eliminar
+                                        <i class="icon-trash"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -491,46 +667,181 @@
                             <i class="icon-file-plus"></i> Nuevo Activo Fijo
                         </button>
                         <button (click)="sincronizarRequerimiento()" class="btn btn-primary botonCelular">
-                            <i class="icon icon-sync"></i> Sincronizar</button>
+                            <i class="icon icon-sync"></i> Sincronizar
+                        </button>
                     </div>
                 </div>
             </div>
             <!-- FORMULARIO ACTIVO FIJO -->
             <div *ngIf="mostrarFormularioActivoFijo" class="formulario mt-4 p-4 shadow rounded">
-                <h2>{{ modoEdicionActivoFijo ? 'Editar Activo Fijo' : 'Registrar Activo Fijo' }}</h2>
+                <h2>
+                    {{
+                    modoEdicionActivoFijo
+                    ? "Editar Activo Fijo"
+                    : "Registrar Activo Fijo"
+                    }}
+                </h2>
 
-                <label>Fundo:</label>
-                <input [(ngModel)]="fundoSeleccionado" class="form-control">
+                <div class="form-group">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label>Proveedor: <span class="text-danger">*</span></label>
+                            <app-dropdown [data]="proveedores" optionLabel="proveedor" valueField="id" [editable]="true"
+                                [(ngModel)]="seleccionaProveedor" textShow2="un proveedor" [required]="true">
+                            </app-dropdown>
+                        </div>
 
-                <label class="mt-2">Glosa:</label>
-                <input [(ngModel)]="glosa" class="form-control">
+                        <div class="col-6">
+                            <label>Servico AF: <span class="text-danger">*</span></label>
+                            <app-dropdown [data]="commodityFiltrados" optionLabel="descripcion" valueField="codigo"
+                                [editable]="true" [(ngModel)]="SeleccionaServicio" textShow2="un servicio"
+                                [required]="true">
+                            </app-dropdown>
+                        </div>
 
-                <button class="btn btn-success mt-2" (click)="abrirModalActivoFijo()">+ Agregar Detalle</button>
+                        <div class="col-6">
+                            <label>Referencia Gasto: <span class="text-danger">*</span></label>
+                            <app-dropdown [data]="tipoGastos" optionLabel="descripcion" valueField="codigo"
+                                [(ngModel)]="SeleccionaTipoGasto" textShow2="un tipo de gasto contable"
+                                [required]="true">
+                            </app-dropdown>
+                        </div>
 
-                <table class="table mt-2" *ngIf="detallesActivoFijo.length > 0">
-                    <thead>
-                        <tr>
-                            <th>Descripción</th>
-                            <th>Cantidad</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let d of detallesActivoFijo">
-                            <td>{{d.descripcion}}</td>
-                            <td>{{d.cantidad}}</td>
-                        </tr>
-                    </tbody>
-                </table>
+
+                        <label class="mt-2">Glosa:</label>
+                        <input [(ngModel)]="glosa" class="form-control" />
+
+                        <div class="d-flex justify-content-end mb-3">
+                            <button class="btn btn-primary" (click)="abrirModalActivoFijo()">
+                                <i class="bi bi-plus-circle me-1"></i> Agregar Detalle
+                            </button>
+                        </div>
+
+                         <!-- Tabla de detalle Activo Fijo-->
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped align-middle text-center">
+                                <thead>
+                                    <tr>
+                                        <th>Editar</th>
+                                        <th>Descripción</th>
+                                        <th>Cantidad</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let d of detallesActivoFijo; let i = index">
+                                        <td><button class="btn btn-sm btn-danger" (click)="eliminarDetalleActivoFijo(i)">
+                                                <i class="icon-trash"></i>
+                                            </button></td>
+                                        <td>{{ d.descripcion }}</td>
+                                        <td>{{ d.cantidad }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-warning me-2"
+                                                (click)="editarDetalleActivoFijo(i)">
+                                                <i class="icon-pencil"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="detallesCommodity.length === 0">
+                                        <td colspan="4" class="text-muted">
+                                            No hay detalles agregados
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Modal de edición Activo Fijo - Detalle-->
+                        <!-- Modal Activo Fijo - Detalle-->
+                        <div class="modal-backdrop" *ngIf="modalAbiertoActivoFijo">
+                            <div class="modal-content">
+                                <!-- <h5>Registrar Línea de Detalle</h5>     -->
+                                <h5>
+                                    {{
+                                    editIndex >= 0
+                                    ? "Editar Línea de Detalle - Activo Fijo"
+                                    : "Agregar Línea de Detalle - Activo Fijo"
+                                    }}
+                                </h5>
+
+                                <div class="form-group">
+                                    <div class="row g-3">
+                                        <!-- Campo CODIGO oculto -->
+                                        <input type="hidden" [(ngModel)]="lineaTemp.codigo" name="codigo" />
+
+                                        <div class="col-12">
+                                            <label>Descripción <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" [(ngModel)]="lineaTempActivoFijo.descripcion" />
+                                        </div>
+
+                                        <div class="col-6">
+                                            <label>Cantidad <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control cantidad"
+                                                [(ngModel)]="lineaTemp.cantidad" min="1" />
+                                        </div>
+
+                                        <div class="col-6">
+                                            <label>Turno <span class="text-danger">*</span></label>
+                                            <app-dropdown [data]="turnos" optionLabel="nombreTurno"
+                                                valueField="nombreTurno" [(ngModel)]="lineaTemp.turno" [editable]="true"
+                                                [required]="true">
+                                            </app-dropdown>
+                                        </div>
+
+                                        <div class="col-6">
+                                            <label>CECO <span class="text-danger">*</span></label>
+                                            <app-dropdown [data]="cecos" optionLabel="localname" valueField="localname"
+                                                [(ngModel)]="lineaTemp.ceco" [editable]="true" [required]="true">
+                                            </app-dropdown>
+                                        </div>
+
+                                        <div class="col-6">
+                                            <label>Proyecto <span class="text-danger">*</span></label>
+                                            <app-dropdown [data]="proyectos" optionLabel="proyectoio"
+                                                valueField="proyectoio" [(ngModel)]="lineaTemp.proyecto"
+                                                [editable]="true" [required]="true">
+                                            </app-dropdown>
+                                        </div>
+
+                                        <div class="col-6">
+                                            <label>Labor <span class="text-danger">*</span></label>
+                                            <app-dropdown [data]="labores" optionLabel="labor" valueField="labor"
+                                                [(ngModel)]="lineaTemp.labor" [editable]="true" [required]="true">
+                                            </app-dropdown>
+                                        </div>
+
+                                        <div class="col-6">
+                                            <label>Codigo Activo Fijo <span class="text-danger">*</span></label>
+                                            <app-dropdown [data]="activosFijosServicioFiltrados" optionLabel="activo_descripcion" valueField="activo"
+                                                [(ngModel)]="lineaTemp.activoFijo" [editable]="true" [required]="true">
+                                            </app-dropdown>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 text-center">
+                                        <button class="btn btn-success me-2" (click)="guardarLineaActivoFijo()">
+                                            Guardar
+                                        </button>
+                                        <button class="btn btn-danger" (click)="cerrarModalActivoFijo()">
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- BOTONES -->
                 <div class="mt-3 text-end">
                     <button class="btn btn-success me-2" (click)="guardarActivoFijo()">
-                        {{ modoEdicionActivoFijo ? 'Actualizar' : 'Registrar' }}
+                        {{ modoEdicionActivoFijo ? "Actualizar" : "Registrar" }}
                     </button>
-                    <button class="btn btn-danger" (click)="cancelarActivoFijo()">Cancelar</button>
+                    <button class="btn btn-danger" (click)="cancelarActivoFijo()">
+                        Cancelar
+                    </button>
                 </div>
             </div>
-
         </div>
     </div>
 </div>

@@ -6,27 +6,30 @@ import { MaestrasService } from '../../../services/maestras.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { Comodity } from '@/app/shared/interfaces/Tables';
 import { SubClasificacion } from '@/app/shared/interfaces/Tables';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-maestros-comodities',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './maestros-comodities.component.html',
-  styleUrls: ['./maestros-comodities.component.scss']
+  styleUrls: ['./maestros-comodities.component.scss'],
 })
 export class MaestrosComoditiesComponent implements OnInit {
-
   listaComodity: Comodity[] = [];
   modelo: any = this.createEmptyModelo();
 
   // combos / datos auxiliares
-  listaClasificaciones: any[] = [];      // cargar desde Dexie o API
-  elementosGasto: any[] = [];           // cargar desde Dexie o API
+  listaClasificaciones: any[] = []; // cargar desde Dexie o API
+  elementosGasto: any[] = []; // cargar desde Dexie o API
 
   usuarioActual = 'MISESF';
   fechaHoy = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
-  constructor(private maestrasService: MaestrasService, private dexieService: DexieService) {}
+  constructor(
+    private maestrasService: MaestrasService,
+    private dexieService: DexieService
+  ) {}
 
   ngOnInit(): void {
     this.cargarLista();
@@ -43,7 +46,7 @@ export class MaestrosComoditiesComponent implements OnInit {
       estado: 'A',
       ultimaModificacionUsuario: this.usuarioActual,
       ultimaModificacionFecha: this.fechaHoy,
-      subClasificaciones: [] as SubClasificacion[]
+      subClasificaciones: [] as SubClasificacion[],
     };
   }
 
@@ -55,11 +58,11 @@ export class MaestrosComoditiesComponent implements OnInit {
     // ejemplo de carga, ajusta a tus datos reales (puedes sacar de dexie o API)
     this.listaClasificaciones = [
       { id: 1, descripcion: 'Activos Menores' },
-      { id: 2, descripcion: 'Activos Fijos' }
+      { id: 2, descripcion: 'Activos Fijos' },
     ];
     this.elementosGasto = [
       { id: 1, descripcion: 'Gasto Operativo' },
-      { id: 2, descripcion: 'Gasto Capital' }
+      { id: 2, descripcion: 'Gasto Capital' },
     ];
   }
 
@@ -83,7 +86,9 @@ export class MaestrosComoditiesComponent implements OnInit {
     // mejor: pedir dexie direct: assuming maestrasService has method showComodityById if needed
     this.modelo = {
       ...c,
-      subClasificaciones: await this.dexieService.showSubClasificacionById(c.id) // Convert to string to match expected type
+      subClasificaciones: await this.dexieService.showSubClasificacionById(
+        c.id
+      ), // Convert to string to match expected type
     };
 
     const el = document.getElementById('modalMaestrosComodity') as any;
@@ -105,7 +110,7 @@ export class MaestrosComoditiesComponent implements OnInit {
       cuentaGasto: '',
       elementoGasto: '',
       clasificacionActivo: '',
-      legacyNumber: ''
+      legacyNumber: '',
     };
     this.modelo.subClasificaciones.push(newSub);
   }
@@ -114,7 +119,7 @@ export class MaestrosComoditiesComponent implements OnInit {
     const sub = this.modelo.subClasificaciones[index];
     if (sub && sub.id && sub.id > 0) {
       // si ya existía en DB, marcar para eliminar o borrarlo
-      this.maestrasService.maestrasDexieDeleteSub?.(sub.id).catch(()=>{}); // opcional (no obligatorio)
+      this.maestrasService.maestrasDexieDeleteSub?.(sub.id).catch(() => {}); // opcional (no obligatorio)
     }
     this.modelo.subClasificaciones.splice(index, 1);
   }
@@ -132,10 +137,15 @@ export class MaestrosComoditiesComponent implements OnInit {
       this.modelo.id = Date.now(); // id temporal; Dexie lo guardará
     }
     // asignar comodityId en subclas
-    this.modelo.subClasificaciones = this.modelo.subClasificaciones.map((s: SubClasificacion) => ({ ...s, comodityId: this.modelo.id }));
+    this.modelo.subClasificaciones = this.modelo.subClasificaciones.map(
+      (s: SubClasificacion) => ({ ...s, comodityId: this.modelo.id })
+    );
 
     // llamar al servicio que guarda en Dexie y en API
-    await this.maestrasService.saveComodityWithSubclas(this.modelo as Comodity, this.modelo.subClasificaciones as SubClasificacion[]);
+    await this.maestrasService.saveComodityWithSubclas(
+      this.modelo as Comodity,
+      this.modelo.subClasificaciones as SubClasificacion[]
+    );
 
     // recargar lista y cerrar modal
     await this.cargarLista();
@@ -149,5 +159,48 @@ export class MaestrosComoditiesComponent implements OnInit {
       el.style.display = 'none';
       el.removeAttribute('aria-modal');
     }
+  }
+
+  openImportModal() {
+    const modal = document.getElementById('importModal');
+    (window as any).bootstrap.Modal.getOrCreateInstance(modal).show();
+  }
+
+  downloadTemplate() {
+    const plantilla = [
+      {
+        codigo: '',
+        descripcionLocal: '',
+        descripcionCompleta: '',
+        unidadMedida: '',
+        unidadCompra: '',
+        unidadEmbalaje: '',
+        compania: '',
+        estado: '',
+      },
+    ];
+
+    // Crear hoja
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      [
+        'codigo',
+        'descripcionLocal',
+        'descripcionCompleta',
+        'unidadMedida',
+        'unidadCompra',
+        'unidadEmbalaje',
+        'compania',
+        'estado',
+      ],
+    ]);
+
+    // Crear libro
+    const workbook = XLSX.utils.book_new();
+
+    // Agregar hoja
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Plantilla');
+
+    // Descargar
+    XLSX.writeFile(workbook, 'plantilla_items.xlsx');
   }
 }

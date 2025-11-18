@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import {
   Usuario, Configuracion, Empresa, Fundo, Almacen, Area, Proyecto, ItemComodity, Clasificacion, Cultivo, Acopio, Ceco, Labor,
-  Trabajador, Turno, DetalleRequerimiento, Requerimiento, Item, Comodity, SubClasificacion
+  Trabajador, Turno, DetalleRequerimiento, Requerimiento, Item, Comodity, SubClasificacion, Proveedor, TipoGasto, ActivoFijo
 } from '../interfaces/Tables'
 import Dexie from 'dexie';
 
@@ -30,9 +30,13 @@ export class DexieService extends Dexie {
   public items!: Dexie.Table<Item, string>
   public comodities!: Dexie.Table<Comodity, string>
   public subClasificaciones!: Dexie.Table<SubClasificacion, string>
+  public proveedores!: Dexie.Table<Proveedor, string>
+  public tipoGastos!: Dexie.Table<TipoGasto, string>
+  public commoditys!: Dexie.Table<Comodity, string>
+  public activosFijos!: Dexie.Table<ActivoFijo, string>
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 4; // ⬅️ cambia este número cuando modifiques el esquema
+  private static readonly DB_VERSION = 5; // ⬅️ cambia este número cuando modifiques el esquema
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -44,17 +48,17 @@ export class DexieService extends Dexie {
     // this.version(1).stores({
       usuario: `id,sociedad,idempresa,ruc,razonSocial,idProyecto,proyecto,documentoidentidad,usuario,
       clave,nombre,idrol,rol`,
-      configuracion: `id,idempresa,idfundo,idcultivo,idarea,idacopio,idceco,idlabor,idalmacen`,
+      configuracion: `id,idempresa,idfundo,idcultivo,idarea,idacopio,idceco,idlabor,idalmacen,idactivoFijo`,
       empresas: `id,ruc,razonsocial`,
       fundos: `id,codigoFundo,empresa,fundo,nombreFundo`,
       almacenes: `id,idalmacen,almacen`,
       areas: `id,ruc,descripcion,estado`,
       proyectos: `id,ruc,afe,proyecto,esinverison,estado`,
       cultivos: `id,cultivo,codigo,descripcion,empresa`,
-      turnos: 'id,codTurno,turno,nombreTurno,modulo',
+      turnos:  `id,turno,codTurno,nombreTurno,idcultivo,idproyecto,conturno,estado`,
       acopios: `id,nave,codigoAcopio,acopio`,
-      cecos: `id,costcenter,localname,conturno,esinversion,estado`,
-      labores: `id,idlabor,idgrupolabor,labor`,
+      cecos: `id,costcenter,localname,cultivo,conturno,esinversion,estado`,
+      labores: `id,idlabor,idgrupolabor,ceco,labor,estado`,
       itemComoditys: `id,tipoclasificacion,codigo,descripcion`,
       clasificaciones: `id,idclasificacion,descripcion_clasificacion,tipoClasificacion`,
       trabajadores: `id,ruc,nrodocumento,nombres,apellidopaterno,apellidomaterno,estado,motivo,
@@ -64,6 +68,10 @@ export class DexieService extends Dexie {
       items: `id,tipoclasificacion,codigo,descripcion`,
       comodities: `id,tipoclasificacion,codigo,descripcion`,
       subClasificaciones: `id,comodityId,subClase,descripcion,unidad,cuentaGasto,elementoGasto,clasificacionActivo,legacyNumber`,
+      proveedores: `id,TipoPersona,documento,ruc,Estado,TipoPago,MonedaPago,detraccion,TipoServicio`,
+      tipoGastos: `codigo,descripcion`,
+      commoditys: `id,tipoclasificacion,codigo,descripcion`,
+      activosFijos: `id,codigo,descripcion,codigoInterno,ubicacion,ceco,localName,tipoActivo,Estado`,
     });
 
     this.usuario = this.table('usuario');
@@ -86,6 +94,10 @@ export class DexieService extends Dexie {
     this.items = this.table('items')
     this.comodities = this.table('comodities')
     this.subClasificaciones = this.table('subClasificaciones')
+    this.proveedores = this.table('proveedores')
+    this.tipoGastos = this.table('tipoGastos')
+    this.commoditys = this.table('commoditys')
+    this.activosFijos = this.table('activosFijos')    
 
     // 🔧 Manejo automático de errores por versión o corrupción
       this.open().catch(async (err) => {
@@ -183,6 +195,24 @@ export class DexieService extends Dexie {
   async showTurnoById(id: number) { return await this.turnos.where('id').equals(id).first() }
   async ShowTurnosByIdTurno(idturno: number) { return await this.turnos.filter(turno => turno.id == idturno).toArray() }
   async clearTurnos() { await this.turnos.clear(); }
+  //Proveedores
+  async saveProveedor(proveedor: Proveedor) { await this.proveedores.put(proveedor); }
+  async saveProveedores(proveedores: Proveedor[]) { await this.proveedores.bulkPut(proveedores); }
+  async showProveedores() { return await this.proveedores.toArray(); }
+  async showProveedorById(id: number) { return await this.proveedores.where('id').equals(id).first() }
+  async clearProveedores() { await this.proveedores.clear(); }
+  //Tipo Gastos
+  async saveTipoGasto(tipoGasto: TipoGasto) { await this.tipoGastos.put(tipoGasto); }
+  async saveTipoGastos(tipoGastos: TipoGasto[]) { await this.tipoGastos.bulkPut(tipoGastos); }
+  async showTipoGastos() { return await this.tipoGastos.toArray(); }
+  async showTipoGastoById(id: number) { return await this.tipoGastos.where('id').equals(id).first() }
+  async clearTipoGastos() { await this.tipoGastos.clear(); }
+  //Activos Fijos
+  async saveActivosFijo(activosFijo: ActivoFijo) { await this.activosFijos.put(activosFijo); }
+  async saveActivosFijos(activosFijos: ActivoFijo[]) { await this.activosFijos.bulkPut(activosFijos); }
+  async showActivosFijos() { return await this.activosFijos.toArray(); }
+  async showActivosFijoById(id: number) { return await this.activosFijos.where('id').equals(id).first() }
+  async clearActivosFijos() { await this.activosFijos.clear(); }
   //Trabajadores
   async saveTrabajadores(params: Trabajador[]) { await this.trabajadores.bulkPut(params); }
   async saveTrabajador(params: Trabajador) { await this.trabajadores.put(params); }
@@ -232,6 +262,8 @@ export class DexieService extends Dexie {
     await this.clearCultivos();
     await this.clearAcopios();
     await this.clearEmpresas();
+    await this.clearProveedores();
+    await this.clearTipoGastos();
     await this.clearCecos();
     await this.clearLabores();
     await this.clearTurnos();

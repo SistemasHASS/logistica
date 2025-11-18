@@ -4,15 +4,13 @@ import { environment } from 'src/environments/environment';
 import { Observable, lastValueFrom } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
-
 export class MaestrasService {
-
   private readonly baseUrl: string = environment.baseUrl;
   private readonly apiMaestra: string = environment.apiMaestra;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   getFundos(body: any): Observable<any> {
     const url = `${this.apiMaestra}/api/Maestros/get-fundos`;
@@ -50,19 +48,34 @@ export class MaestrasService {
     }
   }
 
-  async saveComodityWithSubclas(comodity: any, subclasificaciones: any[]): Promise<void> {
+  getActivosFijos(body: any): Observable<any> {
+    const url = `${this.apiMaestra}/api/Maestros/obtener-actfijo`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error en el api: activos fijos');
+    }
+  }
+
+  async saveComodityWithSubclas(
+    comodity: any,
+    subclasificaciones: any[]
+  ): Promise<void> {
     try {
       // Here you should implement the logic to save the comodity and its subclasificaciones
       // This is a basic implementation - adjust according to your API requirements
       const url = `${this.apiMaestra}/api/Maestros/save-comodity`;
       const body = {
         comodity,
-        subclasificaciones
+        subclasificaciones,
       };
-      
+
       await lastValueFrom(this.http.post(url, body));
     } catch (error: any) {
-      throw new Error(error.error?.message || 'Error al guardar el comodity con sus subclasificaciones');
+      throw new Error(
+        error.error?.message ||
+          'Error al guardar el comodity con sus subclasificaciones'
+      );
     }
   }
 
@@ -71,7 +84,9 @@ export class MaestrasService {
     try {
       return this.http.post<any>(url, body);
     } catch (error: any) {
-      throw new Error(error.error?.message || 'Error en el api: clasificaciones');
+      throw new Error(
+        error.error?.message || 'Error en el api: clasificaciones'
+      );
     }
   }
 
@@ -201,11 +216,33 @@ export class MaestrasService {
     }
   }
 
+  getProveedores(body: any): Observable<any> {
+    const url = `${this.apiMaestra}/api/Maestros/obtener-provee`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message || 'Error al obtener proveedores'
+      );
+    }
+  }
+
+  getTipoGastos(body: any): Observable<any> {
+    const url = `${this.apiMaestra}/api/Maestros/obtener-gastos`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message || 'Error al obtener tipos de gatos contables'
+      );
+    }
+  }
+
   getMonedas(params: any): Observable<any> {
     const url = `${this.baseUrl}/tareo/monedas`;
     try {
       let httpParams = new HttpParams();
-      const paramsString = JSON.stringify(params)
+      const paramsString = JSON.stringify(params);
       httpParams = httpParams.set('parametros', paramsString);
       return this.http.get<any>(url, { params: httpParams });
     } catch (error: any) {
@@ -217,7 +254,7 @@ export class MaestrasService {
     const url = `${this.baseUrl}/tareo/labor`;
     try {
       let httpParams = new HttpParams();
-      const paramsString = JSON.stringify(params)
+      const paramsString = JSON.stringify(params);
       httpParams = httpParams.set('parametros', paramsString);
       return this.http.get<any>(url, { params: httpParams });
     } catch (error: any) {
@@ -229,7 +266,7 @@ export class MaestrasService {
     const url = `${this.baseUrl}/tareo/incidencias`;
     try {
       let httpParams = new HttpParams();
-      const paramsString = JSON.stringify(params)
+      const paramsString = JSON.stringify(params);
       httpParams = httpParams.set('parametros', paramsString);
       return this.http.get<any>(url, { params: httpParams });
     } catch (error: any) {
@@ -241,7 +278,7 @@ export class MaestrasService {
     const url = `${this.baseUrl}/tareo/motivosalida`;
     try {
       let httpParams = new HttpParams();
-      const paramsString = JSON.stringify(params)
+      const paramsString = JSON.stringify(params);
       httpParams = httpParams.set('parametros', paramsString);
       return this.http.get<any>(url, { params: httpParams });
     } catch (error: any) {
@@ -250,12 +287,14 @@ export class MaestrasService {
   }
 
   // Add this to MaestrasService
-async maestrasDexieDeleteSub(id: number): Promise<any> {
-  const url = `${this.apiMaestra}/api/Maestros/delete-subclasificacion`; // Adjust the endpoint as needed
-  try {
-    return await lastValueFrom(this.http.post(url, { id }));
-  } catch (error: any) {
-    throw new Error(error.error?.message || 'Error eliminando subclasificación');
+  async maestrasDexieDeleteSub(id: number): Promise<any> {
+    const url = `${this.apiMaestra}/api/Maestros/delete-subclasificacion`; // Adjust the endpoint as needed
+    try {
+      return await lastValueFrom(this.http.post(url, { id }));
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message || 'Error eliminando subclasificación'
+      );
+    }
   }
-}
 }
