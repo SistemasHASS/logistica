@@ -81,3 +81,70 @@ table tr button{
         --tamaño-letra: 13px;
     }
 }
+
+/* ================================
+   RESPONSIVE GENERAL
+   ================================ */
+// @media (max-width: 768px) {
+
+//     /* ---- TABLAS RESPONSIVE ---- */
+//     .table-responsive {
+//         overflow-x: auto;
+//         -webkit-overflow-scrolling: touch;
+//     }
+
+//     table.table th,
+//     table.table td {
+//         white-space: nowrap !important;
+//         font-size: 0.85rem;
+//         padding: 6px;
+//     }
+
+//     /* ---- BOTONES RESPONSIVE ---- */
+//     .botonCelular,
+//     .btn {
+//         width: 100%;
+//         margin-bottom: 8px;
+//     }
+
+//     .d-flex {
+//         flex-direction: column;
+//     }
+
+//     /* ---- FORMULARIOS ---- */
+//     .formulario {
+//         padding: 15px !important;
+//     }
+
+//     .row.g-3 > [class*="col-6"] {
+//         width: 100% !important;
+//     }
+
+//     /* ---- TITULOS ---- */
+//     h2, h4 {
+//         text-align: center;
+//         font-size: 1.2rem !important;
+//     }
+
+//     /* ---- MODALES EN CELULAR ---- */
+//     .modal-backdrop {
+//         display: flex;
+//         align-items: center;
+//         justify-content: center;
+//         padding: 10px;
+//     }
+
+//     .modal-content {
+//         width: 100% !important;
+//         max-height: 90vh;
+//         overflow-y: auto;
+//         padding: 15px;
+//     }
+
+//     /* ---- TABS ---- */
+//     .nav-tabs .nav-link {
+//         width: 100%;
+//         text-align: center;
+//         margin-bottom: 5px;
+//     }
+// }

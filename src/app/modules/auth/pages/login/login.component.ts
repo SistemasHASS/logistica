@@ -57,6 +57,9 @@ export class LoginComponent {
       this.router.navigate(['/main/aprobaciones']);
     }
     else if (rol.includes('ALLOGIST')) {
+      this.router.navigate(['/main/despachos']);
+    }
+    else if (rol.includes('OPLOGIST')) {
       this.router.navigate(['/main/parametros']);
     }
     else {

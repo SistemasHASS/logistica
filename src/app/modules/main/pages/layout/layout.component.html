@@ -48,11 +48,11 @@
               <span class="hide-menu"> Comodities</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Configuración</span>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')"  class="sidebar-item" (click)="toggleSidebar()">
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST')"  class="sidebar-item" (click)="toggleSidebar()">
             <a routerLink="./parametros" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class="icon icon-equalizer"></i>
@@ -70,17 +70,30 @@
               <span class="hide-menu"> Roles de aprobación</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Requerimientos</span>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item" (click)="toggleSidebar()">
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST')" class="sidebar-item" (click)="toggleSidebar()">
             <a routerLink="./requerimientos" routerLinkActive="active" class="sidebar-link"
               aria-expanded="false">
               <span>
                 <i class="icon icon-stack"></i>
               </span>
               <span class="hide-menu"> Requerimientos</span>
+            </a>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Despachos</span>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./despachos" routerLinkActive="active" class="sidebar-link"
+              aria-expanded="false">
+              <span>
+                <i class="icon icon-stack"></i>
+              </span>
+              <span class="hide-menu"> Despachos</span>
             </a>
           </li>
           <li *ngIf="usuario?.idrol.includes('TI')" class="nav-small-cap">

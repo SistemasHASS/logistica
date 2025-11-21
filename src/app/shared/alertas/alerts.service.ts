@@ -24,6 +24,16 @@ export class AlertService {
     });
   }
 
+  showAlertError(title: string, message: string) {
+    Swal.fire({
+      title: title,
+      html: message,
+      icon: 'error',
+      confirmButtonText: 'Aceptar',
+      allowOutsideClick: false
+    });
+  }
+
   showAlert(title: string, message: string, icon: SweetAlertIcon) {
     Swal.fire({
       title: title,

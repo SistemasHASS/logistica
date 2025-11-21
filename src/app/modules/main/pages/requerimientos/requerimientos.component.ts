@@ -12,6 +12,10 @@ import {
   DetalleRequerimientoCommodity,
   DetalleRequerimientoActivoFijo,
   ActivoFijo,
+  RequerimientoCommodity,
+  RequerimientoActivoFijo,
+  RequerimientoActivoFijoMenor,
+  DetalleRequerimientoActivoFijoMenor,
 } from 'src/app/shared/interfaces/Tables';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
 import {
@@ -40,7 +44,7 @@ import { LayoutComponent } from '@/app/modules/main/pages/layout/layout.componen
 })
 export class RequerimientosComponent implements OnInit {
   // Control de tabs
-  tabActiva: 'ITEM' | 'COMMODITY' | 'ACTIVOFIJO' = 'ITEM';
+  tabActiva: 'ITEM' | 'COMMODITY' | 'ACTIVOFIJO' | 'ACTIVOFIJOMENOR' = 'ITEM';
   // ====================
   // FORMULARIOS VISIBLES
   // ====================
@@ -53,17 +57,22 @@ export class RequerimientosComponent implements OnInit {
   //-------Activo Fijo----------
   mostrarFormularioActivoFijo = false;
   modoEdicionActivoFijo = false;
+  //-------Activo Fijo Menor----------
+  mostrarFormularioActivoFijoMenor = false;
+  modoEdicionActivoFijoMenor = false;
 
   // listas
   requerimientos: Requerimiento[] = [];
   requerimientosItems: any[] = []; // ITEMS
-  requerimientosCommodity: any[] = []; // SERVICIOS
-  requerimientosActivoFijo: any[] = []; // ACTIVO FIJO
+  requerimientosCommodity: RequerimientoCommodity[] = []; // SERVICIOS
+  requerimientosActivoFijo: RequerimientoActivoFijo[] = []; // ACTIVO FIJO
+  requerimientosActivoFijoMenor: RequerimientoActivoFijoMenor[] = []; // ACTIVO FIJO MENOR
 
   // detalles por cada requerimiento
   detalles: DetalleRequerimiento[] = []; // para ITEMS
   detallesCommodity: DetalleRequerimientoCommodity[] = []; // para SERVICIOS
   detallesActivoFijo: DetalleRequerimientoActivoFijo[] = []; // para ACTIVO FIJO
+  detallesActivoFijoMenor: DetalleRequerimientoActivoFijoMenor[] = []; // para ACTIVO FIJO MENOR
 
   // modal (reutilizado)
   //-----MODAL ITEMS----------
@@ -75,13 +84,17 @@ export class RequerimientosComponent implements OnInit {
   //-----MODAL ACTIVO FIJO----------
   modalAbiertoActivoFijo: boolean = false;
   activoFijoEditIndex: number = -1;
+  //-----MODAL ACTIVO FIJO MENOR----------
+  modalAbiertoActivoFijoMenor: boolean = false;
+  activoFijoMenorEditIndex: number = -1;
 
-  cambiarTab(tab: 'ITEM' | 'COMMODITY' | 'ACTIVOFIJO') {
+  cambiarTab(tab: 'ITEM' | 'COMMODITY' | 'ACTIVOFIJO' | 'ACTIVOFIJOMENOR') {
     this.tabActiva = tab;
     // cerrar cualquier formulario abierto para evitar confusión
     this.mostrarFormulario = false;
     this.mostrarFormularioCommodity = false;
     this.mostrarFormularioActivoFijo = false;
+    this.mostrarFormularioActivoFijoMenor = false;
   }
 
   fecha = new Date();
@@ -97,7 +110,8 @@ export class RequerimientosComponent implements OnInit {
   almacenes: any[] = [];
   clasificaciones: any[] = [];
   glosa: string = '';
-  proveedores: any[] = [];
+  proveedoresServicios: any[] = [];
+  proveedoresActivoFijo: any[] = [];
   tipoGastos: any[] = [];
   servicios: any[] = [];
   activosFijos: any[] = [];
@@ -117,6 +131,7 @@ export class RequerimientosComponent implements OnInit {
     idrol: '',
     rol: '',
   };
+
   detalle: DetalleRequerimiento = {
     codigo: '',
     producto: '',
@@ -147,6 +162,114 @@ export class RequerimientosComponent implements OnInit {
     idproyecto: '',
     estado: 0,
     detalle: [],
+  };
+
+  requerimientoCommodity: RequerimientoCommodity = {
+    idrequerimiento: '',
+    fecha: '',
+    proveedor: '',
+    servicio: '',
+    descripcion: '',
+    almacen: '',
+    glosa: '',
+    tipo: '',
+    ruc: '',
+    estados: 'PENDIENTE',
+    idfundo: '',
+    idarea: '',
+    idclasificacion: '',
+    nrodocumento: '',
+    idalmacen: '',
+    idalmacendestino: '',
+    idproyecto: '',
+    estado: 0,
+    detalleCommodity: [],
+  };
+
+  requerimientoActivoFijo: RequerimientoActivoFijo = {
+    idrequerimiento: '',
+    fecha: '',
+    proveedor: '',
+    servicio: '',
+    descripcion: '',
+    almacen: '',
+    glosa: '',
+    tipo: '',
+    ruc: '',
+    estados: 'PENDIENTE',
+    idfundo: '',
+    idarea: '',
+    idclasificacion: '',
+    nrodocumento: '',
+    idalmacen: '',
+    idalmacendestino: '',
+    idproyecto: '',
+    estado: 0,
+    detalleActivoFijo: [],
+  };
+
+  requerimientoActivoFijoMenor: RequerimientoActivoFijoMenor = {
+    idrequerimiento: '',
+    ruc: '',
+    fecha: '',
+    // proveedor: '',
+    servicio: '',
+    descripcion: '',
+    almacen: '',
+    glosa: '',
+    tipo: '',
+    estados: 'PENDIENTE',
+    idfundo: '',
+    idarea: '',
+    idclasificacion: '',
+    nrodocumento: '',
+    idalmacen: '',
+    idalmacendestino: '',
+    idproyecto: '',
+    estado: 0,
+    detalleActivoFijoMenor: [],
+  };
+
+  detalleActivoFijoMenor: DetalleRequerimientoActivoFijoMenor = {
+    // servicio: '',
+    descripcion: '',
+    proveedor: '',
+    cantidad: 0,
+    proyecto: '',
+    ceco: '',
+    turno: '',
+    labor: '',
+    esActivoFijo: false,
+    activoFijo: '',
+    estado: 0,
+  };
+
+  detalleCommodity: DetalleRequerimientoCommodity = {
+    // servicio: '',
+    descripcion: '',
+    proveedor: '',
+    cantidad: 0,
+    proyecto: '',
+    ceco: '',
+    turno: '',
+    labor: '',
+    esActivoFijo: false,
+    activoFijo: '',
+    estado: 0,
+  };
+
+  detalleActivoFijo: DetalleRequerimientoActivoFijo = {
+    // servicio: '',
+    descripcion: '',
+    proveedor: '',
+    cantidad: 0,
+    proyecto: '',
+    ceco: '',
+    turno: '',
+    labor: '',
+    esActivoFijo: false,
+    activoFijo: '',
+    estado: 0,
   };
 
   configuracion: Configuracion = {
@@ -207,6 +330,7 @@ export class RequerimientosComponent implements OnInit {
   SeleccionaTipoGasto = '';
   SeleccionaServicio = '';
   selecccionaActivoFijo = '';
+  selecccionaActivoFijoMenor = '';
   itemsFiltrados: any[] = [];
   commodityFiltrados: any[] = [];
   clasificacionesFiltrados: any[] = [];
@@ -262,34 +386,331 @@ export class RequerimientosComponent implements OnInit {
   }
 
   editarCommodity(index: number) {
+    const req = this.requerimientosCommodity[index];
+    if (!req) return;
+
     this.mostrarFormularioCommodity = true;
     this.modoEdicionCommodity = true;
     this.commodityEditIndex = index;
+
+    // Copiar el requerimiento seleccionado
+    this.requerimientoCommodity = { ...req };
+
+    // Cargar detalles
+    this.detallesCommodity = req.detalleCommodity || [];
+
+    // Cargar selects
+    this.fundoSeleccionado = req.idfundo;
+    this.areaSeleccionada = req.idarea;
+    this.almacenSeleccionado = req.idalmacen;
+    this.clasificacionSeleccionado = req.idclasificacion;
+    this.proyectoSeleccionado = req.idproyecto;
+
+    // Campos propios del servicio
+    this.seleccionaProveedor = req.proveedor;
+    this.SeleccionaServicio = req.servicio;
+    this.glosa = req.glosa;
+
+    // Asegurar que no esté abierto algún modal
+    this.modalAbiertoCommodity = false;
   }
 
   eliminarCommodity(index: number) {
     this.requerimientosCommodity.splice(index, 1);
   }
 
-  guardarCommodity() {
-    if (this.modoEdicionCommodity) {
-      // actualiza
-    } else {
-      // registra nuevo
-      this.requerimientosCommodity.push({
-        fecha: new Date(),
-        idfundo: 'Ejemplo',
-        idarea: 'Área X',
-        almacen: 'A01',
-        glosa: 'Commodity registrado',
-        estado: 0,
-      });
+  async guardarCommodity() {
+    if (!this.fundoSeleccionado) {
+      this.alertService.showAlert(
+        'Atención',
+        'Debes seleccionar un Fundo antes de guardar.',
+        'warning'
+      );
+      return;
     }
-    this.mostrarFormularioCommodity = false;
+
+    // if (!this.clasificacionSeleccionado) {
+    //   this.alertService.showAlert(
+    //     'Atención',
+    //     'Debes seleccionar una Clasificación antes de guardar.',
+    //     'warning'
+    //   );
+    //   return;
+    // }
+
+    if (!this.glosa) {
+      this.alertService.showAlert(
+        'Atención',
+        'Debes ingresar una glosa antes de guardar.',
+        'warning'
+      );
+      return;
+    }
+
+    try {
+      this.alertService.mostrarModalCarga();
+
+      // Obtener datos de almacén
+      const almacenObj = this.almacenes.find(
+        (a) => a.idalmacen == this.almacenSeleccionado
+      );
+
+      const idAlmacenSync = almacenObj ? almacenObj.idalmacen : '';
+
+      // =============== GENERAR ID ==================
+      const idreq =
+        this.usuario.ruc +
+        idAlmacenSync +
+        this.usuario.documentoidentidad +
+        this.utilsService.formatoAnioMesDiaHoraMinSec();
+
+      // =============== ARMAR OBJETO ==================
+      const reqCommodity: RequerimientoCommodity = {
+        idrequerimiento: idreq,
+        fecha: new Date().toISOString(),
+        proveedor: this.seleccionaProveedor,
+        servicio: this.SeleccionaServicio,
+        descripcion: this.glosa,
+        almacen: almacenObj?.almacen || '',
+        glosa: this.glosa,
+        tipo: 'COMMODITY',
+        ruc: this.usuario.ruc,
+        estados: 'PENDIENTE',
+
+        idfundo: this.fundoSeleccionado,
+        idarea: this.areaSeleccionada,
+        idclasificacion: this.clasificacionSeleccionado,
+        nrodocumento: this.usuario.documentoidentidad,
+        idalmacen: idAlmacenSync,
+        idalmacendestino: '',
+        idproyecto: this.proyectoSeleccionado,
+        estado: 0,
+
+        detalleCommodity: [...this.detallesCommodity],
+      };
+
+      let idGuardado;
+
+      // =============== EDITAR ==================
+      if (this.modoEdicionCommodity) {
+        await this.dexieService.requerimientosCommodity.put(reqCommodity);
+
+        const index = this.requerimientosCommodity.findIndex(
+          (r) => r.idrequerimiento === reqCommodity.idrequerimiento
+        );
+
+        if (index !== -1) {
+          this.requerimientosCommodity[index] = { ...reqCommodity };
+        }
+
+        idGuardado = reqCommodity.idrequerimiento;
+        this.modoEdicionCommodity = false;
+      } else {
+        // =============== NUEVO ==================
+        idGuardado = await this.dexieService.requerimientosCommodity.put(
+          reqCommodity
+        );
+
+        this.requerimientosCommodity.push({ ...reqCommodity });
+      }
+
+      this.alertService.cerrarModalCarga();
+
+      this.alertService.showAlert(
+        'Éxito',
+        `Requerimiento de Servicio #${idGuardado} guardado correctamente.`,
+        'success'
+      );
+
+      // =============== LIMPIAR ==================
+      this.detallesCommodity = [];
+      this.mostrarFormularioCommodity = false;
+      this.glosa = '';
+      this.seleccionaProveedor = '';
+      this.SeleccionaServicio = '';
+      this.commodityEditIndex = -1;
+    } catch (e) {
+      console.error('Error al guardar commodity', e);
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert(
+        'Error',
+        'Ocurrió un problema al guardar el Requerimiento de Servicio.',
+        'error'
+      );
+    }
   }
 
   cancelarCommodity() {
     this.mostrarFormularioCommodity = false;
+  }
+
+  nuevoActivoFijoMenor() {
+    this.mostrarFormularioActivoFijoMenor = true;
+    this.detallesActivoFijo = [];
+  }
+
+  editarActivoFijoMenor(index: number) {
+    const req = this.requerimientosActivoFijoMenor[index];
+    if (!req) return;
+
+    this.mostrarFormularioActivoFijoMenor = true;
+    this.modoEdicionActivoFijoMenor = true;
+    this.activoFijoMenorEditIndex = index;
+
+    // Copia del registro
+    this.requerimientoActivoFijoMenor = { ...req };
+
+    // Cargar detalles
+    this.detallesActivoFijoMenor = req.detalleActivoFijoMenor || [];
+
+    // Cargar selects principales
+    this.fundoSeleccionado = req.idfundo;
+    this.areaSeleccionada = req.idarea;
+    this.almacenSeleccionado = req.idalmacen;
+    this.clasificacionSeleccionado = req.idclasificacion;
+    this.proyectoSeleccionado = req.idproyecto;
+
+    // Campos propios del activo fijo
+    this.selecccionaActivoFijoMenor = req.servicio;
+    this.glosa = req.glosa;
+
+    this.modalAbiertoActivoFijoMenor = false;
+  }
+
+  eliminarActivoFijoMenor(index: number) {
+    this.requerimientosActivoFijoMenor.splice(index, 1);
+  }
+
+  editarDetalleActivoFijoMenor(index: number): void {
+    this.editIndex = index;
+    const detalleSeleccionado = this.detallesActivoFijoMenor[index];
+
+    this.modalAbiertoActivoFijoMenor = true;
+  }
+
+  async eliminarDetalleActivoFijoMenor(index: number) {
+    const id = this.detallesActivoFijoMenor[index].id!;
+    await this.dexieService.deleteDetalleActivoFijoMenor(id);
+    await this.cargarDetalles();
+    this.alertService.mostrarInfo('Línea eliminada.');
+  }
+
+  async guardarActivoFijoMenor() {
+    if (!this.fundoSeleccionado) {
+      this.alertService.showAlert(
+        'Atención',
+        'Debes seleccionar un Fundo antes de guardar.',
+        'warning'
+      );
+      return;
+    }
+
+    if (!this.clasificacionSeleccionado) {
+      this.alertService.showAlert(
+        'Atención',
+        'Debes seleccionar una Clasificación antes de guardar.',
+        'warning'
+      );
+      return;
+    }
+
+    if (!this.glosa) {
+      this.alertService.showAlert(
+        'Atención',
+        'Debes ingresar una glosa antes de guardar.',
+        'warning'
+      );
+      return;
+    }
+
+    try {
+      this.alertService.mostrarModalCarga();
+
+      const almacenObj = this.almacenes.find(
+        (a) => a.idalmacen == this.almacenSeleccionado
+      );
+
+      const idAlmacenSync = almacenObj ? almacenObj.idalmacen : '';
+
+      // ================================
+      // GENERAR ID ACTIVO FIJO
+      // ================================
+      const idreq =
+        this.usuario.ruc +
+        idAlmacenSync +
+        this.usuario.documentoidentidad +
+        this.utilsService.formatoAnioMesDiaHoraMinSec();
+
+      // ================================
+      // ARMAR OBJETO
+      // ================================
+      const reqAF: RequerimientoActivoFijo = {
+        idrequerimiento: idreq,
+        fecha: new Date().toISOString(),
+        proveedor: this.seleccionaProveedor,
+        servicio: this.SeleccionaServicio,
+        descripcion: this.glosa,
+        almacen: almacenObj?.almacen || '',
+        glosa: this.glosa,
+        tipo: 'ACTIVOFIJO',
+        ruc: this.usuario.ruc,
+        estados: 'PENDIENTE',
+
+        idfundo: this.fundoSeleccionado,
+        idarea: this.areaSeleccionada,
+        idclasificacion: this.clasificacionSeleccionado,
+        nrodocumento: this.usuario.documentoidentidad,
+        idalmacen: idAlmacenSync,
+        idalmacendestino: '',
+        idproyecto: this.proyectoSeleccionado,
+        estado: 0,
+
+        detalleActivoFijo: [...this.detallesActivoFijo],
+      };
+
+      // ================================
+      // GUARDAR EN DEXIE
+      // ================================
+      const idGuardado = await this.dexieService.requerimientosActivoFijo.put(
+        reqAF
+      );
+
+      // ================================
+      // GUARDAR EN MEMORIA
+      // ================================
+      this.requerimientosActivoFijo.push(reqAF);
+
+      this.alertService.cerrarModalCarga();
+
+      this.alertService.showAlert(
+        'Éxito',
+        `Requerimiento Activo Fijo #${idGuardado} guardado correctamente.`,
+        'success'
+      );
+
+      // ================================
+      // LIMPIAR
+      // ================================
+      this.detallesActivoFijo = [];
+      this.mostrarFormularioActivoFijo = false;
+      this.glosa = '';
+      this.seleccionaProveedor = '';
+      this.SeleccionaServicio = '';
+      this.activoFijoEditIndex = -1;
+    } catch (e) {
+      console.error('Error Guardando Activo Fijo', e);
+      this.alertService.cerrarModalCarga();
+
+      this.alertService.showAlert(
+        'Error',
+        'Hubo un problema al guardar el Requerimiento de Activo Fijo.',
+        'error'
+      );
+    }
+  }
+
+  cancelarActivoFijoMenor() {
+    this.mostrarFormularioActivoFijoMenor = false;
   }
 
   nuevoActivoFijo() {
@@ -298,9 +719,31 @@ export class RequerimientosComponent implements OnInit {
   }
 
   editarActivoFijo(index: number) {
+    const req = this.requerimientosActivoFijo[index];
+    if (!req) return;
+
     this.mostrarFormularioActivoFijo = true;
     this.modoEdicionActivoFijo = true;
     this.activoFijoEditIndex = index;
+
+    // Copia del registro
+    this.requerimientoActivoFijo = { ...req };
+
+    // Cargar detalles
+    this.detallesActivoFijo = req.detalleActivoFijo || [];
+
+    // Cargar selects principales
+    this.fundoSeleccionado = req.idfundo;
+    this.areaSeleccionada = req.idarea;
+    this.almacenSeleccionado = req.idalmacen;
+    this.clasificacionSeleccionado = req.idclasificacion;
+    this.proyectoSeleccionado = req.idproyecto;
+
+    // Campos propios del activo fijo
+    this.selecccionaActivoFijo = req.servicio;
+    this.glosa = req.glosa;
+
+    this.modalAbiertoActivoFijo = false;
   }
 
   eliminarActivoFijo(index: number) {
@@ -333,14 +776,118 @@ export class RequerimientosComponent implements OnInit {
     this.alertService.mostrarInfo('Línea eliminada.');
   }
 
-  guardarActivoFijo() {
-    this.requerimientosActivoFijo.push({
-      fecha: new Date(),
-      fundo: this.fundoSeleccionado,
-      glosa: this.glosa,
-      detalles: this.detallesActivoFijo,
-    });
-    this.mostrarFormularioActivoFijo = false;
+  async guardarActivoFijo() {
+    if (!this.fundoSeleccionado) {
+      this.alertService.showAlert(
+        'Atención',
+        'Debes seleccionar un Fundo antes de guardar.',
+        'warning'
+      );
+      return;
+    }
+
+    if (!this.clasificacionSeleccionado) {
+      this.alertService.showAlert(
+        'Atención',
+        'Debes seleccionar una Clasificación antes de guardar.',
+        'warning'
+      );
+      return;
+    }
+
+    if (!this.glosa) {
+      this.alertService.showAlert(
+        'Atención',
+        'Debes ingresar una glosa antes de guardar.',
+        'warning'
+      );
+      return;
+    }
+
+    try {
+      this.alertService.mostrarModalCarga();
+
+      const almacenObj = this.almacenes.find(
+        (a) => a.idalmacen == this.almacenSeleccionado
+      );
+
+      const idAlmacenSync = almacenObj ? almacenObj.idalmacen : '';
+
+      // ================================
+      // GENERAR ID ACTIVO FIJO
+      // ================================
+      const idreq =
+        this.usuario.ruc +
+        idAlmacenSync +
+        this.usuario.documentoidentidad +
+        this.utilsService.formatoAnioMesDiaHoraMinSec();
+
+      // ================================
+      // ARMAR OBJETO
+      // ================================
+      const reqAF: RequerimientoActivoFijo = {
+        idrequerimiento: idreq,
+        fecha: new Date().toISOString(),
+        proveedor: this.seleccionaProveedor,
+        servicio: this.SeleccionaServicio,
+        descripcion: this.glosa,
+        almacen: almacenObj?.almacen || '',
+        glosa: this.glosa,
+        tipo: 'ACTIVOFIJO',
+        ruc: this.usuario.ruc,
+        estados: 'PENDIENTE',
+
+        idfundo: this.fundoSeleccionado,
+        idarea: this.areaSeleccionada,
+        idclasificacion: this.clasificacionSeleccionado,
+        nrodocumento: this.usuario.documentoidentidad,
+        idalmacen: idAlmacenSync,
+        idalmacendestino: '',
+        idproyecto: this.proyectoSeleccionado,
+        estado: 0,
+
+        detalleActivoFijo: [...this.detallesActivoFijo],
+      };
+
+      // ================================
+      // GUARDAR EN DEXIE
+      // ================================
+      const idGuardado = await this.dexieService.requerimientosActivoFijo.put(
+        reqAF
+      );
+
+      // ================================
+      // GUARDAR EN MEMORIA
+      // ================================
+      this.requerimientosActivoFijo.push(reqAF);
+
+      this.alertService.cerrarModalCarga();
+
+      this.alertService.showAlert(
+        'Éxito',
+        `Requerimiento Activo Fijo #${idGuardado} guardado correctamente.`,
+        'success'
+      );
+
+      // ================================
+      // LIMPIAR
+      // ================================
+      this.detallesActivoFijo = [];
+      this.mostrarFormularioActivoFijo = false;
+      this.glosa = '';
+      this.seleccionaProveedor = '';
+      this.SeleccionaServicio = '';
+      this.activoFijoEditIndex = -1;
+    } catch (e) {
+      console.error('Error Guardando Activo Fijo', e);
+      this.alertService.cerrarModalCarga();
+
+      this.alertService.showAlert(
+        'Error',
+        'Hubo un problema al guardar el Requerimiento de Activo Fijo.',
+        'error'
+      );
+    }
   }
 
   cancelarActivoFijo() {
@@ -529,6 +1076,262 @@ export class RequerimientosComponent implements OnInit {
             'success'
           );
         } else {
+          this.alertService.showAlertError(
+            'Error',
+            'Hubo un problema al sincronizar el requerimiento'
+          );
+          console.error('Detalles del error:', resp);
+        }
+      },
+      error: (err) => {
+        console.error('❌ Error HTTP:', err);
+        this.alertService.showAlertError(
+          'Error',
+          'No se pudo conectar con el servidor'
+        );
+      },
+    });
+  }
+
+  async sincronizarRequerimientoCommodity() {
+    if (this.requerimientoCommodity.detalleCommodity.length === 0) {
+      this.alertService.showAlert(
+        'Alerta',
+        'Debe ingresar al menos un requerimiento de commodity',
+        'warning'
+      );
+      return;
+    }
+
+    const confirmacion = await this.alertService.showConfirm(
+      'Confirmación',
+      '¿Desea enviar los datos?',
+      'warning'
+    );
+
+    if (!confirmacion) return;
+
+    // 👇 Aquí formamos el objeto según el SP
+    const requerimiento = {
+      idrequerimiento: `${this.usuario.ruc}${
+        this.requerimientoCommodity.idalmacen
+      }${this.usuario.documentoidentidad}${new Date()
+        .toISOString()
+        .replace(/[-:TZ.]/g, '')}`,
+      ruc: this.usuario.ruc,
+      idfundo: this.requerimientoCommodity.idfundo,
+      // idarea: this.areaSeleccionada,
+      idarea: this.requerimientoCommodity.idarea,
+      idclasificacion: this.requerimientoCommodity.idclasificacion,
+      nrodocumento: this.usuario.documentoidentidad,
+      idalmacen: this.requerimientoCommodity.idalmacen,
+      idalmacendestino: this.requerimientoCommodity.idalmacendestino || '',
+      glosa: this.requerimientoCommodity.glosa || '',
+      eliminado: 0,
+      tipo: this.requerimientoCommodity.tipo,
+      estados: 'PENDIENTE',
+      // usuario: this.usuario.usuario,
+      detalle: this.requerimientoCommodity.detalleCommodity.map((d: any) => ({
+        codigo: d.codigo,
+        tipoclasificacion: d.tipoclasificacion,
+        cantidad: d.cantidad,
+        idproyecto: d.proyecto || '',
+        idcentrocosto: d.ceco || '',
+        idturno: d.turno || '',
+        idlabor: d.labor || '',
+        eliminado: 0,
+      })),
+    };
+
+    // 👇 Mandamos directamente el array (NO dentro de { json: ... })
+    const payload = [requerimiento];
+
+    console.log('📤 Enviando al backend:', payload);
+
+    this.requerimientosService.registrarRequerimientos(payload).subscribe({
+      next: (resp) => {
+        console.log('✅ Respuesta del backend:', resp);
+
+        // Manejo del resultado del SP
+        if (Array.isArray(resp) && resp[0]?.errorgeneral === 0) {
+          this.alertService.showAlert(
+            'Éxito',
+            'Requerimiento sincronizado correctamente',
+            'success'
+          );
+        } else {
+          this.alertService.showAlert(
+            'Error',
+            'Hubo un problema al sincronizar el requerimiento',
+            'error'
+          );
+          console.error('Detalles del error:', resp);
+        }
+      },
+      error: (err) => {
+        console.error('❌ Error HTTP:', err);
+        this.alertService.showAlert(
+          'Error',
+          'No se pudo conectar con el servidor',
+          'error'
+        );
+      },
+    });
+  }
+
+  async sincronizarRequerimientoActivoFijo() {
+    if (this.requerimientoActivoFijo.detalleActivoFijo.length === 0) {
+      this.alertService.showAlert(
+        'Alerta',
+        'Debe ingresar al menos un requerimiento de activo fijo',
+        'warning'
+      );
+      return;
+    }
+
+    const confirmacion = await this.alertService.showConfirm(
+      'Confirmación',
+      '¿Desea enviar los datos?',
+      'warning'
+    );
+
+    if (!confirmacion) return;
+
+    // 👇 Aquí formamos el objeto según el SP
+    const requerimiento = {
+      idrequerimiento: `${this.usuario.ruc}${
+        this.requerimientoActivoFijo.idalmacen
+      }${this.usuario.documentoidentidad}${new Date()
+        .toISOString()
+        .replace(/[-:TZ.]/g, '')}`,
+      ruc: this.usuario.ruc,
+      idfundo: this.requerimientoActivoFijo.idfundo,
+      // idarea: this.areaSeleccionada,
+      idarea: this.requerimientoActivoFijo.idarea,
+      idclasificacion: this.requerimientoActivoFijo.idclasificacion,
+      nrodocumento: this.usuario.documentoidentidad,
+      idalmacen: this.requerimientoActivoFijo.idalmacen,
+      idalmacendestino: this.requerimientoActivoFijo.idalmacendestino || '',
+      glosa: this.requerimientoActivoFijo.glosa || '',
+      eliminado: 0,
+      tipo: this.requerimientoActivoFijo.tipo,
+      estados: 'PENDIENTE',
+      // usuario: this.usuario.usuario,
+      detalle: this.requerimientoActivoFijo.detalleActivoFijo.map((d: any) => ({
+        codigo: d.codigo,
+        tipoclasificacion: d.tipoclasificacion,
+        cantidad: d.cantidad,
+        idproyecto: d.proyecto || '',
+        idcentrocosto: d.ceco || '',
+        idturno: d.turno || '',
+        idlabor: d.labor || '',
+        eliminado: 0,
+      })),
+    };
+
+    // 👇 Mandamos directamente el array (NO dentro de { json: ... })
+    const payload = [requerimiento];
+
+    console.log('📤 Enviando al backend:', payload);
+
+    this.requerimientosService.registrarRequerimientos(payload).subscribe({
+      next: (resp) => {
+        console.log('✅ Respuesta del backend:', resp);
+
+        // Manejo del resultado del SP
+        if (Array.isArray(resp) && resp[0]?.errorgeneral === 0) {
+          this.alertService.showAlert(
+            'Éxito',
+            'Requerimiento sincronizado correctamente',
+            'success'
+          );
+        } else {
+          this.alertService.showAlert(
+            'Error',
+            'Hubo un problema al sincronizar el requerimiento',
+            'error'
+          );
+          console.error('Detalles del error:', resp);
+        }
+      },
+      error: (err) => {
+        console.error('❌ Error HTTP:', err);
+        this.alertService.showAlert(
+          'Error',
+          'No se pudo conectar con el servidor',
+          'error'
+        );
+      },
+    });
+  }
+
+  async sincronizarRequerimientoActivoFijoMenor() {
+    if (this.requerimientoActivoFijo.detalleActivoFijo.length === 0) {
+      this.alertService.showAlert(
+        'Alerta',
+        'Debe ingresar al menos un requerimiento de activo fijo',
+        'warning'
+      );
+      return;
+    }
+
+    const confirmacion = await this.alertService.showConfirm(
+      'Confirmación',
+      '¿Desea enviar los datos?',
+      'warning'
+    );
+
+    if (!confirmacion) return;
+
+    // 👇 Aquí formamos el objeto según el SP
+    const requerimiento = {
+      idrequerimiento: `${this.usuario.ruc}${
+        this.requerimientoActivoFijo.idalmacen
+      }${this.usuario.documentoidentidad}${new Date()
+        .toISOString()
+        .replace(/[-:TZ.]/g, '')}`,
+      ruc: this.usuario.ruc,
+      idfundo: this.requerimientoActivoFijo.idfundo,
+      // idarea: this.areaSeleccionada,
+      idarea: this.requerimientoActivoFijo.idarea,
+      idclasificacion: this.requerimientoActivoFijo.idclasificacion,
+      nrodocumento: this.usuario.documentoidentidad,
+      idalmacen: this.requerimientoActivoFijo.idalmacen,
+      idalmacendestino: this.requerimientoActivoFijo.idalmacendestino || '',
+      glosa: this.requerimientoActivoFijo.glosa || '',
+      eliminado: 0,
+      tipo: this.requerimientoActivoFijo.tipo,
+      estados: 'PENDIENTE',
+      // usuario: this.usuario.usuario,
+      detalle: this.requerimientoActivoFijo.detalleActivoFijo.map((d: any) => ({
+        codigo: d.codigo,
+        tipoclasificacion: d.tipoclasificacion,
+        cantidad: d.cantidad,
+        idproyecto: d.proyecto || '',
+        idcentrocosto: d.ceco || '',
+        idturno: d.turno || '',
+        idlabor: d.labor || '',
+        eliminado: 0,
+      })),
+    };
+
+    // 👇 Mandamos directamente el array (NO dentro de { json: ... })
+    const payload = [requerimiento];
+
+    console.log('📤 Enviando al backend:', payload);
+
+    this.requerimientosService.registrarRequerimientos(payload).subscribe({
+      next: (resp) => {
+        console.log('✅ Respuesta del backend:', resp);
+
+        // Manejo del resultado del SP
+        if (Array.isArray(resp) && resp[0]?.errorgeneral === 0) {
+          this.alertService.showAlert(
+            'Éxito',
+            'Requerimiento sincronizado correctamente',
+            'success'
+          );
+        } else {
           this.alertService.showAlert(
             'Error',
             'Hubo un problema al sincronizar el requerimiento',
@@ -656,7 +1459,8 @@ export class RequerimientosComponent implements OnInit {
   }
 
   async ListarProveedores() {
-    this.proveedores = await this.dexieService.showProveedores();
+    this.proveedoresServicios = await this.dexieService.showProveedores();
+    this.proveedoresActivoFijo = await this.dexieService.showProveedores();
   }
 
   async ListarTipoGastos() {
@@ -674,16 +1478,16 @@ export class RequerimientosComponent implements OnInit {
     this.activosFijos = await this.dexieService.showActivosFijos();
     // 1. Mapea y concatena
     const activosMapeados: ActivoFijo[] = this.activosFijos.map((act) => ({
-        ...act,
-        activo_descripcion: `${act.activo} - ${act.descripcion}` // <-- ¡AQUÍ ESTÁ LA CLAVE!
+      ...act,
+      activo_descripcion: `${act.activo} - ${act.descripcion}`, // <-- ¡AQUÍ ESTÁ LA CLAVE!
     }));
     // console.log(activosMapeados);
-    
+
     // 2. Aplica los filtros usando los arrays mapeados
     this.activosFijosFiltrados = activosMapeados.filter(
       (act) => act.tipoActivo === 'I' // Nota: La interfaz dice TipoActivo con 'T' mayúscula.
     );
-    
+
     this.activosFijosServicioFiltrados = activosMapeados.filter(
       (act) => act.tipoActivo === 'C'
     );
@@ -713,28 +1517,33 @@ export class RequerimientosComponent implements OnInit {
 
   nuevaLineaCommodity(): DetalleRequerimientoCommodity {
     return {
-      codigo: '',
+      // codigo: '',
       descripcion: '',
-      producto: '',
+      proveedor: '',
       cantidad: 0,
       proyecto: '',
       ceco: '',
       turno: '',
       labor: '',
       estado: 0,
+      esActivoFijo: false,
+      activoFijo: '',
     };
   }
 
   nuevaLineaActivoFijo(): DetalleRequerimientoActivoFijo {
     return {
-      codigo: '',
+      // codigo: '',
       descripcion: '',
-      producto: '',
+      proveedor: '',
       cantidad: 0,
       proyecto: '',
       ceco: '',
       turno: '',
       labor: '',
+      // NUEVOS CAMPOS
+      esActivoFijo: false,
+      activoFijo: '',
       estado: 0,
     };
   }
@@ -768,15 +1577,17 @@ export class RequerimientosComponent implements OnInit {
   abrirModalCommodity() {
     if ((this.commodityEditIndex = -1)) {
       this.lineaTempCommodity = {
-        codigo: '',
+        // codigo: '',
         descripcion: '',
-        producto: '',
-        cantidad: 1,
+        proveedor: '',
+        cantidad: 0,
         proyecto: '',
         ceco: '',
         turno: '',
         labor: '',
         estado: 0,
+        esActivoFijo: false,
+        activoFijo: '',
       };
     }
     this.modalAbiertoCommodity = true;
@@ -788,20 +1599,23 @@ export class RequerimientosComponent implements OnInit {
 
   async guardarLineaCommodity() {
     // Buscar producto seleccionado
-    const productoSeleccionado = this.items.find(
-      (it) => it.codigo === this.lineaTemp.producto
-    );
+    // const productoSeleccionado = this.items.find(
+    //   (it) => it.codigo === this.lineaTemp.producto
+    // );
     // ✅ Validaciones previas
-    if (!this.lineaTemp.producto || this.lineaTemp.producto.trim() === '') {
-      this.alertService.showAlert(
-        'Campo requerido',
-        'Debes seleccionar un producto.',
-        'warning'
-      );
-      return;
-    }
+    // if (!this.lineaTemp.producto || this.lineaTemp.producto.trim() === '') {
+    //   this.alertService.showAlert(
+    //     'Campo requerido',
+    //     'Debes seleccionar un producto.',
+    //     'warning'
+    //   );
+    //   return;
+    // }
 
-    if (!this.lineaTemp.cantidad || this.lineaTemp.cantidad <= 0) {
+    if (
+      !this.lineaTempCommodity.cantidad ||
+      this.lineaTempCommodity.cantidad <= 0
+    ) {
       this.alertService.showAlert(
         'Campo inválido',
         'La cantidad debe ser mayor a 0.',
@@ -810,7 +1624,10 @@ export class RequerimientosComponent implements OnInit {
       return;
     }
 
-    if (!this.lineaTemp.proyecto || this.lineaTemp.proyecto.trim() === '') {
+    if (
+      !this.lineaTempCommodity.proyecto ||
+      this.lineaTempCommodity.proyecto.trim() === ''
+    ) {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un proyecto.',
@@ -819,7 +1636,10 @@ export class RequerimientosComponent implements OnInit {
       return;
     }
 
-    if (!this.lineaTemp.ceco || this.lineaTemp.ceco.trim() === '') {
+    if (
+      !this.lineaTempCommodity.ceco ||
+      this.lineaTempCommodity.ceco.trim() === ''
+    ) {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un CECO.',
@@ -828,7 +1648,10 @@ export class RequerimientosComponent implements OnInit {
       return;
     }
 
-    if (!this.lineaTemp.turno || this.lineaTemp.turno.trim() === '') {
+    if (
+      !this.lineaTempCommodity.turno ||
+      this.lineaTempCommodity.turno.trim() === ''
+    ) {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un turno.',
@@ -837,7 +1660,10 @@ export class RequerimientosComponent implements OnInit {
       return;
     }
 
-    if (!this.lineaTemp.labor || this.lineaTemp.labor.trim() === '') {
+    if (
+      !this.lineaTempCommodity.labor ||
+      this.lineaTempCommodity.labor.trim() === ''
+    ) {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar una labor.',
@@ -846,14 +1672,14 @@ export class RequerimientosComponent implements OnInit {
       return;
     }
 
-    if (this.lineaTemp.esActivoFijo && !this.lineaTemp.activoFijo) {
-      this.alertService.showAlert(
-        'Advertencia',
-        'Debe ingresar el código de activo fijo.',
-        'warning'
-      );
-      return;
-    }
+    // if (this.lineaTempCommodity.esActivoFijo && !this.lineaTempCommodity.activoFijo) {
+    //   this.alertService.showAlert(
+    //     'Advertencia',
+    //     'Debe ingresar el código de activo fijo.',
+    //     'warning'
+    //   );
+    //   return;
+    // }
 
     // if (this.tabActiva === 'ITEM') {
     //   this.detalles.push({ ...this.lineaTemp });
@@ -868,40 +1694,45 @@ export class RequerimientosComponent implements OnInit {
     // }
 
     const nuevaLineaDetalle = {
-      codigo: productoSeleccionado.codigo,
-      producto: productoSeleccionado.descripcion, // 👈 Guardamos la descripción visible
-      cantidad: this.lineaTemp.cantidad,
-      proyecto: this.lineaTemp.proyecto,
-      ceco: this.lineaTemp.ceco,
-      turno: this.lineaTemp.turno,
-      labor: this.lineaTemp.labor,
-      esActivoFijo: this.lineaTemp.esActivoFijo,
-      activoFijo: this.lineaTemp.activoFijo,
+      // codigo: productoSeleccionado.codigo,
+      // producto: productoSeleccionado.descripcion, // 👈 Guardamos la descripción visible
+      descripcion: this.lineaTempCommodity.descripcion,
+      proveedor: this.lineaTempCommodity.proveedor,
+      cantidad: this.lineaTempCommodity.cantidad,
+      proyecto: this.lineaTempCommodity.proyecto,
+      ceco: this.lineaTempCommodity.ceco,
+      turno: this.lineaTempCommodity.turno,
+      labor: this.lineaTempCommodity.labor,
+      esActivoFijo: this.lineaTempCommodity.esActivoFijo,
+      activoFijo: this.lineaTempCommodity.activoFijo,
       estado: 0, // 👈 agrega cualquier campo adicional que tu tabla Dexie requiera
     };
 
     // ✅ Si pasa todas las validaciones
     if (this.editIndex >= 0) {
       // Editar línea existente
-      const idExistente = this.detalles[this.editIndex].id!;
+      const idExistente = this.detallesCommodity[this.editIndex].id!;
       // await this.dexieService.detalles.put({ id: idExistente, ...this.lineaTemp });
-      await this.dexieService.detalles.put({
+      await this.dexieService.detallesCommodity.put({
         id: idExistente,
         ...nuevaLineaDetalle,
       });
       // this.detalle[this.editIndex] = { ...this.lineaTemp };
       // console.log(this.detalles);
       // ✅ Actualizar en memoria también
-      this.detalles[this.editIndex] = { id: idExistente, ...nuevaLineaDetalle };
+      this.detallesCommodity[this.editIndex] = {
+        id: idExistente,
+        ...nuevaLineaDetalle,
+      };
     } else {
       // Agregar nueva línea
-      delete this.lineaTemp.id;
+      delete this.lineaTempCommodity.id;
       // Agregar nueva línea
-      const idNuevo = await this.dexieService.detalles.add({
+      const idNuevo = await this.dexieService.detallesCommodity.add({
         ...nuevaLineaDetalle,
       });
       // ✅ Añadir al arreglo en memoria
-      this.detalles.push({ id: idNuevo, ...nuevaLineaDetalle });
+      this.detallesCommodity.push({ id: idNuevo, ...nuevaLineaDetalle });
       // await this.dexieService.detalles.add(this.lineaTemp);
       // await this.dexieService.detalles.add({ ...nuevaLineaDetalle });
       // this.alertService.showAlert('Éxito', 'Línea guardada correctamente.', 'success');
@@ -910,7 +1741,7 @@ export class RequerimientosComponent implements OnInit {
     }
 
     // await this.cargarDetalles();
-    this.cerrarModal();
+    this.cerrarModalCommodity();
     this.alertService.showAlert(
       'Éxito',
       'Línea guardada correctamente.',
@@ -923,18 +1754,18 @@ export class RequerimientosComponent implements OnInit {
     const detalleSeleccionado = this.detalles[index];
 
     // Buscar el producto en la lista de items por descripción
-    const producto = this.items.find(
-      (it) => it.descripcion === detalleSeleccionado.producto
-    );
+    // const producto = this.items.find(
+    //   (it) => it.descripcion === detalleSeleccionado.producto
+    // );
 
     // Cargar en lineaTemp el código real para que el select lo reconozca
-    this.lineaTemp = {
-      ...detalleSeleccionado,
-      producto: producto ? producto.codigo : detalleSeleccionado.codigo,
-    };
+    // this.lineaTemp = {
+    //   ...detalleSeleccionado,
+    //   producto: producto ? producto.codigo : detalleSeleccionado.codigo,
+    // };
 
     // this.lineaTemp = { ...this.detalles[index] };
-    this.modalAbierto = true;
+    this.modalAbiertoCommodity = true;
   }
 
   async eliminarDetalleCommodity(index: number) {
@@ -945,33 +1776,39 @@ export class RequerimientosComponent implements OnInit {
   }
 
   // Activo Fijo
-  abrirModalActivoFijo() {
+  abrirModalActivoFijoMenor() {
     if ((this.activoFijoEditIndex = -1)) {
       this.lineaTempActivoFijo = {
-        codigo: '',
+        // codigo: '',
         descripcion: '',
-        producto: '',
-        cantidad: 1,
+        proveedor: '',
+        cantidad: 0,
         proyecto: '',
         ceco: '',
         turno: '',
         labor: '',
         estado: 0,
+        esActivoFijo: false,
+        activoFijo: '',
       };
     }
-    this.modalAbiertoActivoFijo = true;
-  }
-  cerrarModalActivoFijo() {
-    this.modalAbiertoActivoFijo = false;
+    this.modalAbiertoActivoFijoMenor = true;
   }
 
-  async guardarLineaActivoFijo() {
+  cerrarModalActivoFijoMenor() {
+    this.modalAbiertoActivoFijoMenor = false;
+  }
+
+  async guardarLineaActivoFijoMenor() {
     // Buscar producto seleccionado
-    const productoSeleccionado = this.items.find(
-      (it) => it.codigo === this.lineaTemp.producto
-    );
+    // const productoSeleccionado = this.items.find(
+    //   (it) => it.codigo === this.lineaTemp.producto
+    // );
     // ✅ Validaciones previas
-    if (!this.lineaTemp.cantidad || this.lineaTemp.cantidad <= 0) {
+    if (
+      !this.lineaTempActivoFijo.cantidad ||
+      this.lineaTempActivoFijo.cantidad <= 0
+    ) {
       this.alertService.showAlert(
         'Campo inválido',
         'La cantidad debe ser mayor a 0.',
@@ -980,7 +1817,10 @@ export class RequerimientosComponent implements OnInit {
       return;
     }
 
-    if (!this.lineaTemp.proyecto || this.lineaTemp.proyecto.trim() === '') {
+    if (
+      !this.lineaTempActivoFijo.proyecto ||
+      this.lineaTempActivoFijo.proyecto.trim() === ''
+    ) {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un proyecto.',
@@ -989,7 +1829,10 @@ export class RequerimientosComponent implements OnInit {
       return;
     }
 
-    if (!this.lineaTemp.ceco || this.lineaTemp.ceco.trim() === '') {
+    if (
+      !this.lineaTempActivoFijo.ceco ||
+      this.lineaTempActivoFijo.ceco.trim() === ''
+    ) {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un CECO.',
@@ -998,7 +1841,10 @@ export class RequerimientosComponent implements OnInit {
       return;
     }
 
-    if (!this.lineaTemp.turno || this.lineaTemp.turno.trim() === '') {
+    if (
+      !this.lineaTempActivoFijo.turno ||
+      this.lineaTempActivoFijo.turno.trim() === ''
+    ) {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un turno.',
@@ -1007,7 +1853,10 @@ export class RequerimientosComponent implements OnInit {
       return;
     }
 
-    if (!this.lineaTemp.labor || this.lineaTemp.labor.trim() === '') {
+    if (
+      !this.lineaTempActivoFijo.labor ||
+      this.lineaTempActivoFijo.labor.trim() === ''
+    ) {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar una labor.',
@@ -1016,7 +1865,10 @@ export class RequerimientosComponent implements OnInit {
       return;
     }
 
-    if (this.lineaTemp.esActivoFijo && !this.lineaTemp.activoFijo) {
+    if (
+      this.lineaTempActivoFijo.esActivoFijo &&
+      !this.lineaTempActivoFijo.activoFijo
+    ) {
       this.alertService.showAlert(
         'Advertencia',
         'Debe ingresar el código de activo fijo.',
@@ -1038,40 +1890,214 @@ export class RequerimientosComponent implements OnInit {
     // }
 
     const nuevaLineaDetalle = {
-      codigo: productoSeleccionado.codigo,
-      producto: productoSeleccionado.descripcion, // 👈 Guardamos la descripción visible
-      cantidad: this.lineaTemp.cantidad,
-      proyecto: this.lineaTemp.proyecto,
-      ceco: this.lineaTemp.ceco,
-      turno: this.lineaTemp.turno,
-      labor: this.lineaTemp.labor,
-      esActivoFijo: this.lineaTemp.esActivoFijo,
-      activoFijo: this.lineaTemp.activoFijo,
+      // codigo: productoSeleccionado.codigo,
+      // producto: productoSeleccionado.descripcion, // 👈 Guardamos la descripción visible
+      descripcion: this.lineaTempActivoFijo.descripcion,
+      proveedor: this.lineaTempActivoFijo.proveedor,
+      cantidad: this.lineaTempActivoFijo.cantidad,
+      proyecto: this.lineaTempActivoFijo.proyecto,
+      ceco: this.lineaTempActivoFijo.ceco,
+      turno: this.lineaTempActivoFijo.turno,
+      labor: this.lineaTempActivoFijo.labor,
+      esActivoFijo: this.lineaTempActivoFijo.esActivoFijo,
+      activoFijo: this.lineaTempActivoFijo.activoFijo,
       estado: 0, // 👈 agrega cualquier campo adicional que tu tabla Dexie requiera
     };
 
     // ✅ Si pasa todas las validaciones
     if (this.editIndex >= 0) {
       // Editar línea existente
-      const idExistente = this.detalles[this.editIndex].id!;
+      const idExistente = this.detallesActivoFijo[this.editIndex].id!;
       // await this.dexieService.detalles.put({ id: idExistente, ...this.lineaTemp });
-      await this.dexieService.detalles.put({
+      await this.dexieService.detallesActivoFijo.put({
         id: idExistente,
         ...nuevaLineaDetalle,
       });
       // this.detalle[this.editIndex] = { ...this.lineaTemp };
       // console.log(this.detalles);
       // ✅ Actualizar en memoria también
-      this.detalles[this.editIndex] = { id: idExistente, ...nuevaLineaDetalle };
+      this.detallesActivoFijo[this.editIndex] = {
+        id: idExistente,
+        ...nuevaLineaDetalle,
+      };
     } else {
       // Agregar nueva línea
       delete this.lineaTemp.id;
       // Agregar nueva línea
-      const idNuevo = await this.dexieService.detalles.add({
+      const idNuevo = await this.dexieService.detallesActivoFijo.add({
         ...nuevaLineaDetalle,
       });
       // ✅ Añadir al arreglo en memoria
-      this.detalles.push({ id: idNuevo, ...nuevaLineaDetalle });
+      this.detallesActivoFijo.push({ id: idNuevo, ...nuevaLineaDetalle });
+      // await this.dexieService.detalles.add(this.lineaTemp);
+      // await this.dexieService.detalles.add({ ...nuevaLineaDetalle });
+      // this.alertService.showAlert('Éxito', 'Línea guardada correctamente.', 'success');
+      // this.detalle.push({ ...this.lineaTemp });
+      // console.log(this.detalles);
+    }
+
+    // await this.cargarDetalles();
+    this.cerrarModalActivoFijo();
+    this.alertService.showAlert(
+      'Éxito',
+      'Línea guardada correctamente.',
+      'success'
+    );
+  }
+
+  abrirModalActivoFijo() {
+    if ((this.activoFijoEditIndex = -1)) {
+      this.lineaTempActivoFijo = {
+        // codigo: '',
+        descripcion: '',
+        proveedor: '',
+        cantidad: 0,
+        proyecto: '',
+        ceco: '',
+        turno: '',
+        labor: '',
+        estado: 0,
+        esActivoFijo: false,
+        activoFijo: '',
+      };
+    }
+    this.modalAbiertoActivoFijo = true;
+  }
+
+  cerrarModalActivoFijo() {
+    this.modalAbiertoActivoFijo = false;
+  }
+
+  async guardarLineaActivoFijo() {
+    // Buscar producto seleccionado
+    // const productoSeleccionado = this.items.find(
+    //   (it) => it.codigo === this.lineaTemp.producto
+    // );
+    // ✅ Validaciones previas
+    if (
+      !this.lineaTempActivoFijo.cantidad ||
+      this.lineaTempActivoFijo.cantidad <= 0
+    ) {
+      this.alertService.showAlert(
+        'Campo inválido',
+        'La cantidad debe ser mayor a 0.',
+        'warning'
+      );
+      return;
+    }
+
+    if (
+      !this.lineaTempActivoFijo.proyecto ||
+      this.lineaTempActivoFijo.proyecto.trim() === ''
+    ) {
+      this.alertService.showAlert(
+        'Campo requerido',
+        'Debes seleccionar un proyecto.',
+        'warning'
+      );
+      return;
+    }
+
+    if (
+      !this.lineaTempActivoFijo.ceco ||
+      this.lineaTempActivoFijo.ceco.trim() === ''
+    ) {
+      this.alertService.showAlert(
+        'Campo requerido',
+        'Debes seleccionar un CECO.',
+        'warning'
+      );
+      return;
+    }
+
+    if (
+      !this.lineaTempActivoFijo.turno ||
+      this.lineaTempActivoFijo.turno.trim() === ''
+    ) {
+      this.alertService.showAlert(
+        'Campo requerido',
+        'Debes seleccionar un turno.',
+        'warning'
+      );
+      return;
+    }
+
+    if (
+      !this.lineaTempActivoFijo.labor ||
+      this.lineaTempActivoFijo.labor.trim() === ''
+    ) {
+      this.alertService.showAlert(
+        'Campo requerido',
+        'Debes seleccionar una labor.',
+        'warning'
+      );
+      return;
+    }
+
+    if (
+      this.lineaTempActivoFijo.esActivoFijo &&
+      !this.lineaTempActivoFijo.activoFijo
+    ) {
+      this.alertService.showAlert(
+        'Advertencia',
+        'Debe ingresar el código de activo fijo.',
+        'warning'
+      );
+      return;
+    }
+
+    // if (this.tabActiva === 'ITEM') {
+    //   this.detalles.push({ ...this.lineaTemp });
+    // }
+
+    // if (this.tabActiva === 'COMMODITY') {
+    //   this.detallesCommodity.push({ ...this.lineaTempCommodity });
+    // }
+
+    // if (this.tabActiva === 'ACTIVOFIJO') {
+    //   this.detallesActivoFijo.push({ ...this.lineaTempActivoFijo });
+    // }
+
+    const nuevaLineaDetalle = {
+      // codigo: productoSeleccionado.codigo,
+      // producto: productoSeleccionado.descripcion, // 👈 Guardamos la descripción visible
+      descripcion: this.lineaTempActivoFijo.descripcion,
+      proveedor: this.lineaTempActivoFijo.proveedor,
+      cantidad: this.lineaTempActivoFijo.cantidad,
+      proyecto: this.lineaTempActivoFijo.proyecto,
+      ceco: this.lineaTempActivoFijo.ceco,
+      turno: this.lineaTempActivoFijo.turno,
+      labor: this.lineaTempActivoFijo.labor,
+      esActivoFijo: this.lineaTempActivoFijo.esActivoFijo,
+      activoFijo: this.lineaTempActivoFijo.activoFijo,
+      estado: 0, // 👈 agrega cualquier campo adicional que tu tabla Dexie requiera
+    };
+
+    // ✅ Si pasa todas las validaciones
+    if (this.editIndex >= 0) {
+      // Editar línea existente
+      const idExistente = this.detallesActivoFijo[this.editIndex].id!;
+      // await this.dexieService.detalles.put({ id: idExistente, ...this.lineaTemp });
+      await this.dexieService.detallesActivoFijo.put({
+        id: idExistente,
+        ...nuevaLineaDetalle,
+      });
+      // this.detalle[this.editIndex] = { ...this.lineaTemp };
+      // console.log(this.detalles);
+      // ✅ Actualizar en memoria también
+      this.detallesActivoFijo[this.editIndex] = {
+        id: idExistente,
+        ...nuevaLineaDetalle,
+      };
+    } else {
+      // Agregar nueva línea
+      delete this.lineaTemp.id;
+      // Agregar nueva línea
+      const idNuevo = await this.dexieService.detallesActivoFijo.add({
+        ...nuevaLineaDetalle,
+      });
+      // ✅ Añadir al arreglo en memoria
+      this.detallesActivoFijo.push({ id: idNuevo, ...nuevaLineaDetalle });
       // await this.dexieService.detalles.add(this.lineaTemp);
       // await this.dexieService.detalles.add({ ...nuevaLineaDetalle });
       // this.alertService.showAlert('Éxito', 'Línea guardada correctamente.', 'success');

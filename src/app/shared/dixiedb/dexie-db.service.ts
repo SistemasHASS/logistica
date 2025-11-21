@@ -1,7 +1,11 @@
 import { Injectable } from '@angular/core';
 import {
   Usuario, Configuracion, Empresa, Fundo, Almacen, Area, Proyecto, ItemComodity, Clasificacion, Cultivo, Acopio, Ceco, Labor,
-  Trabajador, Turno, DetalleRequerimiento, Requerimiento, Item, Comodity, SubClasificacion, Proveedor, TipoGasto, ActivoFijo
+  Trabajador, Turno, DetalleRequerimiento, Requerimiento, Item, Comodity, SubClasificacion, Proveedor, TipoGasto, ActivoFijo,
+  DetalleRequerimientoActivoFijo, DetalleRequerimientoCommodity, RequerimientoCommodity, RequerimientoActivoFijo,
+  RequerimientoActivoFijoMenor, DetalleRequerimientoActivoFijoMenor,
+  MaestroItem,
+  MaestroCommodity
 } from '../interfaces/Tables'
 import Dexie from 'dexie';
 
@@ -26,6 +30,8 @@ export class DexieService extends Dexie {
   public trabajadores!: Dexie.Table<Trabajador, string>;
   public itemComoditys!: Dexie.Table<ItemComodity, string>
   public detalles!: Dexie.Table<DetalleRequerimiento, number>
+  public detallesActivoFijo!: Dexie.Table<DetalleRequerimientoActivoFijo, number>
+  public detallesCommodity!: Dexie.Table<DetalleRequerimientoCommodity, number>
   public requerimientos!: Dexie.Table<Requerimiento, number>
   public items!: Dexie.Table<Item, string>
   public comodities!: Dexie.Table<Comodity, string>
@@ -34,9 +40,15 @@ export class DexieService extends Dexie {
   public tipoGastos!: Dexie.Table<TipoGasto, string>
   public commoditys!: Dexie.Table<Comodity, string>
   public activosFijos!: Dexie.Table<ActivoFijo, string>
+  public requerimientosCommodity!: Dexie.Table<RequerimientoCommodity, number>
+  public requerimientosActivoFijo!: Dexie.Table<RequerimientoActivoFijo, number>
+  public requerimientosActivoFijoMenor!: Dexie.Table<RequerimientoActivoFijoMenor, number>
+  public detallesActivoFijoMenor!: Dexie.Table<DetalleRequerimientoActivoFijoMenor, number>
+  public maestroItems!: Dexie.Table<MaestroItem, number>
+  public maestroCommoditys!: Dexie.Table<MaestroCommodity, number>
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 5; // ⬅️ cambia este número cuando modifiques el esquema
+  private static readonly DB_VERSION = 10; // ⬅️ cambia este número cuando modifiques el esquema
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -72,6 +84,24 @@ export class DexieService extends Dexie {
       tipoGastos: `codigo,descripcion`,
       commoditys: `id,tipoclasificacion,codigo,descripcion`,
       activosFijos: `id,codigo,descripcion,codigoInterno,ubicacion,ceco,localName,tipoActivo,Estado`,
+      detallesActivoFijo: `++id,codigo,cantidad,proyecto,ceco,turno,labor`,
+      detallesCommodity: `++id,codigo,cantidad,proyecto,ceco,turno,labor`,
+      requerimientosCommodity: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle`,
+      requerimientosActivoFijo: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle`,
+      requerimientosActivoFijoMenor: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle`,
+      detallesActivoFijoMenor: `++id,codigo,cantidad,proyecto,ceco,turno,labor`,
+      maestroCommoditys: `id,commodity01,commodity02,commodity,descripcionLocal,descripcionIngles,
+      unidadporDefecto,cuentaContableGasto,elementoGasto,clasificacionActivo,estado,ultimoUsuario,
+      montoReferencial,montoReferencialMoneda,descripcionEditableFlag,igvExoneradoFlag`,
+      maestroItems: `id,item,itemTipo,linea,familia,subFamilia,descripcionLocal,descripcionIngles,
+      descripcionCompleta,unidadCodigo,monedaCodigo,precioCosto,precioUnitarioLocal,
+      precioUnitarioDolares,itemPrecioFlag,disponibleVentaFlag,itemProcedencia,manejoxLoteFlag,
+      manejoxSerieFlag,manejoxKitFlag,afectoImpuestoVentasFlag,requisicionamientoAutomaticoFl,
+      disponibleTransferenciaFlag,disponibleConsumoFlag,formularioFlag,manejoxUnidadFlag,isoAplicableFlag,
+      cantidadDobleFlag,unidadReplicacion,cuentaInventario,cuentaGasto,cuentaServicioTecnico,
+      factorEquivalenciaComercial,estado,ultimaFechaModif,ultimoUsuario,cuentaVentas,
+      unidadCompra,controlCalidadFlag,cuentaTransito,cantidadDobleFactor,subFamiliaInferior,
+      stockMinimo,stockMaximo,referenciaFiscalIngreso02`,
     });
 
     this.usuario = this.table('usuario');
@@ -98,6 +128,14 @@ export class DexieService extends Dexie {
     this.tipoGastos = this.table('tipoGastos')
     this.commoditys = this.table('commoditys')
     this.activosFijos = this.table('activosFijos')    
+    this.detallesActivoFijo = this.table('detallesActivoFijo')
+    this.detallesCommodity = this.table('detallesCommodity')
+    this.requerimientosCommodity = this.table('requerimientosCommodity')
+    this.requerimientosActivoFijo = this.table('requerimientosActivoFijo')
+    this.requerimientosActivoFijoMenor = this.table('requerimientosActivoFijoMenor')
+    this.detallesActivoFijoMenor = this.table('detallesActivoFijoMenor')
+    this.maestroItems = this.table('maestroItems')
+    this.maestroCommoditys = this.table('maestroCommoditys')
 
     // 🔧 Manejo automático de errores por versión o corrupción
       this.open().catch(async (err) => {
@@ -219,6 +257,25 @@ export class DexieService extends Dexie {
   async showTrabajadorById(id: any) { return await this.trabajadores.where('id').equals(id).first(); }
   async showTrabajadores() { return await this.trabajadores.toArray(); }
   async deleteTrabajador(id: any) { return await this.trabajadores.where('id').equals(id).delete(); }
+  async clearTrabajadores() { await this.trabajadores.clear(); }
+  // ---------------- Detalle Activo Fijo ----------------
+  async saveDetalleActivoFijo(detalleActivoFijo: DetalleRequerimientoActivoFijo) { await this.detallesActivoFijo.put(detalleActivoFijo); }
+  async saveDetallesActivoFijo(detallesActivoFijo: DetalleRequerimientoActivoFijo[]) { await this.detallesActivoFijo.bulkPut(detallesActivoFijo); }
+  async showDetallesActivoFijo() { return await this.detallesActivoFijo.toArray(); }
+  async deleteDetalleActivoFijo(id: number) { return await this.detallesActivoFijo.where('id').equals(id).delete(); }
+  async clearDetallesActivoFijo() { await this.detallesActivoFijo.clear(); }
+  // ---------------- Detalle Commodity ----------------
+  async saveDetalleCommodity(detalleCommodity: DetalleRequerimientoCommodity) { await this.detallesCommodity.put(detalleCommodity); }
+  async saveDetallesCommodity(detallesCommodity: DetalleRequerimientoCommodity[]) { await this.detallesCommodity.bulkPut(detallesCommodity); }
+  async showDetallesCommodity() { return await this.detallesCommodity.toArray(); }
+  async deleteDetalleCommodity(id: number) { return await this.detallesCommodity.where('id').equals(id).delete(); }
+  async clearDetallesCommodity() { await this.detallesCommodity.clear(); }
+  // ---------------- Detalle Activo Fijo Menor ----------------
+  async saveDetalleActivoFijoMenor(detalleActivoFijoMenor: DetalleRequerimientoActivoFijoMenor) { await this.detallesActivoFijoMenor.put(detalleActivoFijoMenor); }
+  async saveDetallesActivoFijoMenor(detallesActivoFijoMenor: DetalleRequerimientoActivoFijoMenor[]) { await this.detallesActivoFijoMenor.bulkPut(detallesActivoFijoMenor); }
+  async showDetallesActivoFijoMenor() { return await this.detallesActivoFijoMenor.toArray(); }
+  async deleteDetalleActivoFijoMenor(id: number) { return await this.detallesActivoFijoMenor.where('id').equals(id).delete(); }
+  async clearDetallesActivoFijoMenor() { await this.detallesActivoFijoMenor.clear(); }
   // ---------------- Detalle Requerimiento ----------------
   async saveDetalleRequerimiento(detalle: DetalleRequerimiento) { await this.detalles.put(detalle); }
   async saveDetallesRequerimientos(detalles: DetalleRequerimiento[]) { await this.detalles.bulkPut(detalles); }
@@ -232,6 +289,36 @@ export class DexieService extends Dexie {
   // async deleteRequerimiento(id: number) { return await this.requerimientos.where('id').equals(id).delete(); }
   async deleteRequerimiento(idrequerimiento: string) { return await this.requerimientos.where('idrequerimiento').equals(idrequerimiento).delete(); }
   async clearRequerimiento() { await this.requerimientos.clear(); }
+  // ---------------- Requerimiento Commodity ----------------
+  async saveRequerimientoCommodity(requerimientosCommodity: RequerimientoCommodity) { await this.requerimientosCommodity.put(requerimientosCommodity ); }
+  async saveRequerimientosCommodity(requerimientosCommodity: RequerimientoCommodity[]) { await this.requerimientosCommodity.bulkPut(requerimientosCommodity); }
+  async showRequerimientoCommodity() { return await this.requerimientosCommodity.toArray(); }
+  async deleteRequerimientoCommodity(idrequerimiento: string) { return await this.requerimientosCommodity.where('idrequerimiento').equals(idrequerimiento).delete(); }
+  async clearRequerimientoCommodity() { await this.requerimientosCommodity.clear(); }
+  // ---------------- Requerimiento Activo Fijo ----------------
+  async saveRequerimientoActivoFijo(requerimientoActivoFijo: RequerimientoActivoFijo) { await this.requerimientosActivoFijo.put(requerimientoActivoFijo); }
+  async saveRequerimientosActivoFijo(requerimientosActivoFijo: RequerimientoActivoFijo[]) { await this.requerimientosActivoFijo.bulkPut(requerimientosActivoFijo); }
+  async showRequerimientoActivoFijo() { return await this.requerimientosActivoFijo.toArray(); }
+  async deleteRequerimientoActivoFijo(idrequerimiento: string) { return await this.requerimientosActivoFijo.where('idrequerimiento').equals(idrequerimiento).delete(); }
+  async clearRequerimientoActivoFijo() { await this.requerimientosActivoFijo.clear(); }
+  // ---------------- Requerimiento Activo Fijo Menor ----------------
+  async saveRequerimientoActivoFijoMenor(requerimientoActivoFijoMenor: RequerimientoActivoFijoMenor) { await this.requerimientosActivoFijoMenor.put(requerimientoActivoFijoMenor); }
+  async saveRequerimientosActivoFijoMenor(requerimientosActivoFijoMenor: RequerimientoActivoFijoMenor[]) { await this.requerimientosActivoFijoMenor.bulkPut(requerimientosActivoFijoMenor); }
+  async showRequerimientoActivoFijoMenor() { return await this.requerimientosActivoFijoMenor.toArray(); }
+  async deleteRequerimientoActivoFijoMenor(idrequerimiento: string) { return await this.requerimientosActivoFijoMenor.where('idrequerimiento').equals(idrequerimiento).delete(); }
+  async clearRequerimientoActivoFijoMenor() { await this.requerimientosActivoFijoMenor.clear(); }
+  // ---------------- Maestro Item ----------------
+  async saveMaestroItem(maestroItem: MaestroItem) { await this.maestroItems.put(maestroItem); }
+  async saveMaestroItems(maestroItems: MaestroItem[]) { await this.maestroItems.bulkPut(maestroItems); } 
+  async showMaestroItem() { return await this.maestroItems.toArray(); }
+  async countMaestroItems() { return await this.maestroItems.count(); }
+  async clearMaestroItem() { await this.maestroItems.clear(); }
+  // ---------------- Maestro Commodity ----------------
+  async saveMaestroCommodity(maestroCommodity: MaestroCommodity) { await this.maestroCommoditys.put(maestroCommodity); }
+  async saveMaestroCommodities(maestroCommodities: MaestroCommodity[]) { await this.maestroCommoditys.bulkPut(maestroCommodities); }
+  async showMaestroCommodity() { return await this.maestroCommoditys.toArray(); }
+  async countMaestroCommodity() { return await this.maestroCommoditys.count(); }
+  async clearMaestroCommodity() { await this.maestroCommoditys.clear(); }
   async generarCodigo(): Promise<string> {
     const total = await this.requerimientos.count();
     const siguiente = total + 1;
@@ -273,7 +360,14 @@ export class DexieService extends Dexie {
     await this.clearItemComoditys();
     await this.clearClasificaciones();
     await this.clearDetallesRequerimiento();
+    await this.clearDetallesActivoFijo();
+    await this.clearDetallesCommodity();
     await this.clearRequerimiento();
+    await this.clearRequerimientoCommodity();
+    await this.clearRequerimientoActivoFijo();
+    await this.clearRequerimientoActivoFijoMenor();
+    await this.clearMaestroItem();
+    await this.clearMaestroCommodity();
     console.log('Todas las tablas de configuracion han sido limpiadas en indexedDB.');
   }
   //Configuracion

@@ -6,12 +6,14 @@ import { RequerimientosComponent } from './modules/main/pages/requerimientos/req
 import { AprobacionesComponent } from './modules/main/pages/aprobaciones/aprobaciones.component';
 import { AprobadorGuard } from './modules/auth/guard/aprobador.guard';
 import { AlmacenGuard } from './modules/auth/guard/almacen.guard';
+import { OperativoGuard } from './modules/auth/guard/operativo.guard';
 import { AdministradorGuard } from './modules/auth/guard/administrador.guard';
 import { AuthGuard } from './modules/auth/guard/auth.guard';
 import { ReporteLogisticoComponent } from './modules/main/pages/reporte_logistico/reporte_logistico.component';
 import { MaestrosComponent } from './modules/main/pages/maestros/maestros.component';
 import { MaestrosItemsComponent } from './modules/main/pages/maestros/items/maestros-items.component';
 import { MaestrosComoditiesComponent } from './modules/main/pages/maestros/comodities/maestros-comodities.component';
+import { DespachoComponent } from './modules/main/pages/despachos/despacho.component';
 
 export const routes: Routes = [
   {
@@ -41,9 +43,10 @@ export const routes: Routes = [
           { path: 'comodities', component: MaestrosComoditiesComponent },
         ]
       },
-      { path: 'parametros', component: ParametrosComponent, canActivate: [AlmacenGuard] },
-      { path: 'requerimientos', component: RequerimientosComponent, canActivate: [AlmacenGuard] },
+      { path: 'parametros', component: ParametrosComponent, canActivate: [OperativoGuard] },
+      { path: 'requerimientos', component: RequerimientosComponent, canActivate: [OperativoGuard] },
       { path: 'aprobaciones', component: AprobacionesComponent, canActivate: [AprobadorGuard] },
+      { path: 'despachos', component: DespachoComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte_logistico', component: ReporteLogisticoComponent },
       { path: '**', redirectTo: 'auth/login' }
     ],

@@ -184,30 +184,121 @@ export interface Requerimiento {
     detalle: DetalleRequerimiento[];
 }
 
+export interface RequerimientoCommodity {
+    id?: number;
+    idrequerimiento: string;
+    proveedor: string;
+    servicio: string;
+    descripcion: string;
+    ruc: string;
+    idfundo: string;
+    idarea: string;
+    idclasificacion: string;
+    nrodocumento: string;
+    idalmacen: string;
+    idalmacendestino: string;
+    idproyecto: string;
+    fecha: string;
+    almacen: string;
+    glosa: string;
+    tipo: string;
+    estados: string;
+    estado: number;
+    detalleCommodity: DetalleRequerimientoCommodity[];
+}
+
+export interface RequerimientoActivoFijo {
+    id?: number;
+    idrequerimiento: string;
+    proveedor: string;
+    servicio: string;
+    descripcion: string;
+    ruc: string;
+    idfundo: string;
+    idarea: string;
+    idclasificacion: string;
+    nrodocumento: string;
+    idalmacen: string;
+    idalmacendestino: string;
+    idproyecto: string;
+    fecha: string;
+    almacen: string;
+    glosa: string;
+    tipo: string;
+    estados: string;
+    estado: number;
+    detalleActivoFijo: DetalleRequerimientoActivoFijo[];
+}
+
 export interface DetalleRequerimientoActivoFijo {
     id?: number;
-    codigo: string;
+    // codigo: string;
     descripcion: string;
-    producto: string;
+    // producto: string;
+    proveedor: string;
     cantidad: number;
     proyecto: string;
     ceco: string;
     turno: string;
     labor: string;
     estado: number;
+    esActivoFijo: boolean;
+    activoFijo: string;
+}
+
+export interface DetalleRequerimientoActivoFijoMenor {
+    id?: number;
+    // codigo: string;
+    descripcion: string;
+    // producto: string;
+    proveedor: string;
+    cantidad: number;
+    proyecto: string;
+    ceco: string;
+    turno: string;
+    labor: string;
+    estado: number;
+    esActivoFijo: boolean;
+    activoFijo: string;
 }
 
 export interface DetalleRequerimientoCommodity {
     id?: number;
-    codigo: string;
+    // codigo: string;
     descripcion: string;
-    producto: string;
+    // servicio: string;
+    // producto: string;
+    proveedor: string;
     cantidad: number;
     proyecto: string;
     ceco: string;
     turno: string;
     labor: string;
     estado: number;
+    esActivoFijo: boolean;
+    activoFijo: string;
+}
+
+export interface RequerimientoActivoFijoMenor {
+    id?: number;
+    idrequerimiento: string;
+    descripcion: string;
+    ruc: string;
+    servicio: string;
+    idfundo: string;
+    idarea: string;
+    idclasificacion: string;
+    nrodocumento: string;
+    idalmacen: string;
+    idalmacendestino: string;
+    idproyecto: string;
+    fecha: string;
+    almacen: string;
+    glosa: string;
+    tipo: string;
+    estados: string;
+    estado: number;
+    detalleActivoFijoMenor: DetalleRequerimientoActivoFijoMenor[];
 }
 
 export interface RequerimientoActivoFijo {
@@ -227,7 +318,7 @@ export interface RequerimientoActivoFijo {
     tipo: string;
     estados: string;
     estado: number;
-    detalle: DetalleRequerimiento[];
+    detalleActivoFijo: DetalleRequerimientoActivoFijo[];
 }
 
 export interface RequerimientoCommodity {
@@ -246,10 +337,8 @@ export interface RequerimientoCommodity {
     glosa: string;
     tipo: string;
     estados: string;
-    // tipo: 'CONSUMO' | 'TRANSFERENCIA';
-    // estados: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
     estado: number;
-    detalle: DetalleRequerimiento[];
+    detalleCommodity: DetalleRequerimientoCommodity[];
 }
 
 export interface Trabajador {
@@ -393,9 +482,7 @@ export interface Item {
     unidadMedida: string;
     unidadCompra: string;
     unidadEmbalaje: string;
-    compania: string;
     estado: string;
-    numeracion: string;
     tipoclasificacion: string;
 }
 
@@ -447,4 +534,93 @@ export interface ActivoFijo {
     tipoActivo: string;
     Estado: string;
     activo_descripcion?: string;
+}
+
+export interface MaestroItem {
+    id: number;
+    item: string,
+    itemTipo: string,
+    linea: string,
+    familia: string,
+    subFamilia: string,
+    descripcionLocal: string,
+    descripcionIngles: string,
+    descripcionCompleta: string,
+    unidadCodigo: string,
+    monedaCodigo: string,
+    precioCosto: string,
+    precioUnitarioLocal: string,
+    precioUnitarioDolares: string,
+    itemPrecioFlag: string,
+    disponibleVentaFlag: string,
+    itemProcedencia: string,
+    manejoxLoteFlag: string,
+    manejoxSerieFlag: string,
+    manejoxKitFlag: string,
+    afectoImpuestoVentasFlag: string,
+    requisicionamientoAutomaticoFl: string,
+    disponibleTransferenciaFlag: string,
+    disponibleConsumoFlag: string,
+    formularioFlag: string,
+    manejoxUnidadFlag: string,
+    isoAplicableFlag: string,
+    cantidadDobleFlag: string,
+    unidadReplicacion: string,
+    cuentaInventario: string,
+    cuentaGasto: string,
+    cuentaServicioTecnico: string,
+    factorEquivalenciaComercial: string,
+    estado: string,
+    ultimaFechaModif: string,
+    ultimoUsuario: string,
+    cuentaVentas: string,
+    unidadCompra: string,
+    controlCalidadFlag: string,
+    cuentaTransito: string,
+    cantidadDobleFactor: string,
+    subFamiliaInferior: string,
+    stockMinimo: string,
+    stockMaximo: string,
+    referenciaFiscalIngreso02: string
+}
+
+export interface MaestroCommodity{
+    id: number;
+    commodity01: string,
+    clasificacion: string,
+    codigoBarrasFlag: string,
+    // commodity02: string,
+    // commodity: string,
+    descripcionLocal: string,
+    descripcionIngles: string,
+    // unidadporDefecto: string,
+    // cuentaContableGasto: string,
+    // elementoGasto: string,
+    // clasificacionActivo: string,
+    estado: string,
+    ultimoUsuario: string,
+    ultimaFechaModif: string,
+    // montoReferencial: string,
+    // montoReferencialMoneda: string,
+    // descripcionEditableFlag: string,
+    // igvExoneradoFlag: string  
+}
+
+export interface MaestroSubCommodity{
+    id?: number;
+    commodity01: string,
+    commodity02: string,
+    commodity: string,
+    descripcionLocal: string,
+    descripcionIngles: string,
+    unidadporDefecto: string,
+    cuentaContableGasto: string,
+    elementoGasto: string,
+    clasificacionActivo: string,
+    estado: string,
+    ultimoUsuario: string,
+    montoReferencial: string,
+    montoReferencialMoneda: string,
+    descripcionEditableFlag: string,
+    igvExoneradoFlag: string
 }

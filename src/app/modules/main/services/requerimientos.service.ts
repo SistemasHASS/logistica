@@ -33,9 +33,30 @@ export class RequerimientosService {
     }
   }
 
+  getBuscarRequerimietnos(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/listar-requerimiento-consumo`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message || 'Error al obtener requerimientos de consumo'
+      );
+    }
+  }
+
   registrarRequerimientos(body: any): Observable<any> {
     const url = `${this.baseUrl}/api/logistica/registrar-requerimiento-consumo`;
-    // console.log(body);
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message || 'Error al registrar requerimientos de consumo'
+      );
+    }
+  }
+
+  registrarDespacho(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/registrar-requerimiento-consumo`;
     try {
       return this.http.post<any>(url, body);
     } catch (error: any) {

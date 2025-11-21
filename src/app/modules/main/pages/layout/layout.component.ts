@@ -14,7 +14,7 @@ import { UserService } from '@/app/shared/services/user.service';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './layout.component.html',
-  styleUrl: './layout.component.scss'
+  styleUrl: './layout.component.scss',
 })
 export class LayoutComponent {
   fechaHoy: string = '';
@@ -29,7 +29,7 @@ export class LayoutComponent {
     private dexieService: DexieService,
     private alertService: AlertService,
     private userService: UserService
-  ) { }
+  ) {}
 
   async ngOnInit() {
     this.usuario = await this.dexieService.showUsuario();
@@ -41,10 +41,10 @@ export class LayoutComponent {
 
     this.updateCurrentPath();
     this.router.events.subscribe(() => {
-      this.updateCurrentPath()
-    })
+      this.updateCurrentPath();
+    });
     this.fechaHoy = this.getDate();
-    this.usuario = await this.dexieService.showUsuario()
+    this.usuario = await this.dexieService.showUsuario();
   }
   async logout() {
     Swal.fire({
@@ -56,13 +56,13 @@ export class LayoutComponent {
       cancelButtonText: 'Cancelar',
       customClass: {
         confirmButton: 'btn btn-primary',
-        cancelButton: 'btn btn-warning'
+        cancelButton: 'btn btn-warning',
       },
-      buttonsStyling: false // para aplicar tus propias clases
+      buttonsStyling: false, // para aplicar tus propias clases
     }).then((result) => {
       if (result.isConfirmed) {
         this.router.navigate(['auth/login']);
-        localStorage.clear()
+        localStorage.clear();
         this.dexieService.clearConfiguracion();
         this.dexieService.clearUsuario();
         this.dexieService.clearMaestras();
@@ -84,8 +84,13 @@ export class LayoutComponent {
     const primerApellido = partes[1];
 
     // Devuelve el primer nombre y el primer apellido con la primera letra en mayúscula y el resto en minúscula
-    return primerNombre.charAt(0).toUpperCase() + primerNombre.slice(1).toLowerCase() + ' ' +
-      primerApellido.charAt(0).toUpperCase() + primerApellido.slice(1).toLowerCase();
+    return (
+      primerNombre.charAt(0).toUpperCase() +
+      primerNombre.slice(1).toLowerCase() +
+      ' ' +
+      primerApellido.charAt(0).toUpperCase() +
+      primerApellido.slice(1).toLowerCase()
+    );
   }
 
   formatNombreInicio(nombre: string): string {
@@ -117,19 +122,28 @@ export class LayoutComponent {
   }
 
   getDate() {
-    return moment(new Date()).format('YYYY-MM-DD')
+    return moment(new Date()).format('YYYY-MM-DD');
   }
   updateCurrentPath() {
+    const url = this.router.url;
+
+    // Si la ruta contiene /maestros/... mostrar "Maestros"
+    if (url.includes('/maestros')) {
+      this.currentPath = 'Maestros';
+      return;
+    }
     const currentUrl = this.router.url.split('/').filter(Boolean);
     const pathMap: { [key: string]: string } = {
-      'maestros': 'Maestros',
-      'parametros': 'Parámetros',
-      'requerimientos': 'Requerimientos',
-      'aprobaciones': 'Aprobaciones',
-      'reportes': 'Lista de requerimientos'
+      maestros: 'Maestros',
+      'maestros/items': 'Maestros',
+      'maestros/comodities': 'Maestros',
+      parametros: 'Parámetros',
+      requerimientos: 'Requerimientos',
+      aprobaciones: 'Aprobaciones',
+      despachos: 'Despachos',
+      reportes: 'Lista de requerimientos',
     };
 
     this.currentPath = pathMap[currentUrl[currentUrl.length - 1]] || '';
   }
-
 }

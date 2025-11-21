@@ -1,4 +1,68 @@
 .color-text {
   color: #fffbfb;
 }
-  
+
+// /* Contenedor principal */
+// .tabla-container {
+//   width: 100%;
+//   max-width: 100%;
+//   overflow-x: auto;
+//   padding: 10px;
+//   background: #fff;
+//   border-radius: 8px;
+// }
+
+// /* Fija el ancho de columnas y evita que la tabla “salte” */
+// .table {
+//   width: 100%;
+//   table-layout: fixed;
+//   border-collapse: collapse;
+// }
+
+// /* Mantener centrado todo */
+// .pagination-container {
+//   display: flex;
+//   justify-content: center;
+//   margin-top: 10px;
+// }
+
+// /* Centrar numeración de Bootstrap */
+// .pagination {
+//   margin: 0;
+// }
+
+// /* Evita que el paginador empuje la tabla hacia los lados */
+// .page-item .page-link {
+//   min-width: 38px;
+//   text-align: center;
+// }
+
+// /* Para que la fila no cambie tamaño entre páginas */
+// .table tbody tr {
+//   height: 48px;
+// }
+.overlay-loading {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.6);
+  z-index: 10;
+}
+
+.skeleton-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeleton-row {
+  height: 35px;
+  background: linear-gradient(90deg, #eee, #ddd, #eee);
+  background-size: 200% 100%;
+  animation: skeleton 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

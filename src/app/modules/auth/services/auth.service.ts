@@ -5,26 +5,24 @@ import { lastValueFrom } from 'rxjs';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
-
 export class AuthService {
-
   private readonly baseUrl: string = environment.baseUrl;
-  private readonly aplicacion: string = 'LOGISTICA';
+  private readonly aplicaciones: string = 'LOGISTICA';
   private readonly baseUrlMaestra: string = environment.apiMaestra;
 
-  constructor(
-    private http: HttpClient,
-    private dexieService: DexieService
-  ) { }
+  constructor(private http: HttpClient, private dexieService: DexieService) {}
 
-  async login(usuario: string, clave: string, aplicacion: string): Promise<any> {
-
+  async login(
+    usuario: string,
+    clave: string,
+    aplicacion: string
+  ): Promise<any> {
     const url = `${this.baseUrlMaestra}/api/Maestros/get-usuarios`;
 
     // const body = [{ usuario, clave, aplicacion:'LOGISTICA' }];
-    const body = [{ usuario, clave, aplicacion: this.aplicacion }];
+    const body = [{ usuario, clave, aplicacion: this.aplicaciones }];
 
     try {
       const response = await lastValueFrom(this.http.post<any>(url, body));
@@ -35,25 +33,34 @@ export class AuthService {
   }
   async isLoggedIn() {
     const user = await this.dexieService.showUsuario();
-    return !!user
+    return !!user;
   }
 
   async getUser() {
     return await this.dexieService.getUsuarioLogueado();
   }
 
+  //Perfil Administrador
   async isAdministrador() {
     const user = await this.getUser();
     return user?.idrol === 'ADLOGIST';
   }
 
+  //Perfil Aprobador
   async isAprobador() {
     const user = await this.getUser();
     return user?.idrol === 'APLOGIST';
   }
 
+  //Perfil Almacen
   async isAlmacen() {
     const user = await this.getUser();
     return user?.idrol === 'ALLOGIST';
+  }
+
+  //Perfil Usuario
+  async isUsuario() {
+    const user = await this.getUser();
+    return user?.idrol === 'OPLOGIST';
   }
 }

@@ -15,36 +15,119 @@
   </button>
 </div>
 
-<table class="table table-sm table-bordered">
-  <thead>
-    <tr>
-      <th>Código</th>
-      <th>Descripción Local</th>
-      <th>Descripción Completa</th>
-      <th>Unidad Medida</th>
-      <th>Unidad Compra</th>
-      <th>Unidad Embalaje</th>
-      <th>Compañía</th>
-      <th>Estado</th>
-      <th>Acciones</th>
+
+<!-- FILTRO -->
+<div class="d-flex justify-content-between mb-2">
+  <input type="text" class="form-control w-25" placeholder="Buscar..." [(ngModel)]="filtro" (input)="buscar()">
+
+  <div>
+    <span class="me-2">Total: {{ totalRegistros }}</span>
+  </div>
+</div>
+
+<!-- LOADING GENERAL -->
+<div class="text-center my-4" *ngIf="isLoading">
+  <div class="spinner-border text-primary" role="status"></div>
+  <p class="mt-2">Cargando datos...</p>
+</div>
+
+<!-- <div class="tabla-container"> -->
+<div class="tabla-container position-relative" *ngIf="!isLoading">
+  <!-- OVERLAY LOADING -->
+  <div *ngIf="isLoadingTable" class="overlay-loading d-flex justify-content-center align-items-center">
+    <div class="spinner-border text-primary"></div>
+  </div>
+  <!-- OVERLAY LOADING -->
+  <div *ngIf="isLoadingTable" class="overlay-loading d-flex justify-content-center align-items-center">
+    <div class="spinner-border text-primary"></div>
+  </div>
+
+  <!-- SKELETON -->
+  <div *ngIf="itemsFiltrados.length === 0" class="skeleton-container">
+    <div class="skeleton-row" *ngFor="let x of [1,2,3,4,5,6]"></div>
+  </div>
+
+  <!-- TABLA REAL -->
+  <p-table #dt [value]="itemsFiltrados" [paginator]="true" [rows]="20" [totalRecords]="itemsFiltrados.length"
+    [loading]="isLoading" responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+    currentPageReportTemplate="<{first} - {last} de {totalRecords}>" styleClass="p-datatable-sm p-datatable-striped">
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width:50px">#</th>
+        <th style="width:50px">
+          <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+        </th>
+        <th style="min-width:120px" pSortableColumn="item">Código</th>
+        <th style="min-width:200px" pSortableColumn="descripcionLocal">Descripción Local</th>
+        <th style="min-width:280px" pSortableColumn="descripcionCompleta">Descripción Completa</th>
+        <th style="min-width:100px" pSortableColumn="unidadCodigo">Unidad</th>
+        <th style="min-width:100px" pSortableColumn="unidadCompra">Compra</th>
+        <th style="min-width:120px" pSortableColumn="precioUnitarioLocal">Precio</th>
+        <th style="min-width:100px" pSortableColumn="estado">Estado</th>
+        <th style="min-width:50px">Acciones</th>
     </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let c of listaItems">
-      <td>{{ c.codigo }}</td>
-      <td>{{ c.descripcionLocal }}</td>
-      <td>{{ c.descripcionCompleta }}</td>
-      <td>{{ c.unidadMedida }}</td>
-      <td>{{ c.unidadCompra }}</td>
-      <td>{{ c.unidadEmbalaje }}</td>
-      <td>{{ c.compania }}</td>
-      <td>{{ c.estado === 'A' ? 'Activo' : 'Inactivo' }}</td>
-      <td>
-        <button class="btn btn-warning btn-sm" (click)="editar(c)">Editar</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-c let-i="rowIndex">
+      <tr>
+        <td>{{ i + 1 }}</td>
+        <td>
+          <p-tableCheckbox [value]="c"></p-tableCheckbox>
+        </td>
+        <td>{{ c.item }}</td>
+        <td>{{ c.descripcionLocal }}</td>
+        <td>{{ c.descripcionCompleta }}</td>
+        <td>{{ c.unidadCodigo }}</td>
+        <td>{{ c.unidadCompra }}</td>
+        <td>{{ c.precioUnitarioLocal }}</td>
+        <td>{{ c.estado === 'A' ? 'Activo' : 'Inactivo' }}</td>
+        <td>
+          <button class="btn btn-sm btn-warning me-2" (click)="editar(c)">
+            <i class="icon-pencil"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8" class="text-center">No hay registros</td>
+      </tr>
+    </ng-template>
+
+  </p-table>
+</div>
+
+<!-- MODAL IMPORTAR EXCEL -->
+<div class="modal fade" id="importExcelModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Importar Items desde Excel</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <input type="file" accept=".xlsx, .xls" class="form-control" (change)="onFileChange($event)" />
+
+        <div *ngIf="excelPreview?.length" class="mt-3">
+          <b>Registros detectados:</b> {{ excelPreview.length }}
+        </div>
+      </div>
+
+      <div class="modal-footer justify-content-between">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+
+        <button class="btn btn-success mb-3" (click)="importarItems()">
+          Importar Excel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL -->
 <div class="modal fade" id="modalItem" tabindex="-1">
@@ -64,11 +147,11 @@
         <ul class="nav nav-tabs" id="itemTabs" role="tablist">
           <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#datosGenerales">🟦 Datos
               Generales</a></li>
-          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#infoAdicional">📄 Información
+          <!-- <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#infoAdicional">📄 Información
               Adicional</a></li>
           <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#caracteristicas">⚙ Características
               Especiales</a></li>
-          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#numeracion">🔢 Numeración</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#numeracion">🔢 Numeración</a></li> -->
         </ul>
 
         <!-- TAB CONTENT -->
@@ -79,7 +162,7 @@
             <div class="row">
               <div class="col-4">
                 <label>Código del Item</label>
-                <input type="text" class="form-control" [(ngModel)]="item.codigo">
+                <input type="text" class="form-control" [(ngModel)]="item.item">
               </div>
 
               <div class="col-8">
@@ -98,7 +181,7 @@
             <div class="row mt-2">
               <div class="col-4">
                 <label>Unidad Medida</label>
-                <select class="form-select" [(ngModel)]="item.unidadMedida">
+                <select class="form-select" [(ngModel)]="item.unidadCodigo">
                   <option>UNIDAD</option>
                   <option>KG</option>
                   <option>MTS</option>
@@ -114,22 +197,22 @@
                 </select>
               </div>
 
-              <div class="col-4">
+              <!-- <div class="col-4">
                 <label>Unidad Embalaje</label>
-                <select class="form-select" [(ngModel)]="item.unidadEmbalaje">
+                <select class="form-select" [(ngModel)]="item2.unidadEmbalaje">
                   <option>UNIDAD</option>
                   <option>CAJA</option>
                 </select>
-              </div>
+              </div> -->
             </div>
 
             <hr>
 
             <div class="row mt-2">
-              <div class="col-6">
+              <!-- <div class="col-6">
                 <label>Compañía</label>
                 <input type="text" class="form-control" maxlength="2" [(ngModel)]="item.compania">
-              </div>
+              </div> -->
 
               <div class="col-6">
                 <label>Imagen del Item</label>
@@ -167,10 +250,10 @@
           </div>
 
           <!-- ✅ TAB 4: NUMERACIÓN -->
-          <div class="tab-pane fade" id="numeracion">
+          <!-- <div class="tab-pane fade" id="numeracion">
             <label>Numeración de Item:</label>
             <input type="text" class="form-control" [(ngModel)]="item.numeracion">
-          </div>
+          </div> -->
 
         </div>
       </div>

@@ -3,12 +3,12 @@ import { CanActivate, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 @Injectable({ providedIn: 'root' })
-export class AlmacenGuard implements CanActivate {
+export class OperativoGuard implements CanActivate {
   constructor(private auth: AuthService, private router: Router) {}
 
   async canActivate(): Promise<boolean> {
-    if (await this.auth.isAlmacen()) return true;
-    this.router.navigate(['/main/despachos']);
+    if (await this.auth.isUsuario()) return true;
+    this.router.navigate(['/main/parametros']);
     return false;
   }
 }

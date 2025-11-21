@@ -1,0 +1,298 @@
+<!-- <div class="card p-3"> -->
+
+  <!-- HEADER DEL REQUERIMIENTO -->
+  <!-- <div class="row mb-3">
+    <div class="col-md-3">
+      <label><b>N° Requerimiento</b></label>
+      <input class="form-control" [(ngModel)]="cabecera.numero" disabled>
+    </div>
+
+    <div class="col-md-3">
+      <label><b>Fecha</b></label>
+      <input class="form-control" [(ngModel)]="cabecera.fecha" disabled>
+    </div>
+
+    <div class="col-md-6">
+      <label><b>Área Solicitante</b></label>
+      <input class="form-control" [(ngModel)]="cabecera.area" disabled>
+    </div>
+  </div> -->
+
+  <!-- DATOS DEL SOLICITANTE -->
+  <!-- <div class="row mb-4">
+    <div class="col-md-4">
+      <label><b>Solicitante</b></label>
+      <input class="form-control" [(ngModel)]="cabecera.solicitante" disabled>
+    </div>
+
+    <div class="col-md-4">
+      <label><b>Tipo Requerimiento</b></label>
+      <input class="form-control" [(ngModel)]="cabecera.tipo" disabled>
+    </div>
+
+    <div class="col-md-4">
+      <label><b>Estado</b></label>
+      <input class="form-control" [(ngModel)]="cabecera.estado" disabled>
+    </div>
+  </div> -->
+
+  <!-- FILTROS -->
+  <!-- <div class="row mb-4">
+    <div class="col-md-4">
+      <label><b>Buscar Ítem</b></label>
+      <input class="form-control" [(ngModel)]="filtro" placeholder="Código | Descripción">
+    </div>
+
+    <div class="col-md-2">
+      <button class="btn btn-primary mt-4 w-100" (click)="buscar()">
+        Buscar
+      </button>
+    </div>
+  </div> -->
+
+  <!-- TABLA DE ITEMS -->
+  <!-- <h5><b>Ítems por despachar</b></h5>
+
+  <table class="table table-striped table-bordered">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Descripción</th>
+        <th>Unidad</th>
+        <th>Cantidad Solicitada</th>
+        <th>Cant. Atendida</th>
+        <th>Cant. Pendiente</th>
+        <th>Despachar</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let item of items">
+        <td>{{ item.codigo }}</td>
+        <td>{{ item.descripcion }}</td>
+        <td>{{ item.unidad }}</td>
+        <td>{{ item.solicitada }}</td>
+        <td>{{ item.atendida }}</td>
+        <td>{{ item.pendiente }}</td>
+
+        <td style="width:140px;">
+          <input type="number" class="form-control"
+                 [(ngModel)]="item.despacho"
+                 [max]="item.pendiente"
+                 min="0">
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <button class="btn btn-success mt-2" (click)="agregarDespacho()">
+    ➕ Agregar al despacho
+  </button>
+
+  <hr> -->
+
+  <!-- DETALLE DEL DESPACHO -->
+  <!-- <h5><b>Detalle del despacho</b></h5>
+
+  <table class="table table-hover table-bordered" *ngIf="detalle.length > 0">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Cant. Despachada</th>
+        <th>Eliminar</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let d of detalle; let i = index">
+        <td>{{ d.descripcion }}</td>
+        <td>{{ d.cantidad }}</td>
+        <td>
+          <button class="btn btn-danger btn-sm" (click)="eliminar(i)">
+            X
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table> -->
+
+  <!-- BOTÓN GUARDAR -->
+  <!-- <div class="text-end mt-4">
+    <button class="btn btn-primary" [disabled]="detalle.length === 0" (click)="guardar()">
+      ✔ Registrar Despacho
+    </button>
+  </div> -->
+
+<!-- </div> -->
+
+<!-- despacho-atencion-consumos.component.html -->
+<div class="despacho-page container-fluid">
+  <h3>Atención de Consumos</h3>
+
+  <div class="row">
+    <!-- Requerimientos -->
+    <div class="col-lg-5">
+      <div class="card mb-3">
+        <div class="card-header">Requerimientos Pendientes</div>
+        <div class="card-body p-2">
+          <table class="table table-sm table-hover">
+            <thead class="table-dark">
+              <tr><th>Req</th><th>Fecha</th><th>Area</th><th>Saldo</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of requerimientos" [class.table-active]="selected?.id === r.id">
+                <td>{{ r.numero }}</td>
+                <td>{{ r.fecha | date:'dd/MM/yyyy' }}</td>
+                <td>{{ r.area }}</td>
+                <td>{{ r.totalPendientes }}</td>
+                <td><button class="btn btn-sm btn-primary">Atender</button></td>
+                <!-- <td><button class="btn btn-sm btn-primary" (click)="onVerItems(r)">Atender</button></td> -->
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items + detalle -->
+    <div class="col-lg-7">
+      <div *ngIf="selected" class="card mb-3">
+        <div class="card-header">Items — Req: {{ selected.numero }}</div>
+        <div class="card-body p-2">
+          <table class="table table-sm table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th>Cod</th><th>Descripción</th><th>Sol</th><th>At</th><th>Pend</th><th>Stock</th><th>Atender</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let it of items">
+                <td>{{ it.codigo }}</td>
+                <td>{{ it.descripcion }}</td>
+                <td>{{ it.cantidadSolicitada }}</td>
+                <td>{{ it.atendida }}</td>
+                <td>{{ it.pendiente }}</td>
+                <td>{{ it.stock }}</td>
+                <td style="width:120px">
+                  <input type="number" class="form-control form-control-sm" min="0" [max]="it.pendiente" [(ngModel)]="it.cantidadAtender">
+                  <!-- <input type="number" class="form-control form-control-sm" min="0" [max]="Math.min(it.pendiente, it.stock)" [(ngModel)]="it.cantidadAtender"> -->
+                </td>
+                <!-- <td><button class="btn btn-sm btn-success" (click)="onAgregar(it)">➕</button></td> -->
+                <td><button class="btn btn-sm btn-success">➕</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Detalle -->
+      <div class="card" *ngIf="detalle.length > 0">
+        <div class="card-header">Detalle Atención</div>
+        <div class="card-body p-2" id="contenidoPDF">
+          <table class="table table-sm">
+            <thead>
+              <tr><th>Cod</th><th>Descripción</th><th>Cantidad</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let d of detalle; index as i">
+                <td>{{ d.codigo }}</td>
+                <td>{{ d.descripcion }}</td>
+                <td>{{ d.cantidad }}</td>
+                <!-- <td><button class="btn btn-sm btn-danger" (click)="onQuitar(i)">✖</button></td> -->
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="d-flex justify-content-between mt-2">
+            <div>
+              <!-- <button class="btn btn-outline-secondary btn-sm" (click)="onLimpiar()">Limpiar</button> -->
+            </div>
+
+            <div>
+              <!-- <button class="btn btn-outline-info btn-sm me-2" (click)="onImprimir()">Imprimir</button>
+              <button class="btn btn-outline-secondary btn-sm me-2" (click)="onGenerarPDF()">PDF</button>
+              <button class="btn btn-primary" [disabled]="detalle.length===0" (click)="onRegistrar()">Registrar Atención</button> -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid">
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5>Despacho de Requerimientos (Almacén)</h5>
+      <div>
+        <!-- <button class="btn btn-sm btn-secondary" (click)="cargarPendientes()">Refrescar</button> -->
+      </div>
+    </div>
+    <div class="card-body">
+      <div *ngIf="loading" class="text-center my-4">
+        <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+      </div>
+
+      <table *ngIf="!loading" class="table table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th>Editar</th><th>Fecha</th><th>Fundo</th><th>Area</th><th>Almacén</th><th>Glosa</th><th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of requerimientos">
+            <!-- <td><button class="btn btn-sm btn-warning" (click)="abrirRequerimiento(r)">Despachar</button></td> -->
+            <td>{{ r.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+            <!-- <td>{{ r.idFundo }}</td>
+            <td>{{ r.idArea }}</td>
+            <td>{{ r.idAlmacen }}</td> -->
+            <td>{{ r.glosa }}</td>
+            <td><span class="badge bg-info">{{ r.estado }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalles -->
+<div class="modal fade" id="modalDetalles" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <!-- <h5 class="modal-title">Detalles Requerimiento - {{selected?.codigo || selected?.idRequerimiento}}</h5> -->
+        <!-- <button type="button" class="btn-close" aria-label="Close" (click)="cerrarModal()"></button> -->
+      </div>
+      <div class="modal-body">
+        <table class="table table-sm">
+          <thead>
+            <tr><th>Item</th><th>Solicitado</th><th>Stock</th><th>Unidad</th><th>Despachar</th></tr>
+          </thead>
+          <tbody>
+            <!-- <tr *ngFor="let d of detalles">
+              <td>{{ d.idItem }}</td>
+              <td>{{ d.cantidadSolicitada }}</td>
+              <td>{{ d.stockActual }}</td>
+              <td>{{ d.unidad }}</td>
+              <td>
+                <input type="number" class="form-control form-control-sm" 
+                       [(ngModel)]="detalleForms[d.idRequerimientoDetalle].despachado" 
+                       min="0" [max]="d.stockActual" />
+              </td> -->
+            <!-- </tr> -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="modal-footer">
+        <!-- <button class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button class="btn btn-info me-auto" (click)="verHistorico()">Ver Histórico</button>
+        <button class="btn btn-primary" (click)="validarYRegistrar()">Registrar Despacho</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+
