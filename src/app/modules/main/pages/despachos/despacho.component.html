@@ -1,7 +1,7 @@
 <!-- <div class="card p-3"> -->
 
-  <!-- HEADER DEL REQUERIMIENTO -->
-  <!-- <div class="row mb-3">
+<!-- HEADER DEL REQUERIMIENTO -->
+<!-- <div class="row mb-3">
     <div class="col-md-3">
       <label><b>N° Requerimiento</b></label>
       <input class="form-control" [(ngModel)]="cabecera.numero" disabled>
@@ -18,8 +18,8 @@
     </div>
   </div> -->
 
-  <!-- DATOS DEL SOLICITANTE -->
-  <!-- <div class="row mb-4">
+<!-- DATOS DEL SOLICITANTE -->
+<!-- <div class="row mb-4">
     <div class="col-md-4">
       <label><b>Solicitante</b></label>
       <input class="form-control" [(ngModel)]="cabecera.solicitante" disabled>
@@ -36,8 +36,8 @@
     </div>
   </div> -->
 
-  <!-- FILTROS -->
-  <!-- <div class="row mb-4">
+<!-- FILTROS -->
+<!-- <div class="row mb-4">
     <div class="col-md-4">
       <label><b>Buscar Ítem</b></label>
       <input class="form-control" [(ngModel)]="filtro" placeholder="Código | Descripción">
@@ -50,8 +50,8 @@
     </div>
   </div> -->
 
-  <!-- TABLA DE ITEMS -->
-  <!-- <h5><b>Ítems por despachar</b></h5>
+<!-- TABLA DE ITEMS -->
+<!-- <h5><b>Ítems por despachar</b></h5>
 
   <table class="table table-striped table-bordered">
     <thead>
@@ -91,8 +91,8 @@
 
   <hr> -->
 
-  <!-- DETALLE DEL DESPACHO -->
-  <!-- <h5><b>Detalle del despacho</b></h5>
+<!-- DETALLE DEL DESPACHO -->
+<!-- <h5><b>Detalle del despacho</b></h5>
 
   <table class="table table-hover table-bordered" *ngIf="detalle.length > 0">
     <thead>
@@ -116,8 +116,8 @@
     </tbody>
   </table> -->
 
-  <!-- BOTÓN GUARDAR -->
-  <!-- <div class="text-end mt-4">
+<!-- BOTÓN GUARDAR -->
+<!-- <div class="text-end mt-4">
     <button class="btn btn-primary" [disabled]="detalle.length === 0" (click)="guardar()">
       ✔ Registrar Despacho
     </button>
@@ -126,43 +126,56 @@
 <!-- </div> -->
 
 <!-- despacho-atencion-consumos.component.html -->
-<div class="despacho-page container-fluid">
+<!-- <div class="despacho-page container-fluid">
   <h3>Atención de Consumos</h3>
 
-  <div class="row">
-    <!-- Requerimientos -->
-    <div class="col-lg-5">
+  <div class="row"> -->
+<!-- Requerimientos -->
+<!-- <div class="col-lg-5">
       <div class="card mb-3">
         <div class="card-header">Requerimientos Pendientes</div>
         <div class="card-body p-2">
           <table class="table table-sm table-hover">
             <thead class="table-dark">
-              <tr><th>Req</th><th>Fecha</th><th>Area</th><th>Saldo</th><th></th></tr>
+              <tr>
+                <th>Req</th>
+                <th>Fecha</th>
+                <th>Area</th>
+                <th>Saldo</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let r of requerimientos" [class.table-active]="selected?.id === r.id">
-                <td>{{ r.numero }}</td>
-                <td>{{ r.fecha | date:'dd/MM/yyyy' }}</td>
-                <td>{{ r.area }}</td>
-                <td>{{ r.totalPendientes }}</td>
-                <td><button class="btn btn-sm btn-primary">Atender</button></td>
-                <!-- <td><button class="btn btn-sm btn-primary" (click)="onVerItems(r)">Atender</button></td> -->
-              </tr>
+              <tr *ngFor="let r of requerimientos" [class.table-active]="selected?.id === r.id"> -->
+<!-- <td>{{ r.numero }}</td> -->
+<!-- <td>{{ r.fecha | date:'dd/MM/yyyy' }}</td> -->
+<!-- <td>{{ r.area }}</td>
+                <td>{{ r.totalPendientes }}</td> -->
+<!-- <td><button class="btn btn-sm btn-primary">Atender</button></td> -->
+<!-- <td><button class="btn btn-sm btn-primary" (click)="onVerItems(r)">Atender</button></td> -->
+<!-- </tr>
             </tbody>
           </table>
         </div>
       </div>
-    </div>
+    </div> -->
 
-    <!-- Items + detalle -->
-    <div class="col-lg-7">
-      <div *ngIf="selected" class="card mb-3">
-        <div class="card-header">Items — Req: {{ selected.numero }}</div>
-        <div class="card-body p-2">
+<!-- Items + detalle -->
+<!-- <div class="col-lg-7">
+      <div *ngIf="selected" class="card mb-3"> -->
+<!-- <div class="card-header">Items — Req: {{ selected.numero }}</div> -->
+<!-- <div class="card-body p-2">
           <table class="table table-sm table-bordered">
             <thead class="table-light">
               <tr>
-                <th>Cod</th><th>Descripción</th><th>Sol</th><th>At</th><th>Pend</th><th>Stock</th><th>Atender</th><th></th>
+                <th>Cod</th>
+                <th>Descripción</th>
+                <th>Sol</th>
+                <th>At</th>
+                <th>Pend</th>
+                <th>Stock</th>
+                <th>Atender</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -174,45 +187,51 @@
                 <td>{{ it.pendiente }}</td>
                 <td>{{ it.stock }}</td>
                 <td style="width:120px">
-                  <input type="number" class="form-control form-control-sm" min="0" [max]="it.pendiente" [(ngModel)]="it.cantidadAtender">
-                  <!-- <input type="number" class="form-control form-control-sm" min="0" [max]="Math.min(it.pendiente, it.stock)" [(ngModel)]="it.cantidadAtender"> -->
-                </td>
-                <!-- <td><button class="btn btn-sm btn-success" (click)="onAgregar(it)">➕</button></td> -->
-                <td><button class="btn btn-sm btn-success">➕</button></td>
+                  <input type="number" class="form-control form-control-sm" min="0" [max]="it.pendiente"
+                    [(ngModel)]="it.cantidadAtender"> -->
+<!-- <input type="number" class="form-control form-control-sm" min="0" [max]="Math.min(it.pendiente, it.stock)" [(ngModel)]="it.cantidadAtender"> -->
+<!-- </td> -->
+<!-- <td><button class="btn btn-sm btn-success" (click)="onAgregar(it)">➕</button></td> -->
+<!-- <td><button class="btn btn-sm btn-success">➕</button></td>
               </tr>
             </tbody>
           </table>
         </div>
-      </div>
+      </div> -->
 
-      <!-- Detalle -->
-      <div class="card" *ngIf="detalle.length > 0">
+<!-- Detalle -->
+<!-- <div class="card" *ngIf="detalle.length > 0">
         <div class="card-header">Detalle Atención</div>
         <div class="card-body p-2" id="contenidoPDF">
           <table class="table table-sm">
             <thead>
-              <tr><th>Cod</th><th>Descripción</th><th>Cantidad</th><th></th></tr>
+              <tr>
+                <th>Cod</th>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
               <tr *ngFor="let d of detalle; index as i">
                 <td>{{ d.codigo }}</td>
                 <td>{{ d.descripcion }}</td>
-                <td>{{ d.cantidad }}</td>
-                <!-- <td><button class="btn btn-sm btn-danger" (click)="onQuitar(i)">✖</button></td> -->
-              </tr>
+                <td>{{ d.cantidad }}</td> -->
+<!-- <td><button class="btn btn-sm btn-danger" (click)="onQuitar(i)">✖</button></td> -->
+<!-- </tr>
             </tbody>
           </table>
 
           <div class="d-flex justify-content-between mt-2">
-            <div>
-              <!-- <button class="btn btn-outline-secondary btn-sm" (click)="onLimpiar()">Limpiar</button> -->
-            </div>
+            <div> -->
+<!-- <button class="btn btn-outline-secondary btn-sm" (click)="onLimpiar()">Limpiar</button> -->
+<!-- </div>
 
-            <div>
-              <!-- <button class="btn btn-outline-info btn-sm me-2" (click)="onImprimir()">Imprimir</button>
+            <div> -->
+<!-- <button class="btn btn-outline-info btn-sm me-2" (click)="onImprimir()">Imprimir</button>
               <button class="btn btn-outline-secondary btn-sm me-2" (click)="onGenerarPDF()">PDF</button>
               <button class="btn btn-primary" [disabled]="detalle.length===0" (click)="onRegistrar()">Registrar Atención</button> -->
-            </div>
+<!-- </div>
           </div>
 
         </div>
@@ -226,9 +245,9 @@
   <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
       <h5>Despacho de Requerimientos (Almacén)</h5>
-      <div>
-        <!-- <button class="btn btn-sm btn-secondary" (click)="cargarPendientes()">Refrescar</button> -->
-      </div>
+      <div> -->
+<!-- <button class="btn btn-sm btn-secondary" (click)="cargarPendientes()">Refrescar</button> -->
+<!-- </div>
     </div>
     <div class="card-body">
       <div *ngIf="loading" class="text-center my-4">
@@ -238,40 +257,52 @@
       <table *ngIf="!loading" class="table table-hover">
         <thead class="table-dark">
           <tr>
-            <th>Editar</th><th>Fecha</th><th>Fundo</th><th>Area</th><th>Almacén</th><th>Glosa</th><th>Estado</th>
+            <th>Editar</th>
+            <th>Fecha</th>
+            <th>Fundo</th>
+            <th>Area</th>
+            <th>Almacén</th>
+            <th>Glosa</th>
+            <th>Estado</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of requerimientos">
-            <!-- <td><button class="btn btn-sm btn-warning" (click)="abrirRequerimiento(r)">Despachar</button></td> -->
-            <td>{{ r.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
-            <!-- <td>{{ r.idFundo }}</td>
+          <tr *ngFor="let r of requerimientos"> -->
+<!-- <td><button class="btn btn-sm btn-warning" (click)="abrirRequerimiento(r)">Despachar</button></td> -->
+<!-- <td>{{ r.fecha | date:'dd/MM/yyyy HH:mm' }}</td> -->
+<!-- <td>{{ r.idFundo }}</td>
             <td>{{ r.idArea }}</td>
             <td>{{ r.idAlmacen }}</td> -->
-            <td>{{ r.glosa }}</td>
+<!-- <td>{{ r.glosa }}</td>
             <td><span class="badge bg-info">{{ r.estado }}</span></td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
-</div>
+</div> -->
 
 <!-- Modal Detalles -->
-<div class="modal fade" id="modalDetalles" tabindex="-1" aria-hidden="true">
+<!-- <div class="modal fade" id="modalDetalles" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
-      <div class="modal-header">
-        <!-- <h5 class="modal-title">Detalles Requerimiento - {{selected?.codigo || selected?.idRequerimiento}}</h5> -->
-        <!-- <button type="button" class="btn-close" aria-label="Close" (click)="cerrarModal()"></button> -->
-      </div>
+      <div class="modal-header"> -->
+<!-- <h5 class="modal-title">Detalles Requerimiento - {{selected?.codigo || selected?.idRequerimiento}}</h5> -->
+<!-- <button type="button" class="btn-close" aria-label="Close" (click)="cerrarModal()"></button> -->
+<!-- </div>
       <div class="modal-body">
         <table class="table table-sm">
           <thead>
-            <tr><th>Item</th><th>Solicitado</th><th>Stock</th><th>Unidad</th><th>Despachar</th></tr>
+            <tr>
+              <th>Item</th>
+              <th>Solicitado</th>
+              <th>Stock</th>
+              <th>Unidad</th>
+              <th>Despachar</th>
+            </tr>
           </thead>
-          <tbody>
-            <!-- <tr *ngFor="let d of detalles">
+          <tbody> -->
+<!-- <tr *ngFor="let d of detalles">
               <td>{{ d.idItem }}</td>
               <td>{{ d.cantidadSolicitada }}</td>
               <td>{{ d.stockActual }}</td>
@@ -281,18 +312,201 @@
                        [(ngModel)]="detalleForms[d.idRequerimientoDetalle].despachado" 
                        min="0" [max]="d.stockActual" />
               </td> -->
-            <!-- </tr> -->
-          </tbody>
+<!-- </tr> -->
+<!-- </tbody>
         </table>
       </div>
 
-      <div class="modal-footer">
-        <!-- <button class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+      <div class="modal-footer"> -->
+<!-- <button class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
         <button class="btn btn-info me-auto" (click)="verHistorico()">Ver Histórico</button>
         <button class="btn btn-primary" (click)="validarYRegistrar()">Registrar Despacho</button> -->
+<!-- </div>
+    </div>
+  </div>
+</div> -->
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Gestión de Despachos</h3>
+    <div>
+      <button class="btn btn-outline-info me-2" (click)="verOrdenesCompra()">
+        <i class="icon-shopping-cart"></i> Ver Órdenes de Compra ({{ ordenesCompraGeneradas.length }})
+      </button>
+      <button class="btn btn-primary" (click)="sincronizarDespachos()">
+        <i class="icon-sync"></i> Sincronizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla de Requerimientos Aprobados -->
+  <div class="card">
+    <div class="card-header bg-success text-white">
+      <h5 class="mb-0">Requerimientos Aprobados Pendientes de Despacho</h5>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive" style="max-height: 60vh; overflow: auto;">
+        <table class="table table-hover table-bordered">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>ID Requerimiento</th>
+              <th>Tipo</th>
+              <th>Fecha</th>
+              <th>Almacén</th>
+              <th>Solicitante</th>
+              <th>Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let req of requerimientosAprobados; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td><code>{{ req.idrequerimiento }}</code></td>
+              <td>
+                <span class="badge bg-info">{{ req.tipo }}</span>
+              </td>
+              <td>{{ req.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ req.idalmacen }}</td>
+              <td>{{ req.nrodocumento }}</td>
+              <td>
+                <span class="badge bg-success">{{ req.estados }}</span>
+              </td>
+              <td class="text-center">
+                <button class="btn btn-primary btn-sm" (click)="abrirModalDespacho(req)" title="Procesar despacho">
+                  <i class="icon-truck"></i> Despachar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div *ngIf="!requerimientosAprobados.length" class="text-center text-muted py-4">
+          <i class="icon-inbox" style="font-size: 48px;"></i>
+          <p class="mt-2">No hay requerimientos pendientes de despacho</p>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- MODAL PROCESAR DESPACHO -->
+<div class="modal fade" id="modalDespacho" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="icon-truck"></i> Procesar Despacho
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
 
+      <div class="modal-body">
+        <!-- Información del Requerimiento -->
+        <div class="alert alert-info" *ngIf="requerimientoSeleccionado">
+          <div class="row">
+            <div class="col-md-6">
+              <strong>ID Requerimiento:</strong> {{ requerimientoSeleccionado.idrequerimiento }}
+            </div>
+            <div class="col-md-3">
+              <strong>Tipo:</strong> {{ requerimientoSeleccionado.tipo }}
+            </div>
+            <div class="col-md-3">
+              <strong>Almacén:</strong> {{ requerimientoSeleccionado.idalmacen }}
+            </div>
+          </div>
+          <div class="row mt-2" *ngIf="requerimientoSeleccionado.glosa">
+            <div class="col-12">
+              <strong>Glosa:</strong> {{ requerimientoSeleccionado.glosa }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Items a Despachar -->
+        <h6 class="mb-3">📋 Detalle de Items</h6>
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="table table-bordered table-sm">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th class="text-center">Solicitado</th>
+                <th class="text-center bg-info text-white">Stock Disponible</th>
+                <th class="text-center bg-success text-white">A Despachar</th>
+                <th class="text-center bg-warning">Faltante</th>
+                <th class="text-center">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of detalleDespacho; let i = index"
+                [ngClass]="{'table-danger': item.faltante > 0, 'table-success': item.faltante === 0}">
+                <td><code>{{ item.codigo }}</code></td>
+                <td>{{ item.descripcion || item.producto }}</td>
+                <td class="text-center">
+                  <strong>{{ item.cantidad }}</strong>
+                </td>
+                <td class="text-center">
+                  <span class="badge" [ngClass]="item.stockDisponible === 0 ? 'bg-danger' : 'bg-info'">
+                    {{ item.stockDisponible }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <input type="number" class="form-control form-control-sm text-center"
+                    [(ngModel)]="item.cantidadDespachar" [max]="item.stockDisponible" [min]="0"
+                    style="width: 80px; display: inline-block;">
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-warning" *ngIf="item.faltante > 0">
+                    {{ item.faltante }}
+                  </span>
+                  <span class="text-muted" *ngIf="item.faltante === 0">-</span>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-success" *ngIf="!item.generaOrdenCompra">
+                    <i class="icon-check"></i> Completo
+                  </span>
+                  <span class="badge bg-warning" *ngIf="item.generaOrdenCompra">
+                    <i class="icon-alert"></i> Genera O/C
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot class="table-light">
+              <tr>
+                <td colspan="4" class="text-end"><strong>Totales:</strong></td>
+                <td class="text-center">
+                  <strong class="text-success">{{ calcularTotalDespachar() }}</strong>
+                </td>
+                <td class="text-center">
+                  <strong class="text-warning">{{ calcularTotalFaltantes() }}</strong>
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Resumen de Acciones -->
+        <div class="alert alert-warning mt-3" *ngIf="calcularTotalFaltantes() > 0">
+          <i class="icon-alert-triangle"></i>
+          <strong>Atención:</strong> Se generará automáticamente una orden de compra para los
+          <strong>{{ calcularTotalFaltantes() }}</strong> items faltantes.
+        </div>
+
+        <div class="alert alert-success mt-3" *ngIf="calcularTotalFaltantes() === 0">
+          <i class="icon-check-circle"></i>
+          <strong>Perfecto:</strong> Hay stock suficiente para despachar todo el requerimiento.
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-success" (click)="procesarDespacho()"
+          [disabled]="calcularTotalDespachar() === 0">
+          <i class="icon-check"></i> Confirmar Despacho
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,387 @@
+<div class="container-fluid mt-4">
+
+    <!-- BREADCRUMB -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><i class="icon-home"></i> Logística</li>
+            <li class="breadcrumb-item active">Listas de Stock</li>
+        </ol>
+    </nav>
+
+    <!-- ======================================== -->
+    <!-- VISTA: LISTADO DE LISTAS -->
+    <!-- ======================================== -->
+    <div *ngIf="vistaActual === 'LISTADO'">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3><i class="icon-list"></i> Listas de Stock Configuradas</h3>
+            <button class="btn btn-primary" (click)="iniciarNuevaLista()">
+                <i class="icon-plus"></i> Nueva Lista
+            </button>
+        </div>
+
+        <!-- GRID DE LISTAS -->
+        <div class="row">
+            <div class="col-md-6 col-lg-4 mb-4" *ngFor="let lista of listasStock">
+                <div class="card h-100 shadow-sm lista-card" [class.inactive]="lista.estado === 'INACTIVA'">
+                    <div class="card-header"
+                        [ngClass]="lista.estado === 'ACTIVA' ? 'bg-success text-white' : 'bg-secondary text-white'">
+                        <h5 class="mb-0">
+                            <i class="icon-clipboard"></i> {{ lista.nombre }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted"><small>{{ lista.descripcion }}</small></p>
+                        <div class="lista-info">
+                            <div class="info-item">
+                                <i class="icon-package"></i>
+                                <span><strong>Almacén:</strong> {{ lista.almacen }}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="icon-layers"></i>
+                                <span><strong>Items:</strong> {{ lista.detalle.length || 0 }}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="icon-calendar"></i>
+                                <span><strong>Fecha:</strong> {{ lista.fecha | date: 'dd/MM/yyyy' }}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="icon-user"></i>
+                                <span><strong>Creador:</strong> {{ lista.usuarioCreador }}</span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <span class="badge" [ngClass]="lista.estado === 'ACTIVA' ? 'bg-success' : 'bg-secondary'">
+                                {{ lista.estado }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light">
+                        <div class="d-flex gap-2 justify-content-between">
+                            <button class="btn btn-sm btn-info" (click)="verDetalleLista(lista)" title="Ver detalle">
+                                <i class="icon-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning" (click)="editarLista(lista)"
+                                *ngIf="lista.estado === 'ACTIVA'" title="Editar">
+                                <i class="icon-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" (click)="desactivarLista(lista)"
+                                *ngIf="lista.estado === 'ACTIVA'" title="Desactivar">
+                                <i class="icon-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="listasStock.length === 0" class="col-12 text-center py-5">
+                <i class="icon-inbox" style="font-size: 64px; opacity: 0.3;"></i>
+                <p class="text-muted mt-3">No hay listas de stock configuradas</p>
+                <button class="btn btn-primary" (click)="iniciarNuevaLista()">
+                    <i class="icon-plus"></i> Crear Primera Lista
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- VISTA: CREAR/EDITAR LISTA -->
+    <!-- ======================================== -->
+    <div *ngIf="vistaActual === 'CREAR' || vistaActual === 'EDITAR'">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="icon-edit"></i> {{ modoEdicion ? 'Editar Lista de Stock' : 'Nueva Lista de Stock' }}
+                </h5>
+            </div>
+            <div class="card-body">
+
+                <!-- DATOS DE LA LISTA -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Nombre de la Lista</strong> <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control" [(ngModel)]="nuevaLista.nombre"
+                            placeholder="Ej: Stock Almacén Central">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Almacén</strong> <span class="text-danger">*</span></label>
+                        <select class="form-select" [(ngModel)]="nuevaLista.almacen">
+                            <option value="">Seleccione almacén</option>
+                            <option *ngFor="let alm of almacenes" [value]="alm.idalmacen">
+                                {{ alm.almacen }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <label class="form-label"><strong>Descripción</strong></label>
+                        <textarea class="form-control" rows="2" [(ngModel)]="nuevaLista.descripcion"
+                            placeholder="Descripción opcional de la lista"></textarea>
+                    </div>
+                </div>
+
+                <!-- IMPORTAR DESDE EXCEL -->
+                <div class="alert alert-info">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="icon-upload"></i> <strong>Importar items desde Excel</strong>
+                            <p class="mb-0 small">Puede cargar múltiples items desde un archivo Excel</p>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary me-2" (click)="descargarPlantilla()">
+                                <i class="icon-download"></i> Plantilla
+                            </button>
+                            <input type="file" #fileInput accept=".xlsx,.xls" (change)="onFileSelected($event)"
+                                style="display: none;">
+                            <button class="btn btn-sm btn-primary" (click)="fileInput.click()">
+                                <i class="icon-file-excel"></i> Seleccionar Archivo
+                            </button>
+                            <button class="btn btn-sm btn-success ms-2" (click)="importarDesdeExcel()"
+                                *ngIf="archivoSeleccionado">
+                                <i class="icon-check"></i> Importar
+                            </button>
+                        </div>
+                    </div>
+                    <div *ngIf="archivoSeleccionado" class="mt-2">
+                        <small class="text-muted">Archivo: {{ archivoSeleccionado.name }}</small>
+                    </div>
+                </div>
+
+                <!-- ITEMS DE LA LISTA -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6><i class="icon-list"></i> Items en la Lista ({{ detalleListaActual.length }})</h6>
+                    <button class="btn btn-success btn-sm" (click)="abrirModalAgregarItem()">
+                        <i class="icon-plus"></i> Agregar Item
+                    </button>
+                </div>
+
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>#</th>
+                                <th>Código</th>
+                                <th>Descripción</th>
+                                <th class="text-center">Stock Inicial</th>
+                                <th class="text-center">Stock Mínimo</th>
+                                <th class="text-center">Stock Máximo</th>
+                                <th>U.M.</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let item of detalleListaActual; let i = index">
+                                <td>{{ i + 1 }}</td>
+                                <td><code>{{ item.codigo }}</code></td>
+                                <td>{{ item.descripcion }}</td>
+                                <td class="text-center">
+                                    <input type="number" class="form-control form-control-sm"
+                                        [(ngModel)]="item.stockInicial" min="0" style="width: 100px;">
+                                </td>
+                                <td class="text-center">
+                                    <input type="number" class="form-control form-control-sm"
+                                        [(ngModel)]="item.stockMinimo" min="0" style="width: 100px;">
+                                </td>
+                                <td class="text-center">
+                                    <input type="number" class="form-control form-control-sm"
+                                        [(ngModel)]="item.stockMaximo" min="0" style="width: 100px;">
+                                </td>
+                                <td>{{ item.unidadMedida }}</td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-danger" (click)="eliminarItemDeLista(i)">
+                                        <i class="icon-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div *ngIf="detalleListaActual.length === 0" class="text-center py-4 text-muted">
+                        <i class="icon-inbox" style="font-size: 48px; opacity: 0.3;"></i>
+                        <p class="mt-2">No hay items agregados. Use el botón "Agregar Item" o importe desde Excel</p>
+                    </div>
+                </div>
+
+                <!-- BOTONES DE ACCIÓN -->
+                <div class="d-flex justify-content-between mt-4">
+                    <button class="btn btn-secondary" (click)="volverAListado()">
+                        <i class="icon-arrow-left"></i> Cancelar
+                    </button>
+                    <button class="btn btn-success btn-lg" (click)="guardarLista()">
+                        <i class="icon-save"></i> {{ modoEdicion ? 'Actualizar' : 'Guardar Lista' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- VISTA: DETALLE DE LISTA -->
+    <!-- ======================================== -->
+    <div *ngIf="vistaActual === 'DETALLE' && listaSeleccionada">
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="icon-clipboard"></i> {{ listaSeleccionada.nombre }}
+                    </h5>
+                    <span class="badge bg-light text-dark">{{ listaSeleccionada.almacen }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+
+                <!-- INFO DE LA LISTA -->
+                <div class="alert alert-light border">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Descripción:</strong> {{ listaSeleccionada.descripcion || 'N/A' }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Fecha Creación:</strong> {{ listaSeleccionada.fecha | date: 'dd/MM/yyyy' }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Creado por:</strong> {{ listaSeleccionada.usuarioCreador }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Estado:</strong>
+                            <span class="badge"
+                                [ngClass]="listaSeleccionada.estado === 'ACTIVA' ? 'bg-success' : 'bg-secondary'">
+                                {{ listaSeleccionada.estado }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACCIONES RÁPIDAS -->
+                <div class="d-flex gap-2 mb-3">
+                    <button class="btn btn-primary" (click)="verificarContraRequerimientos()">
+                        <i class="icon-check-circle"></i> Verificar con Requerimientos
+                    </button>
+                    <button class="btn btn-warning" (click)="actualizarStockMasivo()">
+                        <i class="icon-refresh-cw"></i> Actualizar Stock
+                    </button>
+                    <button class="btn btn-success" (click)="exportarListaExcel()">
+                        <i class="icon-file-excel"></i> Exportar Excel
+                    </button>
+                </div>
+
+                <!-- TABLA DE STOCK -->
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>#</th>
+                                <th>Código</th>
+                                <th>Descripción</th>
+                                <th class="text-center">Stock Inicial</th>
+                                <th class="text-center bg-info text-white">Stock Actual</th>
+                                <th class="text-center">Stock Mínimo</th>
+                                <th class="text-center">Stock Máximo</th>
+                                <th>U.M.</th>
+                                <th class="text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let item of detalleListaActual; let i = index"
+                                [class.table-danger]="item.stockActual < item.stockMinimo"
+                                [class.table-warning]="item.stockActual >= item.stockMinimo && item.stockActual <= (item.stockMinimo * 1.5)"
+                                [class.table-success]="item.stockActual > (item.stockMinimo * 1.5)">
+                                <td>{{ i + 1 }}</td>
+                                <td><code>{{ item.codigo }}</code></td>
+                                <td>{{ item.descripcion }}</td>
+                                <td class="text-center">{{ item.stockInicial }}</td>
+                                <td class="text-center">
+                                    <strong class="fs-5">{{ item.stockActual }}</strong>
+                                </td>
+                                <td class="text-center">{{ item.stockMinimo }}</td>
+                                <td class="text-center">{{ item.stockMaximo }}</td>
+                                <td>{{ item.unidadMedida }}</td>
+                                <td class="text-center">
+                                    <span class="badge" [ngClass]="{
+                          'bg-danger': item.stockActual < item.stockMinimo,
+                          'bg-warning': item.stockActual >= item.stockMinimo && item.stockActual <= (item.stockMinimo * 1.5),
+                          'bg-success': item.stockActual > (item.stockMinimo * 1.5)
+                        }">
+                                        {{ item.stockActual < item.stockMinimo ? 'CRÍTICO' : item.stockActual
+                                            <=(item.stockMinimo * 1.5) ? 'BAJO' : 'NORMAL' }} </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- BOTÓN VOLVER -->
+                <div class="mt-4">
+                    <button class="btn btn-secondary" (click)="volverAListado()">
+                        <i class="icon-arrow-left"></i> Volver al Listado
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ======================================== -->
+<!-- MODAL: AGREGAR ITEM -->
+<!-- ======================================== -->
+<div class="modal fade" id="modalAgregarItem" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="icon-plus"></i> Agregar Item a la Lista</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Item</strong> <span class="text-danger">*</span></label>
+                        <select class="form-select" [(ngModel)]="nuevoItem.codigo"
+                            (change)="onItemSeleccionado($event)">
+                            <option value="">Seleccione un item</option>
+                            <option *ngFor="let item of itemsDisponibles" [value]="item.codigo">
+                                {{ item.codigo }} - {{ item.descripcion }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Descripción</strong></label>
+                        <input type="text" class="form-control" [(ngModel)]="nuevoItem.descripcion" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label"><strong>Stock Inicial</strong> <span
+                                class="text-danger">*</span></label>
+                        <input type="number" class="form-control" [(ngModel)]="nuevoItem.stockInicial" min="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label"><strong>Stock Mínimo</strong></label>
+                        <input type="number" class="form-control" [(ngModel)]="nuevoItem.stockMinimo" min="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label"><strong>Stock Máximo</strong></label>
+                        <input type="number" class="form-control" [(ngModel)]="nuevoItem.stockMaximo" min="0">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label"><strong>Unidad de Medida</strong></label>
+                        <select class="form-select" [(ngModel)]="nuevoItem.unidadMedida">
+                            <option value="UND">UNIDAD</option>
+                            <option value="KG">KILOGRAMO</option>
+                            <option value="LT">LITRO</option>
+                            <option value="MT">METRO</option>
+                            <option value="CAJA">CAJA</option>
+                            <option value="SACO">SACO</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" (click)="agregarItemALista()">
+                    <i class="icon-check"></i> Agregar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

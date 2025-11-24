@@ -3,9 +3,9 @@ import {
   Usuario, Configuracion, Empresa, Fundo, Almacen, Area, Proyecto, ItemComodity, Clasificacion, Cultivo, Acopio, Ceco, Labor,
   Trabajador, Turno, DetalleRequerimiento, Requerimiento, Item, Comodity, SubClasificacion, Proveedor, TipoGasto, ActivoFijo,
   DetalleRequerimientoActivoFijo, DetalleRequerimientoCommodity, RequerimientoCommodity, RequerimientoActivoFijo,
-  RequerimientoActivoFijoMenor, DetalleRequerimientoActivoFijoMenor,
-  MaestroItem,
-  MaestroCommodity
+  RequerimientoActivoFijoMenor, DetalleRequerimientoActivoFijoMenor, MaestroItem, MaestroCommodity, MaestroSubCommodity,
+  DetalleListaStock, ListaStock, MovimientoStock, SolicitudCompra, DetalleSolicitudCompra, OrdenCompra, DetalleCotizacion,
+  Cotizacion, Stock, DetalleOrdenCompra
 } from '../interfaces/Tables'
 import Dexie from 'dexie';
 
@@ -46,98 +46,134 @@ export class DexieService extends Dexie {
   public detallesActivoFijoMenor!: Dexie.Table<DetalleRequerimientoActivoFijoMenor, number>
   public maestroItems!: Dexie.Table<MaestroItem, number>
   public maestroCommoditys!: Dexie.Table<MaestroCommodity, number>
+  public maestroSubCommoditys!: Dexie.Table<MaestroSubCommodity, number>
+  public solicitudesCompra!: Dexie.Table<SolicitudCompra, number>;
+  public detalleSolicitudCompra!: Dexie.Table<DetalleSolicitudCompra, number>;
+  public cotizaciones!: Dexie.Table<Cotizacion, number>;
+  public detalleCotizacion!: Dexie.Table<DetalleCotizacion, number>;
+  public ordenesCompra!: Dexie.Table<OrdenCompra, number>;
+  public detalleOrdenCompra!: Dexie.Table<DetalleOrdenCompra, number>;
+  public stock!: Dexie.Table<Stock, number>;
+  public movimientosStock!: Dexie.Table<MovimientoStock, number>;
+  public listasStock!: Dexie.Table<ListaStock, number>;
+  public detalleListaStock!: Dexie.Table<DetalleListaStock, number>;
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 10; // ⬅️ cambia este número cuando modifiques el esquema
+  private static readonly DB_VERSION = 12; // ⬅️ cambia este número cuando modifiques el esquema
 
   constructor() {
     super(DexieService.DB_NAME);
     console.log('🔄 Inicializando DexieService (IndexedDB)');
     // super('Logistica');
     // console.log('DexieService Constructor - Base de datos inicializada');
-    try{
-     this.version(DexieService.DB_VERSION).stores({
-    // this.version(1).stores({
-      usuario: `id,sociedad,idempresa,ruc,razonSocial,idProyecto,proyecto,documentoidentidad,usuario,
-      clave,nombre,idrol,rol`,
-      configuracion: `id,idempresa,idfundo,idcultivo,idarea,idacopio,idceco,idlabor,idalmacen,idactivoFijo`,
-      empresas: `id,ruc,razonsocial`,
-      fundos: `id,codigoFundo,empresa,fundo,nombreFundo`,
-      almacenes: `id,idalmacen,almacen`,
-      areas: `id,ruc,descripcion,estado`,
-      proyectos: `id,ruc,afe,proyecto,esinverison,estado`,
-      cultivos: `id,cultivo,codigo,descripcion,empresa`,
-      turnos:  `id,turno,codTurno,nombreTurno,idcultivo,idproyecto,conturno,estado`,
-      acopios: `id,nave,codigoAcopio,acopio`,
-      cecos: `id,costcenter,localname,cultivo,conturno,esinversion,estado`,
-      labores: `id,idlabor,idgrupolabor,ceco,labor,estado`,
-      itemComoditys: `id,tipoclasificacion,codigo,descripcion`,
-      clasificaciones: `id,idclasificacion,descripcion_clasificacion,tipoClasificacion`,
-      trabajadores: `id,ruc,nrodocumento,nombres,apellidopaterno,apellidomaterno,estado,motivo,
-      bloqueado,eliminado,idmotivo,motivosalida`,
-      detalles: `++id,codigo,producto,cantidad,proyecto,ceco,turno,labor`,
-      requerimientos: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle`,
-      items: `id,tipoclasificacion,codigo,descripcion`,
-      comodities: `id,tipoclasificacion,codigo,descripcion`,
-      subClasificaciones: `id,comodityId,subClase,descripcion,unidad,cuentaGasto,elementoGasto,clasificacionActivo,legacyNumber`,
-      proveedores: `id,TipoPersona,documento,ruc,Estado,TipoPago,MonedaPago,detraccion,TipoServicio`,
-      tipoGastos: `codigo,descripcion`,
-      commoditys: `id,tipoclasificacion,codigo,descripcion`,
-      activosFijos: `id,codigo,descripcion,codigoInterno,ubicacion,ceco,localName,tipoActivo,Estado`,
-      detallesActivoFijo: `++id,codigo,cantidad,proyecto,ceco,turno,labor`,
-      detallesCommodity: `++id,codigo,cantidad,proyecto,ceco,turno,labor`,
-      requerimientosCommodity: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle`,
-      requerimientosActivoFijo: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle`,
-      requerimientosActivoFijoMenor: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle`,
-      detallesActivoFijoMenor: `++id,codigo,cantidad,proyecto,ceco,turno,labor`,
-      maestroCommoditys: `id,commodity01,commodity02,commodity,descripcionLocal,descripcionIngles,
-      unidadporDefecto,cuentaContableGasto,elementoGasto,clasificacionActivo,estado,ultimoUsuario,
-      montoReferencial,montoReferencialMoneda,descripcionEditableFlag,igvExoneradoFlag`,
-      maestroItems: `id,item,itemTipo,linea,familia,subFamilia,descripcionLocal,descripcionIngles,
-      descripcionCompleta,unidadCodigo,monedaCodigo,precioCosto,precioUnitarioLocal,
-      precioUnitarioDolares,itemPrecioFlag,disponibleVentaFlag,itemProcedencia,manejoxLoteFlag,
-      manejoxSerieFlag,manejoxKitFlag,afectoImpuestoVentasFlag,requisicionamientoAutomaticoFl,
-      disponibleTransferenciaFlag,disponibleConsumoFlag,formularioFlag,manejoxUnidadFlag,isoAplicableFlag,
-      cantidadDobleFlag,unidadReplicacion,cuentaInventario,cuentaGasto,cuentaServicioTecnico,
-      factorEquivalenciaComercial,estado,ultimaFechaModif,ultimoUsuario,cuentaVentas,
-      unidadCompra,controlCalidadFlag,cuentaTransito,cantidadDobleFactor,subFamiliaInferior,
-      stockMinimo,stockMaximo,referenciaFiscalIngreso02`,
-    });
+    try {
+      this.version(DexieService.DB_VERSION).stores({
+        // this.version(1).stores({
+        usuario: `id,sociedad,idempresa,ruc,razonSocial,idProyecto,proyecto,documentoidentidad,usuario,
+        clave,nombre,idrol,rol`,
+        configuracion: `id,idempresa,idfundo,idcultivo,idarea,idacopio,idceco,idlabor,idalmacen,idactivoFijo`,
+        empresas: `id,ruc,razonsocial`,
+        fundos: `id,codigoFundo,empresa,fundo,nombreFundo`,
+        almacenes: `id,idalmacen,almacen`,
+        areas: `id,ruc,descripcion,estado`,
+        proyectos: `id,ruc,afe,proyecto,esinverison,estado`,
+        cultivos: `id,cultivo,codigo,descripcion,empresa`,
+        turnos: `id,turno,codTurno,nombreTurno,idcultivo,idproyecto,conturno,estado`,
+        acopios: `id,nave,codigoAcopio,acopio`,
+        cecos: `id,costcenter,localname,cultivo,conturno,esinversion,estado`,
+        labores: `id,idlabor,idgrupolabor,ceco,labor,estado`,
+        itemComoditys: `id,tipoclasificacion,codigo,descripcion`,
+        clasificaciones: `id,idclasificacion,descripcion_clasificacion,tipoClasificacion`,
+        trabajadores: `id,ruc,nrodocumento,nombres,apellidopaterno,apellidomaterno,estado,motivo,
+        bloqueado,eliminado,idmotivo,motivosalida`,
+        detalles: `++id,codigo,producto,cantidad,proyecto,ceco,turno,labor`,
+        requerimientos: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle,despachado`,
+        items: `id,tipoclasificacion,codigo,descripcion`,
+        comodities: `id,tipoclasificacion,codigo,descripcion`,
+        subClasificaciones: `id,comodityId,subClase,descripcion,unidad,cuentaGasto,elementoGasto,clasificacionActivo,legacyNumber`,
+        proveedores: `id,TipoPersona,documento,ruc,Estado,TipoPago,MonedaPago,detraccion,TipoServicio`,
+        tipoGastos: `codigo,descripcion`,
+        commoditys: `id,tipoclasificacion,codigo,descripcion`,
+        activosFijos: `id,codigo,descripcion,codigoInterno,ubicacion,ceco,localName,tipoActivo,Estado`,
+        detallesActivoFijo: `++id,codigo,cantidad,proyecto,ceco,turno,labor`,
+        detallesCommodity: `++id,codigo,cantidad,proyecto,ceco,turno,labor`,
+        requerimientosCommodity: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle`,
+        requerimientosActivoFijo: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle`,
+        requerimientosActivoFijoMenor: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle`,
+        detallesActivoFijoMenor: `++id,codigo,cantidad,proyecto,ceco,turno,labor`,
+        maestroCommoditys: `id,commodity01,commodity02,commodity,clasificacion,descripcionLocal,descripcionIngles,
+        unidadporDefecto,cuentaContableGasto,elementoGasto,clasificacionActivo,estado,ultimoUsuario,
+        montoReferencial,montoReferencialMoneda,descripcionEditableFlag,igvExoneradoFlag`,
+        maestroItems: `id,item,itemTipo,linea,familia,subFamilia,descripcionLocal,descripcionIngles,
+        descripcionCompleta,unidadCodigo,monedaCodigo,precioCosto,precioUnitarioLocal,
+        precioUnitarioDolares,itemPrecioFlag,disponibleVentaFlag,itemProcedencia,manejoxLoteFlag,
+        manejoxSerieFlag,manejoxKitFlag,afectoImpuestoVentasFlag,requisicionamientoAutomaticoFl,
+        disponibleTransferenciaFlag,disponibleConsumoFlag,formularioFlag,manejoxUnidadFlag,isoAplicableFlag,
+        cantidadDobleFlag,unidadReplicacion,cuentaInventario,cuentaGasto,cuentaServicioTecnico,
+        factorEquivalenciaComercial,estado,ultimaFechaModif,ultimoUsuario,cuentaVentas,
+        unidadCompra,controlCalidadFlag,cuentaTransito,cantidadDobleFactor,subFamiliaInferior,
+        stockMinimo,stockMaximo,referenciaFiscalIngreso02`,
+        maestroSubCommoditys: `id,commodity01,commodity02,commodity,descripcionLocal,descripcionIngles,
+        unidadporDefecto,cuentaContableGasto,elementoGasto,clasificacionActivo,estado,ultimoUsuario,
+        montoReferencial,montoReferencialMoneda,descripcionEditableFlag,igvExoneradoFlag`,
+        // ✅ NUEVAS TABLAS PARA EL FLUJO DE COMPRAS
+        solicitudesCompra: `++id,numeroSolicitud,fecha,estado,usuarioSolicita,almacen,tipo`,
+        detalleSolicitudCompra: `++id,solicitudCompraId,codigo,descripcion,cantidad,estado`,
+        cotizaciones: `++id,numeroCotizacion,solicitudCompraId,proveedor,fecha,estado,seleccionada`,
+        detalleCotizacion: `++id,cotizacionId,codigo,descripcion,cantidad,precioUnitario,total`,
+        ordenesCompra: `++id,numeroOrden,solicitudCompraId,proveedor,fecha,estado,montoTotal`,
+        detalleOrdenCompra: `++id,ordenCompraId,codigo,descripcion,cantidad,cantidadRecibida,estado`,
+        stock: `++id,codigo,almacen,cantidad`,
+        movimientosStock: `++id,fecha,tipo,codigo,almacenOrigen,almacenDestino,cantidad,usuario`,
+        listasStock: `++id,nombre,almacen,fecha,estado,usuarioCreador`,
+        detalleListaStock: `++id,listaStockId,codigo,descripcion,stockActual,estado`
+      });
 
-    this.usuario = this.table('usuario');
-    this.configuracion = this.table('configuracion');
-    this.empresas = this.table('empresas');
-    this.fundos = this.table('fundos');
-    this.almacenes = this.table('almacenes');
-    this.cultivos = this.table('cultivos');
-    this.turnos = this.table('turnos');
-    this.proyectos = this.table('proyectos');
-    this.areas = this.table('areas');
-    this.acopios = this.table('acopios');
-    this.cecos = this.table('cecos');
-    this.labores = this.table('labores');
-    this.itemComoditys = this.table('itemComoditys');
-    this.trabajadores = this.table('trabajadores')
-    this.clasificaciones = this.table('clasificaciones')
-    this.detalles = this.table('detalles')
-    this.requerimientos = this.table('requerimientos')
-    this.items = this.table('items')
-    this.comodities = this.table('comodities')
-    this.subClasificaciones = this.table('subClasificaciones')
-    this.proveedores = this.table('proveedores')
-    this.tipoGastos = this.table('tipoGastos')
-    this.commoditys = this.table('commoditys')
-    this.activosFijos = this.table('activosFijos')    
-    this.detallesActivoFijo = this.table('detallesActivoFijo')
-    this.detallesCommodity = this.table('detallesCommodity')
-    this.requerimientosCommodity = this.table('requerimientosCommodity')
-    this.requerimientosActivoFijo = this.table('requerimientosActivoFijo')
-    this.requerimientosActivoFijoMenor = this.table('requerimientosActivoFijoMenor')
-    this.detallesActivoFijoMenor = this.table('detallesActivoFijoMenor')
-    this.maestroItems = this.table('maestroItems')
-    this.maestroCommoditys = this.table('maestroCommoditys')
+      this.usuario = this.table('usuario');
+      this.configuracion = this.table('configuracion');
+      this.empresas = this.table('empresas');
+      this.fundos = this.table('fundos');
+      this.almacenes = this.table('almacenes');
+      this.cultivos = this.table('cultivos');
+      this.turnos = this.table('turnos');
+      this.proyectos = this.table('proyectos');
+      this.areas = this.table('areas');
+      this.acopios = this.table('acopios');
+      this.cecos = this.table('cecos');
+      this.labores = this.table('labores');
+      this.itemComoditys = this.table('itemComoditys');
+      this.trabajadores = this.table('trabajadores')
+      this.clasificaciones = this.table('clasificaciones')
+      this.detalles = this.table('detalles')
+      this.requerimientos = this.table('requerimientos')
+      this.items = this.table('items')
+      this.comodities = this.table('comodities')
+      this.subClasificaciones = this.table('subClasificaciones')
+      this.proveedores = this.table('proveedores')
+      this.tipoGastos = this.table('tipoGastos')
+      this.commoditys = this.table('commoditys')
+      this.activosFijos = this.table('activosFijos')
+      this.detallesActivoFijo = this.table('detallesActivoFijo')
+      this.detallesCommodity = this.table('detallesCommodity')
+      this.requerimientosCommodity = this.table('requerimientosCommodity')
+      this.requerimientosActivoFijo = this.table('requerimientosActivoFijo')
+      this.requerimientosActivoFijoMenor = this.table('requerimientosActivoFijoMenor')
+      this.detallesActivoFijoMenor = this.table('detallesActivoFijoMenor')
+      this.maestroItems = this.table('maestroItems')
+      this.maestroCommoditys = this.table('maestroCommoditys')
+      this.maestroSubCommoditys = this.table('maestroSubCommoditys')
+      this.solicitudesCompra = this.table('solicitudesCompra');
+      this.detalleSolicitudCompra = this.table('detalleSolicitudCompra');
+      this.cotizaciones = this.table('cotizaciones');
+      this.detalleCotizacion = this.table('detalleCotizacion');
+      this.ordenesCompra = this.table('ordenesCompra');
+      this.detalleOrdenCompra = this.table('detalleOrdenCompra');
+      this.stock = this.table('stock');
+      this.movimientosStock = this.table('movimientosStock');
+      this.listasStock = this.table('listasStock');
+      this.detalleListaStock = this.table('detalleListaStock');
 
-    // 🔧 Manejo automático de errores por versión o corrupción
+      // 🔧 Manejo automático de errores por versión o corrupción
       this.open().catch(async (err) => {
         console.error('⚠️ Error al abrir IndexedDB, limpiando base antigua:', err);
         await this.delete();
@@ -290,7 +326,7 @@ export class DexieService extends Dexie {
   async deleteRequerimiento(idrequerimiento: string) { return await this.requerimientos.where('idrequerimiento').equals(idrequerimiento).delete(); }
   async clearRequerimiento() { await this.requerimientos.clear(); }
   // ---------------- Requerimiento Commodity ----------------
-  async saveRequerimientoCommodity(requerimientosCommodity: RequerimientoCommodity) { await this.requerimientosCommodity.put(requerimientosCommodity ); }
+  async saveRequerimientoCommodity(requerimientosCommodity: RequerimientoCommodity) { await this.requerimientosCommodity.put(requerimientosCommodity); }
   async saveRequerimientosCommodity(requerimientosCommodity: RequerimientoCommodity[]) { await this.requerimientosCommodity.bulkPut(requerimientosCommodity); }
   async showRequerimientoCommodity() { return await this.requerimientosCommodity.toArray(); }
   async deleteRequerimientoCommodity(idrequerimiento: string) { return await this.requerimientosCommodity.where('idrequerimiento').equals(idrequerimiento).delete(); }
@@ -309,7 +345,7 @@ export class DexieService extends Dexie {
   async clearRequerimientoActivoFijoMenor() { await this.requerimientosActivoFijoMenor.clear(); }
   // ---------------- Maestro Item ----------------
   async saveMaestroItem(maestroItem: MaestroItem) { await this.maestroItems.put(maestroItem); }
-  async saveMaestroItems(maestroItems: MaestroItem[]) { await this.maestroItems.bulkPut(maestroItems); } 
+  async saveMaestroItems(maestroItems: MaestroItem[]) { await this.maestroItems.bulkPut(maestroItems); }
   async showMaestroItem() { return await this.maestroItems.toArray(); }
   async countMaestroItems() { return await this.maestroItems.count(); }
   async clearMaestroItem() { await this.maestroItems.clear(); }
@@ -319,6 +355,13 @@ export class DexieService extends Dexie {
   async showMaestroCommodity() { return await this.maestroCommoditys.toArray(); }
   async countMaestroCommodity() { return await this.maestroCommoditys.count(); }
   async clearMaestroCommodity() { await this.maestroCommoditys.clear(); }
+  // ---------------- Maestro SubCommodity ----------------
+  async saveMaestroSubCommodity(maestroSubCommodity: MaestroSubCommodity) { await this.maestroSubCommoditys.put(maestroSubCommodity); }
+  async saveMaestroSubCommodities(maestroSubCommoditys: MaestroSubCommodity[]) { await this.maestroSubCommoditys.bulkPut(maestroSubCommoditys); }
+  async showMaestroSubCommodity() { return await this.maestroSubCommoditys.toArray(); }
+  async countMaestroSubCommodity() { return await this.maestroSubCommoditys.count(); }
+  async clearMaestroSubCommodity() { await this.maestroSubCommoditys.clear(); }
+
   async generarCodigo(): Promise<string> {
     const total = await this.requerimientos.count();
     const siguiente = total + 1;
@@ -342,7 +385,45 @@ export class DexieService extends Dexie {
   async showSubClasificaciones() { return await this.subClasificaciones.toArray(); }
   async showSubClasificacionById(id: number) { return await this.subClasificaciones.where('id').equals(id).first() }
   async clearSubClasificaciones() { await this.subClasificaciones.clear(); }
-  //Configuracion
+  //--------------------- Solicitudes de Compra ---------------------
+  async saveSolicitudCompra(solicitud: SolicitudCompra) { return await this.solicitudesCompra.put(solicitud); }
+  async showSolicitudesCompra() { return await this.solicitudesCompra.toArray(); }
+  async showSolicitudCompraById(id: number) { return await this.solicitudesCompra.where('id').equals(id).first(); }
+  async clearSolicitudesCompra() { await this.solicitudesCompra.clear(); }
+  //--------------------- Cotizaciones ---------------------
+  async saveCotizacion(cotizacion: Cotizacion) { return await this.cotizaciones.put(cotizacion); }
+  async showCotizaciones() { return await this.cotizaciones.toArray(); }
+  async showCotizacionesBySolicitud(solicitudId: number) { return await this.cotizaciones.where('solicitudCompraId').equals(solicitudId).toArray(); }
+  async clearCotizaciones() { await this.cotizaciones.clear(); }
+  //--------------------- Órdenes de Compra ---------------------
+  async saveOrdenCompra(orden: OrdenCompra) { return await this.ordenesCompra.put(orden); }
+  async showOrdenesCompra() { return await this.ordenesCompra.toArray(); }
+  async showOrdenCompraById(id: number) { return await this.ordenesCompra.where('id').equals(id).first(); }
+  async clearOrdenesCompra() { await this.ordenesCompra.clear(); }
+  //--------------------- Stock ---------------------
+  async saveStock(stock: Stock) { return await this.stock.put(stock); }
+  async showStock() { return await this.stock.toArray(); }
+  async showStockByAlmacen(almacen: string) { return await this.stock.where('almacen').equals(almacen).toArray(); }
+  async updateStock(codigo: string, almacen: string, cantidad: number) {
+    const stockItem = await this.stock.where(['codigo', 'almacen']).equals([codigo, almacen]).first();
+    if (stockItem) {
+      stockItem.cantidad += cantidad;
+      return await this.stock.put(stockItem);
+    }
+    return null;
+  }
+  async clearStock() { await this.stock.clear(); }
+  //--------------------- Movimientos de Stock ---------------------
+  async saveMovimientoStock(movimiento: MovimientoStock) { return await this.movimientosStock.put(movimiento); }
+  async showMovimientosStock() { return await this.movimientosStock.toArray(); }
+  async clearMovimientosStock() { await this.movimientosStock.clear(); }
+  //--------------------- Listas de Stock ---------------------
+  async saveListaStock(lista: ListaStock) { return await this.listasStock.put(lista); }
+  async showListasStock() { return await this.listasStock.toArray(); }
+  async showListaStockById(id: number) { return await this.listasStock.where('id').equals(id).first(); }
+  async showListasStockByAlmacen(almacen: string) { return await this.listasStock.where('almacen').equals(almacen).toArray(); }
+  async clearListasStock() { await this.listasStock.clear(); }
+  //--------------------- Maestras ---------------------
   async clearMaestras() {
     await this.clearUsuario();
     await this.clearFundos();

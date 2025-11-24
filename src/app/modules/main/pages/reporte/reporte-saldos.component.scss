@@ -1,0 +1,124 @@
+:host {
+  display: block;
+  padding: 1rem;
+  font-family: var(--bs-font-sans-serif);
+}
+
+h5 {
+  font-weight: 600;
+  color: #333;
+}
+
+/* filtros */
+.row.mb-3 {
+  align-items: center;
+}
+
+input.form-control {
+  height: 38px;
+  border-radius: 6px;
+}
+
+/* tabla */
+.table {
+  background: #fff;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.table thead.table-dark th {
+  background: linear-gradient(90deg, #34495e, #2c3e50);
+  color: #fff;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.table tbody tr td {
+  vertical-align: middle;
+  padding: 0.75rem 0.9rem;
+}
+
+.table.table-striped tbody tr:nth-of-type(odd) {
+  background-color: #fbfbfb;
+}
+
+/* medidas para celdas numéricas */
+.table td.text-center {
+  min-width: 80px;
+}
+
+/* resaltado cuando no hay stock */
+.text-danger {
+  color: #e74c3c !important;
+  font-weight: 600;
+}
+
+/* boton despachar */
+.btn-success {
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* responsive: que la tabla ocupe bien en modal-xl */
+@media (min-width: 1200px) {
+  .modal-xl .table-responsive {
+    max-height: 56vh;
+    overflow-y: auto;
+  }
+}
+
+/* badge pequeño */
+.badge {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 10px;
+}
+
+/* estado de stock bajo */
+.disponible-bajo {
+  background: #fff3f2;
+  border-left: 4px solid #e74c3c;
+  padding-left: 0.6rem;
+}
+
+/* utilidad: truncar código largo si necesario */
+.codigo-truncado {
+  display: inline-block;
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* pequeña mejora estética para el header */
+:host ::ng-deep .modal-header.bg-info {
+  background: linear-gradient(90deg,#8e44ad,#6a1b9a);
+  color: #fff;
+}
+
+/* si quieres que el ID se muestre en monoespacio */
+.id-mono {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.9rem;
+}
+
+/* tooltip copy button */
+.copy-btn {
+  border: 0;
+  background: transparent;
+  padding-left: 0.4rem;
+}
+
+/* espaciado adicional para la fila de info */
+.info-row {
+  gap: 0.75rem;
+}
+
+/* fin de archivo */

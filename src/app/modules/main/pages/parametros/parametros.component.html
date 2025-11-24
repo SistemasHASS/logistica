@@ -31,8 +31,6 @@
                 <option [ngValue]="''">Seleccione una opción</option>
                 <option *ngFor="let t of fundos; let i = index" [ngValue]="t.codigoFundo">
                   {{ t.nombreFundo }}
-                  <!-- <option *ngFor="let t of fundos; let i = index" [ngValue]="t.nombreFundo">
-                  {{ t.nombreFundo }} -->
                 </option>
               </select>
             </div>

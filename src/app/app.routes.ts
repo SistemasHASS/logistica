@@ -14,6 +14,8 @@ import { MaestrosComponent } from './modules/main/pages/maestros/maestros.compon
 import { MaestrosItemsComponent } from './modules/main/pages/maestros/items/maestros-items.component';
 import { MaestrosComoditiesComponent } from './modules/main/pages/maestros/comodities/maestros-comodities.component';
 import { DespachoComponent } from './modules/main/pages/despachos/despacho.component';
+import { ReporteSaldosComponent } from './modules/main/pages/reporte/reporte-saldos.component';
+import { ListasStockComponent } from './modules/main/pages/listas-stock/listas-stock.component';
 
 export const routes: Routes = [
   {
@@ -32,7 +34,7 @@ export const routes: Routes = [
   {
     path: 'main',
     component: LayoutComponent,
-    children: [ 
+    children: [
       {
         path: 'maestros',
         component: MaestrosComponent,
@@ -46,8 +48,10 @@ export const routes: Routes = [
       { path: 'parametros', component: ParametrosComponent, canActivate: [OperativoGuard] },
       { path: 'requerimientos', component: RequerimientosComponent, canActivate: [OperativoGuard] },
       { path: 'aprobaciones', component: AprobacionesComponent, canActivate: [AprobadorGuard] },
+      { path: 'listas-stock', component: ListasStockComponent, canActivate: [AlmacenGuard] },
       { path: 'despachos', component: DespachoComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte_logistico', component: ReporteLogisticoComponent },
+      { path: 'reporte-saldos', component: ReporteSaldosComponent, canActivate: [AlmacenGuard] },
       { path: '**', redirectTo: 'auth/login' }
     ],
     canActivate: [AuthGuard]

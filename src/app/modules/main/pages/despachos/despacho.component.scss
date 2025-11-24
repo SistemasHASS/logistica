@@ -1,0 +1,84 @@
+.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #f8f9fa;
+}
+
+.table-danger {
+    background-color: #f8d7da !important;
+}
+
+.table-success {
+    background-color: #d1e7dd !important;
+}
+
+.badge {
+    font-size: 0.85rem;
+    padding: 0.35em 0.65em;
+}
+
+.form-control-sm {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+
+    .card-header {
+        border-radius: 8px 8px 0 0;
+    }
+}
+
+.alert {
+    border-left: 4px solid;
+
+    &.alert-info {
+        border-left-color: #0dcaf0;
+    }
+
+    &.alert-warning {
+        border-left-color: #ffc107;
+    }
+
+    &.alert-success {
+        border-left-color: #198754;
+    }
+}
+
+.modal-xl {
+    max-width: 1200px;
+}
+
+.btn {
+    transition: all 0.3s ease;
+
+    &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+}
+
+code {
+    background-color: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+@media (max-width: 768px) {
+    .modal-xl {
+        max-width: 95%;
+    }
+
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+
+    .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+}

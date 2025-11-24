@@ -9,7 +9,7 @@ import { Observable } from 'rxjs';
 export class RequerimientosService {
   private readonly baseUrl: string = environment.baseUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getRequerimientos(body: any): Observable<any> {
     const url = `${this.baseUrl}/api/logistica/listar-requerimientos`;
@@ -55,13 +55,24 @@ export class RequerimientosService {
     }
   }
 
-  registrarDespacho(body: any): Observable<any> {
-    const url = `${this.baseUrl}/api/logistica/registrar-requerimiento-consumo`;
+  obtenerReporteSaldos(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/listar-saldos`;
     try {
       return this.http.post<any>(url, body);
     } catch (error: any) {
       throw new Error(
-        error.error?.message || 'Error al registrar requerimientos de consumo'
+        error.error?.message || 'Error al obtener reporte de saldos'
+      );
+    }
+  }
+
+  registrarDespacho(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/registrar-despacho`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message || 'Error al registrar despacho'
       );
     }
   }
@@ -73,6 +84,16 @@ export class RequerimientosService {
     } catch (error: any) {
       throw new Error(
         error.error?.message || 'Error al actualizar estado de requerimiento'
+      );
+    }
+  }
+  despacharItem(iddetalle: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/despachar-item`;
+    try {
+      return this.http.post<any>(url, { iddetalle });
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message || 'Error al despachar item'
       );
     }
   }

@@ -43,13 +43,19 @@
                         </thead>
                         <tbody>
                             <tr *ngFor="let req of requerimientosItems; let i = index">
-                                <td><input type="checkbox" [(ngModel)]="req.checked" (change)="simpleSelected('ITEM')"></td>
+                                <td><input type="checkbox" [(ngModel)]="req.checked" (change)="simpleSelected('ITEM')">
+                                </td>
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ req.tipo }}</td>
                                 <td>{{ req.idalmacen }}</td>
                                 <td>{{ req.nrodocumento }}</td>
                                 <td>{{ req.estados}}</td>
                                 <td>
+                                    <!-- Botón Visualizar -->
+                                    <button class="btn btn-info btn-sm me-1" (click)="visualizarDetalle(req, 'ITEM')"
+                                        title="Ver detalle">
+                                        <i class="icon-eye"></i>
+                                    </button>
                                     <button class="btn btn-success btn-sm me-1"
                                         (click)="aprobar(req, 'ITEM')">Aprobar</button>
                                     <button class="btn btn-danger btn-sm"
@@ -65,7 +71,8 @@
                 </div>
 
                 <div class="text-center mt-2">
-                    <button class="btn btn-success" (click)="aprobarRequerimientos()" [disabled]="!dataSelectedItems.length">
+                    <button class="btn btn-success" (click)="aprobarRequerimientos()"
+                        [disabled]="!dataSelectedItems.length">
                         ✅ Aprobar seleccionados
                     </button>
                 </div>
@@ -100,7 +107,8 @@
                         </thead>
                         <tbody>
                             <tr *ngFor="let req of requerimientosCommodity; let i = index">
-                                <td><input type="checkbox" [(ngModel)]="req.checked" (change)="simpleSelected('COMMODITY')"></td>
+                                <td><input type="checkbox" [(ngModel)]="req.checked"
+                                        (change)="simpleSelected('COMMODITY')"></td>
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ req.tipo }}</td>
                                 <td>{{ req.idalmacen }}</td>
@@ -108,6 +116,11 @@
                                 <td>{{ req.nrodocumento }}</td>
                                 <td>{{ req.estados}}</td>
                                 <td>
+                                    <!-- Botón Visualizar -->
+                                    <button class="btn btn-info btn-sm me-1"
+                                        (click)="visualizarDetalle(req, 'COMMODITY')" title="Ver detalle">
+                                        <i class="icon-eye"></i>
+                                    </button>
                                     <button class="btn btn-success btn-sm me-1"
                                         (click)="aprobar(req, 'COMMODITY')">Aprobar</button>
                                     <button class="btn btn-danger btn-sm"
@@ -123,7 +136,8 @@
                 </div>
 
                 <div class="text-center mt-2">
-                    <button class="btn btn-success" (click)="aprobarRequerimientos()" [disabled]="!dataSelectedCommodity.length">
+                    <button class="btn btn-success" (click)="aprobarRequerimientos()"
+                        [disabled]="!dataSelectedCommodity.length">
                         ✅ Aprobar seleccionados
                     </button>
                 </div>
@@ -158,7 +172,8 @@
                         </thead>
                         <tbody>
                             <tr *ngFor="let req of requerimientosActivoFijo; let i = index">
-                                <td><input type="checkbox" [(ngModel)]="req.checked" (change)="simpleSelected('ACTIVO FIJO')"></td>
+                                <td><input type="checkbox" [(ngModel)]="req.checked"
+                                        (change)="simpleSelected('ACTIVO FIJO')"></td>
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ req.tipo }}</td>
                                 <td>{{ req.idalmacen }}</td>
@@ -166,6 +181,11 @@
                                 <td>{{ req.nrodocumento }}</td>
                                 <td>{{ req.estados}}</td>
                                 <td>
+                                    <!-- Botón Visualizar -->
+                                    <button class="btn btn-info btn-sm me-1"
+                                        (click)="visualizarDetalle(req, 'COMMODITY')" title="Ver detalle">
+                                        <i class="icon-eye"></i>
+                                    </button>
                                     <button class="btn btn-success btn-sm me-1"
                                         (click)="aprobar(req, 'ACTIVO FIJO')">Aprobar</button>
                                     <button class="btn btn-danger btn-sm"
@@ -181,12 +201,88 @@
                 </div>
 
                 <div class="text-center mt-2">
-                    <button class="btn btn-success" (click)="aprobarRequerimientos()" [disabled]="!dataSelectedActivo.length">
+                    <button class="btn btn-success" (click)="aprobarRequerimientos()"
+                        [disabled]="!dataSelectedActivo.length">
                         ✅ Aprobar seleccionados
                     </button>
                 </div>
             </div>
         </div>
 
+    </div>
+</div>
+
+<!-- MODAL VISUALIZACIÓN DETALLE -->
+<div class="modal fade" id="modalVisualizarDetalle" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Detalle del Requerimiento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3" *ngIf="requerimientoSeleccionado">
+                    <div class="col-md-6">
+                        <strong>ID Requerimiento:</strong> {{ requerimientoSeleccionado.idrequerimiento }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Tipo:</strong> {{ requerimientoSeleccionado.tipo }}
+                    </div>
+                    <div class="col-md-3" style="display: flex; align-items: center;">
+                        <strong>Estado:</strong> <span style="margin-left: 5px;" class="badge bg-warning">{{
+                            requerimientoSeleccionado.estados
+                            }}</span>
+                    </div>
+                </div>
+
+                <div class="row mb-3" *ngIf="requerimientoSeleccionado">
+                    <div class="col-md-6">
+                        <strong>Almacén:</strong> {{ requerimientoSeleccionado.idalmacen }}
+                    </div>
+                    <div class="col-md-6" *ngIf="requerimientoSeleccionado.idalmacen_destino">
+                        <strong>Almacén Destino:</strong> {{ requerimientoSeleccionado.idalmacen_destino }}
+                    </div>
+                </div>
+
+                <div class="row mb-3" *ngIf="requerimientoSeleccionado">
+                    <div class="col-12">
+                        <strong>Glosa:</strong> {{ requerimientoSeleccionado.glosa || 'Sin glosa' }}
+                    </div>
+                </div>
+
+                <h6 class="mt-4 mb-3">Detalle de Items:</h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Código</th>
+                                <th>Descripción</th>
+                                <th>Cantidad</th>
+                                <th>Proyecto</th>
+                                <th>CECO</th>
+                                <th>Turno</th>
+                                <th>Labor</th>
+                                <th>Activo Fijo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let det of detalleRequerimiento">
+                                <td>{{ det.codigo }}</td>
+                                <td>{{ det.descripcion || det.producto }}</td>
+                                <td class="text-center">{{ det.cantidad }}</td>
+                                <td>{{ det.idproyecto }}</td>
+                                <td>{{ det.idcentrocosto }}</td>
+                                <td>{{ det.idturno }}</td>
+                                <td>{{ det.idlabor }}</td>
+                                <td>{{ det.activoFijo || '-' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
     </div>
 </div>

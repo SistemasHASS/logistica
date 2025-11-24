@@ -1,6 +1,11 @@
-.selectedAll{
+.selectedAll {
     display: flex;
     gap: 8px;
     align-items: center;
     margin-bottom: 5px;
+}
+
+.modal-title {
+    font-size: 1.2rem;
+    color: #fdf9f9;
 }

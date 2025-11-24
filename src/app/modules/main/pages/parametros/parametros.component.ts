@@ -18,6 +18,7 @@ import { Usuario } from '@/app/shared/interfaces/Tables';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { RequerimientosService } from '../../services/requerimientos.service';
 import { DropdownComponent } from '../../components/dropdown/dropdown.component';
+import { CommodityService } from '../../services/commoditys.service';
 
 @Component({
   selector: 'app-parametros',
@@ -31,8 +32,9 @@ export class ParametrosComponent implements OnInit {
     private dexieService: DexieService,
     private maestrasService: MaestrasService,
     private alertService: AlertService, // ✅ inyectar el servicio
-    private requerimientosService: RequerimientosService
-  ) {}
+    private requerimientosService: RequerimientosService,
+    private CommodityService: CommodityService
+  ) { }
 
   fecha = new Date();
   mensajeFundos: String = '';
@@ -53,6 +55,7 @@ export class ParametrosComponent implements OnInit {
   proveedores: any[] = [];
   servicios: any[] = [];
   activosFijos: any[] = [];
+  comodities: any[] = [];
 
   fundoSeleccionado = '';
   cultivoSeleccionado = '';
@@ -346,6 +349,20 @@ export class ParametrosComponent implements OnInit {
         }
       });
 
+      const comodities = this.CommodityService.getCommodity([]);
+      comodities.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveMaestroCommodities(resp);
+        }
+      });
+
+      const subcommodities = this.CommodityService.getSubCommodity([]);
+      subcommodities.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveMaestroSubCommodities(resp);
+        }
+      });
+
       const requerimmientos = this.requerimientosService.getRequerimientos([
         { ruc: this.usuario.ruc, idrol: this.obtenerRol() },
       ]);
@@ -529,28 +546,94 @@ export class ParametrosComponent implements OnInit {
   }
 
   async darProyectoCecos(limpiar = false) {
-    this.filteredCecos.length = 0;
+
+    this.filteredCecos = [];
+
     if (limpiar) {
       this.configuracion.idceco = '';
       this.configuracion.idlabor = '';
-      this.configuracion.idproyecto;
+      this.configuracion.idproyecto = '';
     }
+
     const turno = this.filteredTurnos.find(
       (e: any) => e.codTurno === this.configuracion.idturno
     );
-    this.configuracion.idproyecto = turno?.idproyecto;
-    this.filteredProyectos = this.proyectos.filter(
-      (e: any) => e.afe == turno?.idproyecto
-    );
-    console.log(this.filteredProyectos);
-    if (this.configuracion.idproyecto)
-      await this.nombreProyecto(this.configuracion.idproyecto);
-    if (this.configuracion.idturno) {
+
+    // =========================
+    // SI ES SIN TURNO
+    // =========================
+    if (!turno || turno.nombreTurno?.toLowerCase() === 'sinturno') {
+
+      const cultivo = this.cultivos.find(
+        (c: any) => c.id == this.configuracion.idcultivo
+      );
+
+      if (cultivo) {
+        this.filteredProyectos = this.proyectos.filter(
+          (p: any) => p.cultivo === cultivo.codigo
+        );
+
+        // ✅ AUTO-SELECCIONAR EL PRIMER PROYECTO
+        if (this.filteredProyectos.length > 0) {
+          this.configuracion.idproyecto = this.filteredProyectos[0].afe;
+          await this.nombreProyecto(this.configuracion.idproyecto);
+        }
+      } else {
+        this.filteredProyectos = [];
+      }
+
+    }
+    // =========================
+    // TURNO NORMAL
+    // =========================
+    else {
+
+      this.configuracion.idproyecto = turno.idproyecto;
+
+      this.filteredProyectos = this.proyectos.filter(
+        (p: any) => p.afe === turno.idproyecto
+      );
+
+      if (this.configuracion.idproyecto)
+        await this.nombreProyecto(this.configuracion.idproyecto);
+    }
+
+    // CECO SEGÚN TURNO
+    if (turno && this.configuracion.idturno) {
       this.filteredCecos = this.cecos.filter((x: Ceco) =>
-        x.conturno.includes(turno?.conturno ?? '')
+        x.conturno.includes(turno.conturno ?? '')
       );
     }
+
+    console.log('✅ Proyectos:', this.filteredProyectos);
+    console.log('✅ Proyecto asignado:', this.configuracion.idproyecto);
   }
+
+
+
+  // async darProyectoCecos(limpiar = false) {
+  //   this.filteredCecos.length = 0;
+  //   if (limpiar) {
+  //     this.configuracion.idceco = '';
+  //     this.configuracion.idlabor = '';
+  //     this.configuracion.idproyecto;
+  //   }
+  //   const turno = this.filteredTurnos.find(
+  //     (e: any) => e.codTurno === this.configuracion.idturno
+  //   );
+  //   this.configuracion.idproyecto = turno?.idproyecto;
+  //   this.filteredProyectos = this.proyectos.filter(
+  //     (e: any) => e.afe == turno?.idproyecto
+  //   );
+  //   console.log(this.filteredProyectos);
+  //   if (this.configuracion.idproyecto)
+  //     await this.nombreProyecto(this.configuracion.idproyecto);
+  //   if (this.configuracion.idturno) {
+  //     this.filteredCecos = this.cecos.filter((x: Ceco) =>
+  //       x.conturno.includes(turno?.conturno ?? '')
+  //     );
+  //   }
+  // }
 
   async darProyectoInversionLabor(limpiar = false) {
     this.filteredProyectos.length = 0;
@@ -583,6 +666,8 @@ export class ParametrosComponent implements OnInit {
       this.filteredTurnos = this.turnos.filter(
         (x: Turno) => x.idcultivo?.trim() === cultivo.codigo
       );
+      // LIMPIAR PROYECTOS AL CAMBIAR CULTIVO
+      this.filteredProyectos = [];
       this.darProyectoCecos();
     }
   }

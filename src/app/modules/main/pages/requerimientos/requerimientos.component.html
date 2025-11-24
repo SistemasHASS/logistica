@@ -16,8 +16,9 @@
             Activos Fijos
         </button>
     </li>
-        <li class="nav-item">
-        <button class="nav-link" [ngClass]="{ active: tabActiva === 'ACTIVOFIJOMENOR' }" (click)="cambiarTab('ACTIVOFIJOMENOR')">
+    <li class="nav-item">
+        <button class="nav-link" [ngClass]="{ active: tabActiva === 'ACTIVOFIJOMENOR' }"
+            (click)="cambiarTab('ACTIVOFIJOMENOR')">
             Commodity
         </button>
     </li>
@@ -418,9 +419,9 @@
 
                         <div class="col-6">
                             <label>Servicio: <span class="text-danger">*</span></label>
-                            <app-dropdown [data]="commodityFiltrados" optionLabel="descripcion" valueField="codigo"
-                                [editable]="true" [(ngModel)]="SeleccionaServicio" textShow2="un servicio"
-                                [required]="true">
+                            <app-dropdown [data]="commodityFiltrados" optionLabel="descripcionLocal"
+                                valueField="commodity01" [editable]="true" [(ngModel)]="SeleccionaServicio"
+                                textShow2="un servicio" (ngModelChange)="onServicioChange()" [required]="true">
                             </app-dropdown>
                         </div>
 
@@ -433,7 +434,7 @@
                         </div>
 
                         <label class="mt-2">Glosa:</label>
-                        <input [(ngModel)]="glosa" class="form-control" />
+                        <input [(ngModel)]="glosaCommodity" class="form-control" />
 
                         <div class="d-flex justify-content-end mb-3">
                             <button class="btn btn-primary" (click)="abrirModalCommodity()">
@@ -495,7 +496,7 @@
                             <!-- <h5>Registrar Línea de Detalle</h5>     -->
                             <h5>
                                 {{
-                                editIndex >= 0
+                                commodityEditIndex >= 0
                                 ? "Editar Línea de Detalle - Servicios"
                                 : "Agregar Línea de Detalle - Servicios"
                                 }}
@@ -504,19 +505,16 @@
                             <div class="form-group">
                                 <div class="row g-3">
                                     <!-- Campo CODIGO oculto -->
-                                    <input type="hidden" [(ngModel)]="lineaTemp.codigo" name="codigo" />
+                                    <input type="hidden" [(ngModel)]="lineaTempCommodity.codigo" name="codigo" />
 
-                                    <!-- <div class="col-12">
-                                        <label>Descripción <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control"
-                                            [(ngModel)]="lineaTempCommodity.descripcion" />
-                                    </div> -->
                                     <div class="col-6">
-                                        <label>Clasificacion Servicio <span class="text-danger">*</span></label>
-                                        <app-dropdown [data]="turnos" optionLabel="nombreTurno" valueField="nombreTurno"
-                                            [(ngModel)]="lineaTempCommodity.turno" [editable]="true" [required]="true">
+                                        <label>Clasificación Servicio <span class="text-danger">*</span></label>
+                                        <app-dropdown [data]="subservicioFiltrados" optionLabel="descripcionLocal"
+                                            valueField="commodity01" [(ngModel)]="SeleccionaSubServicio"
+                                            [editable]="true" [required]="true">
                                         </app-dropdown>
                                     </div>
+
 
                                     <div class="col-6">
                                         <label>Cantidad <span class="text-danger">*</span></label>
@@ -632,8 +630,7 @@
                         </thead>
                         <tbody>
                             <tr *ngFor="let req of requerimientosActivoFijo; let i = index">
-                                <td><button class="btn btn-sm btn-warning me-2"
-                                        (click)="editarActivoFijo(i)">
+                                <td><button class="btn btn-sm btn-warning me-2" (click)="editarActivoFijo(i)">
                                         <i class="icon-pencil"></i>
                                     </button></td>
                                 <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm" }}</td>
@@ -694,9 +691,9 @@
 
                         <div class="col-6">
                             <label>Servico AF: <span class="text-danger">*</span></label>
-                            <app-dropdown [data]="commodityFiltrados" optionLabel="descripcion" valueField="codigo"
-                                [editable]="true" [(ngModel)]="SeleccionaServicio" textShow2="un servicio"
-                                [required]="true">
+                            <app-dropdown [data]="commodityFiltradosAF" optionLabel="descripcionLocal"
+                                valueField="commodity01" [editable]="true" [(ngModel)]="SeleccionaServicioAF"
+                                (ngModelChange)="onServicioAFChange()" textShow2="un servicio" [required]="true">
                             </app-dropdown>
                         </div>
 
@@ -710,7 +707,7 @@
 
 
                         <label class="mt-2">Glosa:</label>
-                        <input [(ngModel)]="glosa" class="form-control" />
+                        <input [(ngModel)]="glosaActivoFijo" class="form-control" />
 
                         <div class="d-flex justify-content-end mb-3">
                             <button class="btn btn-primary" (click)="abrirModalActivoFijo()">
@@ -767,12 +764,12 @@
 
                         <!-- Modal de edición Activo Fijo - Detalle-->
                         <!-- Modal Activo Fijo - Detalle-->
-                        <div class="modal-backdrop" *ngIf="modalAbiertoActivoFijo">
+                        <div class="modal-backdrop" *ngIf="modalAbiertoActivoFijoMenor">
                             <div class="modal-content">
                                 <!-- <h5>Registrar Línea de Detalle</h5>     -->
                                 <h5>
                                     {{
-                                    editIndex >= 0
+                                    activoFijoEditIndex >= 0
                                     ? "Editar Línea de Detalle - Activo Fijo"
                                     : "Agregar Línea de Detalle - Activo Fijo"
                                     }}
@@ -781,12 +778,20 @@
                                 <div class="form-group">
                                     <div class="row g-3">
                                         <!-- Campo CODIGO oculto -->
-                                        <input type="hidden" [(ngModel)]="lineaTemp.codigo" name="codigo" />
+                                        <input type="hidden" [(ngModel)]="lineaTempActivoFijoMenor.codigo"
+                                            name="codigo" />
 
-                                        <div class="col-12">
+                                        <!-- <div class="col-12">
                                             <label>Descripción <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control"
                                                 [(ngModel)]="lineaTempActivoFijo.descripcion" />
+                                        </div> -->
+                                        <div class="col-12">
+                                            <label>Clasificación Servicio <span class="text-danger">*</span></label>
+                                            <app-dropdown [data]="subservicioFiltradosAF" optionLabel="descripcionLocal"
+                                                valueField="commodity01" [(ngModel)]="SeleccionaSubServicioAF"
+                                                [editable]="true" [required]="true">
+                                            </app-dropdown>
                                         </div>
 
                                         <div class="col-6">
@@ -853,10 +858,10 @@
 
                 <!-- BOTONES -->
                 <div class="mt-3 text-end">
-                    <button class="btn btn-success me-2" (click)="guardarActivoFijo()">
-                        {{ modoEdicionActivoFijo ? "Actualizar" : "Registrar" }}
+                    <button class="btn btn-success me-2" (click)="guardarActivoFijoMenor()">
+                        {{ modoEdicionActivoFijoMenor ? "Actualizar" : "Registrar" }}
                     </button>
-                    <button class="btn btn-danger" (click)="cancelarActivoFijo()">
+                    <button class="btn btn-danger" (click)="cancelarActivoFijoMenor()">
                         Cancelar
                     </button>
                 </div>
@@ -892,8 +897,7 @@
                         </thead>
                         <tbody>
                             <tr *ngFor="let req of requerimientosActivoFijoMenor; let i = index">
-                                <td><button class="btn btn-sm btn-warning me-2"
-                                        (click)="editarActivoFijoMenor(i)">
+                                <td><button class="btn btn-sm btn-warning me-2" (click)="editarActivoFijoMenor(i)">
                                         <i class="icon-pencil"></i>
                                     </button></td>
                                 <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm" }}</td>
@@ -919,7 +923,7 @@
                         </tbody>
                     </table>
 
-                    <div *ngIf="requerimientosActivoFijo.length === 0" class="text-center text-muted py-3">
+                    <div *ngIf="requerimientosActivoFijoMenor.length === 0" class="text-center text-muted py-3">
                         <em>No hay requerimientos Commodity registrados.</em>
                     </div>
 
@@ -927,7 +931,8 @@
                         <button class="btn btn-success me-3" (click)="nuevoActivoFijoMenor()">
                             <i class="icon-file-plus"></i> Nuevo Commodity
                         </button>
-                        <button (click)="sincronizarRequerimientoActivoFijoMenor()" class="btn btn-primary botonCelular">
+                        <button (click)="sincronizarRequerimientoActivoFijoMenor()"
+                            class="btn btn-primary botonCelular">
                             <i class="icon icon-sync"></i> Sincronizar
                         </button>
                     </div>
@@ -953,10 +958,10 @@
                         </div> -->
 
                         <div class="col-6">
-                            <label>Servico AF: <span class="text-danger">*</span></label>
-                            <app-dropdown [data]="commodityFiltrados" optionLabel="descripcion" valueField="codigo"
-                                [editable]="true" [(ngModel)]="SeleccionaServicio" textShow2="un servicio"
-                                [required]="true">
+                            <label>Servico AFM: <span class="text-danger">*</span></label>
+                            <app-dropdown [data]="commodityFiltradosAFMenor" optionLabel="descripcionLocal"
+                                valueField="commodity01" [editable]="true" [(ngModel)]="SeleccionaServicioAFMenor"
+                                (ngModelChange)="onServicioAFMenorChange()" textShow2="un servicio" [required]="true">
                             </app-dropdown>
                         </div>
 
@@ -970,7 +975,7 @@
 
 
                         <label class="mt-2">Glosa:</label>
-                        <input [(ngModel)]="glosa" class="form-control" />
+                        <input [(ngModel)]="glosaActivoFijoMenor" class="form-control" />
 
                         <div class="d-flex justify-content-end mb-3">
                             <button class="btn btn-primary" (click)="abrirModalActivoFijoMenor()">
@@ -995,7 +1000,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr *ngFor="let d of detallesActivoFijo; let i = index">
+                                    <tr *ngFor="let d of detallesActivoFijoMenor; let i = index">
                                         <td>
                                             <button class="btn btn-sm btn-warning me-2"
                                                 (click)="editarDetalleActivoFijoMenor(i)">
@@ -1016,7 +1021,7 @@
                                             </button>
                                         </td>
                                     </tr>
-                                    <tr *ngIf="detallesCommodity.length === 0">
+                                    <tr *ngIf="detallesActivoFijoMenor.length === 0">
                                         <td colspan="9" class="text-muted">
                                             No hay detalles agregados
                                         </td>
@@ -1032,7 +1037,7 @@
                                 <!-- <h5>Registrar Línea de Detalle</h5>     -->
                                 <h5>
                                     {{
-                                    editIndex >= 0
+                                    activoFijoMenorEditIndex >= 0
                                     ? "Editar Línea de Detalle - Activo Fijo Menor"
                                     : "Agregar Línea de Detalle - Activo Fijo Menor"
                                     }}
@@ -1041,24 +1046,33 @@
                                 <div class="form-group">
                                     <div class="row g-3">
                                         <!-- Campo CODIGO oculto -->
-                                        <input type="hidden" [(ngModel)]="lineaTemp.codigo" name="codigo" />
+                                        <input type="hidden" [(ngModel)]="lineaTempActivoFijoMenor.codigo"
+                                            name="codigo" />
 
-                                        <div class="col-12">
+                                        <!-- <div class="col-12">
                                             <label>Descripción <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control"
-                                                [(ngModel)]="lineaTempActivoFijo.descripcion" />
+                                                [(ngModel)]="lineaTempActivoFijoMenor.descripcion" />
+                                        </div> -->
+                                        <div class="col-12">
+                                            <label>Clasificación Servicio AFM<span class="text-danger">*</span></label>
+                                            <app-dropdown [data]="subservicioFiltradosAFMenor"
+                                                optionLabel="descripcionLocal" valueField="commodity01"
+                                                [(ngModel)]="SeleccionaSubServicioAFMenor" [editable]="true"
+                                                [required]="true">
+                                            </app-dropdown>
                                         </div>
 
                                         <div class="col-6">
                                             <label>Cantidad <span class="text-danger">*</span></label>
                                             <input type="number" class="form-control cantidad"
-                                                [(ngModel)]="lineaTempActivoFijo.cantidad" min="1" />
+                                                [(ngModel)]="lineaTempActivoFijoMenor.cantidad" min="1" />
                                         </div>
 
                                         <div class="col-6">
                                             <label>Turno <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="turnos" optionLabel="nombreTurno"
-                                                valueField="nombreTurno" [(ngModel)]="lineaTempActivoFijo.turno"
+                                                valueField="nombreTurno" [(ngModel)]="lineaTempActivoFijoMenor.turno"
                                                 [editable]="true" [required]="true">
                                             </app-dropdown>
                                         </div>
@@ -1066,7 +1080,7 @@
                                         <div class="col-6">
                                             <label>CECO <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="cecos" optionLabel="localname" valueField="localname"
-                                                [(ngModel)]="lineaTempActivoFijo.ceco" [editable]="true"
+                                                [(ngModel)]="lineaTempActivoFijoMenor.ceco" [editable]="true"
                                                 [required]="true">
                                             </app-dropdown>
                                         </div>
@@ -1074,7 +1088,7 @@
                                         <div class="col-6">
                                             <label>Proyecto <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="proyectos" optionLabel="proyectoio"
-                                                valueField="proyectoio" [(ngModel)]="lineaTempActivoFijo.proyecto"
+                                                valueField="proyectoio" [(ngModel)]="lineaTempActivoFijoMenor.proyecto"
                                                 [editable]="true" [required]="true">
                                             </app-dropdown>
                                         </div>
@@ -1082,7 +1096,7 @@
                                         <div class="col-6">
                                             <label>Labor <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="labores" optionLabel="labor" valueField="labor"
-                                                [(ngModel)]="lineaTempActivoFijo.labor" [editable]="true"
+                                                [(ngModel)]="lineaTempActivoFijoMenor.labor" [editable]="true"
                                                 [required]="true">
                                             </app-dropdown>
                                         </div>
@@ -1091,7 +1105,7 @@
                                             <label>Codigo Activo Fijo <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="activosFijosServicioFiltrados"
                                                 optionLabel="activo_descripcion" valueField="activo"
-                                                [(ngModel)]="lineaTempActivoFijo.activoFijo" [editable]="true"
+                                                [(ngModel)]="lineaTempActivoFijoMenor.activoFijo" [editable]="true"
                                                 [required]="true">
                                             </app-dropdown>
                                         </div>
@@ -1099,7 +1113,7 @@
 
                                     <div class="mt-4 text-center">
                                         <button class="btn btn-success me-2" (click)="guardarLineaActivoFijoMenor()">
-                                            {{ modoEdicionActivoFijo ? "Actualizar" : "Registrar" }}
+                                            {{ modoEdicionActivoFijoMenor ? "Actualizar" : "Registrar" }}
                                         </button>
                                         <button class="btn btn-danger" (click)="cerrarModalActivoFijoMenor()">
                                             Cancelar
@@ -1114,7 +1128,7 @@
                 <!-- BOTONES -->
                 <div class="mt-3 text-end">
                     <button class="btn btn-success me-2" (click)="guardarActivoFijoMenor()">
-                        {{ modoEdicionActivoFijo ? "Actualizar" : "Registrar" }}
+                        {{ modoEdicionActivoFijoMenor ? "Actualizar" : "Registrar" }}
                     </button>
                     <button class="btn btn-danger" (click)="cancelarActivoFijoMenor()">
                         Cancelar

@@ -8,6 +8,7 @@ import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
 import { Usuario } from '@/app/shared/interfaces/Tables';
 
+declare var bootstrap: any; // Para usar Bootstrap modal
 @Component({
     selector: 'app-aprobaciones',
     standalone: true,
@@ -35,6 +36,10 @@ export class AprobacionesComponent {
     requerimientosItems: any[] = [];
     requerimientosCommodity: any[] = [];
     requerimientosActivoFijo: any[] = [];
+
+    // Para el modal de visualización
+    requerimientoSeleccionado: any = null;
+    detalleRequerimiento: any[] = [];
 
     usuarioAprueba = 'APROBADOR_99';
     usuario: Usuario = {
@@ -136,6 +141,29 @@ export class AprobacionesComponent {
         } catch (error: any) {
             console.error(error);
             this.alertService.showAlert('Error!', '<p>Ocurrio un error</p><p>', 'error');
+        }
+    }
+
+    /** ✅ Visualizar detalle del requerimiento */
+    async visualizarDetalle(req: any, tipo: string) {
+        this.requerimientoSeleccionado = req;
+        
+        // Cargar el detalle del requerimiento desde Dexie
+        if (req.detalle && req.detalle.length > 0) {
+            this.detalleRequerimiento = req.detalle;
+        } else {
+            // Si no está en memoria, buscar en Dexie
+            this.detalleRequerimiento = await this.dexieService.detalles
+                .where('idrequerimiento')
+                .equals(req.idrequerimiento)
+                .toArray();
+        }
+
+        // Abrir el modal
+        const modalElement = document.getElementById('modalVisualizarDetalle');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
         }
     }
 
