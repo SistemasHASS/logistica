@@ -1,0 +1,29 @@
+<div class="dropdown-cards position-relative">
+  <!-- input que reutiliza el dropdown base -->
+  <app-dropdown
+    [editable]="true"
+    [data]="data"
+    [optionLabel]="optionLabel"
+    [valueField]="valueField"
+    [(ngModel)]="busqueda"
+    (ngModelChange)="filtrar()"
+    [placeholder]="placeholder">
+  </app-dropdown>
+
+  <!-- Panel con cards -->
+  <div class="panel shadow" *ngIf="mostrarPanel">
+    <div class="card-item" *ngFor="let item of resultados" (click)="seleccionar(item)">
+      <div class="titulo">
+        {{ item[optionLabel] }}
+      </div>
+
+      <div class="codigo">
+        Código: {{ item[valueField] }}
+      </div>
+    </div>
+
+    <div *ngIf="resultados.length === 0" class="no-data">
+      No se encontraron resultados
+    </div>
+  </div>
+</div>

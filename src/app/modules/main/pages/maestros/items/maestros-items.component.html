@@ -1,6 +1,6 @@
 <div class="d-flex gap-2">
   <!-- BOTÓN ABRIR MODAL -->
-  <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalItem">
+  <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalItem" (click)="abrirNuevoItem()">
     Nuevo Item
   </button>
 
@@ -50,11 +50,12 @@
   <!-- TABLA REAL -->
   <p-table #dt [value]="itemsFiltrados" [paginator]="true" [rows]="20" [totalRecords]="itemsFiltrados.length"
     [loading]="isLoading" responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+    [expandedRowKeys]="expandedRows" [showGridlines]="false"
     currentPageReportTemplate="<{first} - {last} de {totalRecords}>" styleClass="p-datatable-sm p-datatable-striped">
 
-    <ng-template pTemplate="header">
+    <ng-template pTemplate="header" let-row>
       <tr>
-        <th style="width:50px">#</th>
+        <th style="width:80px">#</th>
         <th style="width:50px">
           <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
         </th>
@@ -66,7 +67,7 @@
         <th style="min-width:120px" pSortableColumn="precioUnitarioLocal">Precio</th>
         <th style="min-width:100px" pSortableColumn="estado">Estado</th>
         <th style="min-width:50px">Acciones</th>
-    </tr>
+      </tr>
     </ng-template>
 
     <ng-template pTemplate="body" let-c let-i="rowIndex">
@@ -162,12 +163,20 @@
             <div class="row">
               <div class="col-4">
                 <label>Código del Item</label>
-                <input type="text" class="form-control" [(ngModel)]="item.item">
+                <!-- <input type="text" class="form-control" [(ngModel)]="item.item" readonly> -->
+                <input class="form-control" [value]="'00'+correlativoItem" readonly>
               </div>
 
               <div class="col-8">
                 <label>Descripción Local</label>
-                <input type="text" class="form-control" [(ngModel)]="item.descripcionLocal">
+                <input type="text" class="form-control" [(ngModel)]="item.descripcionLocal"
+                  (input)="onDescripcionInput($event.target.value)">
+                <div class="autocomplete-container" *ngIf="sugerencias?.length">
+                  <div class="suggestion" *ngFor="let s of sugerencias" (click)="selectSuggestionInModal(s)">
+                    {{ s.item ? s.item.descripcionLocal : s.descripcionLocal || s }}
+                    <small *ngIf="s._score"> ({{ (s._score).toFixed(2) }})</small>
+                  </div>
+                </div>
               </div>
 
               <div class="col-12 mt-2">

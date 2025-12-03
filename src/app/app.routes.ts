@@ -15,7 +15,9 @@ import { MaestrosItemsComponent } from './modules/main/pages/maestros/items/maes
 import { MaestrosComoditiesComponent } from './modules/main/pages/maestros/comodities/maestros-comodities.component';
 import { DespachoComponent } from './modules/main/pages/despachos/despacho.component';
 import { ReporteSaldosComponent } from './modules/main/pages/reporte/reporte-saldos.component';
+import { ReporteAprobadosComponent } from './modules/main/pages/reporte/reporte-aprobados.component';
 import { ListasStockComponent } from './modules/main/pages/listas-stock/listas-stock.component';
+import { AprobadoresMantenedorComponent } from './modules/main/pages/aprobadores/aprobadores-mantenedor.component';
 
 export const routes: Routes = [
   {
@@ -45,9 +47,11 @@ export const routes: Routes = [
           { path: 'comodities', component: MaestrosComoditiesComponent },
         ]
       },
+      { path: 'aprobadores', component: AprobadoresMantenedorComponent, canActivate: [AdministradorGuard] },
       { path: 'parametros', component: ParametrosComponent, canActivate: [OperativoGuard] },
       { path: 'requerimientos', component: RequerimientosComponent, canActivate: [OperativoGuard] },
       { path: 'aprobaciones', component: AprobacionesComponent, canActivate: [AprobadorGuard] },
+      { path: 'reporte-aprobados', component: ReporteAprobadosComponent, canActivate: [AprobadorGuard] },
       { path: 'listas-stock', component: ListasStockComponent, canActivate: [AlmacenGuard] },
       { path: 'despachos', component: DespachoComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte_logistico', component: ReporteLogisticoComponent },

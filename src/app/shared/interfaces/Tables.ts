@@ -102,13 +102,13 @@ export interface Ceco {
     idproyecto: string;
 }
 
-export interface Labor {
-    id: string;
-    idgrupolabor: string;
-    ceco: string;
-    idlabor: string;
-    labor: string;
-}
+// export interface Labor {
+//     id: string;
+//     idgrupolabor: string;
+//     ceco: string;
+//     idlabor: string;
+//     labor: string;
+// }
 
 
 export interface Labor {
@@ -153,7 +153,8 @@ export interface Clasificacion {
 export interface DetalleRequerimiento {
     id?: number;
     codigo: string;
-    producto: string;
+    // producto: string;
+    producto: any;
     descripcion: string;
     cantidad: number;
     proyecto: string;
@@ -163,6 +164,7 @@ export interface DetalleRequerimiento {
     esActivoFijo: boolean;
     activoFijo: string;
     estado: number;
+    atendida?: string;
 }
 
 export interface Requerimiento {
@@ -180,6 +182,9 @@ export interface Requerimiento {
     almacen: string;
     glosa: string;
     tipo: string;
+    itemtipo: string;
+    referenciaGasto: string; 
+    prioridad: string;
     estados: string;
     estado: number;
     despachado: boolean;
@@ -196,6 +201,7 @@ export interface RequerimientoCommodity {
     idfundo: string;
     idarea: string;
     idclasificacion: string;
+    prioridad: string;
     nrodocumento: string;
     idalmacen: string;
     idalmacendestino: string;
@@ -219,6 +225,7 @@ export interface RequerimientoActivoFijo {
     idfundo: string;
     idarea: string;
     idclasificacion: string;
+    prioridad: string;
     nrodocumento: string;
     idalmacen: string;
     idalmacendestino: string;
@@ -290,6 +297,7 @@ export interface RequerimientoActivoFijoMenor {
     idfundo: string;
     idarea: string;
     idclasificacion: string;
+    prioridad: string;
     nrodocumento: string;
     idalmacen: string;
     idalmacendestino: string;
@@ -303,26 +311,6 @@ export interface RequerimientoActivoFijoMenor {
     detalleActivoFijoMenor: DetalleRequerimientoActivoFijoMenor[];
 }
 
-export interface RequerimientoActivoFijo {
-    id?: number;
-    idrequerimiento: string;
-    ruc: string;
-    idfundo: string;
-    idarea: string;
-    idclasificacion: string;
-    nrodocumento: string;
-    idalmacen: string;
-    idalmacendestino: string;
-    idproyecto: string;
-    fecha: string;
-    almacen: string;
-    glosa: string;
-    tipo: string;
-    estados: string;
-    estado: number;
-    detalleActivoFijo: DetalleRequerimientoActivoFijo[];
-}
-
 export interface RequerimientoCommodity {
     id?: number;
     idrequerimiento: string;
@@ -330,6 +318,7 @@ export interface RequerimientoCommodity {
     idfundo: string;
     idarea: string;
     idclasificacion: string;
+    prioridad: string;
     nrodocumento: string;
     idalmacen: string;
     idalmacendestino: string;
@@ -341,120 +330,6 @@ export interface RequerimientoCommodity {
     estados: string;
     estado: number;
     detalleCommodity: DetalleRequerimientoCommodity[];
-}
-
-export interface Trabajador {
-    id: string
-    ruc: string
-    nrodocumento: string
-    nombres: string
-    apellidopaterno: string
-    apellidomaterno: string
-    estado: number
-    motivo: string
-    bloqueado: number
-    eliminado: number
-    idmotivo: number
-    motivosalida: number
-}
-
-export interface TrabajadorPlanilla {
-    nrodocumento: string
-    nombre: string
-    fechatareo: string
-    idfundo: number
-    idcultivo: number
-    idacopio: number
-    hora_inicio: string
-    fecha_fintareo: string
-    hora_fin: string
-    horas: number
-    fecha_iniciorefrigerio: string
-    hora_iniciorefrigerio: string
-    fecha_finrefrigerio: string
-    hora_finrefrigerio: string
-    horas_refrigerio: number
-    turno: string
-    motivosalida: string
-    disabled: boolean
-    checked: boolean
-    eliminado: number
-    estado: number
-    cerrado: boolean
-    bloqueado: number
-    idmotivocierre: number
-    fecha_compensa: string
-    nombreTurno: string
-    labores: LaborPlanilla[]
-}
-
-export interface LaborPlanilla {
-    idlabor: string
-    labor: string
-    idceco: string
-    ceco: string
-    idturno: string
-    tipo: number
-    horas: number
-}
-
-export interface IncidenciaPersona {
-    iddetalleincidencia: string,
-    fecharegistro: string,
-    iddocumento: string,
-    serie: string,
-    nrodocumento: string,
-    fechainicio: string,
-    fechafin: string,
-    anular: number,
-    usuario_aprueba: string,
-    idaprobacion: string,
-    glosa: string,
-    pdf64: string,
-    idincidencia: string,
-    nombrePersona: string,
-    nombreIncidencia: string,
-    aprobado: number,
-    checked: false,
-    estado: number
-}
-
-export interface TareoAsistencia {
-    idtareo_asistencia: string;
-    ruc: string;
-    nrodocumentosupervisor: string;
-    fecha: string;
-    tipo: number;
-    fundo: number;
-    codfundo: string;
-    cultivo: number;
-    codcultivo: string;
-    planilla: TrabajadorPlanilla[];
-}
-
-export interface PlanillasAdicional {
-    id: string
-    ruc: string
-    nrodocumentosupervisor: string
-    idfundo: number
-    codfundo: string
-    idcultivo: number
-    codcultivo: string
-    idacopio: number
-    fechatareo: string
-    hora_inicio: string
-    fecha_fintareo: string
-    hora_fin: string
-    horas: number
-    idceco: number
-    ceco: string
-    idlabor: number
-    labor: string
-    idturno: string
-    estado: number
-    eliminado: number
-    tipo: number
-    trabajadores: Trabajador[]
 }
 
 export interface PersonaFlujoAprobacion {
@@ -910,4 +785,61 @@ export interface DetalleRecepcion {
     lote?: string;
     fechaVencimiento?: string;
     estado: 'CONFORME' | 'NO_CONFORME';
+}
+
+export interface Nivel {
+  idNivel: number;
+  descripcion: string;
+  orden: number;
+  estado?: boolean;
+}
+
+export interface TipoDocumento {
+  idTipoDocumento: number;
+  codigo: string;
+  descripcion: string;
+  estado?: boolean;
+}
+
+export interface Aprobador {
+  idAprobador?: number;
+  dni: string;
+  nombres: string;
+  correo?: string;
+  idNivel: number;
+  idTipoDocumento: number;
+  activo?: boolean;
+  fechaRegistro?: string;
+}
+
+export interface Despacho{
+    id?: number;
+    numeroDespacho: string;
+    fecha: string;
+    almacen: string;
+    detalle: DetalleDespacho[];
+    observaciones?: string;
+    usuarioDespacha: string;
+    estado: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
+}
+
+export interface DetalleDespacho{
+    id?: number;
+    despachoId: number;
+    detalleRecepcionId: number;
+    codigo: string;
+    descripcion: string;
+    cantidad: number;
+    unidadMedida: string;
+    precioUnitario: number;
+    descuento: number;
+    subtotal: number;
+    impuesto: number;
+    total: number;
+    marca?: string;
+    modelo?: string;
+    especificaciones?: string;
+    fechaEntregaEstimada?: string;
+    estado: 'PENDIENTE' | 'PARCIAL' | 'COMPLETO' | 'CANCELADO';
+    observaciones?: string;
 }

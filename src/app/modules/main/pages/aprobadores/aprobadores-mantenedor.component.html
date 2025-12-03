@@ -1,0 +1,99 @@
+<div class="card p-3">
+  <h5>Mantenedor de Aprobadores por Nivel</h5>
+
+  <div class="row mb-3">
+    <div class="col-sm-4">
+      <label>Nivel</label>
+      <select class="form-select" (change)="onSeleccionNivel($any($event.target).value)">
+        <option value="">-- Seleccione nivel --</option>
+        <option *ngFor="let n of niveles" [value]="n.idNivel">{{n.orden}} - {{n.descripcion}}</option>
+      </select>
+    </div>
+
+    <div class="col-sm-4">
+      <label>Tipo Documento</label>
+      <select class="form-select" (change)="onSeleccionTipo($any($event.target).value)">
+        <option *ngFor="let t of tipos" [value]="t.codigo">{{t.descripcion}}</option>
+      </select>
+    </div>
+
+    <div class="col-sm-4 d-flex align-items-end">
+      <div *ngIf="cargando" class="spinner-border spinner-border-sm me-2" role="status"></div>
+      <small class="text-success">{{ mensaje }}</small>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-5">
+      <div class="card p-3">
+        <h6>Registrar aprobador</h6>
+        <form [formGroup]="form" (ngSubmit)="registrar()">
+          <div class="mb-2">
+            <label class="form-label">DNI / Documento</label>
+            <input formControlName="dni" class="form-control" />
+            <small class="text-danger" *ngIf="form.get('dni')?.invalid && form.get('dni')?.touched">DNI requerido.</small>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label">Nombres</label>
+            <input formControlName="nombres" class="form-control" />
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label">Correo</label>
+            <input formControlName="correo" class="form-control" />
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label">Nivel</label>
+            <select formControlName="idNivel" class="form-select">
+              <option value="">-- Seleccione nivel --</option>
+              <option *ngFor="let n of niveles" [value]="n.idNivel">{{n.orden}} - {{n.descripcion}}</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Tipo Documento</label>
+            <select formControlName="idTipoDocumento" class="form-select">
+              <option value="">-- Seleccione tipo --</option>
+              <option *ngFor="let t of tipos" [value]="t.idTipoDocumento">{{t.descripcion}}</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary" [disabled]="cargando">Guardar aprobador</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+      <div class="card p-3">
+        <h6>Lista de aprobadores</h6>
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>DNI</th>
+              <th>Nombre</th>
+              <th>Correo</th>
+              <th>Activo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of aprobadores">
+              <td>{{a.dni}}</td>
+              <td>{{a.nombres}}</td>
+              <td>{{a.correo}}</td>
+              <td>{{a.activo ? 'Sí' : 'No'}}</td>
+              <td>
+                <button class="btn btn-sm btn-danger" (click)="confirmarDesactivar(a)" [disabled]="!a.activo">Desactivar</button>
+              </td>
+            </tr>
+            <tr *ngIf="!aprobadores || aprobadores.length === 0">
+              <td colspan="5" class="text-muted">No hay aprobadores para el nivel/tipo seleccionado.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

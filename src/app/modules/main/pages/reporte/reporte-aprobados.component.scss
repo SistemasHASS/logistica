@@ -1,0 +1,109 @@
+::ng-deep .p-table {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+::ng-deep .p-table thead th {
+  background: linear-gradient(45deg, #1976d2, #42a5f5);
+  color: #fff;
+  padding: 14px 25px !important;
+  font-size: 14px;
+}
+
+::ng-deep .p-table td {
+  padding: 12px 25px !important;
+  font-size: 13px;
+}
+
+.nav-tabs .nav-link {
+  font-weight: 600;
+  color: #6c757d;
+  border-radius: 6px 6px 0 0;
+  transition: 0.2s;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #0d6efd;
+}
+
+.nav-tabs .nav-link.active {
+  background-color: #0d6efd;
+  color: white;
+  border-color: #0d6efd;
+}
+
+/* Cabecera estilizada */
+.custom-table .p-datatable-thead > tr > th {
+  background: #2f3e46; /* azul oscuro elegante */
+  color: #ffffff;
+  font-weight: 600;
+  padding: 14px 20px;
+  text-align: left;
+  border: none;
+}
+
+/* Separación entre columnas */
+.custom-table .p-datatable-tbody > tr > td {/* ENCABEZADOS */
+.custom-table .p-datatable-thead > tr > th {
+  background: #2f3e46;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 14px 20px;
+  border: none;
+  font-size: 14px;
+}
+
+/* CUERPO */
+.custom-table .p-datatable-tbody > tr > td {
+  padding: 16px 20px;
+  font-size: 14px;
+}
+
+/* Filas alternadas */
+.custom-table .p-datatable-tbody > tr:nth-child(even) {
+  background: #f8fbfd;
+}
+
+/* Hover */
+.custom-table .p-datatable-tbody > tr:hover {
+  background: #edf4f9;
+}
+
+/* Bordes redondeados tabla */
+.custom-table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+  padding: 16px 20px;
+  vertical-align: middle;
+}
+
+/* Filas con efecto suave */
+.custom-table .p-datatable-tbody > tr {
+  background: #f8fbfd;
+  border-radius: 10px;
+}
+
+/* Hover filas */
+.custom-table .p-datatable-tbody > tr:hover {
+  background: #eef5f9;
+}
+
+.badge-estado {
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.aprobado {
+  background: #4cd137;
+  color: #fff;
+}
+
+.rechazado {
+  background: #e84118;
+  color: #fff;
+}

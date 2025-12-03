@@ -30,10 +30,14 @@
 <div *ngIf="tabActiva === 'ITEM'">
     <div class="requerimientos-container">
         <div class="container py-4">
-            <div class="container mt-3">
+            <div class="container mt-3 table-content">
                 <h2>Requerimientos Items</h2>
                 <!-- 🔹 Vista: LISTA DE REQUERIMIENTOS -->
                 <div *ngIf="!mostrarFormulario">
+                    <!-- <app-modern-table [columns]="columns" [data]="requerimientos" 
+                    (edit)="editarRequerimiento($event)" (delete)="eliminarRequerimiento($event)">
+                    </app-modern-table> -->
+
                     <table class="table table-hover table-striped align-middle shadow-sm">
                         <thead class="table-dark">
                             <tr>
@@ -53,7 +57,8 @@
                                         <i class="icon-pencil"></i>
                                     </button></td>
                                 <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm" }}</td>
-                                <td>{{ req.idfundo }}</td>
+                                <!-- <td>{{ req.idfundo }}</td> -->
+                                <td>{{ getDescripcionFundo(req.idfundo) }}</td>
                                 <td>{{ req.idarea }}</td>
                                 <td>{{ req.almacen }}</td>
                                 <td>{{ req.glosa }}</td>
@@ -86,14 +91,17 @@
                         class="btn btn-success botonCelular">
                         <i class="icon-file-plus"></i> Nuevo
                     </button>
-                    <button class="btn btn-secondary" (click)="abrirModalConsolidacion()">
+                    <!-- <button class="btn btn-secondary" (click)="abrirModalConsolidacion()">
                         Consolidar pendientes
-                    </button>
+                    </button> -->
                     <button (click)="sincronizarRequerimiento()" class="btn btn-primary botonCelular">
                         <i class="icon icon-sync"></i> Sincronizar
                     </button>
                 </div>
             </div>
+
+            <!-- CAPA OSCURA -->
+            <div class="overlay-global" *ngIf="mostrarFormulario"></div>
 
             <!-- ===================== -->
             <!-- FORMULARIO DE REQUERIMIENTO ITEMS-->
@@ -107,6 +115,17 @@
                 <!-- FORMULARIO COMPLETO DE REQUERIMIENTO ITEMS-->
                 <div class="requerimientos-form">
                     <div class="row g-3">
+
+                        <div class="col-6">
+                            <label>Prioridad <span class="text-danger">*</span></label>
+                            <select class="form-select" [(ngModel)]="SeleccionaPrioridadITEM">
+                                <option value="">Selecciona prioridad</option>
+                                <option value="1">Normal</option>
+                                <option value="2">Urgente</option>
+                                <option value="3">Muy Urgente</option>
+                            </select>
+                        </div>
+
                         <div class="col-6" *ngIf="TipoSelecionado !== 'TRANSFERENCIA'">
                             <label>Almacén <span class="text-danger">*</span></label>
                             <app-dropdown [(ngModel)]="almacenSeleccionado"
@@ -239,9 +258,14 @@
 
                                         <div class="col-6">
                                             <label>Producto <span class="text-danger">*</span></label>
-                                            <app-dropdown [(ngModel)]="lineaTemp.producto" [required]="true"
+                                            <!-- <app-dropdown [(ngModel)]="lineaTemp.producto" [required]="true"
                                                 [editable]="true" [data]="itemsFiltrados" [valueField]="'codigo'"
-                                                [textShow2]="'un producto'" [optionLabel]="'descripcion'" />
+                                                [textShow2]="'un producto'" [optionLabel]="'descripcion'" /> -->
+                                            <app-product-search-cards [(ngModel)]="lineaTemp.producto" name="producto"
+                                                [data]="itemsFiltrados" [optionLabel]="'descripcion'"
+                                                [valueField]="'codigo'" [placeholder]="'Buscar producto...'"
+                                                (onSelect)="lineaTemp.producto = $event">
+                                            </app-product-search-cards>
                                         </div>
 
                                         <div class="col-6">
@@ -253,15 +277,15 @@
                                         <div class="col-6">
                                             <label>Turno <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="turnos" optionLabel="nombreTurno"
-                                                valueField="nombreTurno" [(ngModel)]="lineaTemp.turno" [editable]="true"
-                                                [required]="true">
+                                                valueField="nombreTurno" [(ngModel)]="lineaTemp.turno" [editable]="false"
+                                                [required]="true" [disabled]="true">
                                             </app-dropdown>
                                         </div>
 
                                         <div class="col-6">
                                             <label>CECO <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="cecos" optionLabel="localname" valueField="localname"
-                                                [(ngModel)]="lineaTemp.ceco" [editable]="true" [required]="true">
+                                                [(ngModel)]="lineaTemp.ceco" [editable]="false" [required]="true" [disabled]="true">
                                             </app-dropdown>
                                         </div>
 
@@ -269,23 +293,23 @@
                                             <label>Proyecto <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="proyectos" optionLabel="proyectoio"
                                                 valueField="proyectoio" [(ngModel)]="lineaTemp.proyecto"
-                                                [editable]="true" [required]="true">
+                                                [editable]="true" [required]="false" [disabled]="true">
                                             </app-dropdown>
                                         </div>
 
                                         <div class="col-6">
                                             <label>Labor <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="labores" optionLabel="labor" valueField="labor"
-                                                [(ngModel)]="lineaTemp.labor" [editable]="true" [required]="true">
+                                                [(ngModel)]="lineaTemp.labor" [editable]="false" [required]="true" [disabled]="true">
                                             </app-dropdown>
                                         </div>
 
                                         <!-- 🔥 NUEVO CAMPO: Activo Fijo -->
-                                        <div class="col-6">
+                                        <div class="col-6" *ngIf="TipoSelecionado === 'CONSUMO'">
                                             <label class="form-label d-block">Es para Activo Fijo</label>
                                             <app-dropdown [data]="activosFijosFiltrados"
                                                 optionLabel="activo_descripcion" valueField="activo"
-                                                [(ngModel)]="lineaTemp.activoFijo" [editable]="true" [required]="false">
+                                                [(ngModel)]="lineaTemp.activoFijo" [editable]="true" [required]="false" [disabled]="true">
                                             </app-dropdown>
 
                                             <!-- CHECK -->
@@ -318,7 +342,7 @@
                     </div>
 
                     <div class="mt-3 text-end">
-                        <button class="btn btn-success me-2" (click)="guardar()">
+                        <button class="btn btn-success me-2" (click)="modoEdicion ? guardarEdicion() : guardar()">
                             {{ modoEdicion ? "Actualizar" : "Registrar" }}
                         </button>
                         <button class="btn btn-danger" (click)="mostrarFormulario = false; cancelar()">
@@ -337,7 +361,7 @@
 <div *ngIf="tabActiva === 'COMMODITY'">
     <div class="requerimientos-container">
         <div class="container py-4">
-            <div class="container mt-3">
+            <div class="container mt-3 table-content">
                 <h2>Requerimientos Servicios</h2>
                 <!-- LISTA COMMODITY -->
                 <div *ngIf="!mostrarFormularioCommodity">
@@ -388,17 +412,20 @@
                     <div *ngIf="requerimientosCommodity.length === 0" class="text-center text-muted py-3">
                         <em>No hay requerimientos de servico registrados.</em>
                     </div>
-
-                    <div class="text-center mt-4">
-                        <button class="btn btn-success me-3" (click)="nuevoCommodity()">
-                            <i class="icon-file-plus"></i> Nuevo Servicio
-                        </button>
-                        <button (click)="sincronizarRequerimientoCommodity()" class="btn btn-primary botonCelular">
-                            <i class="icon icon-sync"></i> Sincronizar
-                        </button>
-                    </div>
                 </div>
             </div>
+            <div class="text-center mt-4">
+                <button class="btn btn-success me-3" (click)="mostrarFormularioCommodity=true; nuevoCommodity()">
+                    <i class="icon-file-plus"></i> Nuevo Servicio
+                </button>
+                <button (click)="sincronizarRequerimientoCommodity()" class="btn btn-primary botonCelular">
+                    <i class="icon icon-sync"></i> Sincronizar
+                </button>
+            </div>
+
+            <!-- CAPA OSCURA -->
+            <div class="overlay-global" *ngIf="mostrarFormularioCommodity"></div>
+
             <!-- FORMULARIO COMMODITY -->
             <div *ngIf="mostrarFormularioCommodity" class="formulario mt-4 p-4 shadow rounded">
                 <h2>
@@ -410,12 +437,15 @@
                 <div class="form-group">
                     <div class="row g-3">
 
-                        <!-- <div class="col-6">
-                            <label>Proveedor: <span class="text-danger">*</span></label>
-                            <app-dropdown [data]="proveedoresServicios" optionLabel="proveedor" valueField="id" [editable]="true"
-                                [(ngModel)]="seleccionaProveedor" textShow2="un proveedor" [required]="true">
-                            </app-dropdown>
-                        </div> -->
+                        <div class="col-6">
+                            <label>Prioridad <span class="text-danger">*</span></label>
+                            <select class="form-select" [(ngModel)]="SeleccionaPrioridadCOMMODITY">
+                                <option value="">Selecciona</option>
+                                <option value="1">Normal</option>
+                                <option value="2">Urgente</option>
+                                <option value="3">Muy Urgente</option>
+                            </select>
+                        </div>
 
                         <div class="col-6">
                             <label>Servicio: <span class="text-danger">*</span></label>
@@ -525,14 +555,14 @@
                                     <div class="col-6">
                                         <label>Turno <span class="text-danger">*</span></label>
                                         <app-dropdown [data]="turnos" optionLabel="nombreTurno" valueField="nombreTurno"
-                                            [(ngModel)]="lineaTempCommodity.turno" [editable]="true" [required]="true">
+                                            [(ngModel)]="lineaTempCommodity.turno" [editable]="false" [required]="true" [disabled]="true">
                                         </app-dropdown>
                                     </div>
 
                                     <div class="col-6">
                                         <label>CECO <span class="text-danger">*</span></label>
                                         <app-dropdown [data]="cecos" optionLabel="localname" valueField="localname"
-                                            [(ngModel)]="lineaTempCommodity.ceco" [editable]="true" [required]="true">
+                                            [(ngModel)]="lineaTempCommodity.ceco" [editable]="false" [required]="true" [disabled]="true">
                                         </app-dropdown>
                                     </div>
 
@@ -540,14 +570,14 @@
                                         <label>Proyecto <span class="text-danger">*</span></label>
                                         <app-dropdown [data]="proyectos" optionLabel="proyectoio"
                                             valueField="proyectoio" [(ngModel)]="lineaTempCommodity.proyecto"
-                                            [editable]="true" [required]="true">
+                                            [editable]="false" [required]="true" [disabled]="true">
                                         </app-dropdown>
                                     </div>
 
                                     <div class="col-6">
                                         <label>Labor <span class="text-danger">*</span></label>
                                         <app-dropdown [data]="labores" optionLabel="labor" valueField="labor"
-                                            [(ngModel)]="lineaTempCommodity.labor" [editable]="true" [required]="true">
+                                            [(ngModel)]="lineaTempCommodity.labor" [editable]="false" [required]="true" [disabled]="true">
                                         </app-dropdown>
                                     </div>
 
@@ -609,7 +639,7 @@
 <div *ngIf="tabActiva === 'ACTIVOFIJO'">
     <div class="requerimientos-container">
         <div class="container py-4">
-            <div class="container mt-3">
+            <div class="container mt-3 table-content">
                 <h2>Requerimientos Activo Fijo</h2>
                 <!-- LISTA ACTIVO FIJO -->
                 <div *ngIf="!mostrarFormularioActivoFijo">
@@ -659,17 +689,20 @@
                     <div *ngIf="requerimientosActivoFijo.length === 0" class="text-center text-muted py-3">
                         <em>No hay requerimientos Activos Fijos registrados.</em>
                     </div>
-
-                    <div class="text-center mt-4">
-                        <button class="btn btn-success me-3" (click)="nuevoActivoFijo()">
-                            <i class="icon-file-plus"></i> Nuevo Activo Fijo
-                        </button>
-                        <button (click)="sincronizarRequerimientoActivoFijo()" class="btn btn-primary botonCelular">
-                            <i class="icon icon-sync"></i> Sincronizar
-                        </button>
-                    </div>
                 </div>
             </div>
+            <div class="text-center mt-4">
+                <button class="btn btn-success me-3" (click)="mostrarFormularioActivoFijo=true; nuevoActivoFijo()">
+                    <i class="icon-file-plus"></i> Nuevo Activo Fijo
+                </button>
+                <button (click)="sincronizarRequerimientoActivoFijo()" class="btn btn-primary botonCelular">
+                    <i class="icon icon-sync"></i> Sincronizar
+                </button>
+            </div>
+
+            <!-- CAPA OSCURA -->
+            <div class="overlay-global" *ngIf="mostrarFormularioActivoFijo"></div>
+
             <!-- FORMULARIO ACTIVO FIJO -->
             <div *ngIf="mostrarFormularioActivoFijo" class="formulario mt-4 p-4 shadow rounded">
                 <h2>
@@ -682,12 +715,16 @@
 
                 <div class="form-group">
                     <div class="row g-3">
-                        <!-- <div class="col-6">
-                            <label>Proveedor: <span class="text-danger">*</span></label>
-                            <app-dropdown [data]="proveedoresActivoFijo" optionLabel="proveedor" valueField="id" [editable]="true"
-                                [(ngModel)]="seleccionaProveedor" textShow2="un proveedor" [required]="true">
-                            </app-dropdown>
-                        </div> -->
+
+                        <div class="col-6">
+                            <label>Prioridad <span class="text-danger">*</span></label>
+                            <select class="form-select" [(ngModel)]="SeleccionaPrioridadACTIVOFIJO">
+                                <option value="">Selecciona</option>
+                                <option value="1">Normal</option>
+                                <option value="2">Urgente</option>
+                                <option value="3">Muy Urgente</option>
+                            </select>
+                        </div>
 
                         <div class="col-6">
                             <label>Servico AF: <span class="text-danger">*</span></label>
@@ -753,7 +790,7 @@
                                             </button>
                                         </td>
                                     </tr>
-                                    <tr *ngIf="detallesCommodity.length === 0">
+                                    <tr *ngIf="detallesActivoFijo.length === 0">
                                         <td colspan="9" class="text-muted">
                                             No hay detalles agregados
                                         </td>
@@ -764,7 +801,7 @@
 
                         <!-- Modal de edición Activo Fijo - Detalle-->
                         <!-- Modal Activo Fijo - Detalle-->
-                        <div class="modal-backdrop" *ngIf="modalAbiertoActivoFijoMenor">
+                        <div class="modal-backdrop" *ngIf="modalAbiertoActivoFijo">
                             <div class="modal-content">
                                 <!-- <h5>Registrar Línea de Detalle</h5>     -->
                                 <h5>
@@ -778,14 +815,8 @@
                                 <div class="form-group">
                                     <div class="row g-3">
                                         <!-- Campo CODIGO oculto -->
-                                        <input type="hidden" [(ngModel)]="lineaTempActivoFijoMenor.codigo"
-                                            name="codigo" />
+                                        <input type="hidden" [(ngModel)]="lineaTempActivoFijo.codigo" name="codigo" />
 
-                                        <!-- <div class="col-12">
-                                            <label>Descripción <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control"
-                                                [(ngModel)]="lineaTempActivoFijo.descripcion" />
-                                        </div> -->
                                         <div class="col-12">
                                             <label>Clasificación Servicio <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="subservicioFiltradosAF" optionLabel="descripcionLocal"
@@ -804,15 +835,15 @@
                                             <label>Turno <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="turnos" optionLabel="nombreTurno"
                                                 valueField="nombreTurno" [(ngModel)]="lineaTempActivoFijo.turno"
-                                                [editable]="true" [required]="true">
+                                                [editable]="false" [required]="true" [disabled]="true">
                                             </app-dropdown>
                                         </div>
 
                                         <div class="col-6">
                                             <label>CECO <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="cecos" optionLabel="localname" valueField="localname"
-                                                [(ngModel)]="lineaTempActivoFijo.ceco" [editable]="true"
-                                                [required]="true">
+                                                [(ngModel)]="lineaTempActivoFijo.ceco" [editable]="false"
+                                                [required]="true" [disabled]="true">
                                             </app-dropdown>
                                         </div>
 
@@ -820,15 +851,15 @@
                                             <label>Proyecto <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="proyectos" optionLabel="proyectoio"
                                                 valueField="proyectoio" [(ngModel)]="lineaTempActivoFijo.proyecto"
-                                                [editable]="true" [required]="true">
+                                                [editable]="false" [required]="true" [disabled]="true">
                                             </app-dropdown>
                                         </div>
 
                                         <div class="col-6">
                                             <label>Labor <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="labores" optionLabel="labor" valueField="labor"
-                                                [(ngModel)]="lineaTempActivoFijo.labor" [editable]="true"
-                                                [required]="true">
+                                                [(ngModel)]="lineaTempActivoFijo.labor" [editable]="false"
+                                                [required]="true" [disabled]="true">
                                             </app-dropdown>
                                         </div>
 
@@ -858,10 +889,10 @@
 
                 <!-- BOTONES -->
                 <div class="mt-3 text-end">
-                    <button class="btn btn-success me-2" (click)="guardarActivoFijoMenor()">
+                    <button class="btn btn-success me-2" (click)="guardarActivoFijo()">
                         {{ modoEdicionActivoFijoMenor ? "Actualizar" : "Registrar" }}
                     </button>
-                    <button class="btn btn-danger" (click)="cancelarActivoFijoMenor()">
+                    <button class="btn btn-danger" (click)="cancelarActivoFijo()">
                         Cancelar
                     </button>
                 </div>
@@ -876,7 +907,7 @@
 <div *ngIf="tabActiva === 'ACTIVOFIJOMENOR'">
     <div class="requerimientos-container">
         <div class="container py-4">
-            <div class="container mt-3">
+            <div class="container mt-3 table-content">
                 <h2>Requerimientos Commodity</h2>
                 <!-- LISTA ACTIVO FIJO MENOR-->
                 <div *ngIf="!mostrarFormularioActivoFijoMenor">
@@ -926,18 +957,21 @@
                     <div *ngIf="requerimientosActivoFijoMenor.length === 0" class="text-center text-muted py-3">
                         <em>No hay requerimientos Commodity registrados.</em>
                     </div>
-
-                    <div class="text-center mt-4">
-                        <button class="btn btn-success me-3" (click)="nuevoActivoFijoMenor()">
-                            <i class="icon-file-plus"></i> Nuevo Commodity
-                        </button>
-                        <button (click)="sincronizarRequerimientoActivoFijoMenor()"
-                            class="btn btn-primary botonCelular">
-                            <i class="icon icon-sync"></i> Sincronizar
-                        </button>
-                    </div>
                 </div>
             </div>
+            <div class="text-center mt-4">
+                <button class="btn btn-success me-3"
+                    (click)="mostrarFormularioActivoFijoMenor=true; nuevoActivoFijoMenor()">
+                    <i class="icon-file-plus"></i> Nuevo Commodity
+                </button>
+                <button (click)="sincronizarRequerimientoActivoFijoMenor()" class="btn btn-primary botonCelular">
+                    <i class="icon icon-sync"></i> Sincronizar
+                </button>
+            </div>
+
+            <!-- CAPA OSCURA -->
+            <div class="overlay-global" *ngIf="mostrarFormularioActivoFijoMenor"></div>
+
             <!-- FORMULARIO ACTIVO FIJO MENOR-->
             <div *ngIf="mostrarFormularioActivoFijoMenor" class="formulario mt-4 p-4 shadow rounded">
                 <h2>
@@ -950,12 +984,16 @@
 
                 <div class="form-group">
                     <div class="row g-3">
-                        <!-- <div class="col-6">
-                            <label>Proveedor: <span class="text-danger">*</span></label>
-                            <app-dropdown [data]="proveedoresActivoFijo" optionLabel="proveedor" valueField="id" [editable]="true"
-                                [(ngModel)]="seleccionaProveedor" textShow2="un proveedor" [required]="true">
-                            </app-dropdown>
-                        </div> -->
+
+                        <div class="col-6">
+                            <label>Prioridad <span class="text-danger">*</span></label>
+                            <select class="form-select" [(ngModel)]="SeleccionaPrioridadACTIVOFIJOMENOR">
+                                <option value="">Selecciona</option>
+                                <option value="1">Normal</option>
+                                <option value="2">Urgente</option>
+                                <option value="3">Muy Urgente</option>
+                            </select>
+                        </div>
 
                         <div class="col-6">
                             <label>Servico AFM: <span class="text-danger">*</span></label>
@@ -1049,11 +1087,6 @@
                                         <input type="hidden" [(ngModel)]="lineaTempActivoFijoMenor.codigo"
                                             name="codigo" />
 
-                                        <!-- <div class="col-12">
-                                            <label>Descripción <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control"
-                                                [(ngModel)]="lineaTempActivoFijoMenor.descripcion" />
-                                        </div> -->
                                         <div class="col-12">
                                             <label>Clasificación Servicio AFM<span class="text-danger">*</span></label>
                                             <app-dropdown [data]="subservicioFiltradosAFMenor"
@@ -1073,15 +1106,15 @@
                                             <label>Turno <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="turnos" optionLabel="nombreTurno"
                                                 valueField="nombreTurno" [(ngModel)]="lineaTempActivoFijoMenor.turno"
-                                                [editable]="true" [required]="true">
+                                                [editable]="false" [required]="true" [disabled]="true">
                                             </app-dropdown>
                                         </div>
 
                                         <div class="col-6">
                                             <label>CECO <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="cecos" optionLabel="localname" valueField="localname"
-                                                [(ngModel)]="lineaTempActivoFijoMenor.ceco" [editable]="true"
-                                                [required]="true">
+                                                [(ngModel)]="lineaTempActivoFijoMenor.ceco" [editable]="false"
+                                                [required]="true" [disabled]="true">
                                             </app-dropdown>
                                         </div>
 
@@ -1089,15 +1122,15 @@
                                             <label>Proyecto <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="proyectos" optionLabel="proyectoio"
                                                 valueField="proyectoio" [(ngModel)]="lineaTempActivoFijoMenor.proyecto"
-                                                [editable]="true" [required]="true">
+                                                [editable]="false" [required]="true" [disabled]="true">
                                             </app-dropdown>
                                         </div>
 
                                         <div class="col-6">
                                             <label>Labor <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="labores" optionLabel="labor" valueField="labor"
-                                                [(ngModel)]="lineaTempActivoFijoMenor.labor" [editable]="true"
-                                                [required]="true">
+                                                [(ngModel)]="lineaTempActivoFijoMenor.labor" [editable]="false"
+                                                [required]="true" [disabled]="true">
                                             </app-dropdown>
                                         </div>
 

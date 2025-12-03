@@ -1,4 +1,41 @@
 .color-text {
   color: #fffbfb;
 }
-  
+
+/* ---------- ESTILOS PARA APP-DROPDOWN SOLO EN ESTA TABLA ---------- */
+
+/* Hace que el dropdown se comporte como un input dentro de la tabla */
+.tabla-subclasificacion app-dropdown {
+  display: block;
+  width: 100%;
+}
+
+/* Ajuste del contenedor visual del dropdown */
+.tabla-subclasificacion app-dropdown .componentReu {
+  height: auto !important;     /* la tabla controla la altura */
+  margin-bottom: 0 !important; /* evita espacios que descuadran */
+  width: 100% !important;
+}
+
+/* Input interno con el mismo estilo de un form-control */
+.tabla-subclasificacion app-dropdown input.form-select {
+  height: 38px;       /* estándar bootstrap */
+  width: 100%;
+  padding: 6px 12px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Asegura que el dropdown no sobresalga del <td> */
+.tabla-subclasificacion app-dropdown .dropdown {
+  position: relative;
+  width: 100%;
+}
+
+/* Menú desplegable dentro del ancho de la celda */
+.tabla-subclasificacion app-dropdown .dropdown-perso {
+  width: 100% !important;
+  left: 0;
+  z-index: 1000;
+}
+

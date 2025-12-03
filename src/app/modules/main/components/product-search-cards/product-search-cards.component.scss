@@ -1,0 +1,47 @@
+.position-relative {
+  position: relative;
+}
+
+.dropdown-card-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  overflow: auto;
+  max-height: 400px;
+  background: white;
+  z-index: 999;
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
+  padding: 8px;
+  margin-top: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.card-item {
+  border: 1px solid #e4e4e4;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.card-item:hover {
+  background: #f5f5f5;
+}
+
+/* 🔥 Mostrar toda la descripción sin cortar NI expandir */
+.card-title {
+  font-weight: bold;
+  white-space: normal;      /* permite múltiples líneas */
+  word-wrap: break-word;    /* evita que palabras largas rompan el card */
+  overflow-wrap: break-word;
+}
+
+/* Código con comportamiento normal */
+.card-code {
+  margin-top: 4px;
+  white-space: normal;
+}
+

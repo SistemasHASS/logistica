@@ -9,7 +9,7 @@ import { Observable } from 'rxjs';
 export class RequerimientosService {
   private readonly baseUrl: string = environment.baseUrl;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   getRequerimientos(body: any): Observable<any> {
     const url = `${this.baseUrl}/api/logistica/listar-requerimientos`;
@@ -71,9 +71,7 @@ export class RequerimientosService {
     try {
       return this.http.post<any>(url, body);
     } catch (error: any) {
-      throw new Error(
-        error.error?.message || 'Error al registrar despacho'
-      );
+      throw new Error(error.error?.message || 'Error al registrar despacho');
     }
   }
 
@@ -87,13 +85,58 @@ export class RequerimientosService {
       );
     }
   }
+
+  aprobarRequerimiento(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/aprobar-requerimientos`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message || 'Error al aprobar requerimientos'
+      );
+    }
+  }
+
+  getReporteAprobarRequerimiento(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/reporte-requerimientos-aprobados`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message ||
+          'Error al obtener el reporte de requerimientos aprobados'
+      );
+    }
+  }
+
   despacharItem(iddetalle: any): Observable<any> {
     const url = `${this.baseUrl}/api/logistica/despachar-item`;
     try {
       return this.http.post<any>(url, { iddetalle });
     } catch (error: any) {
+      throw new Error(error.error?.message || 'Error al despachar item');
+    }
+  }
+
+  getRegristroRequerimientoSPRING(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/registra-requerimientos-aprobados`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
       throw new Error(
-        error.error?.message || 'Error al despachar item'
+        error.error?.message ||
+          'Error al registrar el requerimientos aprobados en SPRING'
+      );
+    }
+  }
+
+  NuevoRequerimientoCorrelativo(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/requerimiento-correlativo-nuevo`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message || 'Error al generar nuevo correlativo de requerimiento'
       );
     }
   }

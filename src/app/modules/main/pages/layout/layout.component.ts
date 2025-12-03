@@ -137,6 +137,7 @@ export class LayoutComponent {
       maestros: 'Maestros',
       'maestros/items': 'Maestros',
       'maestros/comodities': 'Maestros',
+      aprobadores: "Aprobadores",
       parametros: 'Parámetros',
       requerimientos: 'Requerimientos',
       aprobaciones: 'Aprobaciones',

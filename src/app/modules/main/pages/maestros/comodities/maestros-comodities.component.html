@@ -1,7 +1,7 @@
 <div class="d-flex gap-2">
   <!-- botón abrir modal -->
   <!-- <div class="d-flex justify-content-end mb-3"> -->
-    <button class="btn btn-primary mb-3" (click)="nuevo()">Agregar Commodity</button>
+  <button class="btn btn-primary mb-3" (click)="nuevo()">Agregar Commodity</button>
   <!-- </div> -->
 
   <!-- BOTÓN IMPORTAR -->
@@ -62,7 +62,7 @@
         <th style="min-width:100px" pSortableColumn="unidadCodigo">Clasificacion</th>
         <th style="min-width:100px" pSortableColumn="estado">Estado</th>
         <th style="min-width:50px">Acciones</th>
-    </tr>
+      </tr>
     </ng-template>
 
     <ng-template pTemplate="body" let-c let-i="rowIndex">
@@ -178,48 +178,68 @@
             <label>Descripción Ingles</label>
             <input type="text" class="form-control" [(ngModel)]="modelo.descripcionIngles">
           </div>
+
+          <div class="col-6">
+            <label>Cuenta Contable <span class="text-danger">*</span></label>
+            <app-dropdown [(ngModel)]="modelo.cuentaContableGasto" [required]="true" [editable]="true"
+              [data]="cuentaContable" [valueField]="'account'" [textShow2]="'un cuenta'" [optionLabel]="'localname'" />
+          </div>
+
+          <div class="col-6">
+            <label>Partida</label>
+            <select class="form-select" [(ngModel)]="seleccionaPartida">
+              <option value="">Seleccione</option>
+              <option *ngFor="let e of partida" [value]="e.codigo">{{ e.descripcion }}</option>
+            </select>
+          </div>
         </div>
 
         <div class="mt-4 border p-2">
           <strong>Sub Clasificación</strong>
 
-          <table class="table table-bordered table-sm mt-2">
-            <thead class="table-light">
-              <tr>
-                <th>Sub Clase</th>
-                <th>Descripción</th>
-                <th>Uni</th>
-                <th>Cuenta Gastos</th>
-                <th>Elemento Gasto</th>
-                <th>Clasificación Activo</th>
-                <th>Legacy Number</th>
-                <th></th>
-              </tr>
-            </thead>
+          <div class="tabla-subclasificacion">
+            <table class="table table-bordered table-sm mt-2">
+              <thead class="table-light">
+                <tr>
+                  <th>Sub Clase</th>
+                  <th>Descripción</th>
+                  <th>Uni</th>
+                  <th>Cuenta Gastos</th>
+                  <th>Elemento Gasto</th>
+                  <th>Clasificación Activo</th>
+                  <th>Legacy Number</th>
+                  <th></th>
+                </tr>
+              </thead>
 
-            <tbody>
-              <tr *ngFor="let s of modelo.subClasificaciones; let i = index">
-                <td><input class="form-control" [(ngModel)]="s.subClase"></td>
-                <td><input class="form-control" [(ngModel)]="s.descripcion"></td>
-                <td><input class="form-control" [(ngModel)]="s.unidad"></td>
-                <td><input class="form-control" [(ngModel)]="s.cuentaGasto"></td>
-                <td>
-                  <select class="form-select" [(ngModel)]="s.elementoGasto">
+              <tbody>
+                <tr *ngFor="let s of modelo.subClasificaciones; let i = index">
+                  <td><input class="form-control" [(ngModel)]="s.subClase"></td>
+                  <td><input class="form-control" [(ngModel)]="s.descripcion"></td>
+                  <td><input class="form-control" [(ngModel)]="s.unidad"></td>
+                  <td><input class="form-control" [(ngModel)]="s.cuentaGasto"></td>
+                  <td>
+                    <!-- <select class="form-select" [(ngModel)]="s.elementoGasto">
                     <option *ngFor="let e of elementosGasto" [value]="e.id">{{ e.descripcion }}</option>
-                  </select>
-                </td>
-                <td><input class="form-control" [(ngModel)]="s.clasificacionActivo"></td>
-                <td><input class="form-control" [(ngModel)]="s.legacyNumber"></td>
-                <td><button class="btn btn-danger btn-sm" (click)="eliminarSubClasificacion(i)">Eliminar</button></td>
-              </tr>
-            </tbody>
-          </table>
+                  </select> -->
+                    <app-dropdown [(ngModel)]="s.elementoGasto" [required]="true" [editable]="true"
+                      [data]="elementosGasto" [valueField]="'codigo'" [textShow2]="'un elemento'"
+                      [optionLabel]="'descripcion'" class="table-mode"/>
+                  </td>
+                  <td><input class="form-control" [(ngModel)]="s.clasificacionActivo"></td>
+                  <td><input class="form-control" [(ngModel)]="s.legacyNumber"></td>
+                  <td><button class="btn btn-danger btn-sm" (click)="eliminarSubClasificacion(i)">Eliminar</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
 
           <div class="d-flex gap-2">
             <button class="btn btn-secondary btn-sm" (click)="agregarSubClasificacion()">Insertar</button>
-            <button class="btn btn-outline-primary btn-sm">Selec. Cuenta</button>
+            <!-- <button class="btn btn-outline-primary btn-sm">Selec. Cuenta</button>
             <button class="btn btn-outline-secondary btn-sm">Clasificación</button>
-            <button class="btn btn-outline-success btn-sm">Partida</button>
+            <button class="btn btn-outline-success btn-sm">Partida</button> -->
           </div>
         </div>
 

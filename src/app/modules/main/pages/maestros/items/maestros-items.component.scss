@@ -2,45 +2,6 @@
   color: #fffbfb;
 }
 
-// /* Contenedor principal */
-// .tabla-container {
-//   width: 100%;
-//   max-width: 100%;
-//   overflow-x: auto;
-//   padding: 10px;
-//   background: #fff;
-//   border-radius: 8px;
-// }
-
-// /* Fija el ancho de columnas y evita que la tabla “salte” */
-// .table {
-//   width: 100%;
-//   table-layout: fixed;
-//   border-collapse: collapse;
-// }
-
-// /* Mantener centrado todo */
-// .pagination-container {
-//   display: flex;
-//   justify-content: center;
-//   margin-top: 10px;
-// }
-
-// /* Centrar numeración de Bootstrap */
-// .pagination {
-//   margin: 0;
-// }
-
-// /* Evita que el paginador empuje la tabla hacia los lados */
-// .page-item .page-link {
-//   min-width: 38px;
-//   text-align: center;
-// }
-
-// /* Para que la fila no cambie tamaño entre páginas */
-// .table tbody tr {
-//   height: 48px;
-// }
 .overlay-loading {
   position: absolute;
   inset: 0;
@@ -65,4 +26,16 @@
 @keyframes skeleton {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+::ng-deep .p-table th,
+::ng-deep .p-table td {
+  padding: 12px 20px !important; /* vertical | horizontal */
+}
+
+::ng-deep .p-table thead th {
+  background-color: #1e88e5 !important; /* azul */
+  color: white !important;
+  font-weight: 600;
+  text-align: center;
 }

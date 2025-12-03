@@ -27,6 +27,7 @@ export class DropdownComponent implements ControlValueAccessor, OnChanges {
   @Input() duration: number = 0.2;
   @Input() editable: boolean = false;
   @Input() disabled: boolean = false;
+  @Input() placeholder: string = '';
 
   isDrop: boolean = false;
   filteredData: any[] = [];

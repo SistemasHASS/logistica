@@ -1,11 +1,8 @@
 import { Injectable } from '@angular/core';
 import {
-  Usuario, Configuracion, Empresa, Fundo, Almacen, Area, Proyecto, ItemComodity, Clasificacion, Cultivo, Acopio, Ceco, Labor,
-  Trabajador, Turno, DetalleRequerimiento, Requerimiento, Item, Comodity, SubClasificacion, Proveedor, TipoGasto, ActivoFijo,
-  DetalleRequerimientoActivoFijo, DetalleRequerimientoCommodity, RequerimientoCommodity, RequerimientoActivoFijo,
-  RequerimientoActivoFijoMenor, DetalleRequerimientoActivoFijoMenor, MaestroItem, MaestroCommodity, MaestroSubCommodity,
-  DetalleListaStock, ListaStock, MovimientoStock, SolicitudCompra, DetalleSolicitudCompra, OrdenCompra, DetalleCotizacion,
-  Cotizacion, Stock, DetalleOrdenCompra
+  Usuario, Configuracion, Empresa, Fundo, Almacen, Area, Proyecto, ItemComodity, Clasificacion, Cultivo, Acopio, Ceco, Labor, Turno, DetalleRequerimiento, Requerimiento, Item, Comodity, SubClasificacion, Proveedor, TipoGasto, ActivoFijo,
+  DetalleRequerimientoActivoFijo, DetalleRequerimientoCommodity, RequerimientoCommodity, RequerimientoActivoFijo, RequerimientoActivoFijoMenor, DetalleRequerimientoActivoFijoMenor, MaestroItem, MaestroCommodity, MaestroSubCommodity,
+  DetalleListaStock, ListaStock, MovimientoStock, SolicitudCompra, DetalleSolicitudCompra, OrdenCompra, DetalleCotizacion, Cotizacion, Stock, DetalleOrdenCompra, Despacho, DetalleDespacho
 } from '../interfaces/Tables'
 import Dexie from 'dexie';
 
@@ -27,7 +24,6 @@ export class DexieService extends Dexie {
   public cecos!: Dexie.Table<Ceco, number>;
   public labores!: Dexie.Table<Labor, number>;
   public clasificaciones!: Dexie.Table<Clasificacion, number>;
-  public trabajadores!: Dexie.Table<Trabajador, string>;
   public itemComoditys!: Dexie.Table<ItemComodity, string>
   public detalles!: Dexie.Table<DetalleRequerimiento, number>
   public detallesActivoFijo!: Dexie.Table<DetalleRequerimientoActivoFijo, number>
@@ -57,9 +53,11 @@ export class DexieService extends Dexie {
   public movimientosStock!: Dexie.Table<MovimientoStock, number>;
   public listasStock!: Dexie.Table<ListaStock, number>;
   public detalleListaStock!: Dexie.Table<DetalleListaStock, number>;
+  public despachos!: Dexie.Table<Despacho, number>;
+  public detalleDespachos!: Dexie.Table<DetalleDespacho, number>;
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 12; // ⬅️ cambia este número cuando modifiques el esquema
+  private static readonly DB_VERSION = 13; // ⬅️ cambia este número cuando modifiques el esquema
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -84,10 +82,8 @@ export class DexieService extends Dexie {
         labores: `id,idlabor,idgrupolabor,ceco,labor,estado`,
         itemComoditys: `id,tipoclasificacion,codigo,descripcion`,
         clasificaciones: `id,idclasificacion,descripcion_clasificacion,tipoClasificacion`,
-        trabajadores: `id,ruc,nrodocumento,nombres,apellidopaterno,apellidomaterno,estado,motivo,
-        bloqueado,eliminado,idmotivo,motivosalida`,
         detalles: `++id,codigo,producto,cantidad,proyecto,ceco,turno,labor`,
-        requerimientos: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle,despachado`,
+        requerimientos: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle,despachado,prioridad`,
         items: `id,tipoclasificacion,codigo,descripcion`,
         comodities: `id,tipoclasificacion,codigo,descripcion`,
         subClasificaciones: `id,comodityId,subClase,descripcion,unidad,cuentaGasto,elementoGasto,clasificacionActivo,legacyNumber`,
@@ -126,7 +122,9 @@ export class DexieService extends Dexie {
         stock: `++id,codigo,almacen,cantidad`,
         movimientosStock: `++id,fecha,tipo,codigo,almacenOrigen,almacenDestino,cantidad,usuario`,
         listasStock: `++id,nombre,almacen,fecha,estado,usuarioCreador`,
-        detalleListaStock: `++id,listaStockId,codigo,descripcion,stockActual,estado`
+        detalleListaStock: `++id,listaStockId,codigo,descripcion,stockActual,estado`,
+        despachos: `++id,fecha,estado,usuarioSolicita,almacen,tipo`,
+        detalleDespachos: `++id,despachoId,codigo,descripcion,cantidad,estado`,
       });
 
       this.usuario = this.table('usuario');
@@ -142,7 +140,6 @@ export class DexieService extends Dexie {
       this.cecos = this.table('cecos');
       this.labores = this.table('labores');
       this.itemComoditys = this.table('itemComoditys');
-      this.trabajadores = this.table('trabajadores')
       this.clasificaciones = this.table('clasificaciones')
       this.detalles = this.table('detalles')
       this.requerimientos = this.table('requerimientos')
@@ -172,6 +169,8 @@ export class DexieService extends Dexie {
       this.movimientosStock = this.table('movimientosStock');
       this.listasStock = this.table('listasStock');
       this.detalleListaStock = this.table('detalleListaStock');
+      this.despachos = this.table('despachos');
+      this.detalleDespachos = this.table('detalleDespachos');
 
       // 🔧 Manejo automático de errores por versión o corrupción
       this.open().catch(async (err) => {
@@ -287,13 +286,6 @@ export class DexieService extends Dexie {
   async showActivosFijos() { return await this.activosFijos.toArray(); }
   async showActivosFijoById(id: number) { return await this.activosFijos.where('id').equals(id).first() }
   async clearActivosFijos() { await this.activosFijos.clear(); }
-  //Trabajadores
-  async saveTrabajadores(params: Trabajador[]) { await this.trabajadores.bulkPut(params); }
-  async saveTrabajador(params: Trabajador) { await this.trabajadores.put(params); }
-  async showTrabajadorById(id: any) { return await this.trabajadores.where('id').equals(id).first(); }
-  async showTrabajadores() { return await this.trabajadores.toArray(); }
-  async deleteTrabajador(id: any) { return await this.trabajadores.where('id').equals(id).delete(); }
-  async clearTrabajadores() { await this.trabajadores.clear(); }
   // ---------------- Detalle Activo Fijo ----------------
   async saveDetalleActivoFijo(detalleActivoFijo: DetalleRequerimientoActivoFijo) { await this.detallesActivoFijo.put(detalleActivoFijo); }
   async saveDetallesActivoFijo(detallesActivoFijo: DetalleRequerimientoActivoFijo[]) { await this.detallesActivoFijo.bulkPut(detallesActivoFijo); }
@@ -361,7 +353,18 @@ export class DexieService extends Dexie {
   async showMaestroSubCommodity() { return await this.maestroSubCommoditys.toArray(); }
   async countMaestroSubCommodity() { return await this.maestroSubCommoditys.count(); }
   async clearMaestroSubCommodity() { await this.maestroSubCommoditys.clear(); }
-
+  // ---------------- Despacho ----------------
+  async saveDespacho(despacho: Despacho){await this.despachos.put(despacho);}
+  async saveDespachos(despachos: Despacho[]) { await this.despachos.bulkPut(despachos); }
+  async showDespacho() { return await this.despachos.toArray(); }
+  async showDespachoById(id: number) { return await this.despachos.where('id').equals(id).first() }
+  async clearDespacho() { await this.despachos.clear(); }
+  // ---------------- Detalle Despacho ----------------
+  async saveDetalleDespacho(detalleDespacho: DetalleDespacho){await this.detalleDespachos.put(detalleDespacho);}
+  async saveDetalleDespachos(detalleDespachos: DetalleDespacho[]) { await this.detalleDespachos.bulkPut(detalleDespachos); }
+  async showDetalleDespacho() { return await this.detalleDespachos.toArray(); }
+  async showDetalleDespachoById(id: number) { return await this.detalleDespachos.where('id').equals(id).first() }
+  async clearDetalleDespacho() { await this.detalleDespachos.clear(); }
   async generarCodigo(): Promise<string> {
     const total = await this.requerimientos.count();
     const siguiente = total + 1;
@@ -456,5 +459,10 @@ export class DexieService extends Dexie {
   async obtenerConfiguracion() { return await this.configuracion.toArray(); }
   async obtenerPrimeraConfiguracion() { return await this.configuracion.toCollection().first(); }
   async clearConfiguracion() { await this.configuracion.clear(); }
-
+  // CECO
+  async getCecoById(id: string) { return await this.cecos.where('id').equals(id).first();}
+  // PROYECTO (busca por AFE)
+  async getProyectoByAfe(afe: string) { return await this.proyectos.where('afe').equals(afe).first(); }
+  // LABOR
+  async getLaborById(idlabor: string) { return await this.labores.where('idlabor').equals(idlabor).first(); }
 }

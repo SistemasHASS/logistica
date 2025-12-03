@@ -68,6 +68,36 @@
     }
 }
 
+:host(.table-mode) {
+  display: block;
+  width: 100%;
+
+  .componentReu {
+    height: auto !important;
+    margin-bottom: 0 !important;
+    width: 100% !important;
+
+    input.form-select {
+      height: 38px;
+      width: 100%;
+      padding: 6px 12px;
+      box-sizing: border-box;
+    }
+  }
+
+  .dropdown {
+    position: relative;
+    width: 100%;
+  }
+
+  .dropdown-perso {
+    width: 100% !important;
+    left: 0;
+    z-index: 1000;
+  }
+}
+
+
 @media (max-width: 768px) {
     input.form-select{
         color: black;

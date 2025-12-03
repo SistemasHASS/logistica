@@ -1,0 +1,26 @@
+<div class="position-relative">
+
+  <input type="text"
+         class="form-control"
+         placeholder="Buscar producto..."
+         [(ngModel)]="searchText"
+         (input)="onTyping()">
+
+  <div class="dropdown-card-list" *ngIf="showList">
+
+    <div class="card-item"
+         *ngFor="let item of filteredItems"
+         (click)="selectItem(item)">
+
+      <div class="card-title">
+        {{ item[optionLabel] }}
+      </div>
+
+      <div class="card-code">
+        Código: {{ item[valueField] }}
+      </div>
+
+    </div>
+
+  </div>
+</div>

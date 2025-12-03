@@ -1,0 +1,104 @@
+<div class="mtable-wrapper" [class.dark]="darkMode">
+  <!-- toolbar -->
+  <div class="mtable-toolbar">
+    <div class="left">
+      <button class="btn btn-sm primary" (click)="add()">➕ Nuevo</button>
+
+      <div class="btn-group">
+        <button class="btn btn-sm" (click)="exportToExcel()">Excel</button>
+        <button class="btn btn-sm" (click)="exportToPDF()">PDF</button>
+      </div>
+    </div>
+
+    <div class="center">
+      <div class="column-selector">
+        <label *ngFor="let c of columns" class="col-toggle">
+          <input type="checkbox" [(ngModel)]="c.visible" />
+          {{ c.header }}
+        </label>
+      </div>
+    </div>
+
+    <div class="right">
+      <label class="search">
+        <input
+          type="search"
+          placeholder="Buscar..."
+          [(ngModel)]="searchText"
+          (input)="page = 1"
+        />
+      </label>
+
+      <button class="toggle-dark" (click)="darkMode = !darkMode">
+        {{ darkMode ? '☀️' : '🌙' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- table -->
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th *ngFor="let col of columns" [hidden]="col.visible === false" (click)="sort(col.field)">
+            <span class="th-text">{{ col.header }}</span>
+            <span class="sort-indicator" *ngIf="sortedColumn === col.field">
+              {{ sortDirection === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <!-- SKELETON LOADING -->
+        <tr *ngIf="loading">
+          <td [attr.colspan]="visibleColumnsCount">
+            <div class="skeleton-rows">
+              <div class="skeleton" *ngFor="let i of [1,2,3,4,5]"></div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- DATOS -->
+        <tr *ngFor="let row of paginatedData" (click)="rowClick(row)">
+          <td *ngFor="let col of columns" [hidden]="col.visible === false">
+            {{ row[col.field] }}
+          </td>
+
+          <td class="actions-td">
+            <button class="btn-edit" (click)="edit(row); $event.stopPropagation()">✏️</button>
+            <button class="btn-delete" (click)="delete(row); $event.stopPropagation()">🗑️</button>
+          </td>
+        </tr>
+
+        <!-- vacío -->
+        <tr *ngIf="!loading && paginatedData.length === 0">
+          <td [attr.colspan]="visibleColumnsCount" class="text-muted text-center">
+            No hay registros
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- footer: paginador -->
+  <div class="mtable-footer">
+    <div class="info">
+      Mostrando {{ (filteredData.length === 0 ? 0 : (page - 1) * pageSize + 1) }} -
+      {{ endIndex }} de {{ filteredData.length }}
+    </div>
+
+    <div class="pager">
+      <button class="pbtn" (click)="cambiarPagina(1)" [disabled]="page === 1">⏮</button>
+      <button class="pbtn" (click)="cambiarPagina(page - 1)" [disabled]="page === 1">◀</button>
+
+      <ng-container *ngFor="let p of [].constructor(totalPages); let i = index">
+        <button class="pnum" [class.active]="page === i + 1" (click)="cambiarPagina(i + 1)">{{ i + 1 }}</button>
+      </ng-container>
+
+      <button class="pbtn" (click)="cambiarPagina(page + 1)" [disabled]="page === totalPages">▶</button>
+      <button class="pbtn" (click)="cambiarPagina(totalPages)" [disabled]="page === totalPages">⏭</button>
+    </div>
+  </div>
+</div>

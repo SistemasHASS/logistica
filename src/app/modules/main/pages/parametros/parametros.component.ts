@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import {
   Configuracion,
@@ -29,6 +30,7 @@ import { CommodityService } from '../../services/commoditys.service';
 })
 export class ParametrosComponent implements OnInit {
   constructor(
+    private router: Router,
     private dexieService: DexieService,
     private maestrasService: MaestrasService,
     private alertService: AlertService, // ✅ inyectar el servicio
@@ -609,32 +611,6 @@ export class ParametrosComponent implements OnInit {
     console.log('✅ Proyecto asignado:', this.configuracion.idproyecto);
   }
 
-
-
-  // async darProyectoCecos(limpiar = false) {
-  //   this.filteredCecos.length = 0;
-  //   if (limpiar) {
-  //     this.configuracion.idceco = '';
-  //     this.configuracion.idlabor = '';
-  //     this.configuracion.idproyecto;
-  //   }
-  //   const turno = this.filteredTurnos.find(
-  //     (e: any) => e.codTurno === this.configuracion.idturno
-  //   );
-  //   this.configuracion.idproyecto = turno?.idproyecto;
-  //   this.filteredProyectos = this.proyectos.filter(
-  //     (e: any) => e.afe == turno?.idproyecto
-  //   );
-  //   console.log(this.filteredProyectos);
-  //   if (this.configuracion.idproyecto)
-  //     await this.nombreProyecto(this.configuracion.idproyecto);
-  //   if (this.configuracion.idturno) {
-  //     this.filteredCecos = this.cecos.filter((x: Ceco) =>
-  //       x.conturno.includes(turno?.conturno ?? '')
-  //     );
-  //   }
-  // }
-
   async darProyectoInversionLabor(limpiar = false) {
     this.filteredProyectos.length = 0;
     if (limpiar) {
@@ -698,6 +674,8 @@ export class ParametrosComponent implements OnInit {
         'La operación se completó correctamente',
         'success'
       );
+
+      this.router.navigate(['/main/requerimientos']);
     }
   }
 }

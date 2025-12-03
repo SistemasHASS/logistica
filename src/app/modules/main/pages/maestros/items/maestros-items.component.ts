@@ -7,6 +7,8 @@ import { Item, MaestroItem } from '@/app/shared/interfaces/Tables';
 import { ItemService } from '@/app/modules/main/services/items.service';
 import { Table, TableModule } from 'primeng/table';
 import * as XLSX from 'xlsx';
+import { SearchMLService } from '@/app/modules/main/services/search-ml.service';
+import { AfterViewInit } from '@angular/core';
 
 @Component({
   selector: 'app-maestros-items',
@@ -17,6 +19,7 @@ import * as XLSX from 'xlsx';
 })
 export class MaestrosItemsComponent implements OnInit {
   @ViewChild('modalEdicion') modalEdicion!: ElementRef;
+  expandedRows: { [s: string]: boolean } = {};
 
   pagina: number = 1;
   registrosPorPagina: number = 15;
@@ -37,6 +40,9 @@ export class MaestrosItemsComponent implements OnInit {
   listaItems: any[] = [];
   itemsFiltrados: MaestroItem[] = [];
   filtros: string = '';
+
+  loadingCorrelativo = false;
+  correlativoItem: string = '';
 
   item: MaestroItem = {
     id: 0,
@@ -97,14 +103,29 @@ export class MaestrosItemsComponent implements OnInit {
   excelPreview: any[] = [];
   excelData: any[] = [];
 
+  sugerencias: any[] = [];
+  esEditar: boolean = false;
+
+  itemsDescripcion: string[] = this.items.map((x) => x.descripcionLocal);
+
   constructor(
     private dexieService: DexieService,
     private alertService: AlertService,
-    private itemService: ItemService
+    private itemService: ItemService,
+    private searchML: SearchMLService
   ) {}
 
   async ngOnInit() {
     await this.sincronizaMaestroItem();
+  }
+
+  ngAfterViewInit() {
+    const modalElement = document.getElementById('modalItem');
+    modalElement?.addEventListener('hidden.bs.modal', () => {
+      // cuando se cierre el modal, dejamos en modo "nuevo" y limpiar
+      this.esEditar = false;
+      this.nuevo(); // reutiliza tu función que resetea this.item
+    });
   }
 
   onFileChange(event: any) {
@@ -151,6 +172,113 @@ export class MaestrosItemsComponent implements OnInit {
     });
   }
 
+  abrirNuevoItem() {
+    // Flag interno si quieres usarlo más adelante
+    // pero no es necesario para limpiar el modal
+    // this.esEditar = false;
+    const filtro = {
+      CompaniaCodigo: '999999',
+      TipoComprobante: 'SY',
+      Serie: 'WHIT',
+    };
+    const correlativo = this.itemService.ItemCorrelativo([filtro]);
+    correlativo.subscribe(async (resp: any) => {
+      if (!!resp && resp.length) {
+        this.correlativoItem = resp[0].correlativoNuevo;
+      }
+    });
+
+    this.item = {
+      id: 0,
+      item: this.correlativoItem,
+      itemTipo: '',
+      linea: '',
+      familia: '',
+      subFamilia: '',
+      descripcionLocal: '',
+      descripcionIngles: '',
+      descripcionCompleta: '',
+      unidadCodigo: '',
+      monedaCodigo: '',
+      precioCosto: '',
+      precioUnitarioLocal: '',
+      precioUnitarioDolares: '',
+      itemPrecioFlag: '',
+      disponibleVentaFlag: '',
+      itemProcedencia: '',
+      manejoxLoteFlag: '',
+      manejoxSerieFlag: '',
+      manejoxKitFlag: '',
+      afectoImpuestoVentasFlag: '',
+      requisicionamientoAutomaticoFl: '',
+      disponibleTransferenciaFlag: '',
+      disponibleConsumoFlag: '',
+      formularioFlag: '',
+      manejoxUnidadFlag: '',
+      isoAplicableFlag: '',
+      cantidadDobleFlag: '',
+      unidadReplicacion: '',
+      cuentaInventario: '',
+      cuentaGasto: '',
+      cuentaServicioTecnico: '',
+      factorEquivalenciaComercial: '',
+      estado: 'Activo',
+      ultimaFechaModif: '',
+      ultimoUsuario: '',
+      cuentaVentas: '',
+      unidadCompra: '',
+      controlCalidadFlag: '',
+      cuentaTransito: '',
+      cantidadDobleFactor: '',
+      subFamiliaInferior: '',
+      stockMinimo: '',
+      stockMaximo: '',
+      referenciaFiscalIngreso02: '',
+    };
+  }
+
+  // buscar con IA desde el input principal
+  async buscarSmartInput(valor: string) {
+    this.filtro = valor;
+    if (!valor || !valor.trim()) {
+      this.itemsFiltrados = [...this.items];
+      this.sugerencias = [];
+      return;
+    }
+
+    const res = await this.searchML.buscar(valor, 50);
+    // res puede contener items con _score si USE rankeó
+    this.sugerencias = res;
+    // opcional: si quieres mostrar solo resultados en la tabla
+    this.itemsFiltrados = res.map((r: any) => (r.item ? r.item : r));
+    this.totalRegistros = this.itemsFiltrados.length;
+  }
+
+  // Al escribir dentro del modal en descripcionLocal para prevenir duplicados
+  async onDescripcionInput(valor: string) {
+    if (!valor || !valor.trim()) {
+      this.sugerencias = [];
+      return;
+    }
+    const res = await this.searchML.buscar(valor, 6);
+    this.sugerencias = res;
+    // si el mejor tiene score alto, avisar duplicado
+    if (res.length && res[0]._score && res[0]._score > 0.8) {
+      // puedes mostrar advertencia o autofill
+      // ejemplo: autocompletar datos para evitar duplicado
+      // this.item.descripcionLocal = res[0].descripcionLocal;
+      // this.alertService.showAlertAcept('Existe un item similar', 'Aviso', 'warning');
+    }
+  }
+
+  usarSugerencia(sug: any) {
+    // si sug viene como item object o string
+    const item = sug.item ? sug.item : sug;
+    this.filtro = item.descripcionLocal ?? item;
+    this.itemsFiltrados = [item];
+    this.sugerencias = [];
+  }
+
   async listaMaestroItem() {
     this.isLoading = true;
     this.isLoadingTable = true;
@@ -162,6 +290,10 @@ export class MaestrosItemsComponent implements OnInit {
       this.totalRegistros = this.itemsFiltrados.length;
       this.isLoading = false;
       this.isLoadingTable = false;
+
+      // inicializar embeddings y fuse
+      // await this.searchML.loadModel(); // asegura modelo cargado
+      // await this.searchML.init(this.items);
       // if (this.items.length > 0) {
       //   this.aplicarFiltros();
       // }
@@ -438,6 +570,17 @@ export class MaestrosItemsComponent implements OnInit {
 
     // Descargar
     XLSX.writeFile(workbook, 'plantilla_items.xlsx');
+  }
+
+  selectSuggestionInModal(sug: any) {
+    const it = sug.item ? sug.item : sug;
+    // popular campos clave del modal para evitar duplicar
+    this.item.descripcionLocal = it.descripcionLocal ?? '';
+    this.item.item = it.item ?? this.item.item;
+    // opcional: llenar otros campos o abrir modal en modo editar
+    // this.alertService.showAlertAcept('Item similar encontrado', 'Atención', 'warning');
+    this.sugerencias = [];
+    this.esEditar = true;
   }
 
   async importarItems() {

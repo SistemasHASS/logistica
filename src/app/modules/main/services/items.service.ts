@@ -44,4 +44,26 @@ export class ItemService {
       );
     }
   }
+
+  ItemCorrelativo(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/item-correlativo`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message || 'Error al consultar correlativo de item'
+      );
+    }
+  }
+
+  NuevoItemCorrelativo(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/item-correlativo-nuevo`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message || 'Error al generar nuevo correlativo de item'
+      );
+    }
+  }
 }
