@@ -35,6 +35,7 @@ export class ReporteSaldosComponent implements OnInit {
         this.requerimientoService.obtenerReporteSaldos([]).subscribe({
             next: (data: any) => {
                 this.saldos = data;
+                // console.log(this.saldos);
                 this.loading = false;
             },
             error: () => {
@@ -49,7 +50,7 @@ export class ReporteSaldosComponent implements OnInit {
 
     filtrar() {
         return this.saldos.filter(x =>
-            (!this.filtroAlmacen || x.idalmacen.toLowerCase().includes(this.filtroAlmacen.toLowerCase())) &&
+            (!this.filtroAlmacen || x.almacen.toLowerCase().includes(this.filtroAlmacen.toLowerCase())) &&
             (!this.filtroCodigo || x.codigo.toLowerCase().includes(this.filtroCodigo.toLowerCase()))
         );
     }

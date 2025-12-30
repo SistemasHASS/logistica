@@ -61,6 +61,22 @@
     }
 }
 
+.input-blanco {
+    background-color: white !important;
+    color: black;
+}
+
+.input-blanco:focus {
+    background-color: white !important;
+    color: black;
+    box-shadow: none !important;
+}
+
+.input-blanco:disabled,
+.input-blanco[readonly] {
+    background-color: white !important;
+}
+
 code {
     background-color: #f5f5f5;
     padding: 2px 6px;

@@ -1,121 +1,165 @@
 <div class="container-fluid">
 
   <h4 class="mb-3">LISTA DE REQUERIMIENTOS APROBADOS</h4>
+  <!-- FILTRO -->
+  <div class="d-flex align-items-center gap-2 mb-2">
+    <input type="text" class="form-control w-25" placeholder="Buscar..." [(ngModel)]="filtro" (input)="buscar()">
 
-  <table class="table table-bordered table-hover">
-    <thead class="table-dark">
+    <p-datepicker name="fechaInicio" [(ngModel)]="fechaInicio" dateFormat="dd/mm/yy" placeholder="Desde"
+      [showIcon]="true" [showClear]="true" (onSelect)="buscar()" (onClear)="limpiarFecha()">
+    </p-datepicker>
+
+    <p-datepicker name="fechaFin" [(ngModel)]="fechaFin" dateFormat="dd/mm/yy" placeholder="Hasta" [showIcon]="true"
+      [showClear]="true" (onSelect)="buscar()" (onClear)="limpiarFecha()">
+    </p-datepicker>
+
+    <div class="ms-auto fw-semibold">
+      <span class="me-2">Total: {{ totalRegistros }}</span>
+    </div>
+  </div>
+
+  <p-table #dt [value]="requerimientosAprobados" [paginator]="true" [rows]="20"
+    [totalRecords]="requerimientosAprobados.length" [loading]="loading" responsiveLayout="scroll" [pageLinks]="5"
+    [showCurrentPageReport]="true" currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+    styleClass="p-datatable-sm p-datatable-striped">
+
+    <ng-template pTemplate="header">
       <tr>
-        <th>#</th>
-        <th>Código</th>
-        <th>Requerimiento</th>
-        <th>Tipo</th>
-        <th>Proyecto</th>
-        <th>Estado</th>
-        <th>Acciones</th>
+        <th style="width:50px">
+          <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+        </th>
+        <th style="width:50px">#</th>
+        <th style="min-width:100px" pSortableColumn="item">Fecha Aprobación</th>
+        <th style="min-width:100px" pSortableColumn="descripcionLocal">Código</th>
+        <th style="min-width:100px" pSortableColumn="unidadCodigo">Requerimiento</th>
+        <th style="min-width:80px" pSortableColumn="descripcionLocal">Tipo</th>
+        <th style="min-width:120px" pSortableColumn="descripcionLocal">Proyecto</th>
+        <th style="min-width:100px" pSortableColumn="descripcionLocal">Estado</th>
+        <th style="min-width:30px">Acciones</th>
       </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let r of requerimientosAprobados; let i = index">
-        <td>{{ i + 1 }}</td>
-        <td>{{ r.idrequerimiento }}</td>
-        <td>{{ r.glosa }}</td>
-        <td>{{ r.tipo }}</td>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-c let-i="rowIndex">
+      <tr>
         <td>
-          <div *ngFor="let d of r.detalle">
+          <p-tableCheckbox [value]="c"></p-tableCheckbox>
+        </td>
+        <td>{{ i + 1 }}</td>
+        <td>{{ c.fechaAprobacion | date: 'dd/MM/yyyy hh:mm:ss' }}</td>
+        <td>{{ c.idrequerimiento }}</td>
+        <td>{{ c.glosa }}</td>
+        <td>{{ c.tipo }}</td>
+        <!-- <td>
+          <div *ngFor="let d of c.detalle">
             {{ d.proyecto }}
           </div>
-        </td>
-        <td>{{ r.estados }}</td>
+        </td> -->
         <td>
-          <button class="btn btn-primary btn-sm" (click)="verDetalle(r)">
+          <div *ngFor="let proyecto of obtenerProyectosUnicos(c.detalle)">
+            {{ proyecto }}
+          </div>
+        </td>
+        <td>{{ c.estados }}</td>
+        <td>
+          <button class="btn btn-primary btn-sm" (click)="verDetalle(c)">
             Atender
           </button>
 
           <button class="btn btn-success btn-sm ms-2"
-            *ngIf="r.estado === 'ATENCION_PARCIAL' || r.estado === 'ATENCION_COMPLETA'" (click)="abrirDespachoFinal(r)">
+            *ngIf="c.estado === 'ATENCION_PARCIAL' || c.estado === 'ATENCION_COMPLETA'" (click)="abrirDespachoFinal(c)">
             Despachar
           </button>
         </td>
       </tr>
-    </tbody>
-  </table>
+    </ng-template>
 
-  <!-- =================== DETALLE ATENCIÓN =================== -->
-  <div *ngIf="selected" class="mt-4">
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8" class="text-center">No hay registros</td>
+      </tr>
+    </ng-template>
 
-    <h5>Detalle Requerimiento: {{ selected.idrequerimiento }}</h5>
-
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>Codigo</th>
-          <th>{{ selected.tipo === 'ITEM' ? 'Producto' : 'Descripción' }}</th>
-          <th>Solicitada</th>
-          <th>Atendida</th>
-          <th>Pendiente</th>
-          <th>Atender</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let d of detalle">
-          <th>{{ d.codigo }}</th>
-          <!-- <td>{{ d.producto }}</td> -->
-          <!-- ITEM -->
-          <td *ngIf="selected.tipo === 'ITEM'">
-            {{ d.producto }}
-          </td>
-
-          <!-- COMMODITY / ACTIVO FIJO / MENOR -->
-          <td *ngIf="selected.tipo !== 'ITEM'">
-            {{ d.descripcion }}
-          </td>
-          <td>{{ d.cantidad }}</td>
-          <td>{{ d.atendida || 0 }}</td>
-          <td>{{ d.cantidad - (d.atendida || 0) }}</td>
-          <td>
-            <input type="number" class="form-control" min="0" [max]="d.cantidad - (d.atendida || 0)"
-              [(ngModel)]="d.atender" />
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <button class="btn btn-warning" (click)="registrarAtencion()">
-      Registrar Atención
-    </button>
-
-  </div>
+  </p-table>
 </div>
 
-<!-- ================= MODAL DESPACHO ================= -->
-<div class="modal fade" id="modalDespacho" tabindex="-1">
-  <div class="modal-dialog modal-lg">
+<!-- =================== MODAL DETALLE ATENCIÓN =================== -->
+<div class="modal fade" id="modalAtencion" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
 
       <div class="modal-header">
-        <h5 class="modal-title">Despacho Final - {{ selected?.codigo }}</h5>
+        <h5 class="modal-title">Detalle Requerimiento: <span class="badge bg-primary ms-2">
+            {{ selected?.idrequerimiento }}
+          </span></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
       <div class="modal-body">
-        <table class="table table-bordered">
-          <thead class="table-light">
+
+        <p-table #dt [value]="detalle" [paginator]="true" [rows]="20" [totalRecords]="detalle.length"
+          [loading]="loading" responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+          currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+          styleClass="p-datatable-sm p-datatable-striped">
+
+          <ng-template pTemplate="header">
             <tr>
-              <th>Producto</th>
-              <th>Cantidad Atendida</th>
+              <th style="width:50px">
+                <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+              </th>
+              <th style="width:50px">#</th>
+              <th style="min-width:20px" pSortableColumn="item">Codigo</th>
+              <th style="min-width:100px" pSortableColumn="item">{{ selected?.tipo === 'ITEM' ? 'Producto' :
+                'Descripción' }}</th>
+              <th style="min-width:100px" pSortableColumn="descripcionLocal">Solicitada</th>
+              <th style="min-width:100px" pSortableColumn="unidadCodigo">Atendida</th>
+              <th style="min-width:120px" pSortableColumn="descripcionLocal">Almacen</th>
+              <th style="min-width:120px" pSortableColumn="descripcionLocal">Pendiente</th>
+              <th style="min-width:100px" pSortableColumn="descripcionLocal">Atender</th>
             </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let d of detalleDespacho">
-              <td>{{ d.producto }}</td>
-              <td>{{ d.atendida }}</td>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-c let-i="rowIndex">
+            <tr>
+              <td>
+                <p-tableCheckbox [value]="c"></p-tableCheckbox>
+              </td>
+              <td>{{ i + 1 }}</td>
+              <td>{{ c.codigo }}</td>
+              <td *ngIf="selected.tipo === 'ITEM'">{{ getDescripcionProducto(c.codigo) }}</td>
+              <td *ngIf="selected.tipo !== 'ITEM'">{{ getDescripcionSubCommodity(c.codigo) }}</td>
+              <td>{{ c.cantidad }}</td>
+              <td>{{ c.atendida || 0 }}</td>
+              <td>{{ c.cantidad - (c.atendida || 0) }}</td>
+              <td><span class="badge" [ngClass]=" c.estado === 1 ? 'bg-success' : 'bg-warning text-dark'">
+                  {{ c.estado === 1 ? "Enviado" : "Sin enviar" }}
+                </span>
+              </td>
+              <td class="text-center">
+                <!-- <input type="number" class="form-control text-center" [value]="calcularAtencion({ codigo: c.codigo, solicitada: c.cantidad, atendida: c.atendida || 0, almacen: c.almacen })" readonly /> -->
+                <input type="number" class="form-control text-center" [value]="calcularAtencion(c)" readonly />
+              </td>
+              <!-- <td>
+                <input type="number" class="form-control" min="0" [max]="c.cantidad - (c.atendida || 0)"
+                  [(ngModel)]="c.atender" />
+              </td> -->
             </tr>
-          </tbody>
-        </table>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="8" class="text-center">No hay registros</td>
+            </tr>
+          </ng-template>
+
+        </p-table>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-success" (click)="confirmarDespacho()">Confirmar Salida</button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+
+        <button class="btn btn-warning" (click)="registrarAtencion()">
+          Registrar Atención
+        </button>
       </div>
 
     </div>

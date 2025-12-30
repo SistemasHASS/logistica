@@ -42,6 +42,7 @@ export class MaestrosItemsComponent implements OnInit {
   filtros: string = '';
 
   loadingCorrelativo = false;
+  isEditMode: boolean = false;
   correlativoItem: string = '';
 
   item: MaestroItem = {
@@ -173,6 +174,7 @@ export class MaestrosItemsComponent implements OnInit {
   }
 
   abrirNuevoItem() {
+    this.isEditMode = false;
     // Flag interno si quieres usarlo más adelante
     // pero no es necesario para limpiar el modal
     // this.esEditar = false;
@@ -395,6 +397,7 @@ export class MaestrosItemsComponent implements OnInit {
   }
 
   editar(data: MaestroItem) {
+    this.isEditMode = true;
     this.item = {
       id: data.id,
       item: data.item,

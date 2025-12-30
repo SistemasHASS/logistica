@@ -22,6 +22,17 @@ export class RequerimientosService {
     }
   }
 
+  getRequerimientosAprobados(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/listar-requerimientos-aprobados`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message || 'Error al obtener requerimientos aprobados'
+      );
+    }
+  }
+
   getRequerimientosConsumo(body: any): Observable<any> {
     const url = `${this.baseUrl}/api/logistica/listar-requerimiento-consumo`;
     try {
@@ -138,6 +149,15 @@ export class RequerimientosService {
       throw new Error(
         error.error?.message || 'Error al generar nuevo correlativo de requerimiento'
       );
+    }
+  }
+
+  getAlmacenes(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/listar-almacen`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error en el api: almacenes');
     }
   }
 }

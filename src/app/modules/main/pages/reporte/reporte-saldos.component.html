@@ -64,12 +64,12 @@
                     <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
                 </th>
                 <th style="min-width:120px" pSortableColumn="item">Código</th>
-                <th style="min-width:200px" pSortableColumn="descripcionLocal">Descripción Local</th>
-                <th style="min-width:280px" pSortableColumn="descripcionCompleta">Descripción Completa</th>
+                <th style="min-width:200px" pSortableColumn="descripcionLocal">Descripción</th>
                 <th style="min-width:100px" pSortableColumn="unidadCodigo">Unidad</th>
-                <th style="min-width:100px" pSortableColumn="unidadCompra">Compra</th>
-                <th style="min-width:120px" pSortableColumn="precioUnitarioLocal">Precio</th>
-                <th style="min-width:100px" pSortableColumn="estado">Estado</th>
+                <th style="min-width:120px" pSortableColumn="descripcionLocal">Almacen</th>
+                <th style="min-width:120px" pSortableColumn="descripcionLocal">Stock Actual</th>
+                <th style="min-width:140px" pSortableColumn="descripcionLocal">Stock Comprometido</th>
+                <th style="min-width:140px" pSortableColumn="descripcionLocal">Stock Disponible</th>
                 <th style="min-width:50px">Acciones</th>
             </tr>
         </ng-template>
@@ -80,13 +80,14 @@
                 <td>
                     <p-tableCheckbox [value]="c"></p-tableCheckbox>
                 </td>
-                <td>{{ c.item }}</td>
-                <td>{{ c.descripcionLocal }}</td>
-                <td>{{ c.descripcionCompleta }}</td>
-                <td>{{ c.unidadCodigo }}</td>
-                <td>{{ c.unidadCompra }}</td>
-                <td>{{ c.precioUnitarioLocal }}</td>
-                <td>{{ c.estado === 'A' ? 'Activo' : 'Inactivo' }}</td>
+                <td>{{ c.codigo }}</td>
+                <td>{{ c.descripcion }}</td>
+                <td>{{ c.unidad }}</td>
+                <td>{{ c.almacen }}</td>
+                <td>{{ c.stockActual }}</td>
+                <td>{{ c.stockComprometido }}</td>
+                <td>{{ c.stockDisponible }}</td>
+                <!-- <td>{{ c.estado === 'A' ? 'Activo' : 'Inactivo' }}</td> -->
                 <td>
                     <button class="btn btn-success btn-sm" [disabled]="c.stockDisponible <= 0" (click)="despachar(c)">
                         Despachar

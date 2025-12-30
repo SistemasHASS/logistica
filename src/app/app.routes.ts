@@ -18,6 +18,7 @@ import { ReporteSaldosComponent } from './modules/main/pages/reporte/reporte-sal
 import { ReporteAprobadosComponent } from './modules/main/pages/reporte/reporte-aprobados.component';
 import { ListasStockComponent } from './modules/main/pages/listas-stock/listas-stock.component';
 import { AprobadoresMantenedorComponent } from './modules/main/pages/aprobadores/aprobadores-mantenedor.component';
+import { ConfigGuard } from './modules/auth/guard/config.guard';
 
 export const routes: Routes = [
   {
@@ -49,10 +50,10 @@ export const routes: Routes = [
       },
       { path: 'aprobadores', component: AprobadoresMantenedorComponent, canActivate: [AdministradorGuard] },
       { path: 'parametros', component: ParametrosComponent, canActivate: [OperativoGuard] },
-      { path: 'requerimientos', component: RequerimientosComponent, canActivate: [OperativoGuard] },
+      { path: 'requerimientos', component: RequerimientosComponent, canActivate: [OperativoGuard, ConfigGuard] },
       { path: 'aprobaciones', component: AprobacionesComponent, canActivate: [AprobadorGuard] },
       { path: 'reporte-aprobados', component: ReporteAprobadosComponent, canActivate: [AprobadorGuard] },
-      { path: 'listas-stock', component: ListasStockComponent, canActivate: [AlmacenGuard] },
+      // { path: 'listas-stock', component: ListasStockComponent, canActivate: [AlmacenGuard] },
       { path: 'despachos', component: DespachoComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte_logistico', component: ReporteLogisticoComponent },
       { path: 'reporte-saldos', component: ReporteSaldosComponent, canActivate: [AlmacenGuard] },

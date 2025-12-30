@@ -57,6 +57,12 @@ export interface Almacen {
     almacen: string
 }
 
+export interface AlmacenDestino {
+    id: number;
+    idalmacen: number;
+    almacen: string
+}
+
 export interface Area {
     idarea: number;
     ruc: string;
@@ -102,15 +108,6 @@ export interface Ceco {
     idproyecto: string;
 }
 
-// export interface Labor {
-//     id: string;
-//     idgrupolabor: string;
-//     ceco: string;
-//     idlabor: string;
-//     labor: string;
-// }
-
-
 export interface Labor {
     id: string;
     idlabor: string;
@@ -150,22 +147,23 @@ export interface Clasificacion {
     tipoClasificacion: string;
 }
 
-export interface DetalleRequerimiento {
-    id?: number;
-    codigo: string;
-    // producto: string;
-    producto: any;
-    descripcion: string;
-    cantidad: number;
-    proyecto: string;
-    ceco: string;
-    turno: string;
-    labor: string;
-    esActivoFijo: boolean;
-    activoFijo: string;
-    estado: number;
-    atendida?: string;
-}
+    export interface DetalleRequerimiento {
+        id?: number;
+        idrequerimiento: string;
+        codigo: string;
+        // producto: string;
+        producto: any;
+        descripcion: string;
+        cantidad: number;
+        proyecto: string;
+        ceco: string;
+        turno: string;
+        labor: string;
+        esActivoFijo: boolean;
+        activoFijo: string;
+        estado: number;
+        atendida?: string;
+    }
 
 export interface Requerimiento {
     id?: number;
@@ -178,7 +176,7 @@ export interface Requerimiento {
     idalmacen: string;
     idalmacendestino: string;
     idproyecto: string;
-    fecha: string;
+    fecha: any;
     almacen: string;
     glosa: string;
     tipo: string;
@@ -212,6 +210,7 @@ export interface RequerimientoCommodity {
     tipo: string;
     estados: string;
     estado: number;
+    detalle?: DetalleRequerimientoCommodity[]; // del backend
     detalleCommodity: DetalleRequerimientoCommodity[];
 }
 
@@ -236,11 +235,13 @@ export interface RequerimientoActivoFijo {
     tipo: string;
     estados: string;
     estado: number;
+    detalle?: DetalleRequerimientoActivoFijo[]; // del backend
     detalleActivoFijo: DetalleRequerimientoActivoFijo[];
 }
 
 export interface DetalleRequerimientoActivoFijo {
     id?: number;
+    idrequerimiento: string;
     codigo: string;
     descripcion: string;
     // producto: string;
@@ -257,6 +258,7 @@ export interface DetalleRequerimientoActivoFijo {
 
 export interface DetalleRequerimientoActivoFijoMenor {
     id?: number;
+    idrequerimiento: string;
     codigo: string;
     descripcion: string;
     // producto: string;
@@ -273,6 +275,7 @@ export interface DetalleRequerimientoActivoFijoMenor {
 
 export interface DetalleRequerimientoCommodity {
     id?: number;
+    idrequerimiento: string;
     codigo: string;
     descripcion: string;
     // servicio: string;
@@ -308,29 +311,30 @@ export interface RequerimientoActivoFijoMenor {
     tipo: string;
     estados: string;
     estado: number;
+    detalle?: DetalleRequerimientoActivoFijoMenor[]; // del backend
     detalleActivoFijoMenor: DetalleRequerimientoActivoFijoMenor[];
 }
 
-export interface RequerimientoCommodity {
-    id?: number;
-    idrequerimiento: string;
-    ruc: string;
-    idfundo: string;
-    idarea: string;
-    idclasificacion: string;
-    prioridad: string;
-    nrodocumento: string;
-    idalmacen: string;
-    idalmacendestino: string;
-    idproyecto: string;
-    fecha: string;
-    almacen: string;
-    glosa: string;
-    tipo: string;
-    estados: string;
-    estado: number;
-    detalleCommodity: DetalleRequerimientoCommodity[];
-}
+// export interface RequerimientoCommodity {
+//     id?: number;
+//     idrequerimiento: string;
+//     ruc: string;
+//     idfundo: string;
+//     idarea: string;
+//     idclasificacion: string;
+//     prioridad: string;
+//     nrodocumento: string;
+//     idalmacen: string;
+//     idalmacendestino: string;
+//     idproyecto: string;
+//     fecha: string;
+//     almacen: string;
+//     glosa: string;
+//     tipo: string;
+//     estados: string;
+//     estado: number;
+//     detalleCommodity: DetalleRequerimientoCommodity[];
+// }
 
 export interface PersonaFlujoAprobacion {
     id: string

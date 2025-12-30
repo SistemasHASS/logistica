@@ -8,6 +8,7 @@ import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { ConnectivityService } from '../../services/connectivity.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { UserService } from '@/app/shared/services/user.service';
+import { SyncService } from '@/app/modules/main/services/sync.service';
 
 @Component({
   selector: 'app-layout',
@@ -28,8 +29,9 @@ export class LayoutComponent {
     private connectivityService: ConnectivityService,
     private dexieService: DexieService,
     private alertService: AlertService,
-    private userService: UserService
-  ) {}
+    private userService: UserService,
+    private syncService: SyncService,
+  ) { }
 
   async ngOnInit() {
     this.usuario = await this.dexieService.showUsuario();
@@ -46,6 +48,31 @@ export class LayoutComponent {
     this.fechaHoy = this.getDate();
     this.usuario = await this.dexieService.showUsuario();
   }
+
+  // async logout() {
+  //   Swal.fire({
+  //     title: '¿Estás seguro?',
+  //     text: 'Confirma que desea cerrar sesión',
+  //     icon: 'warning',
+  //     showCancelButton: true,
+  //     confirmButtonText: 'Sí, deseo salir',
+  //     cancelButtonText: 'Cancelar',
+  //     customClass: {
+  //       confirmButton: 'btn btn-primary',
+  //       cancelButton: 'btn btn-warning',
+  //     },
+  //     buttonsStyling: false, // para aplicar tus propias clases
+  //   }).then((result) => {
+  //     if (result.isConfirmed) {
+  //       this.router.navigate(['auth/login']);
+  //       localStorage.clear();
+  //       this.dexieService.clearConfiguracion();
+  //       this.dexieService.clearUsuario();
+  //       this.dexieService.clearMaestras();
+  //     }
+  //   });
+  // }
+
   async logout() {
     Swal.fire({
       title: '¿Estás seguro?',
@@ -58,17 +85,60 @@ export class LayoutComponent {
         confirmButton: 'btn btn-primary',
         cancelButton: 'btn btn-warning',
       },
-      buttonsStyling: false, // para aplicar tus propias clases
-    }).then((result) => {
-      if (result.isConfirmed) {
+      buttonsStyling: false,
+    }).then(async (result) => {
+
+      // ❌ Si cancela, no hace nada
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      try {
+        // 🔴 VALIDACIÓN CLAVE: verificar pendientes
+        const pendientes = await this.dexieService.requerimientos
+          .where('estado')
+          .equals(0)
+          .count();
+
+        if (pendientes > 0) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Sincronización pendiente',
+            text: `Tienes ${pendientes} requerimiento(s) sin sincronizar. Debes sincronizar antes de cerrar sesión.`,
+            confirmButtonText: 'Entendido',
+            customClass: {
+              confirmButton: 'btn btn-primary',
+            },
+            buttonsStyling: false,
+          });
+          return; // ⛔ NO cerrar sesión
+        }
+
+        // ✅ CIERRE DE SESIÓN SEGURO
         this.router.navigate(['auth/login']);
+
         localStorage.clear();
-        this.dexieService.clearConfiguracion();
-        this.dexieService.clearUsuario();
-        this.dexieService.clearMaestras();
+        await this.dexieService.clearConfiguracion();
+        await this.dexieService.clearUsuario();
+        await this.dexieService.clearMaestras();
+
+      } catch (error) {
+        console.error('Error validando cierre de sesión', error);
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudo validar la sincronización antes de cerrar sesión.',
+          confirmButtonText: 'Aceptar',
+          customClass: {
+            confirmButton: 'btn btn-danger',
+          },
+          buttonsStyling: false,
+        });
       }
     });
   }
+
 
   formatNombre(nombre: string): string {
     if (!nombre) return ''; // Verifica si el nombre está vacío

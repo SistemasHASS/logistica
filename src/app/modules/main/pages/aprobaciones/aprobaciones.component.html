@@ -1,4 +1,4 @@
-<div class="container mt-4">
+<div class="container mt-4 custom-tabs">
 
     <ul class="nav nav-tabs">
         <li class="nav-item">
@@ -14,7 +14,7 @@
         <li class="nav-item">
             <a class="nav-link" data-bs-toggle="tab" href="#activofijomenor"
                 (click)="currentTab = 'ACTIVOFIJOMENOR'">ACTIVO
-                FIJO MENOR</a>
+                MENOR</a>
         </li>
     </ul>
 
@@ -24,21 +24,77 @@
         <!-- TAB ITEMS -->
         <div class="tab-pane fade show active" id="items">
             <h5>Requerimientos Item (Jefe aprueba)</h5>
-            <div class="card firstCard p-2">
-                <div class="mb-2">
+            <div class="text-center mt-4">
+                <!-- <div class="mb-2">
                     <input type="checkbox" [(ngModel)]="allCheckedItems" (change)="seleccionarTodos('ITEM')">
-                    Seleccionar todo
-                    <button class="btn btn-success btn-sm ms-3" (click)="aprobarMasivo('ITEM')">Aprobar
-                        Seleccionados</button>
-                </div>
+                    Seleccionar todo -->
+                <!-- <button class="btn btn-success btn-sm ms-3" (click)="aprobarMasivo('ITEM')">Aprobar
+                        Seleccionados</button> -->
+                <!-- </div> -->
 
                 <div class="table-responsive" style="max-height: 60vh; overflow: auto;">
-                    <table class="table table-bordered">
+                    <p-table #dt [value]="requerimientosItems" [paginator]="true" [rows]="20"
+                        [totalRecords]="requerimientosItems.length" [loading]="loading"
+                        responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+                        currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+                        styleClass="p-datatable-sm p-datatable-striped">
+
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th style="width:50px">
+                                    <input type="checkbox" [(ngModel)]="allCheckedItems"
+                                        (change)="seleccionarTodos('ITEM')">
+                                </th>
+                                <th style="width:50px">#</th>
+                                <th style="min-width:20px" pSortableColumn="item">Fecha</th>
+                                <th style="min-width:100px" pSortableColumn="item">Tipo</th>
+                                <th style="min-width:120px" pSortableColumn="descripcionLocal">Almacen</th>
+                                <th style="min-width:120px" pSortableColumn="descripcionLocal">Usuario</th>
+                                <th style="min-width:100px" pSortableColumn="descripcionLocal">Estado</th>
+                                <th style="min-width:30px">Acciones</th>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="body" let-c let-i="rowIndex">
+                            <tr>
+                                <td>
+                                    <input type="checkbox" [(ngModel)]="c.checked" (change)="simpleSelected('ITEM')">
+                                </td>
+                                <td>{{ i + 1 }}</td>
+                                <td>{{ c.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
+                                <td>{{ c.tipo }}</td>
+                                <td>{{ c.idalmacen }}</td>
+                                <td>{{ c.nrodocumento }}</td>
+                                <td>{{ c.estados }}</td>
+                                <td>
+                                    <!-- Botón Visualizar -->
+                                    <button class="btn btn-info btn-sm me-1" (click)="visualizarDetalle(c, 'ITEM')"
+                                        title="Ver detalle">
+                                        <i class="icon-eye"></i>
+                                    </button>
+                                    <button class="btn btn-success btn-sm me-1"
+                                        (click)="aprobar(c, 'ITEM')">Aprobar</button>
+                                    <button class="btn btn-danger btn-sm"
+                                        (click)="rechazar(c, 'ITEM')">Rechazar</button>
+                                </td>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="8" class="text-center">No hay registros</td>
+                            </tr>
+                        </ng-template>
+
+                    </p-table>
+
+                    <!-- <table class="table table-bordered">
                         <thead class="table-light">
                             <tr>
                                 <th><input type="checkbox" [(ngModel)]="allCheckedItems"
                                         (change)="seleccionarTodos('ITEM')"></th>
                                 <th>#</th>
+                                <th>Fecha</th>
                                 <th>Tipo</th>
                                 <th>Almacén</th>
                                 <th>Usuario</th>
@@ -51,13 +107,14 @@
                                 <td><input type="checkbox" [(ngModel)]="req.checked" (change)="simpleSelected('ITEM')">
                                 </td>
                                 <td>{{ i + 1 }}</td>
+                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
                                 <td>{{ req.tipo }}</td>
                                 <td>{{ req.idalmacen }}</td>
                                 <td>{{ req.nrodocumento }}</td>
                                 <td>{{ req.estados}}</td>
-                                <td>
+                                <td> -->
                                     <!-- Botón Visualizar -->
-                                    <button class="btn btn-info btn-sm me-1" (click)="visualizarDetalle(req, 'ITEM')"
+                                    <!-- <button class="btn btn-info btn-sm me-1" (click)="visualizarDetalle(req, 'ITEM')"
                                         title="Ver detalle">
                                         <i class="icon-eye"></i>
                                     </button>
@@ -68,7 +125,7 @@
                                 </td>
                             </tr>
                         </tbody>
-                    </table>
+                    </table> -->
 
                     <div *ngIf="!requerimientosItems.length" class="text-center text-muted mt-2">
                         No hay requerimientos pendientes
@@ -88,20 +145,76 @@
         <div class="tab-pane fade" id="commodity">
             <h5>Requerimientos Servicios (por monto)</h5>
             <div class="text-center mt-4">
-                <div class="mb-2">
+                <!-- <div class="mb-2">
                     <input type="checkbox" [(ngModel)]="allCheckedCommodity" (change)="seleccionarTodos('COMMODITY')">
-                    Seleccionar todo
-                    <button class="btn btn-success btn-sm ms-3" (click)="aprobarMasivo('ITEM')">Aprobar
-                        Seleccionados</button>
-                </div>
+                    Seleccionar todo -->
+                <!-- <button class="btn btn-success btn-sm ms-3" (click)="aprobarMasivo('ITEM')">Aprobar
+                        Seleccionados</button> -->
+                <!-- </div> -->
 
                 <div class="table-responsive" style="max-height: 60vh; overflow: auto;">
-                    <table class="table table-bordered">
+                    <p-table #dt [value]="requerimientosCommodity" [paginator]="true" [rows]="20"
+                        [totalRecords]="requerimientosCommodity.length" [loading]="loading"
+                        responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+                        currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+                        styleClass="p-datatable-sm p-datatable-striped">
+
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th style="width:50px">
+                                    <input type="checkbox" [(ngModel)]="allCheckedCommodity"
+                                        (change)="seleccionarTodos('COMMODITY')">
+                                </th>
+                                <th style="width:50px">#</th>
+                                <th style="min-width:20px" pSortableColumn="item">Fecha</th>
+                                <th style="min-width:100px" pSortableColumn="item">Tipo</th>
+                                <th style="min-width:120px" pSortableColumn="descripcionLocal">Almacen</th>
+                                <th style="min-width:120px" pSortableColumn="descripcionLocal">Usuario</th>
+                                <th style="min-width:100px" pSortableColumn="descripcionLocal">Estado</th>
+                                <th style="min-width:30px">Acciones</th>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="body" let-c let-i="rowIndex">
+                            <tr>
+                                <td>
+                                    <input type="checkbox" [(ngModel)]="c.checked" (change)="simpleSelected('COMMODITY')">
+                                </td>
+                                <td>{{ i + 1 }}</td>
+                                <td>{{ c.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
+                                <td>{{ c.tipo }}</td>
+                                <td>{{ c.idalmacen }}</td>
+                                <td>{{ c.nrodocumento }}</td>
+                                <td>{{ c.estados }}</td>
+                                <td>
+                                    <!-- Botón Visualizar -->
+                                    <button class="btn btn-info btn-sm me-1" (click)="visualizarDetalle(c, 'COMMODITY')"
+                                        title="Ver detalle">
+                                        <i class="icon-eye"></i>
+                                    </button>
+                                    <button class="btn btn-success btn-sm me-1"
+                                        (click)="aprobar(c, 'COMMODITY')">Aprobar</button>
+                                    <button class="btn btn-danger btn-sm"
+                                        (click)="rechazar(c, 'COMMODITY')">Rechazar</button>
+                                </td>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="8" class="text-center">No hay registros</td>
+                            </tr>
+                        </ng-template>
+
+                    </p-table>
+
+                    <!-- <table class="table table-bordered">
                         <thead class="table-light">
                             <tr>
                                 <th><input type="checkbox" [(ngModel)]="allCheckedCommodity"
                                         (change)="seleccionarTodos('COMMODITY')"></th>
                                 <th>#</th>
+                                <th>Fecha</th>
                                 <th>Tipo</th>
                                 <th>Almacén Origen</th>
                                 <th>Almacén Destino</th>
@@ -115,14 +228,15 @@
                                 <td><input type="checkbox" [(ngModel)]="req.checked"
                                         (change)="simpleSelected('COMMODITY')"></td>
                                 <td>{{ i + 1 }}</td>
+                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
                                 <td>{{ req.tipo }}</td>
                                 <td>{{ req.idalmacen }}</td>
                                 <td>{{ req.idalmacen_destino || '-' }}</td>
                                 <td>{{ req.nrodocumento }}</td>
                                 <td>{{ req.estados}}</td>
-                                <td>
+                                <td> -->
                                     <!-- Botón Visualizar -->
-                                    <button class="btn btn-info btn-sm me-1"
+                                    <!-- <button class="btn btn-info btn-sm me-1"
                                         (click)="visualizarDetalle(req, 'COMMODITY')" title="Ver detalle">
                                         <i class="icon-eye"></i>
                                     </button>
@@ -133,7 +247,7 @@
                                 </td>
                             </tr>
                         </tbody>
-                    </table>
+                    </table> -->
 
                     <div *ngIf="!requerimientosCommodity.length" class="text-center text-muted mt-2">
                         No hay requerimientos pendientes
@@ -153,20 +267,76 @@
         <div class="tab-pane fade" id="activofijo">
             <h5>Requerimientos activo fijo (por monto)</h5>
             <div class="text-center mt-4">
-                <div class="mb-2">
+                <!-- <div class="mb-2">
                     <input type="checkbox" [(ngModel)]="allCheckedActivo" (change)="seleccionarTodos('ACTIVOFIJO')">
-                    Seleccionar todo
-                    <button class="btn btn-success btn-sm ms-3" (click)="aprobarMasivo('ITEM')">Aprobar
-                        Seleccionados</button>
-                </div>
+                    Seleccionar todo -->
+                <!-- <button class="btn btn-success btn-sm ms-3" (click)="aprobarMasivo('ITEM')">Aprobar
+                        Seleccionados</button> -->
+                <!-- </div> -->
 
                 <div class="table-responsive" style="max-height: 60vh; overflow: auto;">
-                    <table class="table table-bordered">
+                    <p-table #dt [value]="requerimientosActivoFijo" [paginator]="true" [rows]="20"
+                        [totalRecords]="requerimientosActivoFijo.length" [loading]="loading"
+                        responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+                        currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+                        styleClass="p-datatable-sm p-datatable-striped">
+
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th style="width:50px">
+                                    <input type="checkbox" [(ngModel)]="allCheckedActivo"
+                                        (change)="seleccionarTodos('ACTIVOFIJO')">
+                                </th>
+                                <th style="width:50px">#</th>
+                                <th style="min-width:20px" pSortableColumn="item">Fecha</th>
+                                <th style="min-width:100px" pSortableColumn="item">Tipo</th>
+                                <th style="min-width:120px" pSortableColumn="descripcionLocal">Almacen</th>
+                                <th style="min-width:120px" pSortableColumn="descripcionLocal">Usuario</th>
+                                <th style="min-width:100px" pSortableColumn="descripcionLocal">Estado</th>
+                                <th style="min-width:30px">Acciones</th>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="body" let-c let-i="rowIndex">
+                            <tr>
+                                <td>
+                                    <input type="checkbox" [(ngModel)]="c.checked" (change)="simpleSelected('ACTIVOFIJO')">
+                                </td>
+                                <td>{{ i + 1 }}</td>
+                                <td>{{ c.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
+                                <td>{{ c.tipo }}</td>
+                                <td>{{ c.idalmacen }}</td>
+                                <td>{{ c.nrodocumento }}</td>
+                                <td>{{ c.estados }}</td>
+                                <td>
+                                    <!-- Botón Visualizar -->
+                                    <button class="btn btn-info btn-sm me-1" (click)="visualizarDetalle(c, 'ACTIVOFIJO')"
+                                        title="Ver detalle">
+                                        <i class="icon-eye"></i>
+                                    </button>
+                                    <button class="btn btn-success btn-sm me-1"
+                                        (click)="aprobar(c, 'ACTIVOFIJO')">Aprobar</button>
+                                    <button class="btn btn-danger btn-sm"
+                                        (click)="rechazar(c, 'ACTIVOFIJO')">Rechazar</button>
+                                </td>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="8" class="text-center">No hay registros</td>
+                            </tr>
+                        </ng-template>
+
+                    </p-table>
+
+                    <!-- <table class="table table-bordered">
                         <thead class="table-light">
                             <tr>
                                 <th><input type="checkbox" [(ngModel)]="allCheckedActivo"
                                         (change)="seleccionarTodos('ACTIVOFIJO')"></th>
                                 <th>#</th>
+                                <th>Fecha</th>
                                 <th>Tipo</th>
                                 <th>Almacén Origen</th>
                                 <th>Almacén Destino</th>
@@ -180,14 +350,15 @@
                                 <td><input type="checkbox" [(ngModel)]="req.checked"
                                         (change)="simpleSelected('ACTIVOFIJO')"></td>
                                 <td>{{ i + 1 }}</td>
+                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
                                 <td>{{ req.tipo }}</td>
                                 <td>{{ req.idalmacen }}</td>
                                 <td>{{ req.idalmacen_destino || '-' }}</td>
                                 <td>{{ req.nrodocumento }}</td>
                                 <td>{{ req.estados}}</td>
-                                <td>
+                                <td> -->
                                     <!-- Botón Visualizar -->
-                                    <button class="btn btn-info btn-sm me-1"
+                                    <!-- <button class="btn btn-info btn-sm me-1"
                                         (click)="visualizarDetalle(req, 'ACTIVOFIJO')" title="Ver detalle">
                                         <i class="icon-eye"></i>
                                     </button>
@@ -198,7 +369,7 @@
                                 </td>
                             </tr>
                         </tbody>
-                    </table>
+                    </table> -->
 
                     <div *ngIf="!requerimientosActivoFijo.length" class="text-center text-muted mt-2">
                         No hay requerimientos pendientes
@@ -218,21 +389,77 @@
         <div class="tab-pane fade" id="activofijomenor">
             <h5>Requerimientos activo fijo (por monto)</h5>
             <div class="text-center mt-4">
-                <div class="mb-2">
+                <!-- <div class="mb-2">
                     <input type="checkbox" [(ngModel)]="allCheckedActivoMenor"
                         (change)="seleccionarTodos('ACTIVOFIJOMENOR')">
-                    Seleccionar todo
-                    <button class="btn btn-success btn-sm ms-3" (click)="aprobarMasivo('ACTIVOFIJOMENOR')">Aprobar
-                        Seleccionados</button>
-                </div>
+                    Seleccionar todo -->
+                <!-- <button class="btn btn-success btn-sm ms-3" (click)="aprobarMasivo('ACTIVOFIJOMENOR')">Aprobar
+                        Seleccionados</button> -->
+                <!-- </div> -->
 
                 <div class="table-responsive" style="max-height: 60vh; overflow: auto;">
-                    <table class="table table-bordered">
+                    <p-table #dt [value]="requerimientosActivoFijoMenor" [paginator]="true" [rows]="20"
+                        [totalRecords]="requerimientosActivoFijoMenor.length" [loading]="loading"
+                        responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+                        currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+                        styleClass="p-datatable-sm p-datatable-striped">
+
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th style="width:50px">
+                                    <input type="checkbox" [(ngModel)]="allCheckedActivoMenor"
+                                        (change)="seleccionarTodos('ACTIVOFIJOMENOR')">
+                                </th>
+                                <th style="width:50px">#</th>
+                                <th style="min-width:20px" pSortableColumn="item">Fecha</th>
+                                <th style="min-width:100px" pSortableColumn="item">Tipo</th>
+                                <th style="min-width:120px" pSortableColumn="descripcionLocal">Almacen</th>
+                                <th style="min-width:120px" pSortableColumn="descripcionLocal">Usuario</th>
+                                <th style="min-width:100px" pSortableColumn="descripcionLocal">Estado</th>
+                                <th style="min-width:30px">Acciones</th>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="body" let-c let-i="rowIndex">
+                            <tr>
+                                <td>
+                                    <input type="checkbox" [(ngModel)]="c.checked" (change)="simpleSelected('ACTIVOFIJOMENOR')">
+                                </td>
+                                <td>{{ i + 1 }}</td>
+                                <td>{{ c.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
+                                <td>{{ c.tipo }}</td>
+                                <td>{{ c.idalmacen }}</td>
+                                <td>{{ c.nrodocumento }}</td>
+                                <td>{{ c.estados }}</td>
+                                <td>
+                                    <!-- Botón Visualizar -->
+                                    <button class="btn btn-info btn-sm me-1" (click)="visualizarDetalle(c, 'ACTIVOFIJOMENOR')"
+                                        title="Ver detalle">
+                                        <i class="icon-eye"></i>
+                                    </button>
+                                    <button class="btn btn-success btn-sm me-1"
+                                        (click)="aprobar(c, 'ACTIVOFIJOMENOR')">Aprobar</button>
+                                    <button class="btn btn-danger btn-sm"
+                                        (click)="rechazar(c, 'ACTIVOFIJOMENOR')">Rechazar</button>
+                                </td>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="8" class="text-center">No hay registros</td>
+                            </tr>
+                        </ng-template>
+
+                    </p-table>
+
+                    <!-- <table class="table table-bordered">
                         <thead class="table-light">
                             <tr>
                                 <th><input type="checkbox" [(ngModel)]="allCheckedActivoMenor"
                                         (change)="seleccionarTodos('ACTIVOFIJOMENOR')"></th>
                                 <th>#</th>
+                                <th>Fecha</th>
                                 <th>Tipo</th>
                                 <th>Almacén Origen</th>
                                 <th>Almacén Destino</th>
@@ -246,14 +473,15 @@
                                 <td><input type="checkbox" [(ngModel)]="req.checked"
                                         (change)="simpleSelected('ACTIVOFIJOMENOR')"></td>
                                 <td>{{ i + 1 }}</td>
+                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
                                 <td>{{ req.tipo }}</td>
                                 <td>{{ req.idalmacen }}</td>
                                 <td>{{ req.idalmacen_destino || '-' }}</td>
                                 <td>{{ req.nrodocumento }}</td>
                                 <td>{{ req.estados}}</td>
-                                <td>
+                                <td> -->
                                     <!-- Botón Visualizar -->
-                                    <button class="btn btn-info btn-sm me-1"
+                                    <!-- <button class="btn btn-info btn-sm me-1"
                                         (click)="visualizarDetalle(req, 'ACTIVOFIJOMENOR')" title="Ver detalle">
                                         <i class="icon-eye"></i>
                                     </button>
@@ -264,7 +492,7 @@
                                 </td>
                             </tr>
                         </tbody>
-                    </table>
+                    </table> -->
 
                     <div *ngIf="!requerimientosActivoFijoMenor.length" class="text-center text-muted mt-2">
                         No hay requerimientos pendientes
@@ -333,7 +561,9 @@
                                 <th>CECO</th>
                                 <th>Turno</th>
                                 <th>Labor</th>
-                                <th>Activo Fijo</th>
+                                <!-- <th>Activo Fijo</th> -->
+                                <th *ngIf="currentTab !== 'ITEM'">Activo Fijo</th>
+                                <!-- <th *ngIf="requerimientoSeleccionado.tipo !== 'ITEM'">Activo Fijo</th> -->
                             </tr>
                         </thead>
                         <tbody>
@@ -341,11 +571,20 @@
                                 <td>{{ det.codigo }}</td>
                                 <td>{{ det.descripcion || det.producto }}</td>
                                 <td class="text-center">{{ det.cantidad }}</td>
-                                <td>{{ det.idproyecto }}</td>
-                                <td>{{ det.idcentrocosto }}</td>
-                                <td>{{ det.idturno }}</td>
-                                <td>{{ det.idlabor }}</td>
+                                <td>{{ det.proyecto }}</td>
+                                <td>{{ det.ceco }}</td>
+                                <td>{{ det.turno }}</td>
+                                <td>{{ det.labor }}</td>
+                                <!-- <td *ngIf="requerimientoSeleccionado?.tipo !== 'ITEM'">
+                                    {{ det.activoFijo || '-' }}
+                                </td> -->
                                 <td>{{ det.activoFijo || '-' }}</td>
+                            </tr>
+                            <tr *ngIf="detalleRequerimiento.length === 0">
+                                <td class="text-center py-3"
+                                    [attr.colspan]="requerimientoSeleccionado?.tipo !== 'ITEM' ? 8 : 7">
+                                    <em>No hay detalles agregados</em>
+                                </td>
                             </tr>
                         </tbody>
                     </table>

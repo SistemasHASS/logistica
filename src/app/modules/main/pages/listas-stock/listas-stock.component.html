@@ -224,7 +224,7 @@
         <div class="card shadow-sm">
             <div class="card-header bg-info text-white">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
+                    <h5 class="mb-0 text-white">
                         <i class="icon-clipboard"></i> {{ listaSeleccionada.nombre }}
                     </h5>
                     <span class="badge bg-light text-dark">{{ listaSeleccionada.almacen }}</span>
@@ -338,10 +338,14 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label"><strong>Item</strong> <span class="text-danger">*</span></label>
+                        <!-- <app-dropdown [data]="itemsFiltrados" optionLabel="descripcion" valueField="codigo"
+                            [(ngModel)]="SeccionaItem" textShow2="un item" [required]="true" 
+                            (itemSelected)="onItemSeleccionado($event)" displayFormat="code-label"/> -->
+
                         <select class="form-select" [(ngModel)]="nuevoItem.codigo"
                             (change)="onItemSeleccionado($event)">
                             <option value="">Seleccione un item</option>
-                            <option *ngFor="let item of itemsDisponibles" [value]="item.codigo">
+                            <option *ngFor="let item of itemsFiltrados" [value]="item.codigo">
                                 {{ item.codigo }} - {{ item.descripcion }}
                             </option>
                         </select>

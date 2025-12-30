@@ -137,7 +137,7 @@
 
       <!-- HEADER -->
       <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title color-text">Agregar Item</h5>
+        <h5 class="modal-title color-text">{{ isEditMode ? 'Editar Item' : 'Agregar Item' }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
@@ -163,8 +163,8 @@
             <div class="row">
               <div class="col-4">
                 <label>Código del Item</label>
-                <!-- <input type="text" class="form-control" [(ngModel)]="item.item" readonly> -->
-                <input class="form-control" [value]="'00'+correlativoItem" readonly>
+                <input *ngIf="isEditMode" type="text" class="form-control" [(ngModel)]="item.item" readonly>
+                <input *ngIf="!isEditMode" class="form-control" [value]="'00'+correlativoItem" readonly>
               </div>
 
               <div class="col-8">
@@ -230,8 +230,8 @@
             </div>
 
             <div class="mt-3">
-              <label class="me-3"><input type="radio" [(ngModel)]="item.estado" value="Activo"> Activo</label>
-              <label><input type="radio" [(ngModel)]="item.estado" value="Inactivo"> Inactivo</label>
+              <label class="me-3"><input type="radio" [(ngModel)]="item.estado" value="A"> Activo</label>
+              <label><input type="radio" [(ngModel)]="item.estado" value="I"> Inactivo</label>
             </div>
           </div>
 

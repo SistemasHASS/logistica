@@ -99,7 +99,7 @@
             </a>
           </li>
           <!-- SECCIÓN STOCK -->
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
+          <!-- <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Gestión de Stock</span>
           </li>
@@ -111,7 +111,7 @@
               </span>
               <span class="hide-menu"> Listas de Stock</span>
             </a>
-          </li>
+          </li> -->
           <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Despachos</span>
@@ -152,7 +152,7 @@
               <span>
                 <i class='icon icon-file-check'></i>
               </span>
-              <span class="hide-menu"> Reporte de requerimientos</span>
+              <span class="hide-menu"> Reporte aprobaciones</span>
             </a>
           </li>
           <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">

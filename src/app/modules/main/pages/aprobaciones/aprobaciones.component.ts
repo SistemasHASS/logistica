@@ -9,13 +9,14 @@ import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
 import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import { Usuario } from '@/app/shared/interfaces/Tables';
+import { TableModule } from 'primeng/table';
 import { async } from 'rxjs';
 
 declare var bootstrap: any; // Para usar Bootstrap modal
 @Component({
   selector: 'app-aprobaciones',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TableModule],
   templateUrl: './aprobaciones.component.html',
   styleUrl: './aprobaciones.component.scss',
 })
@@ -84,7 +85,7 @@ export class AprobacionesComponent {
     private alertService: AlertService,
     private requerimientosService: RequerimientosService,
     private maestrasService: MaestrasService
-  ) {}
+  ) { }
 
   async ngOnInit() {
     await this.getUsuario();
@@ -301,16 +302,16 @@ export class AprobacionesComponent {
     const data = await this.dexieService.showRequerimiento();
 
     this.requerimientosItems = data.filter(
-      (x) => x.tipo === 'ITEM' && x.estados === 'PENDIENTE'
+      (x: { tipo: string; estados: string; }) => x.tipo === 'ITEM' && x.estados === 'PENDIENTE'
     );
     this.requerimientosCommodity = data.filter(
-      (x) => x.tipo === 'COMMODITY' && x.estados === 'PENDIENTE'
+      (x: { tipo: string; estados: string; }) => x.tipo === 'COMMODITY' && x.estados === 'PENDIENTE'
     );
     this.requerimientosActivoFijo = data.filter(
-      (x) => x.tipo === 'ACTIVOFIJO' && x.estados === 'PENDIENTE'
+      (x: { tipo: string; estados: string; }) => x.tipo === 'ACTIVOFIJO' && x.estados === 'PENDIENTE'
     );
     this.requerimientosActivoFijoMenor = data.filter(
-      (x) => x.tipo === 'ACTIVOFIJOMENOR' && x.estados === 'PENDIENTE'
+      (x: { tipo: string; estados: string; }) => x.tipo === 'ACTIVOFIJOMENOR' && x.estados === 'PENDIENTE'
     );
   }
 
@@ -394,6 +395,11 @@ export class AprobacionesComponent {
 
     // this.correlativoRequerimiento = resp[0].codigoGenerado;
     // console.log('🔢 Correlativo generado:', this.correlativoRequerimiento);
+    let comprasAlmacenFlag;
+    if (req.itemtipo === 'TRANSFERENCIA' || req.itemtipo === 'COMSUMO') {
+      comprasAlmacenFlag = 'A';
+    }
+    else { comprasAlmacenFlag = 'C'; }
 
     try {
       // 🟦 FORMAMOS el JSON EXACTO para el SP
@@ -403,22 +409,24 @@ export class AprobacionesComponent {
           // RequisicionNumero: this.correlativoRequerimiento,
           RequisicionNumero: '',// AHORA LO GENERA EL SP
           Clasificacion: req.idclasificacion,
-          ComprasAlmacenFlag: 'C',
+          ComprasAlmacenFlag: comprasAlmacenFlag,
           AlmacenCodigo: req.idalmacen,
           MonedaCodigo: 'LO',
           FechaRequerida: new Date(req.fecha).toISOString(),
           FechaPreparacion: new Date().toISOString(),
+          FechaAprobacion: new Date(req.fechaAprobacion).toISOString(),
           PreparadaPor: -1,
           AprobadaPor: -1,
           PrecioTotal: 0,
-          PrioridadCodigo: '1',
+          // PrioridadCodigo: req.prioridad || '1',
+          PrioridadCodigo: String(req.prioridad ?? '1'),
           DefaultPrime: '0001',
           DefaultAfe: 'FUNDO HP',
           CuantiaMonetariaPendienteFlag: 'N',
           UnidadNegocio: '0001', //si es TRUJILLO '0001'; si es OLMOS '0002'
           UnidadReplicacion: 'TRUJ',
           LocalForeignFlag: 'L',
-          Comentarios: '',
+          Comentarios: req.glosa || '',
           Estado: 'AP',
           UltimoUsuario: 'MISESF',
           UltimaFechaModif: new Date().toISOString(),
@@ -426,7 +434,7 @@ export class AprobacionesComponent {
           TransaccionOperacion: '999',
           DefaultCampoReferencia: req.referenciaGasto ?? '',
           RevisionTecnicaPendienteFlag: 'N',
-          ClienteNumeroPedido: null,
+          ClienteNumeroPedido: '',
           ViaTransporte: 'T',
           OrigenGeneracionFlag: 'L',
 
@@ -436,11 +444,14 @@ export class AprobacionesComponent {
             console.log(ceco);
             return {
               Secuencia: index + 1,
-              Item: d.codigo,
+              // Item: d.codigo,
+              TipoDetalle: d.tipoDetalle, // ITEM | COMMODITY | ACTIVOFIJO | ACTIVOFIJOMENOR
+              Item: req.tipo === 'ITEM' ? d.codigo : null,
+              Commodity: req.tipo !== 'ITEM' ? d.codigo : null,
               Condicion: '0',
               UnidadCodigo: '',
-              Descripcion: d.descripcion,
-              ComprasAlmacenFlag: 'C',
+              Descripcion: req.tipo === 'ITEM' ? d.producto : d.descripcion,
+              ComprasAlmacenFlag: comprasAlmacenFlag,
               RedefinidoFlag: 'N',
               CantidadPedida: d.cantidad,
               CantidadOrdenCompra: 0,
@@ -453,41 +464,29 @@ export class AprobacionesComponent {
               CotizacionProveedor: 0,
               ControlPresupuestalFlag: 'S',
               Comentario: d.descripcion ?? '',
-              CentroCosto: ceco?.id ?? '',
+              // CentroCosto: ceco?.id ?? '',
+              CentroCosto: (ceco?.id ?? '').toString(),
               Estado: 'PE',
               UltimoUsuario: 'MISESF',
               UltimaFechaModif: new Date().toISOString(),
               IGVExoneradoFlag: 'N',
               GenerarContratoFlag: 'N',
+
+              // 🔥 DISTRIBUCIÓN CONTABLE
+              distribucion: d.distribucion.map((x: any, i: number) => ({
+                Secuencia: i + 1,
+                Linea: 1,
+                Account: x.cuenta,                 // 10411103
+                Afe: x.afe ?? 'FUNDO HP',
+                Monto: Number(x.monto),
+                CentroCostoDestino: x.cecoDestino ?? ceco?.id ?? '',
+                Sucursal: '0801',
+                CampoReferencia: req.referenciaGasto ?? 'GA',
+                ReferenciaFiscal01: '',
+                ReferenciaFiscal02: ''
+              }))
             };
           }),
-
-          // detalle: req.detalle.map((d: any, index: number) => ({
-          //   Secuencia: index + 1,
-          //   Item: d.codigo,
-          //   Condicion: '0',
-          //   UnidadCodigo: '',
-          //   Descripcion: d.descripcion,
-          //   ComprasAlmacenFlag: 'C',
-          //   RedefinidoFlag: 'N',
-          //   CantidadPedida: d.cantidad,
-          //   CantidadOrdenCompra: 0,
-          //   CantidadRecibida: 0,
-          //   PrecioUnitario: 0,
-          //   PrecioxCantidad: 0,
-          //   CotizacionCantidad: 0,
-          //   CotizacionPrecioUnitario: 0,
-          //   CotizacionPrecioUnitarioconIGV: 0,
-          //   CotizacionProveedor: 0,
-          //   ControlPresupuestalFlag: 'S',
-          //   Comentario: d.descripcion ?? '',
-          //   CentroCosto: d.ceco,
-          //   Estado: 'PE',
-          //   UltimoUsuario: 'MISESF',
-          //   UltimaFechaModif: new Date().toISOString(),
-          //   IGVExoneradoFlag: 'N',
-          //   GenerarContratoFlag: 'N',
-          // })),
         },
       ];
 
@@ -536,17 +535,35 @@ export class AprobacionesComponent {
   /** ✅ Visualizar detalle del requerimiento */
   async visualizarDetalle(req: any, tipo: string) {
     this.requerimientoSeleccionado = req;
+    // SIEMPRE inicializamos
+    this.requerimientoSeleccionado = {
+      ...req,
+      tipo: req.tipo || ''
+    };
 
     // Cargar el detalle del requerimiento desde Dexie
     if (req.detalle && req.detalle.length > 0) {
       this.detalleRequerimiento = req.detalle;
     } else {
       // Si no está en memoria, buscar en Dexie
-      this.detalleRequerimiento = await this.dexieService.detalles
+      // this.detalleRequerimiento = await this.dexieService.detalles
+      //   .where('idrequerimiento')
+      //   .equals(req.idrequerimiento)
+      //   .toArray();
+      const detalleDexie = await this.dexieService.detalles
         .where('idrequerimiento')
         .equals(req.idrequerimiento)
         .toArray();
+
+      this.detalleRequerimiento = detalleDexie || [];
     }
+
+    // ✔ Mostrar alerta si NO hay detalle
+    // if (this.detalleRequerimiento.length === 0) {
+    //   this.alertService.mostrarInfo(
+    //     "Este requerimiento no tiene detalles registrados."
+    //   );
+    // }
 
     // Abrir el modal
     const modalElement = document.getElementById('modalVisualizarDetalle');

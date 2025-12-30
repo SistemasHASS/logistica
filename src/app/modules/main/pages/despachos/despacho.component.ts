@@ -4,7 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
-import { Usuario, Stock, OrdenCompra } from '@/app/shared/interfaces/Tables';
+import { MaestrasService } from '@/app/modules/main/services/maestras.service';
+import { CommodityService } from '@/app/modules/main/services/commoditys.service';
+import { Usuario, Stock, OrdenCompra, DetalleDespacho, Despacho } from '@/app/shared/interfaces/Tables';
+import { TableModule } from 'primeng/table';
+import { DatePickerModule } from 'primeng/datepicker';
+import { ViewChild } from '@angular/core';
+import { Table } from 'primeng/table';
 
 declare var bootstrap: any;
 
@@ -17,21 +23,53 @@ export enum EstadoRequerimiento {
 @Component({
   selector: 'app-despachos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TableModule, DatePickerModule],
   templateUrl: './despacho.component.html',
   styleUrls: ['despacho.component.scss'],
 })
 export class DespachoComponent implements OnInit {
+  @ViewChild('dt') table!: Table;
   // Make Math available in template
   public Math = Math;
 
   // Listas principales
+  requerimientosAprobadosAll: any[] = [];
   requerimientos: any[] = [];
   requerimientosAprobados: any[] = [];
   stockDisponible: Stock[] = [];
   ordenesCompraGeneradas: OrdenCompra[] = [];
   items: any[] = []; // detalle del requerimiento seleccionado
+  turnos: any[] = [];
+  labores: any[] = [];
+  cecos: any[] = [];
+  almacenes: any[] = [];
+  clasificaciones: any[] = [];
+  tipoGastos: any[] = [];
+  servicios: any[] = [];
+  servicioAF: any[] = [];
+  servicioAFM: any[] = [];
+  fundos: any[] = [];
+  cultivos: any[] = [];
+  areas: any[] = [];
+  proyectos: any[] = [];
   detalle: any[] = []; // items a despachar (detalle atención)
+  subcommodity: any[] = [];
+
+  filtroServicios: any[] = [];
+  filtroServiciosAF: any[] = [];
+  filtroServiciosAFM: any[] = [];
+
+  filterItem: any[] = [];
+  filterCommodity: any[] = [];
+
+  filtro: string = '';
+  totalRegistros: number = 0;
+  pagina: number = 1;
+  ordenColumna: string = '';
+  ordenDireccion: 'asc' | 'desc' = 'asc';
+
+  fechaInicio?: Date;
+  fechaFin?: Date;
 
   // Modal detalle despacho
   requerimientoSeleccionado: any = null;
@@ -54,70 +92,315 @@ export class DespachoComponent implements OnInit {
     idrol: '',
     rol: '',
   };
-  //     numeroOrden: `OC-${Date.now()}`, // generate a proper order number
-  //     solicitudCompraId: 0, // you'll need to provide this
-  //   fecha: new Date().toISOString().split('T')[0], // format as YYYY-MM-DD
-  //   fechaEntrega: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
-  //   proveedor: '', // provide a default or get from somewhere
-  //   nombreProveedor: '', // provide a default or get from somewhere
-  //   rucProveedor: '', // provide a default or get from somewhere
-  //   direccionEntrega: '', // provide a default or get from somewhere
-  //   montoTotal: 0, // calculate this
-  //   moneda: 'PEN', // or your default currency
-  //   formaPago: 'CONTADO', // or your default
-  //   condicionesPago: 'CONTRA ENTREGA', // or your default
-  //   plazoEntrega: 7, // default days
-  //   detalle: itemsFaltantes.map(item => ({
-  //     id: 0, // will be set by the database
-  //     ordenCompraId: 0, // will be set after saving
-  //     codigo: item.codigo,
-  //     descripcion: item.descripcion || item.producto,
-  //     cantidad: item.faltante || item.cantidad - (item.disponible || 0),
-  //     cantidadRecibida: 0,
-  //     cantidadPendiente: item.faltante || item.cantidad - (item.disponible || 0),
-  //     unidadMedida: 'UN', // or get from item if available
-  //     precioUnitario: 0, // you might want to set this
-  //     descuento: 0,
-  //     subtotal: 0, // calculate this
-  //     impuesto: 0, // calculate this
-  //     total: 0, // calculate this
-  //     estado: 'PENDIENTE'
-  //   })),
-  //   estado: 'GENERADA',
-  //   usuarioGenera: this.usuario.usuario || 'SISTEMA'
-  // };
 
   constructor(
     private dexieService: DexieService,
     private alertService: AlertService,
-    private requerimientosService: RequerimientosService
-  ) {}
+    private requerimientosService: RequerimientosService,
+    private maestrasService: MaestrasService,
+    private commodityService: CommodityService
+  ) { }
 
   async ngOnInit() {
     await this.cargarUsuario();
+    await this.sincronizarTablasMaestras();
     await this.sincronizaAprobados();
-    await this.cargarRequerimientosAprobados();
+    // await this.cargarRequerimientosAprobados();
     await this.cargarStockDisponible();
   }
 
   async cargarRequerimientos() {
     this.requerimientos = await this.dexieService.requerimientos
-      .where('estado')
+      .where('estados')
       .anyOf('APROBADO', 'ATENCION_PARCIAL', 'ATENCION_COMPLETA')
       .toArray();
   }
 
-  async verDetalle(req: any) {
-    this.selected = req;
+  async sincronizarTablasMaestras() {
+    try {
+      this.alertService.mostrarModalCarga();
 
-    this.detalle = req.detalle || [];
+      const fundos = this.maestrasService.getFundos([
+        { idempresa: this.usuario.idempresa },
+      ]);
+      fundos.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveFundos(resp);
+          await this.ListarFundos();
+          this.alertService.cerrarModalCarga();
+          this.alertService.showAlert(
+            'Exito!',
+            'Sincronizado con exito',
+            'success'
+          );
+        }
+      });
 
-    this.detalle.forEach(d => {
-      d.atender = 0;
-    });
+      const cultivos = this.maestrasService.getCultivos([
+        { idempresa: this.usuario?.idempresa },
+      ]);
+      cultivos.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveCultivos(resp);
+          await this.ListarCultivos();
+        }
+      });
 
-    console.log('Detalle seleccionado:', this.detalle);
+      const areas = this.maestrasService.getAreas([
+        { ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA' },
+      ]);
+      areas.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveAreas(resp);
+          await this.ListarAreas();
+        }
+      });
+
+      const almacenes = this.maestrasService.getAlmacenes([
+        { ruc: this.usuario?.ruc },
+      ]);
+      almacenes.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveAlmacenes(resp);
+          await this.ListarAlmacenes();
+        }
+      });
+
+      const proyectos = this.maestrasService.getProyectos([
+        { ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA', esadmin: 0 },
+      ]);
+      proyectos.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveProyectos(resp);
+          await this.ListarProyectos();
+        }
+      });
+
+      const items = this.maestrasService.getItems([{ ruc: this.usuario?.ruc }]);
+      items.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveItemComoditys(resp);
+          await this.ListarItems();
+        }
+      });
+
+      const clasificaciones = this.maestrasService.getClasificaciones([{}]);
+      clasificaciones.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveClasificaciones(resp);
+          await this.ListarClasificaciones();
+        }
+      });
+
+      const cecos = await this.maestrasService.getCecos([
+        { aplicacion: 'LOGISTICA', esadmin: 0 },
+      ]);
+      cecos.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveCecos(resp);
+          await this.ListarCecos();
+        }
+      });
+
+      const subcommodity = await this.commodityService.getSubCommodity([]);
+      subcommodity.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveMaestroSubCommodities(resp);
+          await this.ListarSubcommodity();
+        }
+      });
+
+      const tipoGastos = this.maestrasService.getTipoGastos([{}]);
+      tipoGastos.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveTipoGastos(resp);
+          await this.ListarTipoGastos();
+        }
+      });
+    } catch (error: any) {
+      console.error(error);
+      this.alertService.showAlert(
+        'Error!',
+        '<p>Ocurrio un error</p><p>',
+        'error'
+      );
+    }
   }
+
+  async ListarFundos() {
+    this.fundos = await this.dexieService.showFundos();
+  }
+
+  async ListarCultivos() {
+    this.cultivos = await this.dexieService.showCultivos();
+  }
+
+  async ListarAreas() {
+    this.areas = await this.dexieService.showAreas();
+  }
+
+  async ListarAlmacenes() {
+    this.almacenes = await this.dexieService.showAlmacenes();
+  }
+
+  async ListarProyectos() {
+    this.proyectos = await this.dexieService.showProyectos();
+  }
+
+  async ListarItems() {
+    this.items = await this.dexieService.showItemComoditys();
+    this.filterItem = this.items.filter((item) => item.tipoclasificacion === 'I');
+  }
+
+  async ListarClasificaciones() {
+    this.clasificaciones = await this.dexieService.showClasificaciones();
+  }
+
+  async ListarTurnos() {
+    this.turnos = await this.dexieService.showTurnos();
+  }
+
+  async ListarLabores() {
+    this.labores = await this.dexieService.showLabores();
+  }
+
+  async ListarCecos() {
+    this.cecos = await this.dexieService.showCecos();
+  }
+
+  async ListarSubcommodity() {
+    this.subcommodity = await this.dexieService.showMaestroSubCommodity();
+  }
+
+  async ListarTipoGastos() {
+    this.tipoGastos = await this.dexieService.showTipoGastos();
+  }
+
+  async ListarServicios() {
+    this.servicios = await this.dexieService.showMaestroCommodity();
+    this.filtroServicios = this.servicios.filter(
+      (serv) => serv.clasificacion === 'SER'
+    );
+  }
+
+  async ListarServiciosAF() {
+    this.servicioAF = await this.dexieService.showMaestroCommodity();
+    this.filtroServiciosAF = this.servicioAF.filter(
+      (servaf) => servaf.clasificacion === 'ACT'
+    );
+  }
+
+  async ListarServiciosAFM() {
+    this.servicioAFM = await this.dexieService.showMaestroCommodity();
+    this.filtroServiciosAFM = this.servicioAFM.filter(
+      (servaf) => servaf.clasificacion === 'ATM'
+    );
+  }
+
+  getDescripcionProducto(codigo: any) {
+    const p = this.filterItem.find((x) => x.codigo === codigo);
+    return p ? p.descripcion : codigo;
+  }
+
+  getDescripcionSubCommodity(codigo: any) {
+    const p = this.subcommodity.find((x) => x.commodity === codigo);
+    return p ? p.descripcionLocal : codigo;
+  }
+
+  obtenerProyectosUnicos(detalle: any[]): string[] {
+    if (!detalle || !detalle.length) return [];
+
+    return [...new Set(detalle.map(d => d.proyecto))];
+  }
+
+  verDetalle(r: any) {
+    this.selected = r;
+    this.detalle = r.detalle;
+
+    const modal = new bootstrap.Modal(document.getElementById('modalAtencion'));
+    modal.show();
+  }
+
+  buscar() {
+    this.pagina = 1;
+    this.aplicarFiltros();
+    if (this.table) {
+      this.table.first = 0; // 👈 vuelve a la página 1
+    }
+  }
+
+  aplicarFiltros() {
+    let data = [...this.requerimientosAprobadosAll];
+
+    if (this.filtro.trim().length > 0) {
+      const f = this.filtro.toLowerCase();
+
+      data = data.filter(
+        (x) =>
+          x.glosa?.toLowerCase().includes(f) ||
+          x.tipo?.toLowerCase().includes(f) ||
+          x.idrequerimiento?.toString().includes(f) ||
+          x.estados?.toLowerCase().includes(f) ||
+          this.formatearFecha(x.fechaAprobacion).includes(f) ||
+          x.detalle?.some((d: any) =>
+            d.proyecto?.toLowerCase().includes(f))
+      );
+    }
+
+    /* 📅 FILTRO POR RANGO DE FECHAS */
+    if (this.fechaInicio || this.fechaFin) {
+      data = data.filter(x => {
+        const fecha = new Date(x.fechaAprobacion);
+
+        if (this.fechaInicio && fecha < this.fechaInicio) return false;
+        if (this.fechaFin && fecha > this.fechaFin) return false;
+
+        return true;
+      });
+    }
+
+    // Ordenamiento si deseas mantenerlo
+    if (this.ordenColumna) {
+      data.sort((a: any, b: any) => {
+        const valorA = a[this.ordenColumna] ?? '';
+        const valorB = b[this.ordenColumna] ?? '';
+
+        return this.ordenDireccion === 'asc'
+          ? valorA > valorB
+            ? 1
+            : -1
+          : valorA < valorB
+            ? 1
+            : -1;
+      });
+    }
+
+    this.requerimientosAprobados = data;
+    this.totalRegistros = data.length;
+  }
+
+  limpiarFecha() {
+    // si ambas fechas están vacías → vuelve a todo
+    if (!this.fechaInicio && !this.fechaFin) {
+      this.buscar();
+    }
+  }
+
+  calcularAtencion(d: any): number {
+    debugger
+    const solicitada = d.cantidad ?? 0;
+    const atendida = d.atendida ?? 0;
+    const pendiente = solicitada - atendida;
+
+    const almacen = this.selected?.almacen; // 🔥 CLAVE
+
+    if (!almacen) return 0;
+
+    const stock = this.obtenerStock(d.codigo, almacen);
+
+    return Math.max(0, Math.min(stock, pendiente));
+  }
+
 
   async registrarAtencion() {
     if (!this.detalle.length) {
@@ -132,7 +415,8 @@ export class DespachoComponent implements OnInit {
     for (const d of this.detalle) {
       const registro = await this.dexieService.detalles
         .where('idrequerimiento')
-        .equals(d.idrequerimiento)
+        // .equals(d.idrequerimiento)
+        .equals(this.selected.idrequerimiento)
         .and((x) => x.codigo === d.codigo)
         .first();
 
@@ -162,21 +446,201 @@ export class DespachoComponent implements OnInit {
     new bootstrap.Modal(document.getElementById('modalDespacho')).show();
   }
 
+  // async confirmarDespacho() {
+  //   try {
+  //     for (const d of this.detalleDespacho) {
+
+  //       // Validar stock antes
+  //       const stockActual = this.obtenerStock(d.codigo, d.almacen);
+  //       if (stockActual < d.atendida) {
+  //         this.alertService.showAlert(
+  //           'Stock insuficiente',
+  //           `No hay stock suficiente para ${d.producto}`,
+  //           'warning'
+  //         );
+  //         return;
+  //       }
+
+  //       // Descontar stock (por almacén)
+  //       await this.actualizarStock(d.codigo, d.almacen, -d.atendida);
+  //     }
+
+  //     // Estado correcto según lógica
+  //     this.selected.estado = EstadoRequerimiento.DESPACHADO_COMPLETO;
+
+  //     await this.dexieService.requerimientos.put(this.selected);
+
+  //     this.alertService.showAlert(
+  //       'Despacho',
+  //       'Salida registrada correctamente',
+  //       'success'
+  //     );
+
+  //     this.cargarRequerimientos();
+
+  //   } catch (error) {
+  //     console.error(error);
+  //     this.alertService.showAlert(
+  //       'Error',
+  //       'Ocurrió un error al confirmar el despacho',
+  //       'error'
+  //     );
+  //   }
+  // }
+
   async confirmarDespacho() {
+    try {
+
+      // 🔒 Validación básica
+      if (!this.selected || !this.detalleDespacho.length) {
+        this.alertService.showAlert(
+          'Despacho',
+          'No hay información para despachar',
+          'warning'
+        );
+        return;
+      }
+
+      const usuario = (await this.dexieService.getUsuarioLogueado())?.usuario || 'SYSTEM';
+
+      // 🔹 Cabecera despacho
+      const despacho: Despacho = {
+        numeroDespacho: `DES-${Date.now()}`,
+        fecha: new Date().toISOString(),
+        almacen: this.selected.idalmacen,
+        usuarioDespacha: usuario,
+        estado: 'PENDIENTE',
+        detalle: [],
+      };
+
+      let atender: any | number = 0;
+
+      for (const d of this.detalleDespacho) {
+        atender = this.calcularAtencion(d); // 🔥 CLAVE
+        if (atender <= 0) continue;
+        // 🔻 Descontar stock
+        await this.actualizarStock(d.codigo, this.selected.almacen, -atender);
+      }
+
+      // 🔹 Detalle despacho
+      const detalles: DetalleDespacho[] = this.detalleDespacho.map(d => ({
+        despachoId: 0, // se asigna en Dexie
+        detalleRecepcionId: d.id || 0,
+        codigo: d.codigo,
+        descripcion: d.producto,
+        cantidad: atender,
+        unidadMedida: d.unidadMedida || '',
+        precioUnitario: 0,
+        descuento: 0,
+        subtotal: 0,
+        impuesto: 0,
+        total: 0,
+        estado: 'COMPLETO'
+      }));
+
+      // 🚀 Confirmar despacho completo
+      const despachoId = await this.dexieService.confirmarDespachoCompleto(
+        despacho,
+        detalles,
+        usuario,
+        this.selected
+      );
+
+      // ✅ UI feedback
+      this.alertService.showAlert(
+        'Despacho',
+        `Despacho N° ${despachoId} confirmado correctamente`,
+        'success'
+      );
+
+      // 🔄 Refrescar data
+      await this.cargarRequerimientos();
+      await this.cargarStockDisponible();
+
+      // ❌ Cerrar modal
+      const modal = document.getElementById('modalDespacho');
+      if (modal) {
+        (window as any).bootstrap.Modal.getInstance(modal)?.hide();
+      }
+
+    } catch (error: any) {
+
+      console.error('Error confirmando despacho:', error);
+
+      this.alertService.showAlert(
+        'Error',
+        error?.message || 'No se pudo confirmar el despacho',
+        'error'
+      );
+    }
+  }
+
+
+  generarNumeroDespacho(): string {
+    const fecha = new Date();
+    return `DSP-${fecha.getFullYear()}${(fecha.getMonth() + 1)
+      .toString().padStart(2, '0')}${fecha.getDate()
+        .toString().padStart(2, '0')}-${Date.now()}`;
+  }
+
+  async guardarDespacho(): Promise<number> {
+    const despacho: Despacho = {
+      numeroDespacho: this.generarNumeroDespacho(),
+      fecha: new Date().toISOString(),
+      almacen: this.selected.almacen,
+      usuarioDespacha: this.usuario.documentoidentidad,
+      estado: 'APROBADO',
+      observaciones: this.selected.observaciones || '',
+      detalle: [] // ❗ NO se persiste
+    };
+
+    // 1️⃣ Guardar cabecera
+    const despachoId = await this.dexieService.despachos.add(despacho);
+    console.log('✅ Despacho guardado:', despacho);
+    // 2️⃣ Guardar detalle
     for (const d of this.detalleDespacho) {
-      await this.actualizarStock(d.codigo, -d.atendida);
+      const detalle: DetalleDespacho = {
+        despachoId,
+        detalleRecepcionId: d.detalleRecepcionId,
+        codigo: d.codigo,
+        descripcion: d.descripcion,
+        cantidad: d.atendida,
+        unidadMedida: d.unidadMedida,
+        precioUnitario: d.precioUnitario,
+        descuento: d.descuento ?? 0,
+        subtotal: d.subtotal,
+        impuesto: d.impuesto,
+        total: d.total,
+        marca: d.marca,
+        modelo: d.modelo,
+        especificaciones: d.especificaciones,
+        fechaEntregaEstimada: d.fechaEntregaEstimada,
+        estado: 'COMPLETO',
+        observaciones: d.observaciones
+      };
+
+      await this.dexieService.detalleDespachos.add(detalle);
+      console.log('✅ Detalle de despacho guardado:', detalle);
     }
 
-    this.selected.estado = EstadoRequerimiento.DESPACHADO_COMPLETO;
-    await this.dexieService.requerimientos.put(this.selected);
-
-    this.alertService.showAlert(
-      'Despacho',
-      'Salida registrada correctamente',
-      'success'
-    );
-    this.cargarRequerimientos();
+    return despachoId;
   }
+
+  // async confirmarDespacho() {
+  //   for (const d of this.detalleDespacho) {
+  //     await this.actualizarStock(d.codigo, -d.atendida);
+  //   }
+
+  //   this.selected.estado = EstadoRequerimiento.DESPACHADO_COMPLETO;
+  //   await this.dexieService.requerimientos.put(this.selected);
+
+  //   this.alertService.showAlert(
+  //     'Despacho',
+  //     'Salida registrada correctamente',
+  //     'success'
+  //   );
+  //   this.cargarRequerimientos();
+  // }
 
   /**
    * Actualiza el stock tanto en memoria como en la base de datos local
@@ -184,54 +648,81 @@ export class DespachoComponent implements OnInit {
    * @param almacenOrCantidad Código del almacén (opcional) o cantidad a sumar/restar
    * @param cantidad Cantidad a sumar/restar (usar negativo para restar)
    */
+  // async actualizarStock(
+  //   codigo: string,
+  //   almacenOrCantidad: string | number,
+  //   cantidad?: number
+  // ) {
+  //   // Manejar ambos casos: (codigo, cantidad) y (codigo, almacen, cantidad)
+  //   let almacen: string | undefined;
+  //   let cant: number;
+
+  //   if (cantidad !== undefined) {
+  //     // Caso con 3 parámetros: (codigo, almacen, cantidad)
+  //     almacen = almacenOrCantidad as string;
+  //     cant = cantidad;
+
+  //     // Actualizar en memoria
+  //     const stock = this.stockDisponible.find(
+  //       (s) => s.codigo === codigo && s.almacen === almacen
+  //     );
+
+  //     if (stock) {
+  //       stock.cantidad += cant; // cantidad negativa para restar en despacho
+  //       if (stock.cantidad < 0) stock.cantidad = 0;
+  //     } else if (cant > 0) {
+  //       // si no existe en la lista local, agregarlo con la cantidad (si la cantidad es positiva)
+  //       this.stockDisponible.push({
+  //         codigo,
+  //         descripcion: '',
+  //         almacen: almacen as string,
+  //         cantidad: cant,
+  //         unidadMedida: '',
+  //         ultimaActualizacion: new Date().toISOString(),
+  //       });
+  //     }
+  //   } else {
+  //     // Caso con 2 parámetros: (codigo, cantidad)
+  //     cant = almacenOrCantidad as number;
+
+  //     // Actualizar en Dexie
+  //     const itemStock = await this.dexieService.stock
+  //       .where('codigo')
+  //       .equals(codigo)
+  //       .first();
+
+  //     if (itemStock) {
+  //       itemStock.cantidad += cant;
+  //       if (itemStock.cantidad < 0) itemStock.cantidad = 0;
+  //       await this.dexieService.stock.put(itemStock);
+  //     }
+  //   }
+  // }
+
   async actualizarStock(
     codigo: string,
-    almacenOrCantidad: string | number,
-    cantidad?: number
+    almacen: string,
+    cantidad: number
   ) {
-    // Manejar ambos casos: (codigo, cantidad) y (codigo, almacen, cantidad)
-    let almacen: string | undefined;
-    let cant: number;
+    // ====== MEMORIA ======
+    const stockLocal = this.stockDisponible.find(
+      s => s.codigo === codigo && s.almacen === almacen
+    );
 
-    if (cantidad !== undefined) {
-      // Caso con 3 parámetros: (codigo, almacen, cantidad)
-      almacen = almacenOrCantidad as string;
-      cant = cantidad;
+    if (stockLocal) {
+      stockLocal.cantidad += cantidad;
+      if (stockLocal.cantidad < 0) stockLocal.cantidad = 0;
+    }
 
-      // Actualizar en memoria
-      const stock = this.stockDisponible.find(
-        (s) => s.codigo === codigo && s.almacen === almacen
-      );
+    // ====== DEXIE ======
+    const itemStock = await this.dexieService.stock
+      .where({ codigo, almacen })
+      .first();
 
-      if (stock) {
-        stock.cantidad += cant; // cantidad negativa para restar en despacho
-        if (stock.cantidad < 0) stock.cantidad = 0;
-      } else if (cant > 0) {
-        // si no existe en la lista local, agregarlo con la cantidad (si la cantidad es positiva)
-        this.stockDisponible.push({
-          codigo,
-          descripcion: '',
-          almacen: almacen as string,
-          cantidad: cant,
-          unidadMedida: '',
-          ultimaActualizacion: new Date().toISOString(),
-        });
-      }
-    } else {
-      // Caso con 2 parámetros: (codigo, cantidad)
-      cant = almacenOrCantidad as number;
-
-      // Actualizar en Dexie
-      const itemStock = await this.dexieService.stock
-        .where('codigo')
-        .equals(codigo)
-        .first();
-
-      if (itemStock) {
-        itemStock.cantidad += cant;
-        if (itemStock.cantidad < 0) itemStock.cantidad = 0;
-        await this.dexieService.stock.put(itemStock);
-      }
+    if (itemStock) {
+      itemStock.cantidad += cantidad;
+      if (itemStock.cantidad < 0) itemStock.cantidad = 0;
+      await this.dexieService.stock.put(itemStock);
     }
   }
 
@@ -244,11 +735,16 @@ export class DespachoComponent implements OnInit {
 
   // Carga solo los requerimientos del store (Dexie)
   async cargarRequerimientosAprobados() {
+    this.loading = true;
     const requerimientos = await this.dexieService.showRequerimiento();
     console.log('Requerimientos desde Dexie:', requerimientos);
-    this.requerimientosAprobados = (requerimientos || []).filter(
-      (r) => r.estados === 'APROBADO'
+    this.requerimientosAprobadosAll = (requerimientos || []).filter(
+      (r: { estados: string; }) => r.estados === 'APROBADO'
     );
+    // inicialmente se muestra todo
+    this.requerimientosAprobados = [...this.requerimientosAprobadosAll];
+    this.totalRegistros = this.requerimientosAprobados.length;
+    this.loading = false;
     console.log('Requerimientos aprobados:', this.requerimientosAprobados);
   }
 
@@ -258,69 +754,115 @@ export class DespachoComponent implements OnInit {
     return '';
   }
 
-  // Sincroniza con backend: trae requerimientos y guarda en Dexie
+  formatearFecha(fecha: string | Date): string {
+    if (!fecha) return '';
+    const d = new Date(fecha);
+
+    const dia = d.getDate().toString().padStart(2, '0');
+    const mes = (d.getMonth() + 1).toString().padStart(2, '0');
+    const anio = d.getFullYear();
+
+    return `${dia}/${mes}/${anio}`;
+  }
+
   async sincronizaAprobados() {
     try {
-      const requerimmientos = this.requerimientosService.getRequerimientos([
-        { ruc: this.usuario.ruc, idrol: this.obtenerRol() },
-      ]);
+      const requerimmientos = this.requerimientosService.getRequerimientosAprobados([]);
+
       requerimmientos.subscribe(async (resp: any) => {
+
         if (!!resp && resp.length) {
-          await this.dexieService.saveRequerimientos(resp);
-          // Guardar detalle en store detalles (table name puede variar)
+
+          // Limpiar Stores para evitar duplicados
+          await this.dexieService.requerimientos.clear();
+          await this.dexieService.detalles.clear();
+
+          // Guardar requerimientos
+          await this.dexieService.requerimientos.bulkAdd(resp);
+
+          // Guardar detalles
+          const detallesPlanos = [];
           for (const req of resp) {
-            if (req.detalle && req.detalle.length) {
+            if (req.detalle?.length) {
               for (const det of req.detalle) {
-                await this.dexieService.detalles.add({
+                detallesPlanos.push({
                   ...det,
-                  idrequerimiento: req.idrequerimiento,
+                  idrequerimiento: req.idrequerimiento
                 });
               }
             }
           }
+
+          await this.dexieService.detalles.bulkAdd(detallesPlanos);
+
           console.log('✅ Requerimientos y detalles guardados correctamente');
-          // recarga local
           await this.cargarRequerimientosAprobados();
         }
       });
+
     } catch (error: any) {
       console.error(error);
       this.alertService.showAlert(
         'Error!',
-        '<p>Ocurrio un error</p><p>',
+        '<p>Ocurrió un error</p>',
         'error'
       );
     }
   }
 
   // Simula carga de stock (reemplaza por llamada real al backend si tienes)
-  async cargarStockDisponible() {
-    this.stockDisponible = [
-      {
-        codigo: 'ITEM001',
-        descripcion: 'Producto A',
-        unidadMedida: 'UN',
-        ultimaActualizacion: new Date().toISOString().split('T')[0],
-        almacen: 'ALM01',
-        cantidad: 100,
+  // async cargarStockDisponible() {
+  //   this.requerimientosService.obtenerReporteSaldos([]).subscribe(async (resp: any) => {
+  //     if (!!resp && resp.length) {
+  //       await this.dexieService.saveStocks(resp);
+  //       this.stockDisponible = await this.dexieService.showStock();
+  //     }
+  //   });
+
+  //   // this.stockDisponible = [
+  //   //   {
+  //   //     codigo: 'ITEM001',
+  //   //     descripcion: 'Producto A',
+  //   //     unidadMedida: 'UN',
+  //   //     ultimaActualizacion: new Date().toISOString().split('T')[0],
+  //   //     almacen: 'ALM01',
+  //   //     cantidad: 100,
+  //   //   },
+  //   //   {
+  //   //     codigo: 'ITEM002',
+  //   //     descripcion: 'Producto B',
+  //   //     unidadMedida: 'UN',
+  //   //     ultimaActualizacion: new Date().toISOString().split('T')[0],
+  //   //     almacen: 'ALM01',
+  //   //     cantidad: 50,
+  //   //   },
+  //   //   {
+  //   //     codigo: 'ITEM003',
+  //   //     descripcion: 'Producto C',
+  //   //     unidadMedida: 'UN',
+  //   //     ultimaActualizacion: new Date().toISOString().split('T')[0],
+  //   //     almacen: 'ALM01',
+  //   //     cantidad: 0,
+  //   //   },
+  //   // ];
+  // }
+
+  cargarStockDisponible() {
+    this.requerimientosService.obtenerReporteSaldos([]).subscribe({
+      next: async (resp: any[]) => {
+        if (resp?.length) {
+          await this.dexieService.saveStocks(resp);
+          this.stockDisponible = await this.dexieService.showStock();
+        }
       },
-      {
-        codigo: 'ITEM002',
-        descripcion: 'Producto B',
-        unidadMedida: 'UN',
-        ultimaActualizacion: new Date().toISOString().split('T')[0],
-        almacen: 'ALM01',
-        cantidad: 50,
-      },
-      {
-        codigo: 'ITEM003',
-        descripcion: 'Producto C',
-        unidadMedida: 'UN',
-        ultimaActualizacion: new Date().toISOString().split('T')[0],
-        almacen: 'ALM01',
-        cantidad: 0,
-      },
-    ];
+      error: () => {
+        this.alertService.showAlert(
+          'Error',
+          'No se pudo cargar el stock',
+          'error'
+        );
+      }
+    });
   }
 
   obtenerStock(codigo: string, almacen: string): number {

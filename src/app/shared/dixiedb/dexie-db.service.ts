@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import {
-  Usuario, Configuracion, Empresa, Fundo, Almacen, Area, Proyecto, ItemComodity, Clasificacion, Cultivo, Acopio, Ceco, Labor, Turno, DetalleRequerimiento, Requerimiento, Item, Comodity, SubClasificacion, Proveedor, TipoGasto, ActivoFijo,
+  Usuario, Configuracion, Empresa, Fundo, Almacen, AlmacenDestino, Area, Proyecto, ItemComodity, Clasificacion, Cultivo, Acopio, Ceco, Labor, Turno, DetalleRequerimiento, Requerimiento, Item, Comodity, SubClasificacion, Proveedor, TipoGasto, ActivoFijo,
   DetalleRequerimientoActivoFijo, DetalleRequerimientoCommodity, RequerimientoCommodity, RequerimientoActivoFijo, RequerimientoActivoFijoMenor, DetalleRequerimientoActivoFijoMenor, MaestroItem, MaestroCommodity, MaestroSubCommodity,
   DetalleListaStock, ListaStock, MovimientoStock, SolicitudCompra, DetalleSolicitudCompra, OrdenCompra, DetalleCotizacion, Cotizacion, Stock, DetalleOrdenCompra, Despacho, DetalleDespacho
 } from '../interfaces/Tables'
@@ -16,6 +16,7 @@ export class DexieService extends Dexie {
   public empresas!: Dexie.Table<Empresa, number>;
   public fundos!: Dexie.Table<Fundo, number>;
   public almacenes!: Dexie.Table<Almacen, number>;
+  public almacenesDestino!: Dexie.Table<AlmacenDestino, number>;
   public areas!: Dexie.Table<Area, number>;
   public cultivos!: Dexie.Table<Cultivo, number>;
   public proyectos!: Dexie.Table<Proyecto, number>;
@@ -57,7 +58,7 @@ export class DexieService extends Dexie {
   public detalleDespachos!: Dexie.Table<DetalleDespacho, number>;
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 13; // ⬅️ cambia este número cuando modifiques el esquema
+  private static readonly DB_VERSION = 22; // ⬅️ cambia este número cuando modifiques el esquema
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -73,6 +74,7 @@ export class DexieService extends Dexie {
         empresas: `id,ruc,razonsocial`,
         fundos: `id,codigoFundo,empresa,fundo,nombreFundo`,
         almacenes: `id,idalmacen,almacen`,
+        almacenesDestino: `id,idalmacen,almacen`,
         areas: `id,ruc,descripcion,estado`,
         proyectos: `id,ruc,afe,proyecto,esinverison,estado`,
         cultivos: `id,cultivo,codigo,descripcion,empresa`,
@@ -82,8 +84,8 @@ export class DexieService extends Dexie {
         labores: `id,idlabor,idgrupolabor,ceco,labor,estado`,
         itemComoditys: `id,tipoclasificacion,codigo,descripcion`,
         clasificaciones: `id,idclasificacion,descripcion_clasificacion,tipoClasificacion`,
-        detalles: `++id,codigo,producto,cantidad,proyecto,ceco,turno,labor`,
-        requerimientos: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle,despachado,prioridad`,
+        detalles: `++id,idrequerimiento,codigo,descripcion,producto,cantidad,proyecto,ceco,turno,labor,esActivoFijo,activoFijo,estado,atendida`,
+        requerimientos: `++id,idrequerimiento,fecha,idfundo,idarea,idalmacen,estados,estado,tipo,idproyecto,glosa,detalle,despachado,prioridad`,
         items: `id,tipoclasificacion,codigo,descripcion`,
         comodities: `id,tipoclasificacion,codigo,descripcion`,
         subClasificaciones: `id,comodityId,subClase,descripcion,unidad,cuentaGasto,elementoGasto,clasificacionActivo,legacyNumber`,
@@ -91,12 +93,12 @@ export class DexieService extends Dexie {
         tipoGastos: `codigo,descripcion`,
         commoditys: `id,tipoclasificacion,codigo,descripcion`,
         activosFijos: `id,codigo,descripcion,codigoInterno,ubicacion,ceco,localName,tipoActivo,Estado`,
-        detallesActivoFijo: `++id,codigo,cantidad,proyecto,ceco,turno,labor`,
-        detallesCommodity: `++id,codigo,cantidad,proyecto,ceco,turno,labor`,
-        requerimientosCommodity: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle`,
-        requerimientosActivoFijo: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle`,
-        requerimientosActivoFijoMenor: `++id,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalle`,
-        detallesActivoFijoMenor: `++id,codigo,cantidad,proyecto,ceco,turno,labor`,
+        detallesActivoFijo: `++id,idrequerimiento,codigo,cantidad,proyecto,ceco,turno,labor`,
+        detallesCommodity: `++id,idrequerimiento,codigo,cantidad,proyecto,ceco,turno,labor`,
+        requerimientosCommodity: `++id,idrequerimiento,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalleCommodity`,
+        requerimientosActivoFijo: `++id,idrequerimiento,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalleActivoFijo`,
+        requerimientosActivoFijoMenor: `++id,idrequerimiento,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalleActivoFijoMenor`,
+        detallesActivoFijoMenor: `++id,idrequerimiento,codigo,cantidad,proyecto,ceco,turno,labor`,
         maestroCommoditys: `id,commodity01,commodity02,commodity,clasificacion,descripcionLocal,descripcionIngles,
         unidadporDefecto,cuentaContableGasto,elementoGasto,clasificacionActivo,estado,ultimoUsuario,
         montoReferencial,montoReferencialMoneda,descripcionEditableFlag,igvExoneradoFlag`,
@@ -119,11 +121,11 @@ export class DexieService extends Dexie {
         detalleCotizacion: `++id,cotizacionId,codigo,descripcion,cantidad,precioUnitario,total`,
         ordenesCompra: `++id,numeroOrden,solicitudCompraId,proveedor,fecha,estado,montoTotal`,
         detalleOrdenCompra: `++id,ordenCompraId,codigo,descripcion,cantidad,cantidadRecibida,estado`,
-        stock: `++id,codigo,almacen,cantidad`,
+        stock: `++id,[codigo+almacen],codigo,almacen,cantidad`,
         movimientosStock: `++id,fecha,tipo,codigo,almacenOrigen,almacenDestino,cantidad,usuario`,
         listasStock: `++id,nombre,almacen,fecha,estado,usuarioCreador`,
         detalleListaStock: `++id,listaStockId,codigo,descripcion,stockActual,estado`,
-        despachos: `++id,fecha,estado,usuarioSolicita,almacen,tipo`,
+        despachos: `++id,numeroDespacho,fecha,estado,usuarioSolicita,almacen,tipo`,
         detalleDespachos: `++id,despachoId,codigo,descripcion,cantidad,estado`,
       });
 
@@ -132,6 +134,7 @@ export class DexieService extends Dexie {
       this.empresas = this.table('empresas');
       this.fundos = this.table('fundos');
       this.almacenes = this.table('almacenes');
+      this.almacenesDestino = this.table('almacenesDestino');
       this.cultivos = this.table('cultivos');
       this.turnos = this.table('turnos');
       this.proyectos = this.table('proyectos');
@@ -215,6 +218,12 @@ export class DexieService extends Dexie {
   async showAlmacenes() { return await this.almacenes.toArray(); }
   async showAlmaceneById(id: number) { return await this.almacenes.where('id').equals(id).first() }
   async clearAlmacenes() { await this.almacenes.clear(); }
+  //Almacenes Destino
+  async saveAlmacenDestino(almacenDestino: AlmacenDestino) { await this.almacenesDestino.put(almacenDestino); }
+  async saveAlmacenesDestino(almacenesDestino: AlmacenDestino[]) { await this.almacenesDestino.bulkPut(almacenesDestino); }
+  async showAlmacenesDestino() { return await this.almacenesDestino.toArray(); }
+  async showAlmaceneDestinoById(id: number) { return await this.almacenesDestino.where('id').equals(id).first() }
+  async clearAlmacenesDestino() { await this.almacenesDestino.clear(); }
   //Proyectos
   async saveProyecto(proyecto: Proyecto) { await this.proyectos.put(proyecto); }
   async saveProyectos(proyectos: Proyecto[]) { await this.proyectos.bulkPut(proyectos); }
@@ -313,26 +322,51 @@ export class DexieService extends Dexie {
   // ---------------- Requerimiento ----------------
   async saveRequerimiento(requerimiento: Requerimiento) { await this.requerimientos.put(requerimiento); }
   async saveRequerimientos(requerimientos: Requerimiento[]) { await this.requerimientos.bulkPut(requerimientos); }
-  async showRequerimiento() { return await this.requerimientos.toArray(); }
+  // async showRequerimiento() { return await this.requerimientos.toArray(); }
+  // async showRequerimiento() { return this.joinDetalle(this.requerimientos, this.detalles); }
+  async showRequerimiento() {
+    const reqs = await this.requerimientos.toArray();
+    const dets = await this.detalles.toArray();
+
+    return this.joinDetalle(reqs, dets);
+  }
   // async deleteRequerimiento(id: number) { return await this.requerimientos.where('id').equals(id).delete(); }
   async deleteRequerimiento(idrequerimiento: string) { return await this.requerimientos.where('idrequerimiento').equals(idrequerimiento).delete(); }
   async clearRequerimiento() { await this.requerimientos.clear(); }
   // ---------------- Requerimiento Commodity ----------------
   async saveRequerimientoCommodity(requerimientosCommodity: RequerimientoCommodity) { await this.requerimientosCommodity.put(requerimientosCommodity); }
   async saveRequerimientosCommodity(requerimientosCommodity: RequerimientoCommodity[]) { await this.requerimientosCommodity.bulkPut(requerimientosCommodity); }
-  async showRequerimientoCommodity() { return await this.requerimientosCommodity.toArray(); }
+  // async showRequerimientoCommodity() { return await this.requerimientosCommodity.toArray(); }
+  // async showRequerimientoCommodity() { return this.joinDetalle(this.requerimientosCommodity, this.detallesCommodity); }
+  async showRequerimientoCommodity() {
+    const reqs = await this.requerimientosCommodity.toArray();
+    const dets = await this.detallesCommodity.toArray();
+    return this.joinDetalle(reqs, dets);
+  }
   async deleteRequerimientoCommodity(idrequerimiento: string) { return await this.requerimientosCommodity.where('idrequerimiento').equals(idrequerimiento).delete(); }
   async clearRequerimientoCommodity() { await this.requerimientosCommodity.clear(); }
   // ---------------- Requerimiento Activo Fijo ----------------
   async saveRequerimientoActivoFijo(requerimientoActivoFijo: RequerimientoActivoFijo) { await this.requerimientosActivoFijo.put(requerimientoActivoFijo); }
   async saveRequerimientosActivoFijo(requerimientosActivoFijo: RequerimientoActivoFijo[]) { await this.requerimientosActivoFijo.bulkPut(requerimientosActivoFijo); }
-  async showRequerimientoActivoFijo() { return await this.requerimientosActivoFijo.toArray(); }
+  // async showRequerimientoActivoFijo() { return await this.requerimientosActivoFijo.toArray(); }
+  // async showRequerimientoActivoFijo() { return this.joinDetalle(this.requerimientosActivoFijo, this.detallesActivoFijo); }
+  async showRequerimientoActivoFijo() {
+    const reqs = await this.requerimientosActivoFijo.toArray();
+    const dets = await this.detallesActivoFijo.toArray();
+    return this.joinDetalle(reqs, dets);
+  }
   async deleteRequerimientoActivoFijo(idrequerimiento: string) { return await this.requerimientosActivoFijo.where('idrequerimiento').equals(idrequerimiento).delete(); }
   async clearRequerimientoActivoFijo() { await this.requerimientosActivoFijo.clear(); }
   // ---------------- Requerimiento Activo Fijo Menor ----------------
   async saveRequerimientoActivoFijoMenor(requerimientoActivoFijoMenor: RequerimientoActivoFijoMenor) { await this.requerimientosActivoFijoMenor.put(requerimientoActivoFijoMenor); }
   async saveRequerimientosActivoFijoMenor(requerimientosActivoFijoMenor: RequerimientoActivoFijoMenor[]) { await this.requerimientosActivoFijoMenor.bulkPut(requerimientosActivoFijoMenor); }
-  async showRequerimientoActivoFijoMenor() { return await this.requerimientosActivoFijoMenor.toArray(); }
+  // async showRequerimientoActivoFijoMenor() { return await this.requerimientosActivoFijoMenor.toArray(); }
+  // async showRequerimientoActivoFijoMenor() { return this.joinDetalle(this.requerimientosActivoFijoMenor, this.detallesActivoFijoMenor); }
+  async showRequerimientoActivoFijoMenor() {
+    const reqs = await this.requerimientosActivoFijoMenor.toArray();
+    const dets = await this.detallesActivoFijoMenor.toArray();
+    return this.joinDetalle(reqs, dets);
+  }
   async deleteRequerimientoActivoFijoMenor(idrequerimiento: string) { return await this.requerimientosActivoFijoMenor.where('idrequerimiento').equals(idrequerimiento).delete(); }
   async clearRequerimientoActivoFijoMenor() { await this.requerimientosActivoFijoMenor.clear(); }
   // ---------------- Maestro Item ----------------
@@ -354,13 +388,13 @@ export class DexieService extends Dexie {
   async countMaestroSubCommodity() { return await this.maestroSubCommoditys.count(); }
   async clearMaestroSubCommodity() { await this.maestroSubCommoditys.clear(); }
   // ---------------- Despacho ----------------
-  async saveDespacho(despacho: Despacho){await this.despachos.put(despacho);}
+  async saveDespacho(despacho: Despacho) { await this.despachos.put(despacho); }
   async saveDespachos(despachos: Despacho[]) { await this.despachos.bulkPut(despachos); }
   async showDespacho() { return await this.despachos.toArray(); }
   async showDespachoById(id: number) { return await this.despachos.where('id').equals(id).first() }
   async clearDespacho() { await this.despachos.clear(); }
   // ---------------- Detalle Despacho ----------------
-  async saveDetalleDespacho(detalleDespacho: DetalleDespacho){await this.detalleDespachos.put(detalleDespacho);}
+  async saveDetalleDespacho(detalleDespacho: DetalleDespacho) { await this.detalleDespachos.put(detalleDespacho); }
   async saveDetalleDespachos(detalleDespachos: DetalleDespacho[]) { await this.detalleDespachos.bulkPut(detalleDespachos); }
   async showDetalleDespacho() { return await this.detalleDespachos.toArray(); }
   async showDetalleDespachoById(id: number) { return await this.detalleDespachos.where('id').equals(id).first() }
@@ -405,6 +439,7 @@ export class DexieService extends Dexie {
   async clearOrdenesCompra() { await this.ordenesCompra.clear(); }
   //--------------------- Stock ---------------------
   async saveStock(stock: Stock) { return await this.stock.put(stock); }
+  async saveStocks(stocks: Stock[]) { return await this.stock.bulkPut(stocks); }
   async showStock() { return await this.stock.toArray(); }
   async showStockByAlmacen(almacen: string) { return await this.stock.where('almacen').equals(almacen).toArray(); }
   async updateStock(codigo: string, almacen: string, cantidad: number) {
@@ -426,6 +461,32 @@ export class DexieService extends Dexie {
   async showListaStockById(id: number) { return await this.listasStock.where('id').equals(id).first(); }
   async showListasStockByAlmacen(almacen: string) { return await this.listasStock.where('almacen').equals(almacen).toArray(); }
   async clearListasStock() { await this.listasStock.clear(); }
+  // 🔥 Une cabecera + detalles según idrequerimiento
+  // async joinDetalle(cabeceraTable: any, detalleTable: any) {
+  //   const cabeceras = await cabeceraTable.toArray();
+
+  //   for (const r of cabeceras) {
+  //     r.detalle = await detalleTable
+  //       .where("idrequerimiento")
+  //       .equals(r.idrequerimiento)
+  //       .toArray();
+  //   }
+
+  //   return cabeceras;
+  // }
+  async joinDetalle(requerimientos: any[], detalles: any[]) {
+    return requerimientos.map(req => {
+      const det = detalles.filter(
+        d => d.idrequerimiento === req.idrequerimiento
+      );
+
+      return {
+        ...req,
+        detalles: det
+      };
+    });
+  }
+
   //--------------------- Maestras ---------------------
   async clearMaestras() {
     await this.clearUsuario();
@@ -460,9 +521,71 @@ export class DexieService extends Dexie {
   async obtenerPrimeraConfiguracion() { return await this.configuracion.toCollection().first(); }
   async clearConfiguracion() { await this.configuracion.clear(); }
   // CECO
-  async getCecoById(id: string) { return await this.cecos.where('id').equals(id).first();}
+  async getCecoById(id: string) { return await this.cecos.where('id').equals(id).first(); }
   // PROYECTO (busca por AFE)
   async getProyectoByAfe(afe: string) { return await this.proyectos.where('afe').equals(afe).first(); }
   // LABOR
   async getLaborById(idlabor: string) { return await this.labores.where('idlabor').equals(idlabor).first(); }
+  // DESPACHO COMPLETO CON TRANSACCION
+  async confirmarDespachoCompleto(
+    despacho: Despacho,
+    detalles: DetalleDespacho[],
+    usuario: string,
+    requerimiento: any
+  ): Promise<number> {
+
+    return await this.transaction(
+      'rw',
+      [
+        this.despachos,
+        this.detalleDespachos,
+        this.stock,
+        this.movimientosStock,
+        this.requerimientos
+      ],
+      async () => {
+
+        // 1️⃣ Guardar despacho
+        const despachoId = await this.despachos.add(despacho);
+
+        // 2️⃣ Detalle + stock + movimiento
+        for (const d of detalles) {
+
+          await this.detalleDespachos.add({
+            ...d,
+            despachoId
+          });
+
+          const stockItem = await this.stock
+            .where('[codigo+almacen]')
+            .equals([d.codigo, despacho.almacen])
+            .first();
+
+          if (!stockItem || stockItem.cantidad < d.cantidad) {
+            throw new Error(`Stock insuficiente para ${d.codigo}`);
+          }
+
+          stockItem.cantidad -= d.cantidad;
+          await this.stock.put(stockItem);
+
+          await this.movimientosStock.add({
+            fecha: new Date().toISOString(),
+            tipo: 'SALIDA',
+            codigo: d.codigo,
+            almacenOrigen: despacho.almacen,
+            cantidad: d.cantidad,
+            usuario
+          });
+        }
+
+        // 3️⃣ Actualizar requerimiento
+        requerimiento.estado = 'DESPACHADO_COMPLETO';
+        requerimiento.despachado = true;
+
+        await this.requerimientos.put(requerimiento);
+
+        return despachoId;
+      }
+    );
+  }
 }

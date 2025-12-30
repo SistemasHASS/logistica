@@ -2,6 +2,7 @@ import { ClickOutsideDirective } from '@/app/shared/directives/click-outside.dir
 import { CommonModule } from '@angular/common';
 import { Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { EventEmitter, Output } from '@angular/core';
 
 @Component({
   selector: 'app-dropdown',
@@ -28,6 +29,10 @@ export class DropdownComponent implements ControlValueAccessor, OnChanges {
   @Input() editable: boolean = false;
   @Input() disabled: boolean = false;
   @Input() placeholder: string = '';
+  @Input() displayFormat: 'label' | 'code-label' = 'label';
+
+
+  @Output() itemSelected = new EventEmitter<any>();
 
   isDrop: boolean = false;
   filteredData: any[] = [];
@@ -35,10 +40,10 @@ export class DropdownComponent implements ControlValueAccessor, OnChanges {
   showValidation: boolean = false;
   private tempValue: any = null;
 
-  private onChange: (value: any) => void = () => {};
-  private onTouched: () => void = () => {};
+  private onChange: (value: any) => void = () => { };
+  private onTouched: () => void = () => { };
 
-  constructor() {}
+  constructor() { }
 
   writeValue(value: any): void {
     if (this.data?.length > 0) {
@@ -95,7 +100,9 @@ export class DropdownComponent implements ControlValueAccessor, OnChanges {
 
   darItem(item: any) {
     this.selectedItem = item[this.optionLabel];
+    // this.selectedItem = this.getDisplayText(item);
     this.onChange(item[this.valueField]);
+    this.itemSelected.emit(item);
     this.closeDropdown();
   }
 
@@ -118,4 +125,15 @@ export class DropdownComponent implements ControlValueAccessor, OnChanges {
     this.onChange(null);
     this.closeDropdown();
   }
+
+  getDisplayText(item: any): string {
+    if (!item) return '';
+
+    if (this.displayFormat === 'code-label') {
+      return `${item[this.valueField]} - ${item[this.optionLabel]}`;
+    }
+
+    return item[this.optionLabel];
+  }
+
 }

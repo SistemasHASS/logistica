@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { Usuario, ListaStock, DetalleListaStock } from '@/app/shared/interfaces/Tables';
+// import { DropdownComponent } from '../../components/dropdown/dropdown.component';
 import * as XLSX from 'xlsx';
 
 declare var bootstrap: any;
@@ -36,6 +37,8 @@ export class ListasStockComponent implements OnInit {
     // Items disponibles
     itemsDisponibles: any[] = [];
     itemsFiltrados: any[] = [];
+
+    SeccionaItem: string = '';
 
     // Almacenes
     almacenes: any[] = [];
@@ -121,7 +124,8 @@ export class ListasStockComponent implements OnInit {
 
     async cargarItems() {
         this.itemsDisponibles = await this.dexieService.showItemComoditys();
-        this.itemsFiltrados = [...this.itemsDisponibles];
+        // this.itemsFiltrados = [...this.itemsDisponibles]
+        this.itemsFiltrados = this.itemsDisponibles.filter((item) => item.tipoclasificacion === 'I')
     }
 
     async cargarListasStock() {
@@ -282,6 +286,12 @@ export class ListasStockComponent implements OnInit {
         }
     }
 
+    // onItemSeleccionado(item: any) {
+    //     this.nuevoItem.codigo = item.codigo;
+    //     this.nuevoItem.descripcion = item.descripcion;
+    // }
+
+
     agregarItemALista() {
         // Validaciones
         if (!this.nuevoItem.codigo || this.nuevoItem.stockInicial <= 0) {
@@ -373,7 +383,7 @@ export class ListasStockComponent implements OnInit {
             // Obtener requerimientos aprobados sin despachar
             const requerimientos = await this.dexieService.showRequerimiento();
             const requerimientosAprobados = requerimientos.filter(
-                r => r.estados === 'APROBADO' && !r.despachado && r.idalmacen === this.listaSeleccionada?.almacen
+                ( r: { estados: string; despachado: any; idalmacen: string | undefined; }) => r.estados === 'APROBADO' && !r.despachado && r.idalmacen === this.listaSeleccionada?.almacen
             );
 
             if (requerimientosAprobados.length === 0) {

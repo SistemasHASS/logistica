@@ -1,4 +1,4 @@
-<ul class="nav nav-tabs mb-3">
+<ul class="nav nav-tabs mb-3 custom-tabs">
     <li class="nav-item">
         <button class="nav-link" [ngClass]="{ active: tabActiva === 'ITEM' }" (click)="cambiarTab('ITEM')">
             Items
@@ -19,7 +19,7 @@
     <li class="nav-item">
         <button class="nav-link" [ngClass]="{ active: tabActiva === 'ACTIVOFIJOMENOR' }"
             (click)="cambiarTab('ACTIVOFIJOMENOR')">
-            Commodity
+            Activos Menores
         </button>
     </li>
 </ul>
@@ -34,49 +34,93 @@
                 <h2>Requerimientos Items</h2>
                 <!-- 🔹 Vista: LISTA DE REQUERIMIENTOS -->
                 <div *ngIf="!mostrarFormulario">
-                    <!-- <app-modern-table [columns]="columns" [data]="requerimientos" 
-                    (edit)="editarRequerimiento($event)" (delete)="eliminarRequerimiento($event)">
-                    </app-modern-table> -->
+                    <div class="requerimientos-tablas">
+                        <div>Total: <span class="azul">{{ requerimientos.length }}</span></div>
+                        <div>Sin enviar: <span class="rojo">{{ sinenviar }}</span></div>
+                        <div>enviados: <span class="verde">{{ enviados }}</span></div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 60vh; overflow: auto;">
+                        <p-table #dt [value]="requerimientos" [paginator]="true" [rows]="20"
+                            [totalRecords]="requerimientos.length" [loading]="loading" responsiveLayout="scroll"
+                            [pageLinks]="5" [showCurrentPageReport]="true"
+                            currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+                            styleClass="p-datatable-sm">
 
-                    <table class="table table-hover table-striped align-middle shadow-sm">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Editar</th>
-                                <th>Fecha</th>
-                                <th>Fundo</th>
-                                <th>Área</th>
-                                <th>Almacén</th>
-                                <th>Glosa</th>
-                                <th>Estado</th>
-                                <th class="text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let req of requerimientos; let i = index">
-                                <td><button class="btn btn-sm btn-warning me-2" (click)="editarRequerimiento(i)">
-                                        <i class="icon-pencil"></i>
-                                    </button></td>
-                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm" }}</td>
-                                <!-- <td>{{ req.idfundo }}</td> -->
-                                <td>{{ getDescripcionFundo(req.idfundo) }}</td>
-                                <td>{{ req.idarea }}</td>
-                                <td>{{ req.almacen }}</td>
-                                <td>{{ req.glosa }}</td>
-                                <td>
-                                    <span class="badge"
-                                        [ngClass]=" req.estado === 1 ? 'bg-success' : 'bg-warning text-dark'">
-                                        {{ req.estado === 1 ? "Enviado" : "Sin enviar" }}
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm btn-danger" (click)="eliminarRequerimiento(i)">
-                                        <i class="icon-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <!-- <th style="width:50px">
+                                        <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                                    </th> -->
+                                    <th style="width:50px">#</th>
+                                    <th style="min-width:20px" pSortableColumn="item">Editar</th>
+                                    <th style="min-width:100px" pSortableColumn="item">Fecha</th>
+                                    <th style="min-width:100px" pSortableColumn="descripcionLocal">Fundo</th>
+                                    <!-- <th style="min-width:100px" pSortableColumn="unidadCodigo">Area<th> -->
+                                    <th style="min-width:100px" pSortableColumn="unidadCodigo">Almacen</th>
+                                    <th style="min-width:120px" pSortableColumn="descripcionLocal">Descripcion</th>
+                                    <th style="min-width:100px" pSortableColumn="descripcionLocal">Estado</th>
+                                    <th style="min-width:30px">Acciones</th>
+                                </tr>
+                            </ng-template>
 
+                            <ng-template pTemplate="body" let-c let-i="rowIndex">
+                                <tr [ngClass]="c.estado === 1 ? 'fila-enviada' : 'fila-sin-enviar'">
+                                    <!-- <td>
+                                        <p-tableCheckbox [value]="c"></p-tableCheckbox>
+                                    </td> -->
+                                    <td>{{ i + 1 }}</td>
+                                    <td><button class="btn btn-sm btn-warning me-2" (click)="editarRequerimiento(i)">
+                                            <i class="icon-pencil"></i>
+                                        </button>
+                                    </td>
+                                    <td>{{ c.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
+                                    <td>{{ getDescripcionFundo(c.idfundo) }}</td>
+                                    <!-- <td>{{ c.idarea }}</td> -->
+                                    <!-- <td>{{ c.idalmacen }}</td> -->
+                                    <!-- <td>{{ mostrarAlmacen(c) }}</td> -->
+                                    <td>
+                                        <ng-container *ngIf="c.itemtipo === 'TRANSFERENCIA'; else normalAlmacen">
+                                            <span>{{ getNombreAlmacen(c.idalmacen) }}</span>
+
+                                            <!-- SVG FLECHA -->
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                fill="currentColor" class="mx-1" viewBox="0 0 16 16">
+                                                <path fill-rule="evenodd"
+                                                    d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.84-3.84a.5.5 0 0 1 .708-.708l4.5 4.5a.5.5 0 0 1 0 .708l-4.5 4.5a.5.5 0 0 1-.708-.708L13.293 8.5H1.5a.5.5 0 0 1-.5-.5z" />
+                                            </svg>
+
+                                            <span>{{ mostrarAlmacenDestino(c) }}</span>
+                                        </ng-container>
+
+                                        <ng-template #normalAlmacen>
+                                            {{ getNombreAlmacen(c.idalmacen) }}
+                                        </ng-template>
+                                    </td>
+
+                                    <td>{{ c.glosa }}</td>
+                                    <td><span class="badge"
+                                            [ngClass]=" c.estado === 1 ? 'enviado-badge' : 'sinenviar-badge'">
+                                            <!-- {{ c.estado === 1 ? "Enviado" : "Sin enviar" }} -->
+                                            {{ esEnviado(c) ? 'Enviado' : 'Sin enviar' }}
+                                        </span>
+                                    </td>
+                                    <!-- <td>{{ c.estado === 'A' ? 'Activo' : 'Inactivo' }}</td> -->
+                                    <td>
+                                        <button class="btn btn-sm btn-danger" (click)="eliminarRequerimiento(i)">
+                                            <i class="icon-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </ng-template>
+
+                            <ng-template pTemplate="emptymessage">
+                                <tr>
+                                    <td colspan="8" class="text-center">No hay registros</td>
+                                </tr>
+                            </ng-template>
+
+                        </p-table>
+                    </div>
                     <div *ngIf="requerimientos.length === 0" class="text-center text-muted py-3">
                         <em>No hay requerimientos registrados.</em>
                     </div>
@@ -94,9 +138,21 @@
                     <!-- <button class="btn btn-secondary" (click)="abrirModalConsolidacion()">
                         Consolidar pendientes
                     </button> -->
-                    <button (click)="sincronizarRequerimiento()" class="btn btn-primary botonCelular">
+                    <!-- <button (click)="sincronizarRequerimiento()" class="btn btn-primary botonCelular"
+                        [disabled]="pendientes === 0 || sincronizando">
                         <i class="icon icon-sync"></i> Sincronizar
-                    </button>
+                    </button> -->
+                    <button class="btn btn-primary" (click)="sincronizarPendientes()"
+                        [disabled]="pendientes === 0 || sincronizando">
+                        <i class="icon icon-sync"></i> Sincronizar
+                    </button>  
+                    <div *ngIf="sincronizando">
+                        <progress [value]="progreso" max="100"></progress>
+                    </div>
+                    <!-- <div *ngIf="pendientes > 0" class="alert alert-warning mt-2">
+                        ⚠ {{ pendientes }} requerimientos sin sincronizar
+                    </div> -->
+
                 </div>
             </div>
 
@@ -177,7 +233,7 @@
                         <div class="col-6">
                             <div *ngIf="TipoSelecionado === 'TRANSFERENCIA'">
                                 <label>Almacén Destino: <span class="text-danger">*</span></label>
-                                <app-dropdown [data]="almacenes" optionLabel="almacen" valueField="idalmacen"
+                                <app-dropdown [data]="alamcenesDestino" optionLabel="almacen" valueField="idalmacen"
                                     [(ngModel)]="almacenDestino" textShow2="un almacen destino" [required]="true">
                                 </app-dropdown>
                             </div>
@@ -196,7 +252,7 @@
                         </div>
 
                         <!-- Tabla de detalle -->
-                        <div class="table-responsive">
+                        <div class="table-responsive" style="max-height: 25vh; overflow: auto;">
                             <table class="table table-bordered table-striped align-middle text-center">
                                 <thead class="table-light">
                                     <tr>
@@ -258,9 +314,6 @@
 
                                         <div class="col-6">
                                             <label>Producto <span class="text-danger">*</span></label>
-                                            <!-- <app-dropdown [(ngModel)]="lineaTemp.producto" [required]="true"
-                                                [editable]="true" [data]="itemsFiltrados" [valueField]="'codigo'"
-                                                [textShow2]="'un producto'" [optionLabel]="'descripcion'" /> -->
                                             <app-product-search-cards [(ngModel)]="lineaTemp.producto" name="producto"
                                                 [data]="itemsFiltrados" [optionLabel]="'descripcion'"
                                                 [valueField]="'codigo'" [placeholder]="'Buscar producto...'"
@@ -277,15 +330,16 @@
                                         <div class="col-6">
                                             <label>Turno <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="turnos" optionLabel="nombreTurno"
-                                                valueField="nombreTurno" [(ngModel)]="lineaTemp.turno" [editable]="false"
-                                                [required]="true" [disabled]="true">
+                                                valueField="nombreTurno" [(ngModel)]="lineaTemp.turno"
+                                                [editable]="false" [required]="true" [disabled]="true">
                                             </app-dropdown>
                                         </div>
 
                                         <div class="col-6">
                                             <label>CECO <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="cecos" optionLabel="localname" valueField="localname"
-                                                [(ngModel)]="lineaTemp.ceco" [editable]="false" [required]="true" [disabled]="true">
+                                                [(ngModel)]="lineaTemp.ceco" [editable]="false" [required]="true"
+                                                [disabled]="true">
                                             </app-dropdown>
                                         </div>
 
@@ -300,7 +354,8 @@
                                         <div class="col-6">
                                             <label>Labor <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="labores" optionLabel="labor" valueField="labor"
-                                                [(ngModel)]="lineaTemp.labor" [editable]="false" [required]="true" [disabled]="true">
+                                                [(ngModel)]="lineaTemp.labor" [editable]="false" [required]="true"
+                                                [disabled]="true">
                                             </app-dropdown>
                                         </div>
 
@@ -309,22 +364,9 @@
                                             <label class="form-label d-block">Es para Activo Fijo</label>
                                             <app-dropdown [data]="activosFijosFiltrados"
                                                 optionLabel="activo_descripcion" valueField="activo"
-                                                [(ngModel)]="lineaTemp.activoFijo" [editable]="true" [required]="false" [disabled]="true">
+                                                [(ngModel)]="lineaTemp.activoFijo" [editable]="true" [required]="false"
+                                                [disabled]="false">
                                             </app-dropdown>
-
-                                            <!-- CHECK -->
-                                            <!-- <div class="form-check form-switch"> -->
-                                            <!-- <input class="form-check-input" type="checkbox" id="checkActivoFijo"
-                                                    [(ngModel)]="lineaTemp.esActivoFijo"
-                                                    (change)="!lineaTemp.esActivoFijo ? lineaTemp.activoFijo = '' : null">
-                                                <label class="form-check-label" for="checkActivoFijo">¿Es activo
-                                                    fijo?</label>
-                                            </div> -->
-
-                                            <!-- INPUT ACTIVADO SOLO SI CHECK = TRUE -->
-                                            <!-- <input type="text" class="form-control mt-2"
-                                                placeholder="Ingrese código de activo fijo"
-                                                [(ngModel)]="lineaTemp.activoFijo" [disabled]="!lineaTemp.esActivoFijo"> -->
                                         </div>
                                     </div>
 
@@ -365,49 +407,74 @@
                 <h2>Requerimientos Servicios</h2>
                 <!-- LISTA COMMODITY -->
                 <div *ngIf="!mostrarFormularioCommodity">
-                    <table class="table table-hover table-striped align-middle shadow-sm">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Editar</th>
-                                <th>Fecha</th>
-                                <!-- <th>Proveedor</th> -->
-                                <th>Servicio</th>
-                                <th>Fundo</th>
-                                <th>Área</th>
-                                <th>Almacén</th>
-                                <th>Glosa</th>
-                                <th>Estado</th>
-                                <th class="text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let req of requerimientosCommodity; let i = index">
-                                <td><button class="btn btn-sm btn-warning me-2" (click)="editarCommodity(i)">
-                                        <i class="icon-pencil"></i>
-                                    </button></td>
-                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm" }}</td>
-                                <!-- <td>{{ req.proveedor }}</td> -->
-                                <td>{{ req.servicio }}</td>
-                                <td>{{ req.idfundo }}</td>
-                                <td>{{ req.idarea }}</td>
-                                <td>{{ req.almacen }}</td>
-                                <td>{{ req.glosa }}</td>
-                                <td>
-                                    <span class="badge" [ngClass]="
-                                    req.estado === 1 ? 'bg-success' : 'bg-warning text-dark'
-                                    ">
-                                        {{ req.estado === 1 ? "Enviado" : "Sin enviar" }}
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm btn-danger" (click)="eliminarCommodity(i)">
-                                        <i class="icon-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
+                    <div class="requerimientos-tablas">
+                        <div>Total: <span class="azul">{{ requerimientosCommodity.length }}</span></div>
+                        <div>Sin enviar: <span class="rojo">{{ sinenviarCommodity }}</span></div>
+                        <div>enviados: <span class="verde">{{ enviadosCommodity }}</span></div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 60vh; overflow: auto;">
+                        <p-table #dt [value]="requerimientosCommodity" [paginator]="true" [rows]="20"
+                            [totalRecords]="requerimientosCommodity.length" [loading]="loading"
+                            responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+                            currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+                            styleClass="p-datatable-sm p-datatable">
 
-                        </tbody>
-                    </table>
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <!-- <th style="width:50px">
+                                        <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                                    </th> -->
+                                    <th style="width:50px">#</th>
+                                    <th style="min-width:20px" pSortableColumn="item">Editar</th>
+                                    <th style="min-width:100px" pSortableColumn="item">Fecha</th>
+                                    <th style="min-width:100px" pSortableColumn="descripcionLocal">Servicio</th>
+                                    <!-- <th style="min-width:100px" pSortableColumn="unidadCodigo">Area<th> -->
+                                    <th style="min-width:100px" pSortableColumn="unidadCodigo">Fundo</th>
+                                    <th style="min-width:120px" pSortableColumn="descripcionLocal">Almacen</th>
+                                    <th style="min-width:120px" pSortableColumn="descripcionLocal">Glosa</th>
+                                    <th style="min-width:100px" pSortableColumn="descripcionLocal">Estado</th>
+                                    <th style="min-width:30px">Acciones</th>
+                                </tr>
+                            </ng-template>
+
+                            <ng-template pTemplate="body" let-c let-i="rowIndex">
+                                <tr [ngClass]="c.estado === 1 ? 'fila-enviada' : 'fila-sin-enviar'">
+                                    <!-- <td>
+                                        <p-tableCheckbox [value]="c"></p-tableCheckbox>
+                                    </td> -->
+                                    <td>{{ i + 1 }}</td>
+                                    <td><button class="btn btn-sm btn-warning me-2" (click)="editarCommodity(i)">
+                                            <i class="icon-pencil"></i>
+                                        </button>
+                                    </td>
+                                    <td>{{ c.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
+                                    <td>{{ obtenerDescripcionServicio(c.servicio) }}</td>
+                                    <td>{{ getDescripcionFundo(c.idfundo) }}</td>
+                                    <!-- <td>{{ c.idarea }}</td> -->
+                                    <td>{{ c.idalmacen }}</td>
+                                    <td>{{ c.glosa }}</td>
+                                    <td><span class="badge"
+                                            [ngClass]=" c.estado === 1 ? 'enviado-badge' : 'sinenviar-badge'">
+                                            {{ c.estado === 1 ? "Enviado" : "Sin enviar" }}
+                                        </span>
+                                    </td>
+                                    <!-- <td>{{ c.estado === 'A' ? 'Activo' : 'Inactivo' }}</td> -->
+                                    <td>
+                                        <button class="btn btn-sm btn-danger" (click)="eliminarCommodity(i)">
+                                            <i class="icon-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </ng-template>
+
+                            <ng-template pTemplate="emptymessage">
+                                <tr>
+                                    <td colspan="8" class="text-center">No hay registros</td>
+                                </tr>
+                            </ng-template>
+
+                        </p-table>
+                    </div>
 
                     <div *ngIf="requerimientosCommodity.length === 0" class="text-center text-muted py-3">
                         <em>No hay requerimientos de servico registrados.</em>
@@ -496,7 +563,8 @@
                                                 <i class="icon-pencil"></i>
                                             </button>
                                         </td>
-                                        <td>{{ d.descripcion }}</td>
+                                        <!-- <td>{{ d.descripcion }}</td> -->
+                                        <td>{{ obtenerDescripcionSubservicio(d.descripcion) }}</td>
                                         <td>{{ d.cantidad }}</td>
                                         <td>{{ d.proyecto }}</td>
                                         <td>{{ d.ceco }}</td>
@@ -540,8 +608,8 @@
                                     <div class="col-6">
                                         <label>Clasificación Servicio <span class="text-danger">*</span></label>
                                         <app-dropdown [data]="subservicioFiltrados" optionLabel="descripcionLocal"
-                                            valueField="commodity01" [(ngModel)]="SeleccionaSubServicio"
-                                            [editable]="true" [required]="true">
+                                            valueField="commodity" [(ngModel)]="SeleccionaSubServicio" [editable]="true"
+                                            [required]="true">
                                         </app-dropdown>
                                     </div>
 
@@ -555,14 +623,16 @@
                                     <div class="col-6">
                                         <label>Turno <span class="text-danger">*</span></label>
                                         <app-dropdown [data]="turnos" optionLabel="nombreTurno" valueField="nombreTurno"
-                                            [(ngModel)]="lineaTempCommodity.turno" [editable]="false" [required]="true" [disabled]="true">
+                                            [(ngModel)]="lineaTempCommodity.turno" [editable]="false" [required]="true"
+                                            [disabled]="true">
                                         </app-dropdown>
                                     </div>
 
                                     <div class="col-6">
                                         <label>CECO <span class="text-danger">*</span></label>
                                         <app-dropdown [data]="cecos" optionLabel="localname" valueField="localname"
-                                            [(ngModel)]="lineaTempCommodity.ceco" [editable]="false" [required]="true" [disabled]="true">
+                                            [(ngModel)]="lineaTempCommodity.ceco" [editable]="false" [required]="true"
+                                            [disabled]="true">
                                         </app-dropdown>
                                     </div>
 
@@ -577,7 +647,8 @@
                                     <div class="col-6">
                                         <label>Labor <span class="text-danger">*</span></label>
                                         <app-dropdown [data]="labores" optionLabel="labor" valueField="labor"
-                                            [(ngModel)]="lineaTempCommodity.labor" [editable]="false" [required]="true" [disabled]="true">
+                                            [(ngModel)]="lineaTempCommodity.labor" [editable]="false" [required]="true"
+                                            [disabled]="true">
                                         </app-dropdown>
                                     </div>
 
@@ -589,20 +660,6 @@
                                             [(ngModel)]="lineaTempCommodity.activoFijo" [editable]="true"
                                             [required]="false">
                                         </app-dropdown>
-                                        <!-- <label class="form-label d-block">Es para Activo Fijo</label> -->
-                                        <!-- CHECK -->
-                                        <!-- <div class="form-check form-switch"> -->
-                                        <!-- <input class="form-check-input" type="checkbox" id="checkActivoFijo" [(ngModel)]="lineaTemp.esActivoFijo"
-                                                (change)="!lineaTemp.esActivoFijo ? lineaTemp.activoFijo = '' : null">
-                                            <label class="form-check-label" for="checkActivoFijo">¿Es activo
-                                                fijo?</label> -->
-
-                                        <!-- </div> -->
-
-                                        <!-- INPUT ACTIVADO SOLO SI CHECK = TRUE -->
-                                        <!-- <input type="text" class="form-control mt-2"
-                                            placeholder="Ingrese código de activo fijo"
-                                            [(ngModel)]="lineaTemp.activoFijo" [disabled]="!lineaTemp.esActivoFijo"> -->
                                     </div>
                                 </div>
 
@@ -643,48 +700,74 @@
                 <h2>Requerimientos Activo Fijo</h2>
                 <!-- LISTA ACTIVO FIJO -->
                 <div *ngIf="!mostrarFormularioActivoFijo">
-                    <table class="table table-hover table-striped align-middle shadow-sm">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Editar</th>
-                                <th>Fecha</th>
-                                <!-- <th>Proveedor</th> -->
-                                <th>Servicio</th>
-                                <th>Fundo</th>
-                                <th>Área</th>
-                                <th>Almacén</th>
-                                <th>Glosa</th>
-                                <th>Estado</th>
-                                <th class="text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let req of requerimientosActivoFijo; let i = index">
-                                <td><button class="btn btn-sm btn-warning me-2" (click)="editarActivoFijo(i)">
-                                        <i class="icon-pencil"></i>
-                                    </button></td>
-                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm" }}</td>
-                                <!-- <td>{{ req.proveedor }}</td> -->
-                                <td>{{ req.servicio }}</td>
-                                <td>{{ req.idfundo }}</td>
-                                <td>{{ req.idarea }}</td>
-                                <td>{{ req.almacen }}</td>
-                                <td>{{ req.glosa }}</td>
-                                <td>
-                                    <span class="badge" [ngClass]="
-                                    req.estado === 1 ? 'bg-success' : 'bg-warning text-dark'
-                                    ">
-                                        {{ req.estado === 1 ? "Enviado" : "Sin enviar" }}
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm btn-danger" (click)="eliminarActivoFijo(i)">
-                                        <i class="icon-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="requerimientos-tablas">
+                        <div>Total: <span class="azul">{{ requerimientosActivoFijo.length }}</span></div>
+                        <div>Sin enviar: <span class="rojo">{{ sinenviarActivoFijo }}</span></div>
+                        <div>enviados: <span class="verde">{{ enviadosActivoFijo }}</span></div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 60vh; overflow: auto;">
+                        <p-table #dt [value]="requerimientosActivoFijo" [paginator]="true" [rows]="20"
+                            [totalRecords]="requerimientosActivoFijo.length" [loading]="loading"
+                            responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+                            currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+                            styleClass="p-datatable-sm p-datatable">
+
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <!-- <th style="width:50px">
+                                        <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                                    </th> -->
+                                    <th style="width:50px">#</th>
+                                    <th style="min-width:20px" pSortableColumn="item">Editar</th>
+                                    <th style="min-width:100px" pSortableColumn="item">Fecha</th>
+                                    <th style="min-width:100px" pSortableColumn="descripcionLocal">Servicio</th>
+                                    <!-- <th style="min-width:100px" pSortableColumn="unidadCodigo">Area<th> -->
+                                    <th style="min-width:100px" pSortableColumn="unidadCodigo">Fundo</th>
+                                    <th style="min-width:120px" pSortableColumn="descripcionLocal">Almacen</th>
+                                    <th style="min-width:120px" pSortableColumn="descripcionLocal">Glosa</th>
+                                    <th style="min-width:100px" pSortableColumn="descripcionLocal">Estado</th>
+                                    <th style="min-width:30px">Acciones</th>
+                                </tr>
+                            </ng-template>
+
+                            <ng-template pTemplate="body" let-c let-i="rowIndex">
+                                <tr [ngClass]="c.estado === 1 ? 'fila-enviada' : 'fila-sin-enviar'">
+                                    <!-- <td>
+                                        <p-tableCheckbox [value]="c"></p-tableCheckbox>
+                                    </td> -->
+                                    <td>{{ i + 1 }}</td>
+                                    <td><button class="btn btn-sm btn-warning me-2" (click)="editarActivoFijo(i)">
+                                            <i class="icon-pencil"></i>
+                                        </button>
+                                    </td>
+                                    <td>{{ c.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
+                                    <td>{{ obtenerDescripcionServicioAF(c.servicio) }}</td>
+                                    <td>{{ getDescripcionFundo(c.idfundo) }}</td>
+                                    <!-- <td>{{ c.idarea }}</td> -->
+                                    <td>{{ c.idalmacen }}</td>
+                                    <td>{{ c.glosa }}</td>
+                                    <td><span class="badge"
+                                            [ngClass]=" c.estado === 1 ? 'enviado-badge' : 'sinenviar-badge'">
+                                            {{ c.estado === 1 ? "Enviado" : "Sin enviar" }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger" (click)="eliminarActivoFijo(i)">
+                                            <i class="icon-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </ng-template>
+
+                            <ng-template pTemplate="emptymessage">
+                                <tr>
+                                    <td colspan="8" class="text-center">No hay registros</td>
+                                </tr>
+                            </ng-template>
+
+                        </p-table>
+                    </div>
+
 
                     <div *ngIf="requerimientosActivoFijo.length === 0" class="text-center text-muted py-3">
                         <em>No hay requerimientos Activos Fijos registrados.</em>
@@ -776,7 +859,8 @@
                                                 <i class="icon-pencil"></i>
                                             </button>
                                         </td>
-                                        <td>{{ d.descripcion }}</td>
+                                        <!-- <td>{{ d.descripcion }}</td> -->
+                                        <td>{{ obtenerDescripcionSubservicioAF(d.descripcion) }}</td>
                                         <td>{{ d.cantidad }}</td>
                                         <td>{{ d.proyecto }}</td>
                                         <td>{{ d.ceco }}</td>
@@ -820,7 +904,7 @@
                                         <div class="col-12">
                                             <label>Clasificación Servicio <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="subservicioFiltradosAF" optionLabel="descripcionLocal"
-                                                valueField="commodity01" [(ngModel)]="SeleccionaSubServicioAF"
+                                                valueField="commodity" [(ngModel)]="SeleccionaSubServicioAF"
                                                 [editable]="true" [required]="true">
                                             </app-dropdown>
                                         </div>
@@ -890,7 +974,7 @@
                 <!-- BOTONES -->
                 <div class="mt-3 text-end">
                     <button class="btn btn-success me-2" (click)="guardarActivoFijo()">
-                        {{ modoEdicionActivoFijoMenor ? "Actualizar" : "Registrar" }}
+                        {{ modoEdicionActivoFijo ? "Actualizar" : "Registrar" }}
                     </button>
                     <button class="btn btn-danger" (click)="cancelarActivoFijo()">
                         Cancelar
@@ -908,61 +992,86 @@
     <div class="requerimientos-container">
         <div class="container py-4">
             <div class="container mt-3 table-content">
-                <h2>Requerimientos Commodity</h2>
+                <h2>Requerimientos Activos Menores</h2>
                 <!-- LISTA ACTIVO FIJO MENOR-->
                 <div *ngIf="!mostrarFormularioActivoFijoMenor">
-                    <table class="table table-hover table-striped align-middle shadow-sm">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Editar</th>
-                                <th>Fecha</th>
-                                <!-- <th>Proveedor</th> -->
-                                <th>Servicio</th>
-                                <th>Fundo</th>
-                                <th>Área</th>
-                                <th>Almacén</th>
-                                <th>Glosa</th>
-                                <th>Estado</th>
-                                <th class="text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let req of requerimientosActivoFijoMenor; let i = index">
-                                <td><button class="btn btn-sm btn-warning me-2" (click)="editarActivoFijoMenor(i)">
-                                        <i class="icon-pencil"></i>
-                                    </button></td>
-                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm" }}</td>
-                                <!-- <td>{{ req.proveedor }}</td> -->
-                                <td>{{ req.servicio }}</td>
-                                <td>{{ req.idfundo }}</td>
-                                <td>{{ req.idarea }}</td>
-                                <td>{{ req.almacen }}</td>
-                                <td>{{ req.glosa }}</td>
-                                <td>
-                                    <span class="badge" [ngClass]="
-                                    req.estado === 1 ? 'bg-success' : 'bg-warning text-dark'
-                                    ">
-                                        {{ req.estado === 1 ? "Enviado" : "Sin enviar" }}
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm btn-danger" (click)="eliminarActivoFijoMenor(i)">
-                                        <i class="icon-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="requerimientos-tablas">
+                        <div>Total: <span class="azul">{{ requerimientosActivoFijoMenor.length }}</span></div>
+                        <div>Sin enviar: <span class="rojo">{{ sienvinarActivoFijoMenor }}</span></div>
+                        <div>enviados: <span class="verde">{{ enviadosActivoFijoMenor }}</span></div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 60vh; overflow: auto;">
+                        <p-table #dt [value]="requerimientosActivoFijoMenor" [paginator]="true" [rows]="20"
+                            [totalRecords]="requerimientosActivoFijoMenor.length" [loading]="loading"
+                            responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+                            currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+                            styleClass="p-datatable-sm p-datatable">
+
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <!-- <th style="width:50px">
+                                        <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                                    </th> -->
+                                    <th style="width:50px">#</th>
+                                    <th style="min-width:20px" pSortableColumn="item">Editar</th>
+                                    <th style="min-width:100px" pSortableColumn="item">Fecha</th>
+                                    <th style="min-width:100px" pSortableColumn="descripcionLocal">Servicio</th>
+                                    <!-- <th style="min-width:100px" pSortableColumn="unidadCodigo">Area<th> -->
+                                    <th style="min-width:100px" pSortableColumn="unidadCodigo">Fundo</th>
+                                    <th style="min-width:120px" pSortableColumn="descripcionLocal">Almacen</th>
+                                    <th style="min-width:120px" pSortableColumn="descripcionLocal">Glosa</th>
+                                    <th style="min-width:100px" pSortableColumn="descripcionLocal">Estado</th>
+                                    <th style="min-width:30px">Acciones</th>
+                                </tr>
+                            </ng-template>
+
+                            <ng-template pTemplate="body" let-c let-i="rowIndex">
+                                <tr [ngClass]="c.estado === 1 ? 'fila-enviada' : 'fila-sin-enviar'">
+                                    <!-- <td>
+                                        <p-tableCheckbox [value]="c"></p-tableCheckbox>
+                                    </td> -->
+                                    <td>{{ i + 1 }}</td>
+                                    <td><button class="btn btn-sm btn-warning me-2" (click)="editarActivoFijoMenor(i)">
+                                            <i class="icon-pencil"></i>
+                                        </button>
+                                    </td>
+                                    <td>{{ c.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
+                                    <td>{{ obtenerDescripcionServicioAFM(c.servicio) }}</td>
+                                    <td>{{ getDescripcionFundo(c.idfundo) }}</td>
+                                    <!-- <td>{{ c.idarea }}</td> -->
+                                    <td>{{ c.idalmacen }}</td>
+                                    <td>{{ c.glosa }}</td>
+                                    <td><span class="badge"
+                                            [ngClass]=" c.estado === 1 ? 'enviado-badge' : 'sinenviar-badge'">
+                                            {{ c.estado === 1 ? "Enviado" : "Sin enviar" }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger" (click)="eliminarActivoFijoMenor(i)">
+                                            <i class="icon-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </ng-template>
+
+                            <ng-template pTemplate="emptymessage">
+                                <tr>
+                                    <td colspan="8" class="text-center">No hay registros</td>
+                                </tr>
+                            </ng-template>
+
+                        </p-table>
+                    </div>
 
                     <div *ngIf="requerimientosActivoFijoMenor.length === 0" class="text-center text-muted py-3">
-                        <em>No hay requerimientos Commodity registrados.</em>
+                        <em>No hay requerimientos de activos menores registrados.</em>
                     </div>
                 </div>
             </div>
             <div class="text-center mt-4">
                 <button class="btn btn-success me-3"
                     (click)="mostrarFormularioActivoFijoMenor=true; nuevoActivoFijoMenor()">
-                    <i class="icon-file-plus"></i> Nuevo Commodity
+                    <i class="icon-file-plus"></i> Nuevo Activo Menor
                 </button>
                 <button (click)="sincronizarRequerimientoActivoFijoMenor()" class="btn btn-primary botonCelular">
                     <i class="icon icon-sync"></i> Sincronizar
@@ -977,8 +1086,8 @@
                 <h2>
                     {{
                     modoEdicionActivoFijoMenor
-                    ? "Editar Commodity"
-                    : "Registrar Commodity"
+                    ? "Editar Activo Menor"
+                    : "Registrar Activo Menor"
                     }}
                 </h2>
 
@@ -1045,7 +1154,8 @@
                                                 <i class="icon-pencil"></i>
                                             </button>
                                         </td>
-                                        <td>{{ d.descripcion }}</td>
+                                        <!-- <td>{{ d.descripcion }}</td> -->
+                                        <td>{{ obtenerDescripcionSubservicioAFM(d.descripcion) }}</td>
                                         <td>{{ d.cantidad }}</td>
                                         <td>{{ d.proyecto }}</td>
                                         <td>{{ d.ceco }}</td>
@@ -1076,8 +1186,8 @@
                                 <h5>
                                     {{
                                     activoFijoMenorEditIndex >= 0
-                                    ? "Editar Línea de Detalle - Activo Fijo Menor"
-                                    : "Agregar Línea de Detalle - Activo Fijo Menor"
+                                    ? "Editar Línea de Detalle - Activo Menor"
+                                    : "Agregar Línea de Detalle - Activo Menor"
                                     }}
                                 </h5>
 
@@ -1090,7 +1200,7 @@
                                         <div class="col-12">
                                             <label>Clasificación Servicio AFM<span class="text-danger">*</span></label>
                                             <app-dropdown [data]="subservicioFiltradosAFMenor"
-                                                optionLabel="descripcionLocal" valueField="commodity01"
+                                                optionLabel="descripcionLocal" valueField="commodity"
                                                 [(ngModel)]="SeleccionaSubServicioAFMenor" [editable]="true"
                                                 [required]="true">
                                             </app-dropdown>

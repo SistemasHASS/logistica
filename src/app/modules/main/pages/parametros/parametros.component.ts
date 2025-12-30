@@ -12,6 +12,14 @@ import {
   Cultivo,
   Item,
   ActivoFijo,
+  Requerimiento,
+  DetalleRequerimiento,
+  RequerimientoCommodity,
+  DetalleRequerimientoCommodity,
+  RequerimientoActivoFijo,
+  DetalleRequerimientoActivoFijo,
+  RequerimientoActivoFijoMenor,
+  DetalleRequerimientoActivoFijoMenor,
 } from '@/app/shared/interfaces/Tables';
 import { MaestrasService } from '../../services/maestras.service';
 import { FormsModule } from '@angular/forms';
@@ -48,6 +56,7 @@ export class ParametrosComponent implements OnInit {
   areas: any[] = [];
   fundos: any[] = [];
   almacenes: any[] = [];
+  almacenesDestino: any[] = [];
   items: any[] = [];
   turnos: any[] = [];
   labores: any[] = [];
@@ -257,6 +266,16 @@ export class ParametrosComponent implements OnInit {
         }
       });
 
+      const almacenesDestino = this.requerimientosService.getAlmacenes([
+        { ruc: this.usuario?.ruc },
+      ]);
+      almacenesDestino.subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveAlmacenesDestino(resp);
+          await this.ListarAlmacenesDestino();
+        }
+      });
+
       const proyectos = this.maestrasService.getProyectos([
         { ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA', esadmin: 0 },
       ]);
@@ -370,19 +389,20 @@ export class ParametrosComponent implements OnInit {
       ]);
       requerimmientos.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
-          await this.dexieService.saveRequerimientos(resp);
+          // await this.dexieService.saveRequerimientos(resp);
           // Ahora recorre cada requerimiento y guarda su detalle
-          for (const req of resp) {
-            if (req.detalle && req.detalle.length) {
-              for (const det of req.detalle) {
-                // Añadimos un campo idrequerimiento para enlazarlo
-                await this.dexieService.detalles.add({
-                  ...det,
-                  idrequerimiento: req.idrequerimiento,
-                });
-              }
-            }
-          }
+          await this.separarYGuardarRequerimientosDesdeAPI(resp);
+          // for (const req of resp) {
+          //   if (req.detalle && req.detalle.length) {
+          //     for (const det of req.detalle) {
+          //       // Añadimos un campo idrequerimiento para enlazarlo
+          //       await this.dexieService.detalles.add({
+          //         ...det,
+          //         idrequerimiento: req.idrequerimiento,
+          //       });
+          //     }
+          //   }
+          // }
 
           console.log('✅ Requerimientos y detalles guardados correctamente');
         }
@@ -396,6 +416,95 @@ export class ParametrosComponent implements OnInit {
       );
     }
   }
+
+  async separarYGuardarRequerimientosDesdeAPI(requerimientos: any[]) {
+
+    const reqItems: Requerimiento[] = [];
+    const detItems: DetalleRequerimiento[] = [];
+
+    const reqCom: RequerimientoCommodity[] = [];
+    const detCom: DetalleRequerimientoCommodity[] = [];
+
+    const reqAF: RequerimientoActivoFijo[] = [];
+    const detAF: DetalleRequerimientoActivoFijo[] = [];
+
+    const reqAFM: RequerimientoActivoFijoMenor[] = [];
+    const detAFM: DetalleRequerimientoActivoFijoMenor[] = [];
+
+    for (const req of requerimientos) {
+      const detalles = req.detalle ?? [];
+      // const { detalle, ...cabecera } = req;
+      const cabecera = { ...req };
+      delete cabecera.detalle; // Eliminamos solo el detalle
+
+      const idReq = req.idrequerimiento; // Garantizamos referencia correcta
+
+      switch (req.tipo) {
+
+        case 'ITEM':
+          reqItems.push(cabecera);
+          for (const d of detalles) {
+            detItems.push({
+              ...d,
+              idrequerimiento: req.idrequerimiento
+            });
+          }
+          break;
+
+        case 'COMMODITY':
+          reqCom.push(cabecera);
+          for (const d of detalles) {
+            detCom.push({
+              ...d,
+              idrequerimiento: req.idrequerimiento
+            });
+          }
+          break;
+
+        case 'ACTIVOFIJO':
+          reqAF.push(cabecera);
+          for (const d of detalles) {
+            detAF.push({
+              ...d,
+              idrequerimiento: req.idrequerimiento
+            });
+          }
+          break;
+
+        case 'ACTIVOFIJOMENOR':
+          reqAFM.push(cabecera);
+          for (const d of detalles) {
+            detAFM.push({
+              ...d,
+              idrequerimiento: req.idrequerimiento
+            });
+          }
+          break;
+
+        default:
+          console.warn('⚠️ Tipo no reconocido:', req.tipo);
+      }
+    }
+
+    // ====================================================
+    // GUARDADO POR ARREGLOS (bulkPut)
+    // ====================================================
+
+    if (reqItems.length) await this.dexieService.saveRequerimientos(reqItems);
+    if (detItems.length) await this.dexieService.saveDetallesRequerimientos(detItems);
+
+    if (reqCom.length) await this.dexieService.saveRequerimientosCommodity(reqCom);
+    if (detCom.length) await this.dexieService.saveDetallesCommodity(detCom);
+
+    if (reqAF.length) await this.dexieService.saveRequerimientosActivoFijo(reqAF);
+    if (detAF.length) await this.dexieService.saveDetallesActivoFijo(detAF);
+
+    if (reqAFM.length) await this.dexieService.saveRequerimientosActivoFijoMenor(reqAFM);
+    if (detAFM.length) await this.dexieService.saveDetallesActivoFijoMenor(detAFM);
+
+    console.log('✅ Requerimientos separados y guardados correctamente (bulkPut).');
+  }
+
 
   async ListarEmpresas() {
     this.empresas = await this.dexieService.showEmpresas();
@@ -460,6 +569,14 @@ export class ParametrosComponent implements OnInit {
     if (this.almacenes.length == 1) {
       this.configuracion.idalmacen = this.almacenes[0].idalmacen;
     }
+  }
+
+  async ListarAlmacenesDestino() {
+    const almacenesDestino = await this.dexieService.showAlmacenesDestino();
+    this.almacenesDestino = almacenesDestino;
+    // if (this.almacenes.length == 1) {
+    //   this.configuracion.idalmacen = this.almacenes[0].idalmacen;
+    // }
   }
 
   async ListarItems() {
