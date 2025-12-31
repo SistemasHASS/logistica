@@ -185,6 +185,10 @@ export interface Requerimiento {
     prioridad: string;
     estados: string;
     estado: number;
+    disabled: boolean;
+    checked: boolean;
+    eliminado: number; // 0 = no, 1 = sí
+    modificado?: number; // 0 = no, 1 = sí
     despachado: boolean;
     detalle: DetalleRequerimiento[];
 }

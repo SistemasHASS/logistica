@@ -112,7 +112,8 @@ textarea {
 /* Capa oscura */
 .overlay-global {
   position: fixed;
-  inset: 0; /* top:0, left:0, right:0, bottom:0 */
+  inset: 0;
+  /* top:0, left:0, right:0, bottom:0 */
   background: rgba(0, 0, 0, 0.55);
   z-index: 900;
 }
@@ -123,43 +124,48 @@ textarea {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80%;          /* Puedes ajustar */
-  max-width: 900px;    /* Límite */
-  max-height: 90vh;    /* Para que no se desborde */
+  width: 80%;
+  /* Puedes ajustar */
+  max-width: 900px;
+  /* Límite */
+  max-height: 90vh;
+  /* Para que no se desborde */
   // overflow-y: auto;    /* Scroll si el contenido es grande */
   background: white;
   border-radius: 12px;
   padding: 25px;
   z-index: 1000;
-  box-shadow: 0 0 25px rgba(0,0,0,0.3);
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
 }
 
 .azul {
-    padding: 1px 5px;
-    border-radius: 2px;
-    background-color: rgb(187, 221, 253);
-    font-weight: bold;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background-color: rgb(187, 221, 253);
+  font-weight: bold;
 }
+
 .verde {
-    padding: 3px;
-    border-radius: 2px;
-    background-color: #e2f4ec;
-    font-weight: bold;
+  padding: 3px;
+  border-radius: 2px;
+  background-color: #e2f4ec;
+  font-weight: bold;
 }
+
 .rojo {
-    padding: 3px;
-    border-radius: 2px;
-    background-color: #fed7d4;
-    font-weight: bold;
+  padding: 3px;
+  border-radius: 2px;
+  background-color: #fed7d4;
+  font-weight: bold;
 }
 
 .requerimientos-tablas {
-    background-color:  white;
-    color: black;
-    border-radius: 3px;
-    padding: 3px;
-    display: flex;
-    justify-content: space-around;
+  background-color: white;
+  color: black;
+  border-radius: 3px;
+  padding: 3px;
+  display: flex;
+  justify-content: space-around;
 }
 
 /* Quitar estilos nativos de Bootstrap */
@@ -179,7 +185,8 @@ textarea {
 
 /* Hover */
 .custom-tabs .nav-link:hover {
-  color: #6f42c1; /* morado como en tu UI */
+  color: #6f42c1;
+  /* morado como en tu UI */
 }
 
 /* Estado activo */
@@ -207,13 +214,22 @@ textarea {
   width: 100%;
 }
 
-.fila-enviada {
-  background-color: #e2f4ec;
+// .fila-enviada {
+//   background-color: #e2f4ec !important;
+// }
+
+// .fila-sin-enviar {
+//   background-color: #fed7d4 !important;
+// }
+
+.fila-enviada td {
+  background-color: #e2f4ec !important;
 }
 
-.fila-sin-enviar {
-  background-color: #fed7d4;
+.fila-sin-enviar td {
+  background-color: #fed7d4 !important;
 }
+
 
 .enviado-badge {
   background-color: #3f5af4;
@@ -223,4 +239,554 @@ textarea {
 .sinenviar-badge {
   background-color: #57b596;
   color: white;
+}
+
+.cardFor {
+  display: none;
+  margin-bottom: 15px;
+
+  >div {
+    overflow: auto;
+    border-left: 5px solid #57b596;
+    padding-left: 5px;
+
+    p {
+      margin: 0;
+    }
+  }
+}
+
+/* =============================
+   FIX PRIME NG + AURA
+============================= */
+
+.custom-table .p-datatable {
+  color: #1f2937;
+}
+
+/* Texto visible */
+.custom-table td,
+.custom-table th {
+  color: #1f2937 !important;
+}
+
+/* Títulos en modo card */
+.p-column-title {
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Por defecto (desktop): ocultos */
+.p-column-title {
+  display: none;
+}
+
+/* ================================
+   MOBILE CARDS (SOLO CELULAR)
+================================ */
+@media (max-width: 768px) {
+
+  /* Forzar separación real */
+  .mobile-cards .p-datatable table {
+    border-collapse: separate !important;
+    border-spacing: 0 16px !important;
+  }
+
+  /* SOLO afecta tablas con esta clase */
+  .mobile-cards .p-datatable-tbody>tr {
+    display: block;
+    margin-bottom: 20px;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    // overflow: hidden;
+    padding: 10px;
+  }
+
+  .mobile-cards .p-datatable-tbody>tr>td {
+    display: block;
+    width: 100%;
+    border: none !important;
+    padding: 8px 12px;
+  }
+
+  /* Ocultar encabezado */
+  .mobile-cards .p-datatable-thead {
+    display: none;
+  }
+
+  /* Espaciado interno */
+  .mobile-cards .p-column-title {
+    font-weight: 600;
+    color: #2f3e46;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .p-column-title {
+    display: inline-block;
+    font-weight: 600;
+    color: #2f3e46;
+    margin-right: 6px;
+  }
+
+  /* Separación real entre filas */
+  .p-datatable table {
+    border-collapse: separate !important;
+    border-spacing: 0 14px !important;
+    /* separación vertical */
+  }
+
+  /* Cada fila se comporta como una card */
+  .p-datatable .p-datatable-tbody>tr {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    // overflow: hidden;
+  }
+
+  /* Espaciado interno */
+  .p-datatable .p-datatable-tbody>tr>td {
+    border: none !important;
+    padding: 0.6rem 0.75rem;
+  }
+
+  /* Opcional: mejora visual del título */
+  .p-column-title {
+    font-weight: 600;
+    color: #555;
+  }
+}
+
+/* ===== VISIBILIDAD ===== */
+.desktop-only {
+  display: block;
+}
+
+.mobile-only {
+  display: none;
+}
+
+/* =========================
+   VISIBILIDAD POR DISPOSITIVO
+========================= */
+
+/* POR DEFECTO (DESKTOP) */
+.desktop-only {
+  display: block;
+}
+
+.mobile-only {
+  display: none;
+}
+
+.requerimientos-lista {
+  display: block;
+}
+
+/* SOLO MOBILE */
+// @media (max-width: 768px) {
+
+//   .desktop-only {
+//     display: none !important;
+//   }
+
+//   .mobile-only {
+//     display: block !important;
+//   }
+
+//   .card {
+//     overflow: hidden;
+//   }
+
+//   .firstCard {
+//     width: calc(100% + 40px);
+//     /* Ocupa el 100% del ancho del dispositivo */
+//     max-width: none;
+//     /* Elimina cualquier restricción de ancho máximo */
+//     left: -20px;
+//     /* Asegura que comience desde el borde izquierdo */
+//     right: 10px;
+//     /* Asegura que termine en el borde derecho */
+//     margin: 0;
+//   }
+
+//   // .mobile-only {
+//   //   padding: 6px 8px;
+//   // }
+
+//   .mobile-only {
+//     position: relative;
+//     width: 100vw;
+//     max-width: 100vw;
+//     margin-left: -16px;
+//     /* ajusta según tu layout */
+//     margin-right: -16px;
+//     padding: 6px 10px;
+//   }
+
+
+//   /* Texto largo (Almacén) */
+//   .mobile-only .card-body p {
+//     white-space: normal;
+//     word-break: break-word;
+//   }
+
+//   .mobile-only .campo-almacen {
+//     white-space: normal;
+//     word-break: break-word;
+//   }
+
+//   .mobile-only .campo-almacen span {
+//     display: inline;
+//   }
+
+//   .mobile-only .icon-flecha {
+//     margin: 0 6px;
+//     vertical-align: middle;
+//     opacity: 0.7;
+//   }
+
+//   .card-mobile {
+//     background: #fff;
+//     // border-radius: 12px;
+//     // margin-bottom: 10px;
+//     /* separación entre cards */
+//     // padding: 10px 12px;
+//     padding: 8px 10px;
+//     /* antes 10px 12px */
+//     margin-bottom: 8px;
+//     /* antes 10px */
+//     border-radius: 12px;
+//     /* espacio interno */
+//     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+//     width: 100%;
+//     // max-width: 100%;
+//   }
+
+//   /* HEADER */
+//   .card-header {
+//     padding: 2px 0;
+//     margin-bottom: 2px;
+//   }
+
+//   .card-header .item-card {
+//     margin: 0;
+//     font-size: 14px;
+//     font-weight: 600;
+//   }
+
+//   /* BODY */
+//   .card-body {
+//     padding: 2px 0;
+//   }
+
+//   .card-body p {
+//     margin: 2px 0;
+//     font-size: 12.5px;
+//     // line-height: 1.3;
+//     line-height: 1.25;
+//   }
+
+//   /* FOOTER */
+//   // .card-footer {
+//   //   margin-top: 6px;
+//   //   display: flex;
+//   //   gap: 8px;
+//   //   justify-content: flex-end;
+//   // }
+
+//   // .card-footer button {
+//   //   padding: 4px 8px;
+//   //   font-size: 12px;
+//   // }
+
+//   .card-footer {
+//     margin-top: 4px;
+//     gap: 6px;
+//   }
+
+//   .card-footer button {
+//     padding: 3px 7px;
+//     font-size: 11px;
+//   }
+
+// }
+
+
+/* ===== DESKTOP ESTADOS ===== */
+// .fila-enviada {
+//   border-left: 5px solid green;
+// }
+
+// .fila-sin-enviar {
+//   border-left: 5px solid red;
+// }
+
+// @media (max-width: 768px) {
+
+//   .item-card,
+//   .item-card span {
+//     font-size: 12px;
+
+//     strong {
+//       font-size: 12px;
+//     }
+//   }
+//   .selectedAll{
+//         display: flex;
+//     }
+//     .cardFor{
+//         display: flex;
+//         flex-direction: row;
+//         input{
+//             margin-right: 10px;
+//         }
+//         >div{
+//             display: flex;
+//             gap: 20px;
+//             p{
+//                 margin-bottom: 5px;
+//             }
+//         }
+//     }
+// }
+
+/*modal*/
+.is-enviado {
+  padding: 3px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-radius: 5px;
+  background-color: rgb(63, 90, 244);
+  color: white;
+}
+
+.is-noenviado {
+  padding: 3px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-radius: 5px;
+  background-color: #57b596;
+  color: white;
+}
+
+.cerrado,
+.cerrado td {
+  background-color: #e2f4ec;
+  color: #161515;
+}
+
+.nocerrado,
+.nocerrado td {
+  background-color: #fed7d4;
+  color: #161515;
+}
+
+.cardbuttons {
+  display: none;
+}
+
+.tabla-item {
+  display: block;
+}
+
+.selectedAll {
+  display: none;
+  align-items: center;
+
+  p {
+    margin: 0;
+    margin-right: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .requerimientos-lista {
+    display: none;
+  }
+
+  .tabla-item {
+    display: none;
+  }
+
+  // .item-card {
+  //   max-width: 100%;
+  //   overflow-wrap: break-word;
+  //   word-break: break-word;
+  //   white-space: normal;
+  // }
+
+  .item-card,
+  .item-card span {
+    font-size: 12px;
+
+    strong {
+      font-size: 12px;
+    }
+  }
+
+  .tablaPlanilla {
+    display: none;
+  }
+
+  .table-content>div {
+    // max-height: calc(50vh + 50px) !important;
+    max-height: calc(40vh + 60px) !important;
+  }
+
+  .selectedAll {
+    display: flex;
+  }
+
+  .cardFor {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    border-radius: 12px;
+
+    input {
+      margin-right: 10px;
+    }
+
+    >div {
+      display: flex;
+      gap: 20px;
+
+      p {
+        margin-bottom: 5px;
+      }
+    }
+  }
+
+  .firstCard {
+    // width: calc(100% + 40px); /* Ocupa el 100% del ancho del dispositivo */
+    max-width: none;
+    /* Elimina cualquier restricción de ancho máximo */
+    left: -20px;
+    /* Asegura que comience desde el borde izquierdo */
+    right: 10px;
+    /* Asegura que termine en el borde derecho */
+    margin: 0;
+  }
+
+  .cardbuttons {
+    display: block;
+    color: #a3a5ac;
+    position: relative;
+    margin: 0;
+    padding-left: 18%;
+    padding-right: 18%;
+    width: calc(100% + 40px);
+    transform: translateX(-20px);
+
+    >i {
+      font-size: 20px;
+      display: initial;
+      position: absolute;
+
+      &:first-of-type {
+        left: 20px;
+      }
+
+      &:last-of-type {
+        right: 20px;
+      }
+    }
+  }
+
+  td {
+    font-size: 10px;
+  }
+
+  .row>.col-md-6 {
+    -webkit-box-flex: 0;
+    -ms-flex: 0 0 auto;
+    flex: 0 0 auto;
+    width: 50%;
+  }
+}
+
+@media (max-width: 750px) {
+  // .item-card {
+  //   max-width: 100%;
+  //   overflow-wrap: break-word;
+  //   word-break: break-word;
+  //   white-space: normal;
+  // }
+
+  .labelRadio {
+    font-size: 10px;
+    font-weight: bold;
+  }
+
+  .sinBorde {
+    background-color: #f9f5d1;
+    color: #000;
+  }
+
+  .container-fluid>i {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 550px) {
+  .firstCard {
+    margin-bottom: 10px;
+  }
+
+  // .item-card {
+  //   max-width: 100%;
+  //   overflow-wrap: break-word;
+  //   word-break: break-word;
+  //   white-space: normal;
+  // }
+
+  .item-card,
+  .item-card span {
+    font-size: 10px;
+
+    strong {
+      font-size: 10px;
+    }
+  }
+
+  label {
+    left: 10px;
+  }
+
+  .cardFor {
+    margin-bottom: 5px;
+    padding: 8px;
+
+    >div {
+
+      .item-card,
+      .item-card span {
+        margin-bottom: 2px;
+      }
+    }
+  }
+
+  .buttons {
+    gap: 10px;
+
+    button {
+      font-size: 10px;
+      padding: 5px 8px;
+    }
+  }
+}
+
+@media (max-width: 450px) {
+  .fieldContent {
+    flex-direction: column;
+  }
+
+  .fieldContent div {
+    width: initial !important;
+  }
 }

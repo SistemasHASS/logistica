@@ -112,6 +112,14 @@ export class RequerimientosComponent implements OnInit {
     this.mostrarFormularioActivoFijoMenor = false;
   }
 
+  //Requerimiento Item
+  verBotones: boolean = false;
+  verBotonEliminar: boolean = false;
+  modoItemPrincipal: boolean = false;
+  dataSelected: any = [];
+  allSelected: boolean = false;
+  requerimientoActivo: any = null;
+
   fecha = new Date();
   mensajeFundos: String = '';
   fundos: any[] = [];
@@ -172,7 +180,6 @@ export class RequerimientosComponent implements OnInit {
   detalle: DetalleRequerimiento = {
     idrequerimiento: '', // ⚠️ SE ASIGNA AL GUARDAR CABECERA
     codigo: '',
-    // producto: '',
     producto: null,
     descripcion: '',
     cantidad: 0,
@@ -204,6 +211,9 @@ export class RequerimientosComponent implements OnInit {
     idalmacendestino: '',
     idproyecto: '',
     estado: 0,
+    disabled: false,
+    checked: false,
+    eliminado: 0,
     despachado: false,
     detalle: [],
   };
@@ -427,11 +437,9 @@ export class RequerimientosComponent implements OnInit {
     await this.cargarUsuario(); // 👈 carga el usuario primero
     await this.cargarMaestras();
     await this.cargarConfiguracion(); // 👈 REUTILIZA LO GUARDADO EN PARÁMETROSs
-    // await this.ListarItems(); // 👈 carga items filtrados por almacén
     await this.cargarRequerimientos(); // 👈 Esto llena la tabla al inicio
     await this.cargarPendientes(); // 👈 carga el número de pendientes
     this.actualizarContadores();
-    // await this.cargarDetalles(); // 🔹 cargar detalles guardados
   }
 
   actualizarContadores() {
@@ -463,22 +471,6 @@ export class RequerimientosComponent implements OnInit {
     this.sienvinarActivoFijoMenor = this.requerimientosActivoFijoMenor.filter(
       (r) => this.esSinEnviar(r)
     ).length;
-
-    // const sc = this.requerimientos.filter((e: any) => e.estado === 0)
-    // console.log('sin enviar', sc);
-    // this.sinenviar = sc.length
-
-    // const scc = this.requerimientosCommodity.filter((e: any) => e.estado === 0)
-    // console.log('sin enviar commodity', scc);
-    // this.sinenviarCommodity = scc.length
-
-    // const scaf = this.requerimientosActivoFijo.filter((e: any) => e.estado === 0)
-    // console.log('sin enviar activo fijo', scaf);
-    // this.sinenviarActivoFijo = scaf.length
-
-    // const scafm = this.requerimientosActivoFijoMenor.filter((e: any) => e.estado === 0)
-    // console.log('sin enviar activo fijo menor', scafm);
-    // this.sienvinarActivoFijoMenor = scafm.length
   }
 
   contarEnviados() {
@@ -495,22 +487,6 @@ export class RequerimientosComponent implements OnInit {
     this.enviadosActivoFijoMenor = this.requerimientosActivoFijoMenor.filter(
       (r) => this.esEnviado(r)
     ).length;
-
-    // const c = this.requerimientos.filter((e: any) => e.estado === 1)
-    // console.log('enviados', c);
-    // this.enviados = c.length
-
-    // const cc = this.requerimientosCommodity.filter((e: any) => e.estado === 1)
-    // console.log('enviados commodity', cc);
-    // this.enviadosCommodity = cc.length
-
-    // const caf = this.requerimientosActivoFijo.filter((e: any) => e.estado === 1)
-    // console.log('enviados activo fijo', caf);
-    // this.enviadosActivoFijo = caf.length
-
-    // const cafm = this.requerimientosActivoFijoMenor.filter((e: any) => e.estado === 1)
-    // console.log('enviados activo fijo menor', cafm);
-    // this.enviadosActivoFijoMenor = cafm.length
   }
 
   async cargarConfiguracion() {
@@ -528,11 +504,8 @@ export class RequerimientosComponent implements OnInit {
       this.areaSeleccionada = config.idarea;
       this.cultivoSeleccionado = config.idcultivo;
       this.almacenSeleccionado = config.idalmacen;
-      // this.proyectoSeleccionado = config.idproyecto;
       this.clasificacionSeleccionado = config.idclasificacion;
-      // this.cecoSeleccionado = config.idceco;
       this.turnoSeleccionado = config.idturno;
-      // this.laborSeleccionado = config.idlabor;
       this.itemSeleccionado = config.iditem;
 
       if (!this.requerimiento.idalmacen) {
@@ -592,7 +565,6 @@ export class RequerimientosComponent implements OnInit {
 
   editarCommodity(index: number) {
     const req = this.requerimientosCommodity[index];
-    // this.requerimientoCommodity = { ...this.requerimientosCommodity[index] };
     req.id = this.requerimientosCommodity[index].id; // 🔥 Necesario para update()
     if (!req) return;
 
@@ -651,13 +623,6 @@ export class RequerimientosComponent implements OnInit {
         'Requerimiento eliminado correctamente.',
         'success'
       );
-      // await this.dexieService.deleteRequerimiento(req.idrequerimiento);
-      // await this.cargarRequerimientos();
-      // this.alertService.showAlert(
-      //   'Éxito',
-      //   'Requerimiento eliminado correctamente.',
-      //   'success'
-      // );
     } catch (error) {
       console.error('Error al eliminar requerimiento:', error);
       this.alertService.showAlert(
@@ -666,7 +631,6 @@ export class RequerimientosComponent implements OnInit {
         'error'
       );
     }
-    // this.requerimientosCommodity.splice(index, 1);
   }
 
   async guardarCommodity() {
@@ -678,15 +642,6 @@ export class RequerimientosComponent implements OnInit {
       );
       return;
     }
-
-    // if (!this.clasificacionSeleccionado) {
-    //   this.alertService.showAlert(
-    //     'Atención',
-    //     'Debes seleccionar una Clasificación antes de guardar.',
-    //     'warning'
-    //   );
-    //   return;
-    // }
 
     if (!this.glosaCommodity) {
       this.alertService.showAlert(
@@ -733,7 +688,6 @@ export class RequerimientosComponent implements OnInit {
         servicio: this.SeleccionaServicio,
         descripcion: this.SeleccionaSubServicio,
         almacen: almacenObj?.almacen || '',
-        // idproyecto: this.proyectoSeleccionado,
         idproyecto: this.proyectoSeleccionado?.proyectoio ?? '',
         estado: 0,
         detalleCommodity: [...this.detallesCommodity]
@@ -854,7 +808,6 @@ export class RequerimientosComponent implements OnInit {
     this.almacenSeleccionado = req.idalmacen;
     this.clasificacionSeleccionado = req.idclasificacion;
     this.SeleccionaPrioridadACTIVOFIJOMENOR = req.prioridad;
-    // this.proyectoSeleccionado = req.idproyecto;
     const proyectoEncontrado = this.proyectos.find(
       (p) => p.id === req.idproyecto
     );
@@ -926,10 +879,6 @@ export class RequerimientosComponent implements OnInit {
 
     // 4. Notificación
     this.alertService.mostrarInfo('Línea eliminada.');
-    // const id = this.detallesActivoFijoMenor[index].id!;
-    // await this.dexieService.deleteDetalleActivoFijoMenor(id);
-    // await this.cargarDetalles();
-    // this.alertService.mostrarInfo('Línea eliminada.');
   }
 
   async guardarActivoFijoMenor() {
@@ -989,7 +938,6 @@ export class RequerimientosComponent implements OnInit {
         nrodocumento: this.usuario.documentoidentidad,
         idalmacen: idAlmacenSync,
         idalmacendestino: '',
-        // idproyecto: this.proyectoSeleccionado,
         idproyecto: this.proyectoSeleccionado?.proyectoio ?? '',
         estado: 0,
 
@@ -1085,7 +1033,6 @@ export class RequerimientosComponent implements OnInit {
     this.requerimientoActivoFijo = { ...req };
 
     // Cargar detalles
-    // this.detallesActivoFijo = req.detalleActivoFijo || [];
     // ⭐ CARGA CORRECTA DE DETALLES
     this.detallesActivoFijo = req.detalleActivoFijo?.length
       ? req.detalleActivoFijo
@@ -1097,7 +1044,6 @@ export class RequerimientosComponent implements OnInit {
     this.almacenSeleccionado = req.idalmacen;
     this.clasificacionSeleccionado = req.idclasificacion;
     this.SeleccionaPrioridadACTIVOFIJO = req.prioridad;
-    // this.proyectoSeleccionado = req.idproyecto;
     this.proyectoSeleccionado =
       this.proyectos.find((p) => p.proyectoio === req.idproyecto) ?? null;
 
@@ -1110,7 +1056,6 @@ export class RequerimientosComponent implements OnInit {
   }
 
   async eliminarActivoFijo(index: number) {
-    // this.requerimientosActivoFijo.splice(index, 1);
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
       '¿Desea eliminar este requerimiento?',
@@ -1167,10 +1112,6 @@ export class RequerimientosComponent implements OnInit {
 
     // 4. Notificación
     this.alertService.mostrarInfo('Línea eliminada.');
-    // const id = this.detalles[index].id!;
-    // await this.dexieService.deleteDetalleRequerimiento(id);
-    // await this.cargarDetalles();
-    // this.alertService.mostrarInfo('Línea eliminada.');
   }
 
   async guardarActivoFijo() {
@@ -1231,7 +1172,6 @@ export class RequerimientosComponent implements OnInit {
         nrodocumento: this.usuario.documentoidentidad,
         idalmacen: idAlmacenSync,
         idalmacendestino: '',
-        // idproyecto: this.proyectoSeleccionado,
         idproyecto: this.proyectoSeleccionado?.proyectoio ?? '',
         estado: 0,
 
@@ -1388,6 +1328,9 @@ export class RequerimientosComponent implements OnInit {
       idalmacendestino: '',
       idproyecto: '',
       estado: 0,
+      disabled: false,
+      checked: false,
+      eliminado: 0,
       estados: 'PENDIENTE',
       despachado: false,
       detalle: [],
@@ -1440,11 +1383,9 @@ export class RequerimientosComponent implements OnInit {
       // idarea: this.areaSeleccionada,
       idarea: this.requerimiento.idarea,
       idclasificacion: this.requerimiento.idclasificacion,
-      // prioridad: this.SeleccionaPrioridadITEM ?? '1',
       prioridad: prioridadFinal,
       nrodocumento: this.usuario.documentoidentidad,
       idalmacen: this.requerimiento.idalmacen,
-      // idalmacendestino: this.requerimiento.idalmacendestino || '',
       idalmacendestino:
         this.TipoSelecionado === 'TRANSFERENCIA' ? this.almacenDestino : '',
       glosa: this.requerimiento.glosa || '',
@@ -1452,10 +1393,8 @@ export class RequerimientosComponent implements OnInit {
       tipo: this.requerimiento.tipo,
       itemtipo: this.requerimiento.itemtipo,
       estados: 'PENDIENTE',
-      // usuario: this.usuario.usuario,
       detalle: this.requerimiento.detalle.map((d: any) => ({
         codigo: d.codigo,
-        // tipoclasificacion: d.tipoclasificacion,
         tipoclasificacion: 'I',
         cantidad: d.cantidad,
         idproducto: d.producto || '',
@@ -1491,7 +1430,6 @@ export class RequerimientosComponent implements OnInit {
               this.cargarRequerimientos();
             });
           this.actualizarContadores();
-          // this.cargarRequerimientos();
         } else {
           this.alertService.showAlertError(
             'Error',
@@ -1520,9 +1458,13 @@ export class RequerimientosComponent implements OnInit {
   async sincronizarPendientes() {
 
     // 1️⃣ Obtener pendientes reales desde Dexie
+    // const pendientes = await this.dexieService.requerimientos
+    //   .where('estado')
+    //   .equals(0)
+    //   .toArray();
+    // const pendientes = await this.dexieService.requerimientos.toArray();
     const pendientes = await this.dexieService.requerimientos
-      .where('estado')
-      .equals(0)
+      .filter(r => r.estado === 0 || r.modificado === 1)
       .toArray();
 
     if (pendientes.length === 0) {
@@ -1627,25 +1569,6 @@ export class RequerimientosComponent implements OnInit {
           );
         }
 
-        // 6️⃣ Manejo de respuesta parcial
-        // const exitosos = resp.filter((r: any) => r.errorgeneral === 0);
-        // const fallidos = resp.filter((r: any) => r.errorgeneral !== 0);
-
-        // // 7️⃣ Actualizar progreso
-        // this.progreso = 100;
-
-        // // 8️⃣ Marcar SOLO los exitosos como enviados
-        // if (exitosos.length > 0) {
-        //   const idsOk = pendientes
-        //     .slice(0, exitosos.length)
-        //     .map(p => p.id);
-
-        //   await this.dexieService.requerimientos
-        //     .where('id')
-        //     .anyOf(idsOk)
-        //     .modify({ estado: 1 });
-        // }
-
         // 🔟 Actualizar progreso
         this.progreso = 100;
 
@@ -1657,27 +1580,6 @@ export class RequerimientosComponent implements OnInit {
 
         // 3️⃣ Opcional: refrescar pendientes
         await this.cargarPendientes();
-
-        // 9️⃣ Refrescar contadores y vista
-        // await this.cargarPendientes();
-        // this.cargarRequerimientos();
-        // this.actualizarContadores();
-        // 🔟 Mensajes finales
-        // if (fallidos.length > 0) {
-        //   this.alertService.showAlert(
-        //     'Advertencia',
-        //     `${fallidos.length} requerimientos no se sincronizaron`,
-        //     'warning'
-        //   );
-        //   console.table(fallidos);
-        // } else {
-        //   this.alertService.showAlert(
-        //     'Éxito',
-        //     'Todos los requerimientos fueron sincronizados correctamente',
-        //     'success'
-        //   );
-        // }
-
         this.sincronizando = false;
       },
 
@@ -1727,7 +1629,6 @@ export class RequerimientosComponent implements OnInit {
       idfundo: this.requerimientoCommodity.idfundo,
       // idarea: this.areaSeleccionada,
       idarea: this.requerimientoCommodity.idarea,
-      // idclasificacion: this.requerimientoCommodity.idclasificacion,
       idclasificacion: 'SER',
       servicio: this.requerimientoCommodity.servicio,
       nrodocumento: this.usuario.documentoidentidad,
@@ -1738,12 +1639,10 @@ export class RequerimientosComponent implements OnInit {
       tipo: this.requerimientoCommodity.tipo,
       estados: 'PENDIENTE',
       prioridad: prioridadFinal,
-      // usuario: this.usuario.usuario,
       detalle: this.requerimientoCommodity.detalleCommodity.map((d: any) => ({
         codigo: d.codigo,
         tipoclasificacion: 'C',
         cantidad: d.cantidad,
-        // iddescripcion: d.descripcion || '',
         iddescripcion: d.descripcion,
         idproyecto: d.proyecto || '',
         idcentrocosto: d.ceco || '',
@@ -1829,7 +1728,6 @@ export class RequerimientosComponent implements OnInit {
       idfundo: this.requerimientoActivoFijo.idfundo,
       // idarea: this.areaSeleccionada,
       idarea: this.requerimientoActivoFijo.idarea,
-      // idclasificacion: this.requerimientoActivoFijo.idclasificacion,
       idclasificacion: 'ACT',
       servicio: this.requerimientoActivoFijo.servicio,
       nrodocumento: this.usuario.documentoidentidad,
@@ -1840,7 +1738,6 @@ export class RequerimientosComponent implements OnInit {
       tipo: this.requerimientoActivoFijo.tipo,
       estados: 'PENDIENTE',
       prioridad: prioridadFinal,
-      // usuario: this.usuario.usuario,
       detalle: this.requerimientoActivoFijo.detalleActivoFijo.map((d: any) => ({
         codigo: d.codigo,
         tipoclasificacion: d.tipoclasificacion,
@@ -1920,12 +1817,9 @@ export class RequerimientosComponent implements OnInit {
         }${new Date().toISOString().replace(/[-:TZ.]/g, '')}`,
       ruc: this.usuario.ruc,
       idfundo: this.requerimientoActivoFijoMenor.idfundo,
-      // idarea: this.areaSeleccionada,
       idarea: this.requerimientoActivoFijoMenor.idarea,
-      // idclasificacion: this.requerimientoActivoFijo.idclasificacion,
       idclasificacion: 'ACM',
       servicio: this.requerimientoActivoFijoMenor.servicio,
-      // prioridad: this.SeleccionaPrioridadACTIVOFIJOMENOR ?? '1',
       nrodocumento: this.usuario.documentoidentidad,
       idalmacen: this.requerimientoActivoFijoMenor.idalmacen,
       idalmacendestino:
@@ -1935,7 +1829,6 @@ export class RequerimientosComponent implements OnInit {
       tipo: this.requerimientoActivoFijoMenor.tipo,
       estados: 'PENDIENTE',
       prioridad: prioridadFinal,
-      // usuario: this.usuario.usuario,
       detalle: this.requerimientoActivoFijoMenor.detalleActivoFijoMenor.map(
         (d: any) => ({
           codigo: d.codigo,
@@ -2027,6 +1920,7 @@ export class RequerimientosComponent implements OnInit {
 
   async cargarRequerimientos() {
     this.requerimientos = await this.dexieService.showRequerimiento();
+    this.modoItemPrincipal = true
 
     this.requerimientosCommodity =
       await this.dexieService.showRequerimientoCommodity();
@@ -2182,7 +2076,6 @@ export class RequerimientosComponent implements OnInit {
       ...act,
       activo_descripcion: `${act.activo} - ${act.descripcion}`, // <-- ¡AQUÍ ESTÁ LA CLAVE!
     }));
-    // console.log(activosMapeados);
 
     // 2. Aplica los filtros usando los arrays mapeados
     this.activosFijosFiltrados = activosMapeados.filter(
@@ -2198,7 +2091,6 @@ export class RequerimientosComponent implements OnInit {
     return {
       idrequerimiento: '', // ⚠️ SE ASIGNA AL GUARDAR CABECERA
       codigo: '',
-      // producto: '',
       producto: null,
       descripcion: '',
       cantidad: 0,
@@ -2273,12 +2165,9 @@ export class RequerimientosComponent implements OnInit {
 
   async abrirModal() {
     if (this.editIndex === -1) {
-      // const nuevoCodigo = (this.detalles.length + 1).toString().padStart(6, '0');
       this.lineaTemp = {
         idrequerimiento: '', // ⚠️ SE ASIGNA AL GUARDAR CABECERA
-        // codigo: nuevoCodigo,
         codigo: '',
-        // producto: '',
         producto: null,
         descripcion: '',
         estado: 0,
@@ -2390,8 +2279,6 @@ export class RequerimientosComponent implements OnInit {
       return;
     }
 
-    // console.log('Subservicio seleccionado:', this.SeleccionaSubServicio);
-
     const subservicioSeleccionado = this.subservicioFiltrados.find(
       (subs) => subs.commodity === this.SeleccionaSubServicio
     );
@@ -2412,8 +2299,6 @@ export class RequerimientosComponent implements OnInit {
     );
     const nuevaLineaDetalle = {
       idrequerimiento: '', // ⚠️ SE ASIGNA AL GUARDAR CABECERA
-      // codigo: this.lineaTempCommodity.codigo,
-      // descripcion: this.SeleccionaSubServicio,
       codigo: subservicioSeleccionado.commodity, // ✅ código servicio
       descripcion: subservicioSeleccionado.descripcionLocal, // ✅ descripción
       proveedor: this.lineaTempCommodity.proveedor,
@@ -2435,31 +2320,7 @@ export class RequerimientosComponent implements OnInit {
       // ➕ agregar SOLO en memoria
       this.detallesCommodity.push({ ...nuevaLineaDetalle });
     }
-    // ✅ Si pasa todas las validaciones
-    // if (this.commodityEditIndex >= 0) {
-    //   // Editar línea existente
-    //   const idExistente = this.detallesCommodity[this.commodityEditIndex].id!;
-    //   await this.dexieService.detallesCommodity.put({
-    //     id: idExistente,
-    //     ...nuevaLineaDetalle,
-    //   });
-    //   // ✅ Actualizar en memoria también
-    //   this.detallesCommodity[this.commodityEditIndex] = {
-    //     id: idExistente,
-    //     ...nuevaLineaDetalle,
-    //   };
-    // } else {
-    //   // Agregar nueva línea
-    //   delete this.lineaTempCommodity.id;
-    //   // Agregar nueva línea
-    //   const idNuevo = await this.dexieService.detallesCommodity.add({
-    //     ...nuevaLineaDetalle,
-    //   });
-    //   // ✅ Añadir al arreglo en memoria
-    //   this.detallesCommodity.push({ id: idNuevo, ...nuevaLineaDetalle });
-    // }
 
-    // await this.cargarDetalles();
     this.cerrarModalCommodity();
     this.alertService.showAlert(
       'Éxito',
@@ -2474,14 +2335,9 @@ export class RequerimientosComponent implements OnInit {
 
     // Cargar la línea temporal
     this.lineaTempCommodity = { ...linea };
-    // console.log('Línea a editar:', linea);
     console.log('Descripción de la línea:', linea.descripcion);
     console.log('Código de la línea:', linea.codigo);
-    // 👇 ESTE ES EL CAMBIO IMPORTANTE
-    // 'descripcion' contiene el commodity01 (el código), se lo devolvemos al dropdown
-    // this.SeleccionaSubServicio = linea.descripcion;
     this.SeleccionaSubServicio = linea.codigo;
-    // this.lineaTempCommodity = { ...this.detallesCommodity[index] };
     this.modoEdicionCommodity = true;
     this.modalAbiertoCommodity = true;
   }
@@ -2501,10 +2357,6 @@ export class RequerimientosComponent implements OnInit {
 
     // 4. Notificación
     this.alertService.mostrarInfo('Línea eliminada.');
-    // const id = this.detalles[index].id!;
-    // await this.dexieService.deleteDetalleRequerimiento(id);
-    // await this.cargarDetalles();
-    // this.alertService.mostrarInfo('Línea eliminada.');
   }
 
   // Activo Fijo
@@ -2628,7 +2480,6 @@ export class RequerimientosComponent implements OnInit {
       // Editar línea existente
       const idExistente =
         this.detallesActivoFijoMenor[this.activoFijoMenorEditIndex].id!;
-      // await this.dexieService.detalles.put({ id: idExistente, ...this.lineaTemp });
       await this.dexieService.detallesActivoFijoMenor.put({
         id: idExistente,
         ...nuevaLineaDetalle,
@@ -2681,10 +2532,6 @@ export class RequerimientosComponent implements OnInit {
   }
 
   cerrarModalActivoFijo() {
-    // const confirmar = confirm(
-    //   '¿Seguro que deseas cancelar los cambios? Se perderán los datos no guardados.'
-    // );
-    // if (!confirmar) return;
     this.modalAbiertoActivoFijo = false;
   }
 
@@ -2779,8 +2626,6 @@ export class RequerimientosComponent implements OnInit {
 
     const nuevaLineaDetalle = {
       idrequerimiento: '', // ⚠️ SE ASIGNA AL GUARDAR CABECERA
-      // codigo: this.lineaTempActivoFijo.codigo,
-      // descripcion: this.SeleccionaSubServicioAF,
       codigo: subservicioSeleccionadoAF.commodity, // ✅ código servicio
       descripcion: subservicioSeleccionadoAF.descripcionLocal, // ✅ descripción
       proveedor: this.lineaTempActivoFijo.proveedor,
@@ -2798,7 +2643,6 @@ export class RequerimientosComponent implements OnInit {
     if (this.activoFijoEditIndex >= 0) {
       // Editar línea existente
       const idExistente = this.detallesActivoFijo[this.activoFijoEditIndex].id!;
-      // await this.dexieService.detalles.put({ id: idExistente, ...this.lineaTemp });
       await this.dexieService.detallesActivoFijo.put({
         id: idExistente,
         ...nuevaLineaDetalle,
@@ -2837,7 +2681,6 @@ export class RequerimientosComponent implements OnInit {
     console.log('Producto en lineaTemp:', this.lineaTemp.producto);
     // ✅ Validaciones previas
     if (!this.lineaTemp.producto || !this.lineaTemp.producto.codigo) {
-      //this.lineaTemp.producto.trim() === '') {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un producto.',
@@ -2919,7 +2762,6 @@ export class RequerimientosComponent implements OnInit {
     if (this.editIndex >= 0) {
       // Editar línea existente
       const idExistente = this.detalles[this.editIndex].id!;
-      // await this.dexieService.detalles.put({ id: idExistente, ...this.lineaTemp });
       await this.dexieService.detalles.put({
         id: idExistente,
         ...nuevaLineaDetalle,
@@ -2958,8 +2800,6 @@ export class RequerimientosComponent implements OnInit {
     // Cargar en lineaTemp el código real para que el select lo reconozca
     this.lineaTemp = {
       ...detalleSeleccionado,
-      // producto: producto ? producto.codigo : detalleSeleccionado.codigo,
-      // producto: producto ? { codigo: producto.codigo } : null
       producto: producto ? { ...producto } : null,
     };
 
@@ -2982,10 +2822,6 @@ export class RequerimientosComponent implements OnInit {
 
     // 4. Notificación
     this.alertService.mostrarInfo('Línea eliminada.');
-    // const id = this.detalles[index].id!;
-    // await this.dexieService.deleteDetalleRequerimiento(id);
-    // await this.cargarDetalles();
-    // this.alertService.mostrarInfo('Línea eliminada.');
   }
 
   mostrarAlmacen(c: any): string {
@@ -3091,9 +2927,6 @@ export class RequerimientosComponent implements OnInit {
       // 🔹 Mostrar modal de carga
       this.alertService.mostrarModalCarga();
 
-      // Fecha actual
-      // const fechaActual = new Date().toISOString();
-
       // 🔹 Simulación del guardado (aquí reemplaza por tu lógica real)
       await new Promise((resolve) => setTimeout(resolve, 1500)); // simulación de espera
 
@@ -3139,7 +2972,6 @@ export class RequerimientosComponent implements OnInit {
       this.requerimiento.idrequerimiento =
         this.usuario.ruc +
         idAlmacenSincronizado +
-        // this.almacenSeleccionado +
         this.usuario.documentoidentidad +
         this.utilsService.formatoAnioMesDiaHoraMinSec();
       this.requerimiento.ruc = this.usuario.ruc;
@@ -3147,33 +2979,15 @@ export class RequerimientosComponent implements OnInit {
       this.requerimiento.idarea = this.areaSeleccionada;
       this.requerimiento.idclasificacion = this.clasificacionSeleccionado;
       this.requerimiento.nrodocumento = this.usuario.documentoidentidad;
-      // this.requerimiento.idalmacen = this.almacenSeleccionado;
-      // campos de almacén según tipo
-      // campos de almacén según tipo
-      // this.requerimiento.idalmacen =
-      //   this.TipoSelecionado === 'TRANSFERENCIA'
-      //     ? String(this.almacenOrigen)
-      //     : String(idAlmacenSincronizado);
       this.requerimiento.idalmacen = String(idAlmacenFinal);
       this.requerimiento.idalmacendestino =
         this.TipoSelecionado === 'TRANSFERENCIA'
           ? String(this.almacenDestino)
           : '';
-      // (this.requerimiento.idalmacen =
-      //   this.TipoSelecionado === 'TRANSFERENCIA'
-      //     ? String(this.almacenOrigen)
-      //     : String(idAlmacenSincronizado)),
-      //   (this.requerimiento.idalmacendestino =
-      //     this.TipoSelecionado === 'TRANSFERENCIA'
-      //       ? String(this.almacenDestino)
-      //       : ''),
-      // (this.requerimiento.idalmacendestino = '');
-      // this.requerimiento.idproyecto = this.proyectoSeleccionado;
       this.requerimiento.idproyecto = this.proyectoSeleccionado
         ? String(this.proyectoSeleccionado)
         : '';
       this.requerimiento.fecha = new Date().toISOString();
-      //   this.requerimiento.almacen = this.almacenSeleccionado;
       // mostrar en la tabla tal como pediste
       this.requerimiento.almacen =
         this.TipoSelecionado === 'TRANSFERENCIA'
@@ -3214,9 +3028,6 @@ export class RequerimientosComponent implements OnInit {
         usuario: this.usuario?.nombre || 'Desconocido',
       });
 
-      // this.requerimientos.push(this.requerimiento);
-      // await this.cargarRequerimientos();
-
       // ✅ Si estás editando, actualiza la lista en memoria
       if (this.modoEdicion) {
         const index = this.requerimientos.findIndex(
@@ -3235,16 +3046,13 @@ export class RequerimientosComponent implements OnInit {
       this.mostrarFormulario = false;
       await this.cargarPendientes();
       // 🔹 Mostrar éxito
-      // this.alertService.showAlert('Éxito', 'Los parámetros se guardaron correctamente.', 'success');
       this.alertService.showAlert(
         'Éxito',
         `Requerimiento #${requerimientoId} guardado correctamente.`,
         'success'
       );
-      // this.alertService.showAlert('Éxito', `Requerimiento #${this.requerimiento.id} guardado correctamente.`, 'success');
       // 5️⃣ Limpiar formulario
       this.detalles = [];
-      //   this.fundoSeleccionado = '';
       this.almacenSeleccionado = '';
       this.areaSeleccionada = '';
       this.clasificacionSeleccionado = '';
@@ -3286,7 +3094,6 @@ export class RequerimientosComponent implements OnInit {
       this.requerimientos[index].prioridad = this.SeleccionaPrioridadITEM;
       this.requerimientos[index].itemtipo = this.TipoSelecionado;
       this.requerimientos[index].referenciaGasto = this.SeleccionaTipoGasto;
-      // this.requerimientos[index].clasificacion = this.clasificacionSeleccionado;
       if (this.TipoSelecionado === 'TRANSFERENCIA') {
         this.requerimientos[index].idalmacen = String(this.almacenOrigen);
         this.requerimientos[index].idalmacendestino = String(
@@ -3304,8 +3111,16 @@ export class RequerimientosComponent implements OnInit {
       }
       this.requerimientos[index].detalle = [...this.detalles];
 
-      // si actualizarás estado
-      // this.requerimientos[index].estado = this.estadoSeleccionado;
+      // ============================
+      // 🔥 MARCAR COMO MODIFICADO
+      // ============================
+      this.requerimientos[index].modificado = 1;
+
+      // (opcional pero recomendado)
+      // Si ya estaba enviado, permitir reenvío
+      if (this.requerimientos[index].estado === 1) {
+        this.requerimientos[index].estado = 0;
+      }
 
       // GUARDAR EN DEXIE
       await this.dexieService.saveRequerimiento(this.requerimientos[index]);
@@ -3333,10 +3148,7 @@ export class RequerimientosComponent implements OnInit {
       '¿Seguro que deseas cancelar los cambios? Se perderán los datos no guardados.'
     );
     if (!confirmar) return;
-
-    // this.fundoSeleccionado = '';
     this.cultivoSeleccionado = '';
-    // this.almacenSeleccionado = '';
     this.SeleccionaPrioridadITEM = '';
     this.SeleccionaTipoGasto = '';
     console.log('Formulario de parámetros reiniciado');
@@ -3424,13 +3236,6 @@ export class RequerimientosComponent implements OnInit {
         'Requerimiento eliminado correctamente.',
         'success'
       );
-      // await this.dexieService.deleteRequerimiento(req.idrequerimiento);
-      // await this.cargarRequerimientos();
-      // this.alertService.showAlert(
-      //   'Éxito',
-      //   'Requerimiento eliminado correctamente.',
-      //   'success'
-      // );
     } catch (error) {
       console.error('Error al eliminar requerimiento:', error);
       this.alertService.showAlert(
@@ -3468,4 +3273,130 @@ export class RequerimientosComponent implements OnInit {
 
     console.log('Consolidado:', consolidado);
   }
+
+  allChecked() {
+    this.requerimientos.forEach((t: any) => { if (t.eliminado == 0) { t.checked = !this.allSelected } });
+    if (!this.allSelected) {
+      this.dataSelected = this.requerimientos;
+    } else {
+      this.dataSelected = [];
+    }
+    this.dataSelected.length == 0 ? this.verBotones = false : this.verBotones = true;
+  }
+
+  // simpleSelected(row: any) {
+  //   if (row.checked) {
+  //     if (!this.dataSelected.some((item: any) => item.idrequerimiento === row.idrequerimiento)) {
+  //       // this.dataSelected.push(row);
+  //       this.dataSelected = [row];
+  //       // 🔥 CARGAR DETALLES DEL SELECCIONADO
+  //       this.detalles = row.detalle
+  //         ? row.detalle.map((d: any) => ({ ...d }))
+  //         : [];
+  //     }
+  //   } else {
+  //     this.dataSelected = this.dataSelected.filter((item: any) => item.idrequerimiento !== row.idrequerimiento);
+  //     this.detalles = [];
+  //   }
+  //   this.allSelected = this.requerimientos.every((row: any) => row.checked);
+  //   if (this.dataSelected.length === 0) {
+  //     this.verBotones = false
+  //   } else {
+  //     this.verBotones = true;
+  //   }
+  // }
+
+  simpleSelected(row: any) {
+
+    // Desmarcar todos
+    this.requerimientos.forEach(r => r.checked = false);
+
+    // Marcar el actual
+    row.checked = true;
+
+    // 🔥 ACTIVO (el que se muestra)
+    this.requerimientoActivo = row;
+
+    // 🔥 CARGAR DETALLES DEL ACTIVO
+    this.detalles = row.detalle
+      ? row.detalle.map((d: any) => ({ ...d }))
+      : [];
+
+    // Para botones
+    this.dataSelected = [row];
+    this.verBotones = true;
+  }
+
+
+  formatoFecha(date: any) {
+    return this.utilsService.formatDate1(date)
+  }
+
+  scrollLeft() {
+    const buttonsContainer = document.querySelector('.buttons') as HTMLElement;
+    if (buttonsContainer) {
+      buttonsContainer.scrollLeft -= 200;  // Desplaza 200 píxeles hacia la izquierda
+    }
+  }
+
+  // Función para desplazar hacia la derecha
+  scrollRight() {
+    const buttonsContainer = document.querySelector('.buttons') as HTMLElement;
+    if (buttonsContainer) {
+      buttonsContainer.scrollLeft += 200;  // Desplaza 200 píxeles hacia la derecha
+    }
+  }
+
+  editarRequerimientoSelect(dataSelected: any[]) {
+
+    if (!dataSelected || dataSelected.length === 0) {
+      this.alertService.showAlert(
+        'Atención',
+        'Debe seleccionar un requerimiento para editar',
+        'warning'
+      );
+      return;
+    }
+
+    if (dataSelected.length > 1) {
+      this.alertService.showAlert(
+        'Atención',
+        'Solo puede editar un requerimiento a la vez',
+        'warning'
+      );
+      return;
+    }
+
+    const item = this.requerimientoActivo;
+
+    this.requerimiento = { ...item };
+    this.requerimiento.id = item.id; // necesario para update
+    // this.detalles = item.detalle || [];
+    // 🔥 Detalle (COPIA PROFUNDA)
+    this.detalles = item.detalles
+      ? item.detalles.map((d: any) => ({ ...d }))
+      : [];
+
+    console.log('Detalle del requerimiento a editar:', this.detalles);
+
+    // Selects
+    this.fundoSeleccionado = item.idfundo;
+    this.areaSeleccionada = item.idarea;
+    this.SeleccionaPrioridadITEM = item.prioridad;
+    this.almacenSeleccionado = item.idalmacen;
+    this.clasificacionSeleccionado = item.idclasificacion;
+    this.glosa = item.glosa;
+    this.SeleccionaTipoGasto = item.referenciaGasto;
+    this.TipoSelecionado = item.itemtipo;
+    this.almacenOrigen = item.idalmacen;
+    this.almacenDestino = item.idalmacendestino;
+
+    // UI
+    this.modoEdicion = true;
+    this.mostrarFormulario = true;
+    this.modalAbierto = false;
+
+    this.reasignarAlmacenDesdeDescripcion();
+  }
+
 }
