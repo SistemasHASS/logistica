@@ -58,7 +58,7 @@ export class DexieService extends Dexie {
   public detalleDespachos!: Dexie.Table<DetalleDespacho, number>;
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 22; // ⬅️ cambia este número cuando modifiques el esquema
+  private static readonly DB_VERSION = 23; // ⬅️ cambia este número cuando modifiques el esquema
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -80,7 +80,7 @@ export class DexieService extends Dexie {
         cultivos: `id,cultivo,codigo,descripcion,empresa`,
         turnos: `id,turno,codTurno,nombreTurno,idcultivo,idproyecto,conturno,estado`,
         acopios: `id,nave,codigoAcopio,acopio`,
-        cecos: `id,costcenter,localname,cultivo,conturno,esinversion,estado`,
+        cecos: `id,costcenter,localname,cultivo,conturno,esinversion,estado,ccontable`,
         labores: `id,idlabor,idgrupolabor,ceco,labor,estado`,
         itemComoditys: `id,tipoclasificacion,codigo,descripcion`,
         clasificaciones: `id,idclasificacion,descripcion_clasificacion,tipoClasificacion`,

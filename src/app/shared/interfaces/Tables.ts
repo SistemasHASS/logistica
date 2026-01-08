@@ -33,6 +33,7 @@ export interface Configuracion {
     idproveedor: string;
     idtipoGasto: string;
     idactivoFijo: string;
+    idTipoItem: string;
 }
 
 export interface Empresa {
@@ -102,6 +103,7 @@ export interface Ceco {
     localname: string;
     conturno: string;
     esinversion: number;
+    ccontable: string;
     nombreTurno: string;
     modulo: number;
     idcultivo: string;
@@ -147,23 +149,25 @@ export interface Clasificacion {
     tipoClasificacion: string;
 }
 
-    export interface DetalleRequerimiento {
-        id?: number;
-        idrequerimiento: string;
-        codigo: string;
-        // producto: string;
-        producto: any;
-        descripcion: string;
-        cantidad: number;
-        proyecto: string;
-        ceco: string;
-        turno: string;
-        labor: string;
-        esActivoFijo: boolean;
-        activoFijo: string;
-        estado: number;
-        atendida?: string;
-    }
+export interface DetalleRequerimiento {
+    id?: number;
+    idrequerimiento: string;
+    codigo: string;
+    // producto: string;
+    producto: any;
+    descripcion: string;
+    cantidad: number;
+    proyecto: string;
+    ceco: string;
+    turno: string;
+    labor: string;
+    esActivoFijo: boolean;
+    activoFijo: string;
+    estado: number;
+    atendida?: string;
+    // 🔥 NUEVO → DISTRIBUCIÓN CONTABLE
+    distribucion?: DistribucionContable[];
+}
 
 export interface Requerimiento {
     id?: number;
@@ -181,7 +185,7 @@ export interface Requerimiento {
     glosa: string;
     tipo: string;
     itemtipo: string;
-    referenciaGasto: string; 
+    referenciaGasto: string;
     prioridad: string;
     estados: string;
     estado: number;
@@ -319,26 +323,14 @@ export interface RequerimientoActivoFijoMenor {
     detalleActivoFijoMenor: DetalleRequerimientoActivoFijoMenor[];
 }
 
-// export interface RequerimientoCommodity {
-//     id?: number;
-//     idrequerimiento: string;
-//     ruc: string;
-//     idfundo: string;
-//     idarea: string;
-//     idclasificacion: string;
-//     prioridad: string;
-//     nrodocumento: string;
-//     idalmacen: string;
-//     idalmacendestino: string;
-//     idproyecto: string;
-//     fecha: string;
-//     almacen: string;
-//     glosa: string;
-//     tipo: string;
-//     estados: string;
-//     estado: number;
-//     detalleCommodity: DetalleRequerimientoCommodity[];
-// }
+export interface DistribucionContable {
+  Secuencia?: number;
+  Linea: number;
+  cuenta: string;              // Account
+  afe?: string;
+  monto: number;
+  cecoDestino?: string;
+}
 
 export interface PersonaFlujoAprobacion {
     id: string
@@ -796,31 +788,31 @@ export interface DetalleRecepcion {
 }
 
 export interface Nivel {
-  idNivel: number;
-  descripcion: string;
-  orden: number;
-  estado?: boolean;
+    idNivel: number;
+    descripcion: string;
+    orden: number;
+    estado?: boolean;
 }
 
 export interface TipoDocumento {
-  idTipoDocumento: number;
-  codigo: string;
-  descripcion: string;
-  estado?: boolean;
+    idTipoDocumento: number;
+    codigo: string;
+    descripcion: string;
+    estado?: boolean;
 }
 
 export interface Aprobador {
-  idAprobador?: number;
-  dni: string;
-  nombres: string;
-  correo?: string;
-  idNivel: number;
-  idTipoDocumento: number;
-  activo?: boolean;
-  fechaRegistro?: string;
+    idAprobador?: number;
+    dni: string;
+    nombres: string;
+    correo?: string;
+    idNivel: number;
+    idTipoDocumento: number;
+    activo?: boolean;
+    fechaRegistro?: string;
 }
 
-export interface Despacho{
+export interface Despacho {
     id?: number;
     numeroDespacho: string;
     fecha: string;
@@ -831,7 +823,7 @@ export interface Despacho{
     estado: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
 }
 
-export interface DetalleDespacho{
+export interface DetalleDespacho {
     id?: number;
     despachoId: number;
     detalleRecepcionId: number;
@@ -850,4 +842,21 @@ export interface DetalleDespacho{
     fechaEntregaEstimada?: string;
     estado: 'PENDIENTE' | 'PARCIAL' | 'COMPLETO' | 'CANCELADO';
     observaciones?: string;
+}
+
+export interface ErrorExcel {
+  columna: string;
+  mensaje: string;
+}
+
+export interface DetalleExcelPreview {
+  codigo: string;
+  descripcion: string;
+  cantidad: number;
+  turno: string;
+  proyecto: string;
+  ceco: string;
+  activofijo: string;
+  errores: ErrorExcel[];
+  error: boolean;
 }

@@ -28,17 +28,13 @@
 <!-- TAB ITEM -->
 <!-- ===================== -->
 <div *ngIf="tabActiva === 'ITEM'">
-    <div class="requerimientos-container">
+    <div class="p-0 requerimientos-container">
         <div class="container py-4">
-            <div class="container mt-3">
+            <div class="p-0 container mt-3">
                 <h2>Requerimientos Items</h2>
                 <!-- 🔹 Vista: LISTA DE REQUERIMIENTOS -->
                 <div *ngIf="!mostrarFormulario">
-                    <div class="card firstCard">
-                        <div class="selectedAll">
-                            <p>Seleccionar todos:</p>
-                            <input type="checkbox" (click)="allChecked()" [(ngModel)]="allSelected" id="allCheck">
-                        </div>
+                    <div class="p-0 card">
                         <!-- RESUMEN -->
                         <div class="requerimientos-tablas">
                             <div>Total: <span class="azul">{{ requerimientos.length }}</span></div>
@@ -46,7 +42,7 @@
                             <div>Enviados: <span class="verde">{{ enviados }}</span></div>
                         </div>
 
-                        <div class="table-content">
+                        <div class="p-0 table-content">
                             <!-- <div style="max-height: calc(50vh + 80px); overflow-y: auto; overflow-x: auto;"> -->
                             <!-- <table *ngIf="modoItemPrincipal"
                                     class="table table-responsive table-bordered tablaPlanilla">
@@ -104,6 +100,7 @@
                                         <tr>
                                             <th style="width:50px">#</th>
                                             <th style="min-width:20px" pSortableColumn="item">Editar</th>
+                                            <th style="min-width:100px" pSortableColumn="item">#Req</th>
                                             <th style="min-width:100px" pSortableColumn="item">Fecha</th>
                                             <th style="min-width:100px" pSortableColumn="descripcionLocal">Fundo</th>
                                             <th style="min-width:100px" pSortableColumn="unidadCodigo">Almacen</th>
@@ -123,7 +120,9 @@
                                                 <button class="btn btn-sm btn-warning me-2"
                                                     (click)="editarRequerimiento(i)">
                                                     <i class="icon-pencil"></i>
-                                                </button>
+                                                </button>                      </td>
+                                            <td><span class="p-column-title">#Req</span>
+                                                {{ obtenerIdReq(c.idrequerimiento) }}
                                             </td>
                                             <td><span class="p-column-title">Fecha</span>
                                                 {{ c.fecha | date : "dd/MM/yyyy HH:mm:ss" }}
@@ -156,7 +155,7 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="p-column-title">Accin</span>
+                                                <span class="p-column-title">Acción</span>
                                                 <button class="btn btn-sm btn-danger"
                                                     (click)="eliminarRequerimiento(i)">
                                                     <i class="icon-trash"></i>
@@ -175,10 +174,13 @@
                             </div>
                             <div *ngIf="modoItemPrincipal">
                                 @for (item of requerimientos; track $index) {
-                                <div class="card cardFor" (click)="item.checked = !item.checked;simpleSelected(item)"
-                                    [ngClass]="item.estado === 1 ? 'fila-enviada' : 'fila-sin-enviar'">
-                                    <input type="checkbox" [(ngModel)]="item.checked" class="checked"
-                                        (ngModelChange)="simpleSelected(item)" [disabled]="item.eliminado === 1">
+                                <div class="card cardFor"
+                                    [ngClass]="{ 'cerrado': item.estado, 'nocerrado': !item.estado }">
+                                    <input type="checkbox" class="checked" [checked]="item.checked"
+                                        (change)="onCheckChange($event, item)" [disabled]="item.eliminado === 1" />
+
+                                    <!-- <input type="checkbox" [(ngModel)]="item.checked" class="checked"
+                                        (ngModelChange)="simpleSelected(item)" [disabled]="item.eliminado === 1"> -->
                                     <div class="contentCard">
                                         <div class="info" [ngClass]="{ 'eliminadoTR': item.eliminado }">
                                             <p class="item-card">
@@ -187,17 +189,19 @@
                                                     [{{item.estado == 0?'Sin enviar':'Enviado'}}]</span>
                                                 &nbsp;&nbsp;&nbsp;<strong>Usuario: {{item.nrodocumento}}</strong>
                                             </p>
-                                            <p class="item-card"><strong>Requerimiento:
-                                                </strong>{{item.idrequerimiento}}</p>
-                                            <p class="item-card" *ngFor="let det of item.detalle; let i = index">
-                                                {{det.ceco}} -
-                                                {{det.labor}} - {{det.turno}}</p>
+                                            <p class="item-card"><strong>#Requerimiento:
+                                                </strong>{{obtenerIdReq(item.idrequerimiento)}}</p>
+                                            <!-- <p class="item-card" *ngFor="let det of item.detalle; let i = index">
+                                                <strong>Ceco:</strong> {{det.ceco}} - <strong>Turno:</strong>
+                                                {{det.turno}}<br>
+                                                <strong>Labor:</strong> {{det.labor}} - <br>
+                                            </p> -->
                                             <p class="item-card"><strong>Fecha:
-                                                </strong>{{formatoFecha(item.fecha)}}
+                                                </strong>{{formatoFecha(item.fecha)}} - <strong>Almacén:</strong>
+                                                {{item.almacen}}
                                             </p>
                                             <p class="item-card"><strong>Glosa:
-                                                </strong>{{item.glosa}} - {{item.idalmacen}} -
-                                                {{item.idproyecto}} - {{item.tipo}}</p>
+                                                </strong>{{item.glosa}} - {{item.tipo}}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -338,7 +342,7 @@
                             <button *ngIf="modoItemPrincipal" class="btn btn-primary" (click)="sincronizarPendientes()">
                                 <i class='icon icon-sync'></i> Sincronizar</button>
                             <button *ngIf="modoItemPrincipal" class="btn btn-danger"
-                                (click)="eliminarRequerimiento(dataSelected)" [disabled]="!verBotones">
+                                (click)="eliminarRequerimientoSelect(dataSelected)" [disabled]="!verBotones">
                                 <i class="icon icon-trash"></i></button>
                         </div>
                         <i class='icon-arrow-right5' (click)="scrollRight()"></i>
@@ -521,7 +525,7 @@
                             </select>
                         </div>
 
-                        <div class="col-6">
+                        <div class="col-6" hidden="true">
                             <label>Referencia Gasto: <span class="text-danger">*</span></label>
                             <app-dropdown [data]="tipoGastos" optionLabel="descripcion" valueField="codigo"
                                 [(ngModel)]="SeleccionaTipoGasto" textShow2="un tipo de gasto contable"
@@ -555,14 +559,21 @@
                                 placeholder="Escriba aquí la glosa..."></textarea>
                         </div>
 
-                        <div class="d-flex justify-content-end mb-3">
+                        <div class="d-flex justify-content-end gap-3 acciones-movil">
+                            <!-- CARGA MASIVA -->
+                            <button type="button" class="btn btn-success" (click)="fileInput.click()">
+                                <i class="bi bi-upload me-1"></i>
+                                Carga masiva
+                            </button>
+
+                            <input #fileInput type="file" hidden accept=".xlsx,.xls" (change)="onExcelUpload($event)" />
                             <button class="btn btn-primary" (click)="abrirModal()">
                                 <i class="bi bi-plus-circle me-1"></i> Agregar línea detalle
                             </button>
                         </div>
 
                         <!-- Tabla de detalle -->
-                        <div class="table-responsive tabla-item" style="max-height: 25vh; overflow: auto;">
+                        <div class="table-responsive" style="max-height: 25vh; overflow: auto;">
                             <table class="table table-bordered table-striped align-middle text-center">
                                 <thead class="table-light">
                                     <tr>
@@ -574,6 +585,7 @@
                                         <th>CECO</th>
                                         <th>Turno</th>
                                         <th>Labor</th>
+                                        <th>Activo Fijo</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -590,13 +602,16 @@
                                         <td>{{ item.turno }}</td>
                                         <td>{{ item.labor }}</td>
                                         <td>
+                                            {{ item.activoFijo ? item.activoFijo : 'N/A' }}
+                                        </td>
+                                        <td>
                                             <button class="btn btn-sm btn-danger" (click)="eliminarLinea(i)">
                                                 <i class="icon-trash"></i>
                                             </button>
                                         </td>
                                     </tr>
                                     <tr *ngIf="detalles.length === 0">
-                                        <td colspan="9" class="text-muted">
+                                        <td colspan="10" class="text-muted">
                                             No hay detalles agregados
                                         </td>
                                     </tr>
@@ -607,7 +622,7 @@
                         <!-- Modal de edición Item - Detalle-->
                         <!-- Modal Item - Detalle-->
                         <div class="modal-backdrop" *ngIf="modalAbierto">
-                            <div class="modal-content">
+                            <div class="modal-content modal-linea-detalle">
                                 <!-- <h5>Registrar Línea de Detalle</h5>     -->
                                 <h5>
                                     {{
@@ -680,7 +695,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="mt-4 text-center">
+                                    <div class="mt-4 text-center botones-modal">
                                         <button class="btn btn-success me-2" (click)="guardarLinea()">
                                             {{ modoEdicion ? "Actualizar" : "Registrar" }}
                                         </button>
@@ -691,6 +706,161 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- MODAL CARGA MASIVA DETALLE-->
+                        <div class="modal fade show d-block" tabindex="-1" *ngIf="modalVisible">
+                            <div class="modal-dialog modal-dialog-centered modal-gl">
+                                <div class="p-0 errores-excel modal-content modal-carga-masiva">
+
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Vista previa carga masiva</h5>
+                                        <button class="btn-close" (click)="modalVisible=false"></button>
+                                    </div>
+
+                                    <div class="alert alert-light d-flex justify-content-between mb-2 resumen-carga">
+                                        <span>Total líneas: <b>{{ lineasPreview.length }}</b></span>
+                                        <!-- <span class="text-success">✔ Correctas: {{ lineasPreview.length }}</span> -->
+                                        <span class="text-success">✔ Correctas: {{contarLineasSinError()}} </span>
+                                        <span class="text-danger">❌ Con errores: {{contarLineasConError()}}</span>
+                                    </div>
+
+                                    <div class="modal-body">
+
+                                        <!-- CONTENEDOR SCROLL -->
+                                        <div class="table-responsive table-modal-scroll w-100">
+                                            <table
+                                                class="table table-bordered table-striped table-sm align-middle text-center w-100">
+                                                <thead class="table-light sticky-top">
+                                                    <tr>
+                                                        <th>#</th>
+                                                        <th>Código</th>
+                                                        <th>Descripción</th>
+                                                        <th>Cantidad</th>
+                                                        <th>Turno</th>
+                                                        <th>Activo Fijo</th>
+                                                        <th>Estado</th>
+                                                    </tr>
+                                                </thead>
+
+                                                <tbody>
+                                                    <tr *ngFor="let row of lineasPreview; let i = index"
+                                                        [class.table-danger]="row.error">
+
+                                                        <td>{{ i + 1 }}</td>
+
+                                                        <!-- CODIGO -->
+                                                        <td>
+                                                            <input *ngIf="tieneError(row, 'Código')"
+                                                                class="form-control form-control-sm"
+                                                                [(ngModel)]="row.codigo" (input)="validarFila(row)" />
+                                                            <span *ngIf="!tieneError(row, 'Código')">
+                                                                {{ row.codigo }}
+                                                            </span>
+                                                        </td>
+
+                                                        <!-- DESCRIPCION -->
+                                                        <td>{{ row.descripcion }}</td>
+
+                                                        <!-- CANTIDAD -->
+                                                        <td>
+                                                            <input *ngIf="tieneError(row, 'Cantidad')" type="number"
+                                                                class="form-control form-control-sm"
+                                                                [(ngModel)]="row.cantidad" (input)="validarFila(row)" />
+                                                            <span *ngIf="!tieneError(row, 'Cantidad')">
+                                                                {{ row.cantidad }}
+                                                            </span>
+                                                        </td>
+
+                                                        <!-- TURNO -->
+                                                        <td>
+                                                            <select *ngIf="tieneError(row, 'Turno')"
+                                                                class="form-select form-select-sm"
+                                                                [(ngModel)]="row.turno" (change)="validarFila(row)">
+                                                                <option value="">--</option>
+                                                                <option *ngFor="let t of turnos" [value]="t">{{ t }}
+                                                                </option>
+                                                            </select>
+
+                                                            <span *ngIf="!tieneError(row, 'Turno')">
+                                                                {{ row.turno }}
+                                                            </span>
+                                                        </td>
+
+                                                        <!-- ACTIVO FIJO -->
+                                                        <td>
+                                                            <app-dropdown *ngIf="tieneError(row, 'Activo Fijo')"
+                                                                class="w-100" [data]="activosFijosFiltrados"
+                                                                optionLabel="activo_descripcion" valueField="activo"
+                                                                [(ngModel)]="row.activofijo"
+                                                                (ngModelChange)="validarFila(row)" [editable]="true"
+                                                                [required]="false">
+                                                            </app-dropdown>
+
+                                                            <span *ngIf="!tieneError(row, 'Activo Fijo')">
+                                                                {{ obtenerDescripcionActivoFijo(row.activofijo) }}
+                                                            </span>
+                                                        </td>
+
+                                                        <!-- ESTADO -->
+                                                        <td>
+                                                            <span *ngIf="!filaConError(row)" class="text-success">✔
+                                                                OK</span>
+                                                            <span *ngIf="filaConError(row)" class="text-danger">❌
+                                                                Error</span>
+                                                        </td>
+
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <div class="d-flex align-items-center justify-content-between mt-3 gap-3">
+
+                                            <!-- MENSAJE ERROR -->
+                                            <div *ngIf="tieneErroresExcel"
+                                                class="alert alert-danger p-2 mb-0 d-flex align-items-center">
+                                                <i class="fa fa-exclamation-triangle me-2"></i>
+                                                <b>Corrija Excel y vuelva a cargarlo.</b>
+                                            </div>
+
+                                            <!-- BOTONES -->
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-secondary" (click)="modalVisible = false">
+                                                    Cancelar
+                                                </button>
+
+                                                <button class="btn btn-success" [disabled]="!puedeGuardar"
+                                                    (click)="guardarDetalleMasivo()">
+                                                    Guardar
+                                                </button>
+                                            </div>
+
+                                        </div>
+
+                                        <!-- MENSAJE DE ERROR GENERAL -->
+                                        <!-- <div *ngIf="tieneErroresExcel" class="p-0 alert alert-danger mt-3 text-center">
+                                            <i class="fa fa-exclamation-triangle me-2"></i>
+                                            <b>Corrija el Excel y vuelva a cargarlo.</b>
+                                        </div>
+                                        <button class="btn btn-secondary" (click)="modalVisible=false">
+                                            Cancelar
+                                        </button>
+
+                                        <button class="btn btn-success" [disabled]="!puedeGuardar"
+                                            (click)="guardarDetalleMasivo()">
+                                            Guardar
+                                        </button> -->
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BACKDROP -->
+                        <div class="modal-backdrop fade show" *ngIf="modalVisible"></div>
                     </div>
 
                     <div class="mt-3 text-end">

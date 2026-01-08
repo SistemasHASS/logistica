@@ -26,7 +26,8 @@
 
             <ng-template pTemplate="body" let-row>
                 <tr>
-                    <td>{{ row.idrequerimiento }}</td>
+                    <!-- <td>{{ row.idrequerimiento }}</td> -->
+                    <td>{{ obtenerIdReq(row.idrequerimiento)}}</td>
                     <td>{{ row.glosa }}</td>
                     <td>{{ row.dniAprobador }}</td>
                     <td>
@@ -58,7 +59,8 @@
 
             <ng-template pTemplate="body" let-row>
                 <tr>
-                    <td>{{ row.idrequerimiento }}</td>
+                    <!-- <td>{{ row.idrequerimiento }}</td> -->
+                    <td>{{ obtenerIdReq(row.idrequerimiento)}}</td>
                     <td>{{ row.glosa }}</td>
                     <td>{{ row.dniAprobador }}</td>
                     <td>

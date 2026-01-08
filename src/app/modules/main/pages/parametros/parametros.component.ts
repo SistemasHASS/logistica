@@ -28,6 +28,7 @@ import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { RequerimientosService } from '../../services/requerimientos.service';
 import { DropdownComponent } from '../../components/dropdown/dropdown.component';
 import { CommodityService } from '../../services/commoditys.service';
+import { any } from '@tensorflow/tfjs';
 
 @Component({
   selector: 'app-parametros',
@@ -67,6 +68,13 @@ export class ParametrosComponent implements OnInit {
   servicios: any[] = [];
   activosFijos: any[] = [];
   comodities: any[] = [];
+
+  tipoItem: any[] = [
+    { id: 'COMPRA', descripcion: 'COMPRA' },
+    { id: 'CONSUMO', descripcion: 'CONSUMO' }
+  ];
+
+  TipoItemSeleccionado = '';
 
   fundoSeleccionado = '';
   cultivoSeleccionado = '';
@@ -124,6 +132,7 @@ export class ParametrosComponent implements OnInit {
     idproveedor: '',
     idtipoGasto: '',
     idactivoFijo: '',
+    idTipoItem: '',
   };
 
   async ngOnInit() {
@@ -775,7 +784,10 @@ export class ParametrosComponent implements OnInit {
     if (
       !this.configuracion.idempresa ||
       !this.configuracion.idfundo ||
-      !this.configuracion.idcultivo
+      !this.configuracion.idcultivo ||
+      !this.configuracion.idlabor ||
+      !this.configuracion.idceco ||
+      !this.configuracion.idTipoItem
     ) {
       this.alertService.showAlert(
         'Advertencia!',

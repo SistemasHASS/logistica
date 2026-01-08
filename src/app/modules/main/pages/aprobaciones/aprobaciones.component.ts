@@ -287,6 +287,7 @@ export class AprobacionesComponent {
     this.requerimientosItems = this.requerimientos.filter(
       (x) => x.tipo === 'ITEM' && x.estados === 'PENDIENTE'
     );
+    this.ordenarRequerimientos();
     this.requerimientosCommodity = this.requerimientos.filter(
       (x) => x.tipo === 'COMMODITY' && x.estados === 'PENDIENTE'
     );
@@ -329,6 +330,13 @@ export class AprobacionesComponent {
     return '';
   }
 
+  ordenarRequerimientos() {
+    this.requerimientosItems.sort((a, b) => {
+      // 1️⃣ Fecha más reciente primero
+      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+    });
+  }
+
   async sincronizarRequerimientos() {
     try {
       const requerimmientos = this.requerimientosService.getRequerimientos([
@@ -366,7 +374,9 @@ export class AprobacionesComponent {
     }
   }
 
+  /** ✅ Sincronizar requerimiento aprobado a SPRING */
   async sincronizaRequerimientoSPRING(req: any) {
+    debugger;
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
       '¿Desea enviar los datos?',
@@ -374,6 +384,18 @@ export class AprobacionesComponent {
     );
 
     if (!confirmacion) return;
+
+    // const sinDistribucion = req.detalle.some(
+    //   (d: { distribucion: string | any[]; }) => !Array.isArray(d.distribucion) || d.distribucion.length === 0
+    // );
+
+    // if (sinDistribucion) {
+    //   this.alertService.showAlertError(
+    //     'Error',
+    //     'Existen líneas sin distribución contable'
+    //   );
+    //   return;
+    // }
 
     // const filtro = {
     //   CompaniaCodigo: this.usuario.idempresa,
@@ -395,11 +417,31 @@ export class AprobacionesComponent {
 
     // this.correlativoRequerimiento = resp[0].codigoGenerado;
     // console.log('🔢 Correlativo generado:', this.correlativoRequerimiento);
+    let origenapp = 'app_logistica';
     let comprasAlmacenFlag;
     if (req.itemtipo === 'TRANSFERENCIA' || req.itemtipo === 'COMSUMO') {
       comprasAlmacenFlag = 'A';
     }
     else { comprasAlmacenFlag = 'C'; }
+    console.log('comprasAlmacenFlag', comprasAlmacenFlag);
+
+    let centroCostoDefault = '0001';
+    let proyectoAfeDefault = 'FUNDO HP';
+    let accountDefault = '10411103';
+
+    // req.detalle.forEach((element: any) => {
+    //   centroCostoDefault = this.cecos.find((c) => c.localname === element.ceco);
+    //   proyectoAfeDefault = this.proyectos.find((p) => p.proyectoio === element.proyecto);
+    // });
+
+    const first = req.detalle[0];
+
+    centroCostoDefault = this.cecos.find(c => c.localname === first.ceco)?.costcenter ?? '0001';
+
+    accountDefault = this.cecos.find(c => c.localname === first.ceco)?.ccontable ?? '10411103';
+
+    proyectoAfeDefault = this.proyectos.find(p => p.proyectoio === first.proyecto)?.afe ?? 'FUNDO HP';
+
 
     try {
       // 🟦 FORMAMOS el JSON EXACTO para el SP
@@ -418,10 +460,9 @@ export class AprobacionesComponent {
           PreparadaPor: -1,
           AprobadaPor: -1,
           PrecioTotal: 0,
-          // PrioridadCodigo: req.prioridad || '1',
           PrioridadCodigo: String(req.prioridad ?? '1'),
-          DefaultPrime: '0001',
-          DefaultAfe: 'FUNDO HP',
+          DefaultPrime: centroCostoDefault, //costcenter
+          DefaultAfe: proyectoAfeDefault, //proyecto afe
           CuantiaMonetariaPendienteFlag: 'N',
           UnidadNegocio: '0001', //si es TRUJILLO '0001'; si es OLMOS '0002'
           UnidadReplicacion: 'TRUJ',
@@ -437,11 +478,18 @@ export class AprobacionesComponent {
           ClienteNumeroPedido: '',
           ViaTransporte: 'T',
           OrigenGeneracionFlag: 'L',
+          origen: origenapp,
 
           // 🟩 DETALLE CORREGIDO
           detalle: req.detalle.map((d: any, index: number) => {
             const ceco = this.cecos.find((c) => c.localname === d.ceco);
             console.log(ceco);
+
+            // 🔐 Blindar distribución
+            // const distribucionArray = Array.isArray(d.distribucion)
+            //   ? d.distribucion
+            //   : [];
+
             return {
               Secuencia: index + 1,
               // Item: d.codigo,
@@ -471,22 +519,24 @@ export class AprobacionesComponent {
               UltimaFechaModif: new Date().toISOString(),
               IGVExoneradoFlag: 'N',
               GenerarContratoFlag: 'N',
-
-              // 🔥 DISTRIBUCIÓN CONTABLE
-              distribucion: d.distribucion.map((x: any, i: number) => ({
-                Secuencia: i + 1,
-                Linea: 1,
-                Account: x.cuenta,                 // 10411103
-                Afe: x.afe ?? 'FUNDO HP',
-                Monto: Number(x.monto),
-                CentroCostoDestino: x.cecoDestino ?? ceco?.id ?? '',
-                Sucursal: '0801',
-                CampoReferencia: req.referenciaGasto ?? 'GA',
-                ReferenciaFiscal01: '',
-                ReferenciaFiscal02: ''
-              }))
+              origen: origenapp,
             };
           }),
+          distribucion: [
+            {
+              Secuencia: 1,
+              Linea: 1,
+              Account: accountDefault,
+              Afe: proyectoAfeDefault,
+              Monto: '100.00',
+              CentroCostoDestino: centroCostoDefault ?? '',
+              Sucursal: '0801',
+              CampoReferencia: req.referenciaGasto ?? 'GA',
+              ReferenciaFiscal01: '',
+              ReferenciaFiscal02: '',
+              origen: origenapp
+            }
+          ]
         },
       ];
 
@@ -559,11 +609,11 @@ export class AprobacionesComponent {
     }
 
     // ✔ Mostrar alerta si NO hay detalle
-    // if (this.detalleRequerimiento.length === 0) {
-    //   this.alertService.mostrarInfo(
-    //     "Este requerimiento no tiene detalles registrados."
-    //   );
-    // }
+    if (this.detalleRequerimiento.length === 0) {
+      this.alertService.mostrarInfo(
+        "Este requerimiento no tiene detalles registrados."
+      );
+    }
 
     // Abrir el modal
     const modalElement = document.getElementById('modalVisualizarDetalle');
@@ -997,5 +1047,10 @@ export class AprobacionesComponent {
     this.dataSelectedActivoMenor = this.dataSelected.filter(
       (x: any) => x.tipo === 'ACTIVOFIJOMENOR'
     );
+  }
+
+  obtenerIdReq(idReq: string): string {
+    if (!idReq) return '';
+    return idReq.slice(-12); // YYMMDDhhmmss
   }
 }

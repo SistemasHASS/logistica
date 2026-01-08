@@ -13,7 +13,7 @@ import { TableModule } from 'primeng/table';
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, TableModule],
   templateUrl: './reporte-aprobados.component.html',
-    styleUrls: ['./reporte-aprobados.component.scss'],
+  styleUrls: ['./reporte-aprobados.component.scss'],
 })
 export class ReporteAprobadosComponent implements OnInit {
   aprobados: any[] = [];
@@ -22,7 +22,7 @@ export class ReporteAprobadosComponent implements OnInit {
   constructor(
     private requerimientoService: RequerimientosService,
     private alertService: AlertService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.cargarReporte();
@@ -33,9 +33,30 @@ export class ReporteAprobadosComponent implements OnInit {
       .getReporteAprobarRequerimiento([{}])
       .subscribe(async (resp) => {
         // if (resp?.[0]?.errorgeneral === 0) {
-          this.aprobados = resp.aprobados || [];
-          this.rechazados = resp.rechazados || [];
+        this.aprobados = resp.aprobados || [];
+        this.ordenarRequerimientoAprobados();
+        this.rechazados = resp.rechazados || [];
+        this.ordenarRequerimientoRechazados();
         // }
       });
+  }
+
+  ordenarRequerimientoAprobados() {
+    this.aprobados.sort((a, b) => {
+      // 1️⃣ Fecha más reciente primero
+      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+    });
+  }
+
+  ordenarRequerimientoRechazados() {
+    this.rechazados.sort((a, b) => {
+      // 1️⃣ Fecha más reciente primero
+      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+    });
+  }
+
+  obtenerIdReq(idReq: string): string {
+    if (!idReq) return '';
+    return idReq.slice(-12); // YYMMDDhhmmss
   }
 }

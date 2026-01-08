@@ -46,6 +46,7 @@
                                         (change)="seleccionarTodos('ITEM')">
                                 </th>
                                 <th style="width:50px">#</th>
+                                <th style="min-width:20px" pSortableColumn="item">#Req</th>
                                 <th style="min-width:20px" pSortableColumn="item">Fecha</th>
                                 <th style="min-width:100px" pSortableColumn="item">Tipo</th>
                                 <th style="min-width:120px" pSortableColumn="descripcionLocal">Almacen</th>
@@ -61,6 +62,7 @@
                                     <input type="checkbox" [(ngModel)]="c.checked" (change)="simpleSelected('ITEM')">
                                 </td>
                                 <td>{{ i + 1 }}</td>
+                                <td>{{ obtenerIdReq(c.idrequerimiento)}}</td>
                                 <td>{{ c.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
                                 <td>{{ c.tipo }}</td>
                                 <td>{{ c.idalmacen }}</td>
