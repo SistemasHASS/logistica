@@ -458,6 +458,8 @@ export class AprobacionesComponent {
 
     let um = this.itemsFiltered.find(i => i.item === first.codigo)?.unidadCodigo;
 
+    let actividad = this.labores.find(l => l.labor === first.labor)?.idlabor;
+
 
     try {
       // 🟦 FORMAMOS el JSON EXACTO para el SP
@@ -491,7 +493,7 @@ export class AprobacionesComponent {
           TransaccionOperacion: '999',
           DefaultCampoReferencia: req.referenciaGasto ?? '',
           RevisionTecnicaPendienteFlag: 'N',
-          ClienteNumeroPedido: '',
+          ClienteNumeroPedido: actividad || '',
           ViaTransporte: 'T',
           OrigenGeneracionFlag: 'L',
           origen: origenapp,
