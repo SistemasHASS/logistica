@@ -146,7 +146,7 @@
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Reporte</span>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('APLOGIST')" class="sidebar-item">
+          <li *ngIf="usuario?.idrol.includes('OPLOGIST')" class="sidebar-item">
             <a routerLink="./reporte-requerimientos" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class='icon icon-file-check'></i>
