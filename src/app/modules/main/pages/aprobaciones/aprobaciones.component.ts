@@ -611,7 +611,7 @@ export class AprobacionesComponent {
       }
     ];
 
-     this.requerimientosService.getRegristroRequerimientoSPRING(payload)
+     this.requerimientosService.getNumeroRequerimientoPRING(payload)
         .subscribe({
           next: (resp) => {
             console.log('✅ Respuesta del backend:', resp);
