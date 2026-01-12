@@ -141,6 +141,18 @@ export class RequerimientosService {
     }
   }
 
+    getNumeroRequerimientoPRING(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/listar-numero-requision`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message ||
+          'Error al obtener el numero de requisicion de SPRING'
+      );
+    }
+  }
+
   NuevoRequerimientoCorrelativo(body: any): Observable<any> {
     const url = `${this.baseUrl}/api/logistica/requerimiento-correlativo-nuevo`;
     try {

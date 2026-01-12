@@ -188,6 +188,12 @@ export class AprobacionesComponent {
         }
       });
 
+      const labores = await this.maestrasService.getLabores([{ aplicacion: 'LOGISTICA', esadmin: 0 }]);
+      if (!!labores && labores.length) {
+        await this.dexieService.saveLabores(labores);
+        await this.ListarLabores();
+      }
+
       const tipoGastos = this.maestrasService.getTipoGastos([{}]);
       tipoGastos.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
@@ -384,7 +390,7 @@ export class AprobacionesComponent {
 
   /** ✅ Sincronizar requerimiento aprobado a SPRING */
   async sincronizaRequerimientoSPRING(req: any) {
-    debugger;
+    // debugger;
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
       '¿Desea enviar los datos?',
@@ -492,9 +498,12 @@ export class AprobacionesComponent {
 
           // 🟩 DETALLE CORREGIDO
           detalle: req.detalle.map((d: any, index: number) => {
+            debugger
             const ceco = this.cecos.find((c) => c.localname === d.ceco);
             console.log(ceco);
             const item = this.itemsFiltered.find(i => i.item === d.codigo);
+            const labores = this.labores.find(l => l.labor === d.labor);
+            console.log('labores', labores);
 
             return {
               Secuencia: index + 1,
@@ -519,7 +528,7 @@ export class AprobacionesComponent {
               ControlPresupuestalFlag: 'S',
               Comentario: d.descripcion ?? '',
               CentroCosto: (ceco?.id ?? '').toString(),
-              LoteProduccion: '',
+              LoteProduccion: labores?.idlabor ?? '',
               Estado: 'PE',
               UltimoUsuario: 'MISESF',
               UltimaFechaModif: new Date().toISOString(),
@@ -554,8 +563,14 @@ export class AprobacionesComponent {
           next: (resp) => {
             console.log('✅ Respuesta del backend:', resp);
 
+            const resultado = Array.isArray(resp) ? resp[0] : resp;
             // Manejo del resultado del SP
-            if (Array.isArray(resp) && resp[0]?.errorgeneral === 0) {
+            // if (Array.isArray(resp) && resp[0]?.errorgeneral === 0) {
+            if (resultado?.errorgeneral === 0) {
+              const correlativoSPRING = resultado.RequisicionNumero;
+              console.log('✅ Requerimiento sincronizado correctamente a SPRING', resp[0]);
+              this.actualizarRequisicionSPRING_DB(req.idrequerimiento, correlativoSPRING);
+
               this.alertService.showAlert(
                 'Éxito',
                 'Requerimiento sincronizado a SPRING correctamente',
@@ -586,6 +601,31 @@ export class AprobacionesComponent {
         'error'
       );
     }
+  }
+
+  actualizarRequisicionSPRING_DB(idrequerimiento: string, requisicion: string) {
+    const payload = [
+      {
+        idrequerimiento,
+        RequisicionNumero: requisicion
+      }
+    ];
+
+     this.requerimientosService.getRegristroRequerimientoSPRING(payload)
+        .subscribe({
+          next: (resp) => {
+            console.log('✅ Respuesta del backend:', resp);
+            const resultado = Array.isArray(resp) ? resp[0] : resp;
+            if (resultado?.errorgeneral === 0) {
+              console.log('✅ Requisición actualizada correctamente en DB', resp[0]);
+            } else {
+              console.error('Detalles del error al actualizar requisición:', resp);
+            }
+          },
+          error: (err) => {
+            console.error('❌ Error HTTP al actualizar requisición:', err);
+          },
+        });
   }
 
   /** ✅ Visualizar detalle del requerimiento */
