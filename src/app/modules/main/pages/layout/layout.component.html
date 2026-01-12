@@ -142,9 +142,17 @@
               <span class="hide-menu"> Aprobacion de comsumo</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')" class="nav-small-cap">
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('APLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Reporte</span>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('APLOGIST')" class="sidebar-item">
+            <a routerLink="./reporte-requerimientos" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-file-check'></i>
+              </span>
+              <span class="hide-menu"> Reporte requerimientos</span>
+            </a>
           </li>
           <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')" class="sidebar-item"
             (click)="toggleSidebar()">

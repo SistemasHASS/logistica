@@ -19,6 +19,7 @@ import { ReporteAprobadosComponent } from './modules/main/pages/reporte/reporte-
 import { ListasStockComponent } from './modules/main/pages/listas-stock/listas-stock.component';
 import { AprobadoresMantenedorComponent } from './modules/main/pages/aprobadores/aprobadores-mantenedor.component';
 import { ConfigGuard } from './modules/auth/guard/config.guard';
+import { ReporteRequerimientos } from './modules/main/pages/reporte-requerimientos/reporte-requerimientos';
 
 export const routes: Routes = [
   {
@@ -57,6 +58,7 @@ export const routes: Routes = [
       { path: 'despachos', component: DespachoComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte_logistico', component: ReporteLogisticoComponent },
       { path: 'reporte-saldos', component: ReporteSaldosComponent, canActivate: [AlmacenGuard] },
+      { path: 'reporte-requerimientos', component: ReporteRequerimientos },
       { path: '**', redirectTo: 'auth/login' }
     ],
     canActivate: [AuthGuard]

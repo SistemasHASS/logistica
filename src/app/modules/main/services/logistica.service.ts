@@ -2,13 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Almacen } from '../model/almacen.model';
+import { environment } from '@/environments/environment';
 
 
 @Injectable({
   providedIn: 'root'
 })
 export class LogisticaService {
-  private apiUrl = 'https://localhost:7140/api/logistica';
+  private apiUrl = environment.baseUrl + '/api/logistica';
 
   constructor(private http: HttpClient) {}
 
@@ -32,5 +33,9 @@ export class LogisticaService {
 
   reporteSemanal(data: any): Observable<any[]> {
     return this.http.post<any[]>(`${this.apiUrl}/reporte-semanal`, data);
+  }
+
+  reporteRequerimientos(data: any): Observable<any[]> {
+    return this.http.post<any[]>(`${this.apiUrl}/generar-reporte-requerimientos`, data);
   }
 }

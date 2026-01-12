@@ -207,12 +207,13 @@ export class LayoutComponent {
       maestros: 'Maestros',
       'maestros/items': 'Maestros',
       'maestros/comodities': 'Maestros',
-      aprobadores: "Aprobadores",
-      parametros: 'Parámetros',
-      requerimientos: 'Requerimientos',
-      aprobaciones: 'Aprobaciones',
-      despachos: 'Despachos',
-      reportes: 'Lista de requerimientos',
+      'aprobadores': "Aprobadores",
+      'parametros': 'Parámetros',
+      'requerimientos': 'Requerimientos',
+      'aprobaciones': 'Aprobaciones',
+      'despachos': 'Despachos',
+      'reportes': 'Lista de requerimientos',
+      'reporte-requerimientos': 'Reporte requerimientos',
     };
 
     this.currentPath = pathMap[currentUrl[currentUrl.length - 1]] || '';
