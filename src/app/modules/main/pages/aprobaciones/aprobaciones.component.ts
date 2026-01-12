@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 import { UtilsService } from '@/app/shared/utils/utils.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
+import { ItemService } from '@/app/modules/main/services/items.service';
 import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import { Usuario } from '@/app/shared/interfaces/Tables';
 import { TableModule } from 'primeng/table';
@@ -48,6 +49,7 @@ export class AprobacionesComponent {
   areas: any[] = [];
   proyectos: any[] = [];
   items: any[] = [];
+  itemsFiltered: any[] = [];
   turnos: any[] = [];
   labores: any[] = [];
   cecos: any[] = [];
@@ -84,7 +86,8 @@ export class AprobacionesComponent {
     private dexieService: DexieService,
     private alertService: AlertService,
     private requerimientosService: RequerimientosService,
-    private maestrasService: MaestrasService
+    private maestrasService: MaestrasService,
+    private ItemService: ItemService,
   ) { }
 
   async ngOnInit() {
@@ -161,6 +164,11 @@ export class AprobacionesComponent {
           await this.ListarItems();
         }
       });
+
+      this.itemsFiltered = await firstValueFrom(
+        this.ItemService.getItem([{}])
+      );
+
 
       const clasificaciones = this.maestrasService.getClasificaciones([{}]);
       clasificaciones.subscribe(async (resp: any) => {
@@ -419,7 +427,7 @@ export class AprobacionesComponent {
     // console.log('🔢 Correlativo generado:', this.correlativoRequerimiento);
     let origenapp = 'app_logistica';
     let comprasAlmacenFlag;
-    if (req.itemtipo === 'TRANSFERENCIA' || req.itemtipo === 'COMSUMO') {
+    if (req.itemtipo === 'TRANSFERENCIA' || req.itemtipo === 'CONSUMO') {
       comprasAlmacenFlag = 'A';
     }
     else { comprasAlmacenFlag = 'C'; }
@@ -441,6 +449,8 @@ export class AprobacionesComponent {
     accountDefault = this.cecos.find(c => c.localname === first.ceco)?.ccontable ?? '10411103';
 
     proyectoAfeDefault = this.proyectos.find(p => p.proyectoio === first.proyecto)?.afe ?? 'FUNDO HP';
+
+    let um = this.itemsFiltered.find(i => i.item === first.codigo)?.unidadCodigo;
 
 
     try {
@@ -484,20 +494,16 @@ export class AprobacionesComponent {
           detalle: req.detalle.map((d: any, index: number) => {
             const ceco = this.cecos.find((c) => c.localname === d.ceco);
             console.log(ceco);
-
-            // 🔐 Blindar distribución
-            // const distribucionArray = Array.isArray(d.distribucion)
-            //   ? d.distribucion
-            //   : [];
+            const item = this.itemsFiltered.find(i => i.item === d.codigo);
 
             return {
               Secuencia: index + 1,
-              // Item: d.codigo,
               TipoDetalle: d.tipoDetalle, // ITEM | COMMODITY | ACTIVOFIJO | ACTIVOFIJOMENOR
               Item: req.tipo === 'ITEM' ? d.codigo : null,
               Commodity: req.tipo !== 'ITEM' ? d.codigo : null,
               Condicion: '0',
-              UnidadCodigo: '',
+              // UnidadCodigo: um,
+              UnidadCodigo: item?.unidadCodigo ?? um, // ✅ CORRECTO
               Descripcion: req.tipo === 'ITEM' ? d.producto : d.descripcion,
               ComprasAlmacenFlag: comprasAlmacenFlag,
               RedefinidoFlag: 'N',
@@ -512,8 +518,8 @@ export class AprobacionesComponent {
               CotizacionProveedor: 0,
               ControlPresupuestalFlag: 'S',
               Comentario: d.descripcion ?? '',
-              // CentroCosto: ceco?.id ?? '',
               CentroCosto: (ceco?.id ?? '').toString(),
+              LoteProduccion: '',
               Estado: 'PE',
               UltimoUsuario: 'MISESF',
               UltimaFechaModif: new Date().toISOString(),

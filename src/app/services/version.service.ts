@@ -1,10 +1,34 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 
+export type UpdateMode = 'AUTO' | 'MANUAL' | 'DISABLED';
+
 @Injectable({ providedIn: 'root' })
 export class VersionService {
 
   private versionUrl = '/assets/version.json'; // 🔍 archivo con versión del servidor
+
+  /** 🔥 NUEVO: configuración */
+  private updateMode: UpdateMode = 'AUTO';
+  private showModal = true;
+
+  /** 🔧 setters */
+  setMode(mode: UpdateMode) {
+    this.updateMode = mode;
+  }
+
+  setShowModal(show: boolean) {
+    this.showModal = show;
+  }
+
+  /** 🔍 getters */
+  getMode(): UpdateMode {
+    return this.updateMode;
+  }
+
+  canShowModal(): boolean {
+    return this.showModal;
+  }
 
   async getServerVersion(): Promise<string | null> {
     try {

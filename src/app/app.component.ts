@@ -15,30 +15,56 @@ import Swal from 'sweetalert2';
 export class AppComponent implements OnInit, OnDestroy {
   title = 'logistica';
   APP_VERSION = environment.appVersion;
+
   private checkInterval: any;
   private readonly CHECK_INTERVAL_MINUTES = 10;
   private lastPromptKey = 'last_update_prompt';
 
-  constructor(private swUpdate: SwUpdate, private versionService: VersionService) {}
+  constructor(private swUpdate: SwUpdate, private versionService: VersionService) { }
 
   ngOnInit() {
-    this.checkVersionFromServer();
-    this.scheduleVersionChecks();
 
-    if (this.swUpdate.isEnabled) {
-      this.swUpdate.versionUpdates.subscribe(event => {
-        if (event.type === 'VERSION_READY') {
-          console.log('Nueva versión detectada por SW');
-          this.askUserToUpdate();
-        }
-      });
+    const mode = this.versionService.getMode();
+
+    /** 💤 SIN EFECTO */
+    if (mode === 'DISABLED') {
+      console.log('🔕 Actualizaciones desactivadas');
+      return;
     }
+
+    /** 🔄 AUTOMÁTICO */
+    if (mode === 'AUTO') {
+      this.checkVersionFromServer();
+      this.scheduleVersionChecks();
+
+      if (this.swUpdate.isEnabled) {
+        this.swUpdate.versionUpdates.subscribe(event => {
+          if (event.type === 'VERSION_READY') {
+            this.handleUpdate();
+          }
+        });
+      }
+    }
+    /** 🔥 MANUAL → no hace nada al iniciar */
+
+    // this.checkVersionFromServer();
+    // this.scheduleVersionChecks();
+
+    // if (this.swUpdate.isEnabled) {
+    //   this.swUpdate.versionUpdates.subscribe(event => {
+    //     if (event.type === 'VERSION_READY') {
+    //       console.log('Nueva versión detectada por SW');
+    //       this.askUserToUpdate();
+    //     }
+    //   });
+    // }
   }
 
   ngOnDestroy() {
     if (this.checkInterval) clearInterval(this.checkInterval);
   }
 
+  /** 🔄 automático */
   scheduleVersionChecks() {
     this.checkInterval = setInterval(() => {
       this.checkVersionFromServer();
@@ -46,18 +72,39 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   async checkVersionFromServer() {
-    const local = this.versionService.getLocalVersion();
+    if (this.versionService.getMode() !== 'AUTO') return;
+    this.handleUpdate();
+    // const remote = await this.versionService.getServerVersion();
+
+    // if (remote && remote !== local) {
+    //   const lastPrompt = localStorage.getItem(this.lastPromptKey);
+    //   const now = Date.now();
+
+    //   // Evita mostrar el modal muchas veces
+    //   if (!lastPrompt || now - parseInt(lastPrompt) > 15 * 60 * 1000) {
+    //     this.askUserToUpdate(remote, local);
+    //     localStorage.setItem(this.lastPromptKey, now.toString());
+    //   }
+    // }
+  }
+
+  /** 🔥 manual */
+  triggerManualUpdate() {
+    if (this.versionService.getMode() !== 'MANUAL') return;
+    this.handleUpdate();
+  }
+
+  /** 🎯 punto único de decisión */
+  async handleUpdate() {
     const remote = await this.versionService.getServerVersion();
+    const local = this.versionService.getLocalVersion();
 
-    if (remote && remote !== local) {
-      const lastPrompt = localStorage.getItem(this.lastPromptKey);
-      const now = Date.now();
+    if (!remote || remote === local) return;
 
-      // Evita mostrar el modal muchas veces
-      if (!lastPrompt || now - parseInt(lastPrompt) > 15 * 60 * 1000) {
-        this.askUserToUpdate(remote, local);
-        localStorage.setItem(this.lastPromptKey, now.toString());
-      }
+    if (this.versionService.canShowModal()) {
+      this.askUserToUpdate(remote, local);
+    } else {
+      await this.clearDexieAndReload();
     }
   }
 
