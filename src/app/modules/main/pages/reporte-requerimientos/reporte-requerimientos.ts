@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { PaginatorModule } from 'primeng/paginator';
 import { TableModule } from 'primeng/table';
 import * as XLSX from 'xlsx-js-style';
 import FileSaver from 'file-saver';
@@ -10,7 +11,7 @@ import { LogisticaService } from '../../services/logistica.service';
 
 @Component({
   selector: 'app-reporte-requerimientos',
-  imports: [CommonModule, FormsModule, TableModule],
+  imports: [CommonModule, FormsModule, TableModule, PaginatorModule],
   templateUrl: './reporte-requerimientos.html',
   styleUrl: './reporte-requerimientos.scss'
 })
@@ -23,6 +24,10 @@ export class ReporteRequerimientos {
   columnas: string[] = [];
   filtro: string = '';
   dataFiltrada: any[] = [];
+
+  // Paginación para cards (vista mobile)
+  cardFirst = 0;
+  cardRows = 10;
 
   empresas: Empresa[] = [];
   fundos: Fundo[] = [];
@@ -92,6 +97,7 @@ export class ReporteRequerimientos {
 
     if (!filtroNormalizado) {
       this.dataFiltrada = this.data;
+      this.cardFirst = 0;
       return;
     }
 
@@ -101,6 +107,20 @@ export class ReporteRequerimientos {
         return valor !== null && valor !== undefined && String(valor).toLowerCase().includes(filtroNormalizado);
       })
     );
+    this.cardFirst = 0;
+  }
+
+  // Nota: tipamos como `any` para evitar incompatibilidades del type-checker
+  // (PrimeNG emite `PaginatorState` con props opcionales según versión)
+  onCardPageChange(event: any) {
+    this.cardFirst = event.first ?? 0;
+    this.cardRows = event.rows ?? this.cardRows;
+  }
+
+  get dataFiltradaPaginada(): any[] {
+    const start = this.cardFirst ?? 0;
+    const rows = this.cardRows ?? 10;
+    return (this.dataFiltrada ?? []).slice(start, start + rows);
   }
 
   exportarExcel() {
@@ -165,6 +185,26 @@ export class ReporteRequerimientos {
     }
 
     return this.mapCellValue(col, row);
+  }
+
+  // Helpers para cards (porque el API puede traer nombres de campos distintos)
+  getUsuarioCard(row: any): string {
+    const value =
+      row?.nrodocumento ??
+      row?.usuario ??
+      row?.user ??
+      row?.dni ??
+      row?.documento ??
+      row?.nroDocumento;
+    return value !== null && value !== undefined ? String(value) : '';
+  }
+
+  getNombreAlmacenCard(row: any, key: 'idalmacen' | 'idalmacendestino' = 'idalmacen'): string {
+    const id =
+      row?.[key] ??
+      row?.[key.toUpperCase()] ??
+      row?.[key === 'idalmacen' ? 'IdAlmacen' : 'IdAlmacenDestino'];
+    return this.getNombreAlmacenPorId(id);
   }
 
   private mapCellValue(col: string, row: any): any {

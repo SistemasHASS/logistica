@@ -73,6 +73,60 @@
               </tr>
             </ng-template>
           </p-table>
+          <!-- Cards (vista responsive). Paginación independiente de la tabla -->
+          @for (item of dataFiltradaPaginada; track $index) {
+            <div class="card cardFor"
+                [ngClass]="{ 'cerrado': item.estado, 'nocerrado': !item.estado }">
+
+              <div class="contentCard">
+                <div class="info" [ngClass]="{ 'eliminadoTR': item.eliminado }">
+
+                  <p class="item-card">
+                    <span
+                      [ngClass]="{
+                        'is-enviado': item.estados == 'APROBADO',
+                        'is-noenviado': item.estados != 'APROBADO'
+                      }">
+                      [{{ item.estados == 'APROBADO' ? 'Enviado' : 'Sin enviar' }}]
+                    </span>
+                  </p>
+
+                  <p class="item-card">
+                    <strong>#Requerimiento:</strong>
+                    {{ item.idrequerimiento }}
+                  </p>
+
+                  <p class="item-card">
+                    <strong>#Requerimiento Spring:</strong>
+                    {{ item.RequisicionNumero }}
+                  </p>
+                  
+                  <p class="item-card">
+                    <strong>Fecha:</strong>
+                    {{ item.fecharegistro | date:'dd/MM/yyyy' }}
+                    - <strong>Almacén:</strong> {{ getNombreAlmacenCard(item, 'idalmacen') }}
+                  </p>
+
+                  <p class="item-card">
+                    <strong>Glosa:</strong>
+                    {{ getDisplayValue('glosa', item) }} - {{ getDisplayValue('tipo', item) }}
+                  </p>
+
+                </div>
+              </div>
+            </div>
+          }
+
+          <p-paginator
+            *ngIf="dataFiltrada.length > 0"
+            [first]="cardFirst"
+            [rows]="cardRows"
+            [totalRecords]="dataFiltrada.length"
+            [rowsPerPageOptions]="[5, 10, 20, 50]"
+            (onPageChange)="onCardPageChange($event)"
+            styleClass="mt-2"
+          ></p-paginator>
+
         </div>
       </div>
     </div>
