@@ -6,7 +6,7 @@ import { TableModule } from 'primeng/table';
 import * as XLSX from 'xlsx-js-style';
 import FileSaver from 'file-saver';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
-import { Almacen, Empresa, Fundo } from '@/app/shared/interfaces/Tables';
+import { Almacen, Empresa, Fundo, Usuario } from '@/app/shared/interfaces/Tables';
 import { LogisticaService } from '../../services/logistica.service';
 
 @Component({
@@ -32,6 +32,21 @@ export class ReporteRequerimientos {
   empresas: Empresa[] = [];
   fundos: Fundo[] = [];
   almacenes: Almacen[] = [];
+  usuario: Usuario = {
+    id: '',
+    sociedad: 0,
+    idempresa: '',
+    ruc: '',
+    razonSocial: '',
+    idProyecto: '',
+    proyecto: '',
+    documentoidentidad: '',
+    usuario: '',
+    clave: '',
+    nombre: '',
+    idrol: '',
+    rol: '',
+  };
 
   constructor(
     private logisticaService: LogisticaService,
@@ -40,6 +55,14 @@ export class ReporteRequerimientos {
 
   async ngOnInit() {
     await this.cargarMaestros();
+    await this.cargarUsuario();
+  }
+
+  async cargarUsuario() {
+    const usuarioGuardado = await this.dexieService.obtenerPrimerUsuario();
+    if (usuarioGuardado) {
+      this.usuario = usuarioGuardado;
+    }
   }
 
   private async cargarMaestros() {
@@ -64,7 +87,7 @@ export class ReporteRequerimientos {
 
   listarReporte() {
     this.logisticaService.reporteRequerimientos([{}]).subscribe((res: any[]) => {
-      this.data = res;
+      this.data = res.filter((item: any) => item.dniregistra === this.usuario?.documentoidentidad);
       console.log(res);
 
       const columnasExcluidas = [
