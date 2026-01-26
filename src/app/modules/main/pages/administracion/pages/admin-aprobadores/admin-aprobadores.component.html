@@ -1,0 +1,99 @@
+<div class="admin-page">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2>Lista de Aprobadores</h2>
+    <button class="btn-primary" (click)="openCreate()">
+      <i class="icon icon-plus"></i> Nuevo Aprobador
+    </button>
+  </div>
+
+  <!-- TABLA -->
+  <div class="table-wrapper">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Usuario</th>
+          <th>Email</th>
+          <th>Flujo</th>
+          <th>Nivel</th>
+          <th>Estado</th>
+          <th style="width: 120px">Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let aprobador of aprobadores; index as i">
+          <td>{{ i + 1 }}</td>
+          <td>{{ aprobador.usuario }}</td>
+          <td>{{ aprobador.email }}</td>
+          <td>{{ aprobador.flujo }}</td>
+          <td>{{ aprobador.nivel }}</td>
+          <td>
+            <span [class.activo]="aprobador.estado === 'ACTIVO'" [class.inactivo]="aprobador.estado === 'INACTIVO'">
+              {{ aprobador.estado }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn btn-sm btn-warning me-2" (click)="openEdit(aprobador)">
+              <i class="icon-pencil"></i>
+            </button>
+          </td>
+        </tr>
+
+        <tr *ngIf="!aprobadores.length">
+          <td colspan="7" class="empty">
+            No hay aprobadores registrados
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal" [class.show]="showModal">
+    <div class="modal-header">
+      <h3>{{ isEdit ? 'Editar Aprobador' : 'Nuevo Aprobador' }}</h3>
+      <button class="close" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" [(ngModel)]="form.usuario" />
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" [(ngModel)]="form.email" />
+      </div>
+
+      <div class="form-group">
+        <label>Flujo</label>
+        <input type="text" [(ngModel)]="form.flujo" />
+      </div>
+
+      <div class="form-group">
+        <label>Nivel de Aprobación</label>
+        <input type="number" [(ngModel)]="form.nivel" min="1" max="10" />
+      </div>
+
+      <div class="form-group">
+        <label>Estado</label>
+        <select [(ngModel)]="form.estado">
+          <option value="ACTIVO">Activo</option>
+          <option value="INACTIVO">Inactivo</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="save()">Guardar</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,331 @@
+<div class="dashboard-compras-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2>Dashboard de Compras</h2>
+      <p class="subtitle">Análisis y métricas del proceso de compras</p>
+    </div>
+    <div class="header-filters">
+      <div class="filter-group">
+        <label>Desde:</label>
+        <input type="date" [(ngModel)]="filtroFechaInicio" class="form-control">
+      </div>
+      <div class="filter-group">
+        <label>Hasta:</label>
+        <input type="date" [(ngModel)]="filtroFechaFin" class="form-control">
+      </div>
+      <button class="btn-primary" (click)="aplicarFiltros()">
+        <i class="icon-filter"></i> Aplicar
+      </button>
+      <button class="btn-secondary" (click)="limpiarFiltros()">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- KPIs PRINCIPALES -->
+  <div class="kpis-principales">
+    <div class="kpi-card primary">
+      <div class="kpi-icon">
+        <i class="icon-shopping-cart"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-value">{{ totalSolicitudes }}</span>
+        <span class="kpi-label">Solicitudes de Compra</span>
+        <span class="kpi-sublabel">{{ formatearMoneda(montoTotalSolicitudes) }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card info">
+      <div class="kpi-icon">
+        <i class="icon-calculator"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-value">{{ totalCotizaciones }}</span>
+        <span class="kpi-label">Cotizaciones</span>
+        <span class="kpi-sublabel">{{ formatearMoneda(montoTotalCotizaciones) }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card success">
+      <div class="kpi-icon">
+        <i class="icon-file-text"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-value">{{ totalOrdenes }}</span>
+        <span class="kpi-label">Órdenes de Compra</span>
+        <span class="kpi-sublabel">{{ formatearMoneda(montoTotalOrdenes) }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card warning">
+      <div class="kpi-icon">
+        <i class="icon-package"></i>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-value">{{ totalRecepciones }}</span>
+        <span class="kpi-label">Recepciones</span>
+        <span class="kpi-sublabel">{{ recepcionesCompletas }} completas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MÉTRICAS DE RENDIMIENTO -->
+  <div class="metricas-rendimiento">
+    <h3>Métricas de Rendimiento</h3>
+    <div class="metricas-grid">
+      <div class="metrica-card">
+        <div class="metrica-header">
+          <span class="metrica-title">Eficiencia de Compras</span>
+          <i class="icon-trending-up"></i>
+        </div>
+        <div class="metrica-value">{{ calcularEficienciaCompras().toFixed(1) }}%</div>
+        <div class="metrica-progress">
+          <div class="progress-bar">
+            <div class="progress-fill success" [style.width.%]="calcularEficienciaCompras()"></div>
+          </div>
+        </div>
+        <span class="metrica-description">Órdenes recibidas vs total</span>
+      </div>
+
+      <div class="metrica-card">
+        <div class="metrica-header">
+          <span class="metrica-title">Tasa de Conformidad</span>
+          <i class="icon-check-circle"></i>
+        </div>
+        <div class="metrica-value">{{ calcularTasaConformidad().toFixed(1) }}%</div>
+        <div class="metrica-progress">
+          <div class="progress-bar">
+            <div class="progress-fill info" [style.width.%]="calcularTasaConformidad()"></div>
+          </div>
+        </div>
+        <span class="metrica-description">Recepciones conformes</span>
+      </div>
+
+      <div class="metrica-card">
+        <div class="metrica-header">
+          <span class="metrica-title">Ahorro Estimado</span>
+          <i class="icon-dollar-sign"></i>
+        </div>
+        <div class="metrica-value">{{ formatearMoneda(calcularAhorro()) }}</div>
+        <div class="metrica-description">Diferencia cotizaciones vs órdenes</div>
+      </div>
+
+      <div class="metrica-card">
+        <div class="metrica-header">
+          <span class="metrica-title">Cotizaciones Activas</span>
+          <i class="icon-activity"></i>
+        </div>
+        <div class="metrica-value">{{ cotizacionesEnEvaluacion }}</div>
+        <div class="metrica-description">En proceso de evaluación</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRÁFICOS Y ANÁLISIS -->
+  <div class="graficos-section">
+    <div class="grafico-card">
+      <h4>Solicitudes por Estado</h4>
+      <div class="chart-container">
+        <div class="bar-chart">
+          <div class="bar-item" *ngFor="let item of solicitudesPorEstado">
+            <div class="bar-wrapper">
+              <div class="bar-fill" 
+                   [style.height.%]="calcularPorcentaje(item.cantidad, totalSolicitudes)"
+                   [ngClass]="obtenerClaseEstado(item.estado)">
+              </div>
+            </div>
+            <span class="bar-value">{{ item.cantidad }}</span>
+            <span class="bar-label">{{ item.estado }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grafico-card">
+      <h4>Órdenes por Estado</h4>
+      <div class="chart-container">
+        <div class="bar-chart">
+          <div class="bar-item" *ngFor="let item of ordenesPorEstado">
+            <div class="bar-wrapper">
+              <div class="bar-fill" 
+                   [style.height.%]="calcularPorcentaje(item.cantidad, totalOrdenes)"
+                   [ngClass]="obtenerClaseEstado(item.estado)">
+              </div>
+            </div>
+            <span class="bar-value">{{ item.cantidad }}</span>
+            <span class="bar-label">{{ item.estado }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DESGLOSE POR ESTADO -->
+  <div class="desglose-section">
+    <div class="desglose-card">
+      <h4>Solicitudes de Compra</h4>
+      <div class="desglose-items">
+        <div class="desglose-item">
+          <span class="badge badge-info">GENERADA</span>
+          <span class="desglose-value">{{ solicitudesGeneradas }}</span>
+        </div>
+        <div class="desglose-item">
+          <span class="badge badge-warning">ENVIADA</span>
+          <span class="desglose-value">{{ solicitudesEnviadas }}</span>
+        </div>
+        <div class="desglose-item">
+          <span class="badge badge-success">APROBADA</span>
+          <span class="desglose-value">{{ solicitudesAprobadas }}</span>
+        </div>
+        <div class="desglose-item">
+          <span class="badge badge-primary">EN COTIZACIÓN</span>
+          <span class="desglose-value">{{ solicitudesEnCotizacion }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="desglose-card">
+      <h4>Cotizaciones</h4>
+      <div class="desglose-items">
+        <div class="desglose-item">
+          <span class="badge badge-info">RECIBIDA</span>
+          <span class="desglose-value">{{ cotizacionesRecibidas }}</span>
+        </div>
+        <div class="desglose-item">
+          <span class="badge badge-warning">EN EVALUACIÓN</span>
+          <span class="desglose-value">{{ cotizacionesEnEvaluacion }}</span>
+        </div>
+        <div class="desglose-item">
+          <span class="badge badge-success">SELECCIONADA</span>
+          <span class="desglose-value">{{ cotizacionesSeleccionadas }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="desglose-card">
+      <h4>Órdenes de Compra</h4>
+      <div class="desglose-items">
+        <div class="desglose-item">
+          <span class="badge badge-info">GENERADA</span>
+          <span class="desglose-value">{{ ordenesGeneradas }}</span>
+        </div>
+        <div class="desglose-item">
+          <span class="badge badge-warning">ENVIADA</span>
+          <span class="desglose-value">{{ ordenesEnviadas }}</span>
+        </div>
+        <div class="desglose-item">
+          <span class="badge badge-primary">CONFIRMADA</span>
+          <span class="desglose-value">{{ ordenesConfirmadas }}</span>
+        </div>
+        <div class="desglose-item">
+          <span class="badge badge-secondary">EN PROCESO</span>
+          <span class="desglose-value">{{ ordenesEnProceso }}</span>
+        </div>
+        <div class="desglose-item">
+          <span class="badge badge-success">RECIBIDAS</span>
+          <span class="desglose-value">{{ ordenesRecibidas }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="desglose-card">
+      <h4>Recepciones</h4>
+      <div class="desglose-items">
+        <div class="desglose-item">
+          <span class="badge badge-warning">PARCIAL</span>
+          <span class="desglose-value">{{ recepcionesParciales }}</span>
+        </div>
+        <div class="desglose-item">
+          <span class="badge badge-success">COMPLETA</span>
+          <span class="desglose-value">{{ recepcionesCompletas }}</span>
+        </div>
+        <div class="desglose-item">
+          <span class="badge badge-success">CONFORME</span>
+          <span class="desglose-value">{{ recepcionesConformes }}</span>
+        </div>
+        <div class="desglose-item">
+          <span class="badge badge-danger">NO CONFORME</span>
+          <span class="desglose-value">{{ recepcionesNoConformes }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP PROVEEDORES -->
+  <div class="top-proveedores-section">
+    <h3>Top 5 Proveedores</h3>
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Proveedor</th>
+            <th>Órdenes</th>
+            <th>Monto Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let prov of topProveedores; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td><strong>{{ prov.nombre }}</strong></td>
+            <td class="text-center">{{ prov.ordenes }}</td>
+            <td class="text-right"><strong>{{ formatearMoneda(prov.monto) }}</strong></td>
+          </tr>
+          <tr *ngIf="topProveedores.length === 0">
+            <td colspan="4" class="text-center">
+              <p class="no-data">No hay datos de proveedores.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ÚLTIMAS ACTIVIDADES -->
+  <div class="actividades-section">
+    <div class="actividad-card">
+      <h4>Últimas Solicitudes</h4>
+      <div class="actividad-list">
+        <div class="actividad-item" *ngFor="let sol of ultimasSolicitudes">
+          <div class="actividad-info">
+            <strong>{{ sol.numeroSolicitud }}</strong>
+            <span class="actividad-fecha">{{ formatearFecha(sol.fecha) }}</span>
+          </div>
+          <span class="badge" [ngClass]="obtenerClaseEstado(sol.estado)">{{ sol.estado }}</span>
+        </div>
+        <p class="no-data" *ngIf="ultimasSolicitudes.length === 0">No hay solicitudes recientes.</p>
+      </div>
+    </div>
+
+    <div class="actividad-card">
+      <h4>Últimas Órdenes</h4>
+      <div class="actividad-list">
+        <div class="actividad-item" *ngFor="let orden of ultimasOrdenes">
+          <div class="actividad-info">
+            <strong>{{ orden.numeroOrden }}</strong>
+            <span class="actividad-fecha">{{ formatearFecha(orden.fecha) }}</span>
+          </div>
+          <span class="badge" [ngClass]="obtenerClaseEstado(orden.estado)">{{ orden.estado }}</span>
+        </div>
+        <p class="no-data" *ngIf="ultimasOrdenes.length === 0">No hay órdenes recientes.</p>
+      </div>
+    </div>
+
+    <div class="actividad-card">
+      <h4>Últimas Recepciones</h4>
+      <div class="actividad-list">
+        <div class="actividad-item" *ngFor="let recep of ultimasRecepciones">
+          <div class="actividad-info">
+            <strong>{{ recep.numeroRecepcion }}</strong>
+            <span class="actividad-fecha">{{ formatearFecha(recep.fecha) }}</span>
+          </div>
+          <span class="badge" [ngClass]="recep.conformidad ? 'badge-success' : 'badge-danger'">
+            {{ recep.conformidad ? 'CONFORME' : 'NO CONFORME' }}
+          </span>
+        </div>
+        <p class="no-data" *ngIf="ultimasRecepciones.length === 0">No hay recepciones recientes.</p>
+      </div>
+    </div>
+  </div>
+</div>

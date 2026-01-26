@@ -1,0 +1,497 @@
+<div class="recepcion-mercaderia-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2>Recepción de Mercadería</h2>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="nuevaRecepcionForm()">
+        <i class="icon-plus"></i> Nueva Recepción
+      </button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-container">
+    <button 
+      class="tab-button" 
+      [class.active]="!mostrarFormulario"
+      (click)="mostrarFormulario = false">
+      <i class="icon-list"></i> Listado de Recepciones
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="mostrarFormulario"
+      (click)="mostrarFormulario = true">
+      <i class="icon-file-text"></i> {{ modoEdicion ? 'Editar' : 'Nueva' }} Recepción
+    </button>
+  </div>
+
+  <!-- CONTADORES -->
+  <div class="stats-cards" *ngIf="!mostrarFormulario">
+    <div class="stat-card warning">
+      <div class="stat-icon"><i class="icon-clock"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalParciales }}</span>
+        <span class="stat-label">Parciales</span>
+      </div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-icon"><i class="icon-check-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalCompletas }}</span>
+        <span class="stat-label">Completas</span>
+      </div>
+    </div>
+    <div class="stat-card info">
+      <div class="stat-icon"><i class="icon-thumbs-up"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalConformes }}</span>
+        <span class="stat-label">Conformes</span>
+      </div>
+    </div>
+    <div class="stat-card danger">
+      <div class="stat-icon"><i class="icon-alert-triangle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalNoConformes }}</span>
+        <span class="stat-label">No Conformes</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTADO DE RECEPCIONES -->
+  <div class="content-section" *ngIf="!mostrarFormulario">
+    <!-- ÓRDENES PENDIENTES -->
+    <div class="ordenes-section" *ngIf="ordenesCompra.length > 0">
+      <h3>Órdenes Pendientes de Recepción</h3>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Número Orden</th>
+              <th>Proveedor</th>
+              <th>Fecha Entrega</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let orden of ordenesCompra; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td><strong>{{ orden.numeroOrden }}</strong></td>
+              <td>
+                <div class="proveedor-info">
+                  <strong>{{ orden.nombreProveedor }}</strong>
+                  <small>RUC: {{ orden.rucProveedor }}</small>
+                </div>
+              </td>
+              <td>{{ formatearFecha(orden.fechaEntrega) }}</td>
+              <td>
+                <span class="badge" [ngClass]="obtenerClaseEstado(orden.estado)">
+                  {{ orden.estado }}
+                </span>
+              </td>
+              <td class="actions">
+                <button 
+                  class="btn btn-sm btn-success" 
+                  (click)="nuevaRecepcionForm(); recepcion.ordenCompraId = orden.id!; onOrdenChange()"
+                  title="Registrar Recepción">
+                  <i class="icon-package"></i> Recibir
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Estado:</label>
+        <select [(ngModel)]="filtroEstado" class="form-control">
+          <option value="TODAS">Todas</option>
+          <option value="PARCIAL">Parcial</option>
+          <option value="COMPLETA">Completa</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Almacén:</label>
+        <input 
+          type="text" 
+          [(ngModel)]="filtroAlmacen" 
+          class="form-control"
+          placeholder="Buscar por almacén...">
+      </div>
+      <div class="filter-group">
+        <label>Fecha Inicio:</label>
+        <input type="date" [(ngModel)]="filtroFechaInicio" class="form-control">
+      </div>
+      <div class="filter-group">
+        <label>Fecha Fin:</label>
+        <input type="date" [(ngModel)]="filtroFechaFin" class="form-control">
+      </div>
+      <button class="btn-secondary" (click)="limpiarFiltros()">
+        <i class="icon-x"></i> Limpiar
+      </button>
+    </div>
+
+    <!-- TABLA DE RECEPCIONES -->
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Número Recepción</th>
+            <th>Fecha</th>
+            <th>Orden Compra</th>
+            <th>Almacén</th>
+            <th>Estado</th>
+            <th>Conformidad</th>
+            <th>Items</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let recep of recepcionesFiltradas(); let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>
+              <strong>{{ recep.numeroRecepcion }}</strong>
+            </td>
+            <td>{{ formatearFecha(recep.fecha) }}</td>
+            <td>{{ recep.numeroOrden }}</td>
+            <td>{{ recep.almacen }}</td>
+            <td>
+              <span class="badge" [ngClass]="obtenerClaseEstado(recep.estado)">
+                {{ recep.estado }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="recep.conformidad ? 'badge-success' : 'badge-danger'">
+                {{ recep.conformidad ? 'CONFORME' : 'NO CONFORME' }}
+              </span>
+            </td>
+            <td class="text-center">{{ recep.detalle.length }}</td>
+            <td class="actions">
+              <button 
+                class="btn btn-sm btn-info me-2" 
+                (click)="verDetalle(recep)"
+                title="Ver Detalle">
+                <i class="icon-eye"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-danger" 
+                (click)="eliminarRecepcion(i)"
+                title="Eliminar">
+                <i class="icon-trash"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="recepcionesFiltradas().length === 0">
+            <td colspan="9" class="text-center">
+              <p class="no-data">No hay recepciones registradas.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FORMULARIO DE RECEPCIÓN -->
+  <div class="content-section" *ngIf="mostrarFormulario">
+    <div class="form-container">
+      <h3>{{ modoEdicion ? 'Editar' : 'Nueva' }} Recepción de Mercadería</h3>
+
+      <!-- INFORMACIÓN GENERAL -->
+      <div class="section-title">Información General</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Número de Recepción:</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="recepcion.numeroRecepcion"
+            [disabled]="true"
+            placeholder="Se generará automáticamente">
+        </div>
+
+        <div class="form-group">
+          <label>Fecha:</label>
+          <input 
+            type="date" 
+            class="form-control" 
+            [(ngModel)]="recepcion.fecha">
+        </div>
+
+        <div class="form-group">
+          <label>Orden de Compra: <span class="required">*</span></label>
+          <select 
+            [(ngModel)]="recepcion.ordenCompraId" 
+            (change)="onOrdenChange()"
+            class="form-control"
+            [disabled]="modoEdicion">
+            <option value="">Seleccione...</option>
+            <option *ngFor="let orden of ordenesCompra" [value]="orden.id">
+              {{ orden.numeroOrden }} - {{ orden.nombreProveedor }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Almacén: <span class="required">*</span></label>
+          <select [(ngModel)]="recepcion.almacen" class="form-control">
+            <option value="">Seleccione...</option>
+            <option *ngFor="let alm of almacenes" [value]="alm.almacen">
+              {{ alm.almacen }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group full-width" *ngIf="ordenSeleccionada">
+          <div class="orden-info">
+            <h4>Información de la Orden</h4>
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Proveedor:</label>
+                <span>{{ ordenSeleccionada.nombreProveedor }}</span>
+              </div>
+              <div class="info-item">
+                <label>RUC:</label>
+                <span>{{ ordenSeleccionada.rucProveedor }}</span>
+              </div>
+              <div class="info-item">
+                <label>Fecha Entrega:</label>
+                <span>{{ formatearFecha(ordenSeleccionada.fechaEntrega) }}</span>
+              </div>
+              <div class="info-item">
+                <label>Estado:</label>
+                <span class="badge" [ngClass]="obtenerClaseEstado(ordenSeleccionada.estado)">
+                  {{ ordenSeleccionada.estado }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Observaciones:</label>
+          <textarea 
+            [(ngModel)]="recepcion.observaciones" 
+            class="form-control" 
+            rows="3"
+            placeholder="Ingrese observaciones sobre la recepción..."></textarea>
+        </div>
+      </div>
+
+      <!-- DETALLE DE ITEMS -->
+      <div class="detalle-section">
+        <div class="section-header">
+          <h4>Detalle de Items a Recibir</h4>
+          <div class="conformidad-indicator">
+            <span class="badge" [ngClass]="recepcion.conformidad ? 'badge-success' : 'badge-danger'">
+              {{ recepcion.conformidad ? 'CONFORME' : 'NO CONFORME' }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Ordenada</th>
+                <th>Recibida <span class="required">*</span></th>
+                <th>Aceptada <span class="required">*</span></th>
+                <th>Rechazada</th>
+                <th>Lote</th>
+                <th>F. Venc.</th>
+                <th>Estado</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let det of detalleRecepcion; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ det.codigo }}</td>
+                <td>{{ det.descripcion }}</td>
+                <td class="text-right">{{ det.cantidadOrdenada }}</td>
+                <td>
+                  <input 
+                    type="number" 
+                    class="form-control input-sm" 
+                    [(ngModel)]="det.cantidadRecibida"
+                    (ngModelChange)="actualizarCantidades(det)"
+                    min="0"
+                    [max]="det.cantidadOrdenada"
+                    step="0.01">
+                </td>
+                <td>
+                  <input 
+                    type="number" 
+                    class="form-control input-sm" 
+                    [(ngModel)]="det.cantidadAceptada"
+                    (ngModelChange)="actualizarCantidades(det)"
+                    min="0"
+                    [max]="det.cantidadRecibida"
+                    step="0.01">
+                </td>
+                <td>
+                  <input 
+                    type="number" 
+                    class="form-control input-sm" 
+                    [(ngModel)]="det.cantidadRechazada"
+                    (ngModelChange)="actualizarCantidades(det)"
+                    min="0"
+                    [max]="det.cantidadRecibida"
+                    step="0.01">
+                </td>
+                <td>
+                  <input 
+                    type="text" 
+                    class="form-control input-sm" 
+                    [(ngModel)]="det.lote"
+                    placeholder="Lote">
+                </td>
+                <td>
+                  <input 
+                    type="date" 
+                    class="form-control input-sm" 
+                    [(ngModel)]="det.fechaVencimiento">
+                </td>
+                <td>
+                  <span class="badge badge-sm" [ngClass]="obtenerClaseEstado(det.estado)">
+                    {{ det.estado }}
+                  </span>
+                </td>
+                <td>
+                  <input 
+                    type="text" 
+                    class="form-control input-sm" 
+                    [(ngModel)]="det.observaciones"
+                    placeholder="Observaciones">
+                </td>
+              </tr>
+              <tr *ngIf="detalleRecepcion.length === 0">
+                <td colspan="11" class="text-center">
+                  <p class="no-data">Seleccione una orden de compra para cargar los items.</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BOTONES -->
+      <div class="form-actions">
+        <button class="btn-secondary" (click)="cancelarFormulario()">
+          <i class="icon-x"></i> Cancelar
+        </button>
+        <button class="btn-primary" (click)="guardarRecepcion()">
+          <i class="icon-save"></i> Guardar Recepción
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE RECEPCIÓN -->
+<div class="modal-overlay" *ngIf="modalDetalleRecepcionAbierto" (click)="cerrarModalDetalleRecepcion()">
+  <div class="modal-content large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Detalle de Recepción: {{ recepcionDetalle?.numeroRecepcion }}</h3>
+      <button class="btn-close" (click)="cerrarModalDetalleRecepcion()">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="recepcionDetalle">
+      <!-- INFO GENERAL -->
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Fecha:</label>
+          <span>{{ formatearFecha(recepcionDetalle.fecha) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Orden Compra:</label>
+          <span>{{ recepcionDetalle.numeroOrden }}</span>
+        </div>
+        <div class="info-item">
+          <label>Almacén:</label>
+          <span>{{ recepcionDetalle.almacen }}</span>
+        </div>
+        <div class="info-item">
+          <label>Estado:</label>
+          <span class="badge" [ngClass]="obtenerClaseEstado(recepcionDetalle.estado)">
+            {{ recepcionDetalle.estado }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Conformidad:</label>
+          <span class="badge" [ngClass]="recepcionDetalle.conformidad ? 'badge-success' : 'badge-danger'">
+            {{ recepcionDetalle.conformidad ? 'CONFORME' : 'NO CONFORME' }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Usuario Recibe:</label>
+          <span>{{ recepcionDetalle.usuarioRecibe }}</span>
+        </div>
+        <div class="info-item">
+          <label>Total Aceptado:</label>
+          <span class="highlight-success">{{ calcularTotalAceptado(recepcionDetalle) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Total Rechazado:</label>
+          <span class="highlight-danger">{{ calcularTotalRechazado(recepcionDetalle) }}</span>
+        </div>
+        <div class="info-item full-width" *ngIf="recepcionDetalle.observaciones">
+          <label>Observaciones:</label>
+          <span>{{ recepcionDetalle.observaciones }}</span>
+        </div>
+      </div>
+
+      <!-- DETALLE -->
+      <h4>Items Recibidos</h4>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Ordenada</th>
+              <th>Recibida</th>
+              <th>Aceptada</th>
+              <th>Rechazada</th>
+              <th>Lote</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let det of recepcionDetalle.detalle; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>{{ det.codigo }}</td>
+              <td>{{ det.descripcion }}</td>
+              <td class="text-right">{{ det.cantidadOrdenada }}</td>
+              <td class="text-right">{{ det.cantidadRecibida }}</td>
+              <td class="text-right highlight-success">{{ det.cantidadAceptada }}</td>
+              <td class="text-right highlight-danger">{{ det.cantidadRechazada }}</td>
+              <td>{{ det.lote || '-' }}</td>
+              <td>
+                <span class="badge" [ngClass]="obtenerClaseEstado(det.estado)">
+                  {{ det.estado }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalDetalleRecepcion()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>

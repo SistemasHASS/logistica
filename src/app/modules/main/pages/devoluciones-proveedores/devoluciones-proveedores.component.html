@@ -1,0 +1,477 @@
+<div class="devoluciones-proveedores-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2>Devoluciones a Proveedores</h2>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-container">
+    <button 
+      class="tab-button" 
+      [class.active]="tabActiva === 'recepciones'"
+      (click)="tabActiva = 'recepciones'; mostrarFormulario = false">
+      <i class="icon-alert-triangle"></i> Recepciones No Conformes
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="tabActiva === 'devoluciones'"
+      (click)="tabActiva = 'devoluciones'; mostrarFormulario = false">
+      <i class="icon-rotate-ccw"></i> Devoluciones Registradas
+    </button>
+  </div>
+
+  <!-- CONTADORES -->
+  <div class="stats-cards" *ngIf="!mostrarFormulario">
+    <div class="stat-card warning">
+      <div class="stat-icon"><i class="icon-alert-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ recepcionesNoConformes.length }}</span>
+        <span class="stat-label">Recepciones No Conformes</span>
+      </div>
+    </div>
+    <div class="stat-card info">
+      <div class="stat-icon"><i class="icon-rotate-ccw"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalDevoluciones }}</span>
+        <span class="stat-label">Total Devoluciones</span>
+      </div>
+    </div>
+    <div class="stat-card primary">
+      <div class="stat-icon"><i class="icon-clock"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ devolucionesRegistradas }}</span>
+        <span class="stat-label">Pendientes</span>
+      </div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-icon"><i class="icon-check-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ devolucionesResueltas }}</span>
+        <span class="stat-label">Resueltas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: RECEPCIONES NO CONFORMES -->
+  <div class="content-section" *ngIf="tabActiva === 'recepciones' && !mostrarFormulario">
+    <h3>Recepciones con Productos No Conformes</h3>
+    <p class="subtitle">Estas recepciones tienen productos rechazados que pueden ser devueltos al proveedor.</p>
+
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Número Recepción</th>
+            <th>Orden Compra</th>
+            <th>Fecha</th>
+            <th>Almacén</th>
+            <th>Items Rechazados</th>
+            <th>Total Rechazado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let recep of recepcionesNoConformes; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td><strong>{{ recep.numeroRecepcion }}</strong></td>
+            <td>{{ recep.numeroOrden }}</td>
+            <td>{{ formatearFecha(recep.fecha) }}</td>
+            <td>{{ recep.almacen }}</td>
+            <td class="text-center">
+              {{ contarItemsRechazados(recep) }}
+            </td>
+            <td class="text-center text-danger">
+              <strong>{{ calcularTotalRechazado(recep) }}</strong>
+            </td>
+            <td class="actions">
+              <button 
+                class="btn btn-sm btn-warning" 
+                (click)="generarDevolucionDesdeRecepcion(recep)"
+                title="Generar Devolución">
+                <i class="icon-rotate-ccw"></i> Devolver
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="recepcionesNoConformes.length === 0">
+            <td colspan="8" class="text-center">
+              <p class="no-data">No hay recepciones no conformes pendientes de devolución.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: DEVOLUCIONES REGISTRADAS -->
+  <div class="content-section" *ngIf="tabActiva === 'devoluciones' && !mostrarFormulario">
+    <!-- FILTROS -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Estado:</label>
+        <select [(ngModel)]="filtroEstado" class="form-control">
+          <option value="TODOS">Todos</option>
+          <option value="REGISTRADA">Registrada</option>
+          <option value="ENVIADA">Enviada</option>
+          <option value="CONFIRMADA">Confirmada</option>
+          <option value="RESUELTA">Resuelta</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Fecha Inicio:</label>
+        <input type="date" [(ngModel)]="filtroFechaInicio" class="form-control">
+      </div>
+      <div class="filter-group">
+        <label>Fecha Fin:</label>
+        <input type="date" [(ngModel)]="filtroFechaFin" class="form-control">
+      </div>
+      <button class="btn-secondary" (click)="limpiarFiltros()">
+        <i class="icon-x"></i> Limpiar
+      </button>
+    </div>
+
+    <!-- TABLA DE DEVOLUCIONES -->
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Número</th>
+            <th>Fecha</th>
+            <th>Proveedor</th>
+            <th>Orden Compra</th>
+            <th>Tipo</th>
+            <th>Monto</th>
+            <th>Estado</th>
+            <th>Resolución</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let dev of devolucionesFiltradas(); let i = index">
+            <td>{{ i + 1 }}</td>
+            <td><strong>{{ dev.numeroDevolucion }}</strong></td>
+            <td>{{ formatearFecha(dev.fecha) }}</td>
+            <td>{{ dev.nombreProveedor }}</td>
+            <td>{{ dev.numeroOrden }}</td>
+            <td>
+              <span class="badge" [ngClass]="dev.tipoDevolucion === 'TOTAL' ? 'badge-danger' : 'badge-warning'">
+                {{ dev.tipoDevolucion }}
+              </span>
+            </td>
+            <td class="text-right"><strong>{{ formatearMoneda(dev.montoTotal) }}</strong></td>
+            <td>
+              <span class="badge" [ngClass]="obtenerClaseEstado(dev.estado)">
+                {{ dev.estado }}
+              </span>
+            </td>
+            <td>
+              <span *ngIf="dev.resolucion" class="badge" [ngClass]="obtenerClaseResolucion(dev.resolucion)">
+                {{ obtenerEtiquetaResolucion(dev.resolucion) }}
+              </span>
+              <span *ngIf="!dev.resolucion">-</span>
+            </td>
+            <td class="actions">
+              <button 
+                class="btn btn-sm btn-info me-2" 
+                (click)="verDetalle(dev)"
+                title="Ver Detalle">
+                <i class="icon-eye"></i>
+              </button>
+              <button 
+                *ngIf="dev.estado === 'REGISTRADA'"
+                class="btn btn-sm btn-warning me-2" 
+                (click)="cambiarEstado(dev, 'ENVIADA')"
+                title="Marcar como Enviada">
+                <i class="icon-send"></i>
+              </button>
+              <button 
+                *ngIf="dev.estado === 'ENVIADA'"
+                class="btn btn-sm btn-primary me-2" 
+                (click)="cambiarEstado(dev, 'CONFIRMADA')"
+                title="Confirmar Recepción">
+                <i class="icon-check"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="devolucionesFiltradas().length === 0">
+            <td colspan="10" class="text-center">
+              <p class="no-data">No hay devoluciones registradas.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FORMULARIO DE DEVOLUCIÓN -->
+  <div class="content-section" *ngIf="mostrarFormulario">
+    <div class="form-container">
+      <h3>Nueva Devolución a Proveedor</h3>
+
+      <div class="info-proveedor">
+        <div class="info-item">
+          <label>Proveedor:</label>
+          <span><strong>{{ devolucion.nombreProveedor }}</strong></span>
+        </div>
+        <div class="info-item">
+          <label>RUC:</label>
+          <span>{{ devolucion.rucProveedor }}</span>
+        </div>
+        <div class="info-item">
+          <label>Orden de Compra:</label>
+          <span><strong>{{ devolucion.numeroOrden }}</strong></span>
+        </div>
+        <div class="info-item">
+          <label>Recepción:</label>
+          <span>{{ devolucion.numeroRecepcion }}</span>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Número Devolución:</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="devolucion.numeroDevolucion"
+            readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Fecha:</label>
+          <input 
+            type="date" 
+            class="form-control" 
+            [(ngModel)]="devolucion.fecha">
+        </div>
+
+        <div class="form-group">
+          <label>Tipo de Devolución:</label>
+          <select [(ngModel)]="devolucion.tipoDevolucion" class="form-control">
+            <option *ngFor="let tipo of tiposDevolucion" [value]="tipo">
+              {{ tipo }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Motivo de Devolución: <span class="required">*</span></label>
+          <textarea 
+            [(ngModel)]="devolucion.motivo" 
+            class="form-control" 
+            rows="3"
+            placeholder="Describa el motivo de la devolución..."></textarea>
+        </div>
+      </div>
+
+      <!-- DETALLE DE ITEMS -->
+      <h4>Items a Devolver</h4>
+      <div class="table-wrapper">
+        <table class="table detalle-table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Cant. Recibida</th>
+              <th>Cant. Devuelta</th>
+              <th>Precio Unit.</th>
+              <th>Subtotal</th>
+              <th>Motivo</th>
+              <th>Lote</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of devolucion.detalle">
+              <td><strong>{{ item.codigo }}</strong></td>
+              <td>{{ item.descripcion }}</td>
+              <td class="text-center">{{ item.cantidadRecibida }}</td>
+              <td class="text-center">
+                <input 
+                  type="number" 
+                  class="form-control input-sm text-center" 
+                  [(ngModel)]="item.cantidadDevuelta"
+                  (ngModelChange)="actualizarSubtotal(item)"
+                  [max]="item.cantidadRecibida"
+                  min="0">
+              </td>
+              <td class="text-right">{{ formatearMoneda(item.precioUnitario) }}</td>
+              <td class="text-right"><strong>{{ formatearMoneda(item.subtotal) }}</strong></td>
+              <td>
+                <input 
+                  type="text" 
+                  class="form-control input-sm" 
+                  [(ngModel)]="item.motivoDetalle"
+                  placeholder="Motivo...">
+              </td>
+              <td>{{ item.lote || '-' }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5" class="text-right"><strong>TOTAL:</strong></td>
+              <td class="text-right"><strong>{{ formatearMoneda(devolucion.montoTotal) }}</strong></td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="form-group full-width">
+        <label>Observaciones:</label>
+        <textarea 
+          [(ngModel)]="devolucion.observaciones" 
+          class="form-control" 
+          rows="3"
+          placeholder="Observaciones adicionales..."></textarea>
+      </div>
+
+      <!-- BOTONES -->
+      <div class="form-actions">
+        <button class="btn-secondary" (click)="cancelarFormulario()">
+          <i class="icon-x"></i> Cancelar
+        </button>
+        <button class="btn-primary" (click)="guardarDevolucion()">
+          <i class="icon-save"></i> Registrar Devolución
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE DEVOLUCIÓN -->
+<div class="modal-overlay" *ngIf="modalDetalleAbierto" (click)="cerrarModalDetalle()">
+  <div class="modal-content large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Detalle de Devolución: {{ devolucionDetalle?.numeroDevolucion }}</h3>
+      <button class="btn-close" (click)="cerrarModalDetalle()">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="devolucionDetalle">
+      <!-- INFO GENERAL -->
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Número:</label>
+          <span><strong>{{ devolucionDetalle.numeroDevolucion }}</strong></span>
+        </div>
+        <div class="info-item">
+          <label>Fecha:</label>
+          <span>{{ formatearFecha(devolucionDetalle.fecha) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Proveedor:</label>
+          <span><strong>{{ devolucionDetalle.nombreProveedor }}</strong></span>
+        </div>
+        <div class="info-item">
+          <label>RUC:</label>
+          <span>{{ devolucionDetalle.rucProveedor }}</span>
+        </div>
+        <div class="info-item">
+          <label>Orden Compra:</label>
+          <span>{{ devolucionDetalle.numeroOrden }}</span>
+        </div>
+        <div class="info-item">
+          <label>Recepción:</label>
+          <span>{{ devolucionDetalle.numeroRecepcion }}</span>
+        </div>
+        <div class="info-item">
+          <label>Tipo:</label>
+          <span class="badge" [ngClass]="devolucionDetalle.tipoDevolucion === 'TOTAL' ? 'badge-danger' : 'badge-warning'">
+            {{ devolucionDetalle.tipoDevolucion }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Estado:</label>
+          <span class="badge" [ngClass]="obtenerClaseEstado(devolucionDetalle.estado)">
+            {{ devolucionDetalle.estado }}
+          </span>
+        </div>
+        <div class="info-item full-width">
+          <label>Motivo:</label>
+          <span>{{ devolucionDetalle.motivo }}</span>
+        </div>
+        <div class="info-item" *ngIf="devolucionDetalle.resolucion">
+          <label>Resolución:</label>
+          <span class="badge" [ngClass]="obtenerClaseResolucion(devolucionDetalle.resolucion)">
+            {{ obtenerEtiquetaResolucion(devolucionDetalle.resolucion) }}
+          </span>
+        </div>
+        <div class="info-item" *ngIf="devolucionDetalle.fechaResolucion">
+          <label>Fecha Resolución:</label>
+          <span>{{ formatearFecha(devolucionDetalle.fechaResolucion) }}</span>
+        </div>
+      </div>
+
+      <!-- DETALLE DE ITEMS -->
+      <h4>Items Devueltos</h4>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Cantidad</th>
+              <th>Precio Unit.</th>
+              <th>Subtotal</th>
+              <th>Motivo</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of devolucionDetalle.detalle">
+              <td><strong>{{ item.codigo }}</strong></td>
+              <td>{{ item.descripcion }}</td>
+              <td class="text-center">{{ item.cantidadDevuelta }}</td>
+              <td class="text-right">{{ formatearMoneda(item.precioUnitario) }}</td>
+              <td class="text-right"><strong>{{ formatearMoneda(item.subtotal) }}</strong></td>
+              <td>{{ item.motivoDetalle }}</td>
+              <td>
+                <span class="badge" [ngClass]="item.estado === 'REEMPLAZADO' ? 'badge-success' : item.estado === 'ACREDITADO' ? 'badge-info' : 'badge-warning'">
+                  {{ item.estado }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4" class="text-right"><strong>TOTAL:</strong></td>
+              <td class="text-right"><strong>{{ formatearMoneda(devolucionDetalle.montoTotal) }}</strong></td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- ACCIONES DE RESOLUCIÓN -->
+      <div class="resolucion-section" *ngIf="devolucionDetalle.estado === 'CONFIRMADA'">
+        <h4>Resolver Devolución</h4>
+        <p>Seleccione cómo se resolvió la devolución:</p>
+        <div class="resolucion-buttons">
+          <button 
+            class="btn-success" 
+            (click)="resolverDevolucion(devolucionDetalle, 'REEMPLAZO')">
+            <i class="icon-refresh-cw"></i> Reemplazo de Productos
+          </button>
+          <button 
+            class="btn-info" 
+            (click)="resolverDevolucion(devolucionDetalle, 'NOTA_CREDITO')">
+            <i class="icon-file-text"></i> Nota de Crédito
+          </button>
+          <button 
+            class="btn-warning" 
+            (click)="resolverDevolucion(devolucionDetalle, 'DEVOLUCION_DINERO')">
+            <i class="icon-dollar-sign"></i> Devolución de Dinero
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalDetalle()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>

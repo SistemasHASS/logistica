@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import {
   Usuario, Configuracion, Empresa, Fundo, Almacen, AlmacenDestino, Area, Proyecto, ItemComodity, Clasificacion, Cultivo, Acopio, Ceco, Labor, Turno, DetalleRequerimiento, Requerimiento, Item, Comodity, SubClasificacion, Proveedor, TipoGasto, ActivoFijo,
   DetalleRequerimientoActivoFijo, DetalleRequerimientoCommodity, RequerimientoCommodity, RequerimientoActivoFijo, RequerimientoActivoFijoMenor, DetalleRequerimientoActivoFijoMenor, MaestroItem, MaestroCommodity, MaestroSubCommodity,
-  DetalleListaStock, ListaStock, MovimientoStock, SolicitudCompra, DetalleSolicitudCompra, OrdenCompra, DetalleCotizacion, Cotizacion, Stock, DetalleOrdenCompra, Despacho, DetalleDespacho
+  DetalleListaStock, ListaStock, MovimientoStock, SolicitudCompra, DetalleSolicitudCompra, OrdenCompra, DetalleCotizacion, Cotizacion, Stock, DetalleOrdenCompra, Despacho, DetalleDespacho,
+  RecepcionOrdenCompra, DetalleRecepcion, DevolucionProveedor, DetalleDevolucion, EvaluacionProveedor, CriterioEvaluacionProveedor
 } from '../interfaces/Tables'
 import Dexie from 'dexie';
 
@@ -33,7 +34,7 @@ export class DexieService extends Dexie {
   public items!: Dexie.Table<Item, string>
   public comodities!: Dexie.Table<Comodity, string>
   public subClasificaciones!: Dexie.Table<SubClasificacion, string>
-  public proveedores!: Dexie.Table<Proveedor, string>
+  public proveedores!: Dexie.Table<Proveedor, number>
   public tipoGastos!: Dexie.Table<TipoGasto, string>
   public commoditys!: Dexie.Table<Comodity, string>
   public activosFijos!: Dexie.Table<ActivoFijo, string>
@@ -56,13 +57,19 @@ export class DexieService extends Dexie {
   public detalleListaStock!: Dexie.Table<DetalleListaStock, number>;
   public despachos!: Dexie.Table<Despacho, number>;
   public detalleDespachos!: Dexie.Table<DetalleDespacho, number>;
+  public recepcionesOrdenCompra!: Dexie.Table<RecepcionOrdenCompra, number>;
+  public detalleRecepciones!: Dexie.Table<DetalleRecepcion, number>;
+  public devolucionesProveedor!: Dexie.Table<DevolucionProveedor, number>;
+  public detalleDevoluciones!: Dexie.Table<DetalleDevolucion, number>;
+  public evaluacionesProveedor!: Dexie.Table<EvaluacionProveedor, number>;
+  public criteriosEvaluacion!: Dexie.Table<CriterioEvaluacionProveedor, number>;
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 23; // ⬅️ cambia este número cuando modifiques el esquema
+  private static readonly DB_VERSION = 27; // Agregadas tablas para Recepciones, Devoluciones y Evaluaciones
 
   constructor() {
     super(DexieService.DB_NAME);
-    console.log('🔄 Inicializando DexieService (IndexedDB)');
+    console.log(' Inicializando DexieService (IndexedDB)');
     // super('Logistica');
     // console.log('DexieService Constructor - Base de datos inicializada');
     try {
@@ -76,7 +83,7 @@ export class DexieService extends Dexie {
         almacenes: `id,idalmacen,almacen`,
         almacenesDestino: `id,idalmacen,almacen`,
         areas: `id,ruc,descripcion,estado`,
-        proyectos: `id,ruc,afe,proyecto,esinverison,estado`,
+        proyectos: `[afe+ceco+idlabor],ruc,afe,ceco,idlabor,proyecto,esinverison,estado`,
         cultivos: `id,cultivo,codigo,descripcion,empresa`,
         turnos: `id,turno,codTurno,nombreTurno,idcultivo,idproyecto,conturno,estado`,
         acopios: `id,nave,codigoAcopio,acopio`,
@@ -95,9 +102,9 @@ export class DexieService extends Dexie {
         activosFijos: `id,codigo,descripcion,codigoInterno,ubicacion,ceco,localName,tipoActivo,Estado`,
         detallesActivoFijo: `++id,idrequerimiento,codigo,cantidad,proyecto,ceco,turno,labor`,
         detallesCommodity: `++id,idrequerimiento,codigo,cantidad,proyecto,ceco,turno,labor`,
-        requerimientosCommodity: `++id,idrequerimiento,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalleCommodity`,
-        requerimientosActivoFijo: `++id,idrequerimiento,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalleActivoFijo`,
-        requerimientosActivoFijoMenor: `++id,idrequerimiento,fecha,idfundo,idarea,idalmacen,estados,tipo,idproyecto,glosa,detalleActivoFijoMenor`,
+        requerimientosCommodity: `++id,idrequerimiento,fecha,idfundo,idarea,idalmacen,estados,estado,tipo,idproyecto,glosa,detalleCommodity`,
+        requerimientosActivoFijo: `++id,idrequerimiento,fecha,idfundo,idarea,idalmacen,estados,estado,tipo,idproyecto,glosa,detalleActivoFijo`,
+        requerimientosActivoFijoMenor: `++id,idrequerimiento,fecha,idfundo,idarea,idalmacen,estados,estado,tipo,idproyecto,glosa,detalleActivoFijoMenor`,
         detallesActivoFijoMenor: `++id,idrequerimiento,codigo,cantidad,proyecto,ceco,turno,labor`,
         maestroCommoditys: `id,commodity01,commodity02,commodity,clasificacion,descripcionLocal,descripcionIngles,
         unidadporDefecto,cuentaContableGasto,elementoGasto,clasificacionActivo,estado,ultimoUsuario,
@@ -127,6 +134,13 @@ export class DexieService extends Dexie {
         detalleListaStock: `++id,listaStockId,codigo,descripcion,stockActual,estado`,
         despachos: `++id,numeroDespacho,fecha,estado,usuarioSolicita,almacen,tipo`,
         detalleDespachos: `++id,despachoId,codigo,descripcion,cantidad,estado`,
+        // ✅ TABLAS PARA RECEPCIÓN, DEVOLUCIONES Y EVALUACIÓN
+        recepcionesOrdenCompra: `++id,numeroRecepcion,ordenCompraId,numeroOrden,fecha,almacen,estado,conformidad`,
+        detalleRecepciones: `++id,recepcionId,detalleOrdenCompraId,codigo,descripcion,estado`,
+        devolucionesProveedor: `++id,numeroDevolucion,recepcionId,ordenCompraId,proveedor,fecha,estado,tipoDevolucion`,
+        detalleDevoluciones: `++id,devolucionId,codigo,descripcion,cantidadDevuelta,estado`,
+        evaluacionesProveedor: `++id,proveedor,periodo,fechaEvaluacion,calificacionTotal,nivel,estado`,
+        criteriosEvaluacion: `++id,evaluacionId,criterio,calificacion,peso`,
       });
 
       this.usuario = this.table('usuario');
@@ -174,6 +188,12 @@ export class DexieService extends Dexie {
       this.detalleListaStock = this.table('detalleListaStock');
       this.despachos = this.table('despachos');
       this.detalleDespachos = this.table('detalleDespachos');
+      this.recepcionesOrdenCompra = this.table('recepcionesOrdenCompra');
+      this.detalleRecepciones = this.table('detalleRecepciones');
+      this.devolucionesProveedor = this.table('devolucionesProveedor');
+      this.detalleDevoluciones = this.table('detalleDevoluciones');
+      this.evaluacionesProveedor = this.table('evaluacionesProveedor');
+      this.criteriosEvaluacion = this.table('criteriosEvaluacion');
 
       // 🔧 Manejo automático de errores por versión o corrupción
       this.open().catch(async (err) => {
@@ -204,6 +224,7 @@ export class DexieService extends Dexie {
   //Usuarios
   async saveUsuario(usuario: Usuario) { await this.usuario.put(usuario); }
   async showUsuario() { return await this.usuario.toCollection().first() }
+  async obtenerPrimerUsuario() { return await this.usuario.toCollection().first(); }
   async clearUsuario() { await this.usuario.clear(); }
   async getUsuarioLogueado() { return await this.usuario.toArray().then(res => res[0]); }
   //Fundos
@@ -317,6 +338,7 @@ export class DexieService extends Dexie {
   async saveDetalleRequerimiento(detalle: DetalleRequerimiento) { await this.detalles.put(detalle); }
   async saveDetallesRequerimientos(detalles: DetalleRequerimiento[]) { await this.detalles.bulkPut(detalles); }
   async showDetallesRequerimiento() { return await this.detalles.toArray(); }
+  async showDetallesByRequerimiento(idrequerimiento: string) { return await this.detalles.where('idrequerimiento').equals(idrequerimiento).toArray(); }
   async deleteDetalleRequerimiento(id: number) { return await this.detalles.where('id').equals(id).delete(); }
   async clearDetallesRequerimiento() { await this.detalles.clear(); }
   // ---------------- Requerimiento ----------------
@@ -588,4 +610,40 @@ export class DexieService extends Dexie {
       }
     );
   }
+  //--------------------- Recepciones de Orden de Compra ---------------------
+  async saveRecepcionOrdenCompra(recepcion: RecepcionOrdenCompra) { return await this.recepcionesOrdenCompra.put(recepcion); }
+  async showRecepcionesOrdenCompra() { return await this.recepcionesOrdenCompra.toArray(); }
+  async showRecepcionOrdenCompraById(id: number) { return await this.recepcionesOrdenCompra.where('id').equals(id).first(); }
+  async showRecepcionesByOrdenCompra(ordenCompraId: number) { return await this.recepcionesOrdenCompra.where('ordenCompraId').equals(ordenCompraId).toArray(); }
+  async clearRecepcionesOrdenCompra() { await this.recepcionesOrdenCompra.clear(); }
+  //--------------------- Detalle de Recepciones ---------------------
+  async saveDetalleRecepcion(detalle: DetalleRecepcion) { return await this.detalleRecepciones.put(detalle); }
+  async showDetalleRecepciones() { return await this.detalleRecepciones.toArray(); }
+  async showDetalleRecepcionById(id: number) { return await this.detalleRecepciones.where('id').equals(id).first(); }
+  async showDetalleRecepcionesByRecepcion(recepcionId: number) { return await this.detalleRecepciones.where('recepcionId').equals(recepcionId).toArray(); }
+  async clearDetalleRecepciones() { await this.detalleRecepciones.clear(); }
+  //--------------------- Devoluciones a Proveedores ---------------------
+  async saveDevolucionProveedor(devolucion: DevolucionProveedor) { return await this.devolucionesProveedor.put(devolucion); }
+  async showDevolucionesProveedor() { return await this.devolucionesProveedor.toArray(); }
+  async showDevolucionProveedorById(id: number) { return await this.devolucionesProveedor.where('id').equals(id).first(); }
+  async showDevolucionesByProveedor(proveedor: string) { return await this.devolucionesProveedor.where('proveedor').equals(proveedor).toArray(); }
+  async clearDevolucionesProveedor() { await this.devolucionesProveedor.clear(); }
+  //--------------------- Detalle de Devoluciones ---------------------
+  async saveDetalleDevolucion(detalle: DetalleDevolucion) { return await this.detalleDevoluciones.put(detalle); }
+  async showDetalleDevoluciones() { return await this.detalleDevoluciones.toArray(); }
+  async showDetalleDevolucionById(id: number) { return await this.detalleDevoluciones.where('id').equals(id).first(); }
+  async showDetalleDevolucionesByDevolucion(devolucionId: number) { return await this.detalleDevoluciones.where('devolucionId').equals(devolucionId).toArray(); }
+  async clearDetalleDevoluciones() { await this.detalleDevoluciones.clear(); }
+  //--------------------- Evaluaciones de Proveedores ---------------------
+  async saveEvaluacionProveedor(evaluacion: EvaluacionProveedor) { return await this.evaluacionesProveedor.put(evaluacion); }
+  async showEvaluacionesProveedor() { return await this.evaluacionesProveedor.toArray(); }
+  async showEvaluacionProveedorById(id: number) { return await this.evaluacionesProveedor.where('id').equals(id).first(); }
+  async showEvaluacionesByProveedor(proveedor: string) { return await this.evaluacionesProveedor.where('proveedor').equals(proveedor).toArray(); }
+  async clearEvaluacionesProveedor() { await this.evaluacionesProveedor.clear(); }
+  //--------------------- Criterios de Evaluación ---------------------
+  async saveCriterioEvaluacion(criterio: CriterioEvaluacionProveedor) { return await this.criteriosEvaluacion.put(criterio); }
+  async showCriteriosEvaluacion() { return await this.criteriosEvaluacion.toArray(); }
+  async showCriterioEvaluacionById(id: number) { return await this.criteriosEvaluacion.where('id').equals(id).first(); }
+  async showCriteriosByEvaluacion(evaluacionId: number) { return await this.criteriosEvaluacion.where('evaluacionId').equals(evaluacionId).toArray(); }
+  async clearCriteriosEvaluacion() { await this.criteriosEvaluacion.clear(); }
 }

@@ -12,7 +12,7 @@ export class AuthService {
   private readonly aplicaciones: string = 'LOGISTICA';
   private readonly baseUrlMaestra: string = environment.apiMaestra;
 
-  constructor(private http: HttpClient, private dexieService: DexieService) {}
+  constructor(private http: HttpClient, private dexieService: DexieService) { }
 
   async login(
     usuario: string,
@@ -62,5 +62,36 @@ export class AuthService {
   async isUsuario() {
     const user = await this.getUser();
     return user?.idrol === 'OPLOGIST';
+  }
+
+  //Perfil Sistemas
+  async isSistemas() {
+    const user = await this.getUser();
+    return user?.idrol === 'TILOGIST';
+  }
+
+  //Perfil Empaque
+  async isEmpaque() {
+    const user = await this.getUser();
+    return user?.idrol === 'EMLOGIST';
+  }
+
+  //Perfil Logístico
+  async isLogistico() {
+    const user = await this.getUser();
+    return user?.idrol === 'LOLOGIST';
+  }
+
+  // ============================
+  // 🔐 VALIDACIÓN LOGÍSTICA REAL
+  // ============================
+  async isAdminSistemaLogistica(): Promise<boolean> {
+    const u = await this.getUser();
+    if (!u) return false;
+
+    const url = `${this.baseUrl}/api/logistica/es-admin-sistema/${u.usuario}`;
+    const resp: any = await lastValueFrom(this.http.get(url));
+
+    return resp?.permitido === true;
   }
 }

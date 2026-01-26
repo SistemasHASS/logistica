@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '@/app/modules/auth/services/auth.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
+import { APP_VERSION, APP_INFO } from 'src/environments/version';
 
 @Component({
   selector: 'app-login',
@@ -14,9 +15,12 @@ import { AlertService } from '@/app/shared/alertas/alerts.service';
 
 export class LoginComponent {
 
+  appVersion = APP_VERSION;
+  appInfo = APP_INFO;
+
   mostrarClave = false;
   usuario: any;
-  clave = ''
+  clave = '';
   mensajeLogin: String = '';
   isCharge: boolean = false;
   loginForm: FormGroup;
@@ -43,27 +47,71 @@ export class LoginComponent {
 
   async login() {
     const user = await this.dexieService.showUsuario();
-    if (!user) return;
+    // if (!user) return;
+    if (user) {
+      this.redireccionarPorRol(user.idrol);
+    }
 
-    const rol = user.idrol;
+    // const rol = user.idrol;
 
-    if (rol.includes('TI')) {
-      this.router.navigate(['/main/parametros']);
-    }
-    else if (rol.includes('ADLOGIST')) {
-      this.router.navigate(['/main/maestros']);
-    }
-    else if (rol.includes('APLOGIST')) {
-      this.router.navigate(['/main/aprobaciones']);
-    }
-    else if (rol.includes('ALLOGIST')) {
-      this.router.navigate(['/main/despachos']);
-    }
-    else if (rol.includes('OPLOGIST')) {
-      this.router.navigate(['/main/parametros']);
-    }
-    else {
-      this.router.navigate(['/main/reporte_logistica']); // fallback
+    // if (rol.includes('TI')) {
+    //   this.router.navigate(['/main/parametros']);
+    // }
+    // else if (rol.includes('ADLOGIST')) {
+    //   this.router.navigate(['/main/maestros']);
+    // }
+    // else if (rol.includes('APLOGIST')) {
+    //   this.router.navigate(['/main/aprobaciones']);
+    // }
+    // else if (rol.includes('ALLOGIST')) {
+    //   this.router.navigate(['/main/despachos']);
+    // }
+    // else if (rol.includes('OPLOGIST')) {
+    //   this.router.navigate(['/main/parametros']);
+    // }
+    // else if (rol.includes('EMLOGIST')) {
+    //   this.router.navigate(['/main/parametros']);
+    // }
+
+    // else {
+    //   this.router.navigate(['/main/reporte_logistica']); // fallback
+    // }
+  }
+
+  // 🔐 REDIRECCIÓN CENTRALIZADA POR ROL
+  private redireccionarPorRol(rol: string) {
+    switch (rol) {
+      case 'TILOGIST':
+        this.router.navigate(['/main/parametros']);
+        break;
+
+      case 'ADLOGIST':
+        this.router.navigate(['/main/maestros']);
+        break;
+
+      case 'APLOGIST':
+        this.router.navigate(['/main/aprobaciones']);
+        break;
+
+      case 'ALLOGIST':
+        this.router.navigate(['/main/despachos']);
+        break;
+
+      case 'OPLOGIST':
+        this.router.navigate(['/main/parametros']);
+        break;
+        
+      case 'EMLOGIST': // 👈 rol empaque
+        this.router.navigate(['/main/parametros']);
+        break;
+
+      case 'LOLOGIST': // 👈 rol logistico
+        this.router.navigate(['/main/parametros']);
+        break;
+
+      default:
+        this.router.navigate(['/main/reporte_logistico']);
+        break;
     }
   }
 

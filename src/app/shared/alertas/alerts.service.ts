@@ -90,4 +90,26 @@ export class AlertService {
       return result.isConfirmed;
     });
   }
+
+  showPrompt(title: string, message: string): Promise<string | null> {
+    return Swal.fire({
+      title: title,
+      text: message,
+      input: 'text',
+      inputPlaceholder: 'Escriba aquí...',
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar',
+      confirmButtonText: 'Aceptar',
+      allowOutsideClick: false,
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Debe ingresar un valor.';
+        }
+        return null;
+      }
+    }).then((result) => {
+      if (!result.isConfirmed) return null;
+      return (result.value ?? '').toString();
+    });
+  }
 }

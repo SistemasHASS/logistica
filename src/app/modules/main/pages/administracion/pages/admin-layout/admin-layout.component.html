@@ -1,0 +1,156 @@
+<!--  Body Wrapper -->
+<div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
+  data-sidebar-position="fixed" data-header-position="fixed">
+  <!-- Sidebar Start -->
+  <aside class="left-sidebar">
+    <!-- Sidebar scroll-->
+    <div>
+      <div class="content-scrollSidebar">
+        <div class="brand-logo d-flex align-items-center justify-content-center">
+          <a class="text-nowrap logo-img text-center">
+            <img class="" src="../assets/images/logos/favicon.svg" alt="" />
+          </a>
+          <div (click)="toggleSidebar()" class="close-btn d-xl-none 
+            d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
+            <i class="ti ti-x fs-8 text-white"></i>
+          </div>
+        </div>
+        <div class="row mt-2">
+          <div class="" style="max-width: 100%;">
+            <div class="media-title font-weight-semibold">
+              <span class="Hola">Hola</span>
+              <span class="nombre">{{formatNombre(adminUser?.nombre)}}</span>
+              <!-- <span class="nombre" style="font-size: 10px;">V. 1.0.0</span> -->
+              <span class="nombre" style="font-size: 10px;">V. {{ appVersion }}</span>
+              <!-- <span class="nombre" style="font-size: 10px;">V. {{ appInfo.version }} • {{ appInfo.buildDate | date:'dd/MM/yyyy' }}</span> -->
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Sidebar navigation-->
+      <nav class="sidebar-nav scroll-sidebar" data-simplebar="">
+        <ul>
+          <li *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('APLOGIST')"
+            class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Administración</span>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('APLOGIST')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./dashboard" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-home'></i>
+              </span>
+              <span class="hide-menu"> Dashboard</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('APLOGIST')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-usuarios" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-user'></i>
+              </span>
+              <span class="hide-menu"> Usuarios</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('APLOGIST')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-areas" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-office'></i>
+              </span>
+              <span class="hide-menu"> Areas</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('APLOGIST')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-roles" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-lock'></i>
+              </span>
+              <span class="hide-menu"> Roles</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('APLOGIST')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-perfiles" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-profile'></i>
+              </span>
+              <span class="hide-menu"> Perfiles</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('APLOGIST')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-flujos" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-git-merge'></i>
+              </span>
+              <span class="hide-menu"> Fujos</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('APLOGIST')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-aprobadores" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-file-check'></i>
+              </span>
+              <span class="hide-menu"> Aprobadores</span>
+            </a>
+          </li>
+          <!-- <li
+            *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('OPLOGIST') || adminUser?.idPerfil.includes('APLOGIST')"
+            class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Reporte</span>
+          </li> -->
+        </ul>
+        <div class="unlimited-access hide-menu position-relative mb-7 text-center ">
+          <a *ngIf="isOnline" (click)="logout()" class="btn btn-danger">
+            <span class="d-md-block hide-menu"><i class="icon icon-exit3 mr-2"></i> Cerrar sesion</span></a>
+          <p *ngIf="!isOnline" class="text-danger">Modo offline..</p>
+        </div>
+      </nav>
+      <!-- End Sidebar navigation -->
+    </div>
+    <!-- End Sidebar scroll-->
+  </aside>
+  <!--  Sidebar End -->
+  <!--  Main wrapper -->
+  <div class="body-wrapper">
+    <!--  Header Start -->
+    <header class="app-header bg-white">
+      <nav class="navbar navbar-expand-lg navbar-light">
+        <ul class="navbar-nav">
+          <li (click)="toggleSidebar()" class="nav-item d-block d-xl-none">
+            <a class="nav-link sidebartoggler nav-icon-hover" id="headerCollapse" href="javascript:void(0)">
+              <i class="ti ti-menu-2"></i>
+            </a>
+          </li>
+        </ul>
+        <div class="navbar-collapse justify-content-end px-0" id="navbarNav">
+          <ul class="navbar-nav align-items-center justify-content-between" style="width: 100%;padding: 0;">
+            <li class="nav-item dropdown" style="max-width: 50%;">
+              <span class="currentPath" style="font-size: 15px;color: black;">{{currentPath}}</span>
+            </li>
+            <div class="info-nav">
+              <li class="nav-item dropdown" style="max-width: 50%;">
+                <span class="currentPath" [ngClass]="{'text-danger' : !isOnline}"
+                  style="font-size: 15px;color: black;">{{!isOnline ? 'Modo Offline...' : fechaHoy}} <i
+                    [ngClass]="!isOnline ? 'bx-wifi-off' : 'bx-wifi'" class='bx'></i></span>
+              </li>
+              <li class="nav-item dropdown">
+                <!-- <span class="nombre2"><i class="icon-pin"></i>{{this.usuario?.razonSocial}}</span> -->
+                <span class="nombre2"><i class="icon-pin"></i>Hass Perú</span>
+              </li>
+            </div>
+          </ul>
+        </div>
+      </nav>
+    </header>
+    <div class="container-fluid">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

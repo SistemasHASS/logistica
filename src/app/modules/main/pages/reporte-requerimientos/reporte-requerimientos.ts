@@ -173,6 +173,10 @@ export class ReporteRequerimientos {
       return 'Almacén Destino';
     }
 
+    if (lowerKey === 'idclasificacion') {
+      return 'Clasificación';
+    }
+
     return col.toUpperCase().replace('_', ' ');
   }
 

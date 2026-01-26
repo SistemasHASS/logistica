@@ -1,0 +1,79 @@
+<div class="dashboard-container">
+
+    <header class="dashboard-header">
+        <h1>Dashboard Administración</h1>
+        <span class="user-info">
+            Bienvenido, 
+            {{ adminUser?.nombre || 'Usuario' }}
+        </span>
+    </header>
+
+    <section class="dashboard-cards">
+
+        <div class="card">
+            <div class="card-icon">
+                <i class="icon icon-users"></i>
+            </div>
+            <h3>Usuarios</h3>
+            <div class="card-total">{{ totals.usuarios }}</div>
+            <p>Administración de usuarios del sistema</p>
+            <button type="button" (click)="goTo('admin-usuarios')">Ingresar</button>
+        </div>
+
+        <div class="card">
+            <div class="card-icon">
+                <i class="icon icon-grid"></i>
+            </div>
+            <h3>Áreas</h3>
+            <div class="card-total">{{ totals.areas }}</div>
+            <p>Administración de áreas del sistema</p>
+            <button type="button" (click)="goTo('admin-areas')">Ingresar</button>
+        </div>
+
+        <div class="card">
+            <div class="card-icon">
+                <i class="icon icon-lock"></i>
+            </div>
+            <h3>Roles</h3>
+            <div class="card-total">{{ totals.roles }}</div>
+            <p>Administración de roles del sistema</p>
+            <button type="button" (click)="goTo('admin-roles')">Ingresar</button>
+        </div>
+
+        <div class="card">
+            <div class="card-icon">
+                <i class="icon icon-user-check"></i>
+            </div>
+            <h3>Perfiles</h3>
+            <div class="card-total">{{ totals.perfiles }}</div>
+            <p>Gestión de perfiles y roles</p>
+            <button type="button" (click)="goTo('admin-perfiles')">Ingresar</button>
+        </div>
+
+        <div class="card">
+            <div class="card-icon">
+                <i class="icon icon-git-branch"></i>
+            </div>
+            <h3>Flujos</h3>
+            <div class="card-total">{{ totals.flujos }}</div>
+            <p>Configuración de flujos de aprobación</p>
+            <button type="button" (click)="goTo('admin-flujos')">Ingresar</button>
+        </div>
+
+        <div class="card">
+            <div class="card-icon">
+                <i class="icon icon-file-check"></i>
+            </div>
+            <h3>Aprobadores</h3>
+            <div class="card-total">{{ totals.aprobadores }}</div>
+            <p>Mantenimiento de aprobadores</p>
+            <button type="button" (click)="goTo('admin-aprobadores')">Ingresar</button>
+        </div>
+
+    </section>
+
+    <footer class="dashboard-footer">
+        Sistema Logístico 2026
+    </footer>
+
+</div>

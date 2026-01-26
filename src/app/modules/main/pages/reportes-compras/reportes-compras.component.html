@@ -1,0 +1,340 @@
+<div class="reportes-compras-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2>Reportes Avanzados de Compras</h2>
+    <div class="header-actions">
+      <button class="btn-success" (click)="exportarExcel()">
+        <i class="icon-download"></i> Exportar Excel
+      </button>
+      <button class="btn-danger" (click)="exportarPDF()">
+        <i class="icon-file-text"></i> Exportar PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- FILTROS GLOBALES -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Fecha Inicio:</label>
+      <input type="date" [(ngModel)]="filtroFechaInicio" class="form-control">
+    </div>
+    <div class="filter-group">
+      <label>Fecha Fin:</label>
+      <input type="date" [(ngModel)]="filtroFechaFin" class="form-control">
+    </div>
+    <div class="filter-group">
+      <label>Proveedor:</label>
+      <input 
+        type="text" 
+        [(ngModel)]="filtroProveedor" 
+        class="form-control"
+        placeholder="Buscar proveedor...">
+    </div>
+    <div class="filter-group">
+      <label>Moneda:</label>
+      <select [(ngModel)]="filtroMoneda" class="form-control">
+        <option value="TODOS">Todas</option>
+        <option value="PEN">Soles (S/)</option>
+        <option value="USD">Dólares ($)</option>
+      </select>
+    </div>
+    <button class="btn-primary" (click)="generarReporte()">
+      <i class="icon-refresh-cw"></i> Generar
+    </button>
+    <button class="btn-secondary" (click)="limpiarFiltros()">
+      <i class="icon-x"></i> Limpiar
+    </button>
+  </div>
+
+  <!-- SELECTOR DE TIPO DE REPORTE -->
+  <div class="report-selector">
+    <button 
+      class="report-btn" 
+      [class.active]="tipoReporte === 'proveedores'"
+      (click)="tipoReporte = 'proveedores'; generarReporte()">
+      <i class="icon-users"></i>
+      <span>Gasto por Proveedor</span>
+    </button>
+    <button 
+      class="report-btn" 
+      [class.active]="tipoReporte === 'categorias'"
+      (click)="tipoReporte = 'categorias'; generarReporte()">
+      <i class="icon-pie-chart"></i>
+      <span>Gasto por Categoría</span>
+    </button>
+    <button 
+      class="report-btn" 
+      [class.active]="tipoReporte === 'tendencias'"
+      (click)="tipoReporte = 'tendencias'; generarReporte()">
+      <i class="icon-trending-up"></i>
+      <span>Tendencias</span>
+    </button>
+    <button 
+      class="report-btn" 
+      [class.active]="tipoReporte === 'ahorro'"
+      (click)="tipoReporte = 'ahorro'; generarReporte()">
+      <i class="icon-dollar-sign"></i>
+      <span>Análisis de Ahorro</span>
+    </button>
+    <button 
+      class="report-btn" 
+      [class.active]="tipoReporte === 'devoluciones'"
+      (click)="tipoReporte = 'devoluciones'; generarReporte()">
+      <i class="icon-rotate-ccw"></i>
+      <span>Devoluciones</span>
+    </button>
+  </div>
+
+  <!-- REPORTE: GASTO POR PROVEEDOR -->
+  <div class="report-content" *ngIf="tipoReporte === 'proveedores'">
+    <div class="report-header">
+      <h3>Análisis de Gasto por Proveedor</h3>
+      <div class="report-stats">
+        <div class="stat-item">
+          <span class="stat-label">Total Gasto:</span>
+          <span class="stat-value">{{ formatearMoneda(totalGasto) }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Total Órdenes:</span>
+          <span class="stat-value">{{ totalOrdenes }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Proveedores:</span>
+          <span class="stat-value">{{ totalProveedores }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>RUC</th>
+            <th>Proveedor</th>
+            <th>Órdenes</th>
+            <th>Monto Total</th>
+            <th>% del Total</th>
+            <th>Gráfico</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let prov of reporteProveedores; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ prov.proveedor }}</td>
+            <td><strong>{{ prov.nombreProveedor }}</strong></td>
+            <td class="text-center">{{ prov.totalOrdenes }}</td>
+            <td class="text-right"><strong>{{ formatearMoneda(prov.montoTotal) }}</strong></td>
+            <td class="text-center">
+              <span class="badge badge-primary">{{ prov.porcentaje.toFixed(2) }}%</span>
+            </td>
+            <td>
+              <div class="progress-bar-container">
+                <div 
+                  class="progress-bar-fill" 
+                  [style.width.%]="prov.porcentaje"
+                  [style.background]="obtenerColorPorcentaje(prov.porcentaje)">
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="reporteProveedores.length === 0">
+            <td colspan="7" class="text-center">
+              <p class="no-data">No hay datos para mostrar.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REPORTE: GASTO POR CATEGORÍA -->
+  <div class="report-content" *ngIf="tipoReporte === 'categorias'">
+    <div class="report-header">
+      <h3>Análisis de Gasto por Categoría (Top 10)</h3>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Categoría</th>
+            <th>Cantidad</th>
+            <th>Monto</th>
+            <th>% del Total</th>
+            <th>Gráfico</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let cat of reporteCategorias; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td><strong>{{ cat.categoria }}</strong></td>
+            <td class="text-center">{{ cat.cantidad }}</td>
+            <td class="text-right"><strong>{{ formatearMoneda(cat.monto) }}</strong></td>
+            <td class="text-center">
+              <span class="badge badge-info">{{ cat.porcentaje.toFixed(2) }}%</span>
+            </td>
+            <td>
+              <div class="progress-bar-container">
+                <div 
+                  class="progress-bar-fill" 
+                  [style.width.%]="cat.porcentaje"
+                  [style.background]="obtenerColorPorcentaje(cat.porcentaje)">
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="reporteCategorias.length === 0">
+            <td colspan="6" class="text-center">
+              <p class="no-data">No hay datos para mostrar.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REPORTE: TENDENCIAS -->
+  <div class="report-content" *ngIf="tipoReporte === 'tendencias'">
+    <div class="report-header">
+      <h3>Tendencias de Compras (Últimos 12 meses)</h3>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Mes</th>
+            <th>Solicitudes</th>
+            <th>Órdenes</th>
+            <th>Monto Total</th>
+            <th>Promedio por Orden</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let tend of reporteTendencias">
+            <td><strong>{{ tend.mes }}</strong></td>
+            <td class="text-center">{{ tend.solicitudes }}</td>
+            <td class="text-center">{{ tend.ordenes }}</td>
+            <td class="text-right"><strong>{{ formatearMoneda(tend.monto) }}</strong></td>
+            <td class="text-right">
+              {{ tend.ordenes > 0 ? formatearMoneda(tend.monto / tend.ordenes) : '-' }}
+            </td>
+          </tr>
+          <tr *ngIf="reporteTendencias.length === 0">
+            <td colspan="5" class="text-center">
+              <p class="no-data">No hay datos para mostrar.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REPORTE: ANÁLISIS DE AHORRO -->
+  <div class="report-content" *ngIf="tipoReporte === 'ahorro'">
+    <div class="report-header">
+      <h3>Análisis de Ahorro (Top 20)</h3>
+      <p class="subtitle">Comparación entre cotizaciones y órdenes de compra</p>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Item</th>
+            <th>Monto Cotizado</th>
+            <th>Monto Orden</th>
+            <th>Ahorro</th>
+            <th>% Ahorro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let ah of reporteAhorro; let i = index" 
+              [class.ahorro-positivo]="ah.ahorro > 0"
+              [class.ahorro-negativo]="ah.ahorro < 0">
+            <td>{{ i + 1 }}</td>
+            <td><strong>{{ ah.item }}</strong></td>
+            <td class="text-right">{{ formatearMoneda(ah.montoCotizado) }}</td>
+            <td class="text-right">{{ formatearMoneda(ah.montoOrden) }}</td>
+            <td class="text-right">
+              <strong [class.text-success]="ah.ahorro > 0" [class.text-danger]="ah.ahorro < 0">
+                {{ formatearMoneda(ah.ahorro) }}
+              </strong>
+            </td>
+            <td class="text-center">
+              <span class="badge" [ngClass]="ah.ahorro > 0 ? 'badge-success' : 'badge-danger'">
+                {{ ah.porcentajeAhorro.toFixed(2) }}%
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="reporteAhorro.length === 0">
+            <td colspan="6" class="text-center">
+              <p class="no-data">No hay datos para mostrar.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REPORTE: DEVOLUCIONES -->
+  <div class="report-content" *ngIf="tipoReporte === 'devoluciones'">
+    <div class="report-header">
+      <h3>Reporte de Devoluciones a Proveedores</h3>
+      <div class="report-stats">
+        <div class="stat-item">
+          <span class="stat-label">Total Devoluciones:</span>
+          <span class="stat-value">{{ totalDevoluciones }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Número</th>
+            <th>Fecha</th>
+            <th>Proveedor</th>
+            <th>Orden Compra</th>
+            <th>Tipo</th>
+            <th>Monto</th>
+            <th>Estado</th>
+            <th>Resolución</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let dev of devolucionesFiltradas(); let i = index">
+            <td>{{ i + 1 }}</td>
+            <td><strong>{{ dev.numeroDevolucion }}</strong></td>
+            <td>{{ formatearFecha(dev.fecha) }}</td>
+            <td>{{ dev.nombreProveedor }}</td>
+            <td>{{ dev.numeroOrden }}</td>
+            <td>
+              <span class="badge" [ngClass]="dev.tipoDevolucion === 'TOTAL' ? 'badge-danger' : 'badge-warning'">
+                {{ dev.tipoDevolucion }}
+              </span>
+            </td>
+            <td class="text-right"><strong>{{ formatearMoneda(dev.montoTotal) }}</strong></td>
+            <td>
+              <span class="badge badge-info">{{ dev.estado }}</span>
+            </td>
+            <td>
+              <span *ngIf="dev.resolucion" class="badge badge-success">{{ dev.resolucion }}</span>
+              <span *ngIf="!dev.resolucion">-</span>
+            </td>
+          </tr>
+          <tr *ngIf="devolucionesFiltradas().length === 0">
+            <td colspan="9" class="text-center">
+              <p class="no-data">No hay devoluciones registradas.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,84 @@
+.admin-login-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f6f8fa;
+}
+
+.login-card {
+  background: #fff;
+  padding: 2rem;
+  width: 360px;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.2);
+
+  h2 {
+    text-align: center;
+    margin-bottom: .3rem;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+
+    label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: .3rem;
+    }
+
+    input {
+      width: 100%;
+      padding: .6rem;
+      border: 1px solid #cbd5f5;
+      border-radius: 4px;
+    }
+  }
+
+  .password-wrapper {
+    display: flex;
+
+    button {
+      margin-left: 5px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+  }
+
+  .error {
+    color: #dc2626;
+    font-size: 13px;
+    margin-bottom: .5rem;
+  }
+
+  button[type="submit"] {
+    width: 100%;
+    padding: .6rem;
+    background: #2563eb;
+    border: none;
+    color: #fff;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: .6;
+    }
+  }
+
+  .footer {
+    display: block;
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 11px;
+    color: #94a3b8;
+  }
+}

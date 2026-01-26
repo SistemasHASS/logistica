@@ -9,6 +9,7 @@ import { ConnectivityService } from '../../services/connectivity.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { UserService } from '@/app/shared/services/user.service';
 import { SyncService } from '@/app/modules/main/services/sync.service';
+import { APP_VERSION, APP_INFO } from 'src/environments/version';
 
 @Component({
   selector: 'app-layout',
@@ -18,6 +19,10 @@ import { SyncService } from '@/app/modules/main/services/sync.service';
   styleUrl: './layout.component.scss',
 })
 export class LayoutComponent {
+
+  appVersion = APP_VERSION;
+  appInfo = APP_INFO;
+
   fechaHoy: string = '';
   currentPath: string = '';
   usuario: any;
@@ -94,25 +99,68 @@ export class LayoutComponent {
       }
 
       try {
-        // 🔴 VALIDACIÓN CLAVE: verificar pendientes
-        const pendientes = await this.dexieService.requerimientos
-          .where('estado')
-          .equals(0)
-          .count();
+        // 🔴 VALIDAR TODOS LOS REQUERIMIENTOS PENDIENTES
+        const [
+          pendientesItems,
+          pendientesCommodity,
+          pendientesActivoFijo,
+          pendientesActivoFijoMenor
+        ] = await Promise.all([
+          this.dexieService.requerimientos.where('estado').equals(0).count(),
+          this.dexieService.requerimientosCommodity.where('estado').equals(0).count(),
+          this.dexieService.requerimientosActivoFijo.where('estado').equals(0).count(),
+          this.dexieService.requerimientosActivoFijoMenor.where('estado').equals(0).count(),
+        ]);
 
-        if (pendientes > 0) {
+        const totalPendientes =
+          pendientesItems +
+          pendientesCommodity +
+          pendientesActivoFijo +
+          pendientesActivoFijoMenor;
+
+        if (totalPendientes > 0) {
           Swal.fire({
             icon: 'warning',
             title: 'Sincronización pendiente',
-            text: `Tienes ${pendientes} requerimiento(s) sin sincronizar. Debes sincronizar antes de cerrar sesión.`,
+            html: `
+                  <p>Tienes requerimientos sin sincronizar:</p>
+                  <ul style="text-align:left">
+                    <li>📦 Requerimientos de Ítems: <b>${pendientesItems}</b></li>
+                    <li>🧾 Requerimientos de Commodity: <b>${pendientesCommodity}</b></li>
+                    <li>🏗 Requerimientos de Activo Fijo: <b>${pendientesActivoFijo}</b></li>
+                    <li>🔧 Requerimientos de Activo Menor: <b>${pendientesActivoFijoMenor}</b></li>
+                  </ul>
+                  <p>Debes sincronizar antes de cerrar sesión.</p>
+                `,
             confirmButtonText: 'Entendido',
             customClass: {
               confirmButton: 'btn btn-primary',
             },
             buttonsStyling: false,
           });
+
           return; // ⛔ NO cerrar sesión
         }
+
+        // 🔴 VALIDACIÓN CLAVE: verificar pendientes
+        // const pendientes = await this.dexieService.requerimientos
+        //   .where('estado')
+        //   .equals(0)
+        //   .count();
+
+        // if (pendientes > 0) {
+        //   Swal.fire({
+        //     icon: 'warning',
+        //     title: 'Sincronización pendiente',
+        //     text: `Tienes ${pendientes} requerimiento(s) sin sincronizar. Debes sincronizar antes de cerrar sesión.`,
+        //     confirmButtonText: 'Entendido',
+        //     customClass: {
+        //       confirmButton: 'btn btn-primary',
+        //     },
+        //     buttonsStyling: false,
+        //   });
+        //   return; // ⛔ NO cerrar sesión
+        // }
 
         // ✅ CIERRE DE SESIÓN SEGURO
         this.router.navigate(['auth/login']);

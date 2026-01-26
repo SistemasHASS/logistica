@@ -1,0 +1,80 @@
+<div class="reportes-container">
+
+  <!-- HEADER -->
+  <header class="reportes-header">
+    <div class="header-content">
+      <h1>
+        <i class="icon icon-bar-chart"></i>
+        Centro de Reportes
+      </h1>
+      <p class="subtitle">Accede a todos los reportes del sistema</p>
+    </div>
+  </header>
+
+  <!-- CARDS GRID -->
+  <section class="reportes-grid">
+    <div 
+      *ngFor="let reporte of reportes" 
+      class="reporte-card"
+      [style.border-left-color]="reporte.color">
+      
+      <div class="card-header">
+        <div class="card-icon" [style.background-color]="reporte.color + '20'">
+          <i [class]="'icon ' + reporte.icono" [style.color]="reporte.color"></i>
+        </div>
+        <h3>{{ reporte.titulo }}</h3>
+      </div>
+
+      <p class="card-description">{{ reporte.descripcion }}</p>
+
+      <div class="card-actions">
+        <button class="btn-primary" (click)="navegarReporte(reporte.ruta)">
+          <i class="icon icon-eye"></i>
+          Ver Reporte
+        </button>
+        <div class="export-buttons">
+          <button class="btn-export" (click)="exportarPDF(reporte)" title="Exportar PDF">
+            <i class="icon icon-file-text"></i>
+          </button>
+          <button class="btn-export" (click)="exportarExcel(reporte)" title="Exportar Excel">
+            <i class="icon icon-file"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS SECTION -->
+  <section class="stats-section">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="icon icon-file-text"></i>
+      </div>
+      <div class="stat-content">
+        <h4>{{ reportes.length }}</h4>
+        <p>Reportes Disponibles</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="icon icon-download"></i>
+      </div>
+      <div class="stat-content">
+        <h4>0</h4>
+        <p>Exportaciones Hoy</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="icon icon-clock"></i>
+      </div>
+      <div class="stat-content">
+        <h4>--</h4>
+        <p>Última Actualización</p>
+      </div>
+    </div>
+  </section>
+
+</div>

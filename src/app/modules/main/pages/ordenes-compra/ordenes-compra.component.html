@@ -1,0 +1,651 @@
+<div class="ordenes-compra-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2>Órdenes de Compra</h2>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="nuevaOrdenCompraForm()">
+        <i class="icon-plus"></i> Nueva Orden
+      </button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-container">
+    <button 
+      class="tab-button" 
+      [class.active]="!mostrarFormulario"
+      (click)="mostrarFormulario = false">
+      <i class="icon-list"></i> Listado de Órdenes
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="mostrarFormulario"
+      (click)="mostrarFormulario = true">
+      <i class="icon-file-text"></i> {{ modoEdicion ? 'Editar' : 'Nueva' }} Orden
+    </button>
+  </div>
+
+  <!-- CONTADORES -->
+  <div class="stats-cards" *ngIf="!mostrarFormulario">
+    <div class="stat-card info">
+      <div class="stat-icon"><i class="icon-file-text"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalGeneradas }}</span>
+        <span class="stat-label">Generadas</span>
+      </div>
+    </div>
+    <div class="stat-card warning">
+      <div class="stat-icon"><i class="icon-send"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalEnviadas }}</span>
+        <span class="stat-label">Enviadas</span>
+      </div>
+    </div>
+    <div class="stat-card primary">
+      <div class="stat-icon"><i class="icon-check-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalConfirmadas }}</span>
+        <span class="stat-label">Confirmadas</span>
+      </div>
+    </div>
+    <div class="stat-card secondary">
+      <div class="stat-icon"><i class="icon-clock"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalEnProceso }}</span>
+        <span class="stat-label">En Proceso</span>
+      </div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-icon"><i class="icon-package"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalRecibidas }}</span>
+        <span class="stat-label">Recibidas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTADO DE ÓRDENES -->
+  <div class="content-section" *ngIf="!mostrarFormulario">
+    <!-- COTIZACIONES SELECCIONADAS -->
+    <div class="cotizaciones-section" *ngIf="cotizaciones.length > 0">
+      <h3>Cotizaciones Seleccionadas (Pendientes de Orden)</h3>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Número Cotización</th>
+              <th>Solicitud</th>
+              <th>Proveedor</th>
+              <th>Monto Total</th>
+              <th>Plazo Entrega</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let cot of cotizaciones; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td><strong>{{ cot.numeroCotizacion }}</strong></td>
+              <td>{{ cot.numeroSolicitud }}</td>
+              <td>
+                <div class="proveedor-info">
+                  <strong>{{ cot.nombreProveedor }}</strong>
+                  <small>RUC: {{ cot.rucProveedor }}</small>
+                </div>
+              </td>
+              <td class="text-right">
+                <strong>{{ formatearMoneda(cot.montoTotal, cot.moneda) }}</strong>
+              </td>
+              <td class="text-center">{{ cot.plazoEntrega }} días</td>
+              <td class="actions">
+                <button 
+                  class="btn btn-sm btn-success" 
+                  (click)="generarDesdeCotizacion(cot)"
+                  title="Generar Orden de Compra">
+                  <i class="icon-file-plus"></i> Generar OC
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Estado:</label>
+        <select [(ngModel)]="filtroEstado" class="form-control">
+          <option value="TODAS">Todas</option>
+          <option value="GENERADA">Generada</option>
+          <option value="ENVIADA">Enviada</option>
+          <option value="CONFIRMADA">Confirmada</option>
+          <option value="EN_PROCESO">En Proceso</option>
+          <option value="RECIBIDA_PARCIAL">Recibida Parcial</option>
+          <option value="RECIBIDA_TOTAL">Recibida Total</option>
+          <option value="CANCELADA">Cancelada</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Proveedor:</label>
+        <input 
+          type="text" 
+          [(ngModel)]="filtroProveedor" 
+          class="form-control"
+          placeholder="Buscar por nombre o código...">
+      </div>
+      <div class="filter-group">
+        <label>Fecha Inicio:</label>
+        <input type="date" [(ngModel)]="filtroFechaInicio" class="form-control">
+      </div>
+      <div class="filter-group">
+        <label>Fecha Fin:</label>
+        <input type="date" [(ngModel)]="filtroFechaFin" class="form-control">
+      </div>
+      <button class="btn-secondary" (click)="limpiarFiltros()">
+        <i class="icon-x"></i> Limpiar
+      </button>
+    </div>
+
+    <!-- TABLA DE ÓRDENES -->
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Número Orden</th>
+            <th>Fecha</th>
+            <th>Proveedor</th>
+            <th>Monto Total</th>
+            <th>Fecha Entrega</th>
+            <th>Estado</th>
+            <th>Progreso</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let orden of ordenesCompraFiltradas(); let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>
+              <strong>{{ orden.numeroOrden }}</strong>
+            </td>
+            <td>{{ formatearFecha(orden.fecha) }}</td>
+            <td>
+              <div class="proveedor-info">
+                <strong>{{ orden.nombreProveedor }}</strong>
+                <small>RUC: {{ orden.rucProveedor }}</small>
+              </div>
+            </td>
+            <td class="text-right">
+              <strong>{{ formatearMoneda(orden.montoTotal, orden.moneda) }}</strong>
+            </td>
+            <td>{{ formatearFecha(orden.fechaEntrega) }}</td>
+            <td>
+              <span class="badge" [ngClass]="obtenerClaseEstado(orden.estado)">
+                {{ orden.estado }}
+              </span>
+            </td>
+            <td>
+              <div class="progress-container">
+                <div class="progress-bar">
+                  <div 
+                    class="progress-fill" 
+                    [style.width.%]="calcularPorcentajeRecibido(orden)">
+                  </div>
+                </div>
+                <span class="progress-text">{{ calcularPorcentajeRecibido(orden).toFixed(0) }}%</span>
+              </div>
+            </td>
+            <td class="actions">
+              <button 
+                class="btn btn-sm btn-info me-2" 
+                (click)="verDetalle(orden)"
+                title="Ver Detalle">
+                <i class="icon-eye"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-warning me-2" 
+                (click)="editarOrdenCompra(i)"
+                [disabled]="orden.estado !== 'GENERADA'"
+                title="Editar">
+                <i class="icon-pencil"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-primary me-2" 
+                (click)="enviarOrdenCompra(orden)"
+                [disabled]="orden.estado !== 'GENERADA'"
+                title="Enviar">
+                <i class="icon-send"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-success me-2" 
+                (click)="confirmarOrdenCompra(orden)"
+                [disabled]="orden.estado !== 'ENVIADA'"
+                title="Confirmar">
+                <i class="icon-check"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-secondary me-2" 
+                (click)="verSeguimiento(orden)"
+                title="Seguimiento">
+                <i class="icon-activity"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-danger" 
+                (click)="eliminarOrdenCompra(i)"
+                [disabled]="orden.estado !== 'GENERADA'"
+                title="Eliminar">
+                <i class="icon-trash"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="ordenesCompraFiltradas().length === 0">
+            <td colspan="9" class="text-center">
+              <p class="no-data">No hay órdenes de compra registradas.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FORMULARIO DE ORDEN DE COMPRA -->
+  <div class="content-section" *ngIf="mostrarFormulario">
+    <div class="form-container">
+      <h3>{{ modoEdicion ? 'Editar' : 'Nueva' }} Orden de Compra</h3>
+
+      <!-- INFORMACIÓN GENERAL -->
+      <div class="section-title">Información General</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Número de Orden:</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="ordenCompra.numeroOrden"
+            [disabled]="true"
+            placeholder="Se generará automáticamente">
+        </div>
+
+        <div class="form-group">
+          <label>Fecha:</label>
+          <input 
+            type="date" 
+            class="form-control" 
+            [(ngModel)]="ordenCompra.fecha"
+            [disabled]="true">
+        </div>
+
+        <div class="form-group">
+          <label>Código Proveedor: <span class="required">*</span></label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="ordenCompra.proveedor"
+            placeholder="Ingrese código del proveedor">
+        </div>
+
+        <div class="form-group">
+          <label>Nombre Proveedor: <span class="required">*</span></label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="ordenCompra.nombreProveedor"
+            placeholder="Ingrese nombre del proveedor">
+        </div>
+
+        <div class="form-group">
+          <label>RUC Proveedor: <span class="required">*</span></label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="ordenCompra.rucProveedor"
+            placeholder="Ingrese RUC del proveedor"
+            maxlength="11">
+        </div>
+
+        <div class="form-group">
+          <label>Fecha Entrega: <span class="required">*</span></label>
+          <input 
+            type="date" 
+            class="form-control" 
+            [(ngModel)]="ordenCompra.fechaEntrega">
+        </div>
+
+        <div class="form-group full-width">
+          <label>Dirección de Entrega: <span class="required">*</span></label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="ordenCompra.direccionEntrega"
+            placeholder="Ingrese dirección de entrega">
+        </div>
+
+        <div class="form-group">
+          <label>Contacto Proveedor:</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="ordenCompra.contactoProveedor"
+            placeholder="Nombre del contacto">
+        </div>
+
+        <div class="form-group">
+          <label>Teléfono Proveedor:</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="ordenCompra.telefonoProveedor"
+            placeholder="Teléfono de contacto">
+        </div>
+
+        <div class="form-group">
+          <label>Correo Proveedor:</label>
+          <input 
+            type="email" 
+            class="form-control" 
+            [(ngModel)]="ordenCompra.correoProveedor"
+            placeholder="correo@proveedor.com">
+        </div>
+
+        <div class="form-group">
+          <label>Moneda:</label>
+          <select [(ngModel)]="ordenCompra.moneda" class="form-control">
+            <option value="PEN">Soles (PEN)</option>
+            <option value="USD">Dólares (USD)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Forma de Pago:</label>
+          <select [(ngModel)]="ordenCompra.formaPago" class="form-control">
+            <option value="CONTADO">Contado</option>
+            <option value="CREDITO_15">Crédito 15 días</option>
+            <option value="CREDITO_30">Crédito 30 días</option>
+            <option value="CREDITO_45">Crédito 45 días</option>
+            <option value="CREDITO_60">Crédito 60 días</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Plazo Entrega (días):</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            [(ngModel)]="ordenCompra.plazoEntrega"
+            min="0">
+        </div>
+
+        <div class="form-group full-width">
+          <label>Condiciones de Pago:</label>
+          <textarea 
+            [(ngModel)]="ordenCompra.condicionesPago" 
+            class="form-control" 
+            rows="2"
+            placeholder="Ingrese condiciones de pago..."></textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Garantía:</label>
+          <textarea 
+            [(ngModel)]="ordenCompra.garantia" 
+            class="form-control" 
+            rows="2"
+            placeholder="Ingrese información de garantía..."></textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Penalidades:</label>
+          <textarea 
+            [(ngModel)]="ordenCompra.penalidades" 
+            class="form-control" 
+            rows="2"
+            placeholder="Ingrese penalidades por incumplimiento..."></textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Observaciones:</label>
+          <textarea 
+            [(ngModel)]="ordenCompra.observaciones" 
+            class="form-control" 
+            rows="3"
+            placeholder="Ingrese observaciones adicionales..."></textarea>
+        </div>
+      </div>
+
+      <!-- DETALLE DE ITEMS -->
+      <div class="detalle-section">
+        <div class="section-header">
+          <h4>Detalle de Items</h4>
+        </div>
+        
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>P. Unit.</th>
+                <th>Desc.</th>
+                <th>Subtotal</th>
+                <th>IGV</th>
+                <th>Total</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let det of detalleOrden; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ det.codigo }}</td>
+                <td>{{ det.descripcion }}</td>
+                <td class="text-right">{{ det.cantidad }}</td>
+                <td class="text-right">{{ formatearMoneda(det.precioUnitario, ordenCompra.moneda) }}</td>
+                <td class="text-right">{{ formatearMoneda(det.descuento, ordenCompra.moneda) }}</td>
+                <td class="text-right">{{ formatearMoneda(det.subtotal, ordenCompra.moneda) }}</td>
+                <td class="text-right">{{ formatearMoneda(det.impuesto, ordenCompra.moneda) }}</td>
+                <td class="text-right"><strong>{{ formatearMoneda(det.total, ordenCompra.moneda) }}</strong></td>
+                <td>
+                  <span class="badge badge-secondary">{{ det.estado }}</span>
+                </td>
+              </tr>
+              <tr *ngIf="detalleOrden.length === 0">
+                <td colspan="10" class="text-center">
+                  <p class="no-data">No hay items agregados.</p>
+                </td>
+              </tr>
+              <tr *ngIf="detalleOrden.length > 0" class="total-row">
+                <td colspan="8" class="text-right"><strong>TOTAL:</strong></td>
+                <td class="text-right">
+                  <strong class="total-amount">{{ formatearMoneda(ordenCompra.montoTotal, ordenCompra.moneda) }}</strong>
+                </td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BOTONES -->
+      <div class="form-actions">
+        <button class="btn-secondary" (click)="cancelarFormulario()">
+          <i class="icon-x"></i> Cancelar
+        </button>
+        <button class="btn-primary" (click)="guardarOrdenCompra()">
+          <i class="icon-save"></i> Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE ORDEN -->
+<div class="modal-overlay" *ngIf="modalDetalleOrdenAbierto" (click)="cerrarModalDetalleOrden()">
+  <div class="modal-content large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Detalle de Orden: {{ ordenDetalle?.numeroOrden }}</h3>
+      <button class="btn-close" (click)="cerrarModalDetalleOrden()">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="ordenDetalle">
+      <!-- INFO GENERAL -->
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Fecha:</label>
+          <span>{{ formatearFecha(ordenDetalle.fecha) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Fecha Entrega:</label>
+          <span>{{ formatearFecha(ordenDetalle.fechaEntrega) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Proveedor:</label>
+          <span>{{ ordenDetalle.nombreProveedor }}</span>
+        </div>
+        <div class="info-item">
+          <label>RUC:</label>
+          <span>{{ ordenDetalle.rucProveedor }}</span>
+        </div>
+        <div class="info-item">
+          <label>Estado:</label>
+          <span class="badge" [ngClass]="obtenerClaseEstado(ordenDetalle.estado)">
+            {{ ordenDetalle.estado }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Monto Total:</label>
+          <span class="amount-highlight">{{ formatearMoneda(ordenDetalle.montoTotal, ordenDetalle.moneda) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Forma Pago:</label>
+          <span>{{ ordenDetalle.formaPago }}</span>
+        </div>
+        <div class="info-item">
+          <label>Plazo Entrega:</label>
+          <span>{{ ordenDetalle.plazoEntrega }} días</span>
+        </div>
+        <div class="info-item full-width">
+          <label>Dirección Entrega:</label>
+          <span>{{ ordenDetalle.direccionEntrega }}</span>
+        </div>
+      </div>
+
+      <!-- DETALLE -->
+      <h4>Items Ordenados</h4>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Cantidad</th>
+              <th>Recibida</th>
+              <th>Pendiente</th>
+              <th>P. Unit.</th>
+              <th>Total</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let det of ordenDetalle.detalle; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>{{ det.codigo }}</td>
+              <td>{{ det.descripcion }}</td>
+              <td class="text-right">{{ det.cantidad }}</td>
+              <td class="text-right">{{ det.cantidadRecibida }}</td>
+              <td class="text-right">{{ det.cantidadPendiente }}</td>
+              <td class="text-right">{{ formatearMoneda(det.precioUnitario, ordenDetalle.moneda) }}</td>
+              <td class="text-right"><strong>{{ formatearMoneda(det.total, ordenDetalle.moneda) }}</strong></td>
+              <td>
+                <span class="badge" [ngClass]="obtenerClaseEstado(det.estado)">
+                  {{ det.estado }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalDetalleOrden()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SEGUIMIENTO -->
+<div class="modal-overlay" *ngIf="modalSeguimientoAbierto" (click)="cerrarModalSeguimiento()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Seguimiento: {{ ordenSeguimiento?.numeroOrden }}</h3>
+      <button class="btn-close" (click)="cerrarModalSeguimiento()">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="ordenSeguimiento">
+      <div class="timeline">
+        <div class="timeline-item" [class.completed]="ordenSeguimiento.estado !== 'GENERADA'">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <h5>Generada</h5>
+            <p>{{ formatearFecha(ordenSeguimiento.fecha) }}</p>
+            <small>Usuario: {{ ordenSeguimiento.usuarioGenera }}</small>
+          </div>
+        </div>
+
+        <div class="timeline-item" [class.completed]="ordenSeguimiento.estado === 'ENVIADA' || ordenSeguimiento.estado === 'CONFIRMADA' || ordenSeguimiento.estado === 'EN_PROCESO' || ordenSeguimiento.estado === 'RECIBIDA_PARCIAL' || ordenSeguimiento.estado === 'RECIBIDA_TOTAL'">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <h5>Enviada</h5>
+            <p>Enviada al proveedor</p>
+          </div>
+        </div>
+
+        <div class="timeline-item" [class.completed]="ordenSeguimiento.estado === 'CONFIRMADA' || ordenSeguimiento.estado === 'EN_PROCESO' || ordenSeguimiento.estado === 'RECIBIDA_PARCIAL' || ordenSeguimiento.estado === 'RECIBIDA_TOTAL'">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <h5>Confirmada</h5>
+            <p *ngIf="ordenSeguimiento.fechaAprobacion">{{ formatearFecha(ordenSeguimiento.fechaAprobacion) }}</p>
+            <small *ngIf="ordenSeguimiento.usuarioAprueba">Usuario: {{ ordenSeguimiento.usuarioAprueba }}</small>
+          </div>
+        </div>
+
+        <div class="timeline-item" [class.completed]="ordenSeguimiento.estado === 'EN_PROCESO' || ordenSeguimiento.estado === 'RECIBIDA_PARCIAL' || ordenSeguimiento.estado === 'RECIBIDA_TOTAL'">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <h5>En Proceso</h5>
+            <p>Proveedor preparando pedido</p>
+          </div>
+        </div>
+
+        <div class="timeline-item" [class.completed]="ordenSeguimiento.estado === 'RECIBIDA_PARCIAL' || ordenSeguimiento.estado === 'RECIBIDA_TOTAL'">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <h5>Recibida</h5>
+            <p>Mercadería recibida</p>
+            <div class="progress-bar">
+              <div 
+                class="progress-fill" 
+                [style.width.%]="calcularPorcentajeRecibido(ordenSeguimiento)">
+              </div>
+            </div>
+            <span>{{ calcularPorcentajeRecibido(ordenSeguimiento).toFixed(0) }}% completado</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalSeguimiento()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>

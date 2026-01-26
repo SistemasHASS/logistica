@@ -1,0 +1,16 @@
+.admin-table {
+  width: 100%;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,.04);
+
+  th {
+    background: #eef2ff;
+    font-weight: 600;
+  }
+
+  td, th {
+    padding: 12px;
+  }
+}

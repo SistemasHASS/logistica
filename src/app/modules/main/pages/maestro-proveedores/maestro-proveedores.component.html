@@ -1,0 +1,313 @@
+<div class="maestro-proveedores-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2>Maestro de Proveedores</h2>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="nuevoProveedorForm()">
+        <i class="icon-plus"></i> Nuevo Proveedor
+      </button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-container">
+    <button 
+      class="tab-button" 
+      [class.active]="!mostrarFormulario"
+      (click)="mostrarFormulario = false">
+      <i class="icon-list"></i> Listado de Proveedores
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="mostrarFormulario"
+      (click)="mostrarFormulario = true">
+      <i class="icon-user-plus"></i> {{ modoEdicion ? 'Editar' : 'Nuevo' }} Proveedor
+    </button>
+  </div>
+
+  <!-- CONTADORES -->
+  <div class="stats-cards" *ngIf="!mostrarFormulario">
+    <div class="stat-card primary">
+      <div class="stat-icon"><i class="icon-users"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalProveedores }}</span>
+        <span class="stat-label">Total Proveedores</span>
+      </div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-icon"><i class="icon-check-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ proveedoresActivos }}</span>
+        <span class="stat-label">Activos</span>
+      </div>
+    </div>
+    <div class="stat-card secondary">
+      <div class="stat-icon"><i class="icon-x-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ proveedoresInactivos }}</span>
+        <span class="stat-label">Inactivos</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTADO DE PROVEEDORES -->
+  <div class="content-section" *ngIf="!mostrarFormulario">
+    <!-- FILTROS -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Nombre/RUC:</label>
+        <input 
+          type="text" 
+          [(ngModel)]="filtroDocumento" 
+          (ngModelChange)="aplicarFiltros()"
+          class="form-control"
+          placeholder="Buscar...">
+      </div>
+      <div class="filter-group">
+        <label>Tipo Persona:</label>
+        <select [(ngModel)]="filtroTipoPersona" (change)="aplicarFiltros()" class="form-control">
+          <option value="TODOS">Todos</option>
+          <option value="NATURAL">Natural</option>
+          <option value="JURIDICA">Jurídica</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Estado:</label>
+        <select [(ngModel)]="filtroEstado" (change)="aplicarFiltros()" class="form-control">
+          <option value="TODOS">Todos</option>
+          <option value="ACTIVO">Activo</option>
+          <option value="INACTIVO">Inactivo</option>
+        </select>
+      </div>
+      <button class="btn-secondary" (click)="limpiarFiltros()">
+        <i class="icon-x"></i> Limpiar
+      </button>
+    </div>
+
+    <!-- TABLA DE PROVEEDORES -->
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>RUC</th>
+            <th>Nombre/Razón Social</th>
+            <th>Tipo Persona</th>
+            <th>Tipo Pago</th>
+            <th>Moneda</th>
+            <th>Tipo Servicio</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let prov of proveedoresFiltrados; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td><strong>{{ prov.ruc }}</strong></td>
+            <td>{{ prov.documento }}</td>
+            <td>
+              <span class="badge badge-info">{{ prov.TipoPersona }}</span>
+            </td>
+            <td>{{ obtenerEtiquetaTipoPago(prov.TipoPago) }}</td>
+            <td>{{ obtenerEtiquetaMoneda(prov.MonedaPago) }}</td>
+            <td>{{ prov.TipoServicio }}</td>
+            <td>
+              <span class="badge" [ngClass]="obtenerClaseEstado(prov.Estado)">
+                {{ prov.Estado }}
+              </span>
+            </td>
+            <td class="actions">
+              <button 
+                class="btn btn-sm btn-info me-2" 
+                (click)="verDetalle(prov)"
+                title="Ver Detalle">
+                <i class="icon-eye"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-warning me-2" 
+                (click)="editarProveedor(i)"
+                title="Editar">
+                <i class="icon-pencil"></i>
+              </button>
+              <button 
+                class="btn btn-sm me-2"
+                [ngClass]="prov.Estado === 'ACTIVO' ? 'btn-secondary' : 'btn-success'"
+                (click)="cambiarEstado(prov)"
+                [title]="prov.Estado === 'ACTIVO' ? 'Desactivar' : 'Activar'">
+                <i [class]="prov.Estado === 'ACTIVO' ? 'icon-x' : 'icon-check'"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-danger" 
+                (click)="eliminarProveedor(i)"
+                title="Eliminar">
+                <i class="icon-trash"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="proveedoresFiltrados.length === 0">
+            <td colspan="9" class="text-center">
+              <p class="no-data">No hay proveedores registrados.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FORMULARIO DE PROVEEDOR -->
+  <div class="content-section" *ngIf="mostrarFormulario">
+    <div class="form-container">
+      <h3>{{ modoEdicion ? 'Editar' : 'Nuevo' }} Proveedor</h3>
+
+      <div class="form-grid">
+        <!-- INFORMACIÓN BÁSICA -->
+        <div class="section-title full-width">Información Básica</div>
+
+        <div class="form-group">
+          <label>RUC: <span class="required">*</span></label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="proveedor.ruc"
+            (blur)="validarRUC()"
+            maxlength="11"
+            placeholder="Ingrese RUC de 11 dígitos">
+        </div>
+
+        <div class="form-group">
+          <label>Tipo de Persona: <span class="required">*</span></label>
+          <select [(ngModel)]="proveedor.TipoPersona" class="form-control">
+            <option *ngFor="let tipo of tiposPersona" [value]="tipo">
+              {{ tipo }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Nombre/Razón Social: <span class="required">*</span></label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="proveedor.documento"
+            placeholder="Ingrese nombre o razón social">
+        </div>
+
+        <!-- CONDICIONES COMERCIALES -->
+        <div class="section-title full-width">Condiciones Comerciales</div>
+
+        <div class="form-group">
+          <label>Tipo de Pago:</label>
+          <select [(ngModel)]="proveedor.TipoPago" class="form-control">
+            <option *ngFor="let tipo of tiposPago" [value]="tipo">
+              {{ obtenerEtiquetaTipoPago(tipo) }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Moneda de Pago:</label>
+          <select [(ngModel)]="proveedor.MonedaPago" class="form-control">
+            <option *ngFor="let moneda of monedas" [value]="moneda">
+              {{ obtenerEtiquetaMoneda(moneda) }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Tipo de Servicio:</label>
+          <select [(ngModel)]="proveedor.TipoServicio" class="form-control">
+            <option *ngFor="let tipo of tiposServicio" [value]="tipo">
+              {{ tipo }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Detracción:</label>
+          <select [(ngModel)]="proveedor.detraccion" class="form-control">
+            <option value="SI">Sí</option>
+            <option value="NO">No</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Estado:</label>
+          <select [(ngModel)]="proveedor.Estado" class="form-control">
+            <option *ngFor="let estado of estados" [value]="estado">
+              {{ estado }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- BOTONES -->
+      <div class="form-actions">
+        <button class="btn-secondary" (click)="cancelarFormulario()">
+          <i class="icon-x"></i> Cancelar
+        </button>
+        <button class="btn-primary" (click)="guardarProveedor()">
+          <i class="icon-save"></i> Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE PROVEEDOR -->
+<div class="modal-overlay" *ngIf="modalDetalleAbierto" (click)="cerrarModalDetalle()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Detalle del Proveedor</h3>
+      <button class="btn-close" (click)="cerrarModalDetalle()">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="proveedorDetalle">
+      <div class="info-grid">
+        <div class="info-item">
+          <label>RUC:</label>
+          <span><strong>{{ proveedorDetalle.ruc }}</strong></span>
+        </div>
+        <div class="info-item">
+          <label>Tipo Persona:</label>
+          <span class="badge badge-info">{{ proveedorDetalle.TipoPersona }}</span>
+        </div>
+        <div class="info-item full-width">
+          <label>Nombre/Razón Social:</label>
+          <span><strong>{{ proveedorDetalle.documento }}</strong></span>
+        </div>
+        <div class="info-item">
+          <label>Estado:</label>
+          <span class="badge" [ngClass]="obtenerClaseEstado(proveedorDetalle.Estado)">
+            {{ proveedorDetalle.Estado }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Tipo de Pago:</label>
+          <span>{{ obtenerEtiquetaTipoPago(proveedorDetalle.TipoPago) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Moneda de Pago:</label>
+          <span>{{ obtenerEtiquetaMoneda(proveedorDetalle.MonedaPago) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Tipo de Servicio:</label>
+          <span>{{ proveedorDetalle.TipoServicio }}</span>
+        </div>
+        <div class="info-item">
+          <label>Detracción:</label>
+          <span class="badge" [ngClass]="proveedorDetalle.detraccion === 'SI' ? 'badge-warning' : 'badge-secondary'">
+            {{ proveedorDetalle.detraccion }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalDetalle()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>

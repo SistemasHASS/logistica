@@ -1,0 +1,435 @@
+<div class="solicitudes-compra-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2>Solicitudes de Compra</h2>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="nuevaSolicitudCompra()">
+        <i class="icon-plus"></i> Nueva Solicitud
+      </button>
+      <button 
+        class="btn-success" 
+        (click)="generarSolicitudDesdeRequerimientos()"
+        [disabled]="requerimientosSeleccionados.length === 0">
+        <i class="icon-check"></i> Generar desde Requerimientos ({{ requerimientosSeleccionados.length }})
+      </button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-container">
+    <button 
+      class="tab-button" 
+      [class.active]="!mostrarFormulario"
+      (click)="mostrarFormulario = false">
+      <i class="icon-list"></i> Listado de Solicitudes
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="mostrarFormulario"
+      (click)="mostrarFormulario = true">
+      <i class="icon-file-text"></i> {{ modoEdicion ? 'Editar' : 'Nueva' }} Solicitud
+    </button>
+  </div>
+
+  <!-- CONTADORES -->
+  <div class="stats-cards" *ngIf="!mostrarFormulario">
+    <div class="stat-card info">
+      <div class="stat-icon"><i class="icon-file"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalGeneradas }}</span>
+        <span class="stat-label">Generadas</span>
+      </div>
+    </div>
+    <div class="stat-card warning">
+      <div class="stat-icon"><i class="icon-send"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalEnviadas }}</span>
+        <span class="stat-label">Enviadas</span>
+      </div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-icon"><i class="icon-check-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalAprobadas }}</span>
+        <span class="stat-label">Aprobadas</span>
+      </div>
+    </div>
+    <div class="stat-card primary">
+      <div class="stat-icon"><i class="icon-shopping-cart"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalEnCotizacion }}</span>
+        <span class="stat-label">En Cotización</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTADO DE SOLICITUDES -->
+  <div class="content-section" *ngIf="!mostrarFormulario">
+    <!-- FILTROS -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Estado:</label>
+        <select [(ngModel)]="filtroEstado" class="form-control">
+          <option value="TODAS">Todas</option>
+          <option value="GENERADA">Generada</option>
+          <option value="ENVIADA">Enviada</option>
+          <option value="APROBADA">Aprobada</option>
+          <option value="RECHAZADA">Rechazada</option>
+          <option value="EN_COTIZACION">En Cotización</option>
+          <option value="ORDEN_GENERADA">Orden Generada</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Tipo:</label>
+        <select [(ngModel)]="filtroTipo" class="form-control">
+          <option value="TODAS">Todas</option>
+          <option value="CONSOLIDADA">Consolidada</option>
+          <option value="DIRECTA">Directa</option>
+          <option value="URGENTE">Urgente</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Fecha Inicio:</label>
+        <input type="date" [(ngModel)]="filtroFechaInicio" class="form-control">
+      </div>
+      <div class="filter-group">
+        <label>Fecha Fin:</label>
+        <input type="date" [(ngModel)]="filtroFechaFin" class="form-control">
+      </div>
+      <button class="btn-secondary" (click)="limpiarFiltros()">
+        <i class="icon-x"></i> Limpiar
+      </button>
+    </div>
+
+    <!-- TABLA DE SOLICITUDES -->
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Número</th>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Almacén</th>
+            <th>Solicitante</th>
+            <th>Items</th>
+            <th>Estado</th>
+            <th>Prioridad</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let solicitud of solicitudesFiltradas(); let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>
+              <strong>{{ solicitud.numeroSolicitud }}</strong>
+            </td>
+            <td>{{ formatearFecha(solicitud.fecha) }}</td>
+            <td>
+              <span class="badge badge-secondary">{{ solicitud.tipo }}</span>
+            </td>
+            <td>{{ solicitud.almacen }}</td>
+            <td>{{ solicitud.nombreSolicita }}</td>
+            <td class="text-center">
+              <span class="badge badge-info">{{ solicitud.detalle.length || 0 }}</span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="obtenerClaseEstado(solicitud.estado)">
+                {{ solicitud.estado }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="obtenerClasePrioridad(solicitud.prioridad || 'NORMAL')">
+                {{ solicitud.prioridad || 'NORMAL' }}
+              </span>
+            </td>
+            <td class="actions">
+              <button 
+                class="btn btn-sm btn-info me-2" 
+                (click)="verDetalle(solicitud)"
+                title="Ver Detalle">
+                <i class="icon-eye"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-warning me-2" 
+                (click)="editarSolicitud(i)"
+                [disabled]="solicitud.estado !== 'GENERADA'"
+                title="Editar">
+                <i class="icon-pencil"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-success me-2" 
+                (click)="enviarSolicitud(solicitud)"
+                [disabled]="solicitud.estado !== 'GENERADA'"
+                title="Enviar">
+                <i class="icon-send"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-danger" 
+                (click)="eliminarSolicitud(i)"
+                [disabled]="solicitud.estado !== 'GENERADA'"
+                title="Eliminar">
+                <i class="icon-trash"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="solicitudesFiltradas().length === 0">
+            <td colspan="10" class="text-center">
+              <p class="no-data">No hay solicitudes de compra registradas.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECCIÓN DE REQUERIMIENTOS APROBADOS -->
+    <div class="requerimientos-section">
+      <h3>Requerimientos Aprobados Disponibles</h3>
+      <p class="text-muted">Seleccione los requerimientos que desea consolidar en una solicitud de compra.</p>
+      
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>
+                <input 
+                  type="checkbox" 
+                  [(ngModel)]="allSelected"
+                  (change)="toggleSeleccionarTodos()">
+              </th>
+              <th>#Req</th>
+              <th>Fecha</th>
+              <th>Fundo</th>
+              <th>Almacén</th>
+              <th>Glosa</th>
+              <th>Items</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let req of requerimientosAprobados; let i = index">
+              <td>
+                <input 
+                  type="checkbox" 
+                  [checked]="estaSeleccionado(req)"
+                  (change)="toggleSeleccionRequerimiento(req)">
+              </td>
+              <td>{{ req.idrequerimiento.slice(-12) }}</td>
+              <td>{{ formatearFecha(req.fecha) }}</td>
+              <td>{{ req.idfundo }}</td>
+              <td>{{ req.almacen }}</td>
+              <td>{{ req.glosa }}</td>
+              <td class="text-center">
+                <span class="badge badge-info">{{ req.detalle.length || 0 }}</span>
+              </td>
+            </tr>
+            <tr *ngIf="requerimientosAprobados.length === 0">
+              <td colspan="7" class="text-center">
+                <p class="no-data">No hay requerimientos aprobados disponibles.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMULARIO DE SOLICITUD -->
+  <div class="content-section" *ngIf="mostrarFormulario">
+    <div class="form-container">
+      <h3>{{ modoEdicion ? 'Editar' : 'Nueva' }} Solicitud de Compra</h3>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Número de Solicitud:</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="solicitud.numeroSolicitud"
+            [disabled]="modoEdicion"
+            placeholder="Se generará automáticamente">
+        </div>
+
+        <div class="form-group">
+          <label>Tipo de Solicitud: <span class="required">*</span></label>
+          <select [(ngModel)]="solicitud.tipo" class="form-control">
+            <option value="CONSOLIDADA">Consolidada</option>
+            <option value="DIRECTA">Directa</option>
+            <option value="URGENTE">Urgente</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Almacén: <span class="required">*</span></label>
+          <select [(ngModel)]="solicitud.almacen" class="form-control">
+            <option value="">Seleccione...</option>
+            <option *ngFor="let alm of almacenes" [value]="alm.almacen">
+              {{ alm.almacen }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Prioridad:</label>
+          <select [(ngModel)]="solicitud.prioridad" class="form-control">
+            <option value="NORMAL">Normal</option>
+            <option value="URGENTE">Urgente</option>
+            <option value="CRITICA">Crítica</option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Observaciones:</label>
+          <textarea 
+            [(ngModel)]="solicitud.observaciones" 
+            class="form-control" 
+            rows="3"
+            placeholder="Ingrese observaciones adicionales..."></textarea>
+        </div>
+      </div>
+
+      <!-- DETALLE DE LA SOLICITUD -->
+      <div class="detalle-section">
+        <h4>Detalle de Items</h4>
+        <p class="text-muted">Los items se agregarán automáticamente al generar desde requerimientos.</p>
+        
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>Unidad</th>
+                <th>Proyecto</th>
+                <th>CECO</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let det of detalleSolicitud; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ det.codigo }}</td>
+                <td>{{ det.descripcion }}</td>
+                <td class="text-right">{{ det.cantidad }}</td>
+                <td>{{ det.unidadMedida }}</td>
+                <td>{{ det.proyecto }}</td>
+                <td>{{ det.ceco }}</td>
+              </tr>
+              <tr *ngIf="detalleSolicitud.length === 0">
+                <td colspan="7" class="text-center">
+                  <p class="no-data">No hay items agregados.</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BOTONES -->
+      <div class="form-actions">
+        <button class="btn-secondary" (click)="cancelarFormulario()">
+          <i class="icon-x"></i> Cancelar
+        </button>
+        <button class="btn-primary" (click)="guardarSolicitud()">
+          <i class="icon-save"></i> Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE -->
+<div class="modal-overlay" *ngIf="modalDetalleAbierto" (click)="cerrarModalDetalle()">
+  <div class="modal-content large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Detalle de Solicitud: {{ solicitudDetalle?.numeroSolicitud }}</h3>
+      <button class="btn-close" (click)="cerrarModalDetalle()">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="solicitudDetalle">
+      <!-- INFO GENERAL -->
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Fecha:</label>
+          <span>{{ formatearFecha(solicitudDetalle.fecha) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Tipo:</label>
+          <span class="badge badge-secondary">{{ solicitudDetalle.tipo }}</span>
+        </div>
+        <div class="info-item">
+          <label>Estado:</label>
+          <span class="badge" [ngClass]="obtenerClaseEstado(solicitudDetalle.estado)">
+            {{ solicitudDetalle.estado }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Prioridad:</label>
+          <span class="badge" [ngClass]="obtenerClasePrioridad(solicitudDetalle.prioridad || 'NORMAL')">
+            {{ solicitudDetalle.prioridad || 'NORMAL' }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Almacén:</label>
+          <span>{{ solicitudDetalle.almacen }}</span>
+        </div>
+        <div class="info-item">
+          <label>Solicitante:</label>
+          <span>{{ solicitudDetalle.nombreSolicita }}</span>
+        </div>
+      </div>
+
+      <div class="info-item full-width" *ngIf="solicitudDetalle.observaciones">
+        <label>Observaciones:</label>
+        <p>{{ solicitudDetalle.observaciones }}</p>
+      </div>
+
+      <!-- DETALLE -->
+      <h4>Items Solicitados</h4>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Cantidad</th>
+              <th>Unidad</th>
+              <th>Proyecto</th>
+              <th>CECO</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let det of solicitudDetalle.detalle; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>{{ det.codigo }}</td>
+              <td>{{ det.descripcion }}</td>
+              <td class="text-right">{{ det.cantidad }}</td>
+              <td>{{ det.unidadMedida }}</td>
+              <td>{{ det.proyecto }}</td>
+              <td>{{ det.ceco }}</td>
+              <td>
+                <span class="badge" [ngClass]="{
+                  'badge-warning': det.estado === 'PENDIENTE',
+                  'badge-success': det.estado === 'APROBADO',
+                  'badge-danger': det.estado === 'RECHAZADO'
+                }">
+                  {{ det.estado }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalDetalle()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>

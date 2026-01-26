@@ -1,0 +1,413 @@
+<div class="evaluacion-proveedores-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2>Evaluación de Proveedores</h2>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="nuevaEvaluacionForm()">
+        <i class="icon-plus"></i> Nueva Evaluación
+      </button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-container">
+    <button 
+      class="tab-button" 
+      [class.active]="tabActiva === 'lista'"
+      (click)="tabActiva = 'lista'">
+      <i class="icon-list"></i> Evaluaciones
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="tabActiva === 'nueva'"
+      (click)="tabActiva = 'nueva'">
+      <i class="icon-edit"></i> {{ modoEdicion ? 'Editar' : 'Nueva' }} Evaluación
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="tabActiva === 'ranking'"
+      (click)="tabActiva = 'ranking'">
+      <i class="icon-award"></i> Ranking de Proveedores
+    </button>
+  </div>
+
+  <!-- TAB: LISTA DE EVALUACIONES -->
+  <div class="content-section" *ngIf="tabActiva === 'lista'">
+    <!-- FILTROS -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Período:</label>
+        <input type="month" [(ngModel)]="filtroPeriodo" class="form-control">
+      </div>
+      <div class="filter-group">
+        <label>Proveedor:</label>
+        <input 
+          type="text" 
+          [(ngModel)]="filtroProveedor" 
+          class="form-control"
+          placeholder="Buscar proveedor...">
+      </div>
+      <div class="filter-group">
+        <label>Nivel:</label>
+        <select [(ngModel)]="filtroNivel" class="form-control">
+          <option value="TODOS">Todos</option>
+          <option value="EXCELENTE">Excelente</option>
+          <option value="BUENO">Bueno</option>
+          <option value="REGULAR">Regular</option>
+          <option value="DEFICIENTE">Deficiente</option>
+        </select>
+      </div>
+      <button class="btn-secondary" (click)="limpiarFiltros()">
+        <i class="icon-x"></i> Limpiar
+      </button>
+    </div>
+
+    <!-- TABLA DE EVALUACIONES -->
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Período</th>
+            <th>Fecha</th>
+            <th>Proveedor</th>
+            <th>Calificación</th>
+            <th>Nivel</th>
+            <th>Usuario</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let eval of evaluacionesFiltradas(); let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ formatearPeriodo(eval.periodo) }}</td>
+            <td>{{ formatearFecha(eval.fechaEvaluacion) }}</td>
+            <td><strong>{{ eval.nombreProveedor }}</strong></td>
+            <td class="text-center">
+              <div class="calificacion-display">
+                <span class="calificacion-numero" [style.color]="obtenerColorCalificacion(eval.calificacionTotal)">
+                  {{ eval.calificacionTotal.toFixed(2) }}
+                </span>
+                <span class="calificacion-max">/10</span>
+              </div>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="obtenerClaseNivel(eval.nivel)">
+                {{ eval.nivel }}
+              </span>
+            </td>
+            <td>{{ eval.usuarioEvalua }}</td>
+            <td>
+              <span class="badge" [ngClass]="eval.estado === 'FINALIZADA' ? 'badge-success' : 'badge-warning'">
+                {{ eval.estado }}
+              </span>
+            </td>
+            <td class="actions">
+              <button 
+                class="btn btn-sm btn-info" 
+                (click)="verDetalle(eval)"
+                title="Ver Detalle">
+                <i class="icon-eye"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="evaluacionesFiltradas().length === 0">
+            <td colspan="9" class="text-center">
+              <p class="no-data">No hay evaluaciones registradas.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: NUEVA EVALUACIÓN -->
+  <div class="content-section" *ngIf="tabActiva === 'nueva'">
+    <div class="form-container">
+      <h3>{{ modoEdicion ? 'Editar' : 'Nueva' }} Evaluación de Proveedor</h3>
+
+      <!-- SELECCIÓN DE PROVEEDOR -->
+      <div class="proveedor-selector">
+        <h4>Seleccionar Proveedor</h4>
+        <div class="proveedores-grid">
+          <div 
+            *ngFor="let prov of proveedoresConMetricas" 
+            class="proveedor-card"
+            [class.selected]="evaluacion.proveedor === prov.proveedor"
+            (click)="seleccionarProveedor(prov)">
+            <div class="proveedor-header">
+              <strong>{{ prov.nombreProveedor }}</strong>
+              <span class="badge badge-info">{{ prov.rucProveedor }}</span>
+            </div>
+            <div class="proveedor-metricas">
+              <div class="metrica">
+                <span class="metrica-label">Órdenes:</span>
+                <span class="metrica-value">{{ prov.totalOrdenes }}</span>
+              </div>
+              <div class="metrica">
+                <span class="metrica-label">Devoluciones:</span>
+                <span class="metrica-value text-danger">{{ prov.devoluciones }}</span>
+              </div>
+              <div class="metrica">
+                <span class="metrica-label">Cumplimiento:</span>
+                <span class="metrica-value" [class.text-success]="prov.tasaCumplimiento >= 90">
+                  {{ prov.tasaCumplimiento.toFixed(1) }}%
+                </span>
+              </div>
+            </div>
+            <div class="ultima-evaluacion" *ngIf="prov.ultimaEvaluacion">
+              <span class="badge" [ngClass]="obtenerClaseNivel(prov.ultimaEvaluacion.nivel)">
+                Última: {{ prov.ultimaEvaluacion.nivel }} ({{ prov.ultimaEvaluacion.calificacionTotal.toFixed(1) }})
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATOS DE EVALUACIÓN -->
+      <div class="form-grid" *ngIf="evaluacion.proveedor">
+        <div class="form-group">
+          <label>Período:</label>
+          <input type="month" [(ngModel)]="evaluacion.periodo" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Fecha de Evaluación:</label>
+          <input type="date" [(ngModel)]="evaluacion.fechaEvaluacion" class="form-control">
+        </div>
+      </div>
+
+      <!-- CRITERIOS DE EVALUACIÓN -->
+      <div class="criterios-section" *ngIf="evaluacion.proveedor">
+        <h4>Criterios de Evaluación</h4>
+        <p class="subtitle">Califique cada criterio del 0 al 10</p>
+
+        <div class="criterios-grid">
+          <div *ngFor="let criterio of evaluacion.criterios" class="criterio-card">
+            <div class="criterio-header">
+              <i [class]="obtenerIconoCriterio(criterio.criterio)"></i>
+              <div class="criterio-info">
+                <strong>{{ criterio.descripcion }}</strong>
+                <span class="criterio-peso">Peso: {{ criterio.peso }}%</span>
+              </div>
+            </div>
+
+            <div class="criterio-calificacion">
+              <label>Calificación (0-10):</label>
+              <input 
+                type="number" 
+                [(ngModel)]="criterio.calificacion" 
+                (ngModelChange)="calcularPuntajePonderado(criterio)"
+                class="form-control"
+                min="0"
+                max="10"
+                step="0.1">
+            </div>
+
+            <div class="criterio-puntaje">
+              <span>Puntaje Ponderado:</span>
+              <strong [style.color]="obtenerColorCalificacion(criterio.puntajePonderado)">
+                {{ criterio.puntajePonderado.toFixed(2) }}
+              </strong>
+            </div>
+
+            <div class="criterio-comentarios">
+              <label>Comentarios:</label>
+              <textarea 
+                [(ngModel)]="criterio.comentarios" 
+                class="form-control" 
+                rows="2"
+                placeholder="Comentarios sobre este criterio..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTADO TOTAL -->
+      <div class="resultado-total" *ngIf="evaluacion.proveedor">
+        <div class="resultado-card">
+          <h4>Calificación Total</h4>
+          <div class="calificacion-grande" [style.color]="obtenerColorCalificacion(evaluacion.calificacionTotal)">
+            {{ evaluacion.calificacionTotal.toFixed(2) }}
+          </div>
+          <div class="nivel-badge">
+            <span class="badge badge-large" [ngClass]="obtenerClaseNivel(evaluacion.nivel)">
+              {{ evaluacion.nivel }}
+            </span>
+          </div>
+        </div>
+
+        <div class="observaciones-generales">
+          <label>Observaciones Generales:</label>
+          <textarea 
+            [(ngModel)]="evaluacion.observaciones" 
+            class="form-control" 
+            rows="4"
+            placeholder="Observaciones generales sobre el proveedor..."></textarea>
+        </div>
+      </div>
+
+      <!-- BOTONES -->
+      <div class="form-actions" *ngIf="evaluacion.proveedor">
+        <button class="btn-secondary" (click)="cancelarFormulario()">
+          <i class="icon-x"></i> Cancelar
+        </button>
+        <button class="btn-primary" (click)="guardarEvaluacion()">
+          <i class="icon-save"></i> Guardar Evaluación
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: RANKING DE PROVEEDORES -->
+  <div class="content-section" *ngIf="tabActiva === 'ranking'">
+    <h3>Ranking de Proveedores</h3>
+    <p class="subtitle">Basado en la última evaluación de cada proveedor</p>
+
+    <div class="ranking-grid">
+      <div *ngFor="let prov of rankingProveedores(); let i = index" class="ranking-card">
+        <div class="ranking-posicion">
+          <span class="posicion-numero" [class.top3]="i < 3">#{{ i + 1 }}</span>
+        </div>
+
+        <div class="ranking-proveedor">
+          <strong>{{ prov.nombreProveedor }}</strong>
+          <span class="ruc">{{ prov.rucProveedor }}</span>
+        </div>
+
+        <div class="ranking-calificacion">
+          <div class="calificacion-numero" [style.color]="obtenerColorCalificacion(prov.ultimaEvaluacion!.calificacionTotal)">
+            {{ prov.ultimaEvaluacion!.calificacionTotal.toFixed(2) }}
+          </div>
+          <span class="badge" [ngClass]="obtenerClaseNivel(prov.ultimaEvaluacion!.nivel)">
+            {{ prov.ultimaEvaluacion!.nivel }}
+          </span>
+        </div>
+
+        <div class="ranking-metricas">
+          <div class="metrica-item">
+            <i class="icon-shopping-cart"></i>
+            <span>{{ prov.totalOrdenes }} órdenes</span>
+          </div>
+          <div class="metrica-item">
+            <i class="icon-rotate-ccw"></i>
+            <span>{{ prov.devoluciones }} devoluciones</span>
+          </div>
+          <div class="metrica-item">
+            <i class="icon-check-circle"></i>
+            <span>{{ prov.tasaCumplimiento.toFixed(1) }}% cumplimiento</span>
+          </div>
+        </div>
+
+        <div class="ranking-periodo">
+          <small>Evaluado: {{ formatearPeriodo(prov.ultimaEvaluacion!.periodo) }}</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="no-data" *ngIf="rankingProveedores().length === 0">
+      <p>No hay proveedores evaluados aún.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE EVALUACIÓN -->
+<div class="modal-overlay" *ngIf="modalDetalleAbierto" (click)="cerrarModalDetalle()">
+  <div class="modal-content large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Detalle de Evaluación</h3>
+      <button class="btn-close" (click)="cerrarModalDetalle()">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="evaluacionDetalle">
+      <!-- INFO GENERAL -->
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Proveedor:</label>
+          <span><strong>{{ evaluacionDetalle.nombreProveedor }}</strong></span>
+        </div>
+        <div class="info-item">
+          <label>RUC:</label>
+          <span>{{ evaluacionDetalle.rucProveedor }}</span>
+        </div>
+        <div class="info-item">
+          <label>Período:</label>
+          <span>{{ formatearPeriodo(evaluacionDetalle.periodo) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Fecha:</label>
+          <span>{{ formatearFecha(evaluacionDetalle.fechaEvaluacion) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Calificación:</label>
+          <span class="calificacion-numero" [style.color]="obtenerColorCalificacion(evaluacionDetalle.calificacionTotal)">
+            {{ evaluacionDetalle.calificacionTotal.toFixed(2) }} / 10
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Nivel:</label>
+          <span class="badge" [ngClass]="obtenerClaseNivel(evaluacionDetalle.nivel)">
+            {{ evaluacionDetalle.nivel }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Evaluado por:</label>
+          <span>{{ evaluacionDetalle.usuarioEvalua }}</span>
+        </div>
+        <div class="info-item">
+          <label>Estado:</label>
+          <span class="badge" [ngClass]="evaluacionDetalle.estado === 'FINALIZADA' ? 'badge-success' : 'badge-warning'">
+            {{ evaluacionDetalle.estado }}
+          </span>
+        </div>
+      </div>
+
+      <!-- CRITERIOS -->
+      <h4>Criterios Evaluados</h4>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Criterio</th>
+              <th>Peso</th>
+              <th>Calificación</th>
+              <th>Puntaje Ponderado</th>
+              <th>Comentarios</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let crit of evaluacionDetalle.criterios">
+              <td><strong>{{ crit.descripcion }}</strong></td>
+              <td class="text-center">{{ crit.peso }}%</td>
+              <td class="text-center">
+                <span [style.color]="obtenerColorCalificacion(crit.calificacion)">
+                  {{ crit.calificacion.toFixed(1) }}
+                </span>
+              </td>
+              <td class="text-center">
+                <strong [style.color]="obtenerColorCalificacion(crit.puntajePonderado)">
+                  {{ crit.puntajePonderado.toFixed(2) }}
+                </strong>
+              </td>
+              <td>{{ crit.comentarios || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- OBSERVACIONES -->
+      <div class="observaciones-detalle" *ngIf="evaluacionDetalle.observaciones">
+        <h4>Observaciones Generales</h4>
+        <p>{{ evaluacionDetalle.observaciones }}</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalDetalle()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>

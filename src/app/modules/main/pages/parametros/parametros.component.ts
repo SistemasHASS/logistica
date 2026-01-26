@@ -22,6 +22,7 @@ import {
   DetalleRequerimientoActivoFijoMenor,
 } from '@/app/shared/interfaces/Tables';
 import { MaestrasService } from '../../services/maestras.service';
+import { AuthService } from '@/app/modules/auth/services/auth.service';
 import { FormsModule } from '@angular/forms';
 import { Usuario } from '@/app/shared/interfaces/Tables';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
@@ -39,6 +40,7 @@ import { any } from '@tensorflow/tfjs';
 })
 export class ParametrosComponent implements OnInit {
   constructor(
+    private auth: AuthService,
     private router: Router,
     private dexieService: DexieService,
     private maestrasService: MaestrasService,
@@ -69,10 +71,18 @@ export class ParametrosComponent implements OnInit {
   activosFijos: any[] = [];
   comodities: any[] = [];
 
-  tipoItem: any[] = [
-    { id: 'COMPRA', descripcion: 'COMPRA' },
-    { id: 'CONSUMO', descripcion: 'CONSUMO' }
-  ];
+  // tipoItem: any[] = [
+  //   { id: 'COMPRA', descripcion: 'COMPRA' },
+  //   { id: 'CONSUMO', descripcion: 'CONSUMO' }
+  // ];
+
+  // 🔥 TIPO ITEM DINÁMICO
+  tipoItem: any[] = [];
+
+  // 🔐 ROLES
+  esLogist = false;
+  esOpLogist = false;
+  esEmLogist = false;
 
   TipoItemSeleccionado = '';
 
@@ -137,8 +147,15 @@ export class ParametrosComponent implements OnInit {
 
   async ngOnInit() {
     await this.getUsuario();
+    await this.cargarRoles(); // 🔥 FALTABA ESTO
+    console.log('ROL REAL:', this.usuario?.idrol);
     await this.validarExisteConfiguracion();
     await this.llenarDropdowns();
+    this.configurarTipoItemPorRol(); // 👈 OBLIGATORIO
+    // 👇 SOLO después de tener todo
+    if (this.configuracion.idTipoItem) {
+      await this.ListarAlmacenesPorRol();
+    }
     // Oculta todos al inicio
     this.ocultarItem = true;
     this.ocultarLabor = true;
@@ -149,10 +166,21 @@ export class ParametrosComponent implements OnInit {
 
   async getUsuario() {
     const usuario = await this.dexieService.showUsuario();
+    console.log('👤 USUARIO EN PARAMETROS:', usuario);
     if (usuario) {
       this.usuario = usuario;
     } else {
       console.log('Error', 'Usuario not found', 'error');
+    }
+  }
+
+  async cargarUsuario() {
+    const user = await this.dexieService.showUsuario();
+
+    console.log('👤 USUARIO CARGADO:', this.usuario);
+
+    if (!this.usuario) {
+      console.error('❌ No se pudo cargar el usuario');
     }
   }
 
@@ -168,7 +196,8 @@ export class ParametrosComponent implements OnInit {
     await this.ListarFundos();
     await this.ListarCultivos();
     await this.ListarAreas();
-    await this.ListarAlmacenes();
+    // await this.ListarAlmacenes();
+    await this.ListarAlmacenesPorRol();
     await this.ListarProyectos();
     await this.ListarItems();
     await this.ListarTurnos();
@@ -183,11 +212,60 @@ export class ParametrosComponent implements OnInit {
     await this.filtraCecoTurnoProyectoInicio();
   }
 
-  obtenerRol() {
-    if (this.usuario.idrol.includes('ALLOGIST')) return 'ALLOGIST';
-    if (this.usuario.idrol.includes('APLOGIST')) return 'APLOGIST';
-    return '';
+  async cargarRoles() {
+    const rol = this.usuario.idrol;
+
+    this.esLogist = rol === 'LOLOGIST';
+    this.esOpLogist = rol === 'OPLOGIST';
+    this.esEmLogist = rol === 'EMLOGIST';
+
+    console.log('ROLES CARGADOS:', {
+      esLogist: this.esLogist,
+      esOpLogist: this.esOpLogist,
+      esEmLogist: this.esEmLogist,
+    });
   }
+
+
+
+  // ===============================
+  // TIPO ITEM POR ROL
+  // ===============================
+  configurarTipoItemPorRol() {
+
+    // Base: todos pueden COMPRA y CONSUMO
+    this.tipoItem = [
+      { id: 'COMPRA', descripcion: 'COMPRA' },
+      { id: 'CONSUMO', descripcion: 'CONSUMO' },
+    ];
+
+    // 🔐 SOLO LOGIST puede TRANSFERENCIA
+    if (this.esLogist) {
+      this.tipoItem.push({
+        id: 'TRANSFERENCIA',
+        descripcion: 'TRANSFERENCIA',
+      });
+    }
+
+    // Reset por seguridad si cambia el rol
+    if (
+      this.configuracion.idTipoItem === 'TRANSFERENCIA' &&
+      !this.esLogist
+    ) {
+      this.configuracion.idTipoItem = 'CONSUMO';
+    }
+  }
+
+  // ===============================
+  // VALIDACIONES DE SEGURIDAD
+  // ===============================
+  esTransferenciaNoPermitida(): boolean {
+    return (
+      this.configuracion.idTipoItem === 'TRANSFERENCIA' &&
+      !this.esLogist
+    );
+  }
+
 
   async filtrarLaboresInicio() {
     if (this.configuracion.idceco) {
@@ -271,7 +349,8 @@ export class ParametrosComponent implements OnInit {
       almacenes.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveAlmacenes(resp);
-          await this.ListarAlmacenes();
+          // await this.ListarAlmacenes();
+          await this.ListarAlmacenesPorRol(); // 👈
         }
       });
 
@@ -281,7 +360,8 @@ export class ParametrosComponent implements OnInit {
       almacenesDestino.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveAlmacenesDestino(resp);
-          await this.ListarAlmacenesDestino();
+          // await this.ListarAlmacenesDestino();
+          await this.ListarAlmacenesPorRol(); // 👈
         }
       });
 
@@ -394,7 +474,7 @@ export class ParametrosComponent implements OnInit {
       });
 
       const requerimmientos = this.requerimientosService.getRequerimientos([
-        { ruc: this.usuario.ruc, idrol: this.obtenerRol() },
+        { ruc: this.usuario.ruc, idrol: this.usuario.idrol },
       ]);
       requerimmientos.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
@@ -559,18 +639,39 @@ export class ParametrosComponent implements OnInit {
     }
   }
 
+  // async ListarProyectos() {
+  //   const proyectos = await this.dexieService.showProyectos();
+  //   const empresa = this.empresas.find(
+  //     (empresa: any) => empresa.ruc === this.usuario.ruc
+  //   );
+  //   this.proyectos = proyectos.filter(
+  //     (proyecto: any) => proyecto.ruc === empresa.ruc
+  //   );
+  //   if (this.proyectos.length == 1) {
+  //     this.configuracion.idproyecto = this.proyectos[0].id;
+  //   }
+  // }
+
   async ListarProyectos() {
     const proyectos = await this.dexieService.showProyectos();
+
     const empresa = this.empresas.find(
-      (empresa: any) => empresa.ruc === this.usuario.ruc
+      (e: any) => e.ruc === this.usuario.ruc
     );
-    this.proyectos = proyectos.filter(
-      (proyecto: any) => proyecto.ruc === empresa.ruc
-    );
-    if (this.proyectos.length == 1) {
-      this.configuracion.idproyecto = this.proyectos[0].id;
+
+    // 🔥 NO agrupar, NO eliminar duplicados - mantener todas las combinaciones CECO-LABOR-PROYECTO
+    if (empresa) {
+      this.proyectos = proyectos.filter(
+        (p: any) => p.ruc === empresa.ruc && p.estado === 1
+      );
+    } else {
+      this.proyectos = proyectos.filter((p: any) => p.estado === 1);
     }
+
+    console.log('🔎 PROYECTOS TOTALES CARGADOS:', this.proyectos.length);
+    console.log('� SAMPLE:', this.proyectos[0]);
   }
+
 
   async ListarAlmacenes() {
     const almacenes = await this.dexieService.showAlmacenes();
@@ -673,6 +774,70 @@ export class ParametrosComponent implements OnInit {
     }
   }
 
+  // async darProyectoCecos(limpiar = false) {
+
+  //   this.filteredCecos = [];
+
+  //   if (limpiar) {
+  //     this.configuracion.idceco = '';
+  //     this.configuracion.idlabor = '';
+  //     this.configuracion.idproyecto = '';
+  //   }
+
+  //   const turno = this.filteredTurnos.find(
+  //     (e: any) => e.codTurno === this.configuracion.idturno
+  //   );
+
+  //   // =========================
+  //   // SI ES SIN TURNO
+  //   // =========================
+  //   if (!turno || turno.nombreTurno?.toLowerCase() === 'sinturno') {
+
+  //     const cultivo = this.cultivos.find(
+  //       (c: any) => c.id == this.configuracion.idcultivo
+  //     );
+
+  //     if (cultivo) {
+  //       this.filteredProyectos = this.proyectos.filter(
+  //         (p: any) => p.cultivo === cultivo.codigo
+  //       );
+
+  //       // ✅ AUTO-SELECCIONAR EL PRIMER PROYECTO
+  //       if (this.filteredProyectos.length > 0) {
+  //         this.configuracion.idproyecto = this.filteredProyectos[0].afe;
+  //         await this.nombreProyecto(this.configuracion.idproyecto);
+  //       }
+  //     } else {
+  //       this.filteredProyectos = [];
+  //     }
+
+  //   }
+  //   // =========================
+  //   // TURNO NORMAL
+  //   // =========================
+  //   else {
+
+  //     this.configuracion.idproyecto = turno.idproyecto;
+
+  //     this.filteredProyectos = this.proyectos.filter(
+  //       (p: any) => p.afe === turno.idproyecto
+  //     );
+
+  //     if (this.configuracion.idproyecto)
+  //       await this.nombreProyecto(this.configuracion.idproyecto);
+  //   }
+
+  //   // CECO SEGÚN TURNO
+  //   if (turno && this.configuracion.idturno) {
+  //     this.filteredCecos = this.cecos.filter((x: Ceco) =>
+  //       x.conturno.includes(turno.conturno ?? '')
+  //     );
+  //   }
+
+  //   console.log('✅ Proyectos:', this.filteredProyectos);
+  //   console.log('✅ Proyecto asignado:', this.configuracion.idproyecto);
+  // }
+
   async darProyectoCecos(limpiar = false) {
 
     this.filteredCecos = [];
@@ -680,51 +845,13 @@ export class ParametrosComponent implements OnInit {
     if (limpiar) {
       this.configuracion.idceco = '';
       this.configuracion.idlabor = '';
-      this.configuracion.idproyecto = '';
+      // this.configuracion.idproyecto = '';
+      // this.filteredProyectos = [];
     }
 
     const turno = this.filteredTurnos.find(
       (e: any) => e.codTurno === this.configuracion.idturno
     );
-
-    // =========================
-    // SI ES SIN TURNO
-    // =========================
-    if (!turno || turno.nombreTurno?.toLowerCase() === 'sinturno') {
-
-      const cultivo = this.cultivos.find(
-        (c: any) => c.id == this.configuracion.idcultivo
-      );
-
-      if (cultivo) {
-        this.filteredProyectos = this.proyectos.filter(
-          (p: any) => p.cultivo === cultivo.codigo
-        );
-
-        // ✅ AUTO-SELECCIONAR EL PRIMER PROYECTO
-        if (this.filteredProyectos.length > 0) {
-          this.configuracion.idproyecto = this.filteredProyectos[0].afe;
-          await this.nombreProyecto(this.configuracion.idproyecto);
-        }
-      } else {
-        this.filteredProyectos = [];
-      }
-
-    }
-    // =========================
-    // TURNO NORMAL
-    // =========================
-    else {
-
-      this.configuracion.idproyecto = turno.idproyecto;
-
-      this.filteredProyectos = this.proyectos.filter(
-        (p: any) => p.afe === turno.idproyecto
-      );
-
-      if (this.configuracion.idproyecto)
-        await this.nombreProyecto(this.configuracion.idproyecto);
-    }
 
     // CECO SEGÚN TURNO
     if (turno && this.configuracion.idturno) {
@@ -733,9 +860,9 @@ export class ParametrosComponent implements OnInit {
       );
     }
 
-    console.log('✅ Proyectos:', this.filteredProyectos);
-    console.log('✅ Proyecto asignado:', this.configuracion.idproyecto);
+    console.log('✅ Cecos:', this.filteredCecos);
   }
+
 
   async darProyectoInversionLabor(limpiar = false) {
     this.filteredProyectos.length = 0;
@@ -760,6 +887,32 @@ export class ParametrosComponent implements OnInit {
     }
   }
 
+  // async darProyectoInversionLabor(limpiar = false) {
+
+  //   // this.filteredLabores = [];
+  //   // this.filteredProyectos = [];
+
+  //   if (limpiar) {
+  //     this.configuracion.idlabor = '';
+  //     // this.configuracion.idproyecto = '';
+  //   }
+
+  //   if (!this.configuracion.idceco) return;
+
+  //   const ceco = this.filteredCecos.find(
+  //     (e: any) => e.id === this.configuracion.idceco
+  //   );
+
+  //   if (!ceco) return;
+
+  //   // 🔹 LABORES POR CECO
+  //   const labores = await this.dexieService.showLabores();
+  //   this.filteredLabores = labores.filter(
+  //     (x: Labor) => x.ceco === this.configuracion.idceco
+  //   );
+  // }
+
+
   async filtraCecoTurnoProyectoInicio() {
     if (this.configuracion.idcultivo) {
       const cultivo = this.cultivos.find(
@@ -769,7 +922,7 @@ export class ParametrosComponent implements OnInit {
         (x: Turno) => x.idcultivo?.trim() === cultivo.codigo
       );
       // LIMPIAR PROYECTOS AL CAMBIAR CULTIVO
-      this.filteredProyectos = [];
+      // this.filteredProyectos = [];
       this.darProyectoCecos();
     }
   }
@@ -777,6 +930,182 @@ export class ParametrosComponent implements OnInit {
   async nombreProyecto(idproyecto: string) {
     const proyecto = this.proyectos.find((p) => p.afe === idproyecto);
     this.nombreProyectoHeader = proyecto?.proyectoio || '';
+  }
+
+  async filtrarProyectoPorLabor() {
+
+    console.log('🔥 CULTIVO SELECCIONADO:', this.configuracion.idcultivo);
+    console.log('🔥 TURNO SELECCIONADO:', this.configuracion.idturno);
+    console.log('🔥 CECO SELECCIONADO:', this.configuracion.idceco);
+    console.log('� LABOR SELECCIONADA:', this.configuracion.idlabor);
+
+    this.filteredProyectos = [];
+    this.configuracion.idproyecto = '';
+    this.nombreProyectoHeader = '';
+
+    if (!this.configuracion.idlabor || !this.configuracion.idceco) {
+      console.log('⚠️ Falta CECO o LABOR');
+      return;
+    }
+
+    // 🔑 RELACIÓN: CULTIVO → TURNO → CECO → LABOR → PROYECTO
+    // Validar que el CECO pertenezca al cultivo seleccionado a través del TURNO
+
+    const cultivo = this.cultivos.find((c: any) => c.id == this.configuracion.idcultivo);
+    console.log('📋 CULTIVO:', cultivo);
+
+    if (cultivo) {
+      // Buscar turnos del cultivo (turno.idcultivo = cultivo.codigo)
+      const turnosDelCultivo = this.turnos.filter((t: Turno) => t.idcultivo?.trim() === cultivo.codigo?.trim());
+      console.log('📋 TURNOS DEL CULTIVO:', turnosDelCultivo.length);
+
+      // Obtener el CECO seleccionado
+      const cecoSeleccionado = this.cecos.find((c: Ceco) => c.costcenter?.trim() === this.configuracion.idceco?.trim());
+      console.log('📋 CECO SELECCIONADO:', cecoSeleccionado);
+
+      if (cecoSeleccionado) {
+        // Verificar que el CECO pertenezca a algún turno del cultivo (ceco.conturno debe estar en turnosDelCultivo)
+        const cecoPerteneceCultivo = turnosDelCultivo.some((t: Turno) =>
+          cecoSeleccionado.conturno?.includes(t.conturno || '')
+        );
+
+        console.log('🔍 CECO pertenece al cultivo?', cecoPerteneceCultivo);
+
+        if (!cecoPerteneceCultivo) {
+          console.log('⚠️ El CECO no pertenece al cultivo seleccionado');
+          console.log('   CECO conturno:', cecoSeleccionado.conturno);
+          console.log('   Turnos del cultivo:', turnosDelCultivo.map((t: Turno) => t.conturno));
+          return;
+        }
+      }
+    }
+
+    // 🔑 FILTRADO POR CECO + LABOR
+    // Los proyectos deben coincidir con CECO e IDLABOR
+    this.filteredProyectos = this.proyectos.filter(
+      (p: any) =>
+        p.ceco?.trim() === this.configuracion.idceco?.trim() &&
+        p.idlabor?.trim() === this.configuracion.idlabor?.trim() &&
+        p.idcultivo?.trim() === cultivo.codigo?.trim()
+    );
+
+    console.log('✅ PROYECTOS FILTRADOS (CULTIVO + CECO + LABOR):', this.filteredProyectos.length);
+    console.log('📦 PROYECTOS FILTRADOS:', this.filteredProyectos);
+
+    // ✅ AUTOSELECCIÓN si solo hay uno
+    if (this.filteredProyectos.length === 1) {
+      this.configuracion.idproyecto = this.filteredProyectos[0].afe;
+      await this.nombreProyecto(this.configuracion.idproyecto);
+      console.log('✅ PROYECTO AUTO-SELECCIONADO:', this.configuracion.idproyecto, '-', this.nombreProyectoHeader);
+    } else if (this.filteredProyectos.length === 0) {
+      console.log('⚠️ No hay proyectos para CECO:', this.configuracion.idceco, 'y LABOR:', this.configuracion.idlabor);
+    } else {
+      console.log(`ℹ️ Hay ${this.filteredProyectos.length} proyectos disponibles para seleccionar`);
+    }
+  }
+
+  // async ListarAlmacenesPorRol() {
+
+  //   console.log('👤 Usuario:', this.usuario);
+  //   console.log('📦 Tipo Item:', this.configuracion.idTipoItem);
+  //   console.log('🎭 Rol:', this.usuario.idrol);
+
+  //   this.almacenes = [];
+
+  //   // 🔁 TRANSFERENCIA → SOLO LOLOGIST
+  //   if (this.configuracion.idTipoItem === 'TRANSFERENCIA') {
+
+  //     if (this.usuario.idrol !== 'LOLOGIST') {
+  //       console.warn('⛔ Transferencia no permitida para este rol');
+  //       return;
+  //     }
+
+  //     const destino = await this.dexieService.showAlmacenesDestino();
+
+  //     this.almacenes = destino ?? [];
+
+  //     console.log('🔁 ALMACENES DESTINO:', this.almacenes);
+  //     return;
+  //   }
+
+  //   // 🏷️ COMPRA / CONSUMO → UN SOLO ALMACÉN
+  //   const almacenes = await this.dexieService.showAlmacenes();
+
+  //   if (!almacenes?.length) {
+  //     console.warn('⚠️ No hay almacenes en Dexie');
+  //     return;
+  //   }
+
+  //   // 👉 EN PARÁMETROS SOLO SE USA UNO
+  //   const almacenUsuario = almacenes[0];
+
+  //   this.almacenes = [almacenUsuario];
+  //   this.configuracion.idalmacen = String(almacenUsuario.idalmacen);
+
+  //   console.log('🏷️ ALMACÉN USUARIO:', this.almacenes);
+  // }
+
+  async ListarAlmacenesPorRol() {
+
+    console.log('👤 Usuario:', this.usuario);
+    console.log('📦 Tipo Item:', this.configuracion.idTipoItem);
+    console.log('🎭 Rol:', this.usuario.idrol);
+
+    this.almacenes = [];
+
+    // ===============================
+    // 🔁 TRANSFERENCIA
+    // ===============================
+    if (this.configuracion.idTipoItem === 'TRANSFERENCIA') {
+
+      // SOLO LOLOGIST
+      if (this.usuario.idrol !== 'LOLOGIST') {
+        console.warn('⛔ Transferencia no permitida para este rol');
+        return;
+      }
+
+      const destino = await this.dexieService.showAlmacenesDestino();
+      this.almacenes = destino ?? [];
+
+      console.log('🔁 ALMACENES DESTINO:', this.almacenes);
+      return;
+    }
+
+    // ===============================
+    // 🏷️ COMPRA / CONSUMO
+    // ===============================
+    const almacenes = await this.dexieService.showAlmacenes();
+
+    if (!almacenes?.length) {
+      console.warn('⚠️ No hay almacenes en Dexie');
+      return;
+    }
+
+    // 🔥 EMLOGIST → TODOS
+    if (this.usuario.idrol === 'EMLOGIST') {
+      this.almacenes = almacenes;
+      console.log('📦 ALMACENES EMPAQUE:', this.almacenes);
+      return;
+    }
+
+    // 🔐 LOLOGIST / OPLOGIST → SOLO UNO
+    const almacenUsuario = almacenes[0];
+
+    this.almacenes = [almacenUsuario];
+    this.configuracion.idalmacen = String(almacenUsuario.idalmacen);
+
+    console.log('🏷️ ALMACÉN USUARIO:', this.almacenes);
+  }
+
+
+  async onTipoItemChange() {
+    console.log('🔄 Tipo Item cambiado:', this.configuracion.idTipoItem);
+
+    // limpiar selección previa
+    // this.configuracion.idalmacen = '';
+    // this.almacenes = [];
+
+    await this.ListarAlmacenesPorRol();
   }
 
   async guardarConfiguracion() {

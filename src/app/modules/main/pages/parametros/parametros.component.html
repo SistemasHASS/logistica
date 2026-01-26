@@ -1,246 +1,3 @@
-<!-- <div class="card firstCard">
-  <div class="card-body p-0">
-    <div class="row">
-      <div class="col-md-12 col-lg-6 col-xl-6 marginBottom">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label"><b class="text-danger">*</b> Empresa</label>
-            <div class="col-lg-9">
-              <select [(ngModel)]="configuracion.idempresa" [ngClass]="{
-                  'is-invalid': showValidation && !configuracion.idempresa,
-                  'is-valid': configuracion.idempresa
-                }" class="form-select mb-2" name="empresa" disabled>
-                <option [ngValue]="''">Seleccione una opción</option>
-                <option *ngFor="let t of empresas; let i = index" [ngValue]="t.ruc">
-                  {{ t.razonsocial }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-      </div>
-      <div class="col-md-12 col-lg-6 col-xl-6 marginBottom">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label"><b class="text-danger">*</b> Fundo</label>
-            <div class="col-lg-9">
-              <select [(ngModel)]="configuracion.idfundo" [ngClass]="{
-                  'is-invalid': showValidation && !configuracion.idfundo,
-                  'is-valid': configuracion.idfundo
-                }" class="form-select mb-2" name="fundo">
-                <option [ngValue]="''">Seleccione una opción</option>
-                <option *ngFor="let t of fundos; let i = index" [ngValue]="t.codigoFundo">
-                  {{ t.nombreFundo }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-      </div>
-    </div>
-    <div class="row"> -->
-      <!-- <div class="col-md-12 col-lg-6 col-xl-6 marginBottom" [hidden]="true">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label"><b class="text-danger">*</b> Area</label>
-            <div class="col-lg-9">
-              <select [(ngModel)]="configuracion.idarea"
-                [ngClass]="{'is-invalid': showValidation && !configuracion.idarea, 'is-valid': configuracion.idarea}"
-                class="form-select mb-2" name="area">
-                <option [ngValue]="''" [disabled]="true">Seleccione una opción</option>
-                <option *ngFor="let ar of areas; let i = index" [ngValue]="ar.id">
-                  {{ar.descripcion }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-      </div> -->
-      <!-- <div class="col-md-12 col-lg-6 col-xl-6 marginBottom">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label"><b class="text-danger">*</b> Cultivo</label>
-            <div class="col-lg-9">
-              <select [(ngModel)]="configuracion.idcultivo" [ngClass]="{
-                  'is-invalid': showValidation && !configuracion.idcultivo,
-                  'is-valid': configuracion.idcultivo
-                }" (ngModelChange)="onCecoTurnoProyectoChange(true)" class="form-select mb-2" name="cultivo">
-                <option [ngValue]="''" [disabled]="true" [selected]="true">
-                  Seleccione un cultivo
-                </option>
-                <option *ngFor="let t of cultivos; let i = index" [ngValue]="t.id">
-                  {{ t.descripcion }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-      </div>
-      <div class="col-md-12 col-lg-6 col-xl-6 marginBottom">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label"><b class="text-danger">*</b> Turno</label>
-            <div class="col-lg-9">
-              <app-dropdown [(ngModel)]="configuracion.idturno" (ngModelChange)="darProyectoCecos(true)"
-                [editable]="true" [data]="filteredTurnos" [valueField]="'codTurno'" [textShow]="'Turno'"
-                [textShow2]="'un Turno'" [optionLabel]="'nombreTurno'"></app-dropdown>
-            </div>
-          </div>
-        </fieldset>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12 col-lg-6 col-xl-6 marginBottom">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label"><b class="text-danger">*</b> Ceco</label>
-            <div class="col-lg-9">
-              <app-dropdown [(ngModel)]="configuracion.idceco" (ngModelChange)="darProyectoInversionLabor(true)"
-                [editable]="true" [data]="filteredCecos" [valueField]="'id'" [textShow]="'Ceco'" [required]="true"
-                [textShow2]="'un ceco'" [optionLabel]="'localname'" />
-            </div>
-          </div>
-        </fieldset>
-      </div>
-      <div class="col-md-12 col-lg-6 col-xl-6 marginBottom">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label"><b class="text-danger">*</b> Proyecto</label>
-            <div class="col-lg-9">
-              <app-dropdown [required]="true" [editable]="true" [data]="filteredProyectos" [valueField]="'afe'"
-                [textShow]="'Proyecto'" [textShow2]="'un proyecto'" [(ngModel)]="configuracion.idproyecto"
-                [optionLabel]="'proyectoio'" />
-            </div>
-          </div>
-        </fieldset>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12 col-lg-6 col-xl-6 marginBottom">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label"><b class="text-danger">*</b> Labor</label>
-            <div class="col-lg-9">
-              <app-dropdown [required]="true" [editable]="true" [data]="filteredLabores" [valueField]="'idlabor'"
-                [textShow]="'Labor'" [textShow2]="'una Labor'" [(ngModel)]="configuracion.idlabor"
-                [optionLabel]="'labor'" />
-            </div>
-          </div>
-        </fieldset>
-      </div>
-      <div class="col-md-12 col-lg-6 col-xl-6 marginBottom">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label"><b class="text-danger">*</b> Almacen</label>
-            <div class="col-lg-9">
-              <select [(ngModel)]="configuracion.idalmacen" [ngClass]="{
-                  'is-invalid': showValidation && !configuracion.idalmacen,
-                  'is-valid': configuracion.idalmacen
-                }" class="form-select mb-2" name="almacen">
-                <option [ngValue]="''" [disabled]="true">
-                  Seleccione una opción
-                </option>
-                <option *ngFor="let a of almacenes; let i = index" [ngValue]="a.idalmacen">
-                  {{ a.almacen }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12 col-lg-6 col-xl-6 marginBottom" hidden="ocultarClasificacion">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label"><b class="text-danger">*</b> Clasificación</label>
-            <div class="col-lg-9">
-              <select [(ngModel)]="configuracion.idclasificacion" [ngClass]="{
-                  'is-invalid':
-                    showValidation && !configuracion.idclasificacion,
-                  'is-valid': configuracion.idclasificacion
-                }" class="form-select mb-2" name="clasificacion">
-                <option [ngValue]="''" [disabled]="true">
-                  Seleccione una opción
-                </option>
-                <option *ngFor="let c of clasificaciones; let i = index" [ngValue]="c.idclasificacion">
-                  {{ c.descripcion_clasificacion }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12 col-lg-6 col-xl-6 marginBottom"
-        [ngClass]="ocultarItem ? 'col-lg-12 col-xl-12' : 'col-lg-6 col-xl-6'" [hidden]="ocultarItem">
-        >
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label"><b class="text-danger">*</b> Item</label>
-            <div class="col-lg-9">
-              <select [(ngModel)]="configuracion.iditem" [ngClass]="{
-                  'is-invalid': showValidation && !configuracion.iditem,
-                  'is-valid': configuracion.iditem
-                }" class="form-select mb-2" name="item">
-                <option [ngValue]="''" [disabled]="true">
-                  Seleccione una opción
-                </option>
-                <option *ngFor="let it of items; let i = index" [ngValue]="it.id">
-                  {{ it.descripcion }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-      </div> -->
-      <!-- <div class="col-md-12 col-lg-6 col-xl-6 marginBottom">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label"><b class="text-danger">*</b> Labor</label>
-            <div class="col-lg-9">
-              <select [(ngModel)]="configuracion.idlabor"
-                [ngClass]="{'is-invalid': showValidation && !configuracion.idlabor, 'is-valid': configuracion.idlabor}"
-                class="form-select mb-2" name="labor">
-                <option [ngValue]="''" [disabled]="true">Seleccione una opción</option>
-                <option *ngFor="let p of proyectos; let i = index" [ngValue]="p.id">
-                  {{ p.proyectoio }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-      </div> -->
-      <!-- <div class="col-md-12 col-lg-6 col-xl-6 marginBottom">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label"><b class="text-danger">*</b> Tipo Item</label>
-            <div class="col-lg-9">
-              <select [(ngModel)]="configuracion.idTipoItem"
-                [ngClass]="{'is-invalid': showValidation && !configuracion.idTipoItem, 'is-valid': configuracion.idTipoItem}"
-                class="form-select mb-2" name="tipoTtem">
-                <option [ngValue]="''" [disabled]="true">Seleccione una opción</option>
-                <option *ngFor="let ti of tipoItem; let i = index" [ngValue]="ti.id">
-                  {{ ti.descripcion }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-      </div>
-    </div>
-    <div class="botonGuardar mb-4 mt-4 d-flex align-items-center justify-content-center" style="gap: 1em">
-      <button (click)="sincronizarTablasMaestras()" class="btn btn-primary botonCelular">
-        <i class="icon icon-sync"></i> Sincronizar
-      </button>
-      <button (click)="guardarConfiguracion()" class="btn btn-success botonCelular">
-        <i class="icon icon-floppy-disk"></i> Guardar
-      </button>
-    </div>
-  </div>
-</div> -->
-
 <div class="card firstCard">
   <div class="card-body p-0">
 
@@ -253,15 +10,10 @@
               <b class="text-danger">*</b> Empresa
             </label>
             <div class="col-lg-9">
-              <select
-                [(ngModel)]="configuracion.idempresa"
-                name="empresa"
-                class="form-select mb-2"
-                [ngClass]="{
+              <select [(ngModel)]="configuracion.idempresa" name="empresa" class="form-select mb-2" [ngClass]="{
                   'is-invalid': showValidation && !configuracion.idempresa,
                   'is-valid': configuracion.idempresa
-                }"
-                disabled>
+                }" disabled>
                 <option [ngValue]="''">Seleccione una opción</option>
                 <option *ngFor="let t of empresas" [ngValue]="t.ruc">
                   {{ t.razonsocial }}
@@ -279,11 +31,7 @@
               <b class="text-danger">*</b> Fundo
             </label>
             <div class="col-lg-9">
-              <select
-                [(ngModel)]="configuracion.idfundo"
-                name="fundo"
-                class="form-select mb-2"
-                [ngClass]="{
+              <select [(ngModel)]="configuracion.idfundo" name="fundo" class="form-select mb-2" [ngClass]="{
                   'is-invalid': showValidation && !configuracion.idfundo,
                   'is-valid': configuracion.idfundo
                 }">
@@ -307,12 +55,8 @@
               <b class="text-danger">*</b> Cultivo
             </label>
             <div class="col-lg-9">
-              <select
-                [(ngModel)]="configuracion.idcultivo"
-                name="cultivo"
-                class="form-select mb-2"
-                (ngModelChange)="onCecoTurnoProyectoChange(true)"
-                [ngClass]="{
+              <select [(ngModel)]="configuracion.idcultivo" name="cultivo" class="form-select mb-2"
+                (ngModelChange)="onCecoTurnoProyectoChange(true)" [ngClass]="{
                   'is-invalid': showValidation && !configuracion.idcultivo,
                   'is-valid': configuracion.idcultivo
                 }">
@@ -333,15 +77,9 @@
               <b class="text-danger">*</b> Turno
             </label>
             <div class="col-lg-9">
-              <app-dropdown
-                [(ngModel)]="configuracion.idturno"
-                (ngModelChange)="darProyectoCecos(true)"
-                [editable]="true"
-                [data]="filteredTurnos"
-                [valueField]="'codTurno'"
-                [optionLabel]="'nombreTurno'"
-                [textShow]="'Turno'"
-                [textShow2]="'un Turno'">
+              <app-dropdown [(ngModel)]="configuracion.idturno" (ngModelChange)="darProyectoCecos(true)"
+                [editable]="true" [data]="filteredTurnos" [valueField]="'codTurno'" [optionLabel]="'nombreTurno'"
+                [textShow]="'Turno'" [textShow2]="'un Turno'">
               </app-dropdown>
             </div>
           </div>
@@ -349,7 +87,7 @@
       </div>
     </div>
 
-    <!-- CECO / PROYECTO -->
+    <!-- CECO / LABOR -->
     <div class="row">
       <div class="col-6 col-lg-6 marginBottom">
         <fieldset>
@@ -358,47 +96,15 @@
               <b class="text-danger">*</b> Ceco
             </label>
             <div class="col-lg-9">
-              <app-dropdown
-                [(ngModel)]="configuracion.idceco"
-                (ngModelChange)="darProyectoInversionLabor(true)"
-                [editable]="true"
-                [data]="filteredCecos"
-                [valueField]="'id'"
-                [optionLabel]="'localname'"
-                [textShow]="'Ceco'"
-                [textShow2]="'un ceco'"
-                [required]="true">
+              <app-dropdown [(ngModel)]="configuracion.idceco" (ngModelChange)="darProyectoInversionLabor(true)"
+                [editable]="true" [data]="filteredCecos" [valueField]="'id'" [optionLabel]="'localname'"
+                [textShow]="'Ceco'" [textShow2]="'un ceco'" [required]="true">
               </app-dropdown>
             </div>
           </div>
         </fieldset>
       </div>
 
-      <div class="col-6 col-lg-6 marginBottom">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label">
-              <b class="text-danger">*</b> Proyecto
-            </label>
-            <div class="col-lg-9">
-              <app-dropdown
-                [(ngModel)]="configuracion.idproyecto"
-                [editable]="true"
-                [data]="filteredProyectos"
-                [valueField]="'afe'"
-                [optionLabel]="'proyectoio'"
-                [textShow]="'Proyecto'"
-                [textShow2]="'un proyecto'"
-                [required]="true">
-              </app-dropdown>
-            </div>
-          </div>
-        </fieldset>
-      </div>
-    </div>
-
-    <!-- LABOR / ALMACÉN -->
-    <div class="row">
       <div class="col-6 col-lg-6 marginBottom">
         <fieldset>
           <div class="form-group row box-labelFloat">
@@ -406,14 +112,31 @@
               <b class="text-danger">*</b> Labor
             </label>
             <div class="col-lg-9">
-              <app-dropdown
-                [(ngModel)]="configuracion.idlabor"
-                [editable]="true"
-                [data]="filteredLabores"
-                [valueField]="'idlabor'"
-                [optionLabel]="'labor'"
-                [textShow]="'Labor'"
-                [textShow2]="'una Labor'"
+              <app-dropdown [(ngModel)]="configuracion.idlabor" (ngModelChange)="filtrarProyectoPorLabor()"
+                [editable]="true" [data]="filteredLabores" [valueField]="'idlabor'" [optionLabel]="'labor'"
+                [textShow]="'Labor'" [textShow2]="'una Labor'" [required]="true">
+              </app-dropdown>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+        <!-- <pre style="background:#111;color:#0f0;padding:8px">
+    {{ filteredProyectos | json }}
+    </pre> -->
+
+
+    <!-- PROYECTO / ALMACÉN -->
+    <div class="row">
+      <div class="col-6 col-lg-6 marginBottom">
+        <fieldset>
+          <div class="form-group row box-labelFloat">
+            <label class="col-lg-3 col-form-label">
+              <b class="text-danger">*</b> Proyecto
+            </label>
+            <div class="col-lg-9">
+              <app-dropdown [(ngModel)]="configuracion.idproyecto" [editable]="true" [data]="filteredProyectos"
+                [valueField]="'afe'" [optionLabel]="'proyectoio'" [textShow]="'Proyecto'" [textShow2]="'un proyecto'"
                 [required]="true">
               </app-dropdown>
             </div>
@@ -428,11 +151,7 @@
               <b class="text-danger">*</b> Almacén
             </label>
             <div class="col-lg-9">
-              <select
-                [(ngModel)]="configuracion.idalmacen"
-                name="almacen"
-                class="form-select mb-2"
-                [ngClass]="{
+              <select [(ngModel)]="configuracion.idalmacen" name="almacen" class="form-select mb-2" [ngClass]="{
                   'is-invalid': showValidation && !configuracion.idalmacen,
                   'is-valid': configuracion.idalmacen
                 }">
@@ -456,11 +175,7 @@
               <b class="text-danger">*</b> Item
             </label>
             <div class="col-lg-9">
-              <select
-                [(ngModel)]="configuracion.iditem"
-                name="item"
-                class="form-select mb-2"
-                [ngClass]="{
+              <select [(ngModel)]="configuracion.iditem" name="item" class="form-select mb-2" [ngClass]="{
                   'is-invalid': showValidation && !configuracion.iditem,
                   'is-valid': configuracion.iditem
                 }">
@@ -481,11 +196,7 @@
               <b class="text-danger">*</b> Tipo Item
             </label>
             <div class="col-lg-9">
-              <select
-                [(ngModel)]="configuracion.idTipoItem"
-                name="tipoItem"
-                class="form-select mb-2"
-                [ngClass]="{
+              <select [(ngModel)]="configuracion.idTipoItem" name="tipoItem" class="form-select mb-2" (change)="onTipoItemChange()" [ngClass]="{
                   'is-invalid': showValidation && !configuracion.idTipoItem,
                   'is-valid': configuracion.idTipoItem
                 }">

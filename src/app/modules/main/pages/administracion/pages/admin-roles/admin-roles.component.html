@@ -1,0 +1,62 @@
+<div class="admin-page">
+
+  <!-- CABECERA -->
+  <div class="page-header">
+    <h2>Lista de Roles</h2>
+    <button class="btn-primary" (click)="nuevoRol()">Nuevo Rol</button>
+  </div>
+
+  <!-- TABLA -->
+  <table class="table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Rol</th>
+        <th>Estado</th>
+        <th width="120">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let rol of roles index as i">
+        <td>{{ i + 1 }}</td>
+        <td>{{ rol.nombre }}</td>
+        <td>
+          <span [ngClass]="rol.estado === 'ACTIVO' ? 'activo' : 'inactivo'">
+            {{ rol.estado }}
+          </span>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-warning me-2" (click)="editarRol(rol)">
+            <i class="icon-pencil"></i>
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- =========================
+     MODAL
+========================== -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal" [class.show]="showModal">
+
+    <h3>{{ isEdit ? 'Editar Rol' : 'Nuevo Rol' }}</h3>
+
+    <label>Nombre del Rol</label>
+    <input type="text" [(ngModel)]="form.nombre" placeholder="Ingrese nombre">
+
+    <label>Estado</label>
+    <select [(ngModel)]="form.estado">
+      <option value="ACTIVO">Activo</option>
+      <option value="INACTIVO">Inactivo</option>
+    </select>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
+      <button class="btn-primary" (click)="guardar()">Guardar</button>
+    </div>
+
+  </div>
+</div>

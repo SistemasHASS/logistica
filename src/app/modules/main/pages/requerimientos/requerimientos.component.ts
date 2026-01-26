@@ -17,9 +17,11 @@ import {
   RequerimientoActivoFijoMenor,
   DetalleRequerimientoActivoFijoMenor,
   DetalleExcelPreview,
-  ErrorExcel
+  ErrorExcel,
 } from 'src/app/shared/interfaces/Tables';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
+import { PrioridadRequerimientoService } from '@/app/shared/services/prioridad-requerimiento.service';
+import { PrioridadSpring, TipoRequerimiento } from '@/app/shared/interfaces/PrioridadRequerimiento';
 import {
   Ceco,
   Configuracion,
@@ -129,6 +131,18 @@ export class RequerimientosComponent implements OnInit {
   dataSelected: any = [];
   allSelected: boolean = false;
   requerimientoActivo: any = null;
+
+  //Requerimiento Commodity
+  dataSelectedCommodity: any = [];
+  requerimientoCommodityActivo: any = null;
+
+  //Requerimiento Activo Fijo
+  dataSelectedActivoFijo: any = [];
+  requerimientoActivoFijoActivo: any = null;
+
+  //Requerimiento Activo Fijo Menor
+  dataSelectedActivoFijoMenor: any = [];
+  requerimientoActivoFijoMenorActivo: any = null;
 
   fecha = new Date();
   mensajeFundos: String = '';
@@ -249,6 +263,9 @@ export class RequerimientosComponent implements OnInit {
     idalmacendestino: '',
     idproyecto: '',
     estado: 0,
+    disabled: false,
+    checked: false,
+    eliminado: 0,
     detalleCommodity: [],
   };
 
@@ -272,6 +289,9 @@ export class RequerimientosComponent implements OnInit {
     idalmacendestino: '',
     idproyecto: '',
     estado: 0,
+    disabled: false,
+    checked: false,
+    eliminado: 0,
     detalleActivoFijo: [],
   };
 
@@ -294,6 +314,9 @@ export class RequerimientosComponent implements OnInit {
     idalmacendestino: '',
     idproyecto: '',
     estado: 0,
+    disabled: false,
+    checked: false,
+    eliminado: 0,
     detalleActivoFijoMenor: [],
   };
 
@@ -402,10 +425,13 @@ export class RequerimientosComponent implements OnInit {
   sienvinarActivoFijoMenor: number = 0;
   enviadosActivoFijoMenor: number = 0;
 
-  SeleccionaPrioridadITEM = '';
+  SeleccionaPrioridadITEM: PrioridadSpring | '' = '';
   SeleccionaPrioridadCOMMODITY = '';
   SeleccionaPrioridadACTIVOFIJO = '';
   SeleccionaPrioridadACTIVOFIJOMENOR = '';
+
+  // Opciones dinámicas de prioridad según tipo de requerimiento
+  opcionesPrioridadITEM: { value: PrioridadSpring; label: string; descripcion: string }[] = [];
   fundoSeleccionado = '';
   cultivoSeleccionado = '';
   areaSeleccionada = '';
@@ -413,7 +439,7 @@ export class RequerimientosComponent implements OnInit {
   itemSeleccionado = '';
   clasificacionSeleccionado = '';
   turnoSeleccionado = '';
-  TipoSelecionado = '';
+  TipoSelecionado: TipoRequerimiento | '' = '';
   almacenOrigen = '';
   almacenDestino = '';
   RequerimientoSelecionado = 'I';
@@ -442,7 +468,8 @@ export class RequerimientosComponent implements OnInit {
     private utilsService: UtilsService,
     private dexieService: DexieService,
     private alertService: AlertService, // ✅ inyectar el servicio
-    private requerimientosService: RequerimientosService
+    private requerimientosService: RequerimientosService,
+    public prioridadService: PrioridadRequerimientoService, // ✅ Servicio de prioridades (public para usar en template)
   ) { }
 
   async ngOnInit() {
@@ -469,19 +496,19 @@ export class RequerimientosComponent implements OnInit {
 
   contarSinEnviar() {
     this.sinenviar = this.requerimientos.filter((r) =>
-      this.esSinEnviar(r)
+      this.esSinEnviar(r),
     ).length;
 
     this.sinenviarCommodity = this.requerimientosCommodity.filter((r) =>
-      this.esSinEnviar(r)
+      this.esSinEnviar(r),
     ).length;
 
     this.sinenviarActivoFijo = this.requerimientosActivoFijo.filter((r) =>
-      this.esSinEnviar(r)
+      this.esSinEnviar(r),
     ).length;
 
     this.sienvinarActivoFijoMenor = this.requerimientosActivoFijoMenor.filter(
-      (r) => this.esSinEnviar(r)
+      (r) => this.esSinEnviar(r),
     ).length;
   }
 
@@ -489,15 +516,15 @@ export class RequerimientosComponent implements OnInit {
     this.enviados = this.requerimientos.filter((r) => this.esEnviado(r)).length;
 
     this.enviadosCommodity = this.requerimientosCommodity.filter((r) =>
-      this.esEnviado(r)
+      this.esEnviado(r),
     ).length;
 
     this.enviadosActivoFijo = this.requerimientosActivoFijo.filter((r) =>
-      this.esEnviado(r)
+      this.esEnviado(r),
     ).length;
 
     this.enviadosActivoFijoMenor = this.requerimientosActivoFijoMenor.filter(
-      (r) => this.esEnviado(r)
+      (r) => this.esEnviado(r),
     ).length;
   }
 
@@ -508,7 +535,7 @@ export class RequerimientosComponent implements OnInit {
 
       console.log(
         '⚙️ Configuración cargada en Requerimientos:',
-        this.configuracion
+        this.configuracion,
       );
 
       // Opcional: precargar selects con esta configuración
@@ -519,7 +546,7 @@ export class RequerimientosComponent implements OnInit {
       this.clasificacionSeleccionado = config.idclasificacion;
       this.turnoSeleccionado = config.idturno;
       this.itemSeleccionado = config.iditem;
-      this.TipoSelecionado = config.idTipoItem;
+      this.TipoSelecionado = config.idTipoItem as TipoRequerimiento | '';
 
       // 🔥 Ejecutar lógica según tipo
       this.onTipoChange();
@@ -530,19 +557,19 @@ export class RequerimientosComponent implements OnInit {
 
       // 🌟 1. BUSCAR EL CECO COMPLETO
       this.cecoSeleccionado = (await this.dexieService.getCecoById(
-        config.idceco
+        config.idceco,
       )) as Ceco | null;
       console.log('ceco seleccionado: ', this.cecoSeleccionado);
       // 🌟 2. BUSCAR EL PROYECTO COMPLETO
       if (config.idproyecto) {
         this.proyectoSeleccionado = (await this.dexieService.getProyectoByAfe(
-          config.idproyecto
+          config.idproyecto,
         )) as Proyecto | null;
       }
       console.log('proyecto seleccionado: ', this.proyectoSeleccionado);
       // 🌟 3. BUSCAR LA LABOR COMPLETA
       this.laborSeleccionado = (await this.dexieService.getLaborById(
-        config.idlabor
+        config.idlabor,
       )) as Labor | null;
       console.log('labor seleccionado: ', this.laborSeleccionado);
     } else {
@@ -571,6 +598,9 @@ export class RequerimientosComponent implements OnInit {
       idalmacendestino: '',
       idproyecto: this.proyectoSeleccionado?.proyectoio || '',
       estado: 0,
+      checked: false,
+      disabled: false,
+      eliminado: 0,
       detalleCommodity: [],
     };
     this.detallesCommodity = [];
@@ -603,7 +633,7 @@ export class RequerimientosComponent implements OnInit {
     this.SeleccionaPrioridadCOMMODITY = req.prioridad;
     // Find the proyecto object that matches the ID
     const proyectoObj = this.proyectos.find(
-      (p) => p.idproyecto === req.idproyecto
+      (p) => p.idproyecto === req.idproyecto,
     );
     this.proyectoSeleccionado = proyectoObj || null;
     // this.proyectoSeleccionado = req.idproyecto;
@@ -622,7 +652,7 @@ export class RequerimientosComponent implements OnInit {
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
       '¿Desea eliminar este requerimiento?',
-      'warning'
+      'warning',
     );
     if (!confirmacion) return;
     try {
@@ -637,14 +667,14 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Éxito',
         'Requerimiento eliminado correctamente.',
-        'success'
+        'success',
       );
     } catch (error) {
       console.error('Error al eliminar requerimiento:', error);
       this.alertService.showAlert(
         'Error',
         'Ocurrió un error al eliminar el requerimiento.',
-        'error'
+        'error',
       );
     }
   }
@@ -654,7 +684,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Atención',
         'Debes seleccionar un Fundo antes de guardar.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -663,7 +693,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Atención',
         'Debes ingresar una glosa antes de guardar.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -673,7 +703,7 @@ export class RequerimientosComponent implements OnInit {
 
       // Obtener datos de almacén
       const almacenObj = this.almacenes.find(
-        (a) => a.idalmacen == this.almacenSeleccionado
+        (a) => a.idalmacen == this.almacenSeleccionado,
       );
 
       const idAlmacenSync = almacenObj ? almacenObj.idalmacen : '';
@@ -706,7 +736,10 @@ export class RequerimientosComponent implements OnInit {
         almacen: almacenObj?.almacen || '',
         idproyecto: this.proyectoSeleccionado?.proyectoio ?? '',
         estado: 0,
-        detalleCommodity: [...this.detallesCommodity]
+        checked: false,
+        disabled: false,
+        eliminado: 0,
+        detalleCommodity: [...this.detallesCommodity],
       };
 
       let idGuardado;
@@ -716,7 +749,7 @@ export class RequerimientosComponent implements OnInit {
         await this.dexieService.requerimientosCommodity.put(reqCommodity);
 
         const index = this.requerimientosCommodity.findIndex(
-          (r) => r.idrequerimiento === reqCommodity.idrequerimiento
+          (r) => r.idrequerimiento === reqCommodity.idrequerimiento,
         );
 
         if (index !== -1) {
@@ -727,9 +760,8 @@ export class RequerimientosComponent implements OnInit {
         this.modoEdicionCommodity = false;
       } else {
         // =============== NUEVO ==================
-        idGuardado = await this.dexieService.requerimientosCommodity.put(
-          reqCommodity
-        );
+        idGuardado =
+          await this.dexieService.requerimientosCommodity.put(reqCommodity);
 
         this.requerimientosCommodity.push({ ...reqCommodity });
       }
@@ -738,7 +770,7 @@ export class RequerimientosComponent implements OnInit {
       for (const d of this.detallesCommodity) {
         await this.dexieService.detallesCommodity.put({
           ...d,
-          idrequerimiento: idreq
+          idrequerimiento: idreq,
         });
       }
 
@@ -747,7 +779,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Éxito',
         `Requerimiento de Servicio #${idGuardado} guardado correctamente.`,
-        'success'
+        'success',
       );
 
       // =============== LIMPIAR ==================
@@ -763,14 +795,14 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Error',
         'Ocurrió un problema al guardar el Requerimiento de Servicio.',
-        'error'
+        'error',
       );
     }
   }
 
   cancelarCommodity() {
     const confirmar = confirm(
-      '¿Seguro que deseas cancelar los cambios? Se perderán los datos no guardados.'
+      '¿Seguro que deseas cancelar los cambios? Se perderán los datos no guardados.',
     );
     if (!confirmar) return;
     this.mostrarFormularioCommodity = false;
@@ -796,6 +828,9 @@ export class RequerimientosComponent implements OnInit {
       idalmacendestino: '',
       idproyecto: '',
       estado: 0,
+      disabled: false,
+      checked: false,
+      eliminado: 0,
       detalleActivoFijoMenor: [],
     };
     this.mostrarFormularioActivoFijoMenor = true;
@@ -825,7 +860,7 @@ export class RequerimientosComponent implements OnInit {
     this.clasificacionSeleccionado = req.idclasificacion;
     this.SeleccionaPrioridadACTIVOFIJOMENOR = req.prioridad;
     const proyectoEncontrado = this.proyectos.find(
-      (p) => p.id === req.idproyecto
+      (p) => p.id === req.idproyecto,
     );
     this.proyectoSeleccionado = proyectoEncontrado || null;
 
@@ -842,7 +877,7 @@ export class RequerimientosComponent implements OnInit {
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
       '¿Desea eliminar este requerimiento?',
-      'warning'
+      'warning',
     );
 
     if (!confirmacion) return;
@@ -860,14 +895,14 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Éxito',
         'Requerimiento eliminado correctamente.',
-        'success'
+        'success',
       );
     } catch (error) {
       console.error('Error al eliminar requerimiento:', error);
       this.alertService.showAlert(
         'Error',
         'Ocurrió un error al eliminar el requerimiento.',
-        'error'
+        'error',
       );
     }
   }
@@ -902,7 +937,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Atención',
         'Debes seleccionar un Fundo antes de guardar.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -911,7 +946,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Atención',
         'Debes ingresar una glosa antes de guardar.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -920,7 +955,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.mostrarModalCarga();
 
       const almacenObj = this.almacenes.find(
-        (a) => a.idalmacen == this.almacenSeleccionado
+        (a) => a.idalmacen == this.almacenSeleccionado,
       );
 
       const idAlmacenSync = almacenObj ? almacenObj.idalmacen : '';
@@ -956,7 +991,9 @@ export class RequerimientosComponent implements OnInit {
         idalmacendestino: '',
         idproyecto: this.proyectoSeleccionado?.proyectoio ?? '',
         estado: 0,
-
+        disabled: false,
+        checked: false,
+        eliminado: 0,
         detalleActivoFijoMenor: [...this.detallesActivoFijoMenor],
       };
 
@@ -976,7 +1013,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Éxito',
         `Requerimiento Activo Fijo #${idGuardado} guardado correctamente.`,
-        'success'
+        'success',
       );
 
       // ================================
@@ -995,14 +1032,14 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Error',
         'Hubo un problema al guardar el Requerimiento de Activo Fijo.',
-        'error'
+        'error',
       );
     }
   }
 
   cancelarActivoFijoMenor() {
     const confirmar = confirm(
-      '¿Seguro que deseas cancelar los cambios? Se perderán los datos no guardados.'
+      '¿Seguro que deseas cancelar los cambios? Se perderán los datos no guardados.',
     );
     if (!confirmar) return;
     this.mostrarFormularioActivoFijoMenor = false;
@@ -1029,6 +1066,9 @@ export class RequerimientosComponent implements OnInit {
       idalmacendestino: '',
       idproyecto: this.proyectoSeleccionado?.proyectoio || '',
       estado: 0,
+      disabled: false,
+      checked: false,
+      eliminado: 0,
       detalleActivoFijo: [],
     };
     this.mostrarFormularioActivoFijo = true;
@@ -1075,7 +1115,7 @@ export class RequerimientosComponent implements OnInit {
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
       '¿Desea eliminar este requerimiento?',
-      'warning'
+      'warning',
     );
 
     if (!confirmacion) return;
@@ -1093,14 +1133,14 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Éxito',
         'Requerimiento eliminado correctamente.',
-        'success'
+        'success',
       );
     } catch (error) {
       console.error('Error al eliminar requerimiento:', error);
       this.alertService.showAlert(
         'Error',
         'Ocurrió un error al eliminar el requerimiento.',
-        'error'
+        'error',
       );
     }
   }
@@ -1135,7 +1175,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Atención',
         'Debes seleccionar un Fundo antes de guardar.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -1144,7 +1184,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Atención',
         'Debes ingresar una glosa antes de guardar.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -1153,7 +1193,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.mostrarModalCarga();
 
       const almacenObj = this.almacenes.find(
-        (a) => a.idalmacen == this.almacenSeleccionado
+        (a) => a.idalmacen == this.almacenSeleccionado,
       );
 
       const idAlmacenSync = almacenObj ? almacenObj.idalmacen : '';
@@ -1190,16 +1230,17 @@ export class RequerimientosComponent implements OnInit {
         idalmacendestino: '',
         idproyecto: this.proyectoSeleccionado?.proyectoio ?? '',
         estado: 0,
-
+        disabled: false,
+        checked: false,
+        eliminado: 0,
         detalleActivoFijo: [...this.detallesActivoFijo],
       };
 
       // ================================
       // GUARDAR EN DEXIE
       // ================================
-      const idGuardado = await this.dexieService.requerimientosActivoFijo.put(
-        reqAF
-      );
+      const idGuardado =
+        await this.dexieService.requerimientosActivoFijo.put(reqAF);
 
       // ================================
       // GUARDAR EN MEMORIA
@@ -1211,7 +1252,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Éxito',
         `Requerimiento Activo Fijo #${idGuardado} guardado correctamente.`,
-        'success'
+        'success',
       );
 
       // ================================
@@ -1230,14 +1271,14 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Error',
         'Hubo un problema al guardar el Requerimiento de Activo Fijo.',
-        'error'
+        'error',
       );
     }
   }
 
   cancelarActivoFijo() {
     const confirmar = confirm(
-      '¿Seguro que deseas cancelar los cambios? Se perderán los datos no guardados.'
+      '¿Seguro que deseas cancelar los cambios? Se perderán los datos no guardados.',
     );
     if (!confirmar) return;
     this.mostrarFormularioActivoFijo = false;
@@ -1255,7 +1296,7 @@ export class RequerimientosComponent implements OnInit {
 
   filtroClasificaciones() {
     this.clasificacionesFiltrados = this.clasificaciones.filter(
-      (it) => it.tipoClasificacion === this.configuracion.idclasificacion
+      (it) => it.tipoClasificacion === this.configuracion.idclasificacion,
     );
     console.log(this.clasificacionesFiltrados);
   }
@@ -1265,26 +1306,36 @@ export class RequerimientosComponent implements OnInit {
       this.almacenSeleccionado = ''; // limpia almacén normal
       this.clasificacionSeleccionado = 'TRA';
       this.clasificacionesFiltrados = this.clasificaciones.filter(
-        (c) => c.id === 'TRA'
+        (c) => c.id === 'TRA',
       );
     } else if (this.TipoSelecionado === 'CONSUMO') {
       this.almacenOrigen = ''; // limpia origen
       this.almacenDestino = ''; // limpia destino
       this.clasificacionSeleccionado = 'STO';
       this.clasificacionesFiltrados = this.clasificaciones.filter(
-        (c) => c.id === 'STO'
+        (c) => c.id === 'STO',
       );
     } else if (this.TipoSelecionado === 'COMPRA') {
       this.clasificacionSeleccionado = 'CMP';
       this.clasificacionesFiltrados = this.clasificaciones.filter(
-        (c) => c.id === 'CMP'
+        (c) => c.id === 'CMP',
       );
+    }
+
+    // 🔥 Cargar opciones de prioridad dinámicas según tipo de requerimiento
+    if (this.TipoSelecionado) {
+      this.opcionesPrioridadITEM = this.prioridadService.obtenerOpcionesPrioridad(
+        this.TipoSelecionado as 'COMPRA' | 'CONSUMO' | 'TRANSFERENCIA'
+      );
+
+      // Resetear prioridad seleccionada al cambiar tipo
+      this.SeleccionaPrioridadITEM = '';
     }
   }
 
   async filtrarClasificaciones() {
     this.clasificacionesFiltrados = this.clasificaciones.filter(
-      (it) => it.tipoClasificacion === this.RequerimientoSelecionado
+      (it) => it.tipoClasificacion === this.RequerimientoSelecionado,
     );
     console.log(this.clasificacionesFiltrados);
   }
@@ -1296,14 +1347,14 @@ export class RequerimientosComponent implements OnInit {
 
   obtenerDescripcionServicioAF(codigo: string): string {
     const serv = this.commodityFiltradosAF.find(
-      (s) => s.commodity01 === codigo
+      (s) => s.commodity01 === codigo,
     );
     return serv ? serv.descripcionLocal : codigo;
   }
 
   obtenerDescripcionServicioAFM(codigo: string): string {
     const serv = this.commodityFiltradosAFMenor.find(
-      (s) => s.commodity01 === codigo
+      (s) => s.commodity01 === codigo,
     );
     return serv ? serv.descripcionLocal : codigo;
   }
@@ -1320,13 +1371,15 @@ export class RequerimientosComponent implements OnInit {
 
   obtenerDescripcionSubservicioAFM(codigo: string): string {
     const sub = this.subservicioFiltradosAFMenor.find(
-      (x) => x.commodity === codigo
+      (x) => x.commodity === codigo,
     );
     return sub ? sub.descripcionLocal : codigo;
   }
 
   obtenerDescripcionActivoFijo(codigo: string): string {
-    const af = this.activosFijosFiltrados.find((a) => a.activoFijo01 === codigo);
+    const af = this.activosFijosFiltrados.find(
+      (a) => a.activoFijo01 === codigo,
+    );
     return af ? af.descripcionLocal : codigo;
   }
 
@@ -1364,13 +1417,114 @@ export class RequerimientosComponent implements OnInit {
     this.filtroClasificaciones();
   }
 
+  nuevoRequerimientoCommodity(): void {
+    this.requerimientoCommodity = {
+      idrequerimiento: '',
+      fecha: new Date().toISOString(),
+      almacen: this.almacenSeleccionado || '',
+      proveedor: '',
+      servicio: '',
+      descripcion: '',
+      glosa: '',
+      tipo: '',
+      ruc: this.usuario.ruc,
+      idfundo: '',
+      idarea: '',
+      idclasificacion: '',
+      prioridad: '',
+      nrodocumento: this.usuario.documentoidentidad,
+      idalmacen: '',
+      idalmacendestino: '',
+      idproyecto: '',
+      estado: 0,
+      disabled: false,
+      checked: false,
+      eliminado: 0,
+      estados: 'PENDIENTE',
+      detalleCommodity: [],
+    };
+
+    this.detalles = [];
+    this.glosa = '';
+    this.modalAbierto = false;
+    this.modoEdicion = false; // 🔹 Desactivamos modo edición
+    this.filtroClasificaciones();
+  }
+
+  nuevoRequerimientoActivoFijo(): void {
+    this.requerimientoActivoFijo = {
+      idrequerimiento: '',
+      fecha: new Date().toISOString(),
+      almacen: this.almacenSeleccionado || '',
+      proveedor: '',
+      servicio: '',
+      descripcion: '',
+      glosa: '',
+      tipo: '',
+      ruc: this.usuario.ruc,
+      idfundo: '',
+      idarea: '',
+      idclasificacion: '',
+      prioridad: '',
+      nrodocumento: this.usuario.documentoidentidad,
+      idalmacen: '',
+      idalmacendestino: '',
+      idproyecto: '',
+      estado: 0,
+      disabled: false,
+      checked: false,
+      eliminado: 0,
+      estados: 'PENDIENTE',
+      detalleActivoFijo: [],
+    };
+
+    this.detalles = [];
+    this.glosa = '';
+    this.modalAbierto = false;
+    this.modoEdicion = false; // 🔹 Desactivamos modo edición
+    this.filtroClasificaciones();
+  }
+
+  nuevoRequerimientoActivoFijoMenor(): void {
+    this.requerimientoActivoFijoMenor = {
+      idrequerimiento: '',
+      fecha: new Date().toISOString(),
+      almacen: this.almacenSeleccionado || '',
+      servicio: '',
+      descripcion: '',
+      glosa: '',
+      tipo: '',
+      ruc: this.usuario.ruc,
+      idfundo: '',
+      idarea: '',
+      idclasificacion: '',
+      prioridad: '',
+      nrodocumento: this.usuario.documentoidentidad,
+      idalmacen: '',
+      idalmacendestino: '',
+      idproyecto: '',
+      estado: 0,
+      disabled: false,
+      checked: false,
+      eliminado: 0,
+      estados: 'PENDIENTE',
+      detalleActivoFijoMenor: [],
+    };
+
+    this.detalles = [];
+    this.glosa = '';
+    this.modalAbierto = false;
+    this.modoEdicion = false; // 🔹 Desactivamos modo edición
+    this.filtroClasificaciones();
+  }
+
   async sincronizarRequerimiento() {
     // 1️⃣ Validación de detalles
     if (this.requerimiento.detalle.length === 0) {
       this.alertService.showAlert(
         'Alerta',
         'Debe ingresar al menos un requerimiento',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -1390,7 +1544,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Validación',
         'Existen líneas duplicadas con el mismo código y turno',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -1399,7 +1553,7 @@ export class RequerimientosComponent implements OnInit {
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
       '¿Desea enviar los datos?',
-      'warning'
+      'warning',
     );
 
     if (!confirmacion) return;
@@ -1410,10 +1564,8 @@ export class RequerimientosComponent implements OnInit {
     this.sincronizando = true;
     this.progreso = 0;
 
-    const prioridadFinal =
-      this.SeleccionaPrioridadITEM && this.SeleccionaPrioridadITEM !== ''
-        ? this.SeleccionaPrioridadITEM
-        : this.requerimiento.prioridad ?? '1';
+    const prioridadFinal: PrioridadSpring =
+      (this.SeleccionaPrioridadITEM || this.requerimiento.prioridad || '1') as PrioridadSpring;
 
     const idReq =
       this.usuario.sociedad +
@@ -1469,7 +1621,7 @@ export class RequerimientosComponent implements OnInit {
           this.alertService.showAlert(
             'Éxito',
             'Requerimiento sincronizado correctamente' + req,
-            'success'
+            'success',
           );
           // ---- 5️⃣ GUARDO EN DEXIE ----
           this.dexieService.requerimientos
@@ -1481,7 +1633,7 @@ export class RequerimientosComponent implements OnInit {
         } else {
           this.alertService.showAlertError(
             'Error',
-            'Hubo un problema al sincronizar el requerimiento'
+            'Hubo un problema al sincronizar el requerimiento',
           );
           console.error('Detalles del error:', resp);
         }
@@ -1490,7 +1642,7 @@ export class RequerimientosComponent implements OnInit {
         console.error('❌ Error HTTP:', err);
         this.alertService.showAlertError(
           'Error',
-          'No se pudo conectar con el servidor'
+          'No se pudo conectar con el servidor',
         );
       },
     });
@@ -1504,7 +1656,6 @@ export class RequerimientosComponent implements OnInit {
   }
 
   async sincronizarPendientes() {
-
     // 1️⃣ Obtener pendientes reales desde Dexie
     // const pendientes = await this.dexieService.requerimientos
     //   .where('estado')
@@ -1512,14 +1663,14 @@ export class RequerimientosComponent implements OnInit {
     //   .toArray();
     // const pendientes = await this.dexieService.requerimientos.toArray();
     const pendientes = await this.dexieService.requerimientos
-      .filter(r => r.estado === 0 || r.modificado === 1)
+      .filter((r) => r.estado === 0 || r.modificado === 1)
       .toArray();
 
     if (pendientes.length === 0) {
       this.alertService.showAlert(
         'Información',
         'No hay requerimientos pendientes por sincronizar',
-        'info'
+        'info',
       );
       return;
     }
@@ -1528,7 +1679,7 @@ export class RequerimientosComponent implements OnInit {
     const confirmar = await this.alertService.showConfirm(
       'Confirmación',
       `Se sincronizarán ${pendientes.length} requerimientos ¿Desea continuar?`,
-      'warning'
+      'warning',
     );
 
     if (!confirmar) return;
@@ -1569,8 +1720,8 @@ export class RequerimientosComponent implements OnInit {
         idcentrocosto: d.ceco || '',
         idturno: d.turno || '',
         idlabor: d.labor || '',
-        eliminado: 0
-      }))
+        eliminado: 0,
+      })),
     }));
 
     // 5️⃣ Enviar al backend
@@ -1580,27 +1731,22 @@ export class RequerimientosComponent implements OnInit {
 
         // 🛑 1. Error general del SP
         if (resultado?.errorgeneral === 1) {
-          this.alertService.showAlert(
-            'Error',
-            resultado.mensaje,
-            'error'
-          );
+          this.alertService.showAlert('Error', resultado.mensaje, 'error');
           this.sincronizando = false;
           return;
         }
 
         // 6️⃣ IDs con error (idrequerimiento)
-        const idsConError: string[] = (resultado?.detalle || [])
-          .map((d: any) => d.id.split('-')[0]);
+        const idsConError: string[] = (resultado?.detalle || []).map(
+          (d: any) => d.id.split('-')[0],
+        );
 
         // 7️⃣ IDs enviados
-        const idsEnviados: string[] = pendientes.map(
-          r => r.idrequerimiento
-        );
+        const idsEnviados: string[] = pendientes.map((r) => r.idrequerimiento);
 
         // 8️⃣ IDs sincronizados correctamente
         const idsOk: string[] = idsEnviados.filter(
-          idreq => !idsConError.includes(idreq)
+          (idreq) => !idsConError.includes(idreq),
         );
 
         // 6️⃣ ACTUALIZAR DEXIE (TU LÍNEA CORREGIDA)
@@ -1609,7 +1755,7 @@ export class RequerimientosComponent implements OnInit {
             .where('idrequerimiento')
             .anyOf(idsOk)
             .modify({
-              estado: 1
+              estado: 1,
             });
         }
 
@@ -1618,13 +1764,13 @@ export class RequerimientosComponent implements OnInit {
           this.alertService.showAlert(
             'Sincronización parcial',
             `Se sincronizaron ${idsOk.length} requerimientos.\n${idsConError.length} con error.`,
-            'warning'
+            'warning',
           );
         } else {
           this.alertService.showAlert(
             'Éxito',
             'Todos los requerimientos se sincronizaron correctamente',
-            'success'
+            'success',
           );
         }
 
@@ -1647,19 +1793,451 @@ export class RequerimientosComponent implements OnInit {
         this.sincronizando = false;
         this.alertService.showAlertError(
           'Error',
-          'No se pudo conectar con el servidor'
+          'No se pudo conectar con el servidor',
         );
-      }
+      },
     });
   }
 
+  async sincronizarPendientesCommodity() {
+    // 1️⃣ Obtener pendientes reales desde Dexie
+    // const pendientes = await this.dexieService.requerimientos
+    //   .where('estado')
+    //   .equals(0)
+    //   .toArray();
+    // const pendientes = await this.dexieService.requerimientos.toArray();
+    debugger;
+    const pendientes = await this.dexieService.requerimientosCommodity
+      .filter((r) => r.estado === 0 || r.modificado === 1)
+      .toArray();
+
+    if (pendientes.length === 0) {
+      this.alertService.showAlert(
+        'Información',
+        'No hay requerimientos pendientes por sincronizar',
+        'info',
+      );
+      return;
+    }
+
+    // 2️⃣ Confirmación
+    const confirmar = await this.alertService.showConfirm(
+      'Confirmación',
+      `Se sincronizarán ${pendientes.length} requerimientos ¿Desea continuar?`,
+      'warning',
+    );
+
+    if (!confirmar) return;
+
+    // 3️⃣ Inicializar progreso
+    this.sincronizando = true;
+    this.progreso = 0;
+
+    // const idReq =
+    //   this.usuario.sociedad +
+    //   this.usuario.documentoidentidad +
+    //   this.utilsService.formatoAnioMesDiaHoraMinSec();
+
+    // 4️⃣ Construir payload completo
+    const payload = pendientes.map((req: any) => ({
+      idrequerimiento: req.idrequerimiento,
+      ruc: this.usuario.ruc,
+      idfundo: req.idfundo,
+      idarea: req.idarea,
+      idclasificacion: req.idclasificacion,
+      prioridad: req.prioridad || '1',
+      nrodocumento: this.usuario.documentoidentidad,
+      idalmacen: req.idalmacen,
+      idalmacendestino:
+        req.tipo === 'TRANSFERENCIA' ? req.idalmacendestino : '',
+      glosa: req.glosa || '',
+      eliminado: 0,
+      tipo: req.tipo,
+      itemtipo: req.itemtipo,
+      estados: 'PENDIENTE',
+      detalle: req.detalle.map((d: any) => ({
+        codigo: d.codigo,
+        tipoclasificacion: 'I',
+        cantidad: d.cantidad,
+        idproducto: d.producto || '',
+        iddescripcion: d.descripcion || '',
+        idproyecto: d.proyecto || '',
+        idcentrocosto: d.ceco || '',
+        idturno: d.turno || '',
+        idlabor: d.labor || '',
+        eliminado: 0,
+      })),
+    }));
+
+    // 5️⃣ Enviar al backend
+    this.requerimientosService.registrarRequerimientos(payload).subscribe({
+      next: async (resp) => {
+        const resultado = resp?.[0];
+
+        // 🛑 1. Error general del SP
+        if (resultado?.errorgeneral === 1) {
+          this.alertService.showAlert('Error', resultado.mensaje, 'error');
+          this.sincronizando = false;
+          return;
+        }
+
+        // 6️⃣ IDs con error (idrequerimiento)
+        const idsConError: string[] = (resultado?.detalle || []).map(
+          (d: any) => d.id.split('-')[0],
+        );
+
+        // 7️⃣ IDs enviados
+        const idsEnviados: string[] = pendientes.map((r) => r.idrequerimiento);
+
+        // 8️⃣ IDs sincronizados correctamente
+        const idsOk: string[] = idsEnviados.filter(
+          (idreq) => !idsConError.includes(idreq),
+        );
+
+        // 6️⃣ ACTUALIZAR DEXIE (TU LÍNEA CORREGIDA)
+        if (idsOk.length) {
+          await this.dexieService.requerimientos
+            .where('idrequerimiento')
+            .anyOf(idsOk)
+            .modify({
+              estado: 1,
+            });
+        }
+
+        // 7️⃣ Mensajes al usuario
+        if (idsConError.length) {
+          this.alertService.showAlert(
+            'Sincronización parcial',
+            `Se sincronizaron ${idsOk.length} requerimientos.\n${idsConError.length} con error.`,
+            'warning',
+          );
+        } else {
+          this.alertService.showAlert(
+            'Éxito',
+            'Todos los requerimientos se sincronizaron correctamente',
+            'success',
+          );
+        }
+
+        // 🔟 Actualizar progreso
+        this.progreso = 100;
+
+        // 1️⃣ Recargar DESDE DEXIE
+        await this.cargarRequerimientos();
+
+        // 2️⃣ Recalcular contadores
+        this.actualizarContadores();
+
+        // 3️⃣ Opcional: refrescar pendientes
+        await this.cargarPendientes();
+        this.sincronizando = false;
+      },
+
+      error: (err) => {
+        console.error(err);
+        this.sincronizando = false;
+        this.alertService.showAlertError(
+          'Error',
+          'No se pudo conectar con el servidor',
+        );
+      },
+    });
+  }
+
+  async sincronizarPendientesActivoFijo() {
+    // 1️⃣ Obtener pendientes reales desde Dexie
+    // const pendientes = await this.dexieService.requerimientos
+    //   .where('estado')
+    //   .equals(0)
+    //   .toArray();
+    // const pendientes = await this.dexieService.requerimientos.toArray();
+    const pendientes = await this.dexieService.requerimientosActivoFijo
+      .filter((r) => r.estado === 0 || r.modificado === 1)
+      .toArray();
+
+    if (pendientes.length === 0) {
+      this.alertService.showAlert(
+        'Información',
+        'No hay requerimientos pendientes por sincronizar',
+        'info',
+      );
+      return;
+    }
+
+    // 2️⃣ Confirmación
+    const confirmar = await this.alertService.showConfirm(
+      'Confirmación',
+      `Se sincronizarán ${pendientes.length} requerimientos ¿Desea continuar?`,
+      'warning',
+    );
+
+    if (!confirmar) return;
+
+    // 3️⃣ Inicializar progreso
+    this.sincronizando = true;
+    this.progreso = 0;
+
+    // const idReq =
+    //   this.usuario.sociedad +
+    //   this.usuario.documentoidentidad +
+    //   this.utilsService.formatoAnioMesDiaHoraMinSec();
+
+    // 4️⃣ Construir payload completo
+    const payload = pendientes.map((req: any) => ({
+      idrequerimiento: req.idrequerimiento,
+      ruc: this.usuario.ruc,
+      idfundo: req.idfundo,
+      idarea: req.idarea,
+      idclasificacion: req.idclasificacion,
+      prioridad: req.prioridad || '1',
+      nrodocumento: this.usuario.documentoidentidad,
+      idalmacen: req.idalmacen,
+      idalmacendestino:
+        req.tipo === 'TRANSFERENCIA' ? req.idalmacendestino : '',
+      glosa: req.glosa || '',
+      eliminado: 0,
+      tipo: req.tipo,
+      itemtipo: req.itemtipo,
+      estados: 'PENDIENTE',
+      detalle: req.detalle.map((d: any) => ({
+        codigo: d.codigo,
+        tipoclasificacion: 'I',
+        cantidad: d.cantidad,
+        idproducto: d.producto || '',
+        iddescripcion: d.descripcion || '',
+        idproyecto: d.proyecto || '',
+        idcentrocosto: d.ceco || '',
+        idturno: d.turno || '',
+        idlabor: d.labor || '',
+        eliminado: 0,
+      })),
+    }));
+
+    // 5️⃣ Enviar al backend
+    this.requerimientosService.registrarRequerimientos(payload).subscribe({
+      next: async (resp) => {
+        const resultado = resp?.[0];
+
+        // 🛑 1. Error general del SP
+        if (resultado?.errorgeneral === 1) {
+          this.alertService.showAlert('Error', resultado.mensaje, 'error');
+          this.sincronizando = false;
+          return;
+        }
+
+        // 6️⃣ IDs con error (idrequerimiento)
+        const idsConError: string[] = (resultado?.detalle || []).map(
+          (d: any) => d.id.split('-')[0],
+        );
+
+        // 7️⃣ IDs enviados
+        const idsEnviados: string[] = pendientes.map((r) => r.idrequerimiento);
+
+        // 8️⃣ IDs sincronizados correctamente
+        const idsOk: string[] = idsEnviados.filter(
+          (idreq) => !idsConError.includes(idreq),
+        );
+
+        // 6️⃣ ACTUALIZAR DEXIE (TU LÍNEA CORREGIDA)
+        if (idsOk.length) {
+          await this.dexieService.requerimientos
+            .where('idrequerimiento')
+            .anyOf(idsOk)
+            .modify({
+              estado: 1,
+            });
+        }
+
+        // 7️⃣ Mensajes al usuario
+        if (idsConError.length) {
+          this.alertService.showAlert(
+            'Sincronización parcial',
+            `Se sincronizaron ${idsOk.length} requerimientos.\n${idsConError.length} con error.`,
+            'warning',
+          );
+        } else {
+          this.alertService.showAlert(
+            'Éxito',
+            'Todos los requerimientos se sincronizaron correctamente',
+            'success',
+          );
+        }
+
+        // 🔟 Actualizar progreso
+        this.progreso = 100;
+
+        // 1️⃣ Recargar DESDE DEXIE
+        await this.cargarRequerimientos();
+
+        // 2️⃣ Recalcular contadores
+        this.actualizarContadores();
+
+        // 3️⃣ Opcional: refrescar pendientes
+        await this.cargarPendientes();
+        this.sincronizando = false;
+      },
+
+      error: (err) => {
+        console.error(err);
+        this.sincronizando = false;
+        this.alertService.showAlertError(
+          'Error',
+          'No se pudo conectar con el servidor',
+        );
+      },
+    });
+  }
+
+  async sincronizarPendientesActivoFijoMenor() {
+    // 1️⃣ Obtener pendientes reales desde Dexie
+    // const pendientes = await this.dexieService.requerimientos
+    //   .where('estado')
+    //   .equals(0)
+    //   .toArray();
+    // const pendientes = await this.dexieService.requerimientos.toArray();
+    const pendientes = await this.dexieService.requerimientosActivoFijoMenor
+      .filter((r) => r.estado === 0 || r.modificado === 1)
+      .toArray();
+
+    if (pendientes.length === 0) {
+      this.alertService.showAlert(
+        'Información',
+        'No hay requerimientos pendientes por sincronizar',
+        'info',
+      );
+      return;
+    }
+
+    // 2️⃣ Confirmación
+    const confirmar = await this.alertService.showConfirm(
+      'Confirmación',
+      `Se sincronizarán ${pendientes.length} requerimientos ¿Desea continuar?`,
+      'warning',
+    );
+
+    if (!confirmar) return;
+
+    // 3️⃣ Inicializar progreso
+    this.sincronizando = true;
+    this.progreso = 0;
+
+    // const idReq =
+    //   this.usuario.sociedad +
+    //   this.usuario.documentoidentidad +
+    //   this.utilsService.formatoAnioMesDiaHoraMinSec();
+
+    // 4️⃣ Construir payload completo
+    const payload = pendientes.map((req: any) => ({
+      idrequerimiento: req.idrequerimiento,
+      ruc: this.usuario.ruc,
+      idfundo: req.idfundo,
+      idarea: req.idarea,
+      idclasificacion: req.idclasificacion,
+      prioridad: req.prioridad || '1',
+      nrodocumento: this.usuario.documentoidentidad,
+      idalmacen: req.idalmacen,
+      idalmacendestino:
+        req.tipo === 'TRANSFERENCIA' ? req.idalmacendestino : '',
+      glosa: req.glosa || '',
+      eliminado: 0,
+      tipo: req.tipo,
+      itemtipo: req.itemtipo,
+      estados: 'PENDIENTE',
+      detalle: req.detalle.map((d: any) => ({
+        codigo: d.codigo,
+        tipoclasificacion: 'I',
+        cantidad: d.cantidad,
+        idproducto: d.producto || '',
+        iddescripcion: d.descripcion || '',
+        idproyecto: d.proyecto || '',
+        idcentrocosto: d.ceco || '',
+        idturno: d.turno || '',
+        idlabor: d.labor || '',
+        eliminado: 0,
+      })),
+    }));
+
+    // 5️⃣ Enviar al backend
+    this.requerimientosService.registrarRequerimientos(payload).subscribe({
+      next: async (resp) => {
+        const resultado = resp?.[0];
+
+        // 🛑 1. Error general del SP
+        if (resultado?.errorgeneral === 1) {
+          this.alertService.showAlert('Error', resultado.mensaje, 'error');
+          this.sincronizando = false;
+          return;
+        }
+
+        // 6️⃣ IDs con error (idrequerimiento)
+        const idsConError: string[] = (resultado?.detalle || []).map(
+          (d: any) => d.id.split('-')[0],
+        );
+
+        // 7️⃣ IDs enviados
+        const idsEnviados: string[] = pendientes.map((r) => r.idrequerimiento);
+
+        // 8️⃣ IDs sincronizados correctamente
+        const idsOk: string[] = idsEnviados.filter(
+          (idreq) => !idsConError.includes(idreq),
+        );
+
+        // 6️⃣ ACTUALIZAR DEXIE (TU LÍNEA CORREGIDA)
+        if (idsOk.length) {
+          await this.dexieService.requerimientos
+            .where('idrequerimiento')
+            .anyOf(idsOk)
+            .modify({
+              estado: 1,
+            });
+        }
+
+        // 7️⃣ Mensajes al usuario
+        if (idsConError.length) {
+          this.alertService.showAlert(
+            'Sincronización parcial',
+            `Se sincronizaron ${idsOk.length} requerimientos.\n${idsConError.length} con error.`,
+            'warning',
+          );
+        } else {
+          this.alertService.showAlert(
+            'Éxito',
+            'Todos los requerimientos se sincronizaron correctamente',
+            'success',
+          );
+        }
+
+        // 🔟 Actualizar progreso
+        this.progreso = 100;
+
+        // 1️⃣ Recargar DESDE DEXIE
+        await this.cargarRequerimientos();
+
+        // 2️⃣ Recalcular contadores
+        this.actualizarContadores();
+
+        // 3️⃣ Opcional: refrescar pendientes
+        await this.cargarPendientes();
+        this.sincronizando = false;
+      },
+
+      error: (err) => {
+        console.error(err);
+        this.sincronizando = false;
+        this.alertService.showAlertError(
+          'Error',
+          'No se pudo conectar con el servidor',
+        );
+      },
+    });
+  }
 
   async sincronizarRequerimientoCommodity() {
     if (this.requerimientoCommodity.detalleCommodity.length === 0) {
       this.alertService.showAlert(
         'Alerta',
         'Debe ingresar al menos un requerimiento de commodity',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -1667,7 +2245,7 @@ export class RequerimientosComponent implements OnInit {
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
       '¿Desea enviar los datos?',
-      'warning'
+      'warning',
     );
 
     if (!confirmacion) return;
@@ -1676,7 +2254,7 @@ export class RequerimientosComponent implements OnInit {
       this.SeleccionaPrioridadCOMMODITY &&
         this.SeleccionaPrioridadCOMMODITY !== ''
         ? this.SeleccionaPrioridadCOMMODITY
-        : this.requerimientoCommodity.prioridad ?? '1';
+        : (this.requerimientoCommodity.prioridad ?? '1');
 
     // 👇 Aquí formamos el objeto según el SP
     const requerimiento = {
@@ -1725,7 +2303,7 @@ export class RequerimientosComponent implements OnInit {
           this.alertService.showAlert(
             'Éxito',
             'Requerimiento sincronizado correctamente',
-            'success'
+            'success',
           );
           // ---- 5️⃣ GUARDO EN DEXIE ----
           this.dexieService.requerimientos
@@ -1737,7 +2315,7 @@ export class RequerimientosComponent implements OnInit {
           this.alertService.showAlert(
             'Error',
             'Hubo un problema al sincronizar el requerimiento',
-            'error'
+            'error',
           );
           console.error('Detalles del error:', resp);
         }
@@ -1747,7 +2325,7 @@ export class RequerimientosComponent implements OnInit {
         this.alertService.showAlert(
           'Error',
           'No se pudo conectar con el servidor',
-          'error'
+          'error',
         );
       },
     });
@@ -1758,7 +2336,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Alerta',
         'Debe ingresar al menos un requerimiento de activo fijo',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -1766,7 +2344,7 @@ export class RequerimientosComponent implements OnInit {
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
       '¿Desea enviar los datos?',
-      'warning'
+      'warning',
     );
 
     if (!confirmacion) return;
@@ -1775,7 +2353,7 @@ export class RequerimientosComponent implements OnInit {
       this.SeleccionaPrioridadACTIVOFIJO &&
         this.SeleccionaPrioridadACTIVOFIJO !== ''
         ? this.SeleccionaPrioridadACTIVOFIJO
-        : this.requerimientoActivoFijo.prioridad ?? '1';
+        : (this.requerimientoActivoFijo.prioridad ?? '1');
 
     // 👇 Aquí formamos el objeto según el SP
     const requerimiento = {
@@ -1824,13 +2402,13 @@ export class RequerimientosComponent implements OnInit {
           this.alertService.showAlert(
             'Éxito',
             'Requerimiento sincronizado correctamente',
-            'success'
+            'success',
           );
         } else {
           this.alertService.showAlert(
             'Error',
             'Hubo un problema al sincronizar el requerimiento',
-            'error'
+            'error',
           );
           console.error('Detalles del error:', resp);
         }
@@ -1840,7 +2418,7 @@ export class RequerimientosComponent implements OnInit {
         this.alertService.showAlert(
           'Error',
           'No se pudo conectar con el servidor',
-          'error'
+          'error',
         );
       },
     });
@@ -1851,7 +2429,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Alerta',
         'Debe ingresar al menos un requerimiento de activo fijo menor',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -1859,7 +2437,7 @@ export class RequerimientosComponent implements OnInit {
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
       '¿Desea enviar los datos?',
-      'warning'
+      'warning',
     );
 
     if (!confirmacion) return;
@@ -1868,7 +2446,7 @@ export class RequerimientosComponent implements OnInit {
       this.SeleccionaPrioridadACTIVOFIJOMENOR &&
         this.SeleccionaPrioridadACTIVOFIJOMENOR !== ''
         ? this.SeleccionaPrioridadACTIVOFIJOMENOR
-        : this.requerimientoActivoFijoMenor.prioridad ?? '1';
+        : (this.requerimientoActivoFijoMenor.prioridad ?? '1');
 
     // 👇 Aquí formamos el objeto según el SP
     const requerimiento = {
@@ -1899,7 +2477,7 @@ export class RequerimientosComponent implements OnInit {
           idturno: d.turno || '',
           idlabor: d.labor || '',
           eliminado: 0,
-        })
+        }),
       ),
     };
 
@@ -1917,13 +2495,13 @@ export class RequerimientosComponent implements OnInit {
           this.alertService.showAlert(
             'Éxito',
             'Requerimiento sincronizado correctamente',
-            'success'
+            'success',
           );
         } else {
           this.alertService.showAlert(
             'Error',
             'Hubo un problema al sincronizar el requerimiento',
-            'error'
+            'error',
           );
           console.error('Detalles del error:', resp);
         }
@@ -1933,7 +2511,7 @@ export class RequerimientosComponent implements OnInit {
         this.alertService.showAlert(
           'Error',
           'No se pudo conectar con el servidor',
-          'error'
+          'error',
         );
       },
     });
@@ -1989,20 +2567,83 @@ export class RequerimientosComponent implements OnInit {
     });
   }
 
+  ordenarRequerimientosCommodity() {
+    this.requerimientosCommodity.sort((a, b) => {
+      // 1️⃣ Sin enviar primero
+      if (a.estado !== b.estado) {
+        return a.estado - b.estado; // 0 primero
+      }
+
+      // 2️⃣ Fecha más reciente primero
+      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+    });
+  }
+
+  ordenarRequerimientosActivoFijo() {
+    this.requerimientosActivoFijo.sort((a, b) => {
+      // 1️⃣ Sin enviar primero
+      if (a.estado !== b.estado) {
+        return a.estado - b.estado; // 0 primero
+      }
+
+      // 2️⃣ Fecha más reciente primero
+      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+    });
+  }
+
+  ordenarRequerimientosActivoFijoMenor() {
+    this.requerimientosActivoFijoMenor.sort((a, b) => {
+      // 1️⃣ Sin enviar primero
+      if (a.estado !== b.estado) {
+        return a.estado - b.estado; // 0 primero
+      }
+
+      // 2️⃣ Fecha más reciente primero
+      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+    });
+  }
+
   async cargarRequerimientos() {
-    this.requerimientos = await this.dexieService.showRequerimiento();
+
+    const itemsTodos = await this.dexieService.showRequerimiento();
+    this.requerimientos = itemsTodos.filter((r: any) =>
+      r.nrodocumento === this.usuario?.documentoidentidad
+    );
+    // this.requerimientos = await this.dexieService.showRequerimiento();
+    // this.requerimientos.filter((r: any) =>
+    //   r.nrodocumento === this.usuario?.documentoidentidad
+    // );
     this.ordenarRequerimientos(); // 👈 CLAVE
 
-    this.modoItemPrincipal = true
+    this.modoItemPrincipal = true;
 
-    this.requerimientosCommodity =
-      await this.dexieService.showRequerimientoCommodity();
+    const commodityTodos = await this.dexieService.showRequerimientoCommodity();
+    this.requerimientosCommodity = commodityTodos.filter((r: any) =>
+      r.nrodocumento === this.usuario?.documentoidentidad
+    );
+    //
+    // this.requerimientosCommodity =
+    //   await this.dexieService.showRequerimientoCommodity();
+    this.ordenarRequerimientosCommodity(); // 👈 CLAVE
 
-    this.requerimientosActivoFijo =
-      await this.dexieService.showRequerimientoActivoFijo();
+    const activoFijoTodos = await this.dexieService.showRequerimientoActivoFijo();
+    this.requerimientosActivoFijo = activoFijoTodos.filter((r: any) =>
+      r.nrodocumento === this.usuario?.documentoidentidad
+    );
+    
+    // this.requerimientosActivoFijo =
+    //   await this.dexieService.showRequerimientoActivoFijo();
+    this.ordenarRequerimientosActivoFijo(); // 👈 CLAVE
 
-    this.requerimientosActivoFijoMenor =
-      await this.dexieService.showRequerimientoActivoFijoMenor();
+
+    const activoFijoMenorTodos = await this.dexieService.showRequerimientoActivoFijoMenor();
+    this.requerimientosActivoFijoMenor = activoFijoMenorTodos.filter((r: any) =>
+      r.nrodocumento === this.usuario?.documentoidentidad
+    );
+    
+    // this.requerimientosActivoFijoMenor =
+    //   await this.dexieService.showRequerimientoActivoFijoMenor();
+    this.ordenarRequerimientosActivoFijoMenor(); // 👈 CLAVE
 
     console.log('📌 ITEM:', this.requerimientos);
     console.log('📌 COMMODITY:', this.requerimientosCommodity);
@@ -2045,7 +2686,7 @@ export class RequerimientosComponent implements OnInit {
   async ListarItems() {
     this.items = await this.dexieService.showItemComoditys();
     this.itemsFiltrados = this.items.filter(
-      (it) => it.tipoclasificacion === 'I'
+      (it) => it.tipoclasificacion === 'I',
     );
   }
 
@@ -2077,21 +2718,21 @@ export class RequerimientosComponent implements OnInit {
   async ListarServicios() {
     this.servicios = await this.dexieService.showMaestroCommodity();
     this.commodityFiltrados = this.servicios.filter(
-      (serv) => serv.clasificacion === 'SER'
+      (serv) => serv.clasificacion === 'SER',
     );
   }
 
   async ListarServiciosAF() {
     this.servicioAF = await this.dexieService.showMaestroCommodity();
     this.commodityFiltradosAF = this.servicioAF.filter(
-      (servaf) => servaf.clasificacion === 'ACT'
+      (servaf) => servaf.clasificacion === 'ACT',
     );
   }
 
   async ListarServiciosAFMenor() {
     this.servicioAFMenor = await this.dexieService.showMaestroCommodity();
     this.commodityFiltradosAFMenor = this.servicioAFMenor.filter(
-      (servafmenor) => servafmenor.clasificacion === 'ACM'
+      (servafmenor) => servafmenor.clasificacion === 'ACM',
     );
   }
 
@@ -2109,7 +2750,7 @@ export class RequerimientosComponent implements OnInit {
     this.subservicios = await this.dexieService.showMaestroSubCommodity();
     // SeleccionaServicio YA ES el Commodity01
     this.subservicioFiltrados = this.subservicios.filter(
-      (sub) => sub.commodity01 === this.SeleccionaServicio
+      (sub) => sub.commodity01 === this.SeleccionaServicio,
     );
 
     this.SeleccionaSubServicio = '';
@@ -2123,7 +2764,7 @@ export class RequerimientosComponent implements OnInit {
     }
     this.subserviciosAF = await this.dexieService.showMaestroSubCommodity();
     this.subservicioFiltradosAF = this.subserviciosAF.filter(
-      (sub) => sub.commodity01 === this.SeleccionaServicioAF
+      (sub) => sub.commodity01 === this.SeleccionaServicioAF,
     );
     this.SeleccionaSubServicioAF = '';
   }
@@ -2137,7 +2778,7 @@ export class RequerimientosComponent implements OnInit {
     this.subserviciosAFMenor =
       await this.dexieService.showMaestroSubCommodity();
     this.subservicioFiltradosAFMenor = this.subserviciosAFMenor.filter(
-      (sub) => sub.commodity01 === this.SeleccionaServicioAFMenor
+      (sub) => sub.commodity01 === this.SeleccionaServicioAFMenor,
     );
     this.SeleccionaSubServicioAFMenor = '';
   }
@@ -2152,11 +2793,11 @@ export class RequerimientosComponent implements OnInit {
 
     // 2. Aplica los filtros usando los arrays mapeados
     this.activosFijosFiltrados = activosMapeados.filter(
-      (act) => act.tipoActivo === 'I' // Nota: La interfaz dice TipoActivo con 'T' mayúscula.
+      (act) => act.tipoActivo === 'I', // Nota: La interfaz dice TipoActivo con 'T' mayúscula.
     );
 
     this.activosFijosServicioFiltrados = activosMapeados.filter(
-      (act) => act.tipoActivo === 'C'
+      (act) => act.tipoActivo === 'C',
     );
   }
 
@@ -2299,7 +2940,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo inválido',
         'La cantidad debe ser mayor a 0.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2311,7 +2952,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un proyecto.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2323,7 +2964,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un CECO.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2335,7 +2976,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un turno.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2347,20 +2988,20 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar una labor.',
-        'warning'
+        'warning',
       );
       return;
     }
 
     const subservicioSeleccionado = this.subservicioFiltrados.find(
-      (subs) => subs.commodity === this.SeleccionaSubServicio
+      (subs) => subs.commodity === this.SeleccionaSubServicio,
     );
 
     if (!subservicioSeleccionado) {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un subservicio válido.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2368,7 +3009,7 @@ export class RequerimientosComponent implements OnInit {
     console.log('Servicio seleccionado:', subservicioSeleccionado);
     console.log(
       'descripcion subservicio:',
-      subservicioSeleccionado.descripcionLocal
+      subservicioSeleccionado.descripcionLocal,
     );
     const nuevaLineaDetalle = {
       idrequerimiento: '', // ⚠️ SE ASIGNA AL GUARDAR CABECERA
@@ -2388,7 +3029,9 @@ export class RequerimientosComponent implements OnInit {
     // ================= EDITAR / AGREGAR =================
     if (this.commodityEditIndex >= 0) {
       // ✏️ editar SOLO en memoria
-      this.detallesCommodity[this.commodityEditIndex] = { ...nuevaLineaDetalle };
+      this.detallesCommodity[this.commodityEditIndex] = {
+        ...nuevaLineaDetalle,
+      };
     } else {
       // ➕ agregar SOLO en memoria
       this.detallesCommodity.push({ ...nuevaLineaDetalle });
@@ -2398,7 +3041,7 @@ export class RequerimientosComponent implements OnInit {
     this.alertService.showAlert(
       'Éxito',
       'Línea guardada correctamente.',
-      'success'
+      'success',
     );
   }
 
@@ -2468,7 +3111,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo inválido',
         'La cantidad debe ser mayor a 0.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2480,7 +3123,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un proyecto.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2492,7 +3135,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un CECO.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2504,7 +3147,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un turno.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2516,7 +3159,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar una labor.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2528,7 +3171,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Advertencia',
         'Debe ingresar el código de activo fijo.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2578,7 +3221,7 @@ export class RequerimientosComponent implements OnInit {
     this.alertService.showAlert(
       'Éxito',
       'Línea guardada correctamente.',
-      'success'
+      'success',
     );
   }
 
@@ -2617,7 +3260,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo inválido',
         'La cantidad debe ser mayor a 0.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2629,7 +3272,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un proyecto.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2641,7 +3284,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un CECO.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2653,7 +3296,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un turno.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2665,7 +3308,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar una labor.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2677,13 +3320,13 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Advertencia',
         'Debe ingresar el código de activo fijo.',
-        'warning'
+        'warning',
       );
       return;
     }
     console.log('Subservicio seleccionado:', this.SeleccionaSubServicioAF);
     const subservicioSeleccionadoAF = this.subservicioFiltradosAF.find(
-      (subs) => subs.commodity === this.SeleccionaSubServicioAF
+      (subs) => subs.commodity === this.SeleccionaSubServicioAF,
     );
 
     console.log('Servicio seleccionado:', subservicioSeleccionadoAF);
@@ -2692,7 +3335,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un subservicio válido.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2741,14 +3384,14 @@ export class RequerimientosComponent implements OnInit {
     this.alertService.showAlert(
       'Éxito',
       'Línea guardada correctamente.',
-      'success'
+      'success',
     );
   }
 
   async guardarLinea() {
     // Buscar producto seleccionado
     const productoSeleccionado = this.items.find(
-      (it) => it.codigo === this.lineaTemp.producto?.codigo
+      (it) => it.codigo === this.lineaTemp.producto?.codigo,
     );
     console.log('Producto seleccionado:', productoSeleccionado);
     console.log('Producto en lineaTemp:', this.lineaTemp.producto);
@@ -2757,7 +3400,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un producto.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2766,7 +3409,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo inválido',
         'La cantidad debe ser mayor a 0.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2775,7 +3418,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un proyecto.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2784,7 +3427,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un CECO.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2793,7 +3436,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar un turno.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2802,7 +3445,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Campo requerido',
         'Debes seleccionar una labor.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2811,7 +3454,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Advertencia',
         'Debe ingresar el código de activo fijo.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2857,7 +3500,7 @@ export class RequerimientosComponent implements OnInit {
     this.alertService.showAlert(
       'Éxito',
       'Línea guardada correctamente.',
-      'success'
+      'success',
     );
   }
 
@@ -2867,7 +3510,7 @@ export class RequerimientosComponent implements OnInit {
 
     // Buscar el producto en la lista de items por descripción
     const producto = this.items.find(
-      (it) => it.descripcion === detalleSeleccionado.producto
+      (it) => it.descripcion === detalleSeleccionado.producto,
     );
 
     // Cargar en lineaTemp el código real para que el select lo reconozca
@@ -2900,35 +3543,29 @@ export class RequerimientosComponent implements OnInit {
   mostrarAlmacen(c: any): string {
     // TRANSFERENCIA → Origen - Destino
     if (c.itemtipo === 'TRANSFERENCIA') {
-      const origen = this.almacenes.find(
-        a => a.idalmacen == c.idalmacen
-      );
+      const origen = this.almacenes.find((a) => a.idalmacen == c.idalmacen);
       const destino = this.alamcenesDestino.find(
-        a => a.idalmacen == c.idalmacendestino
+        (a) => a.idalmacen == c.idalmacendestino,
       );
 
       return `${origen?.almacen ?? '---'} - ${destino?.almacen ?? '---'}`;
     }
 
     // CONSUMO / COMPRA
-    const almacen = this.almacenes.find(
-      a => a.idalmacen == c.idalmacen
-    );
+    const almacen = this.almacenes.find((a) => a.idalmacen == c.idalmacen);
 
     return almacen?.almacen ?? '---';
   }
 
   mostrarAlmacenDestino(c: any): string {
     const destino = this.alamcenesDestino.find(
-      a => a.idalmacen == c.idalmacendestino
+      (a) => a.idalmacen == c.idalmacendestino,
     );
     return destino?.almacen ?? '---';
   }
 
   getNombreAlmacen(id: string): string {
-    const almacen = this.almacenes.find(
-      a => a.idalmacen == id
-    );
+    const almacen = this.almacenes.find((a) => a.idalmacen == id);
     return almacen?.almacen ?? '---';
   }
 
@@ -3154,33 +3791,61 @@ export class RequerimientosComponent implements OnInit {
   async guardar() {
     // 1️⃣ Validaciones iniciales
     if (!this.fundoSeleccionado) {
-      this.alertService.showAlert('Atención', 'Debes seleccionar un Fundo antes de guardar.', 'warning');
+      this.alertService.showAlert(
+        'Atención',
+        'Debes seleccionar un Fundo antes de guardar.',
+        'warning',
+      );
       return;
     }
 
-    if ((this.TipoSelecionado === 'CONSUMO' || this.TipoSelecionado === 'COMPRA') && !this.almacenSeleccionado) {
-      this.alertService.showAlert('Atención', 'Debes seleccionar un Almacén antes de guardar.', 'warning');
+    if (
+      (this.TipoSelecionado === 'CONSUMO' ||
+        this.TipoSelecionado === 'COMPRA') &&
+      !this.almacenSeleccionado
+    ) {
+      this.alertService.showAlert(
+        'Atención',
+        'Debes seleccionar un Almacén antes de guardar.',
+        'warning',
+      );
       return;
     }
 
     if (this.TipoSelecionado === 'TRANSFERENCIA') {
       if (!this.almacenOrigen) {
-        this.alertService.showAlert('Atención', 'Debes seleccionar un Almacén Origen antes de guardar.', 'warning');
+        this.alertService.showAlert(
+          'Atención',
+          'Debes seleccionar un Almacén Origen antes de guardar.',
+          'warning',
+        );
         return;
       }
       if (!this.almacenDestino) {
-        this.alertService.showAlert('Atención', 'Debes seleccionar un Almacén Destino antes de guardar.', 'warning');
+        this.alertService.showAlert(
+          'Atención',
+          'Debes seleccionar un Almacén Destino antes de guardar.',
+          'warning',
+        );
         return;
       }
     }
 
     if (!this.clasificacionSeleccionado) {
-      this.alertService.showAlert('Atención', 'Debes seleccionar una clasificación antes de guardar.', 'warning');
+      this.alertService.showAlert(
+        'Atención',
+        'Debes seleccionar una clasificación antes de guardar.',
+        'warning',
+      );
       return;
     }
 
     if (!this.glosa) {
-      this.alertService.showAlert('Atención', 'Debes ingresar una glosa antes de guardar.', 'warning');
+      this.alertService.showAlert(
+        'Atención',
+        'Debes ingresar una glosa antes de guardar.',
+        'warning',
+      );
       return;
     }
 
@@ -3189,10 +3854,19 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.mostrarModalCarga();
 
       // 🔹 Preparar objetos de almacén
-      const almacenOrigenObj = this.almacenes.find(a => a.idalmacen == this.almacenOrigen);
-      const almacenDestinoObj = this.almacenes.find(a => a.idalmacen == this.almacenDestino);
-      const almacenNormalObj = this.almacenes.find(a => a.idalmacen == this.almacenSeleccionado);
-      const idAlmacenFinal = this.TipoSelecionado === 'TRANSFERENCIA' ? this.almacenOrigen : this.almacenSeleccionado;
+      const almacenOrigenObj = this.almacenes.find(
+        (a) => a.idalmacen == this.almacenOrigen,
+      );
+      const almacenDestinoObj = this.almacenes.find(
+        (a) => a.idalmacen == this.almacenDestino,
+      );
+      const almacenNormalObj = this.almacenes.find(
+        (a) => a.idalmacen == this.almacenSeleccionado,
+      );
+      const idAlmacenFinal =
+        this.TipoSelecionado === 'TRANSFERENCIA'
+          ? this.almacenOrigen
+          : this.almacenSeleccionado;
 
       // 🔹 Función ultra-segura para generar ID único
       // const generarIdUnico = () => {
@@ -3220,8 +3894,13 @@ export class RequerimientosComponent implements OnInit {
         idclasificacion: this.clasificacionSeleccionado,
         nrodocumento: this.usuario.documentoidentidad,
         idalmacen: String(idAlmacenFinal),
-        idalmacendestino: this.TipoSelecionado === 'TRANSFERENCIA' ? String(this.almacenDestino) : '',
-        idproyecto: this.proyectoSeleccionado ? String(this.proyectoSeleccionado) : '',
+        idalmacendestino:
+          this.TipoSelecionado === 'TRANSFERENCIA'
+            ? String(this.almacenDestino)
+            : '',
+        idproyecto: this.proyectoSeleccionado
+          ? String(this.proyectoSeleccionado)
+          : '',
         fecha: new Date().toISOString(),
         almacen:
           this.TipoSelecionado === 'TRANSFERENCIA'
@@ -3238,7 +3917,7 @@ export class RequerimientosComponent implements OnInit {
         disabled: false,
         checked: false,
         eliminado: 0,
-        despachado: false
+        despachado: false,
       };
 
       // 🔹 Guardar requerimiento en Dexie
@@ -3248,7 +3927,7 @@ export class RequerimientosComponent implements OnInit {
       for (const d of this.detalles) {
         await this.dexieService.detalles.put({
           ...d,
-          idrequerimiento: idReq
+          idrequerimiento: idReq,
         });
       }
 
@@ -3267,7 +3946,11 @@ export class RequerimientosComponent implements OnInit {
 
       // 🔹 Mostrar éxito
       const reqShort = idReq.slice(-12);
-      this.alertService.showAlert('Éxito', `Requerimiento #${reqShort} guardado correctamente.`, 'success');
+      this.alertService.showAlert(
+        'Éxito',
+        `Requerimiento #${reqShort} guardado correctamente.`,
+        'success',
+      );
       console.log('Requerimiento guardado:', nuevoReq);
     } catch (err) {
       console.error('❌ Error al guardar:', err);
@@ -3275,12 +3958,15 @@ export class RequerimientosComponent implements OnInit {
       this.modoEdicion = false;
       this.mostrarFormulario = false;
       this.modalAbierto = false;
-      this.alertService.showAlert('Error', 'Ocurrió un error al guardar los parámetros.', 'error');
+      this.alertService.showAlert(
+        'Error',
+        'Ocurrió un error al guardar los parámetros.',
+        'error',
+      );
     } finally {
       this.alertService.cerrarModalCarga();
     }
   }
-
 
   obtenerIdReq(idReq: string): string {
     if (!idReq) return '';
@@ -3291,7 +3977,7 @@ export class RequerimientosComponent implements OnInit {
     try {
       // solo actualizamos los campos editables
       const index = this.requerimientos.findIndex(
-        (r) => r.idrequerimiento === this.requerimiento.idrequerimiento
+        (r) => r.idrequerimiento === this.requerimiento.idrequerimiento,
       );
 
       if (index === -1) {
@@ -3310,16 +3996,16 @@ export class RequerimientosComponent implements OnInit {
       if (this.TipoSelecionado === 'TRANSFERENCIA') {
         this.requerimientos[index].idalmacen = String(this.almacenOrigen);
         this.requerimientos[index].idalmacendestino = String(
-          this.almacenDestino
+          this.almacenDestino,
         );
         this.requerimientos[index].almacen = `${this.getAlmacenNombre(
-          this.almacenOrigen
+          this.almacenOrigen,
         )} → ${this.getAlmacenNombre(this.almacenDestino)}`;
       } else {
         this.requerimientos[index].idalmacen = String(this.almacenSeleccionado);
         this.requerimientos[index].idalmacendestino = '';
         this.requerimientos[index].almacen = this.getAlmacenNombre(
-          this.almacenSeleccionado
+          this.almacenSeleccionado,
         );
       }
       this.requerimientos[index].detalle = [...this.detalles];
@@ -3341,7 +4027,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Actualizado',
         'Requerimiento actualizado correctamente',
-        'success'
+        'success',
       );
 
       this.modoEdicion = false;
@@ -3358,7 +4044,7 @@ export class RequerimientosComponent implements OnInit {
 
   cancelar(): void {
     const confirmar = confirm(
-      '¿Seguro que deseas cancelar los cambios? Se perderán los datos no guardados.'
+      '¿Seguro que deseas cancelar los cambios? Se perderán los datos no guardados.',
     );
     if (!confirmar) return;
     this.cultivoSeleccionado = '';
@@ -3385,13 +4071,13 @@ export class RequerimientosComponent implements OnInit {
     // Cargar los campos en los selects principales
     this.fundoSeleccionado = this.requerimiento.idfundo;
     this.areaSeleccionada = this.requerimiento.idarea;
-    this.SeleccionaPrioridadITEM = this.requerimiento.prioridad;
+    this.SeleccionaPrioridadITEM = this.requerimiento.prioridad as PrioridadSpring | '';
 
     this.almacenSeleccionado = this.requerimiento.idalmacen;
     this.clasificacionSeleccionado = this.requerimiento.idclasificacion;
     this.glosa = this.requerimiento.glosa;
     this.SeleccionaTipoGasto = this.requerimiento.referenciaGasto;
-    this.TipoSelecionado = this.requerimiento.itemtipo;
+    this.TipoSelecionado = this.requerimiento.itemtipo as TipoRequerimiento | '';
     this.almacenOrigen = this.requerimiento.idalmacen;
     this.almacenDestino = this.requerimiento.idalmacendestino;
 
@@ -3414,7 +4100,7 @@ export class RequerimientosComponent implements OnInit {
 
     // Buscar por texto del almacén
     const alm = this.almacenes.find(
-      (a) => a.almacen === this.requerimiento.almacen
+      (a) => a.almacen === this.requerimiento.almacen,
     );
 
     if (alm) {
@@ -3422,10 +4108,12 @@ export class RequerimientosComponent implements OnInit {
     }
 
     if (this.TipoSelecionado === 'TRANSFERENCIA') {
-      const partes = this.requerimiento.almacen.split('→').map(p => p.trim());
+      const partes = this.requerimiento.almacen.split('→').map((p) => p.trim());
       if (partes.length === 2) {
-        const origen = this.almacenes.find(a => a.almacen === partes[0]);
-        const destino = this.alamcenesDestino.find(a => a.almacen === partes[1]);
+        const origen = this.almacenes.find((a) => a.almacen === partes[0]);
+        const destino = this.alamcenesDestino.find(
+          (a) => a.almacen === partes[1],
+        );
         if (origen) {
           this.almacenOrigen = origen.idalmacen;
         }
@@ -3441,7 +4129,7 @@ export class RequerimientosComponent implements OnInit {
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
       '¿Desea eliminar este requerimiento?',
-      'warning'
+      'warning',
     );
     if (!confirmacion) return;
 
@@ -3457,14 +4145,14 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Éxito',
         'Requerimiento eliminado correctamente.',
-        'success'
+        'success',
       );
     } catch (error) {
       console.error('Error al eliminar requerimiento:', error);
       this.alertService.showAlert(
         'Error',
         'Ocurrió un error al eliminar el requerimiento.',
-        'error'
+        'error',
       );
     }
   }
@@ -3473,7 +4161,7 @@ export class RequerimientosComponent implements OnInit {
   abrirModalConsolidacion() {
     // tomamos todos los ATENDIDO_PARCIAL y GENERADO que tengan saldo > 0
     const pendientes = this.requerimientosItems.filter(
-      (r) => r.estado === 'ATENDIDO_PARCIAL' || r.estado === 'GENERADO'
+      (r) => r.estado === 'ATENDIDO_PARCIAL' || r.estado === 'GENERADO',
     );
     if (pendientes.length === 0) {
       alert('No hay requerimientos pendientes para consolidar');
@@ -3488,8 +4176,8 @@ export class RequerimientosComponent implements OnInit {
         ...pendientes.map((p) =>
           p.detalles
             .filter((d: any) => d.saldo && d.saldo > 0)
-            .map((d: any) => ({ ...d, origenReq: p.id }))
-        )
+            .map((d: any) => ({ ...d, origenReq: p.id })),
+        ),
       ),
       origenReqs: pendientes.map((p) => p.id),
     };
@@ -3498,13 +4186,19 @@ export class RequerimientosComponent implements OnInit {
   }
 
   allChecked() {
-    this.requerimientos.forEach((t: any) => { if (t.eliminado == 0) { t.checked = !this.allSelected } });
+    this.requerimientos.forEach((t: any) => {
+      if (t.eliminado == 0) {
+        t.checked = !this.allSelected;
+      }
+    });
     if (!this.allSelected) {
       this.dataSelected = this.requerimientos;
     } else {
       this.dataSelected = [];
     }
-    this.dataSelected.length == 0 ? this.verBotones = false : this.verBotones = true;
+    this.dataSelected.length == 0
+      ? (this.verBotones = false)
+      : (this.verBotones = true);
   }
 
   // simpleSelected(row: any) {
@@ -3562,10 +4256,9 @@ export class RequerimientosComponent implements OnInit {
   // }
 
   simpleSelected(row: any) {
-
     // 🔁 Si se desmarca
     if (!row.checked) {
-      this.requerimientos.forEach(r => r.checked = false);
+      this.requerimientos.forEach((r) => (r.checked = false));
 
       this.requerimientoActivo = null;
       this.detalles = [];
@@ -3575,30 +4268,26 @@ export class RequerimientosComponent implements OnInit {
     }
 
     // 🔒 Selección única
-    this.requerimientos.forEach(r => r.checked = false);
+    this.requerimientos.forEach((r) => (r.checked = false));
     row.checked = true;
 
     // 🔥 Activo
     this.requerimientoActivo = row;
 
     // 🔥 Detalles
-    this.detalles = row.detalle
-      ? row.detalle.map((d: any) => ({ ...d }))
-      : [];
+    this.detalles = row.detalle ? row.detalle.map((d: any) => ({ ...d })) : [];
 
     // 🔥 Botones
     this.dataSelected = [row];
     this.verBotones = true;
   }
 
-
   // 🔥 EVENTO REAL DEL CHECKBOX
   onCheckChange(event: Event, row: any) {
-
     const checked = (event.target as HTMLInputElement).checked;
 
     // 🔁 Siempre limpiar primero
-    this.requerimientos.forEach(r => r.checked = false);
+    this.requerimientos.forEach((r) => (r.checked = false));
 
     if (!checked) {
       // ❌ Ninguno seleccionado
@@ -3616,24 +4305,109 @@ export class RequerimientosComponent implements OnInit {
     this.requerimientoActivo = row;
 
     // 🔥 Detalles
-    this.detalles = row.detalle
-      ? row.detalle.map((d: any) => ({ ...d }))
-      : [];
+    this.detalles = row.detalle ? row.detalle.map((d: any) => ({ ...d })) : [];
 
     // 🔥 Botones
     this.dataSelected = [row];
     this.verBotones = true;
   }
 
+  onCheckChangeCommodity(event: Event, row: any) {
+    const checked = (event.target as HTMLInputElement).checked;
+
+    // 🔁 Siempre limpiar primero
+    this.requerimientosCommodity.forEach((r) => (r.checked = false));
+
+    if (!checked) {
+      // ❌ Ninguno seleccionado
+      this.requerimientoCommodityActivo = null;
+      this.detalles = [];
+      this.dataSelectedCommodity = [];
+      this.verBotones = false;
+      return;
+    }
+
+    // ✅ Selección única
+    row.checked = true;
+
+    // 🔥 Activo
+    this.requerimientoCommodityActivo = row;
+
+    // 🔥 Detalles
+    this.detalles = row.detalle ? row.detalle.map((d: any) => ({ ...d })) : [];
+
+    // 🔥 Botones
+    this.dataSelectedCommodity = [row];
+    this.verBotones = true;
+  }
+
+  onCheckChangeActivoFIjo(event: Event, row: any) {
+
+    const checked = (event.target as HTMLInputElement).checked;
+
+    // 🔁 Siempre limpiar primero
+    this.requerimientosActivoFijo.forEach((r) => (r.checked = false));
+
+    if (!checked) {
+      // ❌ Ninguno seleccionado
+      this.requerimientoActivoFijoActivo = null;
+      this.detallesActivoFijo = [];
+      this.dataSelectedActivoFijo = [];
+      this.verBotones = false;
+      return;
+    }
+
+    // ✅ Selección única
+    row.checked = true;
+
+    // 🔥 Activo
+    this.requerimientoActivoFijoActivo = row;
+
+    // 🔥 Detalles
+    this.detallesActivoFijo = row.detalleActivoFijo ? row.detalleActivoFijo.map((d: any) => ({ ...d })) : [];
+
+    // 🔥 Botones
+    this.dataSelectedActivoFijo = [row];
+    this.verBotones = true;
+  }
+
+  onCheckChangeActivoFijoMenor(event: Event, row: any) {
+    const checked = (event.target as HTMLInputElement).checked;
+
+    // 🔁 Siempre limpiar primero
+    this.requerimientosActivoFijoMenor.forEach((r) => (r.checked = false));
+
+    if (!checked) {
+      // ❌ Ninguno seleccionado
+      this.requerimientoActivo = null;
+      this.detalles = [];
+      this.dataSelected = [];
+      this.verBotones = false;
+      return;
+    }
+
+    // ✅ Selección única
+    row.checked = true;
+
+    // 🔥 Activo
+    this.requerimientoActivo = row;
+
+    // 🔥 Detalles
+    this.detalles = row.detalle ? row.detalle.map((d: any) => ({ ...d })) : [];
+
+    // 🔥 Botones
+    this.dataSelected = [row];
+    this.verBotones = true;
+  }
 
   formatoFecha(date: any) {
-    return this.utilsService.formatDate1(date)
+    return this.utilsService.formatDate1(date);
   }
 
   scrollLeft() {
     const buttonsContainer = document.querySelector('.buttons') as HTMLElement;
     if (buttonsContainer) {
-      buttonsContainer.scrollLeft -= 200;  // Desplaza 200 píxeles hacia la izquierda
+      buttonsContainer.scrollLeft -= 200; // Desplaza 200 píxeles hacia la izquierda
     }
   }
 
@@ -3641,17 +4415,16 @@ export class RequerimientosComponent implements OnInit {
   scrollRight() {
     const buttonsContainer = document.querySelector('.buttons') as HTMLElement;
     if (buttonsContainer) {
-      buttonsContainer.scrollLeft += 200;  // Desplaza 200 píxeles hacia la derecha
+      buttonsContainer.scrollLeft += 200; // Desplaza 200 píxeles hacia la derecha
     }
   }
 
   editarRequerimientoSelect(dataSelected: any[]) {
-
     if (!dataSelected || dataSelected.length === 0) {
       this.alertService.showAlert(
         'Atención',
         'Debe seleccionar un requerimiento para editar',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -3660,7 +4433,7 @@ export class RequerimientosComponent implements OnInit {
       this.alertService.showAlert(
         'Atención',
         'Solo puede editar un requerimiento a la vez',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -3697,18 +4470,176 @@ export class RequerimientosComponent implements OnInit {
     this.reasignarAlmacenDesdeDescripcion();
   }
 
+  editarRequerimientoCommoditySelect(dataSelectedCommodity: any[]) {
+    if (!dataSelectedCommodity || dataSelectedCommodity.length === 0) {
+      this.alertService.showAlert(
+        'Atención',
+        'Debe seleccionar un requerimiento para editar',
+        'warning',
+      );
+      return;
+    }
+
+    if (dataSelectedCommodity.length > 1) {
+      this.alertService.showAlert(
+        'Atención',
+        'Solo puede editar un requerimiento a la vez',
+        'warning',
+      );
+      return;
+    }
+
+    const commodity = this.requerimientoCommodityActivo;
+
+    this.requerimientoCommodity = { ...commodity };
+    this.requerimiento.id = commodity.id; // necesario para update
+    // this.detalles = item.detalle || [];
+    // 🔥 Detalle (COPIA PROFUNDA)
+    this.detallesCommodity = commodity.detalles
+      ? commodity.detalles.map((d: any) => ({ ...d }))
+      : [];
+
+    console.log('Detalle del requerimiento a editar:', this.detallesCommodity);
+
+    // Selects
+    this.fundoSeleccionado = commodity.idfundo;
+    this.areaSeleccionada = commodity.idarea;
+    this.SeleccionaPrioridadITEM = commodity.prioridad;
+    this.almacenSeleccionado = commodity.idalmacen;
+    this.clasificacionSeleccionado = commodity.idclasificacion;
+    this.glosa = commodity.glosa;
+    this.SeleccionaTipoGasto = commodity.referenciaGasto;
+    this.SeleccionaServicio = commodity.servicio;
+    this.onServicioChange();
+    this.TipoSelecionado = commodity.itemtipo;
+    this.almacenOrigen = commodity.idalmacen;
+    this.almacenDestino = commodity.idalmacendestino;
+
+    // UI
+    this.modoEdicionCommodity = true;
+    this.mostrarFormularioCommodity = true;
+    this.modalAbiertoCommodity = false;
+
+    this.reasignarAlmacenDesdeDescripcion();
+  }
+
+  editarRequerimientoActivoFijoSelect(dataSelectedActivoFijo: any[]) {
+    debugger;
+    if (!dataSelectedActivoFijo || dataSelectedActivoFijo.length === 0) {
+      this.alertService.showAlert(
+        'Atención',
+        'Debe seleccionar un requerimiento para editar',
+        'warning',
+      );
+      return;
+    }
+
+    if (dataSelectedActivoFijo.length > 1) {
+      this.alertService.showAlert(
+        'Atención',
+        'Solo puede editar un requerimiento a la vez',
+        'warning',
+      );
+      return;
+    }
+
+    const activofijo = this.requerimientoActivoFijoActivo;
+
+    this.requerimientoActivoFijo = { ...activofijo };
+    this.requerimiento.id = activofijo.id; // necesario para update
+    // this.detalles = item.detalle || [];
+    // 🔥 Detalle (COPIA PROFUNDA)
+    this.detallesActivoFijo = activofijo.detalles
+      ? activofijo.detalles.map((d: any) => ({ ...d }))
+      : [];
+
+    console.log('Detalle del requerimiento a editar:', this.detallesActivoFijo);
+
+    // Selects
+    this.fundoSeleccionado = activofijo.idfundo;
+    this.areaSeleccionada = activofijo.idarea;
+    this.SeleccionaPrioridadITEM = activofijo.prioridad;
+    this.almacenSeleccionado = activofijo.idalmacen;
+    this.clasificacionSeleccionado = activofijo.idclasificacion;
+    this.glosa = activofijo.glosa;
+    this.SeleccionaTipoGasto = activofijo.referenciaGasto;
+    this.SeleccionaServicio = activofijo.servicio;
+    this.onServicioAFChange();
+    this.TipoSelecionado = activofijo.itemtipo;
+    this.almacenOrigen = activofijo.idalmacen;
+    this.almacenDestino = activofijo.idalmacendestino;
+
+    // UI
+    this.modoEdicionActivoFijo = true;
+    this.mostrarFormularioActivoFijo = true;
+    this.modalAbiertoActivoFijo = false;
+
+    this.reasignarAlmacenDesdeDescripcion();
+  }
+
+  editarRequerimientoActivoFijoMenorSelect(dataSelected: any[]) {
+    if (!dataSelected || dataSelected.length === 0) {
+      this.alertService.showAlert(
+        'Atención',
+        'Debe seleccionar un requerimiento para editar',
+        'warning',
+      );
+      return;
+    }
+
+    if (dataSelected.length > 1) {
+      this.alertService.showAlert(
+        'Atención',
+        'Solo puede editar un requerimiento a la vez',
+        'warning',
+      );
+      return;
+    }
+
+    const activofijomenor = this.requerimientoActivo;
+
+    this.requerimientoActivoFijoMenor = { ...activofijomenor };
+    this.requerimiento.id = activofijomenor.id; // necesario para update
+    // this.detalles = item.detalle || [];
+    // 🔥 Detalle (COPIA PROFUNDA)
+    this.detalles = activofijomenor.detalles
+      ? activofijomenor.detalles.map((d: any) => ({ ...d }))
+      : [];
+
+    console.log('Detalle del requerimiento a editar:', this.detalles);
+
+    // Selects
+    this.fundoSeleccionado = activofijomenor.idfundo;
+    this.areaSeleccionada = activofijomenor.idarea;
+    this.SeleccionaPrioridadITEM = activofijomenor.prioridad;
+    this.almacenSeleccionado = activofijomenor.idalmacen;
+    this.clasificacionSeleccionado = activofijomenor.idclasificacion;
+    this.glosa = activofijomenor.glosa;
+    this.SeleccionaTipoGasto = activofijomenor.referenciaGasto;
+    this.TipoSelecionado = activofijomenor.itemtipo;
+    this.almacenOrigen = activofijomenor.idalmacen;
+    this.almacenDestino = activofijomenor.idalmacendestino;
+
+    // UI
+    this.modoEdicion = true;
+    this.mostrarFormulario = true;
+    this.modalAbierto = false;
+
+    this.reasignarAlmacenDesdeDescripcion();
+  }
+
   async eliminarRequerimientoSelect(dataSelected: any[]) {
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
       '¿Desea eliminar este requerimiento?',
-      'warning'
+      'warning',
     );
     if (!confirmacion) return;
     dataSelected.forEach(async (item) => {
       try {
         await this.dexieService.deleteRequerimiento(item.idrequerimiento);
         const index = this.requerimientos.findIndex(
-          (r) => r.idrequerimiento === item.idrequerimiento
+          (r) => r.idrequerimiento === item.idrequerimiento,
         );
         if (index !== -1) {
           this.requerimientos.splice(index, 1);
@@ -3716,7 +4647,7 @@ export class RequerimientosComponent implements OnInit {
         this.alertService.showAlert(
           'Éxito',
           'Requerimiento eliminado correctamente.',
-          'success'
+          'success',
         );
         this.contarSinEnviar();
       } catch (error) {
@@ -3724,7 +4655,106 @@ export class RequerimientosComponent implements OnInit {
         this.alertService.showAlert(
           'Error',
           'Ocurrió un error al eliminar el requerimiento.',
-          'error'
+          'error',
+        );
+      }
+    });
+  }
+
+  async eliminarRequerimientoCommoditySelect(dataSelected: any[]) {
+    const confirmacion = await this.alertService.showConfirm(
+      'Confirmación',
+      '¿Desea eliminar este requerimiento?',
+      'warning',
+    );
+    if (!confirmacion) return;
+    dataSelected.forEach(async (item) => {
+      try {
+        await this.dexieService.deleteRequerimiento(item.idrequerimiento);
+        const index = this.requerimientosCommodity.findIndex(
+          (r) => r.idrequerimiento === item.idrequerimiento,
+        );
+        if (index !== -1) {
+          this.requerimientosCommodity.splice(index, 1);
+        }
+        this.alertService.showAlert(
+          'Éxito',
+          'Requerimiento eliminado correctamente.',
+          'success',
+        );
+        this.contarSinEnviar();
+      } catch (error) {
+        console.error('Error al eliminar requerimiento:', error);
+        this.alertService.showAlert(
+          'Error',
+          'Ocurrió un error al eliminar el requerimiento.',
+          'error',
+        );
+      }
+    });
+  }
+
+  async eliminarRequerimientoActivoFijoSelect(dataSelected: any[]) {
+    const confirmacion = await this.alertService.showConfirm(
+      'Confirmación',
+      '¿Desea eliminar este requerimiento?',
+      'warning',
+    );
+    if (!confirmacion) return;
+    dataSelected.forEach(async (item) => {
+      try {
+        await this.dexieService.deleteRequerimiento(item.idrequerimiento);
+        const index = this.requerimientosActivoFijo.findIndex(
+          (r) => r.idrequerimiento === item.idrequerimiento,
+        );
+        if (index !== -1) {
+          this.requerimientosActivoFijo.splice(index, 1);
+        }
+        this.alertService.showAlert(
+          'Éxito',
+          'Requerimiento eliminado correctamente.',
+          'success',
+        );
+        this.contarSinEnviar();
+      } catch (error) {
+        console.error('Error al eliminar requerimiento:', error);
+        this.alertService.showAlert(
+          'Error',
+          'Ocurrió un error al eliminar el requerimiento.',
+          'error',
+        );
+      }
+    });
+  }
+
+  async eliminarRequerimientoActivoFijoMenorSelect(dataSelected: any[]) {
+    const confirmacion = await this.alertService.showConfirm(
+      'Confirmación',
+      '¿Desea eliminar este requerimiento?',
+      'warning',
+    );
+    if (!confirmacion) return;
+    dataSelected.forEach(async (item) => {
+      try {
+        await this.dexieService.deleteRequerimiento(item.idrequerimiento);
+        const index = this.requerimientosActivoFijoMenor.findIndex(
+          (r) => r.idrequerimiento === item.idrequerimiento,
+        );
+        if (index !== -1) {
+          this.requerimientosActivoFijoMenor.splice(index, 1);
+        }
+        this.alertService.showAlert(
+          'Éxito',
+          'Requerimiento eliminado correctamente.',
+          'success',
+        );
+        this.contarSinEnviar();
+      } catch (error) {
+        console.error('Error al eliminar requerimiento:', error);
+        this.alertService.showAlert(
+          'Error',
+          'Ocurrió un error al eliminar el requerimiento.',
+          'error',
         );
       }
     });
@@ -3758,7 +4788,7 @@ export class RequerimientosComponent implements OnInit {
         proyecto: this.proyectoSeleccionado?.proyectoio ?? '',
         ceco: this.cecoSeleccionado?.localname ?? '',
         errores: [],
-        error: false
+        error: false,
       };
 
       await this.validarFila(fila);
@@ -3781,9 +4811,12 @@ export class RequerimientosComponent implements OnInit {
       row.errores.push({ columna: 'Código', mensaje: 'Requerido' });
     } else {
       // const item = await this.dexieService.getItemByCodigo(row.codigo);
-      const item = this.items.find(i => i.codigo === row.codigo);
+      const item = this.items.find((i) => i.codigo === row.codigo);
       if (!item) {
-        row.errores.push({ columna: 'Código', mensaje: 'No existe en almacén' });
+        row.errores.push({
+          columna: 'Código',
+          mensaje: 'No existe en almacén',
+        });
       }
     }
 
@@ -3799,14 +4832,14 @@ export class RequerimientosComponent implements OnInit {
 
     // ACTIVO FIJO
     if (row.activofijo && row.activofijo.toString().trim() !== '') {
-
-      const activoExiste = this.activosFijos
-        .some(af => af.activo === row.activofijo);
+      const activoExiste = this.activosFijos.some(
+        (af) => af.activo === row.activofijo,
+      );
 
       if (!activoExiste) {
         row.errores.push({
           columna: 'ActivoFijo',
-          mensaje: 'No existe el activo fijo'
+          mensaje: 'No existe el activo fijo',
         });
       }
     }
@@ -3814,12 +4847,14 @@ export class RequerimientosComponent implements OnInit {
     row.error = row.errores.length > 0;
     // validar todas al cargar
     // this.lineasPreview.forEach(row => this.validarFila(row));
-    this.tieneErroresExcel = this.lineasPreview.some(r => r.errores.length > 0);
+    this.tieneErroresExcel = this.lineasPreview.some(
+      (r) => r.errores.length > 0,
+    );
     this.actualizarEstadoGuardar();
   }
 
   actualizarEstadoGuardar() {
-    this.puedeGuardar = !this.lineasPreview.some(l => l.error);
+    this.puedeGuardar = !this.lineasPreview.some((l) => l.error);
   }
 
   // ===============================
@@ -3827,37 +4862,42 @@ export class RequerimientosComponent implements OnInit {
   // ===============================
   guardarDetalleMasivo() {
     if (!this.puedeGuardar) {
-      this.alertService.showAlertError('Error', 'Existen errores, corríjalos antes de guardar');
+      this.alertService.showAlertError(
+        'Error',
+        'Existen errores, corríjalos antes de guardar',
+      );
       return;
     }
 
     // Aquí armas el DetalleRequerimiento real
-    const detalleFinal = this.lineasPreview.map(l => ({
+    const detalleFinal = this.lineasPreview.map((l) => ({
       codigo: l.codigo,
       descripcion: l.descripcion,
       cantidad: l.cantidad,
       turno: l.turno,
       proyecto: l.proyecto,
       ceco: l.ceco,
-      estado: 0
+      estado: 0,
     }));
 
     console.log('DETALLE A GUARDAR', detalleFinal);
 
-    const nuevosDetalles: DetalleRequerimiento[] = this.lineasPreview.map(l => ({
-      idrequerimiento: '', // se asignará al guardar cabecera
-      codigo: l.codigo,
-      producto: l.descripcion, // o el objeto producto si ya lo manejas
-      descripcion: l.descripcion,
-      cantidad: l.cantidad,
-      proyecto: l.proyecto,
-      ceco: l.ceco,
-      turno: l.turno,
-      labor: this.laborSeleccionado?.labor ?? '',
-      esActivoFijo: false,
-      activoFijo: l.activofijo,
-      estado: 0
-    }));
+    const nuevosDetalles: DetalleRequerimiento[] = this.lineasPreview.map(
+      (l) => ({
+        idrequerimiento: '', // se asignará al guardar cabecera
+        codigo: l.codigo,
+        producto: l.descripcion, // o el objeto producto si ya lo manejas
+        descripcion: l.descripcion,
+        cantidad: l.cantidad,
+        proyecto: l.proyecto,
+        ceco: l.ceco,
+        turno: l.turno,
+        labor: this.laborSeleccionado?.labor ?? '',
+        esActivoFijo: false,
+        activoFijo: l.activofijo,
+        estado: 0,
+      }),
+    );
 
     // 🔥 AGREGA A LA TABLA EXISTENTE
     this.detalles.push(...nuevosDetalles);
@@ -3891,11 +4931,10 @@ export class RequerimientosComponent implements OnInit {
   }
 
   contarLineasConError(): number {
-    return this.lineasPreview.filter(l => l.error).length;
+    return this.lineasPreview.filter((l) => l.error).length;
   }
 
   contarLineasSinError(): number {
-    return this.lineasPreview.filter(l => !l.error).length;
+    return this.lineasPreview.filter((l) => !l.error).length;
   }
-
 }

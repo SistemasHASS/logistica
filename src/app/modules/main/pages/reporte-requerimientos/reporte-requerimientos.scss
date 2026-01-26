@@ -18,6 +18,9 @@
     }
   }
 }
+.paginator-responsive{
+    display: none;
+}
 
 @media (max-width: 768px) {
     .table-responsive p-table{
@@ -27,6 +30,9 @@
         align-items: start !important;
     }
 
+    .paginator-responsive{
+        display: flex;
+    }
     .cardFor {
         padding: 0;
         display: flex;

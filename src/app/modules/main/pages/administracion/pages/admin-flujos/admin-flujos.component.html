@@ -1,0 +1,92 @@
+<div class="admin-page">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2>Lista de Flujos de Aprobación</h2>
+    <button class="btn-primary" (click)="openCreate()">
+      <i class="icon icon-plus"></i> Nuevo Flujo
+    </button>
+  </div>
+
+  <!-- TABLA -->
+  <div class="table-wrapper">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Flujo</th>
+          <th>Descripción</th>
+          <th>Niveles</th>
+          <th>Estado</th>
+          <th style="width: 120px">Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let flujo of flujos; index as i">
+          <td>{{ i + 1 }}</td>
+          <td>{{ flujo.nombre }}</td>
+          <td>{{ flujo.descripcion }}</td>
+          <td>{{ flujo.niveles }}</td>
+          <td>
+            <span [class.activo]="flujo.estado === 'ACTIVO'" [class.inactivo]="flujo.estado === 'INACTIVO'">
+              {{ flujo.estado }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn btn-sm btn-warning me-2" (click)="openEdit(flujo)">
+              <i class="icon-pencil"></i>
+            </button>
+          </td>
+        </tr>
+
+        <tr *ngIf="!flujos.length">
+          <td colspan="6" class="empty">
+            No hay flujos registrados
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal" [class.show]="showModal">
+    <div class="modal-header">
+      <h3>{{ isEdit ? 'Editar Flujo' : 'Nuevo Flujo' }}</h3>
+      <button class="close" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" [(ngModel)]="form.nombre" />
+      </div>
+
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea rows="3" [(ngModel)]="form.descripcion"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Niveles de Aprobación</label>
+        <input type="number" [(ngModel)]="form.niveles" min="1" max="10" />
+      </div>
+
+      <div class="form-group">
+        <label>Estado</label>
+        <select [(ngModel)]="form.estado">
+          <option value="ACTIVO">Activo</option>
+          <option value="INACTIVO">Inactivo</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="save()">Guardar</button>
+    </div>
+  </div>
+</div>

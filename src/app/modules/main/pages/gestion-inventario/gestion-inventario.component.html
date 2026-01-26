@@ -1,0 +1,444 @@
+<div class="gestion-inventario-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2>Gestión de Inventario</h2>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="abrirFormMovimiento()">
+        <i class="icon-plus"></i> Nuevo Movimiento
+      </button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-container">
+    <button 
+      class="tab-button" 
+      [class.active]="tabActiva === 'stock'"
+      (click)="tabActiva = 'stock'">
+      <i class="icon-package"></i> Stock Actual
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="tabActiva === 'kardex'"
+      (click)="tabActiva = 'kardex'">
+      <i class="icon-file-text"></i> Kardex
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="tabActiva === 'movimientos'"
+      (click)="tabActiva = 'movimientos'">
+      <i class="icon-activity"></i> Movimientos
+    </button>
+  </div>
+
+  <!-- CONTADORES -->
+  <div class="stats-cards">
+    <div class="stat-card info">
+      <div class="stat-icon"><i class="icon-box"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalItems }}</span>
+        <span class="stat-label">Items en Stock</span>
+      </div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-icon"><i class="icon-home"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalAlmacenes }}</span>
+        <span class="stat-label">Almacenes</span>
+      </div>
+    </div>
+    <div class="stat-card warning">
+      <div class="stat-icon"><i class="icon-alert-triangle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ itemsBajoStock }}</span>
+        <span class="stat-label">Stock Bajo</span>
+      </div>
+    </div>
+    <div class="stat-card primary">
+      <div class="stat-icon"><i class="icon-dollar-sign"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">S/ {{ valorInventario.toLocaleString() }}</span>
+        <span class="stat-label">Valor Estimado</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: STOCK ACTUAL -->
+  <div class="content-section" *ngIf="tabActiva === 'stock'">
+    <!-- FILTROS -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Almacén:</label>
+        <select [(ngModel)]="filtroAlmacen" class="form-control">
+          <option value="">Todos</option>
+          <option *ngFor="let alm of almacenes" [value]="alm.almacen">
+            {{ alm.almacen }}
+          </option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Código/Descripción:</label>
+        <input 
+          type="text" 
+          [(ngModel)]="filtroCodigo" 
+          class="form-control"
+          placeholder="Buscar...">
+      </div>
+      <div class="filter-group">
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="filtroStockBajo">
+          Solo stock bajo
+        </label>
+      </div>
+      <button class="btn-secondary" (click)="limpiarFiltrosStock()">
+        <i class="icon-x"></i> Limpiar
+      </button>
+    </div>
+
+    <!-- TABLA DE STOCK -->
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>Almacén</th>
+            <th>Cantidad</th>
+            <th>Unidad</th>
+            <th>Estado</th>
+            <th>Última Actualización</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of stockFiltrado(); let i = index" 
+              [class.stock-bajo]="esStockBajo(item.cantidad)">
+            <td>{{ i + 1 }}</td>
+            <td><strong>{{ item.codigo }}</strong></td>
+            <td>{{ item.descripcion }}</td>
+            <td>{{ item.almacen }}</td>
+            <td class="text-right">
+              <span class="cantidad" [class.bajo]="esStockBajo(item.cantidad)">
+                {{ item.cantidad }}
+              </span>
+            </td>
+            <td>{{ item.unidadMedida }}</td>
+            <td>
+              <span class="badge" [ngClass]="esStockBajo(item.cantidad) ? 'badge-danger' : 'badge-success'">
+                {{ esStockBajo(item.cantidad) ? 'BAJO' : 'OK' }}
+              </span>
+            </td>
+            <td>{{ formatearFecha(item.ultimaActualizacion) }}</td>
+            <td class="actions">
+              <button 
+                class="btn btn-sm btn-info" 
+                (click)="verDetalleStock(item)"
+                title="Ver Detalle">
+                <i class="icon-eye"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="stockFiltrado().length === 0">
+            <td colspan="9" class="text-center">
+              <p class="no-data">No hay items en stock.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: KARDEX -->
+  <div class="content-section" *ngIf="tabActiva === 'kardex'">
+    <h3>Kardex de Producto</h3>
+    
+    <!-- FILTROS KARDEX -->
+    <div class="kardex-filters">
+      <div class="filter-group">
+        <label>Código Producto: <span class="required">*</span></label>
+        <input 
+          type="text" 
+          [(ngModel)]="kardexCodigo" 
+          class="form-control"
+          placeholder="Ingrese código del producto">
+      </div>
+      <div class="filter-group">
+        <label>Almacén:</label>
+        <select [(ngModel)]="kardexAlmacen" class="form-control">
+          <option value="">Todos</option>
+          <option *ngFor="let alm of almacenes" [value]="alm.almacen">
+            {{ alm.almacen }}
+          </option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Fecha Inicio:</label>
+        <input type="date" [(ngModel)]="kardexFechaInicio" class="form-control">
+      </div>
+      <div class="filter-group">
+        <label>Fecha Fin:</label>
+        <input type="date" [(ngModel)]="kardexFechaFin" class="form-control">
+      </div>
+      <button class="btn-primary" (click)="buscarKardex()">
+        <i class="icon-search"></i> Buscar
+      </button>
+      <button class="btn-secondary" (click)="limpiarKardex()">
+        <i class="icon-x"></i> Limpiar
+      </button>
+    </div>
+
+    <!-- TABLA KARDEX -->
+    <div class="table-wrapper" *ngIf="movimientosKardex.length > 0">
+      <table class="table kardex-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Documento</th>
+            <th>Almacén Origen</th>
+            <th>Almacén Destino</th>
+            <th>Entrada</th>
+            <th>Salida</th>
+            <th>Saldo</th>
+            <th>Usuario</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let mov of movimientosKardex; let i = index">
+            <td>{{ formatearFecha(mov.fecha) }}</td>
+            <td>
+              <span class="badge" [ngClass]="obtenerClaseTipoMovimiento(mov.tipo)">
+                <i [class]="obtenerIconoTipoMovimiento(mov.tipo)"></i>
+                {{ mov.tipo }}
+              </span>
+            </td>
+            <td>{{ mov.referenciaDocumento || '-' }}</td>
+            <td>{{ mov.almacenOrigen || '-' }}</td>
+            <td>{{ mov.almacenDestino || '-' }}</td>
+            <td class="text-right entrada">
+              {{ mov.tipo === 'ENTRADA' ? mov.cantidad : '-' }}
+            </td>
+            <td class="text-right salida">
+              {{ mov.tipo === 'SALIDA' ? mov.cantidad : '-' }}
+            </td>
+            <td class="text-right saldo">
+              <strong>{{ calcularSaldoKardex(i) }}</strong>
+            </td>
+            <td>{{ mov.usuario }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="no-data-message" *ngIf="movimientosKardex.length === 0">
+      <p>Ingrese un código de producto y presione "Buscar" para ver el kardex.</p>
+    </div>
+  </div>
+
+  <!-- TAB: MOVIMIENTOS -->
+  <div class="content-section" *ngIf="tabActiva === 'movimientos'">
+    <h3>Últimos Movimientos</h3>
+    
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Código</th>
+            <th>Cantidad</th>
+            <th>Almacén Origen</th>
+            <th>Almacén Destino</th>
+            <th>Usuario</th>
+            <th>Motivo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let mov of movimientos.slice(0, 50); let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ formatearFecha(mov.fecha) }}</td>
+            <td>
+              <span class="badge" [ngClass]="obtenerClaseTipoMovimiento(mov.tipo)">
+                <i [class]="obtenerIconoTipoMovimiento(mov.tipo)"></i>
+                {{ mov.tipo }}
+              </span>
+            </td>
+            <td><strong>{{ mov.codigo }}</strong></td>
+            <td class="text-right">{{ mov.cantidad }}</td>
+            <td>{{ mov.almacenOrigen || '-' }}</td>
+            <td>{{ mov.almacenDestino || '-' }}</td>
+            <td>{{ mov.usuario }}</td>
+            <td>{{ mov.motivo || '-' }}</td>
+          </tr>
+          <tr *ngIf="movimientos.length === 0">
+            <td colspan="9" class="text-center">
+              <p class="no-data">No hay movimientos registrados.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVO MOVIMIENTO -->
+<div class="modal-overlay" *ngIf="mostrarFormMovimiento" (click)="cancelarMovimiento()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Nuevo Movimiento de Stock</h3>
+      <button class="btn-close" (click)="cancelarMovimiento()">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Tipo de Movimiento: <span class="required">*</span></label>
+          <select [(ngModel)]="nuevoMovimiento.tipo" class="form-control">
+            <option value="ENTRADA">Entrada</option>
+            <option value="SALIDA">Salida</option>
+            <option value="TRANSFERENCIA">Transferencia</option>
+            <option value="AJUSTE">Ajuste</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Fecha:</label>
+          <input 
+            type="datetime-local" 
+            [(ngModel)]="nuevoMovimiento.fecha" 
+            class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label>Código Producto: <span class="required">*</span></label>
+          <input 
+            type="text" 
+            [(ngModel)]="nuevoMovimiento.codigo" 
+            class="form-control"
+            placeholder="Código del producto">
+        </div>
+
+        <div class="form-group">
+          <label>Cantidad: <span class="required">*</span></label>
+          <input 
+            type="number" 
+            [(ngModel)]="nuevoMovimiento.cantidad" 
+            class="form-control"
+            min="0"
+            step="0.01">
+        </div>
+
+        <div class="form-group" *ngIf="nuevoMovimiento.tipo === 'SALIDA' || nuevoMovimiento.tipo === 'TRANSFERENCIA'">
+          <label>Almacén Origen: <span class="required">*</span></label>
+          <select [(ngModel)]="nuevoMovimiento.almacenOrigen" class="form-control">
+            <option value="">Seleccione...</option>
+            <option *ngFor="let alm of almacenes" [value]="alm.almacen">
+              {{ alm.almacen }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group" *ngIf="nuevoMovimiento.tipo === 'ENTRADA' || nuevoMovimiento.tipo === 'TRANSFERENCIA' || nuevoMovimiento.tipo === 'AJUSTE'">
+          <label>Almacén Destino: <span class="required">*</span></label>
+          <select [(ngModel)]="nuevoMovimiento.almacenDestino" class="form-control">
+            <option value="">Seleccione...</option>
+            <option *ngFor="let alm of almacenes" [value]="alm.almacen">
+              {{ alm.almacen }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Documento Referencia:</label>
+          <input 
+            type="text" 
+            [(ngModel)]="nuevoMovimiento.referenciaDocumento" 
+            class="form-control"
+            placeholder="Ej: OC-20240125-001">
+        </div>
+
+        <div class="form-group full-width">
+          <label>Motivo:</label>
+          <textarea 
+            [(ngModel)]="nuevoMovimiento.motivo" 
+            class="form-control" 
+            rows="3"
+            placeholder="Ingrese el motivo del movimiento..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cancelarMovimiento()">
+        Cancelar
+      </button>
+      <button class="btn-primary" (click)="guardarMovimiento()">
+        <i class="icon-save"></i> Guardar Movimiento
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE STOCK -->
+<div class="modal-overlay" *ngIf="modalDetalleStockAbierto" (click)="cerrarModalDetalleStock()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Detalle de Stock: {{ stockDetalle?.codigo }}</h3>
+      <button class="btn-close" (click)="cerrarModalDetalleStock()">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="stockDetalle">
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Código:</label>
+          <span>{{ stockDetalle.codigo }}</span>
+        </div>
+        <div class="info-item">
+          <label>Descripción:</label>
+          <span>{{ stockDetalle.descripcion }}</span>
+        </div>
+        <div class="info-item">
+          <label>Almacén:</label>
+          <span>{{ stockDetalle.almacen }}</span>
+        </div>
+        <div class="info-item">
+          <label>Cantidad:</label>
+          <span class="cantidad-highlight">{{ stockDetalle.cantidad }} {{ stockDetalle.unidadMedida }}</span>
+        </div>
+        <div class="info-item">
+          <label>Estado:</label>
+          <span class="badge" [ngClass]="esStockBajo(stockDetalle.cantidad) ? 'badge-danger' : 'badge-success'">
+            {{ esStockBajo(stockDetalle.cantidad) ? 'STOCK BAJO' : 'STOCK OK' }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Última Actualización:</label>
+          <span>{{ formatearFecha(stockDetalle.ultimaActualizacion) }}</span>
+        </div>
+      </div>
+
+      <div class="stock-progress">
+        <label>Nivel de Stock:</label>
+        <div class="progress-bar">
+          <div class="progress-fill" 
+               [style.width.%]="calcularPorcentajeStock(stockDetalle.cantidad)"
+               [ngClass]="esStockBajo(stockDetalle.cantidad) ? 'danger' : 'success'">
+          </div>
+        </div>
+        <span class="progress-text">{{ calcularPorcentajeStock(stockDetalle.cantidad).toFixed(0) }}%</span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalDetalleStock()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>

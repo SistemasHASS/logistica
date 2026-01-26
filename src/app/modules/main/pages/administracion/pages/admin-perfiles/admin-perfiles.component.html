@@ -1,0 +1,85 @@
+<div class="admin-page">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2>Lista de Perfiles</h2>
+    <button class="btn-primary" (click)="openCreate()">
+      <i class="icon icon-plus"></i> Nuevo Perfil
+    </button>
+  </div>
+
+  <!-- TABLA -->
+  <div class="table-wrapper">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Perfil</th>
+          <th>Descripción</th>
+          <th>Estado</th>
+          <th style="width: 120px">Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let perfil of perfiles; index as i">
+          <td>{{ i + 1 }}</td>
+          <td>{{ perfil.nombre }}</td>
+          <td>{{ perfil.descripcion }}</td>
+          <td>
+            <span [class.activo]="perfil.estado === 'ACTIVO'" [class.inactivo]="perfil.estado === 'INACTIVO'">
+              {{ perfil.estado }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn btn-sm btn-warning me-2" (click)="openEdit(perfil)">
+              <i class="icon-pencil"></i>
+            </button>
+          </td>
+        </tr>
+
+        <tr *ngIf="!perfiles.length">
+          <td colspan="5" class="empty">
+            No hay perfiles registrados
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal" [class.show]="showModal">
+    <div class="modal-header">
+      <h3>{{ isEdit ? 'Editar Perfil' : 'Nuevo Perfil' }}</h3>
+      <button class="close" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" [(ngModel)]="form.nombre" />
+      </div>
+
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea rows="3" [(ngModel)]="form.descripcion"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Estado</label>
+        <select [(ngModel)]="form.estado">
+          <option value="ACTIVO">Activo</option>
+          <option value="INACTIVO">Inactivo</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="save()">Guardar</button>
+    </div>
+  </div>
+</div>

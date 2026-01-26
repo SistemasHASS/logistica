@@ -1,3 +1,4 @@
+import { exp } from "@tensorflow/tfjs";
 
 export interface Usuario {
     id: string;
@@ -13,6 +14,79 @@ export interface Usuario {
     nombre: string;
     idrol: string;
     rol: string;
+}
+
+export interface Perfil {
+    id: string;
+    idperfil: string;
+    descripcion: string;
+    estado: string;
+}
+
+export interface FlujoAprobacion {  
+    id: string;
+    idflujo: string;
+    descripcion: string;
+    estado: string;
+    niveles: FlujoAprobacionNivel[];
+}
+
+export interface FlujoAprobacionNivel {
+    id: string;
+    idflujo: string;
+    nivel: number;
+    descripcion: string;
+    idrol: string;
+    rol: string;
+    estado: string;
+}
+
+export interface FlujoAprobacionPersona {
+    id: string;
+    idflujo: string;
+    nivel: number;
+    usuario: string;
+    nombrePersona: string;
+    rol: string;
+    idrol: string;
+    estado: string;
+}
+
+export interface AsignacionPerfil {
+    id: string;
+    idusuario: string;
+    idperfil: string;
+    perfil: string;
+    estado: string;
+}
+
+export interface AsignacionFlujo {
+    id: string;
+    idusuario: string;
+    idflujo: string;
+    flujo: string;
+    estado: string;
+}
+
+export interface EmpresaUsuario {
+    id: string;
+    idusuario: string;
+    idempresa: string;
+    empresa: string;
+    estado: string;
+}
+
+export interface UsuarioAdmin {
+    id: string;
+    usuario: string;
+    nombre: string;
+    documentoidentidad: string;
+    ruc: string;
+    razonSocial: string;
+    perfil: string;
+    flujo: string;
+    estado: string;
+    esUsuarioSistema: boolean;
 }
 
 export interface Configuracion {
@@ -77,6 +151,7 @@ export interface Proyecto {
     afe: string;
     proyectoio: string;
     esinverison: number;
+    idlabor: string;
     estado: number
 }
 
@@ -218,6 +293,10 @@ export interface RequerimientoCommodity {
     tipo: string;
     estados: string;
     estado: number;
+    disabled: boolean;
+    checked: boolean;
+    eliminado: number; // 0 = no, 1 = sí
+    modificado?: number; // 0 = no, 1 = sí
     detalle?: DetalleRequerimientoCommodity[]; // del backend
     detalleCommodity: DetalleRequerimientoCommodity[];
 }
@@ -243,6 +322,10 @@ export interface RequerimientoActivoFijo {
     tipo: string;
     estados: string;
     estado: number;
+    disabled: boolean;
+    checked: boolean;
+    eliminado: number; // 0 = no, 1 = sí
+    modificado?: number; // 0 = no, 1 = sí
     detalle?: DetalleRequerimientoActivoFijo[]; // del backend
     detalleActivoFijo: DetalleRequerimientoActivoFijo[];
 }
@@ -319,6 +402,10 @@ export interface RequerimientoActivoFijoMenor {
     tipo: string;
     estados: string;
     estado: number;
+    disabled: boolean;
+    checked: boolean;
+    eliminado: number; // 0 = no, 1 = sí
+    modificado?: number; // 0 = no, 1 = sí
     detalle?: DetalleRequerimientoActivoFijoMenor[]; // del backend
     detalleActivoFijoMenor: DetalleRequerimientoActivoFijoMenor[];
 }
@@ -550,33 +637,15 @@ export interface MovimientoStock {
     motivo?: string;
 }
 
-export interface Cotizacion {
-    id?: number;
-    ordenCompraId: number;
-    proveedor: string;
-    fecha: string;
-    montoTotal: number;
-    moneda: string;
-    plazoEntrega: number;
-    condicionesPago: string;
-    validezOferta: number;
-    items: DetalleCotizacion[];
-    seleccionada: boolean;
-    observaciones?: string;
-}
-
-export interface DetalleCotizacion2 {
-    id?: number;
-    cotizacionId2?: number;
-    codigo: string;
-    descripcion: string;
-    cantidad: number;
-    precioUnitario: number;
-    descuento: number;
-    subtotal: number;
-    impuesto: number;
-    total: number;
-}
+// export interface Cotizacion {
+//     id?: number;
+//     cantidad: number;
+//     precioUnitario: number;
+//     descuento: number;
+//     subtotal: number;
+//     impuesto: number;
+//     total: number;
+// }
 
 export interface SolicitudCompra {
     id?: number;
@@ -845,18 +914,81 @@ export interface DetalleDespacho {
 }
 
 export interface ErrorExcel {
-  columna: string;
-  mensaje: string;
+columna: string;
+mensaje: string;
 }
 
 export interface DetalleExcelPreview {
-  codigo: string;
-  descripcion: string;
-  cantidad: number;
-  turno: string;
-  proyecto: string;
-  ceco: string;
-  activofijo: string;
-  errores: ErrorExcel[];
-  error: boolean;
+codigo: string;
+descripcion: string;
+cantidad: number;
+turno: string;
+proyecto: string;
+ceco: string;
+activofijo: string;
+errores: ErrorExcel[];
+error: boolean;
+}
+
+export interface DevolucionProveedor {
+id?: number;
+numeroDevolucion: string;
+recepcionId: number;
+numeroRecepcion: string;
+ordenCompraId: number;
+numeroOrden: string;
+proveedor: string;
+nombreProveedor: string;
+rucProveedor: string;
+fecha: string;
+motivo: string;
+tipoDevolucion: 'TOTAL' | 'PARCIAL';
+detalle: DetalleDevolucion[];
+montoTotal: number;
+estado: 'REGISTRADA' | 'ENVIADA' | 'CONFIRMADA' | 'RESUELTA';
+resolucion?: 'REEMPLAZO' | 'NOTA_CREDITO' | 'DEVOLUCION_DINERO';
+fechaResolucion?: string;
+observaciones?: string;
+usuarioRegistra: string;
+}
+
+export interface DetalleDevolucion {
+id?: number;
+devolucionId: number;
+codigo: string;
+descripcion: string;
+cantidadDevuelta: number;
+cantidadRecibida: number;
+unidadMedida: string;
+precioUnitario: number;
+subtotal: number;
+motivoDetalle: string;
+lote?: string;
+estado: 'PENDIENTE' | 'REEMPLAZADO' | 'ACREDITADO';
+}
+
+export interface EvaluacionProveedor {
+id?: number;
+proveedor: string;
+nombreProveedor: string;
+rucProveedor: string;
+periodo: string; // YYYY-MM
+fechaEvaluacion: string;
+criterios: CriterioEvaluacionProveedor[];
+calificacionTotal: number;
+nivel: 'EXCELENTE' | 'BUENO' | 'REGULAR' | 'DEFICIENTE';
+observaciones?: string;
+usuarioEvalua: string;
+estado: 'BORRADOR' | 'FINALIZADA';
+}
+
+export interface CriterioEvaluacionProveedor {
+id?: number;
+evaluacionId: number;
+criterio: 'CALIDAD' | 'TIEMPO_ENTREGA' | 'PRECIO' | 'SERVICIO' | 'DOCUMENTACION';
+descripcion: string;
+peso: number; // Porcentaje de importancia (0-100)
+calificacion: number; // Puntuación (0-10)
+puntajePonderado: number; // calificacion * peso / 100
+comentarios?: string;
 }
