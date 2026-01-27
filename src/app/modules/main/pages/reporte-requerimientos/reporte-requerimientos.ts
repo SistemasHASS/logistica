@@ -92,8 +92,8 @@ export class ReporteRequerimientos {
         ruc: this.usuario?.ruc,
         desde: this.fdesde,
         hasta: this.fhasta,
-        dni: this.usuario?.documentoidentidad,
-        rol: this.usuario?.rol
+        dniusuario: this.usuario?.documentoidentidad,
+        idrol: this.usuario?.idrol
       }
     ]
   }
