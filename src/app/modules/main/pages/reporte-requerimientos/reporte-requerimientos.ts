@@ -86,10 +86,22 @@ export class ReporteRequerimientos {
     }
   }
 
+  formatoReporteListar(){
+    return [
+      {
+        ruc: this.usuario?.ruc,
+        desde: this.fdesde,
+        hasta: this.fhasta,
+        dni: this.usuario?.documentoidentidad,
+        rol: this.usuario?.rol
+      }
+    ]
+  }
+
   listarReporte() {
-    this.logisticaService.reporteRequerimientos([{}]).subscribe((res: any[]) => {
-      this.data = res.filter((item: any) => item.dniregistra === this.usuario?.documentoidentidad);
-      console.log(res);
+    const formato = this.formatoReporteListar()
+    this.logisticaService.reporteRequerimientos(formato).subscribe((res: any[]) => {
+      this.data = res
 
       // Formatear fecharegistro a dd/mm/yyyy
       this.data = this.data.map(item => {
