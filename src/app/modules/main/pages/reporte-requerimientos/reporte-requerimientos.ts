@@ -8,6 +8,7 @@ import FileSaver from 'file-saver';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { Almacen, Empresa, Fundo, Usuario } from '@/app/shared/interfaces/Tables';
 import { LogisticaService } from '../../services/logistica.service';
+import moment from 'moment';
 
 @Component({
   selector: 'app-reporte-requerimientos',
@@ -90,6 +91,38 @@ export class ReporteRequerimientos {
       this.data = res.filter((item: any) => item.dniregistra === this.usuario?.documentoidentidad);
       console.log(res);
 
+      // Formatear fecharegistro a dd/mm/yyyy
+      this.data = this.data.map(item => {
+        if (item.fecharegistro) {
+          item.fecharegistro = moment(item.fecharegistro).format('DD/MM/YYYY');
+        }
+        return item;
+      });
+
+      // Ordenar por fecharegistro descendente y poner 'PENDIENTE' primero
+      this.data.sort((a, b) => {
+        // Primero ordenar por estado: PENDIENTE va primero
+        const aEstado = (a.estados || '').toUpperCase();
+        const bEstado = (b.estados || '').toUpperCase();
+        
+        if (aEstado === 'PENDIENTE' && bEstado !== 'PENDIENTE') {
+          return -1;
+        }
+        if (aEstado !== 'PENDIENTE' && bEstado === 'PENDIENTE') {
+          return 1;
+        }
+        
+        // Si ambos tienen el mismo estado, ordenar por fecha descendente
+        const fechaA = moment(a.fecharegistro, 'DD/MM/YYYY');
+        const fechaB = moment(b.fecharegistro, 'DD/MM/YYYY');
+        
+        if (fechaA.isValid() && fechaB.isValid()) {
+          return fechaB.diff(fechaA); // descendente
+        }
+        
+        return 0;
+      });
+
       const columnasExcluidas = [
         'id',
         'dniedita',
@@ -106,8 +139,18 @@ export class ReporteRequerimientos {
 
       const indexRequisicion = this.columnas.indexOf('RequisicionNumero');
       if (indexRequisicion > 0) {
-        this.columnas.splice(indexRequisicion, 1);
+        this.columnas.splice(indexRequisicion, 2);
         this.columnas.unshift('RequisicionNumero');
+      }
+      const indexFecha = this.columnas.indexOf('fecharegistro');
+      if (indexFecha > 0) {
+        this.columnas.splice(indexFecha, 1);
+        this.columnas.unshift('fecharegistro');
+      }
+      const indexGlosa = this.columnas.indexOf('glosa');
+      if (indexGlosa > 0) {
+        this.columnas.splice(indexGlosa, 1);
+        this.columnas.splice(3, 0, 'glosa');
       }
 
       console.log(this.columnas);
