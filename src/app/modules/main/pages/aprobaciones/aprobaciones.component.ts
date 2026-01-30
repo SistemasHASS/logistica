@@ -62,6 +62,7 @@ export class AprobacionesComponent {
   correlativoRequerimiento: any = '';
 
   // Para el modal de visualización
+  modalDetalleVisible = false;
   requerimientoSeleccionado: any = null;
   detalleRequerimiento: any[] = [];
 
@@ -618,10 +619,11 @@ export class AprobacionesComponent {
           next: (resp) => {
             console.log('✅ Respuesta del backend:', resp);
             const resultado = Array.isArray(resp) ? resp[0] : resp;
-            if (resultado?.errorgeneral === 0) {
-              console.log('✅ Requisición actualizada correctamente en DB', resp[0]);
+            // La respuesta tiene 'error' no 'errorgeneral'
+            if (resultado?.error === 0) {
+              console.log('✅ Requisición actualizada correctamente en DB:', resultado);
             } else {
-              console.error('Detalles del error al actualizar requisición:', resp);
+              console.error('❌ Error al actualizar requisición:', resp);
             }
           },
           error: (err) => {
@@ -663,12 +665,15 @@ export class AprobacionesComponent {
       );
     }
 
-    // Abrir el modal
-    const modalElement = document.getElementById('modalVisualizarDetalle');
-    if (modalElement) {
-      const modal = new bootstrap.Modal(modalElement);
-      modal.show();
-    }
+    // Abrir el modal personalizado
+    this.modalDetalleVisible = true;
+  }
+
+  /** Cerrar modal de detalle */
+  cerrarModalDetalle() {
+    this.modalDetalleVisible = false;
+    this.requerimientoSeleccionado = null;
+    this.detalleRequerimiento = [];
   }
 
   /** ✅ Seleccionar todos por tab */

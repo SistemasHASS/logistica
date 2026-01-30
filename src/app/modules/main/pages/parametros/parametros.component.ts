@@ -151,6 +151,8 @@ export class ParametrosComponent implements OnInit {
     console.log('ROL REAL:', this.usuario?.idrol);
     await this.validarExisteConfiguracion();
     await this.llenarDropdowns();
+    // 🔒 FORZAR TIPO ITEM A CONSUMO
+    // this.configuracion.idTipoItem = 'CONSUMO';
     this.configurarTipoItemPorRol(); // 👈 OBLIGATORIO
     // 👇 SOLO después de tener todo
     if (this.configuracion.idTipoItem) {
@@ -197,7 +199,7 @@ export class ParametrosComponent implements OnInit {
     await this.ListarCultivos();
     await this.ListarAreas();
     // await this.ListarAlmacenes();
-    await this.ListarAlmacenesPorRol();
+    // await this.ListarAlmacenesPorRol();
     await this.ListarProyectos();
     await this.ListarItems();
     await this.ListarTurnos();
@@ -235,7 +237,7 @@ export class ParametrosComponent implements OnInit {
 
     // Base: todos pueden COMPRA y CONSUMO
     this.tipoItem = [
-      { id: 'COMPRA', descripcion: 'COMPRA' },
+      // { id: 'COMPRA', descripcion: 'COMPRA' },
       { id: 'CONSUMO', descripcion: 'CONSUMO' },
     ];
 
@@ -253,6 +255,12 @@ export class ParametrosComponent implements OnInit {
       !this.esLogist
     ) {
       this.configuracion.idTipoItem = 'CONSUMO';
+    }
+
+    // 🔹 Auto-seleccionar si solo hay una opción
+    if (this.tipoItem.length === 1 && !this.configuracion.idTipoItem) {
+      this.configuracion.idTipoItem = this.tipoItem[0].id;
+      console.log('✅ Auto-seleccionado tipoItem:', this.configuracion.idTipoItem);
     }
   }
 
@@ -349,8 +357,7 @@ export class ParametrosComponent implements OnInit {
       almacenes.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveAlmacenes(resp);
-          // await this.ListarAlmacenes();
-          await this.ListarAlmacenesPorRol(); // 👈
+          await this.ListarAlmacenesPorRol(); // 🔹 Auto-seleccionar almacén
         }
       });
 
@@ -360,8 +367,7 @@ export class ParametrosComponent implements OnInit {
       almacenesDestino.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveAlmacenesDestino(resp);
-          // await this.ListarAlmacenesDestino();
-          await this.ListarAlmacenesPorRol(); // 👈
+          await this.ListarAlmacenesPorRol(); // 🔹 Auto-seleccionar almacén
         }
       });
 
@@ -1052,6 +1058,7 @@ export class ParametrosComponent implements OnInit {
     console.log('🎭 Rol:', this.usuario.idrol);
 
     this.almacenes = [];
+    this.configuracion.idalmacen = '';
 
     // ===============================
     // 🔁 TRANSFERENCIA
@@ -1083,16 +1090,21 @@ export class ParametrosComponent implements OnInit {
 
     // 🔥 EMLOGIST → TODOS
     if (this.usuario.idrol === 'EMLOGIST') {
-      this.almacenes = almacenes;
+      const destino = await this.dexieService.showAlmacenesDestino();
+      this.almacenes = destino;
       console.log('📦 ALMACENES EMPAQUE:', this.almacenes);
       return;
     }
 
     // 🔐 LOLOGIST / OPLOGIST → SOLO UNO
-    const almacenUsuario = almacenes[0];
+    // const almacenUsuario = almacenes[0];
+    this.almacenes = [almacenes[0]];
 
-    this.almacenes = [almacenUsuario];
-    this.configuracion.idalmacen = String(almacenUsuario.idalmacen);
+    // 🔹 Auto-seleccionar si solo hay un almacén
+    if (this.almacenes.length === 1 && !this.configuracion.idalmacen) {
+      this.configuracion.idalmacen = String(this.almacenes[0].idalmacen);
+      console.log('✅ Auto-seleccionado almacén:', this.configuracion.idalmacen);
+    }
 
     console.log('🏷️ ALMACÉN USUARIO:', this.almacenes);
   }

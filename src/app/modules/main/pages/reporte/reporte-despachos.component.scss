@@ -1,0 +1,61 @@
+.container-fluid {
+    padding: 1rem;
+}
+
+h5 {
+    color: #333;
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.85em;
+    padding: 0.4em 0.6em;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+:host ::ng-deep {
+    .p-datatable {
+        .p-datatable-thead > tr > th {
+            background: #f8f9fa;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .p-datatable-tbody > tr > td {
+            font-size: 0.85rem;
+            vertical-align: middle;
+        }
+    }
+
+    .p-dialog {
+        .p-dialog-header {
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .p-dialog-content {
+            padding: 1rem;
+        }
+        
+        .p-dialog-footer {
+            border-top: 1px solid #dee2e6;
+            padding: 0.75rem 1rem;
+        }
+    }
+
+    .p-datepicker {
+        width: 100%;
+    }
+}
+
+.row.mb-3 {
+    .col-md-2 {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+}

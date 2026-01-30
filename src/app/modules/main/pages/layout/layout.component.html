@@ -31,6 +31,9 @@
       <!-- Sidebar navigation-->
       <nav class="sidebar-nav scroll-sidebar" data-simplebar="">
         <ul>
+          <!-- ============================================= -->
+          <!-- MÓDULOS -->
+          <!-- ============================================= -->
           <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ADLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Maestros</span>
@@ -53,24 +56,6 @@
               <span class="hide-menu"> Comodities</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item"
-            (click)="toggleSidebar()">
-            <a routerLink="./maestro-proveedores" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
-              <span>
-                <i class="icon icon-users"></i>
-              </span>
-              <span class="hide-menu"> Proveedores</span>
-            </a>
-          </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item"
-            (click)="toggleSidebar()">
-            <a routerLink="./evaluacion-proveedores" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
-              <span>
-                <i class="icon icon-award"></i>
-              </span>
-              <span class="hide-menu"> Evaluación de Proveedores</span>
-            </a>
-          </li>
           <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ADLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Mantenedor</span>
@@ -84,12 +69,15 @@
               <span class="hide-menu"> Aprobadores</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST')" class="nav-small-cap">
+          <li
+            *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST')"
+            class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Configuración</span>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST')" class="sidebar-item"
-            (click)="toggleSidebar()">
+          <li
+            *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST')"
+            class="sidebar-item" (click)="toggleSidebar()">
             <a routerLink="./parametros" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class="icon icon-equalizer"></i>
@@ -106,12 +94,15 @@
               <span class="hide-menu"> Roles de aprobación</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST')" class="nav-small-cap">
+          <li
+            *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST')"
+            class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Requerimientos</span>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST')" class="sidebar-item"
-            (click)="toggleSidebar()">
+          <li
+            *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST')"
+            class="sidebar-item" (click)="toggleSidebar()">
             <a routerLink="./requerimientos" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class="icon icon-stack"></i>
@@ -119,20 +110,6 @@
               <span class="hide-menu"> Requerimientos</span>
             </a>
           </li>
-          <!-- SECCIÓN STOCK -->
-          <!-- <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
-            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
-            <span class="hide-menu"> Gestión de Stock</span>
-          </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item"
-            (click)="toggleSidebar()">
-            <a routerLink="./listas-stock" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
-              <span>
-                <i class="icon-clipboard"></i>
-              </span>
-              <span class="hide-menu"> Listas de Stock</span>
-            </a>
-          </li> -->
           <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Despachos</span>
@@ -144,6 +121,91 @@
                 <i class="icon icon-stack"></i>
               </span>
               <span class="hide-menu"> Gestión de Despachos</span>
+            </a>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Reporte</span>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./reporte-despachos" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class="icon icon-file-text"></i>
+              </span>
+              <span class="hide-menu"> Reporte de Despachos</span>
+            </a>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')" class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Aprobaciones</span>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./aprobaciones" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-file-check'></i>
+              </span>
+              <span class="hide-menu"> Aprobacion de comsumo</span>
+            </a>
+          </li>
+          <li
+            *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST')"
+            class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Reporte</span>
+          </li>
+          <li
+            *ngIf="usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST')"
+            class="sidebar-item">
+            <a routerLink="./reporte-requerimientos" routerLinkActive="active" class="sidebar-link"
+              aria-expanded="false">
+              <span>
+                <i class='icon icon-file-check'></i>
+              </span>
+              <span class="hide-menu"> Reporte requerimientos</span>
+            </a>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')" class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Reporte</span>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./reporte-aprobados" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-file-check'></i>
+              </span>
+              <span class="hide-menu"> Reporte aprobaciones</span>
+            </a>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Saldo</span>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./reporte-saldos" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-file-check'></i>
+              </span>
+              <span class="hide-menu"> Reporte de saldo</span>
+            </a>
+          </li>
+          <!-- ============================================= -->
+          <!-- MÓDULOS OCULTOS: STOCK, INVENTARIO Y COMPRAS -->
+          <!-- ============================================= -->
+          <!-- <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Gestión de Stock</span>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./listas-stock" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class="icon-clipboard"></i>
+              </span>
+              <span class="hide-menu"> Listas de Stock</span>
             </a>
           </li>
           <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
@@ -230,7 +292,7 @@
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Procesos</span>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')" class="nav-small-cap">
+          <!-- <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Aprobaciones</span>
           </li>
@@ -242,8 +304,8 @@
               </span>
               <span class="hide-menu"> Aprobacion de comsumo</span>
             </a>
-          </li>
-          <li
+          </li> -->
+          <!-- <li
             *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('APLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST')"
             class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
@@ -280,7 +342,7 @@
               <span class="hide-menu"> Reporte de saldo</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI')" class="nav-small-cap">
+          <!-- <li *ngIf="usuario?.idrol.includes('TI')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Reportes</span>
           </li>
@@ -291,7 +353,7 @@
               </span>
               <span class="hide-menu"> lista de requerimientos</span>
             </a>
-          </li>
+          </li> -->
         </ul>
         <div class="unlimited-access hide-menu position-relative mb-7 text-center ">
           <a *ngIf="isOnline" (click)="logout()" class="btn btn-danger">

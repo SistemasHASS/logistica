@@ -172,4 +172,13 @@ export class RequerimientosService {
       throw new Error(error.error?.message || 'Error en el api: almacenes');
     }
   }
+
+  listarDetalleRequerimiento(idrequerimiento: string): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/listar-detalle-requerimiento`;
+    try {
+      return this.http.post<any>(url, { idrequerimiento });
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error al listar detalle de requerimiento');
+    }
+  }
 }

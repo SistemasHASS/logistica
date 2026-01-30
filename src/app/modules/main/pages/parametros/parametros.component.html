@@ -196,7 +196,8 @@
               <b class="text-danger">*</b> Tipo Item
             </label>
             <div class="col-lg-9">
-              <select [(ngModel)]="configuracion.idTipoItem" name="tipoItem" class="form-select mb-2" (change)="onTipoItemChange()" [ngClass]="{
+              <select [(ngModel)]="configuracion.idTipoItem" name="tipoItem" class="form-select mb-2" 
+                 (ngModelChange)="onTipoItemChange()" [ngClass]="{
                   'is-invalid': showValidation && !configuracion.idTipoItem,
                   'is-valid': configuracion.idTipoItem
                 }">

@@ -513,88 +513,83 @@
     </div>
 </div>
 
-<!-- MODAL VISUALIZACIÓN DETALLE -->
-<div class="modal fade" id="modalVisualizarDetalle" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title">Detalle del Requerimiento</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row mb-3" *ngIf="requerimientoSeleccionado">
-                    <div class="col-md-6">
-                        <strong>ID Requerimiento:</strong> {{ requerimientoSeleccionado.idrequerimiento }}
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Tipo:</strong> {{ requerimientoSeleccionado.tipo }}
-                    </div>
-                    <div class="col-md-3" style="display: flex; align-items: center;">
-                        <strong>Estado:</strong> <span style="margin-left: 5px;" class="badge bg-warning">{{
-                            requerimientoSeleccionado.estados
-                            }}</span>
-                    </div>
+<!-- MODAL VISUALIZACIÓN DETALLE (Custom como despacho) -->
+<div class="modal-backdrop-custom" *ngIf="modalDetalleVisible">
+    <div class="modal-content-custom">
+        <div class="modal-header bg-info text-white">
+            <h5 class="modal-title">Detalle del Requerimiento</h5>
+            <button type="button" class="btn-close btn-close-white" (click)="cerrarModalDetalle()"></button>
+        </div>
+        <div class="modal-body">
+            <div class="row mb-3" *ngIf="requerimientoSeleccionado">
+                <div class="col-md-4">
+                    <strong>ID Requerimiento:</strong> {{ requerimientoSeleccionado.idrequerimiento }}
                 </div>
-
-                <div class="row mb-3" *ngIf="requerimientoSeleccionado">
-                    <div class="col-md-6">
-                        <strong>Almacén:</strong> {{ requerimientoSeleccionado.idalmacen }}
-                    </div>
-                    <div class="col-md-6" *ngIf="requerimientoSeleccionado.idalmacen_destino">
-                        <strong>Almacén Destino:</strong> {{ requerimientoSeleccionado.idalmacen_destino }}
-                    </div>
+                <div class="col-md-4">
+                    <strong>Creado por:</strong> <span class="text-primary fw-bold">{{ requerimientoSeleccionado.nombreCreador || requerimientoSeleccionado.nrodocumento }}</span>
                 </div>
-
-                <div class="row mb-3" *ngIf="requerimientoSeleccionado">
-                    <div class="col-12">
-                        <strong>Glosa:</strong> {{ requerimientoSeleccionado.glosa || 'Sin glosa' }}
-                    </div>
+                <div class="col-md-2">
+                    <strong>Tipo:</strong> {{ requerimientoSeleccionado.tipo }}
                 </div>
-
-                <h6 class="mt-4 mb-3">Detalle de Linea:</h6>
-                <div class="table-responsive">
-                    <table class="table table-bordered table-sm">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Código</th>
-                                <th>Descripción</th>
-                                <th>Cantidad</th>
-                                <th>Proyecto</th>
-                                <th>CECO</th>
-                                <th>Turno</th>
-                                <th>Labor</th>
-                                <!-- <th>Activo Fijo</th> -->
-                                <th *ngIf="currentTab !== 'ITEM'">Activo Fijo</th>
-                                <!-- <th *ngIf="requerimientoSeleccionado.tipo !== 'ITEM'">Activo Fijo</th> -->
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let det of detalleRequerimiento">
-                                <td>{{ det.codigo }}</td>
-                                <td>{{ det.descripcion || det.producto }}</td>
-                                <td class="text-center">{{ det.cantidad }}</td>
-                                <td>{{ det.proyecto }}</td>
-                                <td>{{ det.ceco }}</td>
-                                <td>{{ det.turno }}</td>
-                                <td>{{ det.labor }}</td>
-                                <!-- <td *ngIf="requerimientoSeleccionado?.tipo !== 'ITEM'">
-                                    {{ det.activoFijo || '-' }}
-                                </td> -->
-                                <td>{{ det.activoFijo || '-' }}</td>
-                            </tr>
-                            <tr *ngIf="detalleRequerimiento.length === 0">
-                                <td class="text-center py-3"
-                                    [attr.colspan]="requerimientoSeleccionado?.tipo !== 'ITEM' ? 8 : 7">
-                                    <em>No hay detalles agregados</em>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="col-md-2" style="display: flex; align-items: center;">
+                    <strong>Estado:</strong> <span style="margin-left: 5px;" class="badge bg-warning">{{
+                        requerimientoSeleccionado.estados
+                        }}</span>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+
+            <div class="row mb-3" *ngIf="requerimientoSeleccionado">
+                <div class="col-md-6">
+                    <strong>Almacén:</strong> {{ requerimientoSeleccionado.idalmacen }}
+                </div>
+                <div class="col-md-6" *ngIf="requerimientoSeleccionado.idalmacen_destino">
+                    <strong>Almacén Destino:</strong> {{ requerimientoSeleccionado.idalmacen_destino }}
+                </div>
             </div>
+
+            <div class="row mb-3" *ngIf="requerimientoSeleccionado">
+                <div class="col-12">
+                    <strong>Glosa:</strong> {{ requerimientoSeleccionado.glosa || 'Sin glosa' }}
+                </div>
+            </div>
+
+            <h6 class="mt-4 mb-3">Detalle de Linea:</h6>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Código</th>
+                            <th>Descripción</th>
+                            <th>Cantidad</th>
+                            <th>Proyecto</th>
+                            <th>CECO</th>
+                            <th>Turno</th>
+                            <th>Labor</th>
+                            <th *ngIf="currentTab !== 'ITEM'">Activo Fijo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let det of detalleRequerimiento">
+                            <td>{{ det.codigo }}</td>
+                            <td>{{ det.descripcion || det.producto }}</td>
+                            <td class="text-center">{{ det.cantidad }}</td>
+                            <td>{{ det.proyecto }}</td>
+                            <td>{{ det.ceco }}</td>
+                            <td>{{ det.turno }}</td>
+                            <td>{{ det.labor }}</td>
+                            <td *ngIf="currentTab !== 'ITEM'">{{ det.activoFijo || '-' }}</td>
+                        </tr>
+                        <tr *ngIf="detalleRequerimiento.length === 0">
+                            <td class="text-center py-3" [attr.colspan]="currentTab !== 'ITEM' ? 8 : 7">
+                                <em>No hay detalles agregados</em>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="cerrarModalDetalle()">Cerrar</button>
         </div>
     </div>
 </div>

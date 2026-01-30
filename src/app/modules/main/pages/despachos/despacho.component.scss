@@ -84,17 +84,310 @@ code {
     font-size: 0.9em;
 }
 
+/* ===== VISIBILIDAD DESKTOP / MÓVIL ===== */
+.desktop-only {
+    display: block;
+}
+
+.mobile-only {
+    display: none;
+}
+
+/* ===== FILTROS - Desktop en fila ===== */
+.filtros-mobile {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 15px;
+
+    .filtro-item {
+        flex: 0 0 auto;
+        min-width: 150px;
+    }
+
+    .filtro-total {
+        margin-left: auto;
+    }
+}
+
+/* ===== ESTILOS RESPONSIVE MÓVIL ===== */
 @media (max-width: 768px) {
+    .desktop-only {
+        display: none !important;
+    }
+
+    .mobile-only {
+        display: block !important;
+    }
+
+    .despachos-container {
+        padding: 0.5rem !important;
+    }
+
+    .titulo-pagina {
+        font-size: 1rem;
+        margin-bottom: 8px !important;
+        flex-shrink: 0;
+    }
+
+    /* Filtros apilados verticalmente */
+    .filtros-mobile {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        margin-bottom: 10px;
+        flex-shrink: 0;
+
+        .filtro-item {
+            width: 100%;
+            min-width: 100%;
+        }
+
+        .filtro-total {
+            margin-left: 0;
+            text-align: center;
+            padding: 5px 0;
+        }
+    }
+
     .modal-xl {
         max-width: 95%;
     }
 
-    .table-responsive {
+    /* ================================
+       CONTAINER CARD - Como requerimientos
+    ================================ */
+    .container-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 200px);
+        overflow: hidden;
+        margin: 0 5px;
+    }
+
+    .container-header {
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .container-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #333;
+    }
+
+    .container-stats {
         font-size: 0.85rem;
+    }
+
+    /* Cards con scroll interno */
+    .cards-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    /* ================================
+       MOBILE CARDS - Estilo Requerimientos
+    ================================ */
+    .mobile-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 12px;
+        border-left: 4px solid #6f42c1;
+        overflow: hidden;
+    }
+
+    .card-row {
+        display: flex;
+        align-items: flex-start;
+        padding: 12px;
+    }
+
+    .card-checkbox {
+        width: 20px;
+        height: 20px;
+        margin-right: 12px;
+        margin-top: 4px;
+        cursor: pointer;
+    }
+
+    .card-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .card-header-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .card-usuario {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.9rem;
+    }
+
+    .card-field {
+        font-size: 0.85rem;
+        color: #555;
+        margin-bottom: 4px;
+        line-height: 1.4;
+
+        strong {
+            color: #2f3e46;
+        }
+    }
+
+    .card-actions {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #eee;
+        display: flex;
+        gap: 8px;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.25em 0.6em;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-field {
+        font-size: 0.8rem;
     }
 
     .btn-sm {
         font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
+        padding: 0.3rem 0.5rem;
+    }
+
+    /* ================================
+       MODAL RESPONSIVE - Móvil
+    ================================ */
+    .modal-backdrop-custom {
+        padding: 10px;
+    }
+
+    .modal-content-custom {
+        width: 100%;
+        max-width: 100%;
+        max-height: 95vh;
+        border-radius: 12px;
+
+        .modal-header {
+            padding: 12px 15px;
+
+            .modal-title {
+                font-size: 0.9rem;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .badge {
+                font-size: 0.7rem;
+            }
+        }
+
+        .modal-body {
+            padding: 10px;
+            overflow-x: auto;
+
+            /* Tabla compacta en móvil */
+            .p-datatable {
+                font-size: 0.75rem;
+
+                th, td {
+                    padding: 6px 8px !important;
+                    white-space: nowrap;
+                }
+
+                th {
+                    font-size: 0.7rem;
+                }
+
+                .form-control {
+                    font-size: 0.75rem;
+                    padding: 4px 6px;
+                    min-width: 60px;
+                }
+            }
+        }
+
+        .modal-footer {
+            padding: 12px 15px;
+            flex-direction: column;
+            gap: 8px;
+
+            .btn {
+                width: 100%;
+            }
+        }
+    }
+}
+
+// Modal personalizado con backdrop oscuro y centrado
+.modal-backdrop-custom {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050;
+    margin: 0 !important;
+    padding: 20px;
+}
+
+.modal-content-custom {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 1200px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+
+    .modal-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f8f9fa;
+    }
+
+    .modal-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .modal-footer {
+        padding: 15px 20px;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        background-color: #f8f9fa;
     }
 }

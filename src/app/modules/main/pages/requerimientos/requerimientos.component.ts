@@ -1414,6 +1414,16 @@ export class RequerimientosComponent implements OnInit {
     this.glosa = '';
     this.modalAbierto = false;
     this.modoEdicion = false; // 🔹 Desactivamos modo edición
+    
+    // 🔹 Inicializar tipo desde configuración y establecer clasificación automáticamente
+    if (this.configuracion?.idTipoItem) {
+      this.TipoSelecionado = this.configuracion.idTipoItem as TipoRequerimiento | '';
+      this.onTipoChange();
+    }
+    
+    // 🔹 Prioridad por defecto: Normal (1)
+    this.SeleccionaPrioridadITEM = '1';
+    
     this.filtroClasificaciones();
   }
 
@@ -2610,9 +2620,6 @@ export class RequerimientosComponent implements OnInit {
       r.nrodocumento === this.usuario?.documentoidentidad
     );
     // this.requerimientos = await this.dexieService.showRequerimiento();
-    // this.requerimientos.filter((r: any) =>
-    //   r.nrodocumento === this.usuario?.documentoidentidad
-    // );
     this.ordenarRequerimientos(); // 👈 CLAVE
 
     this.modoItemPrincipal = true;

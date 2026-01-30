@@ -6,53 +6,21 @@
 
     <div class="row mb-3">
         <div class="col-md-3">
-            <input type="text" [(ngModel)]="filtroCodigo" class="form-control" placeholder="Filtrar por código">
+            <input type="text" [(ngModel)]="filtroCodigo" class="form-control" placeholder="Filtrar por código" (input)="aplicarFiltro()">
         </div>
         <div class="col-md-3">
-            <input type="text" [(ngModel)]="filtroAlmacen" class="form-control" placeholder="Filtrar por almacén">
+            <input type="text" [(ngModel)]="filtroAlmacen" class="form-control" placeholder="Filtrar por almacén" (input)="aplicarFiltro()">
         </div>
         <div class="col-md-2">
-            <button class="btn btn-primary" (click)="listarSaldos()">Actualizar</button>
+            <button class="btn btn-primary" (click)="listarSaldos()">Listar</button>
+        </div>
+        <div class="col-md-4 d-flex align-items-center">
+            <span class="text-muted">Total: {{ saldosFiltrados.length }} registros</span>
         </div>
     </div>
 
-
-    <!-- <div class="table-responsive">
-        <table class="table table-bordered table-striped table-sm">
-            <thead class="table-dark">
-                <tr>
-                    <th>Código</th>
-                    <th>Descripción</th>
-                    <th>Almacén</th>
-                    <th>Stock</th>
-                    <th>Requerido</th>
-                    <th>Disponible</th>
-                    <th class="text-center">Acción</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let item of filtrar()">
-                    <td>{{ item.codigo }}</td>
-                    <td>{{ item.descripcion }}</td>
-                    <td>{{ item.almacen }}</td>
-                    <td class="text-center">{{ item.stockActual }}</td>
-                    <td class="text-center">{{ item.cantidadRequerida }}</td>
-                    <td class="text-center" [ngClass]="{'text-danger': item.stockDisponible <= 0}">
-                        {{ item.stockDisponible }}
-                    </td>
-                    <td class="text-center">
-                        <button class="btn btn-success btn-sm" [disabled]="item.stockDisponible <= 0"
-                            (click)="despachar(item)">
-                            Despachar
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div> -->
-
     <!-- TABLA REAL -->
-    <p-table #dt [value]="saldos" [paginator]="true" [rows]="20" [totalRecords]="saldos.length" [loading]="loading"
+    <p-table #dt [value]="saldosFiltrados" [paginator]="true" [rows]="20" [totalRecords]="saldosFiltrados.length" [loading]="loading"
         responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
         currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
         styleClass="p-datatable-sm p-datatable-striped">
@@ -70,7 +38,7 @@
                 <th style="min-width:120px" pSortableColumn="descripcionLocal">Stock Actual</th>
                 <th style="min-width:140px" pSortableColumn="descripcionLocal">Stock Comprometido</th>
                 <th style="min-width:140px" pSortableColumn="descripcionLocal">Stock Disponible</th>
-                <th style="min-width:50px">Acciones</th>
+                <!-- <th style="min-width:50px">Acciones</th> -->
             </tr>
         </ng-template>
 
@@ -88,11 +56,11 @@
                 <td>{{ c.stockComprometido }}</td>
                 <td>{{ c.stockDisponible }}</td>
                 <!-- <td>{{ c.estado === 'A' ? 'Activo' : 'Inactivo' }}</td> -->
-                <td>
+                <!-- <td>
                     <button class="btn btn-success btn-sm" [disabled]="c.stockDisponible <= 0" (click)="despachar(c)">
                         Despachar
                     </button>
-                </td>
+                </td> -->
             </tr>
         </ng-template>
 

@@ -19,6 +19,7 @@ import { MaestrosComoditiesComponent } from './modules/main/pages/maestros/comod
 import { DespachoComponent } from './modules/main/pages/despachos/despacho.component';
 import { ReporteSaldosComponent } from './modules/main/pages/reporte/reporte-saldos.component';
 import { ReporteAprobadosComponent } from './modules/main/pages/reporte/reporte-aprobados.component';
+import { ReporteDespachosComponent } from './modules/main/pages/reporte/reporte-despachos.component';
 import { ListasStockComponent } from './modules/main/pages/listas-stock/listas-stock.component';
 import { AprobadoresMantenedorComponent } from './modules/main/pages/aprobadores/aprobadores-mantenedor.component';
 import { ConfigGuard } from './modules/auth/guard/config.guard';
@@ -96,6 +97,7 @@ export const routes: Routes = [
       { path: 'despachos', component: DespachoComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte_logistico', component: ReporteLogisticoComponent },
       { path: 'reporte-saldos', component: ReporteSaldosComponent, canActivate: [AlmacenGuard] },
+      { path: 'reporte-despachos', component: ReporteDespachosComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte-requerimientos', component: ReporteRequerimientos },
       { path: '**', redirectTo: 'auth/login' }
     ],

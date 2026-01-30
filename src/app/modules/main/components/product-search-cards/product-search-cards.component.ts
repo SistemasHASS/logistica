@@ -65,7 +65,8 @@ export class ProductSearchCardsComponent implements ControlValueAccessor {
     if (!this.searchText) return [];
     const text = this.searchText.toLowerCase();
     return this.data.filter(item =>
-      item[this.optionLabel]?.toLowerCase()?.includes(text)
+      item[this.optionLabel]?.toLowerCase()?.includes(text) ||
+      item[this.valueField]?.toString().toLowerCase()?.includes(text)
     );
   }
 

@@ -1,0 +1,146 @@
+<div class="container-fluid">
+    <h5 class="mb-3">Reporte de Despachos Realizados</h5>
+
+    <div class="row mb-3">
+        <div class="col-md-2">
+            <input type="text" [(ngModel)]="filtroNS" class="form-control" 
+                placeholder="Filtrar por N° NS" (input)="aplicarFiltro()">
+        </div>
+        <div class="col-md-2">
+            <input type="text" [(ngModel)]="filtroRequisicion" class="form-control" 
+                placeholder="Filtrar por Requisición" (input)="aplicarFiltro()">
+        </div>
+        <div class="col-md-2">
+            <p-datepicker [(ngModel)]="fechaInicio" dateFormat="dd/mm/yy" placeholder="Desde"
+                [showIcon]="true" [showClear]="true" (onSelect)="aplicarFiltro()" 
+                (onClear)="aplicarFiltro()" styleClass="w-100">
+            </p-datepicker>
+        </div>
+        <div class="col-md-2">
+            <p-datepicker [(ngModel)]="fechaFin" dateFormat="dd/mm/yy" placeholder="Hasta"
+                [showIcon]="true" [showClear]="true" (onSelect)="aplicarFiltro()" 
+                (onClear)="aplicarFiltro()" styleClass="w-100">
+            </p-datepicker>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary me-2" (click)="listarDespachos()">Listar</button>
+            <button class="btn btn-secondary" (click)="limpiarFiltros()">Limpiar</button>
+        </div>
+        <div class="col-md-2 d-flex align-items-center">
+            <span class="text-muted">Total: {{ despachosFiltrados.length }} registros</span>
+        </div>
+    </div>
+
+    <!-- TABLA DE DESPACHOS -->
+    <p-table #dt [value]="despachosFiltrados" [paginator]="true" [rows]="20" 
+        [totalRecords]="despachosFiltrados.length" [loading]="loading"
+        responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+        currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+        styleClass="p-datatable-sm p-datatable-striped">
+
+        <ng-template pTemplate="header">
+            <tr>
+                <th style="width:50px">#</th>
+                <th style="min-width:120px" pSortableColumn="numeroNS">N° NS</th>
+                <th style="min-width:120px" pSortableColumn="numeroRequisicion">N° Requisición</th>
+                <th style="min-width:120px" pSortableColumn="idrequerimiento">ID Requerimiento</th>
+                <th style="min-width:120px" pSortableColumn="fechaDespacho">Fecha Despacho</th>
+                <th style="min-width:100px" pSortableColumn="almacen">Almacén</th>
+                <th style="min-width:150px" pSortableColumn="usuario">Usuario</th>
+                <th style="min-width:100px" pSortableColumn="estado">Estado</th>
+                <th style="min-width:80px">Acciones</th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-c let-i="rowIndex">
+            <tr>
+                <td>{{ i + 1 }}</td>
+                <td><strong>{{ c.numeroNS }}</strong></td>
+                <td>{{ c.numeroRequisicion }}</td>
+                <td>{{ c.idrequerimiento }}</td>
+                <td>{{ c.fechaDespacho | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ c.almacen }}</td>
+                <td>{{ c.usuario }}</td>
+                <td>
+                    <span class="badge" [ngClass]="getEstadoClass(c.estado)">
+                        {{ c.estado }}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-info btn-sm" (click)="verDetalle(c)" title="Ver Detalle">
+                        <i class="icon icon-eye"></i> Ver
+                    </button>
+                </td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="9" class="text-center">No hay registros</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<!-- MODAL DETALLE DESPACHO -->
+<p-dialog header="Detalle del Despacho" [(visible)]="displayDetalle" [modal]="true" 
+    [style]="{ width: '90vw' }" [closable]="true">
+    
+    <div class="mb-3" *ngIf="despachoSeleccionado">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>N° NS:</strong> {{ despachoSeleccionado.numeroNS }}
+            </div>
+            <div class="col-md-3">
+                <strong>N° Requisición:</strong> {{ despachoSeleccionado.numeroRequisicion }}
+            </div>
+            <div class="col-md-3">
+                <strong>Fecha:</strong> {{ despachoSeleccionado.fechaDespacho | date: 'dd/MM/yyyy HH:mm' }}
+            </div>
+            <div class="col-md-3">
+                <strong>Estado:</strong> 
+                <span class="badge" [ngClass]="getEstadoClass(despachoSeleccionado.estado)">
+                    {{ despachoSeleccionado.estado }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <p-table [value]="detalleDespacho" responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped">
+        <ng-template pTemplate="header">
+            <tr>
+                <th style="width:50px">#</th>
+                <th style="min-width:100px">Código</th>
+                <th style="min-width:200px">Descripción</th>
+                <th style="min-width:80px">Cantidad Solicitada</th>
+                <th style="min-width:80px">Cantidad Despachada</th>
+                <th style="min-width:80px">Pendiente</th>
+                <th style="min-width:80px">Lote</th>
+                <th style="min-width:80px">Unidad</th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-d let-i="rowIndex">
+            <tr>
+                <td>{{ i + 1 }}</td>
+                <td>{{ d.codigo }}</td>
+                <td>{{ d.descripcion }}</td>
+                <td>{{ d.cantidadSolicitada }}</td>
+                <td>{{ d.cantidadDespachada }}</td>
+                <td>{{ d.cantidadSolicitada - d.cantidadDespachada }}</td>
+                <td>{{ d.lote || '-' }}</td>
+                <td>{{ d.unidad }}</td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="8" class="text-center">No hay detalle</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <ng-template pTemplate="footer">
+        <button class="btn btn-secondary" (click)="cerrarDetalle()">Cerrar</button>
+    </ng-template>
+</p-dialog>

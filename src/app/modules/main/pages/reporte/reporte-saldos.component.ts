@@ -16,6 +16,7 @@ import { TableModule } from 'primeng/table';
 export class ReporteSaldosComponent implements OnInit {
 
     saldos: any[] = [];
+    saldosFiltrados: any[] = [];
     filtroAlmacen: string = '';
     filtroCodigo: string = '';
     loading: boolean = false;
@@ -31,11 +32,10 @@ export class ReporteSaldosComponent implements OnInit {
 
     listarSaldos() {
         this.loading = true;
-        // const saldos = this.requerimientoService.obtenerReporteSaldos([]);
         this.requerimientoService.obtenerReporteSaldos([]).subscribe({
             next: (data: any) => {
-                this.saldos = data;
-                // console.log(this.saldos);
+                this.saldos = Array.isArray(data) ? data : [];
+                this.aplicarFiltro();
                 this.loading = false;
             },
             error: () => {
@@ -48,10 +48,10 @@ export class ReporteSaldosComponent implements OnInit {
         });
     }
 
-    filtrar() {
-        return this.saldos.filter(x =>
-            (!this.filtroAlmacen || x.almacen.toLowerCase().includes(this.filtroAlmacen.toLowerCase())) &&
-            (!this.filtroCodigo || x.codigo.toLowerCase().includes(this.filtroCodigo.toLowerCase()))
+    aplicarFiltro() {
+        this.saldosFiltrados = this.saldos.filter(x =>
+            (!this.filtroAlmacen || (x.almacen || '').toLowerCase().includes(this.filtroAlmacen.toLowerCase())) &&
+            (!this.filtroCodigo || (x.codigo || '').toLowerCase().includes(this.filtroCodigo.toLowerCase()))
         );
     }
 

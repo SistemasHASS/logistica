@@ -84,12 +84,21 @@ textarea {
   z-index: 1000;
 }
 
-.modal-content {
+.modal-content:not(.modal-carga-masiva) {
   background: white;
   padding: 20px;
   border-radius: 8px;
   width: 500px;
   max-width: 100%;
+}
+
+.modal-content.modal-carga-masiva {
+  width: fit-content !important;
+  min-width: 700px;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.3) !important;
+  border: none !important;
 }
 
 .modal-content .form-group {
@@ -493,7 +502,7 @@ textarea {
   }
 
   .modal-content {
-    width: 190%;
+    width: 100%;
     max-width: 100%;
   }
 
@@ -815,7 +824,12 @@ textarea {
 .modal-body {
   flex: 1;
   display: flex;
-  height: 0;
+}
+
+/* Override para modal carga masiva */
+.modal-carga-masiva .modal-body {
+  height: auto !important;
+  display: block !important;
 }
 
 /* CENTRADO FORZADO */
@@ -838,7 +852,176 @@ textarea {
 .errores-excel.modal-content {
   background: #fff;
   padding: 20px;
-  border-radius: 8px;
   // width: 600px;
   // height: auto;
+}
+
+/* Modal Carga Masiva - Estilos corregidos */
+.modal-carga-masiva {
+  background: #fff !important;
+  padding: 0 !important;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  width: auto !important;
+  max-width: 90vw !important;
+  min-width: 600px;
+  gap: 0 !important;
+  overflow: hidden !important;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.3) !important;
+  border: none !important;
+  
+  & > *:first-child {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+  
+  .modal-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid #dee2e6;
+    border-top: none !important;
+    flex-shrink: 0;
+    margin: 0 !important;
+    background: #fff !important;
+  }
+  
+  .resumen-carga {
+    padding: 8px 20px;
+    margin: 0 !important;
+    flex-shrink: 0;
+    border-radius: 0 !important;
+    border: none !important;
+    background: #f8f9fa !important;
+  }
+  
+  .alert {
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+  
+  .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px;
+    max-height: 50vh;
+    height: auto !important;
+    display: block !important;
+    margin: 0;
+    background: #fff !important;
+  }
+  
+  .modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #dee2e6;
+    flex-shrink: 0;
+    margin: 0;
+    background: #fff !important;
+    // border-radius: 0 0 12px 12px;
+  }
+}
+
+/* Override base modal-content padding */
+.modal-overlay-carga .modal-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 8px !important;
+}
+
+.modal-overlay-carga .modal-content.modal-carga-masiva .modal-header {
+  margin: 0 !important;
+  padding: 12px 20px !important;
+  border: none !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  background: #fff !important;
+  border-radius: 8px 8px 0 0 !important;
+}
+
+/* Overlay oscuro + centrado para modal carga masiva */
+.modal-overlay-carga {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+
+/* Quitar fondo blanco extra del modal-dialog */
+.modal-gl {
+  background: transparent !important;
+  box-shadow: none !important;
+  max-width: fit-content !important;
+}
+
+/* Fix para modal-content base cuando es carga masiva */
+.modal-gl .modal-carga-masiva {
+  width: fit-content !important;
+  min-width: 700px;
+}
+
+/* Asegurar que el modal-footer se vea */
+.modal-carga-masiva .modal-footer {
+  background: #fff;
+  border-radius: 0 0 12px 12px;
+}
+
+/* Responsive modal carga masiva para móvil */
+@media (max-width: 768px) {
+  .modal-content.modal-carga-masiva {
+    width: 95vw !important;
+    min-width: unset !important;
+    max-width: 95vw !important;
+    margin: 10px auto;
+  }
+  
+  .modal-gl {
+    max-width: 95vw !important;
+    margin: 0 auto;
+  }
+  
+  .modal-carga-masiva {
+    min-width: unset !important;
+    
+    .modal-header {
+      padding: 12px 15px;
+    }
+    
+    .modal-body {
+      padding: 10px;
+      max-height: 45vh;
+    }
+    
+    .modal-footer {
+      padding: 10px 15px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .modal-footer .d-flex {
+      flex-direction: column;
+      width: 100%;
+      gap: 8px;
+    }
+    
+    .modal-footer .btn {
+      width: 100%;
+    }
+    
+    .table-modal-scroll {
+      max-height: 35vh;
+    }
+    
+    table {
+      font-size: 11px;
+    }
+    
+    th, td {
+      padding: 6px 4px !important;
+    }
+  }
 }

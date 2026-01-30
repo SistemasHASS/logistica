@@ -7,17 +7,24 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
   selector: 'app-reporte-aprobados',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, TableModule],
+  imports: [CommonModule, RouterModule, FormsModule, TableModule, DialogModule],
   templateUrl: './reporte-aprobados.component.html',
   styleUrls: ['./reporte-aprobados.component.scss'],
 })
 export class ReporteAprobadosComponent implements OnInit {
   aprobados: any[] = [];
   rechazados: any[] = [];
+
+  // Modal detalle
+  displayDetalle: boolean = false;
+  requerimientoSeleccionado: any = null;
+  detalleRequerimiento: any[] = [];
+  loadingDetalle: boolean = false;
 
   constructor(
     private requerimientoService: RequerimientosService,
@@ -58,5 +65,30 @@ export class ReporteAprobadosComponent implements OnInit {
   obtenerIdReq(idReq: string): string {
     if (!idReq) return '';
     return idReq.slice(-12); // YYMMDDhhmmss
+  }
+
+  verDetalle(row: any) {
+    this.requerimientoSeleccionado = row;
+    this.loadingDetalle = true;
+    this.displayDetalle = true;
+
+    this.requerimientoService.listarDetalleRequerimiento(row.idrequerimiento).subscribe({
+      next: (data: any) => {
+        this.detalleRequerimiento = Array.isArray(data) ? data : [];
+        this.loadingDetalle = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar detalle:', err);
+        this.detalleRequerimiento = [];
+        this.loadingDetalle = false;
+        this.alertService.showAlertError('Error', 'Error al cargar detalle del requerimiento');
+      }
+    });
+  }
+
+  cerrarDetalle() {
+    this.displayDetalle = false;
+    this.requerimientoSeleccionado = null;
+    this.detalleRequerimiento = [];
   }
 }

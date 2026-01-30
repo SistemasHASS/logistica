@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
 import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import { CommodityService } from '@/app/modules/main/services/commoditys.service';
+import { DespachosService } from '@/app/modules/main/services/despachos.service';
 import { Usuario, Stock, OrdenCompra, DetalleDespacho, Despacho } from '@/app/shared/interfaces/Tables';
 import { TableModule } from 'primeng/table';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -37,6 +39,7 @@ export class DespachoComponent implements OnInit {
   requerimientos: any[] = [];
   requerimientosAprobados: any[] = [];
   stockDisponible: Stock[] = [];
+  saldosStock: any[] = [];
   ordenesCompraGeneradas: OrdenCompra[] = [];
   items: any[] = []; // detalle del requerimiento seleccionado
   turnos: any[] = [];
@@ -76,6 +79,8 @@ export class DespachoComponent implements OnInit {
   detalleDespacho: any[] = [];
   loading = false;
   selected: any = null;
+  modalAtencionVisible = false;
+  displayDetalle = false;
   // Usuario
   usuario: Usuario = {
     id: '',
@@ -98,7 +103,8 @@ export class DespachoComponent implements OnInit {
     private alertService: AlertService,
     private requerimientosService: RequerimientosService,
     private maestrasService: MaestrasService,
-    private commodityService: CommodityService
+    private commodityService: CommodityService,
+    private despachosService: DespachosService
   ) { }
 
   async ngOnInit() {
@@ -313,12 +319,50 @@ export class DespachoComponent implements OnInit {
     return [...new Set(detalle.map(d => d.proyecto))];
   }
 
-  verDetalle(r: any) {
-    this.selected = r;
-    this.detalle = r.detalle;
+  async verDetalle(r: any) {
+    try {
+      this.alertService.mostrarModalCarga();
+      this.selected = r;
+      this.detalle = r.detalle || [];
 
-    const modal = new bootstrap.Modal(document.getElementById('modalAtencion'));
-    modal.show();
+      // Cargar saldos de stock desde la API
+      await this.cargarSaldosStock(this.detalle, r.idalmacen);
+
+      // Calcular atención real para cada línea
+      if (this.detalle && this.detalle.length > 0) {
+        this.detalle.forEach((d: any) => {
+          const solicitada = Number(d.cantidad) || 0;
+          const atendida = Number(d.atendida) || 0;
+          const pendiente = Math.max(0, solicitada - atendida);
+
+          const stock = this.obtenerStock(d.codigo, this.selected.idalmacen);
+          const atender = Math.min(pendiente, stock);
+
+          d.stock = stock;
+          d.atender = atender;
+          d.compra = Math.max(0, pendiente - stock);
+
+          d.estadoAtencion =
+            atender === 0
+              ? 'SIN STOCK'
+              : atender < pendiente
+              ? 'PARCIAL'
+              : 'COMPLETO';
+        });
+      }
+
+      this.alertService.cerrarModalCarga();
+      this.modalAtencionVisible = true;
+      this.displayDetalle = true;
+    } catch (error) {
+      console.error('Error al cargar detalle:', error);
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert('Error', 'No se pudo cargar el detalle', 'error');
+    }
+  }
+
+  cerrarModalAtencion() {
+    this.modalAtencionVisible = false;
   }
 
   buscar() {
@@ -387,23 +431,166 @@ export class DespachoComponent implements OnInit {
   }
 
   calcularAtencion(d: any): number {
-    debugger
-    const solicitada = d.cantidad ?? 0;
-    const atendida = d.atendida ?? 0;
-    const pendiente = solicitada - atendida;
+    const solicitada = Number(d.cantidad) || 0;
+    const atendida = Number(d.atendida) || 0;
+    const pendiente = Math.max(0, solicitada - atendida);
 
-    const almacen = this.selected?.almacen; // 🔥 CLAVE
+    const almacen = this.selected?.idalmacen || '';
+    const stockDisponible = this.obtenerStock(d.codigo, almacen);
 
-    if (!almacen) return 0;
-
-    const stock = this.obtenerStock(d.codigo, almacen);
-
-    return Math.max(0, Math.min(stock, pendiente));
+    return Math.max(0, Math.min(pendiente, stockDisponible));
   }
 
 
+  // async registrarAtencion() {
+  //   if (!this.detalle.length) {
+  //     this.alertService.showAlert(
+  //       'Aviso',
+  //       'No hay items para despachar',
+  //       'warning'
+  //     );
+  //     return;
+  //   }
+
+  //   try {
+  //     this.alertService.mostrarModalCarga();
+
+  //     // Preparar el body para el SP LOGISTICA_generarSalidaNSWH_JSON
+  //     // Formatear fecha con hora: "2026-01-27 10:40:05"
+  //     const ahora = new Date();
+  //     const fechaFormateada = ahora.toISOString().slice(0, 10) + ' ' + ahora.toTimeString().slice(0, 8);
+
+  //     // CompaniaSocio debe ser 8 caracteres (ej: "00000800")
+  //     const companiaSocio = (this.usuario.idempresa || '').padStart(6, '0') + '00';
+
+  //     // RequisicionNumero debe ser 10 caracteres (ej: "0000006070")
+  //     const requisicionNumero = (this.selected.RequisicionNumero || '').padStart(10, '0');
+
+  //     const body = [
+  //       {
+  //         CompaniaSocio: companiaSocio,
+  //         RequisicionNumero: requisicionNumero,
+  //         AlmacenCodigo: this.selected.idalmacen || 'H001',
+  //         Periodo: new Date().toISOString().slice(0, 7).replace('-', ''), // YYYYMM
+  //         UltimoUsuario: this.usuario.usuario || 'MISESF',
+  //         TipoCambio: 3.356,
+  //         FechaDocumento: fechaFormateada,
+  //         Proyecto: this.selected.proyecto || this.selected.Proyecto || 'REQ',
+  //         detalle: this.detalle
+  //           .filter((d: any) => (d.atender || 0) > 0)
+  //           .map((d: any, index: number) => ({
+  //             Secuencia: index + 1,
+  //             Item: d.codigo,
+  //             Condicion: d.condicion || '0',
+  //             UnidadCodigo: d.unidadMedida || d.unidad || 'UND',
+  //             Cantidad: d.atender || d.cantidad,
+  //             Lote: d.lote || '00',
+  //             CentroCosto: d.centroCosto || this.selected.centroCosto || '11020',
+  //             Actividad: d.actividad || '0502'
+  //           }))
+  //       }
+  //     ];
+
+  //     console.log('📦 JSON enviado al SP:', JSON.stringify(body, null, 2));
+
+  //     // Llamar al service para generar la salida NS
+  //     this.despachosService.generarSalidaNS(body).subscribe({
+  //       next: async (response: any) => {
+  //         this.alertService.cerrarModalCarga();
+
+  //         const resultado = response?.resultado || response;
+  //         const errorGeneral = resultado?.errorgeneral || 0;
+
+  //         if (errorGeneral === 0) {
+  //           // Éxito: actualizar detalles en Dexie
+  //           for (const d of this.detalle) {
+  //             const registro = await this.dexieService.detalles
+  //               .where('idrequerimiento')
+  //               .equals(this.selected.idrequerimiento)
+  //               .and((x) => x.codigo === d.codigo)
+  //               .first();
+
+  //             if (registro) {
+  //               registro.atendida = (registro.atendida || 0) + (d.atender || d.cantidad);
+  //               await this.dexieService.detalles.put(registro);
+  //             }
+  //           }
+
+  //           // Actualizar estado del requerimiento a 'DESPACHADO' en Dexie
+  //           const requerimiento = await this.dexieService.requerimientos
+  //             .where('idrequerimiento')
+  //             .equals(this.selected.idrequerimiento)
+  //             .first();
+
+  //           if (requerimiento) {
+  //             requerimiento.estados = 'DESPACHADO';
+  //             await this.dexieService.requerimientos.put(requerimiento);
+  //           }
+
+  //           // Actualizar estado en la base de datos LOGISTICA
+  //           const bodyEstado = [{
+  //             idrequerimiento: this.selected.idrequerimiento,
+  //             estados: 'DESPACHADO',
+  //             usuario: this.usuario.documentoidentidad
+  //           }];
+
+  //           this.despachosService.actualizarEstadoRequerimiento(bodyEstado).subscribe({
+  //             next: (respEstado: any) => {
+  //               console.log('Estado actualizado en BD LOGISTICA:', respEstado);
+  //             },
+  //             error: (errEstado: any) => {
+  //               console.error('Error al actualizar estado en BD LOGISTICA:', errEstado);
+  //             }
+  //           });
+
+  //           this.alertService.showAlert(
+  //             'Éxito',
+  //             `Salida NS generada: ${resultado.NumeroDocumento || 'N/A'}`,
+  //             'success'
+  //           );
+
+  //           // Cerrar modal
+  //           this.modalAtencionVisible = false;
+
+  //           this.detalle = [];
+  //           this.selected = null;
+
+  //           // Recargar lista (excluirá los DESPACHADOS porque solo muestra APROBADOS)
+  //           await this.cargarRequerimientosAprobados();
+  //         } else {
+  //           // Error en el SP
+  //           const errores = resultado?.detalle || [];
+  //           const mensajeError = errores.map((e: any) => `${e.id}: ${e.error}`).join('\n');
+  //           this.alertService.showAlert(
+  //             'Error',
+  //             `No se pudo generar la salida NS:\n${mensajeError}`,
+  //             'error'
+  //           );
+  //         }
+  //       },
+  //       error: (error: any) => {
+  //         console.error('Error al generar salida NS:', error);
+  //         this.alertService.cerrarModalCarga();
+  //         this.alertService.showAlert(
+  //           'Error',
+  //           'Error al generar salida NS en SPRING',
+  //           'error'
+  //         );
+  //       }
+  //     });
+  //   } catch (error) {
+  //     console.error('Error en registrarAtencion:', error);
+  //     this.alertService.cerrarModalCarga();
+  //     this.alertService.showAlert(
+  //       'Error',
+  //       'Error al procesar la atención',
+  //       'error'
+  //     );
+  //   }
+  // }
+
   async registrarAtencion() {
-    if (!this.detalle.length) {
+    if (!this.detalle || !this.detalle.length) {
       this.alertService.showAlert(
         'Aviso',
         'No hay items para despachar',
@@ -412,28 +599,254 @@ export class DespachoComponent implements OnInit {
       return;
     }
 
-    for (const d of this.detalle) {
-      const registro = await this.dexieService.detalles
-        .where('idrequerimiento')
-        // .equals(d.idrequerimiento)
-        .equals(this.selected.idrequerimiento)
-        .and((x) => x.codigo === d.codigo)
-        .first();
+    // 🔹 Filtrar SOLO lo que realmente se va a atender
+    const detalleAtendido = this.detalle.filter(
+      (d: any) => (d.atender || 0) > 0
+    );
 
-      if (registro) {
-        registro.atendida = (registro.atendida || 0) + d.cantidad;
-        await this.dexieService.detalles.put(registro);
-      }
+    // 🔹 Obtener AFE del proyecto (buscar por nombre del proyecto en maestras)
+    const primerDetalle = detalleAtendido[0];
+    const proyectoNombre = primerDetalle?.proyecto || this.selected?.proyecto;
+    const proyectoAfeDefault = this.proyectos?.find(p => p.proyectoio === proyectoNombre)?.afe 
+      || 'FUNDO HP';
+    
+    console.log('📌 Nombre del proyecto:', proyectoNombre);
+    console.log('📌 AFE a enviar:', proyectoAfeDefault);
+
+    if (!detalleAtendido.length) {
+      this.alertService.showAlert(
+        'Aviso',
+        'No hay cantidades válidas para despachar',
+        'warning'
+      );
+      return;
     }
 
-    this.alertService.showAlert(
-      'Éxito',
-      'Despacho registrado correctamente',
-      'success'
-    );
-    this.detalle = [];
-    this.selected = null;
+    try {
+      this.alertService.mostrarModalCarga();
+
+      /* ---------------------------------------------------------
+       * FORMATEOS
+       * --------------------------------------------------------- */
+
+      // Fecha: yyyy-MM-dd HH:mm:ss
+      const ahora = new Date();
+      const fechaFormateada =
+        ahora.toISOString().slice(0, 10) +
+        ' ' +
+        ahora.toTimeString().slice(0, 8);
+
+      // CompaniaSocio (8)
+      const companiaSocio =
+        ((this.usuario?.idempresa || '').padStart(6, '0')) + '00';
+
+      // RequisicionNumero (10)
+      const requisicionNumero =
+        (this.selected?.RequisicionNumero || '').padStart(10, '0');
+
+      /* ---------------------------------------------------------
+       * JSON PARA EL SP
+       * --------------------------------------------------------- */
+      const body = [
+        {
+          CompaniaSocio: companiaSocio,
+          RequisicionNumero: requisicionNumero,
+          AlmacenCodigo: this.selected?.idalmacen || 'H001',
+          Periodo: new Date().toISOString().slice(0, 7).replace('-', ''),
+          UltimoUsuario: this.usuario?.usuario || 'SYSTEM' || -1,
+          TipoCambio: 3.356,
+          FechaDocumento: fechaFormateada,
+          Proyecto: proyectoAfeDefault,
+
+          detalle: detalleAtendido.map((d: any, index: number) => ({
+            Secuencia: index + 1,
+            Item: d.codigo,
+            Condicion: d.condicion || '0',
+            UnidadCodigo: d.unidadMedida || d.unidad || 'UND',
+            Cantidad: d.atender,
+            Lote: d.lote || '00',
+            CentroCosto:
+              d.centroCosto || this.selected?.centroCosto || '11020',
+            Actividad: d.actividad || '0502'
+          }))
+        }
+      ];
+
+      console.log('📦 JSON enviado al SP:', JSON.stringify(body, null, 2));
+
+      /* ---------------------------------------------------------
+       * LLAMADA AL SP
+       * --------------------------------------------------------- */
+      this.despachosService.generarSalidaNS(body).subscribe({
+        next: async (response: any) => {
+          this.alertService.cerrarModalCarga();
+
+          // Manejar respuesta como array o como objeto con propiedad resultado
+          let resultado = response?.resultado || response;
+          if (Array.isArray(resultado)) {
+            resultado = resultado[0];
+          }
+
+          if (!resultado) {
+            this.alertService.showAlert(
+              'Error',
+              'Respuesta inválida del servidor',
+              'error'
+            );
+            return;
+          }
+
+          /* -----------------------------------------------------
+           * ERROR GENERAL
+           * ----------------------------------------------------- */
+          if (resultado.errorgeneral !== 0) {
+            const errores = resultado.detalle || [];
+            
+            // Construir mensaje de error detallado
+            let mensajeError = resultado.mensajeError || 'Error desconocido';
+            if (errores.length > 0) {
+              const detalleErrores = errores
+                .map((e: any) => `• ${e.id}: ${e.error}`)
+                .join('\n');
+              mensajeError = `${mensajeError}\n\n${detalleErrores}`;
+            }
+
+            // Determinar título según tipo de error
+            const esErrorStock = mensajeError.toLowerCase().includes('stock');
+            const esErrorLote = mensajeError.toLowerCase().includes('lote');
+            
+            let titulo = 'Error';
+            let tipo: 'error' | 'warning' = 'error';
+            
+            if (esErrorStock) {
+              titulo = 'Stock Insuficiente';
+              tipo = 'warning';
+            } else if (esErrorLote) {
+              titulo = 'Lote No Encontrado';
+              tipo = 'warning';
+            }
+
+            this.alertService.showAlert(titulo, mensajeError, tipo);
+            return;
+          }
+
+          /* -----------------------------------------------------
+           * ÉXITO → ACTUALIZAR DEXIE (SOLO LO ATENDIDO)
+           * ----------------------------------------------------- */
+          for (const d of detalleAtendido) {
+            const registro = await this.dexieService.detalles
+              .where('idrequerimiento')
+              .equals(this.selected.idrequerimiento)
+              .and(x => x.codigo === d.codigo)
+              .first();
+
+            if (registro) {
+              registro.atendida = (registro.atendida || 0) + d.atender;
+              await this.dexieService.detalles.put(registro);
+            }
+          }
+
+          /* -----------------------------------------------------
+           * ACTUALIZAR ESTADO REQUERIMIENTO
+           * ----------------------------------------------------- */
+          const requerimiento = await this.dexieService.requerimientos
+            .where('idrequerimiento')
+            .equals(this.selected.idrequerimiento)
+            .first();
+
+          if (requerimiento) {
+            requerimiento.estados = 'DESPACHADO';
+            await this.dexieService.requerimientos.put(requerimiento);
+          }
+
+          /* -----------------------------------------------------
+           * BD LOGISTICA - Registrar Despacho
+           * ----------------------------------------------------- */
+          const bodyDespacho = {
+            idrequerimiento: this.selected.idrequerimiento,
+            usuario: this.usuario.documentoidentidad,
+            observacion: `Despacho generado - NS: ${resultado.NumeroDocumento}`,
+            numeroNS: resultado.NumeroDocumento,
+            detalle: detalleAtendido.map(d => ({
+              codigo: d.codigo,
+              solicitado: d.cantidad,
+              despachado: d.atender
+            }))
+          };
+
+          this.despachosService.registrarDespacho(bodyDespacho).subscribe({
+            next: () => console.log('Despacho registrado en BD local'),
+            error: err => console.error('Error registrando despacho:', err)
+          });
+
+          /* -----------------------------------------------------
+           * BD LOGISTICA - Actualizar Estado Requerimiento
+           * ----------------------------------------------------- */
+          const bodyEstado = [
+            {
+              idrequerimiento: this.selected.idrequerimiento,
+              estados: 'DESPACHADO',
+              usuario: this.usuario.documentoidentidad
+            }
+          ];
+
+          this.despachosService.actualizarEstadoRequerimiento(bodyEstado).subscribe({
+            next: () => { },
+            error: err =>
+              console.error('Error actualizando estado LOGISTICA:', err)
+          });
+
+          /* -----------------------------------------------------
+           * UI - Mostrar mensaje por 3 segundos
+           * ----------------------------------------------------- */
+          this.alertService.showAlert(
+            'Éxito',
+            `Salida NS generada correctamente: ${resultado.NumeroDocumento}`,
+            'success'
+          );
+
+          this.modalAtencionVisible = false;
+          this.detalle = [];
+          this.selected = null;
+
+          /* -----------------------------------------------------
+           * TODO: Navegación a Compras para consolidar requerimientos
+           * no atendidos. Descomentar cuando esté listo el módulo.
+           * ----------------------------------------------------- */
+          // setTimeout(() => {
+          //   // Navegar a módulo de compras para consolidación
+          //   this.router.navigate(['/main/compras'], {
+          //     queryParams: {
+          //       consolidar: true,
+          //       idrequerimiento: this.selected?.idrequerimiento
+          //     }
+          //   });
+          // }, 3000); // Esperar 3 segundos para que usuario vea el mensaje
+
+          await this.cargarRequerimientosAprobados();
+        },
+
+        error: err => {
+          console.error('Error al generar salida NS:', err);
+          this.alertService.cerrarModalCarga();
+          this.alertService.showAlert(
+            'Error',
+            'Error al generar salida NS en SPRING',
+            'error'
+          );
+        }
+      });
+    } catch (error) {
+      console.error('Error en registrarAtencion:', error);
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert(
+        'Error',
+        'Error inesperado al procesar la atención',
+        'error'
+      );
+    }
   }
+
 
   async abrirDespachoFinal(req: any) {
     this.selected = req;
@@ -741,6 +1154,14 @@ export class DespachoComponent implements OnInit {
     this.requerimientosAprobadosAll = (requerimientos || []).filter(
       (r: { estados: string; }) => r.estados === 'APROBADO'
     );
+
+    // Ordenar por fecha de aprobación (más reciente primero)
+    this.requerimientosAprobadosAll.sort((a: any, b: any) => {
+      const fechaA = new Date(a.fechaAprobacion || a.fecha || 0).getTime();
+      const fechaB = new Date(b.fechaAprobacion || b.fecha || 0).getTime();
+      return fechaB - fechaA; // Descendente (más reciente primero)
+    });
+
     // inicialmente se muestra todo
     this.requerimientosAprobados = [...this.requerimientosAprobadosAll];
     this.totalRegistros = this.requerimientosAprobados.length;
@@ -866,10 +1287,43 @@ export class DespachoComponent implements OnInit {
   }
 
   obtenerStock(codigo: string, almacen: string): number {
-    const stock = this.stockDisponible.find(
-      (s) => s.codigo === codigo && s.almacen === almacen
+    if (!this.saldosStock || this.saldosStock.length === 0) {
+      return 0;
+    }
+
+    const saldosItem = this.saldosStock.filter(
+      s => s.codigo?.trim() === codigo?.trim() && s.almacen?.trim() === almacen?.trim()
     );
-    return stock ? stock.cantidad : 0;
+
+    if (saldosItem.length === 0) {
+      return 0;
+    }
+
+    const stockDisponibleTotal = saldosItem.reduce(
+      (acc, s) => acc + (Number(s.stockDisponible) || 0), 0
+    );
+
+    return stockDisponibleTotal;
+  }
+
+  async cargarSaldosStock(detalles: any[], almacenCodigo: string): Promise<void> {
+    if (!detalles || detalles.length === 0 || !almacenCodigo) {
+      this.saldosStock = [];
+      return;
+    }
+
+    const items = detalles.map(d => ({
+      Item: d.codigo,
+      AlmacenCodigo: almacenCodigo
+    }));
+
+    try {
+      const resp = await firstValueFrom(this.despachosService.saldosLoteItem(items));
+      this.saldosStock = Array.isArray(resp) ? resp : [];
+    } catch (error) {
+      console.error('Error al cargar saldos de stock:', error);
+      this.saldosStock = [];
+    }
   }
 
   /* ---------------------------

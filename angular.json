@@ -41,7 +41,7 @@
               "src/assets/libs/simplebar/dist/simplebar.js",
               "src/assets/js/sidebarmenu.js",
               "src/assets/js/app.min.js"
-            ],
+            ]
           },
           "configurations": {
             "production": {
@@ -53,8 +53,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "5kb",
-                  "maximumError": "10kb"
+                  "maximumWarning": "20kb",
+                  "maximumError": "50kb"
                 }
               ],
               "outputHashing": "all"
