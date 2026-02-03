@@ -22,11 +22,14 @@
                 (onClear)="aplicarFiltro()" styleClass="w-100">
             </p-datepicker>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2 mt-3 mt-md-0">
             <button class="btn btn-primary me-2" (click)="listarDespachos()">Listar</button>
-            <button class="btn btn-secondary" (click)="limpiarFiltros()">Limpiar</button>
+            <button class="btn btn-secondary me-2" (click)="limpiarFiltros()">Limpiar</button>
+            <button class="btn btn-success" (click)="exportarExcel()" title="Exportar a Excel">
+                <i class="icon icon-file-excel"></i>
+            </button>
         </div>
-        <div class="col-md-2 d-flex align-items-center">
+        <div class="col-md-2 mt-2 mt-md-0 d-flex align-items-center">
             <span class="text-muted">Total: {{ despachosFiltrados.length }} registros</span>
         </div>
     </div>

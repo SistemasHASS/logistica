@@ -7,6 +7,8 @@ import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogModule } from 'primeng/dialog';
+import * as XLSX from 'xlsx-js-style';
+import FileSaver from 'file-saver';
 
 @Component({
   selector: 'app-reporte-despachos',
@@ -130,6 +132,53 @@ export class ReporteDespachosComponent implements OnInit {
         return 'bg-danger';
       default:
         return 'bg-info';
+    }
+  }
+
+  exportarExcel(): void {
+    if (this.despachosFiltrados.length === 0) {
+      this.alertService.showAlert('Información', 'No hay datos para exportar', 'info');
+      return;
+    }
+
+    try {
+      const dataExport = this.despachosFiltrados.map((d, i) => ({
+        '#': i + 1,
+        'N° NS': d.numeroNS || '',
+        'N° Requisición': d.numeroRequisicion || '',
+        'ID Requerimiento': d.idrequerimiento || '',
+        'Fecha Despacho': d.fechaDespacho ? new Date(d.fechaDespacho).toLocaleString('es-PE') : '',
+        'Almacén': d.almacen || '',
+        'Usuario': d.usuario || '',
+        'Estado': d.estado || ''
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(dataExport);
+      
+      // Ajustar ancho de columnas
+      worksheet['!cols'] = [
+        { wch: 5 },   // #
+        { wch: 15 },  // N° NS
+        { wch: 15 },  // N° Requisición
+        { wch: 20 },  // ID Requerimiento
+        { wch: 20 },  // Fecha Despacho
+        { wch: 15 },  // Almacén
+        { wch: 20 },  // Usuario
+        { wch: 15 },  // Estado
+      ];
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Despachos');
+      
+      const fechaArchivo = new Date().toISOString().slice(0, 10);
+      const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+      FileSaver.saveAs(blob, `reporte_despachos_${fechaArchivo}.xlsx`);
+      
+      this.alertService.mostrarInfo('Archivo exportado correctamente');
+    } catch (error) {
+      console.error('Error al exportar:', error);
+      this.alertService.showAlert('Error', 'No se pudo exportar el archivo', 'error');
     }
   }
 }

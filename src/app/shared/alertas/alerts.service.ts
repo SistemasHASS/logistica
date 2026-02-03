@@ -112,4 +112,42 @@ export class AlertService {
       return (result.value ?? '').toString();
     });
   }
+
+  /**
+   * Muestra una alerta con 3 botones: Confirmar, Denegar y Cancelar.
+   * @param title Título de la alerta.
+   * @param message Mensaje de la alerta.
+   * @param icon Tipo de icono.
+   * @param confirmText Texto del botón confirmar.
+   * @param denyText Texto del botón denegar.
+   * @returns 'confirm' si confirma, 'deny' si deniega, 'cancel' si cancela.
+   */
+  showConfirmWithCancel(
+    title: string,
+    message: string,
+    icon: SweetAlertIcon,
+    confirmText: string = 'Confirmar',
+    denyText: string = 'Denegar'
+  ): Promise<'confirm' | 'deny' | 'cancel'> {
+    return Swal.fire({
+      title: title,
+      text: message,
+      icon: icon,
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: confirmText,
+      denyButtonText: denyText,
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#3085d6',
+      denyButtonColor: '#d33',
+      allowOutsideClick: false
+    }).then((result) => {
+      if (result.isConfirmed) {
+        return 'confirm';
+      } else if (result.isDenied) {
+        return 'deny';
+      }
+      return 'cancel';
+    });
+  }
 }

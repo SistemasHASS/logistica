@@ -1198,23 +1198,30 @@ export class DespachoComponent implements OnInit {
           await this.dexieService.requerimientos.clear();
           await this.dexieService.detalles.clear();
 
-          // Guardar requerimientos
-          await this.dexieService.requerimientos.bulkAdd(resp);
+          // Preparar requerimientos sin el campo 'id' del backend (Dexie genera su propio ++id)
+          const requerimientosSinId = resp.map((req: any) => {
+            const { id, ...sinId } = req;
+            return sinId;
+          });
+
+          // Guardar requerimientos usando bulkPut para evitar errores de duplicados
+          await this.dexieService.requerimientos.bulkPut(requerimientosSinId);
 
           // Guardar detalles
-          const detallesPlanos = [];
+          const detallesPlanos: any[] = [];
           for (const req of resp) {
             if (req.detalle?.length) {
               for (const det of req.detalle) {
+                const { id, ...detSinId } = det;
                 detallesPlanos.push({
-                  ...det,
+                  ...detSinId,
                   idrequerimiento: req.idrequerimiento
                 });
               }
             }
           }
 
-          await this.dexieService.detalles.bulkAdd(detallesPlanos);
+          await this.dexieService.detalles.bulkPut(detallesPlanos);
 
           console.log('✅ Requerimientos y detalles guardados correctamente');
           await this.cargarRequerimientosAprobados();

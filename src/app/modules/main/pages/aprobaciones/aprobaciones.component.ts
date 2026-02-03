@@ -362,6 +362,7 @@ export class AprobacionesComponent {
           await this.dexieService.saveRequerimientos(resp);
           // Ahora recorre cada requerimiento y guarda su detalle
           for (const req of resp) {
+            console.log('Requerimiento', req);
             if (req.detalle && req.detalle.length) {
               for (const det of req.detalle) {
                 // Añadimos un campo idrequerimiento para enlazarlo

@@ -19,6 +19,12 @@ import { DialogModule } from 'primeng/dialog';
 export class ReporteAprobadosComponent implements OnInit {
   aprobados: any[] = [];
   rechazados: any[] = [];
+  aprobadosOriginal: any[] = [];
+  rechazadosOriginal: any[] = [];
+
+  // Filtros
+  filtroNombre: string = '';
+  filtroDocumento: string = '';
 
   // Modal detalle
   displayDetalle: boolean = false;
@@ -40,9 +46,11 @@ export class ReporteAprobadosComponent implements OnInit {
       .getReporteAprobarRequerimiento([{}])
       .subscribe(async (resp) => {
         // if (resp?.[0]?.errorgeneral === 0) {
-        this.aprobados = resp.aprobados || [];
+        this.aprobadosOriginal = resp.aprobados || [];
+        this.rechazadosOriginal = resp.rechazados || [];
+        this.aprobados = [...this.aprobadosOriginal];
+        this.rechazados = [...this.rechazadosOriginal];
         this.ordenarRequerimientoAprobados();
-        this.rechazados = resp.rechazados || [];
         this.ordenarRequerimientoRechazados();
         // }
       });
@@ -90,5 +98,29 @@ export class ReporteAprobadosComponent implements OnInit {
     this.displayDetalle = false;
     this.requerimientoSeleccionado = null;
     this.detalleRequerimiento = [];
+  }
+
+  filtrar() {
+    const nombre = this.filtroNombre.toLowerCase().trim();
+    const documento = this.filtroDocumento.toLowerCase().trim();
+
+    this.aprobados = this.aprobadosOriginal.filter(item => {
+      const matchNombre = !nombre || (item.nombreCreador?.toLowerCase().includes(nombre));
+      const matchDocumento = !documento || (item.nrodocumento?.toLowerCase().includes(documento));
+      return matchNombre && matchDocumento;
+    });
+
+    this.rechazados = this.rechazadosOriginal.filter(item => {
+      const matchNombre = !nombre || (item.nombreCreador?.toLowerCase().includes(nombre));
+      const matchDocumento = !documento || (item.nrodocumento?.toLowerCase().includes(documento));
+      return matchNombre && matchDocumento;
+    });
+  }
+
+  limpiarFiltros() {
+    this.filtroNombre = '';
+    this.filtroDocumento = '';
+    this.aprobados = [...this.aprobadosOriginal];
+    this.rechazados = [...this.rechazadosOriginal];
   }
 }

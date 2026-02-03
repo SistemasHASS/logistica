@@ -491,19 +491,18 @@ export class DexieService extends Dexie {
   //     r.detalle = await detalleTable
   //       .where("idrequerimiento")
   //       .equals(r.idrequerimiento)
-  //       .toArray();
-  //   }
-
-  //   return cabeceras;
-  // }
   async joinDetalle(requerimientos: any[], detalles: any[]) {
     return requerimientos.map(req => {
       const det = detalles.filter(
         d => d.idrequerimiento === req.idrequerimiento
       );
 
+      // Usar detalles de tabla separada si existen, si no usar el detalle embebido
+      const detallesFinal = det.length > 0 ? det : (req.detalle || []);
+
       return {
         ...req,
+        detalle: detallesFinal,
         detalles: det
       };
     });

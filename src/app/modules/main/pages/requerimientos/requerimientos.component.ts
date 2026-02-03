@@ -115,6 +115,12 @@ export class RequerimientosComponent implements OnInit {
   modalAbiertoActivoFijoMenor: boolean = false;
   activoFijoMenorEditIndex: number = -1;
 
+  //-----MODAL VALIDACION STOCK----------
+  modalStockAbierto: boolean = false;
+  itemsStockValidacion: any[] = [];
+  requerimientoValidandoStock: any = null;
+  validandoStock: boolean = false;
+
   cambiarTab(tab: 'ITEM' | 'COMMODITY' | 'ACTIVOFIJO' | 'ACTIVOFIJOMENOR') {
     this.tabActiva = tab;
     // cerrar cualquier formulario abierto para evitar confusión
@@ -920,15 +926,34 @@ export class RequerimientosComponent implements OnInit {
     const detalle = this.detallesActivoFijoMenor[index];
     const id = detalle.id;
 
-    // 2. Eliminar solo ese registro de Dexie
+    // 2. Eliminar de la tabla separada de detalles en Dexie
     if (id) {
       await this.dexieService.deleteDetalleRequerimiento(id);
     }
 
-    // 3. Eliminar del array local que alimenta la tabla (solo este requerimiento)
+    // 3. Eliminar del array local que alimenta la tabla
     this.detallesActivoFijoMenor.splice(index, 1);
 
-    // 4. Notificación
+    // 4. Actualizar el array embebido en el requerimiento actual
+    (this.requerimiento as any).detalle = [...this.detallesActivoFijoMenor];
+
+    // 5. Actualizar en Dexie el requerimiento con el nuevo detalle embebido
+    if (this.requerimiento.id) {
+      await (this.dexieService.requerimientos as any).update(this.requerimiento.id, {
+        detalle: this.detallesActivoFijoMenor,
+        modificado: 1
+      });
+    }
+
+    // 6. Actualizar también en la lista local de requerimientos
+    const idx = this.requerimientos.findIndex(
+      (r) => r.idrequerimiento === this.requerimiento.idrequerimiento
+    );
+    if (idx >= 0) {
+      (this.requerimientos[idx] as any).detalle = [...this.detallesActivoFijoMenor];
+    }
+
+    // 7. Notificación
     this.alertService.mostrarInfo('Línea eliminada.');
   }
 
@@ -1158,15 +1183,34 @@ export class RequerimientosComponent implements OnInit {
     const detalle = this.detallesActivoFijo[index];
     const id = detalle.id;
 
-    // 2. Eliminar solo ese registro de Dexie
+    // 2. Eliminar de la tabla separada de detalles en Dexie
     if (id) {
       await this.dexieService.deleteDetalleRequerimiento(id);
     }
 
-    // 3. Eliminar del array local que alimenta la tabla (solo este requerimiento)
+    // 3. Eliminar del array local que alimenta la tabla
     this.detallesActivoFijo.splice(index, 1);
 
-    // 4. Notificación
+    // 4. Actualizar el array embebido en el requerimiento actual
+    (this.requerimiento as any).detalle = [...this.detallesActivoFijo];
+
+    // 5. Actualizar en Dexie el requerimiento con el nuevo detalle embebido
+    if (this.requerimiento.id) {
+      await (this.dexieService.requerimientos as any).update(this.requerimiento.id, {
+        detalle: this.detallesActivoFijo,
+        modificado: 1
+      });
+    }
+
+    // 6. Actualizar también en la lista local de requerimientos
+    const idx = this.requerimientos.findIndex(
+      (r) => r.idrequerimiento === this.requerimiento.idrequerimiento
+    );
+    if (idx >= 0) {
+      (this.requerimientos[idx] as any).detalle = [...this.detallesActivoFijo];
+    }
+
+    // 7. Notificación
     this.alertService.mostrarInfo('Línea eliminada.');
   }
 
@@ -1659,10 +1703,11 @@ export class RequerimientosComponent implements OnInit {
   }
 
   async cargarPendientes() {
-    this.pendientes = await this.dexieService.requerimientos
-      .where('estado')
-      .equals(0)
-      .count();
+    // Usar el mismo filtro que sincronizarPendientes: estado === 0 OR modificado === 1
+    const pendientesArray = await this.dexieService.requerimientos
+      .filter((r) => r.estado === 0 || r.modificado === 1)
+      .toArray();
+    this.pendientes = pendientesArray.length;
   }
 
   async sincronizarPendientes() {
@@ -1693,6 +1738,17 @@ export class RequerimientosComponent implements OnInit {
     );
 
     if (!confirmar) return;
+
+    // 2.5️⃣ Validar stock para requerimientos tipo CONSUMO
+    const pendientesConsumo = pendientes.filter((r) => r.itemtipo === 'CONSUMO');
+    for (const req of pendientesConsumo) {
+      const stockOk = await this.validarStockRequerimiento(req);
+      if (!stockOk) {
+        // Modal de stock se mostró, el usuario debe confirmar ajustes
+        // La sincronización continuará después de confirmar en el modal
+        return;
+      }
+    }
 
     // 3️⃣ Inicializar progreso
     this.sincronizando = true;
@@ -3070,15 +3126,34 @@ export class RequerimientosComponent implements OnInit {
     const detalle = this.detallesCommodity[index];
     const id = detalle.id;
 
-    // 2. Eliminar solo ese registro de Dexie
+    // 2. Eliminar de la tabla separada de detalles en Dexie
     if (id) {
       await this.dexieService.deleteDetalleRequerimiento(id);
     }
 
-    // 3. Eliminar del array local que alimenta la tabla (solo este requerimiento)
+    // 3. Eliminar del array local que alimenta la tabla
     this.detallesCommodity.splice(index, 1);
 
-    // 4. Notificación
+    // 4. Actualizar el array embebido en el requerimiento actual
+    (this.requerimiento as any).detalle = [...this.detallesCommodity];
+
+    // 5. Actualizar en Dexie el requerimiento con el nuevo detalle embebido
+    if (this.requerimiento.id) {
+      await (this.dexieService.requerimientos as any).update(this.requerimiento.id, {
+        detalle: this.detallesCommodity,
+        modificado: 1
+      });
+    }
+
+    // 6. Actualizar también en la lista local de requerimientos
+    const idx = this.requerimientos.findIndex(
+      (r) => r.idrequerimiento === this.requerimiento.idrequerimiento
+    );
+    if (idx >= 0) {
+      (this.requerimientos[idx] as any).detalle = [...this.detallesCommodity];
+    }
+
+    // 7. Notificación
     this.alertService.mostrarInfo('Línea eliminada.');
   }
 
@@ -3535,16 +3610,56 @@ export class RequerimientosComponent implements OnInit {
     const detalle = this.detalles[index];
     const id = detalle.id;
 
-    // 2. Eliminar solo ese registro de Dexie
+    // 2. Eliminar de la tabla separada de detalles en Dexie
     if (id) {
       await this.dexieService.deleteDetalleRequerimiento(id);
     }
 
-    // 3. Eliminar del array local que alimenta la tabla (solo este requerimiento)
+    // 3. Eliminar del array local que alimenta la tabla
     this.detalles.splice(index, 1);
 
-    // 4. Notificación
+    // 4. Actualizar el array embebido en el requerimiento actual
+    this.requerimiento.detalle = [...this.detalles];
+
+    // 5. Actualizar en Dexie el requerimiento con el nuevo detalle embebido
+    if (this.requerimiento.id) {
+      await this.dexieService.requerimientos.update(this.requerimiento.id, {
+        detalle: this.detalles,
+        modificado: 1
+      });
+    }
+
+    // 6. Actualizar también en la lista local de requerimientos
+    const idx = this.requerimientos.findIndex(
+      (r) => r.idrequerimiento === this.requerimiento.idrequerimiento
+    );
+    if (idx >= 0) {
+      this.requerimientos[idx].detalle = [...this.detalles];
+    }
+
+    // 7. Notificación
     this.alertService.mostrarInfo('Línea eliminada.');
+  }
+
+  copiarLinea(index: number): void {
+    const detalleOriginal = this.detalles[index];
+
+    // Buscar el producto en la lista de items por descripción
+    const producto = this.items.find(
+      (it) => it.descripcion === detalleOriginal.producto,
+    );
+
+    // Cargar en lineaTemp los datos copiados (sin id para que se cree como nueva)
+    this.lineaTemp = {
+      ...detalleOriginal,
+      id: undefined, // Sin ID para que se guarde como nueva línea
+      producto: producto ? { ...producto } : null,
+    };
+
+    // editIndex = -1 indica que es nueva línea (no edición)
+    this.editIndex = -1;
+    this.modalAbierto = true;
+    this.alertService.mostrarInfo('Línea copiada. Modifica los campos y guarda.');
   }
 
   mostrarAlmacen(c: any): string {
@@ -4163,6 +4278,370 @@ export class RequerimientosComponent implements OnInit {
       );
     }
   }
+
+  async copiarRequerimiento(index: number) {
+    const reqOriginal: any = this.requerimientos[index];
+
+    // Generar nuevo ID único para el requerimiento copiado
+    const nuevoId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+    // Copiar cabecera del requerimiento (sin id para que sea nuevo)
+    this.requerimiento = {
+      ...reqOriginal,
+      id: undefined,
+      idrequerimiento: nuevoId,
+      fecha: new Date(),
+      estados: 'PENDIENTE',
+      estado: 0,
+      checked: false,
+      eliminado: 0,
+      despachado: false,
+    };
+
+    // Copiar detalles (sin ids para que sean nuevos)
+    const detallesOriginales = reqOriginal.detalle ?? reqOriginal.detalles ?? [];
+    this.detalles = detallesOriginales.map((det: any) => ({
+      ...det,
+      id: undefined,
+      idrequerimiento: nuevoId,
+      estado: 0,
+    }));
+    this.requerimiento.detalle = this.detalles;
+
+    // Cargar los campos en los selects principales
+    this.fundoSeleccionado = this.requerimiento.idfundo;
+    this.areaSeleccionada = this.requerimiento.idarea;
+    this.SeleccionaPrioridadITEM = this.requerimiento.prioridad as PrioridadSpring | '';
+    this.almacenSeleccionado = this.requerimiento.idalmacen;
+    this.clasificacionSeleccionado = this.requerimiento.idclasificacion;
+    this.glosa = this.requerimiento.glosa + ' (Copia)';
+    this.SeleccionaTipoGasto = this.requerimiento.referenciaGasto;
+    this.TipoSelecionado = this.requerimiento.itemtipo as TipoRequerimiento | '';
+    this.almacenOrigen = this.requerimiento.idalmacen;
+    this.almacenDestino = this.requerimiento.idalmacendestino;
+
+    // Mostrar el formulario en modo NUEVO (no edición)
+    this.modoEdicion = false;
+    this.mostrarFormulario = true;
+    this.modalAbierto = false;
+
+    this.alertService.mostrarInfo('Requerimiento copiado. Modifica los campos y guarda como nuevo.');
+  }
+
+  copiarRequerimientoSelect(dataSelected: any[]) {
+    if (!dataSelected || dataSelected.length === 0) {
+      this.alertService.showAlert('Advertencia', 'Seleccione un requerimiento para copiar.', 'warning');
+      return;
+    }
+    if (dataSelected.length > 1) {
+      this.alertService.showAlert('Advertencia', 'Solo puede copiar un requerimiento a la vez.', 'warning');
+      return;
+    }
+
+    // Buscar el índice del requerimiento seleccionado
+    const reqSeleccionado = dataSelected[0];
+    const index = this.requerimientos.findIndex(
+      (r) => r.idrequerimiento === reqSeleccionado.idrequerimiento
+    );
+
+    if (index >= 0) {
+      this.copiarRequerimiento(index);
+    }
+  }
+
+  // ============================================
+  // VALIDACIÓN DE STOCK ANTES DE SINCRONIZAR
+  // ============================================
+  async validarStockRequerimiento(requerimiento: any): Promise<boolean> {
+    // Solo validar para tipo CONSUMO (los que consumen stock del almacén)
+    if (requerimiento.itemtipo !== 'CONSUMO') {
+      return true; // No requiere validación de stock
+    }
+
+    const idalmacen = requerimiento.idalmacen;
+    const detalles = requerimiento.detalle || [];
+
+    if (!idalmacen || detalles.length === 0) {
+      return true;
+    }
+
+    // Preparar items para validar
+    const itemsParaValidar = detalles.map((d: any) => ({
+      codigo: d.codigo,
+      producto: d.producto || d.idproducto,
+      cantidad: d.cantidad,
+    }));
+
+    this.validandoStock = true;
+
+    return new Promise((resolve) => {
+      this.requerimientosService.validarStockItems(idalmacen, itemsParaValidar).subscribe({
+        next: (resp) => {
+          this.validandoStock = false;
+          const resultado = resp || [];
+
+          // Verificar si hay items con stock insuficiente
+          const itemsSinStock = resultado.filter(
+            (item: any) => item.estadoStock === 'SIN_STOCK' || item.estadoStock === 'PARCIAL'
+          );
+
+          if (itemsSinStock.length > 0) {
+            // Hay items con stock insuficiente, mostrar modal
+            this.itemsStockValidacion = resultado;
+            this.requerimientoValidandoStock = requerimiento;
+            this.modalStockAbierto = true;
+            resolve(false); // No continuar con sincronización automática
+          } else {
+            resolve(true); // Todo OK, continuar
+          }
+        },
+        error: (err) => {
+          this.validandoStock = false;
+          console.error('Error al validar stock:', err);
+          // En caso de error, permitir continuar (el backend validará)
+          resolve(true);
+        },
+      });
+    });
+  }
+
+  async confirmarAjusteStock() {
+    if (!this.requerimientoValidandoStock) return;
+
+    // Verificar si TODOS los items tienen stock 0
+    const todosConStockCero = this.itemsStockValidacion.every(
+      (item: any) => item.cantidadAjustada === 0 || item.estadoStock === 'SIN_STOCK'
+    );
+
+    if (todosConStockCero) {
+      // Mostrar opciones: eliminar requerimiento o editar para cambiar productos
+      const resultado = await this.alertService.showConfirmWithCancel(
+        'Sin Stock Disponible',
+        'Todos los items del requerimiento no tienen stock disponible. ¿Qué desea hacer?',
+        'warning',
+        'Editar Productos',
+        'Eliminar Requerimiento'
+      );
+
+      if (resultado === 'confirm') {
+        // Usuario quiere editar productos - abrir el requerimiento para edición
+        this.cerrarModalStock();
+        const idx = this.requerimientos.findIndex(
+          (r) => r.idrequerimiento === this.requerimientoValidandoStock.idrequerimiento
+        );
+        if (idx >= 0) {
+          this.editarRequerimiento(idx);
+        }
+        return;
+      } else if (resultado === 'deny') {
+        // Usuario quiere eliminar el requerimiento
+        try {
+          const idReq = this.requerimientoValidandoStock.idrequerimiento;
+          
+          // Si el requerimiento ya fue sincronizado al backend, marcarlo como eliminado
+          if (idReq && idReq.length > 10) {
+            // Tiene un ID válido del backend, eliminar también del servidor
+            const bodyEliminar = {
+              idrequerimiento: idReq,
+              eliminado: 1,
+              dnielimina: this.usuario?.documentoidentidad || ''
+            };
+            
+            this.requerimientosService.eliminarRequerimiento(bodyEliminar).subscribe({
+              next: async () => {
+                // Éxito al eliminar en backend, ahora eliminar de Dexie
+                await this.dexieService.requerimientos.delete(this.requerimientoValidandoStock.id);
+                
+                // Eliminar de lista local
+                const idx = this.requerimientos.findIndex(
+                  (r) => r.idrequerimiento === idReq
+                );
+                if (idx >= 0) {
+                  this.requerimientos.splice(idx, 1);
+                }
+                
+                this.actualizarContadores();
+                await this.cargarPendientes();
+                this.alertService.mostrarInfo('Requerimiento eliminado por falta de stock.');
+                this.cerrarModalStock();
+              },
+              error: (err: any) => {
+                console.error('Error al eliminar en backend:', err);
+                this.alertService.showAlert('Error', 'No se pudo eliminar el requerimiento del servidor', 'error');
+                this.cerrarModalStock();
+              }
+            });
+            return;
+          }
+          
+          // Solo eliminar de Dexie (no fue sincronizado aún)
+          await this.dexieService.requerimientos.delete(this.requerimientoValidandoStock.id);
+          
+          // Eliminar de lista local
+          const idx = this.requerimientos.findIndex(
+            (r) => r.idrequerimiento === this.requerimientoValidandoStock.idrequerimiento
+          );
+          if (idx >= 0) {
+            this.requerimientos.splice(idx, 1);
+          }
+          
+          // Actualizar contadores después de eliminar
+          this.actualizarContadores();
+          await this.cargarPendientes();
+          
+          this.alertService.mostrarInfo('Requerimiento eliminado por falta de stock.');
+          this.cerrarModalStock();
+          return;
+        } catch (error) {
+          console.error('Error al eliminar requerimiento:', error);
+          this.alertService.showAlert('Error', 'No se pudo eliminar el requerimiento', 'error');
+          this.cerrarModalStock();
+          return;
+        }
+      } else {
+        // Usuario canceló
+        this.cerrarModalStock();
+        return;
+      }
+    }
+
+    // Ajustar las cantidades del requerimiento según el stock disponible
+    const detalles = [...(this.requerimientoValidandoStock.detalle || [])];
+
+    for (const itemStock of this.itemsStockValidacion) {
+      const detalleIndex = detalles.findIndex((d: any) => d.codigo === itemStock.codigo);
+      if (detalleIndex >= 0) {
+        // Actualizar cantidad con la cantidad ajustada (stock disponible)
+        detalles[detalleIndex].cantidad = itemStock.cantidadAjustada;
+      }
+    }
+
+    // Filtrar items con cantidad 0 (sin stock)
+    const detallesFiltrados = detalles.filter((d: any) => d.cantidad > 0);
+
+    // Verificar si quedaron items después de filtrar
+    if (detallesFiltrados.length === 0) {
+      this.alertService.showAlert(
+        'Sin Items',
+        'No quedan items con stock disponible. El requerimiento no puede continuar.',
+        'error'
+      );
+      this.cerrarModalStock();
+      return;
+    }
+
+    // Actualizar requerimiento
+    this.requerimientoValidandoStock.detalle = detallesFiltrados;
+    const idReq = this.requerimientoValidandoStock.idrequerimiento;
+
+    // Actualizar en DexieDB
+    try {
+      // 1. Actualizar el requerimiento con el detalle embebido
+      await this.dexieService.requerimientos.update(
+        this.requerimientoValidandoStock.id,
+        {
+          detalle: detallesFiltrados,
+          modificado: 1,
+        }
+      );
+
+      // 2. Sincronizar tabla separada de detalles
+      const detallesExistentes = await this.dexieService.detalles
+        .where('idrequerimiento')
+        .equals(idReq)
+        .toArray();
+      
+      if (detallesExistentes.length > 0) {
+        // Si existen registros, actualizar/eliminar
+        for (const detExistente of detallesExistentes) {
+          if (!detExistente.id) continue; // Saltar si no tiene id
+          
+          const detalleActualizado = detallesFiltrados.find(
+            (df: any) => df.codigo === detExistente.codigo
+          );
+          
+          if (detalleActualizado) {
+            await this.dexieService.detalles.update(detExistente.id, {
+              cantidad: detalleActualizado.cantidad
+            });
+          } else {
+            await this.dexieService.detalles.delete(detExistente.id);
+          }
+        }
+      } else {
+        // Si la tabla separada está vacía, agregar los detalles filtrados
+        for (const det of detallesFiltrados) {
+          await this.dexieService.detalles.add({
+            ...det,
+            idrequerimiento: idReq
+          });
+        }
+      }
+
+      // Actualizar lista local
+      const idx = this.requerimientos.findIndex(
+        (r) => r.idrequerimiento === idReq
+      );
+      if (idx >= 0) {
+        this.requerimientos[idx].detalle = detallesFiltrados;
+      }
+
+      const itemsEliminados = detalles.length - detallesFiltrados.length;
+      if (itemsEliminados > 0) {
+        this.alertService.mostrarInfo(
+          `Cantidades ajustadas. ${itemsEliminados} item(s) eliminado(s) por falta de stock.`
+        );
+      } else {
+        this.alertService.mostrarInfo('Cantidades ajustadas según stock disponible.');
+      }
+    } catch (error) {
+      console.error('Error al actualizar requerimiento:', error);
+      this.alertService.showAlert('Error', 'No se pudieron ajustar las cantidades', 'error');
+      this.cerrarModalStock();
+      return;
+    }
+
+    this.cerrarModalStock();
+
+    // Continuar con sincronización
+    await this.sincronizarPendientes();
+  }
+
+  cerrarModalStock() {
+    this.modalStockAbierto = false;
+    this.itemsStockValidacion = [];
+    this.requerimientoValidandoStock = null;
+  }
+
+  getEstadoStockClass(estado: string): string {
+    switch (estado) {
+      case 'SUFICIENTE':
+        return 'badge bg-success';
+      case 'PARCIAL':
+        return 'badge bg-warning text-dark';
+      case 'SIN_STOCK':
+        return 'badge bg-danger';
+      default:
+        return 'badge bg-secondary';
+    }
+  }
+
+  getEstadoStockTexto(estado: string): string {
+    switch (estado) {
+      case 'SUFICIENTE':
+        return 'Stock OK';
+      case 'PARCIAL':
+        return 'Stock Parcial';
+      case 'SIN_STOCK':
+        return 'Sin Stock';
+      default:
+        return estado;
+    }
+  }
+
+  // ============================================
+  // FIN VALIDACIÓN DE STOCK
+  // ============================================
 
   // Abrir modal consolidacion (agrupa varios)
   abrirModalConsolidacion() {

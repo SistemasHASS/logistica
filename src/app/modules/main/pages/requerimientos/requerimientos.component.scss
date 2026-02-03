@@ -1025,3 +1025,95 @@ textarea {
     }
   }
 }
+
+// =====================
+// MODAL VALIDACIÓN DE STOCK - RESPONSIVE
+// =====================
+.modal-stock-responsive {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  margin: 10px;
+  
+  .modal-header {
+    padding: 12px 16px;
+    border-radius: 12px 12px 0 0;
+    
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+  }
+  
+  .modal-body {
+    padding: 12px 16px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  
+  .modal-footer {
+    padding: 12px 16px;
+    border-top: 1px solid #dee2e6;
+  }
+}
+
+.stock-card-mobile {
+  border-width: 2px;
+  border-radius: 8px;
+  
+  &.border-success {
+    background-color: rgba(25, 135, 84, 0.05);
+  }
+  
+  &.border-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+  }
+  
+  &.border-danger {
+    background-color: rgba(220, 53, 69, 0.05);
+  }
+}
+
+// Mobile adjustments
+@media (max-width: 576px) {
+  .modal-stock-responsive {
+    width: 95%;
+    margin: 5px;
+    max-height: 95vh;
+    
+    .modal-header {
+      padding: 10px 12px;
+      
+      .modal-title {
+        font-size: 0.9rem;
+      }
+    }
+    
+    .modal-body {
+      padding: 10px 12px;
+      max-height: 65vh;
+    }
+    
+    .modal-footer {
+      padding: 10px 12px;
+      
+      .btn {
+        width: 100%;
+        margin: 0;
+      }
+    }
+  }
+  
+  .w-sm-auto {
+    width: 100% !important;
+  }
+}
+
+@media (min-width: 576px) {
+  .w-sm-auto {
+    width: auto !important;
+  }
+}

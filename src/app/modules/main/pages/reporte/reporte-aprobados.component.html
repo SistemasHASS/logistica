@@ -1,9 +1,31 @@
+<!-- Filtros de búsqueda -->
+<div class="row mb-3">
+    <div class="col-md-4">
+        <label class="form-label fw-bold">Nombre del Creador</label>
+        <input type="text" class="form-control" [(ngModel)]="filtroNombre" 
+            placeholder="Buscar por nombre..." (keyup.enter)="filtrar()">
+    </div>
+    <div class="col-md-4">
+        <label class="form-label fw-bold">N° Documento</label>
+        <input type="text" class="form-control" [(ngModel)]="filtroDocumento" 
+            placeholder="Buscar por documento..." (keyup.enter)="filtrar()">
+    </div>
+    <div class="col-md-4 d-flex align-items-end gap-2">
+        <button class="btn btn-primary" (click)="filtrar()">
+            <i class="icon icon-search"></i> Buscar
+        </button>
+        <button class="btn btn-secondary" (click)="limpiarFiltros()">
+            <i class="icon icon-refresh"></i> Limpiar
+        </button>
+    </div>
+</div>
+
 <ul class="nav nav-tabs">
     <li class="nav-item">
-        <a class="nav-link active" data-bs-toggle="tab" href="#aprobados">Aprobados</a>
+        <a class="nav-link active" data-bs-toggle="tab" href="#aprobados">Aprobados ({{ aprobados.length }})</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#rechazados">Rechazados</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#rechazados">Rechazados ({{ rechazados.length }})</a>
     </li>
 </ul>
 
@@ -49,9 +71,10 @@
     </div>
 
     <div class="tab-pane fade" id="rechazados">
-        <p-table [value]="rechazados" class="p-table-sm" [paginator]="true" [rows]="20" [totalRecords]="rechazados.length"
-            responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true" styleClass="custom-table"
-            [showGridlines]="false" currentPageReportTemplate="<{first} - {last} de {totalRecords}>">
+        <p-table [value]="rechazados" class="p-table-sm" [paginator]="true" [rows]="20"
+            [totalRecords]="rechazados.length" responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+            styleClass="custom-table" [showGridlines]="false"
+            currentPageReportTemplate="<{first} - {last} de {totalRecords}>">
             <ng-template pTemplate="header">
                 <tr>
                     <th>N° Req</th>
@@ -90,9 +113,9 @@
 </div>
 
 <!-- MODAL DETALLE REQUERIMIENTO -->
-<p-dialog header="Detalle del Requerimiento" [(visible)]="displayDetalle" [modal]="true" 
-    [style]="{ width: '90vw' }" [closable]="true">
-    
+<p-dialog header="Detalle del Requerimiento" [(visible)]="displayDetalle" [modal]="true" [style]="{ width: '90vw' }"
+    [closable]="true">
+
     <div class="mb-3" *ngIf="requerimientoSeleccionado">
         <div class="row">
             <div class="col-md-3">
@@ -100,6 +123,9 @@
             </div>
             <div class="col-md-3">
                 <strong>N° Requisición:</strong> {{ requerimientoSeleccionado.RequisicionNumero || '-' }}
+            </div>
+            <div class="col-md-3">
+                <strong>Nombre Creador:</strong> {{ requerimientoSeleccionado.nombreCreador || '-' }}
             </div>
             <div class="col-md-3">
                 <strong>Fecha Aprobación:</strong> {{ requerimientoSeleccionado.fechaAprobacion | date: 'dd/MM/yyyy' }}

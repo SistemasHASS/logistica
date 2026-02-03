@@ -112,6 +112,10 @@
                                             </td>
                                             <td>
                                                 <span class="p-column-title">Acción</span>
+                                                <button class="btn btn-sm btn-info me-1" title="Copiar requerimiento"
+                                                    (click)="copiarRequerimiento(i)">
+                                                    <i class="icon-copy"></i>
+                                                </button>
                                                 <button class="btn btn-sm btn-danger"
                                                     (click)="eliminarRequerimiento(i)">
                                                     <i class="icon-trash"></i>
@@ -176,6 +180,9 @@
                             <button *ngIf="modoItemPrincipal" class="btn btn btn-warning"
                                 (click)="editarRequerimientoSelect(dataSelected)" [disabled]="!verBotones">
                                 <i class="icon icon-pencil"></i></button>
+                            <button *ngIf="modoItemPrincipal" class="btn btn-info"
+                                (click)="copiarRequerimientoSelect(dataSelected)" [disabled]="!verBotones" title="Copiar requerimiento">
+                                <i class="icon icon-copy"></i></button>
                             <button *ngIf="modoItemPrincipal" class="btn btn-primary" (click)="sincronizarPendientes()">
                                 <i class='icon icon-sync'></i> Sincronizar</button>
                             <button *ngIf="modoItemPrincipal" class="btn btn-danger"
@@ -340,7 +347,7 @@
                                 </thead>
                                 <tbody>
                                     <tr *ngFor="let item of detalles; let i = index">
-                                        <td> <button class="btn btn-sm btn-warning me-2" (click)="editarLinea(i)">
+                                        <td> <button class="btn btn-sm btn-warning me-2" (click)="editarLinea(i)" title="editar línea">
                                                 <i class="icon-pencil"></i>
                                             </button></td>
                                         <td>{{ item.codigo }}</td>
@@ -354,7 +361,10 @@
                                             {{ item.activoFijo ? item.activoFijo : 'N/A' }}
                                         </td>
                                         <td>
-                                            <button class="btn btn-sm btn-danger" (click)="eliminarLinea(i)">
+                                            <button class="btn btn-sm btn-info me-1" (click)="copiarLinea(i)" title="Copiar línea">
+                                                <i class="icon-copy"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" (click)="eliminarLinea(i)" title="eliminar línea">
                                                 <i class="icon-trash"></i>
                                             </button>
                                         </td>
@@ -1562,6 +1572,114 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== -->
+<!-- MODAL VALIDACIÓN DE STOCK -->
+<!-- ===================== -->
+<div class="modal-backdrop" *ngIf="modalStockAbierto" style="z-index: 1050;">
+    <div class="modal-content modal-stock-responsive">
+        <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title">
+                <i class="icon-warning me-2"></i>
+                Validación de Stock
+            </h5>
+            <button type="button" class="btn-close" (click)="cerrarModalStock()"></button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="alert alert-warning mb-3" style="font-size: 0.9rem;">
+                <strong>¡Atención!</strong> Algunos items no tienen stock suficiente.
+            </div>
+
+            <!-- Vista Desktop: Tabla -->
+            <div class="table-responsive d-none d-md-block">
+                <table class="table table-bordered table-striped table-sm">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th class="text-center">Solicitado</th>
+                            <th class="text-center">Stock</th>
+                            <th class="text-center">Ajustado</th>
+                            <th class="text-center">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let item of itemsStockValidacion" 
+                            [ngClass]="{
+                                'table-success': item.estadoStock === 'SUFICIENTE',
+                                'table-warning': item.estadoStock === 'PARCIAL',
+                                'table-danger': item.estadoStock === 'SIN_STOCK'
+                            }">
+                            <td>{{ item.codigo }}</td>
+                            <td>{{ item.producto }}</td>
+                            <td class="text-center">{{ item.cantidadSolicitada }}</td>
+                            <td class="text-center">
+                                <strong>{{ item.stockDisponible }}</strong>
+                            </td>
+                            <td class="text-center">
+                                <strong class="text-primary">{{ item.cantidadAjustada }}</strong>
+                            </td>
+                            <td class="text-center">
+                                <span [ngClass]="getEstadoStockClass(item.estadoStock)">
+                                    {{ getEstadoStockTexto(item.estadoStock) }}
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Vista Mobile: Cards -->
+            <div class="d-block d-md-none">
+                <div *ngFor="let item of itemsStockValidacion" class="card mb-2 stock-card-mobile"
+                    [ngClass]="{
+                        'border-success': item.estadoStock === 'SUFICIENTE',
+                        'border-warning': item.estadoStock === 'PARCIAL',
+                        'border-danger': item.estadoStock === 'SIN_STOCK'
+                    }">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <strong class="text-truncate" style="max-width: 60%; font-size: 0.85rem;">{{ item.producto }}</strong>
+                            <span [ngClass]="getEstadoStockClass(item.estadoStock)" style="font-size: 0.7rem;">
+                                {{ getEstadoStockTexto(item.estadoStock) }}
+                            </span>
+                        </div>
+                        <div class="text-muted mb-1" style="font-size: 0.75rem;">Código: {{ item.codigo }}</div>
+                        <div class="row text-center" style="font-size: 0.8rem;">
+                            <div class="col-4">
+                                <div class="text-muted">Solicitado</div>
+                                <strong>{{ item.cantidadSolicitada }}</strong>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-muted">Stock</div>
+                                <strong class="text-info">{{ item.stockDisponible }}</strong>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-muted">Ajustado</div>
+                                <strong class="text-primary">{{ item.cantidadAjustada }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-2 py-2" style="font-size: 0.8rem;" *ngIf="itemsStockValidacion.length > 0">
+                <i class="icon-info me-1"></i>
+                Al confirmar, se ajustarán las cantidades al stock disponible.
+            </div>
+        </div>
+
+        <div class="modal-footer flex-column flex-sm-row gap-2">
+            <button class="btn btn-secondary btn-sm w-100 w-sm-auto" (click)="cerrarModalStock()">
+                <i class="icon-close me-1"></i> Cancelar
+            </button>
+            <button class="btn btn-warning btn-sm w-100 w-sm-auto" (click)="confirmarAjusteStock()">
+                <i class="icon-check me-1"></i> Ajustar y Continuar
+            </button>
         </div>
     </div>
 </div>

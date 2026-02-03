@@ -86,13 +86,13 @@ export class RequerimientosService {
     }
   }
 
-  updateEstadoRequerimiento(body: any) {
-    const url = `${this.baseUrl}/api/logistica/update-requerimiento`;
+  eliminarRequerimiento(body: any) {
+    const url = `${this.baseUrl}/api/logistica/eliminar-requerimiento`;
     try {
       return this.http.post<any>(url, body);
     } catch (error: any) {
       throw new Error(
-        error.error?.message || 'Error al actualizar estado de requerimiento'
+        error.error?.message || 'Error al eliminar requerimiento'
       );
     }
   }
@@ -179,6 +179,15 @@ export class RequerimientosService {
       return this.http.post<any>(url, { idrequerimiento });
     } catch (error: any) {
       throw new Error(error.error?.message || 'Error al listar detalle de requerimiento');
+    }
+  }
+
+  validarStockItems(idalmacen: string, items: any[]): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/validar-stock-items`;
+    try {
+      return this.http.post<any>(url, { idalmacen, items });
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error al validar stock de items');
     }
   }
 }
