@@ -1289,72 +1289,130 @@
                 <h2>Requerimientos Activos Menores</h2>
                 <!-- LISTA ACTIVO FIJO MENOR-->
                 <div *ngIf="!mostrarFormularioActivoFijoMenor">
-                    <div class="requerimientos-tablas">
-                        <div>Total: <span class="azul">{{ requerimientosActivoFijoMenor.length }}</span></div>
-                        <div>Sin enviar: <span class="rojo">{{ sienvinarActivoFijoMenor }}</span></div>
-                        <div>enviados: <span class="verde">{{ enviadosActivoFijoMenor }}</span></div>
-                    </div>
-                    <div class="table-responsive" style="max-height: 60vh; overflow: auto;">
-                        <p-table #dt [value]="requerimientosActivoFijoMenor" [paginator]="true" [rows]="20"
-                            [totalRecords]="requerimientosActivoFijoMenor.length" [loading]="loading"
-                            responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
-                            currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
-                            styleClass="p-datatable-sm p-datatable">
+                    <div class="p-0 card">
+                        <div class="requerimientos-tablas">
+                            <div>Total: <span class="azul">{{ requerimientosActivoFijoMenor.length }}</span></div>
+                            <div>Sin enviar: <span class="rojo">{{ sienvinarActivoFijoMenor }}</span></div>
+                            <div>enviados: <span class="verde">{{ enviadosActivoFijoMenor }}</span></div>
+                        </div>
 
-                            <ng-template pTemplate="header">
-                                <tr>
-                                    <!-- <th style="width:50px">
+                        <div class="p-0 table-content">
+                            <div class="table-responsive tabla-item" style="max-height: 60vh; overflow: auto;">
+                                <p-table #dt [value]="requerimientosActivoFijoMenor" [paginator]="true" [rows]="20"
+                                    [totalRecords]="requerimientosActivoFijoMenor.length" [loading]="loading"
+                                    responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+                                    currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+                                    styleClass="p-datatable-sm p-datatable">
+
+                                    <ng-template pTemplate="header">
+                                        <tr>
+                                            <!-- <th style="width:50px">
                                         <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
                                     </th> -->
-                                    <th style="width:50px">#</th>
-                                    <th style="min-width:20px" pSortableColumn="item">Editar</th>
-                                    <th style="min-width:100px" pSortableColumn="item">Fecha</th>
-                                    <th style="min-width:100px" pSortableColumn="descripcionLocal">Servicio</th>
-                                    <!-- <th style="min-width:100px" pSortableColumn="unidadCodigo">Area<th> -->
-                                    <th style="min-width:100px" pSortableColumn="unidadCodigo">Fundo</th>
-                                    <th style="min-width:120px" pSortableColumn="descripcionLocal">Almacen</th>
-                                    <th style="min-width:120px" pSortableColumn="descripcionLocal">Glosa</th>
-                                    <th style="min-width:100px" pSortableColumn="descripcionLocal">Estado</th>
-                                    <th style="min-width:30px">Acciones</th>
-                                </tr>
-                            </ng-template>
+                                            <th style="width:50px">#</th>
+                                            <th style="min-width:20px" pSortableColumn="item">Editar</th>
+                                            <th style="min-width:100px" pSortableColumn="item">Fecha</th>
+                                            <th style="min-width:100px" pSortableColumn="descripcionLocal">Servicio</th>
+                                            <!-- <th style="min-width:100px" pSortableColumn="unidadCodigo">Area<th> -->
+                                            <th style="min-width:100px" pSortableColumn="unidadCodigo">Fundo</th>
+                                            <th style="min-width:120px" pSortableColumn="descripcionLocal">Almacen</th>
+                                            <th style="min-width:120px" pSortableColumn="descripcionLocal">Glosa</th>
+                                            <th style="min-width:100px" pSortableColumn="descripcionLocal">Estado</th>
+                                            <th style="min-width:30px">Acciones</th>
+                                        </tr>
+                                    </ng-template>
 
-                            <ng-template pTemplate="body" let-c let-i="rowIndex">
-                                <tr [ngClass]="c.estado === 1 ? 'fila-enviada' : 'fila-sin-enviar'">
-                                    <!-- <td>
+                                    <ng-template pTemplate="body" let-c let-i="rowIndex">
+                                        <tr [ngClass]="c.estado === 1 ? 'fila-enviada' : 'fila-sin-enviar'">
+                                            <!-- <td>
                                         <p-tableCheckbox [value]="c"></p-tableCheckbox>
                                     </td> -->
-                                    <td>{{ i + 1 }}</td>
-                                    <td><button class="btn btn-sm btn-warning me-2" (click)="editarActivoFijoMenor(i)">
-                                            <i class="icon-pencil"></i>
-                                        </button>
-                                    </td>
-                                    <td>{{ c.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
-                                    <td>{{ obtenerDescripcionServicioAFM(c.servicio) }}</td>
-                                    <td>{{ getDescripcionFundo(c.idfundo) }}</td>
-                                    <!-- <td>{{ c.idarea }}</td> -->
-                                    <td>{{ c.idalmacen }}</td>
-                                    <td>{{ c.glosa }}</td>
-                                    <td><span class="badge"
-                                            [ngClass]=" c.estado === 1 ? 'enviado-badge' : 'sinenviar-badge'">
-                                            {{ c.estado === 1 ? "Enviado" : "Sin enviar" }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm btn-danger" (click)="eliminarActivoFijoMenor(i)">
-                                            <i class="icon-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </ng-template>
+                                            <td>{{ i + 1 }}</td>
+                                            <td><button class="btn btn-sm btn-warning me-2"
+                                                    (click)="editarActivoFijoMenor(i)">
+                                                    <i class="icon-pencil"></i>
+                                                </button>
+                                            </td>
+                                            <td>{{ c.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
+                                            <td>{{ obtenerDescripcionServicioAFM(c.servicio) }}</td>
+                                            <td>{{ getDescripcionFundo(c.idfundo) }}</td>
+                                            <!-- <td>{{ c.idarea }}</td> -->
+                                            <td>{{ c.idalmacen }}</td>
+                                            <td>{{ c.glosa }}</td>
+                                            <td><span class="badge"
+                                                    [ngClass]=" c.estado === 1 ? 'enviado-badge' : 'sinenviar-badge'">
+                                                    {{ c.estado === 1 ? "Enviado" : "Sin enviar" }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-danger" (click)="eliminarActivoFijoMenor(i)">
+                                                    <i class="icon-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </ng-template>
 
-                            <ng-template pTemplate="emptymessage">
-                                <tr>
-                                    <td colspan="8" class="text-center">No hay registros</td>
-                                </tr>
-                            </ng-template>
+                                    <ng-template pTemplate="emptymessage">
+                                        <tr>
+                                            <td colspan="8" class="text-center">No hay registros</td>
+                                        </tr>
+                                    </ng-template>
 
-                        </p-table>
+                                </p-table>
+                            </div>
+                            <div *ngIf="modoItemPrincipal">
+                                @for (activofijomenor of requerimientosActivoFijoMenor; track $index) {
+                                <div class="card cardFor"
+                                    [ngClass]="{ 'cerrado': activofijomenor.estado, 'nocerrado': !activofijomenor.estado }">
+                                    <input type="checkbox" class="checked" [checked]="activofijomenor.checked"
+                                        (change)="onCheckChangeActivoFIjoMenor($event, activofijomenor)"
+                                        [disabled]="activofijomenor.eliminado === 1" />
+
+                                    <div class="contentCard">
+                                        <div class="info" [ngClass]="{ 'eliminadoTR': activofijomenor.eliminado }">
+                                            <p class="item-card">
+                                                <span
+                                                    [ngClass]="{'is-enviado': activofijomenor.estado==1, 'is-noenviado':  activofijomenor.estado==0}">
+                                                    [{{activofijomenor.estado == 0?'Sin enviar':'Enviado'}}]</span>
+                                                &nbsp;&nbsp;&nbsp;<strong>Usuario: {{activofijomenor.nrodocumento}}</strong>
+                                            </p>
+                                            <p class="item-card"><strong>#Requerimiento:
+                                                </strong>{{obtenerIdReq(activofijomenor.idrequerimiento)}}</p>
+                                            <p class="item-card">
+                                                <strong>Servicio:
+                                                </strong>{{obtenerDescripcionServicioAFM(activofijomenor.servicio)}}
+                                            </p>
+                                            <p class="item-card"><strong>Fecha:
+                                                </strong>{{formatoFecha(activofijomenor.fecha)}} - <strong>Almacén:</strong>
+                                                {{activofijomenor.almacen}}
+                                            </p>
+                                            <p class="item-card"><strong>Glosa:
+                                                </strong>{{activofijomenor.glosa}} - {{activofijomenor.tipo}}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card cardbuttons">
+                        <i class='icon-arrow-left5' (click)="scrollLeft()"></i>
+                        <div class="buttons">
+                            <button (click)="mostrarFormularioActivoFijoMenor = true; nuevoRequerimientoActivoFijoMenor()"
+                                class="btn btn-success botonCelular">
+                                <i class="icon-file-plus"></i>
+                            </button>
+                            <button *ngIf="modoItemPrincipal" class="btn btn btn-warning"
+                                (click)="editarRequerimientoActivoFijoMenorSelect(dataSelectedActivoFijoMenor)" [disabled]="!verBotonesActivoFijoMenor">
+                                <i class="icon icon-pencil"></i></button>
+                            <button *ngIf="modoItemPrincipal" class="btn btn-primary" (click)="sincronizarPendientesActivoFijoMenor()">
+                                <i class='icon icon-sync'></i> Sincronizar</button>
+                            <button *ngIf="modoItemPrincipal" class="btn btn-danger"
+                                (click)="eliminarRequerimientoActivoFijoMenorSelect(dataSelectedActivoFijoMenor)" [disabled]="!verBotonesActivoFijoMenor">
+                                <i class="icon icon-trash"></i></button>
+                        </div>
+                        <i class='icon-arrow-right5' (click)="scrollRight()"></i>
                     </div>
 
                     <div *ngIf="requerimientosActivoFijoMenor.length === 0" class="text-center text-muted py-3">
@@ -1362,14 +1420,19 @@
                     </div>
                 </div>
             </div>
-            <div class="text-center mt-4">
-                <button class="btn btn-success me-3"
-                    (click)="mostrarFormularioActivoFijoMenor=true; nuevoActivoFijoMenor()">
-                    <i class="icon-file-plus"></i> Nuevo Activo Menor
-                </button>
-                <button (click)="sincronizarRequerimientoActivoFijoMenor()" class="btn btn-primary botonCelular">
-                    <i class="icon icon-sync"></i> Sincronizar
-                </button>
+            <!-- ===================== -->
+            <!-- LISTA DE REQUERIMIENTOS -->
+            <!-- ===================== -->
+            <div *ngIf="!mostrarFormularioActivoFijoMenor" class="requerimientos-lista">
+                <div class="botonGuardar text-center mt-4">
+                    <button class="btn btn-success me-3"
+                        (click)="mostrarFormularioActivoFijoMenor=true; nuevoActivoFijoMenor()">
+                        <i class="icon-file-plus"></i> Nuevo Activo Menor
+                    </button>
+                    <button (click)="sincronizarRequerimientoActivoFijoMenor()" class="btn btn-primary botonCelular">
+                        <i class="icon icon-sync"></i> Sincronizar
+                    </button>
+                </div>
             </div>
 
             <!-- CAPA OSCURA -->
@@ -1425,7 +1488,7 @@
                         </div>
 
                         <!-- Tabla de detalle Activo Fijo-->
-                        <div class="table-responsive">
+                        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                             <table class="table table-bordered table-striped align-middle text-center">
                                 <thead>
                                     <tr>

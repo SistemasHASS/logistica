@@ -56,6 +56,7 @@
                 <th *ngFor="let col of columnas">
                   {{ getHeaderLabel(col) }}
                 </th>
+                <th style="min-width:100px">Detalles</th>
               </tr>
             </ng-template>
 
@@ -64,12 +65,17 @@
                 <td *ngFor="let col of columnas" class="text-center">
                   {{ getDisplayValue(col, row) }}
                 </td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-info" (click)="verDetalles(row)">
+                    <i class="icon icon-eye"></i>
+                  </button>
+                </td>
               </tr>
             </ng-template>
 
             <ng-template pTemplate="emptymessage">
               <tr>
-                <td [attr.colspan]="columnas.length" class="text-center">No hay registros</td>
+                <td [attr.colspan]="columnas.length + 1" class="text-center">No hay registros</td>
               </tr>
             </ng-template>
           </p-table>
@@ -130,6 +136,122 @@
 
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Detalles -->
+<div class="modal-backdrop" *ngIf="modalDetallesAbierto">
+  <div class="modal-content-detalles">
+    <div class="modal-header-custom">
+      <h4>Detalles del Requerimiento</h4>
+      <button class="btn-close-custom" (click)="cerrarModalDetalles()">
+        <i class="icon icon-x"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body-custom" *ngIf="requerimientoSeleccionado">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="detalle-item">
+            <label>ID Requerimiento:</label>
+            <span>{{ requerimientoSeleccionado.idrequerimiento }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="detalle-item">
+            <label>Requisición Número:</label>
+            <span>{{ requerimientoSeleccionado.RequisicionNumero || 'N/A' }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="detalle-item">
+            <label>Fecha Registro:</label>
+            <span>{{ requerimientoSeleccionado.fecharegistro }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="detalle-item">
+            <label>Estado:</label>
+            <span class="badge" 
+              [ngClass]="requerimientoSeleccionado.estados === 'APROBADO' ? 'bg-success' : 'bg-warning'">
+              {{ requerimientoSeleccionado.estados || 'PENDIENTE' }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="detalle-item">
+            <label>Empresa:</label>
+            <span>{{ getDisplayValue('ruc', requerimientoSeleccionado) }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="detalle-item">
+            <label>Fundo:</label>
+            <span>{{ getDisplayValue('idfundo', requerimientoSeleccionado) }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="detalle-item">
+            <label>Almacén:</label>
+            <span>{{ getDisplayValue('idalmacen', requerimientoSeleccionado) }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6" *ngIf="requerimientoSeleccionado.idalmacendestino">
+          <div class="detalle-item">
+            <label>Almacén Destino:</label>
+            <span>{{ getDisplayValue('idalmacendestino', requerimientoSeleccionado) }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="detalle-item">
+            <label>Tipo:</label>
+            <span>{{ requerimientoSeleccionado.tipo || 'N/A' }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="detalle-item">
+            <label>Prioridad:</label>
+            <span>{{ requerimientoSeleccionado.prioridad || 'N/A' }}</span>
+          </div>
+        </div>
+        
+        <div class="col-12">
+          <div class="detalle-item">
+            <label>Glosa:</label>
+            <span>{{ requerimientoSeleccionado.glosa || 'Sin descripción' }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6" *ngIf="requerimientoSeleccionado.idclasificacion">
+          <div class="detalle-item">
+            <label>Clasificación:</label>
+            <span>{{ requerimientoSeleccionado.idclasificacion }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6" *ngIf="requerimientoSeleccionado.idarea">
+          <div class="detalle-item">
+            <label>Área:</label>
+            <span>{{ requerimientoSeleccionado.idarea }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer-custom">
+      <button class="btn btn-secondary" (click)="cerrarModalDetalles()">
+        Cerrar
+      </button>
     </div>
   </div>
 </div>

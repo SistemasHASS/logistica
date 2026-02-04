@@ -120,6 +120,7 @@ export class RequerimientosComponent implements OnInit {
   itemsStockValidacion: any[] = [];
   requerimientoValidandoStock: any = null;
   validandoStock: boolean = false;
+  requerimientosOmitirValidacion: Set<string> = new Set();
 
   cambiarTab(tab: 'ITEM' | 'COMMODITY' | 'ACTIVOFIJO' | 'ACTIVOFIJOMENOR') {
     this.tabActiva = tab;
@@ -149,6 +150,7 @@ export class RequerimientosComponent implements OnInit {
   //Requerimiento Activo Fijo Menor
   dataSelectedActivoFijoMenor: any = [];
   requerimientoActivoFijoMenorActivo: any = null;
+  verBotonesActivoFijoMenor: boolean = false;
 
   fecha = new Date();
   mensajeFundos: String = '';
@@ -1703,9 +1705,9 @@ export class RequerimientosComponent implements OnInit {
   }
 
   async cargarPendientes() {
-    // Usar el mismo filtro que sincronizarPendientes: estado === 0 OR modificado === 1
+    // Usar el mismo filtro que sincronizarPendientes: (estado === 0 OR modificado === 1) AND estado !== 1
     const pendientesArray = await this.dexieService.requerimientos
-      .filter((r) => r.estado === 0 || r.modificado === 1)
+      .filter((r) => (r.estado === 0 || r.modificado === 1) && r.estado !== 1)
       .toArray();
     this.pendientes = pendientesArray.length;
   }
@@ -1718,7 +1720,7 @@ export class RequerimientosComponent implements OnInit {
     //   .toArray();
     // const pendientes = await this.dexieService.requerimientos.toArray();
     const pendientes = await this.dexieService.requerimientos
-      .filter((r) => r.estado === 0 || r.modificado === 1)
+      .filter((r) => (r.estado === 0 || r.modificado === 1) && r.estado !== 1)
       .toArray();
 
     if (pendientes.length === 0) {
@@ -1851,6 +1853,10 @@ export class RequerimientosComponent implements OnInit {
 
         // 3️⃣ Opcional: refrescar pendientes
         await this.cargarPendientes();
+        
+        // 4️⃣ Limpiar set de requerimientos que omitieron validación
+        this.requerimientosOmitirValidacion.clear();
+        
         this.sincronizando = false;
       },
 
@@ -4358,6 +4364,11 @@ export class RequerimientosComponent implements OnInit {
       return true; // No requiere validación de stock
     }
 
+    // Si el usuario ya eligió continuar con cantidad solicitada, omitir validación
+    if (this.requerimientosOmitirValidacion.has(requerimiento.idrequerimiento)) {
+      return true;
+    }
+
     const idalmacen = requerimiento.idalmacen;
     const detalles = requerimiento.detalle || [];
 
@@ -4414,26 +4425,63 @@ export class RequerimientosComponent implements OnInit {
     );
 
     if (todosConStockCero) {
-      // Mostrar opciones: eliminar requerimiento o editar para cambiar productos
-      const resultado = await this.alertService.showConfirmWithCancel(
+      // Construir mensaje con detalle de stock
+      let mensajeStock = 'Todos los items del requerimiento no tienen stock disponible:<br><br>';
+      mensajeStock += '<table style="width:100%; font-size:0.85rem; border-collapse:collapse;">';
+      mensajeStock += '<tr style="background:#f8f9fa;"><th style="padding:4px; border:1px solid #dee2e6;">Producto</th><th style="padding:4px; border:1px solid #dee2e6; text-align:center;">Solicitado</th><th style="padding:4px; border:1px solid #dee2e6; text-align:center;">Stock</th></tr>';
+      for (const item of this.itemsStockValidacion) {
+        mensajeStock += `<tr><td style="padding:4px; border:1px solid #dee2e6;">${item.producto}</td><td style="padding:4px; border:1px solid #dee2e6; text-align:center;">${item.cantidadSolicitada}</td><td style="padding:4px; border:1px solid #dee2e6; text-align:center; color:red;">${item.stockDisponible}</td></tr>`;
+      }
+      mensajeStock += '</table><br>¿Qué desea hacer?';
+
+      // Mostrar opciones: continuar, editar, eliminar o cancelar
+      const resultado = await this.alertService.showFourButtons(
         'Sin Stock Disponible',
-        'Todos los items del requerimiento no tienen stock disponible. ¿Qué desea hacer?',
+        mensajeStock,
         'warning',
+        'Continuar con Cantidad Solicitada',
         'Editar Productos',
-        'Eliminar Requerimiento'
+        'Eliminar Requerimiento',
+        'Cancelar'
       );
 
-      if (resultado === 'confirm') {
-        // Usuario quiere editar productos - abrir el requerimiento para edición
+      if (resultado === 'button1') {
+        // Usuario quiere continuar con la cantidad solicitada sin ajustar
+        const idReq = this.requerimientoValidandoStock.idrequerimiento;
+        this.requerimientosOmitirValidacion.add(idReq);
+        this.cerrarModalStock();
+        await this.sincronizarPendientes();
+        return;
+      } else if (resultado === 'button2') {
+        // Usuario quiere editar productos - abrir el requerimiento y modal de edición de línea
+        const idReqEditar = this.requerimientoValidandoStock.idrequerimiento;
         this.cerrarModalStock();
         const idx = this.requerimientos.findIndex(
-          (r) => r.idrequerimiento === this.requerimientoValidandoStock.idrequerimiento
+          (r) => r.idrequerimiento === idReqEditar
         );
         if (idx >= 0) {
           this.editarRequerimiento(idx);
+          // Abrir modal de edición de la primera línea después de que el formulario cargue
+          setTimeout(() => {
+            if (this.detalles && this.detalles.length > 0) {
+              this.editIndex = 0;
+              const detalleSeleccionado = this.detalles[0];
+              const producto = this.items.find(
+                (it) => it.descripcion === detalleSeleccionado.producto,
+              );
+              this.lineaTemp = {
+                ...detalleSeleccionado,
+                producto: producto ? { ...producto } : null,
+              };
+              this.modalAbierto = true;
+            } else {
+              // Si no hay detalles, abrir modal para agregar nueva línea
+              this.modalAbierto = true;
+            }
+          }, 500);
         }
         return;
-      } else if (resultado === 'deny') {
+      } else if (resultado === 'button3') {
         // Usuario quiere eliminar el requerimiento
         try {
           const idReq = this.requerimientoValidandoStock.idrequerimiento;
@@ -4857,7 +4905,7 @@ export class RequerimientosComponent implements OnInit {
     this.verBotones = true;
   }
 
-  onCheckChangeActivoFijoMenor(event: Event, row: any) {
+  onCheckChangeActivoFIjoMenor(event: Event, row: any) {
     const checked = (event.target as HTMLInputElement).checked;
 
     // 🔁 Siempre limpiar primero
@@ -4865,10 +4913,10 @@ export class RequerimientosComponent implements OnInit {
 
     if (!checked) {
       // ❌ Ninguno seleccionado
-      this.requerimientoActivo = null;
-      this.detalles = [];
-      this.dataSelected = [];
-      this.verBotones = false;
+      this.requerimientoActivoFijoMenorActivo = null;
+      this.detallesActivoFijoMenor = [];
+      this.dataSelectedActivoFijoMenor = [];
+      this.verBotonesActivoFijoMenor = false;
       return;
     }
 
@@ -4876,14 +4924,14 @@ export class RequerimientosComponent implements OnInit {
     row.checked = true;
 
     // 🔥 Activo
-    this.requerimientoActivo = row;
+    this.requerimientoActivoFijoMenorActivo = row;
 
     // 🔥 Detalles
-    this.detalles = row.detalle ? row.detalle.map((d: any) => ({ ...d })) : [];
+    this.detallesActivoFijoMenor = row.detalleActivoFijoMenor ? row.detalleActivoFijoMenor.map((d: any) => ({ ...d })) : [];
 
     // 🔥 Botones
-    this.dataSelected = [row];
-    this.verBotones = true;
+    this.dataSelectedActivoFijoMenor = [row];
+    this.verBotonesActivoFijoMenor = true;
   }
 
   formatoFecha(date: any) {
@@ -5082,34 +5130,36 @@ export class RequerimientosComponent implements OnInit {
       return;
     }
 
-    const activofijomenor = this.requerimientoActivo;
+    const activofijomenor = this.requerimientoActivoFijoMenorActivo;
 
     this.requerimientoActivoFijoMenor = { ...activofijomenor };
-    this.requerimiento.id = activofijomenor.id; // necesario para update
-    // this.detalles = item.detalle || [];
+    this.requerimiento.id = activofijomenor.id;
+    
     // 🔥 Detalle (COPIA PROFUNDA)
-    this.detalles = activofijomenor.detalles
+    this.detallesActivoFijoMenor = activofijomenor.detalles
       ? activofijomenor.detalles.map((d: any) => ({ ...d }))
       : [];
 
-    console.log('Detalle del requerimiento a editar:', this.detalles);
+    console.log('Detalle del requerimiento a editar:', this.detallesActivoFijoMenor);
 
     // Selects
     this.fundoSeleccionado = activofijomenor.idfundo;
     this.areaSeleccionada = activofijomenor.idarea;
-    this.SeleccionaPrioridadITEM = activofijomenor.prioridad;
+    this.SeleccionaPrioridadACTIVOFIJOMENOR = activofijomenor.prioridad;
     this.almacenSeleccionado = activofijomenor.idalmacen;
     this.clasificacionSeleccionado = activofijomenor.idclasificacion;
-    this.glosa = activofijomenor.glosa;
+    this.glosaActivoFijoMenor = activofijomenor.glosa;
     this.SeleccionaTipoGasto = activofijomenor.referenciaGasto;
+    this.SeleccionaServicioAFMenor = activofijomenor.servicio;
+    this.onServicioAFMenorChange();
     this.TipoSelecionado = activofijomenor.itemtipo;
     this.almacenOrigen = activofijomenor.idalmacen;
     this.almacenDestino = activofijomenor.idalmacendestino;
 
     // UI
-    this.modoEdicion = true;
-    this.mostrarFormulario = true;
-    this.modalAbierto = false;
+    this.modoEdicionActivoFijoMenor = true;
+    this.mostrarFormularioActivoFijoMenor = true;
+    this.modalAbiertoActivoFijoMenor = false;
 
     this.reasignarAlmacenDesdeDescripcion();
   }

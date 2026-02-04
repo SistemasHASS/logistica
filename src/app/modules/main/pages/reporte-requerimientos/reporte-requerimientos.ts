@@ -235,27 +235,46 @@ export class ReporteRequerimientos {
   getHeaderLabel(col: string): string {
     const lowerKey = col.toLowerCase();
 
-    if (lowerKey === 'ruc') {
-      return 'Empresa';
+    // Mapeo específico de columnas
+    const headerMap: { [key: string]: string } = {
+      'fecharegistro': 'FechaRegistro',
+      'requisicionnumero': 'RequisicionNumero',
+      'idrequerimiento': 'IdRequerimiento',
+      'glosa': 'Glosa',
+      'ruc': 'Empresa',
+      'idfundo': 'Fundo',
+      'idalmacen': 'Almacén',
+      'idalmacendestino': 'AlmacénDestino',
+      'idclasificacion': 'Clasificación',
+      'tipo': 'Tipo',
+      'estados': 'Estado',
+      'prioridad': 'Prioridad',
+      'eliminado': 'Eliminado',
+      'fechaeliminacion': 'FechaEliminacion',
+      'idarea': 'Área',
+      'referenciaGasto': 'ReferenciaGasto'
+    };
+
+    // Si existe en el mapeo, retornar el valor mapeado
+    if (headerMap[lowerKey]) {
+      return headerMap[lowerKey];
     }
 
-    if (lowerKey === 'idfundo') {
-      return 'Fundo';
-    }
+    // Convertir primera letra a mayúscula y el resto como está
+    return col.charAt(0).toUpperCase() + col.slice(1).replace('_', ' ');
+  }
 
-    if (lowerKey === 'idalmacen') {
-      return 'Almacén';
-    }
+  modalDetallesAbierto: boolean = false;
+  requerimientoSeleccionado: any = null;
 
-    if (lowerKey === 'idalmacendestino') {
-      return 'Almacén Destino';
-    }
+  verDetalles(row: any) {
+    this.requerimientoSeleccionado = row;
+    this.modalDetallesAbierto = true;
+  }
 
-    if (lowerKey === 'idclasificacion') {
-      return 'Clasificación';
-    }
-
-    return col.toUpperCase().replace('_', ' ');
+  cerrarModalDetalles() {
+    this.modalDetallesAbierto = false;
+    this.requerimientoSeleccionado = null;
   }
 
   getDisplayValue(col: string, row: any): any {

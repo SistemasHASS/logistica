@@ -5,11 +5,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
+import { SelectModule } from 'primeng/select';
 
 @Component({
     selector: 'app-reporte-saldos',
     standalone: true,
-    imports: [CommonModule, RouterModule, FormsModule, TableModule],
+    imports: [CommonModule, RouterModule, FormsModule, TableModule, SelectModule],
     templateUrl: './reporte-saldos.component.html',
     styleUrls: ['./reporte-saldos.component.scss']
 })
@@ -19,6 +20,7 @@ export class ReporteSaldosComponent implements OnInit {
     saldosFiltrados: any[] = [];
     filtroAlmacen: string = '';
     filtroCodigo: string = '';
+    almacenes: { label: string; value: string }[] = [];
     loading: boolean = false;
 
     constructor(
@@ -35,6 +37,7 @@ export class ReporteSaldosComponent implements OnInit {
         this.requerimientoService.obtenerReporteSaldos([]).subscribe({
             next: (data: any) => {
                 this.saldos = Array.isArray(data) ? data : [];
+                this.cargarAlmacenes();
                 this.aplicarFiltro();
                 this.loading = false;
             },
@@ -50,9 +53,14 @@ export class ReporteSaldosComponent implements OnInit {
 
     aplicarFiltro() {
         this.saldosFiltrados = this.saldos.filter(x =>
-            (!this.filtroAlmacen || (x.almacen || '').toLowerCase().includes(this.filtroAlmacen.toLowerCase())) &&
+            (!this.filtroAlmacen || (x.almacen || '').toLowerCase() === this.filtroAlmacen.toLowerCase()) &&
             (!this.filtroCodigo || (x.codigo || '').toLowerCase().includes(this.filtroCodigo.toLowerCase()))
         );
+    }
+
+    cargarAlmacenes() {
+        const almacenesUnicos = [...new Set(this.saldos.map((s) => s.almacen).filter(Boolean))];
+        this.almacenes = almacenesUnicos.map((a) => ({ label: a, value: a }));
     }
 
     despachar(item: any) {

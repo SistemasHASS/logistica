@@ -157,9 +157,8 @@
           </li>
           <li
             *ngIf="usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST')"
-            class="sidebar-item">
-            <a routerLink="./reporte-requerimientos" routerLinkActive="active" class="sidebar-link"
-              aria-expanded="false">
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./reporte-requerimientos" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class='icon icon-file-check'></i>
               </span>
