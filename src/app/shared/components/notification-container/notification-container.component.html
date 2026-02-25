@@ -1,0 +1,41 @@
+<div class="notification-container">
+  <div 
+    *ngFor="let notificacion of notificaciones$ | async" 
+    class="notification notification-{{notificacion.tipo}}" style="width: auto !important; height: auto !important;"
+    [class.leida]="notificacion.leida"
+    [style.animation]="notificacion.leida ? 'fadeSlideOut 0.3s ease-out' : 'fadeSlideIn 0.3s ease-out'">
+    
+    <div class="notification-icon">
+      <ng-container [ngSwitch]="notificacion.tipo">
+        <i *ngSwitchCase="'success'" class="fas fa-check-circle"></i>
+        <i *ngSwitchCase="'info'" class="fas fa-info-circle"></i>
+        <i *ngSwitchCase="'warning'" class="fas fa-exclamation-triangle"></i>
+        <i *ngSwitchCase="'error'" class="fas fa-times-circle"></i>
+        <i *ngSwitchDefault class="fas fa-info-circle"></i>
+      </ng-container>
+    </div>
+    
+    <div class="notification-content">
+      <div class="notification-title">{{notificacion.titulo}}</div>
+      <div class="notification-message" [innerHTML]="notificacion.mensaje"></div>
+      
+      <div *ngIf="notificacion.accion" class="notification-action">
+        <button 
+          class="btn btn-sm btn-outline-light"
+          (click)="ejecutarAccion(notificacion)">
+          {{notificacion.accion.texto}}
+        </button>
+      </div>
+    </div>
+    
+    <button class="notification-close" (click)="cerrar(notificacion.id)">
+      <i class="fas fa-times"></i>
+    </button>
+    
+    <div 
+      *ngIf="notificacion.duracion" 
+      class="notification-progress"
+      [style.animation-duration]="notificacion.duracion + 'ms'">
+    </div>
+  </div>
+</div>

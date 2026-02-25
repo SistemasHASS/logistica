@@ -49,6 +49,26 @@ h5 {
 
     .p-datepicker {
         width: 100%;
+        
+        .p-datepicker-input {
+            width: 100%;
+            padding-right: 2.5rem;
+        }
+        
+        .p-datepicker-trigger {
+            background: transparent;
+            border: none;
+            color: #6c757d;
+            width: 2.5rem;
+            
+            &:hover {
+                color: #495057;
+            }
+            
+            .pi {
+                font-size: 1rem;
+            }
+        }
     }
 }
 

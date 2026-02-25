@@ -1,14 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
+import { NotificationService } from '@/app/shared/services/notification.service';
+import { NotificacionApiService } from '@/app/shared/services/notificacion-api.service';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
 import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import { CommodityService } from '@/app/modules/main/services/commoditys.service';
 import { DespachosService } from '@/app/modules/main/services/despachos.service';
+import { SaldoRequerimientoService } from '@/app/modules/main/services/saldo-requerimiento.service';
+import { ConsolidacionService } from '@/app/services/consolidacion.service';
 import { Usuario, Stock, OrdenCompra, DetalleDespacho, Despacho } from '@/app/shared/interfaces/Tables';
+import { ItemPendienteConsolidacion } from '@/app/models/consolidacion.model';
 import { TableModule } from 'primeng/table';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ViewChild } from '@angular/core';
@@ -34,6 +39,10 @@ export class DespachoComponent implements OnInit {
   // Make Math available in template
   public Math = Math;
 
+  // Services
+  private saldoService = inject(SaldoRequerimientoService);
+  private consolidacionService = inject(ConsolidacionService);
+
   // Listas principales
   requerimientosAprobadosAll: any[] = [];
   requerimientos: any[] = [];
@@ -57,6 +66,11 @@ export class DespachoComponent implements OnInit {
   proyectos: any[] = [];
   detalle: any[] = []; // items a despachar (detalle atención)
   subcommodity: any[] = [];
+
+  // Notificaciones
+  notificaciones: any[] = [];
+  notificacionesNoLeidas: number = 0;
+  mostrarNotificaciones: boolean = false;
 
   filtroServicios: any[] = [];
   filtroServiciosAF: any[] = [];
@@ -101,6 +115,8 @@ export class DespachoComponent implements OnInit {
   constructor(
     private dexieService: DexieService,
     private alertService: AlertService,
+    private notificationService: NotificationService,
+    private notificacionApi: NotificacionApiService,
     private requerimientosService: RequerimientosService,
     private maestrasService: MaestrasService,
     private commodityService: CommodityService,
@@ -113,6 +129,7 @@ export class DespachoComponent implements OnInit {
     await this.sincronizaAprobados();
     // await this.cargarRequerimientosAprobados();
     await this.cargarStockDisponible();
+    await this.cargarNotificaciones();
   }
 
   async cargarRequerimientos() {
@@ -349,6 +366,37 @@ export class DespachoComponent implements OnInit {
               ? 'PARCIAL'
               : 'COMPLETO';
         });
+
+        // Verificar si todos los items están SIN STOCK
+        const todosSinStock = this.detalle.every((d: any) => d.estadoAtencion === 'SIN STOCK');
+        console.log('🔍 Verificando SIN STOCK:', { 
+          todosSinStock, 
+          cantidadItems: this.detalle.length,
+          selected: this.selected,
+          selectedNumero: this.selected?.numero,
+          selectedId: this.selected?.idrequerimiento
+        });
+        
+        if (todosSinStock && this.detalle.length > 0) {
+          console.log('📢 Mostrando notificaciones de SIN STOCK');
+          
+          // Notificación flotante
+          this.notificationService.warning(
+            'Sin Stock Disponible',
+            `Todos los ítems del requerimiento ${this.selected?.numero || this.selected?.idrequerimiento || 'N/A'} están sin stock. Los ítems quedarán en saldo pendiente.`,
+            10000
+          );
+          
+          // Alerta más visible con SweetAlert2
+          setTimeout(() => {
+            console.log('📢 Mostrando alerta SweetAlert2');
+            this.alertService.showAlert(
+              'Sin Stock Disponible',
+              `Todos los ítems del requerimiento ${this.selected?.numero || this.selected?.idrequerimiento || 'N/A'} están sin stock.\n\nLos ítems han sido movidos a saldo pendiente para su consolidación.`,
+              'warning'
+            );
+          }, 500);
+        }
       }
 
       this.alertService.cerrarModalCarga();
@@ -711,22 +759,32 @@ export class DespachoComponent implements OnInit {
               mensajeError = `${mensajeError}\n\n${detalleErrores}`;
             }
 
-            // Determinar título según tipo de error
+            // Determinar si es error de stock
             const esErrorStock = mensajeError.toLowerCase().includes('stock');
-            const esErrorLote = mensajeError.toLowerCase().includes('lote');
-            
-            let titulo = 'Error';
-            let tipo: 'error' | 'warning' = 'error';
             
             if (esErrorStock) {
-              titulo = 'Stock Insuficiente';
-              tipo = 'warning';
-            } else if (esErrorLote) {
-              titulo = 'Lote No Encontrado';
-              tipo = 'warning';
+              // Identificar items sin stock
+              const itemsSinStock = this.detalle.filter((d: any) => {
+                const stock = this.obtenerStock(d.codigo, this.selected?.idalmacen || '');
+                const cantidadTotal = Number(d.cantidad) || 0;
+                const cantidadAtendida = Number(d.atendida || 0);
+                const cantidadPorAtender = d.atender || 0;
+                const saldoPendiente = cantidadTotal - cantidadAtendida - cantidadPorAtender;
+                return saldoPendiente > 0 && stock <= 0;
+              });
+
+              if (itemsSinStock.length > 0) {
+                // Manejar saldo pendiente con opciones
+                await this.manejarSaldoPendienteSinStock(
+                  itemsSinStock,
+                  this.selected
+                );
+                return;
+              }
             }
 
-            this.alertService.showAlert(titulo, mensajeError, tipo);
+            // Si no es error de stock o no hay items sin stock, mostrar error normal
+            this.alertService.showAlert('Error', mensajeError, 'error');
             return;
           }
 
@@ -778,6 +836,51 @@ export class DespachoComponent implements OnInit {
             next: () => console.log('Despacho registrado en BD local'),
             error: err => console.error('Error registrando despacho:', err)
           });
+
+          /* -----------------------------------------------------
+           * VERIFICAR Y NOTIFICAR STOCK PARCIAL
+           * ----------------------------------------------------- */
+          
+          // Identificar items con despacho parcial (sin async en filter)
+          const itemsParciales: any[] = [];
+          for (const d of detalleAtendido) {
+            const solicitada = Number(d.cantidad) || 0;
+            const atendida = Number(d.atendida) || 0;
+            const totalAtendido = await this.getTotalAtendido(d.codigo);
+            const pendiente = solicitada - totalAtendido - atendida;
+            
+            if (pendiente > 0 && atendida > 0) {
+              // Tiene algo atendido pero le falta más
+              itemsParciales.push({
+                ...d,
+                totalAtendido,
+                pendiente,
+                despachadoAhora: atendida
+              });
+            }
+          }
+
+          // Notificar al solicitante sobre despacho parcial
+          if (itemsParciales.length > 0) {
+            console.log('📝 Detectando stock parcial, notificando al solicitante...');
+            
+            for (const item of itemsParciales) {
+              await this.notificacionApi.insertarNotificacionStock({
+                iditem: item.codigo,
+                itemDescripcion: item.descripcion || item.producto,
+                mensaje: `Se ha despachado parcialmente tu requerimiento ${this.selected?.numero || this.selected?.idrequerimiento || 'N/A'}. Item: ${item.codigo} - ${item.descripcion || item.producto}. Despachado: ${item.despachadoAhora}, Pendiente: ${item.pendiente} de ${item.cantidad} unidades.`,
+                idrequerimiento: this.selected?.idrequerimiento || 0,
+                tipo_notificacion: 'DESPACHO_PARCIAL'
+              });
+            }
+            
+            // Mostrar mensaje al operador sobre notificaciones enviadas
+            this.notificationService.info(
+              'Despacho Parcial',
+              `Se ha notificado al solicitante sobre el despacho parcial de ${itemsParciales.length} item(s).`,
+              5000
+            );
+          }
 
           /* -----------------------------------------------------
            * BD LOGISTICA - Actualizar Estado Requerimiento
@@ -1112,6 +1215,51 @@ export class DespachoComponent implements OnInit {
   //   }
   // }
 
+  /**
+   * Cargar stock disponible desde el backend
+   */
+  async cargarStockDisponible() {
+    try {
+      this.requerimientosService.obtenerReporteSaldos([]).subscribe(async (resp: any) => {
+        if (!!resp && resp.length) {
+          await this.dexieService.saveStocks(resp);
+          this.stockDisponible = await this.dexieService.showStock();
+        }
+      });
+    } catch (error) {
+      console.error('Error cargando stock disponible:', error);
+    }
+  }
+
+  /**
+   * Cargar saldos de stock para los detalles de un requerimiento
+   */
+  async cargarSaldosStock(detalle: any[], idalmacen: string) {
+    // Obtener códigos únicos de los detalles
+    const codigosUnicos = [...new Set(detalle.map(d => d.codigo))];
+    
+    // Obtener stock para estos códigos en el almacén especificado
+    const stockFiltrado = this.stockDisponible.filter(s => 
+      codigosUnicos.includes(s.codigo) && s.almacen === idalmacen
+    );
+
+    // Actualizar stock en cada detalle
+    detalle.forEach((d: any) => {
+      const stockItem = stockFiltrado.find(s => s.codigo === d.codigo);
+      d.stock = stockItem?.cantidad || 0;
+    });
+  }
+
+  /**
+   * Obtener stock disponible para un item en un almacén
+   */
+  obtenerStock(codigo: string, almacen: string): number {
+    const stockItem = this.stockDisponible.find(s => 
+      s.codigo === codigo && s.almacen === almacen
+    );
+    return stockItem?.cantidad || 0;
+  }
+
   async actualizarStock(
     codigo: string,
     almacen: string,
@@ -1270,469 +1418,326 @@ export class DespachoComponent implements OnInit {
   //   //     unidadMedida: 'UN',
   //   //     ultimaActualizacion: new Date().toISOString().split('T')[0],
   //   //     almacen: 'ALM01',
-  //   //     cantidad: 0,
-  //   //   },
-  //   // ];
-  // }
 
-  cargarStockDisponible() {
-    this.requerimientosService.obtenerReporteSaldos([]).subscribe({
-      next: async (resp: any[]) => {
-        if (resp?.length) {
-          await this.dexieService.saveStocks(resp);
-          this.stockDisponible = await this.dexieService.showStock();
-        }
-      },
-      error: () => {
-        this.alertService.showAlert(
-          'Error',
-          'No se pudo cargar el stock',
-          'error'
-        );
-      }
-    });
-  }
+  // =================================================================
+  // MÉTODOS PARA MANEJO DE STOCK INSUFICIENTE
+  // =================================================================
 
-  obtenerStock(codigo: string, almacen: string): number {
-    if (!this.saldosStock || this.saldosStock.length === 0) {
-      return 0;
-    }
+  /**
+   * Manejar saldo pendiente cuando no hay stock disponible
+   */
+  private async manejarSaldoPendienteSinStock(itemsSinStock: any[], requerimiento: any) {
+    // Construir HTML con los items sin stock
+    const htmlItems = itemsSinStock.map(item => 
+      `<div style="margin: 5px 0;">
+        <strong>${item.codigo}</strong> - ${item.descripcion || item.producto}<br>
+        <small>Solicitado: ${item.cantidad} | Stock: 0 | Falta: ${item.faltante}</small>
+      </div>`
+    ).join('');
 
-    const saldosItem = this.saldosStock.filter(
-      s => s.codigo?.trim() === codigo?.trim() && s.almacen?.trim() === almacen?.trim()
+    // Mostrar diálogo con 4 opciones
+    const result = await this.alertService.showFourButtons(
+      '⚠️ Stock Insuficiente',
+      `
+        <div style="text-align: left;">
+          <p>Los siguientes items no tienen stock disponible:</p>
+          ${htmlItems}
+          <hr style="margin: 15px 0;">
+          <p>¿Qué desea hacer?</p>
+        </div>
+      `,
+      'info',
+      'Consolidar para Compra',
+      'Esperar Stock',
+      'Cerrar Saldo',
+      'Decidir Después'
     );
 
-    if (saldosItem.length === 0) {
-      return 0;
-    }
-
-    const stockDisponibleTotal = saldosItem.reduce(
-      (acc, s) => acc + (Number(s.stockDisponible) || 0), 0
-    );
-
-    return stockDisponibleTotal;
-  }
-
-  async cargarSaldosStock(detalles: any[], almacenCodigo: string): Promise<void> {
-    if (!detalles || detalles.length === 0 || !almacenCodigo) {
-      this.saldosStock = [];
-      return;
-    }
-
-    const items = detalles.map(d => ({
-      Item: d.codigo,
-      AlmacenCodigo: almacenCodigo
-    }));
-
-    try {
-      const resp = await firstValueFrom(this.despachosService.saldosLoteItem(items));
-      this.saldosStock = Array.isArray(resp) ? resp : [];
-    } catch (error) {
-      console.error('Error al cargar saldos de stock:', error);
-      this.saldosStock = [];
+    // Ejecutar acción según la opción seleccionada
+    switch (result) {
+      case 'button1':
+        await this.manejarOpcionConsolidarCompra(itemsSinStock);
+        break;
+      case 'button2':
+        await this.manejarOpcionEsperarStock(itemsSinStock);
+        break;
+      case 'button3':
+        await this.manejarOpcionCerrarSaldo(itemsSinStock);
+        break;
+      case 'button4':
+        await this.manejarOpcionDecidirDespues(itemsSinStock);
+        break;
+      case 'cancel':
+        // Usuario cerró el diálogo
+        console.log('Usuario canceló la acción');
+        break;
+      default:
+        // Usuario cerró el diálogo
+        console.log('Usuario canceló la acción');
+        break;
     }
   }
 
-  /* ---------------------------
-     NUEVOS MÉTODOS: flujo despacho
-     --------------------------- */
-
-  // 1) Al hacer click en "Atender" — carga detalle del requerimiento y prepara items
-  async onVerItems(req: any) {
+  /**
+   * Opción 1: Consolidar items para compra
+   */
+  private async manejarOpcionConsolidarCompra(itemsFaltantes: any[]) {
     try {
-      this.selected = req;
-      this.detalle = []; // limpiar detalle de atención
+      // Crear ítems pendientes de consolidación
+      const itemsPendientes: ItemPendienteConsolidacion[] = itemsFaltantes.map((item: any) => ({
+        idDetalle: (this.selected?.idrequerimiento || 0) * 10000 + item.id,
+        item: item.codigo,
+        descripcion: item.descripcion || item.producto || '',
+        familia: item.familia || '',
+        categoria: item.categoria || '',
+        cantidad: item.faltante,
+        unidad: item.unidadMedida || 'UND',
+        tipoRequerimiento: 'CONSUMO',
+        requerimientoOrigen: this.selected?.numero || `REQ-${this.selected?.idrequerimiento}`,
+        fechaCreacion: new Date().toISOString(),
+        estadoDetalleConsolidacion: 'PENDIENTE',
+        seleccionado: false,
+      }));
 
-      // Trae detalles desde Dexie (ajusta el nombre 'detalles' si tu store es distinto)
-      const detalles = await this.dexieService.detalles
-        .where('idrequerimiento')
-        .equals(req.idrequerimiento)
-        .toArray();
-
-      // mapear y calcular pendientes/stock
-      this.items = (detalles || []).map((d: any) => {
-        const atendida = d.atendida || 0;
-        const solicitada = d.cantidad || d.cantidadSolicitada || 0;
-        const pendiente = Math.max(0, solicitada - atendida);
-        const stock = this.obtenerStock(
-          d.codigo,
-          req.idalmacen || d.almacen || 'ALM01'
-        );
-
-        return {
-          ...d,
-          cantidadSolicitada: solicitada,
-          atendida: atendida,
-          pendiente: pendiente,
-          stock: stock,
-          cantidadAtender: 0, // campo temporal enlazado en el input
-        };
+      // Migrar directamente a consolidación
+      const resp = await this.consolidacionService.migrarSaldoDirectoConsolidacion({
+        items: itemsPendientes,
       });
 
-      // Si quieres abrir un modal, lo puedes hacer aquí
-      // const modalEl = document.getElementById('modalDetalles'); ...
-    } catch (err) {
-      console.error('Error cargando items:', err);
-      this.alertService.showAlert(
+      if (resp.success) {
+        this.alertService.showAlertAcept(
+          'Consolidado para Compra',
+          `Los ítems han sido migrados al módulo de consolidación.<br>
+           Ya están disponibles para procesar la solicitud de compra.`,
+          'success',
+        );
+        
+        // Actualizar estado del requerimiento
+        await this.actualizarEstadoRequerimiento('EN CONSOLIDACION');
+      } else {
+        this.alertService.showAlertError(
+          'Error',
+          resp.mensaje || 'No se pudo consolidar para compra',
+        );
+      }
+    } catch (err: any) {
+      console.error('Error consolidando para compra:', err);
+      this.alertService.showAlertError(
         'Error',
-        'No se pudieron cargar los items',
-        'error'
+        'No se pudo consolidar para compra',
       );
     }
   }
 
-  // 2) Agregar item al detalle de atención
-  onAgregar(item: any) {
+  /**
+   * Opción 2: Esperar Stock - notificar al solicitante cuando haya stock
+   */
+  private async manejarOpcionEsperarStock(itemsFaltantes: any[]) {
     try {
-      const cantidad = Number(item.cantidadAtender) || 0;
-
-      if (cantidad <= 0) {
-        this.alertService.showAlert(
-          'Aviso',
-          'Ingrese cantidad a atender',
-          'warning'
-        );
-        return;
-      }
-
-      if (cantidad > item.pendiente) {
-        this.alertService.showAlert(
-          'Aviso',
-          'La cantidad excede lo pendiente',
-          'warning'
-        );
-        return;
-      }
-
-      if (cantidad > item.stock) {
-        // Permitimos parcialmente y generamos orden de compra para faltantes
-        // pero aquí prevenimos enviar más de lo que hay en stock.
-        this.alertService.showAlert(
-          'Aviso',
-          'No hay suficiente stock. Ajusta la cantidad.',
-          'warning'
-        );
-        return;
-      }
-
-      // Si ya existe en detalle, sumar
-      const idx = this.detalle.findIndex((d) => d.codigo === item.codigo);
-      if (idx >= 0) {
-        this.detalle[idx].cantidad += cantidad;
-      } else {
-        this.detalle.push({
-          idRequerimientoDetalle: item.idRequerimientoDetalle || item.id,
-          codigo: item.codigo,
-          descripcion: item.descripcion || item.producto,
-          cantidad: cantidad,
-          idrequerimiento: this.selected.idrequerimiento,
-          idalmacen: this.selected.idalmacen,
+      // Registrar notificaciones para cada item (al solicitante original)
+      for (const item of itemsFaltantes) {
+        await this.notificacionApi.insertarNotificacionStock({
+          iditem: item.codigo,
+          itemDescripcion: item.descripcion || item.producto,
+          mensaje: `El item ${item.codigo} - ${item.descripcion || item.producto} no tiene stock disponible actualmente. Te notificaremos cuando esté disponible para tu requerimiento ${this.selected?.numero || this.selected?.idrequerimiento || 'N/A'}.`,
+          idrequerimiento: this.selected?.idrequerimiento || 0,
+          tipo_notificacion: 'SIN_STOCK'
         });
       }
 
-      // Actualizar campos en items para reflectar visualmente
-      item.cantidadAtender = 0;
-    } catch (err) {
-      console.error('onAgregar error', err);
-    }
-  }
+      // Crear saldos pendientes
+      await this.crearSaldosPendientes(itemsFaltantes, 'ESPERA_STOCK');
 
-  // 3) Quitar del detalle de atención
-  onQuitar(index: number) {
-    this.detalle.splice(index, 1);
-  }
+      this.alertService.showAlertAcept(
+        'Notificación Registrada',
+        `Se ha notificado al solicitante sobre la falta de stock para:<br><br>
+         ${itemsFaltantes.map(i => `• ${i.codigo} - ${i.descripcion || i.producto}`).join('<br>')}<br><br>
+         El solicitante recibirá una notificación cuando el stock esté disponible.<br>
+         Puedes revisar los saldos pendientes en el módulo de Saldo-Requerimiento.`,
+        'success',
+      );
 
-  // 4) Limpiar detalle
-  onLimpiar() {
-    this.detalle = [];
-  }
-
-  // 5) Imprimir (usa la sección #contenidoPDF)
-  onImprimir() {
-    const contenido = document.getElementById('contenidoPDF');
-    if (!contenido) return;
-
-    const w = window.open('', '_blank');
-    if (!w) {
-      this.alertService.showAlert(
+      // Actualizar estado del requerimiento
+      await this.actualizarEstadoRequerimiento('PENDIENTE STOCK');
+    } catch (err: any) {
+      console.error('Error esperando stock:', err);
+      console.error('Error registrando notificaciones:', err);
+      this.alertService.showAlertError(
         'Error',
-        'No se pudo abrir ventana de impresión',
-        'error'
+        'No se pudo registrar la notificación de stock',
       );
-      return;
     }
-
-    w.document.write(`
-      <html>
-        <head>
-          <title>Imprimir Atención</title>
-          <link rel="stylesheet" href="/assets/styles.css" />
-          <style>
-            /* adapta estilos impresos si quieres */
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #333; padding: 6px; }
-          </style>
-        </head>
-        <body>
-          ${contenido.innerHTML}
-        </body>
-      </html>
-    `);
-    w.document.close();
-    w.focus();
-    setTimeout(() => w.print(), 300);
   }
 
-  // 6) Generar PDF (versión simple: abre vista para imprimir — si tienes jsPDF/html2pdf puedes integrarlo)
-  onGenerarPDF() {
-    // Reutilizamos impresión en nueva ventana; si quieres lo reemplazo por html2pdf/jsPDF
-    this.onImprimir();
-  }
-
-  // 7) Registrar Atención (persistir en Dexie / backend)
-  async onRegistrar() {
-    if (!this.selected) {
-      this.alertService.showAlert(
-        'Aviso',
-        'Seleccione un requerimiento',
-        'warning'
-      );
-      return;
-    }
-
-    if (!this.detalle || this.detalle.length === 0) {
-      this.alertService.showAlert(
-        'Aviso',
-        'No hay items en el detalle para registrar',
-        'warning'
-      );
-      return;
-    }
-
+  /**
+   * Opción 3: Decidir después - crear saldo pendiente sin notificaciones
+   */
+  private async manejarOpcionDecidirDespues(itemsFaltantes: any[]) {
     try {
-      this.alertService.mostrarModalCarga();
+      // Crear saldos pendientes
+      await this.crearSaldosPendientes(itemsFaltantes, 'PENDIENTE');
 
-      // 1) Validar stock otra vez y generar orden de compra automática para faltantes
-      const itemsFaltantes: any[] = [];
-      for (const d of this.detalle) {
-        const stock = this.obtenerStock(
-          d.codigo,
-          d.idalmacen || this.selected.idalmacen
-        );
-        if (stock < d.cantidad) {
-          itemsFaltantes.push({
-            ...d,
-            faltante: d.cantidad - stock,
-            disponible: stock,
-          });
-        }
-      }
-
-      if (itemsFaltantes.length > 0) {
-        // Genera orden de compra automática como ya tenías
-        await this.generarOrdenCompraAutomatica(itemsFaltantes);
-        // Opcional: notificar al usuario
-      }
-
-      // 2) Actualizar stock y actualizar detalle en Dexie (marcar atendida)
-      for (const d of this.detalle) {
-        // actualizar stock local
-        await this.actualizarStock(
-          d.codigo,
-          d.idalmacen || this.selected.idalmacen,
-          -d.cantidad
-        );
-
-        // actualizar detalle del requerimiento en Dexie:
-        // buscamos el registro por idRequerimientoDetalle o por codigo/idrequerimiento
-        let claveDetalle =
-          d.idRequerimientoDetalle || d.idRequerimientoDetalle === 0
-            ? d.idRequerimientoDetalle
-            : null;
-
-        if (claveDetalle) {
-          // si tu store tiene clave primaria, usa put
-          try {
-            const registro = await this.dexieService.detalles.get(claveDetalle);
-            if (registro) {
-              registro.atendida = (registro.atendida || 0) + d.cantidad;
-              await this.dexieService.detalles.put(registro);
-            } else {
-              // buscar por idrequerimiento + codigo
-              const reg = await this.dexieService.detalles
-                .where({
-                  idrequerimiento: this.selected.idrequerimiento,
-                  codigo: d.codigo,
-                })
-                .first();
-              if (reg) {
-                reg.atendida = (reg.atendida || 0) + d.cantidad;
-                await this.dexieService.detalles.put(reg);
-              }
-            }
-          } catch (e) {
-            console.warn(
-              'No se pudo actualizar detalle por id, intentando por keys',
-              e
-            );
-          }
-        } else {
-          // buscar por idrequerimiento + codigo
-          const reg = await this.dexieService.detalles
-            .where('idrequerimiento')
-            .equals(this.selected.idrequerimiento)
-            .and((r: any) => r.codigo === d.codigo)
-            .first();
-
-          if (reg) {
-            reg.atendida = (reg.atendida || 0) + d.cantidad;
-            await this.dexieService.detalles.put(reg);
-          }
-        }
-      }
-
-      // 3) Marcar requerimiento como parcialmente o completamente atendido
-      await this.recalcularEstadoRequerimiento(this.selected.idrequerimiento);
-
-      // 4) Guardar registro de despacho (opcional: store 'despachos' en Dexie)
-      const despachoRecord = {
-        id: Date.now(),
-        numeroDespacho: `DESP-${Date.now()}`,
-        fecha: new Date().toISOString(),
-        almacen: this.selected.almacen || 'ALMACEN_DEFAULT',
-        detalle: this.detalle.map((item) => ({
-          despachoId: Date.now(),
-          detalleRecepcionId: item.id || 0,
-          codigo: item.codigo || '',
-          descripcion: item.descripcion || '',
-          cantidad: item.cantidad || 0,
-          unidadMedida: item.unidadMedida || 'UN',
-          precioUnitario: item.precioUnitario || 0,
-          descuento: item.descuento || 0,
-          subtotal: (item.cantidad || 0) * (item.precioUnitario || 0),
-          impuesto: 0, // You might need to calculate this based on your tax logic
-          total: (item.cantidad || 0) * (item.precioUnitario || 0),
-          estado: 'PENDIENTE' as const,
-          observaciones: item.observaciones || '',
-        })),
-        usuarioDespacha: this.usuario.documentoidentidad,
-        estado: 'PENDIENTE' as const,
-        observaciones: `Despacho para requerimiento ${this.selected.idrequerimiento}`,
-      };
-      try {
-        if (this.dexieService.despachos) {
-          await this.dexieService.despachos.add(despachoRecord);
-        } else {
-          console.log(
-            'Dexie store "despachos" no definido, imprime en consola:',
-            despachoRecord
-          );
-        }
-      } catch (e) {
-        console.warn('No se pudo guardar despacho en Dexie:', e);
-      }
-
-      this.alertService.cerrarModalCarga();
       this.alertService.showAlert(
-        'Éxito',
-        'Atención registrada correctamente',
-        'success'
+        'Saldo Pendiente',
+        `Los items con saldo insuficiente han sido registrados como pendientes.<br>
+         Puedes decidir qué hacer más tarde en el módulo de Saldo-Requerimiento.`,
+        'info',
       );
 
-      // limpiar vista y recargar datos
-      this.detalle = [];
-      await this.cargarRequerimientosAprobados();
-      this.selected = null;
-      this.items = [];
-    } catch (err) {
-      console.error('Error registrando atención:', err);
-      this.alertService.cerrarModalCarga();
-      this.alertService.showAlert(
+      // Actualizar estado del requerimiento
+      await this.actualizarEstadoRequerimiento('SALDO PENDIENTE');
+    } catch (err: any) {
+      console.error('Error creando saldos pendientes:', err);
+      this.alertService.showAlertError(
         'Error',
-        'No se pudo registrar la atención',
-        'error'
+        'No se pudo crear el saldo pendiente',
       );
     }
   }
 
-  // Recalcula el estado del requerimiento en base a sus detalles (pendiente/completo)
-  async recalcularEstadoRequerimiento(idrequerimiento: any) {
-    const detalles = await this.dexieService.detalles
-      .where('idrequerimiento')
-      .equals(idrequerimiento)
-      .toArray();
+  /**
+   * Opción 4: Cerrar saldo - cerrar el requerimiento
+   */
+  private async manejarOpcionCerrarSaldo(itemsFaltantes: any[]) {
+    try {
+      // Actualizar estado del requerimiento a cerrado
+      await this.actualizarEstadoRequerimiento('CERRADO');
 
-    let pendiente = false;
-    for (const d of detalles) {
-      // const solicitada = Number(d.cantidad || d.cantidadSolicitada || 0);
-      const solicitada = Number(d.cantidad || 0);
-      const atendida = Number(d.atendida || 0);
-      if (atendida < solicitada) {
-        pendiente = true;
-        break;
-      }
-    }
-
-    // actualizar requerimiento en Dexie
-    const req = await this.dexieService.requerimientos.get(idrequerimiento);
-    if (req) {
-      req.estados = pendiente ? 'APROBADO' : 'DESPACHADO'; // ajusta nomenclatura según tu sistema
-      await this.dexieService.requerimientos.put(req);
+      this.alertService.showAlertAcept(
+        'Requerimiento Cerrado',
+        'El requerimiento ha sido cerrado por falta de stock.',
+        'info',
+      );
+    } catch (err: any) {
+      console.error('Error cerrando requerimiento:', err);
+      this.alertService.showAlertError(
+        'Error',
+        'No se pudo cerrar el requerimiento',
+      );
     }
   }
 
-  // Generar orden de compra para items faltantes (ya tenías esta lógica; la reutilizo)
-  async generarOrdenCompraAutomatica(itemsFaltantes: any[]) {
-    const nuevaOrden: OrdenCompra = {
-      id: Date.now(),
-      numeroOrden: `OC-${Date.now()}`, // Required field
-      solicitudCompraId: 0, // You'll need to provide this
-      fecha: new Date().toISOString(),
-      fechaEntrega: new Date(
-        Date.now() + 7 * 24 * 60 * 60 * 1000
-      ).toISOString(), // 7 days from now
-      proveedor: '', // You'll need to provide a default or get it from somewhere
-      nombreProveedor: '', // You'll need to provide a default or get it from somewhere
-      rucProveedor: '', // You'll need to provide a default or get it from somewhere
-      direccionEntrega: '', // You'll need to provide a default or get it from somewhere
-      montoTotal: 0, // You'll need to calculate this
-      moneda: 'PEN', // Default currency, adjust as needed
-      formaPago: 'CONTADO', // Default payment method, adjust as needed
-      condicionesPago: 'CONTADO', // Default payment terms, adjust as needed
-      plazoEntrega: 7, // 7 days, adjust as needed
-      detalle: itemsFaltantes.map((item) => ({
+  /**
+   * Crear saldos pendientes para los items faltantes
+   */
+  private async crearSaldosPendientes(itemsFaltantes: any[], estado: string) {
+    // Preparar datos para el saldo pendiente
+    const saldoPendiente = {
+      idrequerimiento: this.selected?.idrequerimiento || 0,
+      requerimientoNumero: this.selected?.numero || `REQ-${this.selected?.idrequerimiento}`,
+      usuario: this.usuario.documentoidentidad,
+      usuarioCreador: this.usuario.documentoidentidad,
+      ceco: this.selected?.idcentrocosto || this.selected?.ceco || '',
+      items: itemsFaltantes.map(item => ({
         codigo: item.codigo,
-        ordenCompraId: 0,
         descripcion: item.descripcion || item.producto,
-        cantidad: item.faltante || item.cantidad - (item.disponible || 0),
-        cantidadRecibida: 0,
-        cantidadPendiente:
-          item.faltante || item.cantidad - (item.disponible || 0),
-        unidadMedida: 'UND', // Default unit, adjust as needed
-        precioUnitario: 0, // You'll need to provide a price
-        descuento: 0,
-        subtotal: 0, // Calculate as cantidad * precioUnitario
-        impuesto: 0, // Calculate based on your tax rate
-        total: 0, // Calculate as subtotal + impuesto - descuento
-        estado: 'PENDIENTE',
-      })),
-      usuarioGenera: this.usuario.usuario, // Assuming you have user info
-      estado: 'GENERADA',
+        cantidadSolicitada: item.cantidad,
+        cantidadDespachada: item.atendida || 0,
+        saldoPendiente: item.faltante,
+        unidadMedida: item.unidadMedida || 'UND'
+      }))
     };
 
-    this.ordenesCompraGeneradas.push(nuevaOrden);
-
-    // Guardar orden en Dexie si tienes store
-    try {
-      if (this.dexieService.ordenesCompra) {
-        await this.dexieService.ordenesCompra.add(nuevaOrden);
-      } else {
-        console.log('Orden generada (no hay store ordenesCompra):', nuevaOrden);
-      }
-    } catch (e) {
-      console.warn('No se pudo guardar orden de compra:', e);
+    // Usar el servicio de consolidación para registrar el saldo pendiente
+    const resp = await this.consolidacionService.registrarSaldoPendienteAprobacion(saldoPendiente);
+    
+    if (!resp.success) {
+      throw new Error(resp.mensaje || 'Error al registrar saldo pendiente');
     }
 
-    console.log('Orden de compra generada:', nuevaOrden);
+    // Insertar notificaciones para cada item en saldo pendiente
+    console.log('📝 Insertando notificaciones de saldo pendiente para:', itemsFaltantes.length, 'items');
+    
+    for (const item of itemsFaltantes) {
+      try {
+        await this.notificacionApi.registrarNotificacionAlmacen({
+          iditem: item.codigo,
+          id_dreq: this.selected?.numero || this.selected?.idrequerimiento?.toString() || 'N/A',
+          itemDescripcion: item.descripcion || item.producto,
+          mensaje: `El item ${item.codigo} - ${item.descripcion || item.producto} ha quedado en saldo pendiente por falta de stock. Requerimiento: ${this.selected?.numero || this.selected?.idrequerimiento || 'N/A'}.`,
+          tipo_notificacion: 'SALDO_PENDIENTE'
+        });
+        console.log('✅ Notificación de almacén registrada para item:', item.codigo);
+      } catch (error) {
+        console.error('❌ Error al registrar notificación de almacén para item:', item.codigo, error);
+      }
+    }
+  }
+
+  /**
+   * Actualizar el estado del requerimiento
+   */
+  private async actualizarEstadoRequerimiento(estado: string) {
+    if (this.selected) {
+      this.selected.estados = estado;
+      await this.dexieService.requerimientos.put(this.selected);
+      await this.cargarRequerimientosAprobados();
+    }
+  }
+
+  /**
+   * Cargar notificaciones del almacén
+   */
+  async cargarNotificaciones() {
+    try {
+      // Cargar todas las notificaciones del usuario
+      this.notificaciones = await this.notificacionApi.listarTodasMisNotificaciones();
+      
+      // Contar las no leídas
+      this.notificacionesNoLeidas = this.notificaciones.filter(n => !n.leida).length;
+      
+      console.log('📬 Notificaciones cargadas:', this.notificaciones.length, 'No leídas:', this.notificacionesNoLeidas);
+    } catch (error) {
+      console.error('Error al cargar notificaciones:', error);
+    }
+  }
+
+  /**
+   * Marcar notificación como leída
+   */
+  async marcarNotificacionComoLeida(notificacion: any) {
+    try {
+      await this.notificacionApi.marcarComoLeida(notificacion.id_notificacion);
+      notificacion.leida = true;
+      this.notificacionesNoLeidas--;
+    } catch (error) {
+      console.error('Error al marcar notificación como leída:', error);
+    }
+  }
+
+  /**
+   * Obtener el total atendido de un item (considerando atendidas anteriores + actual)
+   */
+  private async getTotalAtendido(codigo: string): Promise<number> {
+    try {
+      const registro = await this.dexieService.detalles
+        .where('idrequerimiento')
+        .equals(this.selected?.idrequerimiento || 0)
+        .and(x => x.codigo === codigo)
+        .first();
+      
+      return Number(registro?.atendida || 0);
+    } catch (error) {
+      console.error('Error obteniendo total atendido:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Obtener icono según tipo de notificación
+   */
+  getTipoNotificacionIcon(tipo: string): string {
+    switch (tipo) {
+      case 'STOCK_DISPONIBLE':
+        return 'bx bx-check-circle text-success';
+      case 'SALDO_PENDIENTE':
+        return 'bx bx-error text-warning';
+      case 'DESPACHO_PARCIAL':
+        return 'bx bx-info-circle text-info';
+      case 'SIN_STOCK':
+        return 'bx bx-x-circle text-danger';
+      default:
+        return 'bx bx-info-circle text-info';
+    }
   }
 }

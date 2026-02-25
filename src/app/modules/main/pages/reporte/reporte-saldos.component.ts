@@ -1,6 +1,7 @@
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { Component, OnInit } from '@angular/core';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
+import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -22,19 +23,31 @@ export class ReporteSaldosComponent implements OnInit {
     filtroCodigo: string = '';
     almacenes: { label: string; value: string }[] = [];
     loading: boolean = false;
+    usuario: any = {};
 
     constructor(
         private requerimientoService: RequerimientosService,
-        private alertService: AlertService
+        private alertService: AlertService,
+        private dexieService: DexieService
     ) { }
 
-    ngOnInit(): void {
+    async ngOnInit(): Promise<void> {
+        // Cargar usuario desde Dexie
+        this.usuario = await this.dexieService.usuario.toArray();
+        this.usuario = this.usuario[0] || {};
+        
         this.listarSaldos();
     }
 
     listarSaldos() {
         this.loading = true;
-        this.requerimientoService.obtenerReporteSaldos([]).subscribe({
+        
+        // Enviar idempresa del usuario logueado
+        const body = {
+            idempresa: this.usuario.idempresa
+        };
+        
+        this.requerimientoService.obtenerReporteSaldos(body).subscribe({
             next: (data: any) => {
                 this.saldos = Array.isArray(data) ? data : [];
                 this.cargarAlmacenes();
@@ -45,7 +58,7 @@ export class ReporteSaldosComponent implements OnInit {
                 this.loading = false;
                 this.alertService.showAlertError(
                     'Error',
-                    'Error al cargar reporte de saldos'
+                    'No se pudo cargar los saldos'
                 );
             }
         });

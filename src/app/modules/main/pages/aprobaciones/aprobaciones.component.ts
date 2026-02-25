@@ -401,38 +401,6 @@ export class AprobacionesComponent {
 
     if (!confirmacion) return;
 
-    // const sinDistribucion = req.detalle.some(
-    //   (d: { distribucion: string | any[]; }) => !Array.isArray(d.distribucion) || d.distribucion.length === 0
-    // );
-
-    // if (sinDistribucion) {
-    //   this.alertService.showAlertError(
-    //     'Error',
-    //     'Existen líneas sin distribución contable'
-    //   );
-    //   return;
-    // }
-
-    // const filtro = {
-    //   CompaniaCodigo: this.usuario.idempresa,
-    //   TipoComprobante: 'SY',
-    //   Serie: 'WHRQ',
-    // };
-
-    // const resp: any = await firstValueFrom(
-    //   this.requerimientosService.NuevoRequerimientoCorrelativo([filtro])
-    // );
-
-    // if (!resp?.length) {
-    //   this.alertService.showAlertError(
-    //     'Error',
-    //     'No se pudo generar el correlativo'
-    //   );
-    //   return;
-    // }
-
-    // this.correlativoRequerimiento = resp[0].codigoGenerado;
-    // console.log('🔢 Correlativo generado:', this.correlativoRequerimiento);
     let origenapp = 'app_logistica';
     let comprasAlmacenFlag;
     if (req.itemtipo === 'TRANSFERENCIA' || req.itemtipo === 'CONSUMO') {
@@ -460,7 +428,13 @@ export class AprobacionesComponent {
 
     let um = this.itemsFiltered.find(i => i.item === first.codigo)?.unidadCodigo;
 
+    // let cuentacontable =  this.itemsFiltered.find(i => i.item === first.codigo)?.cuentaGasto;
+
+    let cuentacontable = '';
+
     let actividad = this.labores.find(l => l.labor === first.labor)?.idlabor;
+
+    let ccostodestino = '';
 
 
     try {
@@ -502,12 +476,14 @@ export class AprobacionesComponent {
 
           // 🟩 DETALLE CORREGIDO
           detalle: req.detalle.map((d: any, index: number) => {
-            debugger
             const ceco = this.cecos.find((c) => c.localname === d.ceco);
             console.log(ceco);
             const item = this.itemsFiltered.find(i => i.item === d.codigo);
+            cuentacontable =  this.itemsFiltered.find(i => i.item === d.codigo)?.cuentaGasto;
             const labores = this.labores.find(l => l.labor === d.labor);
             console.log('labores', labores);
+            ccostodestino = labores?.idlabor ?? '';
+            console.log(cuentacontable);
 
             return {
               Secuencia: index + 1,
@@ -545,10 +521,12 @@ export class AprobacionesComponent {
             {
               Secuencia: 1,
               Linea: 1,
-              Account: accountDefault,
+              // Account: accountDefault,
+              Account: cuentacontable,
               Afe: proyectoAfeDefault,
               Monto: '100.00',
-              CentroCostoDestino: centroCostoDefault ?? '',
+              //CentroCostoDestino: centroCostoDefault ?? '',
+              CentroCostoDestino: ccostodestino ?? '',
               Sucursal: '0801',
               CampoReferencia: req.referenciaGasto ?? 'GA',
               ReferenciaFiscal01: '',

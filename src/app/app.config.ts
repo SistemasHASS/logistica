@@ -6,7 +6,10 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { providePrimeNG } from 'primeng/config';
-import Aura from '@primeuix/themes/aura'
+import Aura from '@primeuix/themes/aura';
+import { NotificationService } from './shared/services/notification.service';
+import { StockNotificationService } from './shared/services/stock-notification.service';
+import { DexieService } from './shared/dixiedb/dexie-db.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -27,6 +30,9 @@ export const appConfig: ApplicationConfig = {
           darkModeSelector: 'light' // 👈🔥 FORZAR MODO CLARO
         }
       }
-    })
+    }),
+    NotificationService,
+    StockNotificationService,
+    DexieService
   ]
 };

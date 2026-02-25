@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '@/app/modules/auth/services/auth.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
+import { StockNotificationService } from '@/app/shared/services/stock-notification.service';
 import { APP_VERSION, APP_INFO } from 'src/environments/version';
 
 @Component({
@@ -30,7 +31,8 @@ export class LoginComponent {
     private fb: FormBuilder,
     private dexieService: DexieService,
     private alertService: AlertService,
-    private authService: AuthService
+    private authService: AuthService,
+    private stockNotificationService: StockNotificationService
   ) {
     this.loginForm = this.fb.group({
       usuario: ['', [Validators.required]],  // Campo requerido
@@ -41,6 +43,8 @@ export class LoginComponent {
   async ngOnInit() {
     this.usuario = await this.dexieService.showUsuario()
     if (!!this.usuario) {
+      // Recargar notificaciones para el usuario existente
+      await this.stockNotificationService.recargarUsuario();
       this.login()
     }
   }
@@ -134,6 +138,8 @@ export class LoginComponent {
             this.mensajeLogin = 'El usuario cuenta con más de una cuenta, comuníquese con su administrador del servicio.';
           } else {
             await this.dexieService.saveUsuario(resp[0]);
+            // Recargar notificaciones para el nuevo usuario
+            await this.stockNotificationService.recargarUsuario();
             this.login();
           }
 

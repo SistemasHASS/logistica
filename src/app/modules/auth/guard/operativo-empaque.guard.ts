@@ -14,7 +14,8 @@ export class OperativoEmpaqueGuard implements CanActivate {
     if (
       await this.auth.isUsuario() ||
       await this.auth.isEmpaque() ||
-      await this.auth.isLogistico()
+      await this.auth.isLogistico() ||
+      await this.auth.isAlmacen()
     ) {
       return true;
     }

@@ -71,11 +71,6 @@ export class ParametrosComponent implements OnInit {
   activosFijos: any[] = [];
   comodities: any[] = [];
 
-  // tipoItem: any[] = [
-  //   { id: 'COMPRA', descripcion: 'COMPRA' },
-  //   { id: 'CONSUMO', descripcion: 'CONSUMO' }
-  // ];
-
   // 🔥 TIPO ITEM DINÁMICO
   tipoItem: any[] = [];
 
@@ -149,15 +144,22 @@ export class ParametrosComponent implements OnInit {
     await this.getUsuario();
     await this.cargarRoles(); // 🔥 FALTABA ESTO
     console.log('ROL REAL:', this.usuario?.idrol);
-    await this.validarExisteConfiguracion();
-    await this.llenarDropdowns();
-    // 🔒 FORZAR TIPO ITEM A CONSUMO
-    // this.configuracion.idTipoItem = 'CONSUMO';
-    this.configurarTipoItemPorRol(); // 👈 OBLIGATORIO
-    // 👇 SOLO después de tener todo
-    if (this.configuracion.idTipoItem) {
-      await this.ListarAlmacenesPorRol();
+    
+    // 🔥 INICIALIZAR TIPO ITEM SIEMPRE (independientemente de si hay configuración guardada)
+    this.configurarTipoItemPorRol();
+    console.log('🔍 Tipo Item inicializado en ngOnInit:', this.configuracion.idTipoItem);
+    console.log('🔍 Array tipoItem:', this.tipoItem);
+    
+    await this.llenarDropdowns(); // Cargar todos los datos base primero
+    await this.validarExisteConfiguracion(); // Luego cargar configuración guardada
+    
+    // 🔥 ASEGURAR QUE LOS VALORES GUARDADOS SE MUESTREN EN LOS DROPDOWNS
+    if (this.configuracion) {
+      console.log('🔄 Configuración final cargada:', this.configuracion);
+      // Los dropdowns ya deberían mostrar los valores gracias a [(ngModel)]
+      // pero aseguramos que no se limpien accidentalmente
     }
+    
     // Oculta todos al inicio
     this.ocultarItem = true;
     this.ocultarLabor = true;
@@ -190,6 +192,35 @@ export class ParametrosComponent implements OnInit {
     const configuracion = await this.dexieService.obtenerPrimeraConfiguracion();
     if (configuracion) {
       this.configuracion = configuracion;
+      console.log('🔄 Configuración cargada:', this.configuracion);
+      console.log('🔍 Tipo Item cargado desde BD:', this.configuracion.idTipoItem);
+      
+      // 🔥 Asegurar que el tipo item esté configurado según el rol
+      await this.cargarRoles();
+      this.configurarTipoItemPorRol();
+      console.log('🔍 Tipo Item después de configurarPorRol:', this.configuracion.idTipoItem);
+      
+      // 🔥 Cargar datos dependientes según la configuración guardada
+      if (this.configuracion.idcultivo) {
+        await this.darTurnoCecosProyectos(false); // Cargar turnos, CECOs y proyectos según cultivo
+      }
+      
+      if (this.configuracion.idturno) {
+        await this.darProyectoCecos(false); // Cargar CECOs y proyectos según turno
+      }
+      
+      if (this.configuracion.idceco) {
+        await this.darProyectoInversionLabor(false); // Cargar labor según CECO
+      }
+      
+      if (this.configuracion.idlabor) {
+        await this.filtrarProyectoPorLabor(true); // Filtrar proyectos según labor, preservando selección
+      }
+      
+      // 🔥 Cargar almacenes según tipo item y rol
+      if (this.configuracion.idTipoItem) {
+        await this.ListarAlmacenesPorRol();
+      }
     }
   }
 
@@ -235,11 +266,15 @@ export class ParametrosComponent implements OnInit {
   // ===============================
   configurarTipoItemPorRol() {
 
+    console.log('🔧 Configurando Tipo Item - Rol:', this.usuario?.idrol, 'esLogist:', this.esLogist);
+    
     // Base: todos pueden COMPRA y CONSUMO
     this.tipoItem = [
-      // { id: 'COMPRA', descripcion: 'COMPRA' },
+      { id: 'COMPRA', descripcion: 'COMPRA' },
       { id: 'CONSUMO', descripcion: 'CONSUMO' },
     ];
+
+    console.log('🔧 Tipo Item base:', this.tipoItem);
 
     // 🔐 SOLO LOGIST puede TRANSFERENCIA
     if (this.esLogist) {
@@ -247,6 +282,7 @@ export class ParametrosComponent implements OnInit {
         id: 'TRANSFERENCIA',
         descripcion: 'TRANSFERENCIA',
       });
+      console.log('🔧 Tipo Item con TRANSFERENCIA:', this.tipoItem);
     }
 
     // Reset por seguridad si cambia el rol
@@ -255,6 +291,14 @@ export class ParametrosComponent implements OnInit {
       !this.esLogist
     ) {
       this.configuracion.idTipoItem = 'CONSUMO';
+      console.log('🔧 Reset a CONSUMO por rol no autorizado');
+    }
+
+    // 🔹 Auto-seleccionar si no hay valor o si está vacío
+    if (!this.configuracion.idTipoItem || this.configuracion.idTipoItem.trim() === '') {
+      // Por defecto seleccionar CONSUMO para todos los roles
+      this.configuracion.idTipoItem = 'CONSUMO';
+      console.log('🤖 Tipo Item auto-seleccionado (CONSUMO):', this.configuracion.idTipoItem);
     }
 
     // 🔹 Auto-seleccionar si solo hay una opción
@@ -262,6 +306,8 @@ export class ParametrosComponent implements OnInit {
       this.configuracion.idTipoItem = this.tipoItem[0].id;
       console.log('✅ Auto-seleccionado tipoItem:', this.configuracion.idTipoItem);
     }
+    
+    console.log('🔧 Resultado final - idTipoItem:', this.configuracion.idTipoItem, 'array:', this.tipoItem);
   }
 
   // ===============================
@@ -296,14 +342,90 @@ export class ParametrosComponent implements OnInit {
     }
   }
 
-  async onCecoTurnoProyectoChange(limpiar = false) {
-    if (limpiar) {
-      this.configuracion.idturno = '';
-      this.configuracion.idceco = '';
-      this.configuracion.idlabor = '';
-      this.configuracion.idproyecto;
+  async onCultivoChange() {
+    console.log('🔄 Cultivo cambiado:', this.configuracion.idcultivo);
+    console.log('🔄 Tipo Item actual:', this.configuracion.idTipoItem);
+    
+    // Buscar el cultivo seleccionado para ver sus propiedades
+    const cultivoSeleccionado = this.cultivos.find(c => c.codigo === this.configuracion.idcultivo);
+    if (cultivoSeleccionado) {
+      console.log('📋 Cultivo seleccionado:', {
+        id: cultivoSeleccionado.id,
+        codigo: cultivoSeleccionado.codigo,
+        descripcion: cultivoSeleccionado.descripcion
+      });
+    } else {
+      console.log('❌ No se encontró el cultivo con código:', this.configuracion.idcultivo);
     }
-    await this.filtraCecoTurnoProyecto();
+    
+    // Limpiar campos dependientes
+    this.configuracion.idturno = '';
+    this.configuracion.idceco = '';
+    this.configuracion.idlabor = '';
+    this.configuracion.idproyecto = '';
+    
+    // Limpiar filtros
+    this.filteredTurnos = [];
+    this.filteredCecos = [];
+    this.filteredLabores = [];
+    this.filteredProyectos = [];
+    
+    if (this.configuracion.idcultivo) {
+      console.log('📊 Total de CECOs disponibles:', this.cecos.length);
+      console.log('📊 Cultivos disponibles:', this.cultivos.map(c => ({ id: c.id, codigo: c.codigo })));
+      
+      // Cargar turnos según cultivo (para CONSUMO y TRANSFERENCIA)
+      this.filteredTurnos = this.turnos.filter(
+        (x: Turno) => x.idcultivo?.trim() === this.configuracion.idcultivo
+      );
+      
+      // Para COMPRA: cargar CECOs según cultivo
+      if (this.configuracion.idTipoItem === 'COMPRA') {
+        console.log('🎯 Cargando CECOs para COMPRA...');
+        await this.cargarCecosPorCultivo();
+      } else {
+        console.log('🎯 No es COMPRA, no cargar CECOs por cultivo');
+      }
+    }
+    
+    console.log('📊 Turnos filtrados:', this.filteredTurnos.length);
+    console.log('📊 CECOs filtrados:', this.filteredCecos.length);
+  }
+
+  // Método para cargar CECOs según cultivo (para flujo COMPRA)
+  async cargarCecosPorCultivo() {
+    try {
+      if (!this.configuracion.idcultivo) return;
+      
+      console.log('🔍 Buscando CECOs para cultivo:', this.configuracion.idcultivo);
+      console.log('📊 Total CECOs antes de filtrar:', this.cecos.length);
+      
+      // Mostrar algunos CECOs de ejemplo para depurar
+      if (this.cecos.length > 0) {
+        console.log('📋 Ejemplos de CECOs disponibles:');
+        this.cecos.slice(0, 3).forEach((ceco, index) => {
+          console.log(`  ${index + 1}. ID: ${ceco.id}, idcultivo: "${ceco.idcultivo}", localname: "${ceco.localname}"`);
+        });
+      }
+      
+      // Filtrar CECOs por cultivo
+      this.filteredCecos = this.cecos.filter(
+        (ceco: Ceco) => ceco.idcultivo?.trim() === this.configuracion.idcultivo
+      );
+      
+      console.log('🔄 CECOs filtrados por cultivo:', this.filteredCecos.length);
+      
+      if (this.filteredCecos.length > 0) {
+        console.log('✅ CECOs encontrados:');
+        this.filteredCecos.slice(0, 3).forEach((ceco, index) => {
+          console.log(`  ${index + 1}. ID: ${ceco.id}, localname: "${ceco.localname}"`);
+        });
+      } else {
+        console.log('❌ No se encontraron CECOs para este cultivo');
+      }
+    } catch (error) {
+      console.error('❌ Error al cargar CECOs por cultivo:', error);
+    }
   }
 
   async sincronizarTablasMaestras() {
@@ -539,8 +661,11 @@ export class ParametrosComponent implements OnInit {
         case 'ITEM':
           reqItems.push(cabecera);
           for (const d of detalles) {
+            console.log('🔍 Detalle desde backend:', d);
+            console.log('🔍 ID del detalle:', d.id);
             detItems.push({
               ...d,
+              idOriginal: d.id, // Guardar ID original de LOGISTICA_DReq
               idrequerimiento: req.idrequerimiento
             });
           }
@@ -644,19 +769,6 @@ export class ParametrosComponent implements OnInit {
       this.configuracion.idarea = this.areas[0].idarea;
     }
   }
-
-  // async ListarProyectos() {
-  //   const proyectos = await this.dexieService.showProyectos();
-  //   const empresa = this.empresas.find(
-  //     (empresa: any) => empresa.ruc === this.usuario.ruc
-  //   );
-  //   this.proyectos = proyectos.filter(
-  //     (proyecto: any) => proyecto.ruc === empresa.ruc
-  //   );
-  //   if (this.proyectos.length == 1) {
-  //     this.configuracion.idproyecto = this.proyectos[0].id;
-  //   }
-  // }
 
   async ListarProyectos() {
     const proyectos = await this.dexieService.showProyectos();
@@ -780,69 +892,39 @@ export class ParametrosComponent implements OnInit {
     }
   }
 
-  // async darProyectoCecos(limpiar = false) {
+  async darTurnoCecosProyectos(limpiar = false) {
+    // Limpiar campos dependientes si se solicita
+    if (limpiar) {
+      this.configuracion.idturno = '';
+      this.configuracion.idceco = '';
+      this.configuracion.idlabor = '';
+      this.configuracion.idproyecto = '';
+      this.filteredTurnos = [];
+      this.filteredCecos = [];
+      this.filteredLabores = [];
+      this.filteredProyectos = [];
+    }
 
-  //   this.filteredCecos = [];
+    if (this.configuracion.idcultivo) {
+      // Cargar turnos según cultivo
+      this.filteredTurnos = this.turnos.filter(
+        (x: Turno) => x.idcultivo?.trim() === this.configuracion.idcultivo
+      );
 
-  //   if (limpiar) {
-  //     this.configuracion.idceco = '';
-  //     this.configuracion.idlabor = '';
-  //     this.configuracion.idproyecto = '';
-  //   }
+      // Para COMPRA: cargar CECOs según cultivo
+      if (this.configuracion.idTipoItem === 'COMPRA') {
+        await this.cargarCecosPorCultivo();
+      } else {
+        // Para CONSUMO y TRANSFERENCIA: cargar CECOs según cultivo
+        this.filteredCecos = this.cecos.filter(
+          (x: Ceco) => x.idcultivo?.trim() === this.configuracion.idcultivo
+        );
+      }
 
-  //   const turno = this.filteredTurnos.find(
-  //     (e: any) => e.codTurno === this.configuracion.idturno
-  //   );
-
-  //   // =========================
-  //   // SI ES SIN TURNO
-  //   // =========================
-  //   if (!turno || turno.nombreTurno?.toLowerCase() === 'sinturno') {
-
-  //     const cultivo = this.cultivos.find(
-  //       (c: any) => c.id == this.configuracion.idcultivo
-  //     );
-
-  //     if (cultivo) {
-  //       this.filteredProyectos = this.proyectos.filter(
-  //         (p: any) => p.cultivo === cultivo.codigo
-  //       );
-
-  //       // ✅ AUTO-SELECCIONAR EL PRIMER PROYECTO
-  //       if (this.filteredProyectos.length > 0) {
-  //         this.configuracion.idproyecto = this.filteredProyectos[0].afe;
-  //         await this.nombreProyecto(this.configuracion.idproyecto);
-  //       }
-  //     } else {
-  //       this.filteredProyectos = [];
-  //     }
-
-  //   }
-  //   // =========================
-  //   // TURNO NORMAL
-  //   // =========================
-  //   else {
-
-  //     this.configuracion.idproyecto = turno.idproyecto;
-
-  //     this.filteredProyectos = this.proyectos.filter(
-  //       (p: any) => p.afe === turno.idproyecto
-  //     );
-
-  //     if (this.configuracion.idproyecto)
-  //       await this.nombreProyecto(this.configuracion.idproyecto);
-  //   }
-
-  //   // CECO SEGÚN TURNO
-  //   if (turno && this.configuracion.idturno) {
-  //     this.filteredCecos = this.cecos.filter((x: Ceco) =>
-  //       x.conturno.includes(turno.conturno ?? '')
-  //     );
-  //   }
-
-  //   console.log('✅ Proyectos:', this.filteredProyectos);
-  //   console.log('✅ Proyecto asignado:', this.configuracion.idproyecto);
-  // }
+      console.log('✅ Turnos cargados:', this.filteredTurnos.length);
+      console.log('✅ CECOs cargados:', this.filteredCecos.length);
+    }
+  }
 
   async darProyectoCecos(limpiar = false) {
 
@@ -855,18 +937,47 @@ export class ParametrosComponent implements OnInit {
       // this.filteredProyectos = [];
     }
 
+    if (this.configuracion.idcultivo) {
+      // Para COMPRA: ya se cargaron CECOs por cultivo en onCultivoChange()
+      if (this.configuracion.idTipoItem !== 'COMPRA') {
+        // Para CONSUMO y TRANSFERENCIA: lógica original
+        this.filteredCecos = this.cecos.filter(
+          (x: Ceco) => x.idcultivo?.trim() === this.configuracion.idcultivo
+        );
+      } else {
+        // Para COMPRA: ya están cargados desde onCultivoChange()
+        // No hacer nada, los CECOs ya están filtrados por cultivo
+      }
+    }
+
     const turno = this.filteredTurnos.find(
       (e: any) => e.codTurno === this.configuracion.idturno
     );
 
-    // CECO SEGÚN TURNO
     if (turno && this.configuracion.idturno) {
-      this.filteredCecos = this.cecos.filter((x: Ceco) =>
+      // Para CONSUMO y TRANSFERENCIA: filtrar CECOs por turno
+      const cecosPorTurno = this.cecos.filter((x: Ceco) =>
         x.conturno.includes(turno.conturno ?? '')
       );
+      
+      // Si hay CECOs que coinciden con el turno, usarlos
+      // Si no, mantener los CECOs filtrados por cultivo (para CONSUMO)
+      if (cecosPorTurno.length > 0) {
+        this.filteredCecos = cecosPorTurno;
+        console.log('✅ CECOs filtrados por turno:', cecosPorTurno.length);
+      } else {
+        console.log('⚠️ No hay CECOs para el turno, manteniendo CECOs por cultivo');
+        // Para CONSUMO, mantener los CECOs por cultivo si no hay por turno
+        if (this.configuracion.idTipoItem !== 'COMPRA') {
+          // Ya están filtrados por cultivo desde arriba
+        } else {
+          // Para COMPRA, limpiar si no hay CECOs por turno
+          this.filteredCecos = [];
+        }
+      }
     }
-
-    console.log('✅ Cecos:', this.filteredCecos);
+    
+    console.log('✅ Cecos finales:', this.filteredCecos.length);
   }
 
 
@@ -874,50 +985,60 @@ export class ParametrosComponent implements OnInit {
     this.filteredProyectos.length = 0;
     if (limpiar) {
       this.configuracion.idlabor = '';
+      this.configuracion.idproyecto = '';
     }
+    
     if (this.configuracion.idceco) {
-      const ceco = this.filteredCecos.find(
-        (e: any) => e.id === this.configuracion.idceco
-      );
-      if (ceco) {
-        if (ceco.esinversion === 1) {
-          this.configuracion.idproyecto = '';
-          const proyectos = await this.dexieService.showProyectos();
-          this.filteredProyectos = proyectos;
-        }
+      console.log('🔍 CECO seleccionado:', this.configuracion.idceco);
+      
+      // Para COMPRA: cargar labores según CECO
+      if (this.configuracion.idTipoItem === 'COMPRA') {
+        console.log('🎯 Cargando labores para COMPRA según CECO...');
+        
+        // Filtrar labores que pertenecen al CECO seleccionado
         const labores = await this.dexieService.showLabores();
         this.filteredLabores = labores.filter(
-          (x: Labor) => x.ceco == this.configuracion.idceco
+          (x: Labor) => x.ceco === this.configuracion.idceco
         );
+        
+        console.log('📊 Labores filtradas por CECO:', this.filteredLabores.length);
+        
+        if (this.filteredLabores.length > 0) {
+          console.log('✅ Labores encontradas:');
+          this.filteredLabores.slice(0, 3).forEach((labor, index) => {
+            console.log(`  ${index + 1}. ${labor.idlabor} - ${labor.labor}`);
+          });
+          
+          // 🎯 AUTO-SELECCIÓN: Si solo hay una labor, seleccionarla automáticamente
+          if (this.filteredLabores.length === 1) {
+            this.configuracion.idlabor = this.filteredLabores[0].idlabor;
+            console.log('🤖 Labor auto-seleccionada:', this.configuracion.idlabor);
+            
+            // Cargar proyectos automáticamente para la labor seleccionada
+            await this.filtrarProyectoPorLabor();
+          }
+        } else {
+          console.log('❌ No se encontraron labores para este CECO');
+        }
+      } else {
+        // Lógica original para otros tipos
+        const ceco = this.filteredCecos.find(
+          (e: any) => e.id === this.configuracion.idceco
+        );
+        if (ceco) {
+          if (ceco.esinversion === 1) {
+            this.configuracion.idproyecto = '';
+            const proyectos = await this.dexieService.showProyectos();
+            this.filteredProyectos = proyectos;
+          }
+          const labores = await this.dexieService.showLabores();
+          this.filteredLabores = labores.filter(
+            (x: Labor) => x.ceco == this.configuracion.idceco
+          );
+        }
       }
     }
   }
-
-  // async darProyectoInversionLabor(limpiar = false) {
-
-  //   // this.filteredLabores = [];
-  //   // this.filteredProyectos = [];
-
-  //   if (limpiar) {
-  //     this.configuracion.idlabor = '';
-  //     // this.configuracion.idproyecto = '';
-  //   }
-
-  //   if (!this.configuracion.idceco) return;
-
-  //   const ceco = this.filteredCecos.find(
-  //     (e: any) => e.id === this.configuracion.idceco
-  //   );
-
-  //   if (!ceco) return;
-
-  //   // 🔹 LABORES POR CECO
-  //   const labores = await this.dexieService.showLabores();
-  //   this.filteredLabores = labores.filter(
-  //     (x: Labor) => x.ceco === this.configuracion.idceco
-  //   );
-  // }
-
 
   async filtraCecoTurnoProyectoInicio() {
     if (this.configuracion.idcultivo) {
@@ -938,26 +1059,69 @@ export class ParametrosComponent implements OnInit {
     this.nombreProyectoHeader = proyecto?.proyectoio || '';
   }
 
-  async filtrarProyectoPorLabor() {
+  async filtrarProyectoPorLabor(preservarSeleccion = false) {
 
     console.log('🔥 CULTIVO SELECCIONADO:', this.configuracion.idcultivo);
     console.log('🔥 TURNO SELECCIONADO:', this.configuracion.idturno);
     console.log('🔥 CECO SELECCIONADO:', this.configuracion.idceco);
-    console.log('� LABOR SELECCIONADA:', this.configuracion.idlabor);
+    console.log('🔥 LABOR SELECCIONADA:', this.configuracion.idlabor);
+    console.log('🔥 TIPO ITEM:', this.configuracion.idTipoItem);
 
+    const proyectoGuardado = this.configuracion.idproyecto; // Guardar valor antes de limpiar
+    
     this.filteredProyectos = [];
-    this.configuracion.idproyecto = '';
-    this.nombreProyectoHeader = '';
+    if (!preservarSeleccion) {
+      this.configuracion.idproyecto = '';
+      this.nombreProyectoHeader = '';
+    }
 
     if (!this.configuracion.idlabor || !this.configuracion.idceco) {
       console.log('⚠️ Falta CECO o LABOR');
       return;
     }
 
-    // 🔑 RELACIÓN: CULTIVO → TURNO → CECO → LABOR → PROYECTO
+    // Para COMPRA: filtrar proyectos por CECO + LABOR
+    if (this.configuracion.idTipoItem === 'COMPRA') {
+      console.log('🎯 Filtrando proyectos para COMPRA (CECO + LABOR)...');
+      
+      this.filteredProyectos = this.proyectos.filter(
+        (p: any) =>
+          p.ceco?.trim() === this.configuracion.idceco?.trim() &&
+          p.idlabor?.trim() === this.configuracion.idlabor?.trim()
+      );
+      
+      console.log('✅ PROYECTOS FILTRADOS (CECO + LABOR):', this.filteredProyectos.length);
+      console.log('📦 PROYECTOS FILTRADOS:', this.filteredProyectos);
+      
+      // Auto-selección si solo hay uno
+      if (this.filteredProyectos.length === 1) {
+        this.configuracion.idproyecto = this.filteredProyectos[0].afe;
+        await this.nombreProyecto(this.configuracion.idproyecto);
+        console.log('✅ PROYECTO AUTO-SELECCIONADO:', this.configuracion.idproyecto, '-', this.nombreProyectoHeader);
+      } else if (this.filteredProyectos.length > 1 && preservarSeleccion && proyectoGuardado) {
+        // Si hay múltiples proyectos y estamos preservando la selección, buscar el guardado
+        const proyectoExistente = this.filteredProyectos.find(p => p.afe === proyectoGuardado);
+        if (proyectoExistente) {
+          this.configuracion.idproyecto = proyectoGuardado;
+          await this.nombreProyecto(proyectoGuardado);
+          console.log('✅ PROYECTO RESTAURADO:', proyectoGuardado, '-', this.nombreProyectoHeader);
+        } else {
+          console.log('⚠️ Proyecto guardado no encontrado en lista filtrada');
+          this.configuracion.idproyecto = '';
+        }
+      } else if (this.filteredProyectos.length === 0) {
+        console.log('⚠️ No hay proyectos para CECO:', this.configuracion.idceco, 'y LABOR:', this.configuracion.idlabor);
+      } else {
+        console.log(`ℹ️ Hay ${this.filteredProyectos.length} proyectos disponibles para seleccionar`);
+      }
+      return;
+    }
+
+    // Lógica original para otros tipos (CONSUMO, TRANSFERENCIA)
+    // �🔑 RELACIÓN: CULTIVO → TURNO → CECO → LABOR → PROYECTO
     // Validar que el CECO pertenezca al cultivo seleccionado a través del TURNO
 
-    const cultivo = this.cultivos.find((c: any) => c.id == this.configuracion.idcultivo);
+    const cultivo = this.cultivos.find((c: any) => c.codigo === this.configuracion.idcultivo);
     console.log('📋 CULTIVO:', cultivo);
 
     if (cultivo) {
@@ -986,8 +1150,8 @@ export class ParametrosComponent implements OnInit {
       }
     }
 
-    // 🔑 FILTRADO POR CECO + LABOR
-    // Los proyectos deben coincidir con CECO e IDLABOR
+    // 🔑 FILTRADO POR CECO + LABOR + CULTIVO
+    // Los proyectos deben coincidir con CECO, IDLABOR y CULTIVO
     this.filteredProyectos = this.proyectos.filter(
       (p: any) =>
         p.ceco?.trim() === this.configuracion.idceco?.trim() &&
@@ -1009,47 +1173,6 @@ export class ParametrosComponent implements OnInit {
       console.log(`ℹ️ Hay ${this.filteredProyectos.length} proyectos disponibles para seleccionar`);
     }
   }
-
-  // async ListarAlmacenesPorRol() {
-
-  //   console.log('👤 Usuario:', this.usuario);
-  //   console.log('📦 Tipo Item:', this.configuracion.idTipoItem);
-  //   console.log('🎭 Rol:', this.usuario.idrol);
-
-  //   this.almacenes = [];
-
-  //   // 🔁 TRANSFERENCIA → SOLO LOLOGIST
-  //   if (this.configuracion.idTipoItem === 'TRANSFERENCIA') {
-
-  //     if (this.usuario.idrol !== 'LOLOGIST') {
-  //       console.warn('⛔ Transferencia no permitida para este rol');
-  //       return;
-  //     }
-
-  //     const destino = await this.dexieService.showAlmacenesDestino();
-
-  //     this.almacenes = destino ?? [];
-
-  //     console.log('🔁 ALMACENES DESTINO:', this.almacenes);
-  //     return;
-  //   }
-
-  //   // 🏷️ COMPRA / CONSUMO → UN SOLO ALMACÉN
-  //   const almacenes = await this.dexieService.showAlmacenes();
-
-  //   if (!almacenes?.length) {
-  //     console.warn('⚠️ No hay almacenes en Dexie');
-  //     return;
-  //   }
-
-  //   // 👉 EN PARÁMETROS SOLO SE USA UNO
-  //   const almacenUsuario = almacenes[0];
-
-  //   this.almacenes = [almacenUsuario];
-  //   this.configuracion.idalmacen = String(almacenUsuario.idalmacen);
-
-  //   console.log('🏷️ ALMACÉN USUARIO:', this.almacenes);
-  // }
 
   async ListarAlmacenesPorRol() {
 
@@ -1081,15 +1204,20 @@ export class ParametrosComponent implements OnInit {
     // ===============================
     // 🏷️ COMPRA / CONSUMO
     // ===============================
+    console.log('🔍 Cargando almacenes para COMPRA/CONSUMO');
     const almacenes = await this.dexieService.showAlmacenes();
 
+    console.log('📊 Almacenes encontrados en Dexie:', almacenes?.length || 0);
     if (!almacenes?.length) {
       console.warn('⚠️ No hay almacenes en Dexie');
       return;
     }
 
+    console.log('👤 Rol del usuario:', this.usuario.idrol);
+
     // 🔥 EMLOGIST → TODOS
     if (this.usuario.idrol === 'EMLOGIST') {
+      console.log('📦 Rol EMLOGIST detectado, cargando almacenes de destino');
       const destino = await this.dexieService.showAlmacenesDestino();
       this.almacenes = destino;
       console.log('📦 ALMACENES EMPAQUE:', this.almacenes);
@@ -1097,6 +1225,7 @@ export class ParametrosComponent implements OnInit {
     }
 
     // 🔐 LOLOGIST / OPLOGIST → SOLO UNO
+    console.log('🔐 Rol LOLOGIST/OPLOGIST detectado, asignando primer almacén');
     // const almacenUsuario = almacenes[0];
     this.almacenes = [almacenes[0]];
 
@@ -1111,41 +1240,143 @@ export class ParametrosComponent implements OnInit {
 
 
   async onTipoItemChange() {
-    console.log('🔄 Tipo Item cambiado:', this.configuracion.idTipoItem);
+    console.log('🔄 Tipo Item cambiado a:', this.configuracion.idTipoItem);
+    console.log('🔍 Estado actual - Cultivo:', this.configuracion.idcultivo, 'Turno:', this.configuracion.idturno, 'CECO:', this.configuracion.idceco);
 
-    // limpiar selección previa
-    // this.configuracion.idalmacen = '';
-    // this.almacenes = [];
+    // Limpiar campos específicos según el tipo
+    if (this.configuracion.idTipoItem === 'COMPRA') {
+      console.log('🛒 Configurando flujo COMPRA');
+      // Limpiar campos de CONSUMO
+      this.configuracion.idturno = '';
+      this.filteredTurnos = [];
+      
+      // Para COMPRA: cargar CECOs según cultivo si ya hay cultivo seleccionado
+      if (this.configuracion.idcultivo) {
+        console.log('📋 Cargando CECOs para COMPRA con cultivo:', this.configuracion.idcultivo);
+        await this.cargarCecosPorCultivo();
+      }
+    } else if (this.configuracion.idTipoItem === 'CONSUMO') {
+      console.log('🥤 Configurando flujo CONSUMO');
+      // Limpiar campos dependientes
+      this.configuracion.idturno = '';
+      this.configuracion.idceco = '';
+      this.configuracion.idlabor = '';
+      this.configuracion.idproyecto = '';
+      this.filteredTurnos = [];
+      this.filteredCecos = [];
+      this.filteredLabores = [];
+      this.filteredProyectos = [];
+      
+      // Para CONSUMO: flujo completo cultivo → turno → ceco → labor → proyecto
+      if (this.configuracion.idcultivo) {
+        console.log('🎯 Cargando flujo CONSUMO para cultivo:', this.configuracion.idcultivo);
+        
+        // 1. Cargar turnos según cultivo
+        this.filteredTurnos = this.turnos.filter(
+          (x: Turno) => x.idcultivo?.trim() === this.configuracion.idcultivo
+        );
+        
+        // 2. Cargar CECOs según cultivo (para CONSUMO también se filtran por cultivo)
+        this.filteredCecos = this.cecos.filter(
+          (x: Ceco) => x.idcultivo?.trim() === this.configuracion.idcultivo
+        );
+        
+        console.log('✅ Turnos para CONSUMO:', this.filteredTurnos.length);
+        console.log('✅ CECOs para CONSUMO:', this.filteredCecos.length);
+        console.log('🔍 Cultivo seleccionado:', this.configuracion.idcultivo);
+        console.log('📊 Total CECOs disponibles:', this.cecos.length);
+        
+        // Mostrar algunos CECOs filtrados para depurar
+        if (this.filteredCecos.length > 0) {
+          console.log('📋 Ejemplos de CECOs filtrados:');
+          this.filteredCecos.slice(0, 3).forEach((ceco, index) => {
+            console.log(`  ${index + 1}. ID: ${ceco.id}, idcultivo: "${ceco.idcultivo}", localname: "${ceco.localname}"`);
+          });
+        } else {
+          console.log('⚠️ No se encontraron CECOs para el cultivo:', this.configuracion.idcultivo);
+          console.log('📋 CECOs disponibles con sus cultivos:');
+          this.cecos.slice(0, 5).forEach((ceco, index) => {
+            console.log(`  ${index + 1}. ID: ${ceco.id}, idcultivo: "${ceco.idcultivo}", localname: "${ceco.localname}"`);
+          });
+        }
+      } else {
+        console.log('⚠️ No hay cultivo seleccionado para CONSUMO');
+      }
+    } else if (this.configuracion.idTipoItem === 'TRANSFERENCIA') {
+      // Limpiar todos los campos específicos
+      this.configuracion.idturno = '';
+      this.configuracion.idceco = '';
+      this.configuracion.idlabor = '';
+      this.configuracion.idproyecto = '';
+      this.filteredTurnos = [];
+      this.filteredCecos = [];
+      this.filteredLabores = [];
+      this.filteredProyectos = [];
+      
+      // Para TRANSFERENCIA: cargar turnos según cultivo si ya hay cultivo seleccionado
+      if (this.configuracion.idcultivo) {
+        this.filteredTurnos = this.turnos.filter(
+          (x: Turno) => x.idcultivo?.trim() === this.configuracion.idcultivo
+        );
+      }
+    }
 
+    // Cargar almacenes según el tipo
     await this.ListarAlmacenesPorRol();
   }
 
   async guardarConfiguracion() {
     this.showValidation = true;
-    if (
-      !this.configuracion.idempresa ||
-      !this.configuracion.idfundo ||
-      !this.configuracion.idcultivo ||
-      !this.configuracion.idlabor ||
-      !this.configuracion.idceco ||
-      !this.configuracion.idTipoItem
-    ) {
+    
+    // Validaciones básicas comunes para todos los tipos
+    if (!this.configuracion.idempresa || !this.configuracion.idfundo || !this.configuracion.idcultivo || !this.configuracion.idTipoItem) {
       this.alertService.showAlert(
         'Advertencia!',
-        'Debe seleccionar todos los campos',
+        'Debe seleccionar Empresa, Fundo, Cultivo y Tipo',
         'warning'
       );
-    } else {
-      this.configuracion.id =
-        this.usuario.ruc + this.usuario.documentoidentidad;
-      await this.dexieService.saveConfiguracion(this.configuracion);
-      this.alertService.showAlert(
-        '¡Éxito!',
-        'La operación se completó correctamente',
-        'success'
-      );
-
-      this.router.navigate(['/main/requerimientos']);
+      return;
     }
+
+    // Validaciones específicas según tipo
+    if (this.configuracion.idTipoItem === 'COMPRA') {
+      if (!this.configuracion.idceco || !this.configuracion.idlabor || !this.configuracion.idproyecto) {
+        this.alertService.showAlert(
+          'Advertencia!',
+          'Para COMPRA debe seleccionar CECO, Labor y Proyecto',
+          'warning'
+        );
+        return;
+      }
+    } else if (this.configuracion.idTipoItem === 'CONSUMO') {
+      if (!this.configuracion.idturno) {
+        this.alertService.showAlert(
+          'Advertencia!',
+          'Para CONSUMO debe seleccionar Turno',
+          'warning'
+        );
+        return;
+      }
+    } else if (this.configuracion.idTipoItem === 'TRANSFERENCIA') {
+      if (!this.configuracion.idturno || !this.configuracion.idceco || !this.configuracion.idlabor || !this.configuracion.idproyecto) {
+        this.alertService.showAlert(
+          'Advertencia!',
+          'Para TRANSFERENCIA debe seleccionar Turno, CECO, Labor y Proyecto',
+          'warning'
+        );
+        return;
+      }
+    }
+
+    // Si pasa todas las validaciones
+    this.configuracion.id = this.usuario.ruc + this.usuario.documentoidentidad;
+    await this.dexieService.saveConfiguracion(this.configuracion);
+    this.alertService.showAlert(
+      '¡Éxito!',
+      'La configuración se guardó correctamente',
+      'success'
+    );
+
+    this.router.navigate(['/main/requerimientos']);
   }
 }

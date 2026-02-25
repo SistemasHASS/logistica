@@ -13,23 +13,27 @@
         <div class="col-md-2">
             <p-datepicker [(ngModel)]="fechaInicio" dateFormat="dd/mm/yy" placeholder="Desde"
                 [showIcon]="true" [showClear]="true" (onSelect)="aplicarFiltro()" 
-                (onClear)="aplicarFiltro()" styleClass="w-100">
+                (onClear)="aplicarFiltro()" styleClass="w-100" icon="pi pi-calendar">
             </p-datepicker>
         </div>
         <div class="col-md-2">
             <p-datepicker [(ngModel)]="fechaFin" dateFormat="dd/mm/yy" placeholder="Hasta"
                 [showIcon]="true" [showClear]="true" (onSelect)="aplicarFiltro()" 
-                (onClear)="aplicarFiltro()" styleClass="w-100">
+                (onClear)="aplicarFiltro()" styleClass="w-100" icon="pi pi-calendar">
             </p-datepicker>
         </div>
-        <div class="col-md-2 mt-3 mt-md-0">
+        <div class="col-md-2">
             <button class="btn btn-primary me-2" (click)="listarDespachos()">Listar</button>
             <button class="btn btn-secondary me-2" (click)="limpiarFiltros()">Limpiar</button>
             <button class="btn btn-success" (click)="exportarExcel()" title="Exportar a Excel">
                 <i class="icon icon-file-excel"></i>
             </button>
         </div>
-        <div class="col-md-2 mt-2 mt-md-0 d-flex align-items-center">
+    </div>
+    
+    <!-- Total de registros debajo de los filtros -->
+    <div class="row mb-3">
+        <div class="col-12">
             <span class="text-muted">Total: {{ despachosFiltrados.length }} registros</span>
         </div>
     </div>

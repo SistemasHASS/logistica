@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
 import { VersionService } from './services/version.service';
+import { StockNotificationService } from './shared/services/stock-notification.service';
 import { environment } from '../environments/environment';
 import Swal from 'sweetalert2';
 
@@ -20,7 +21,11 @@ export class AppComponent implements OnInit, OnDestroy {
   private readonly CHECK_INTERVAL_MINUTES = 10;
   private lastPromptKey = 'last_update_prompt';
 
-  constructor(private swUpdate: SwUpdate, private versionService: VersionService) { }
+  constructor(
+    private swUpdate: SwUpdate, 
+    private versionService: VersionService,
+    private stockNotificationService: StockNotificationService
+  ) { }
 
   ngOnInit() {
 
@@ -73,19 +78,20 @@ export class AppComponent implements OnInit, OnDestroy {
 
   async checkVersionFromServer() {
     if (this.versionService.getMode() !== 'AUTO') return;
-    this.handleUpdate();
-    // const remote = await this.versionService.getServerVersion();
+    
+    const remote = await this.versionService.getServerVersion();
+    const local = this.versionService.getLocalVersion();
 
-    // if (remote && remote !== local) {
-    //   const lastPrompt = localStorage.getItem(this.lastPromptKey);
-    //   const now = Date.now();
+    if (remote && remote !== local) {
+      const lastPrompt = localStorage.getItem(this.lastPromptKey);
+      const now = Date.now();
 
-    //   // Evita mostrar el modal muchas veces
-    //   if (!lastPrompt || now - parseInt(lastPrompt) > 15 * 60 * 1000) {
-    //     this.askUserToUpdate(remote, local);
-    //     localStorage.setItem(this.lastPromptKey, now.toString());
-    //   }
-    // }
+      // Evita mostrar el modal muchas veces (cada 15 minutos máximo)
+      if (!lastPrompt || now - parseInt(lastPrompt) > 15 * 60 * 1000) {
+        this.handleUpdate();
+        localStorage.setItem(this.lastPromptKey, now.toString());
+      }
+    }
   }
 
   /** 🔥 manual */
@@ -151,17 +157,3 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 }
 
-
-// import { Component } from '@angular/core';
-// import { RouterOutlet } from '@angular/router';
-
-// @Component({
-//   selector: 'app-root',
-//   standalone: true,
-//   imports: [RouterOutlet],
-//   templateUrl: './app.component.html',
-//   styleUrl: './app.component.scss'
-// })
-// export class AppComponent {
-//   title = 'logistica';
-// }

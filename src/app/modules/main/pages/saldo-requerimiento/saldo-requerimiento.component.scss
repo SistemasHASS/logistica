@@ -1,0 +1,329 @@
+.acciones-header {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+
+  input {
+    flex: 1;
+  }
+
+  .btn-success {
+    background-color: #28a745;
+    color: white;
+
+    &:hover {
+      background-color: #218838;
+    }
+
+    &:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.grupo-familia {
+  margin-bottom: 20px;
+
+  h4 {
+    margin-bottom: 10px;
+    color: #2c3e50;
+  }
+
+  .item-consolidado {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+  }
+}
+
+.saldo-container {
+  padding: 20px;
+  .p-column-title {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    padding: 15px 10px;
+    .fila-responsive {
+      td {
+        justify-content: initial !important;
+        gap: 10px;
+      }
+    }
+    .p-column-title {
+      display: inline-block !important;
+      font-weight: bold;
+    }
+  }
+}
+
+.requerimientos-container {
+  padding: 1rem;
+  font-family: "Inter", sans-serif;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+  // max-width: 600px;
+  margin: auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  h2 {
+    margin: 0;
+    width: 100%;
+  }
+
+  input {
+    width: 100%;
+    max-width: 300px;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+}
+
+// PrimeNG Table Responsive Styles
+:host ::ng-deep {
+  .p-datatable {
+    .p-datatable-tbody > tr > td {
+      .p-column-title {
+        /*display: none;*/
+      }
+    }
+
+    // Stack layout for mobile
+    &.p-datatable-stack {
+      .p-datatable-tbody {
+        > tr {
+          display: block;
+          border: 1px solid #dee2e6;
+          border-radius: 8px;
+          margin-bottom: 1.5rem;
+          background: white;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+          > td {
+            display: block;
+            width: 100% !important;
+            text-align: left;
+            padding: 12px 15px !important;
+            border: none !important;
+            border-bottom: 1px solid #f8f9fa !important;
+
+            &:last-child {
+              border-bottom: none !important;
+            }
+
+            .p-column-title {
+              display: inline-block !important;
+              font-weight: 600;
+              color: #495057;
+              margin-right: 8px;
+              min-width: 80px;
+            }
+          }
+        }
+      }
+
+      .p-datatable-thead {
+        display: none;
+      }
+    }
+  }
+
+  // Badge styles
+  .badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .enviado-badge {
+    background-color: #d4edda;
+    color: #155724;
+  }
+
+  .sinenviar-badge {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+
+  /* Amarillo suave */
+  .pendiente-decision {
+    background-color: #fff8e1;
+    color: #f57f17;
+  }
+
+  /* Morado profesional */
+  .esperando-stock {
+    background-color: #ede7f6;
+    color: #5e35b1;
+  }
+
+  /* Verde éxito */
+  .atendido {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  /* Naranja parcial */
+  .parcial {
+    background-color: #fff3e0;
+    color: #ef6c00;
+  }
+}
+
+// Button styles for mobile
+.d-flex {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  &.btn-info {
+    background-color: #17a2b8;
+    color: white;
+
+    &:hover {
+      background-color: #138496;
+    }
+  }
+
+  &.btn-danger {
+    background-color: #dc3545;
+    color: white;
+
+    &:hover {
+      background-color: #c82333;
+    }
+  }
+
+  &.btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+}
+
+.tabla-saldos {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    background: #2c3e50;
+    color: white;
+    padding: 10px;
+  }
+
+  td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+  }
+}
+
+.estado {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.PENDIENTE_DECISION {
+  background: orange;
+  color: white;
+}
+.ESPERA_STOCK {
+  background: blue;
+  color: white;
+}
+.CERRADO {
+  background: gray;
+  color: white;
+}
+
+.btn-confirmar {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  margin-right: 5px;
+  border-radius: 6px;
+}
+
+.btn-cerrar {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.familia-titulo {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: #2c3e50;
+  font-weight: 600;
+  border-left: 4px solid #4f46e5;
+  padding-left: 8px;
+}
+
+.tabla-header,
+.tabla-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 120px;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.tabla-header {
+  background-color: #f1f5f9;
+  font-weight: 600;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.tabla-row {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 14px;
+}
+
+.col-codigo {
+  font-weight: 500;
+}
+
+.col-descripcion {
+  color: #475569;
+}
+
+.col-cantidad {
+  text-align: right;
+  font-weight: 600;
+  color: #1e293b;
+}

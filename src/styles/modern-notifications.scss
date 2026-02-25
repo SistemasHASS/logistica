@@ -1,0 +1,118 @@
+// Estilos globales para notificaciones modernas
+:global {
+  .modern-notification-popup {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4) !important;
+  }
+
+  .modern-notification-title {
+    color: #fff !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 8px !important;
+  }
+
+  .modern-notification-content {
+    .notification-content {
+      .notification-count {
+        color: #fff !important;
+        font-size: 0.9rem !important;
+        margin: 0 0 4px 0 !important;
+        font-weight: 500 !important;
+      }
+
+      .notification-action {
+        color: rgba(255, 255, 255, 0.8) !important;
+        font-size: 0.8rem !important;
+        margin: 0 !important;
+        font-style: italic;
+      }
+    }
+  }
+
+  // Estilos para el toast de notificaciones
+  .swal2-toast {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border-radius: 12px !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    
+    .swal2-icon {
+      border-color: rgba(255, 255, 255, 0.3) !important;
+      
+      .swal2-icon-content {
+        color: #fff !important;
+        font-size: 1.5rem !important;
+      }
+    }
+
+    .swal2-title {
+      color: #fff !important;
+    }
+
+    .swal2-html-container {
+      color: #fff !important;
+      max-height: none !important;
+      overflow: visible !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .swal2-progress-steps .swal2-progress-step {
+      background: rgba(255, 255, 255, 0.3) !important;
+      
+      &.swal2-active-progress-step {
+        background: #fff !important;
+      }
+    }
+
+    .swal2-timer-progress-bar-container {
+      background: rgba(255, 255, 255, 0.2) !important;
+      
+      .swal2-timer-progress-bar {
+        background: #fff !important;
+      }
+    }
+  }
+
+  // Estilos adicionales para eliminar scroll en todos los elementos hijos
+  .swal2-toast * {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  .swal2-popup {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  .swal2-actions {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  // Estilos específicos para el contenido de la notificación
+  .notification-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    max-height: none !important;
+    
+    .notification-count {
+      margin: 0 0 4px 0 !important;
+      padding: 0 !important;
+      overflow: visible !important;
+      max-height: none !important;
+    }
+
+    .notification-action {
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: visible !important;
+      max-height: none !important;
+    }
+  }
+}

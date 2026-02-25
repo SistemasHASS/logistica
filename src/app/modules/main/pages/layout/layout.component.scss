@@ -1,3 +1,4 @@
+.left-sidebar {
   .hide-menu {
     text-wrap: balance;
     font-size: 12px;
@@ -70,3 +71,20 @@
         font-size: 1rem;
     }
   }
+  
+  /* Estilos para el badge de notificaciones */
+  .sidebar-link {
+    .badge {
+      font-size: 0.65rem; /* Tamaño de fuente más pequeño */
+      padding: 0.2em 0.4em; /* Padding reducido */
+      min-width: 18px; /* Ancho mínimo */
+      height: 18px; /* Altura fija */
+      line-height: 1; /* Ajustar altura de línea */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      top: -2px; /* Ajustar posición vertical */
+      right: -5px; /* Ajustar posición horizontal */
+    }
+  }
+}

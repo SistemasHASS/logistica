@@ -1,0 +1,144 @@
+<div class="saldo-container">
+
+  <div class="header">
+    <h2>Saldo Pendiente de Requerimientos</h2>
+
+    <input type="text" placeholder="Buscar item o requerimiento..." [(ngModel)]="filtroTexto" (ngModelChange)="onSearchChange($event)" />
+    <button class="btn btn-success" [disabled]="!haySeleccionados()" (click)="abrirModalConsolidacion()">
+      Consolidar a Requerimiento de Compra
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading">
+    Cargando saldos...
+  </div>
+  <div class="requerimientos-container">
+    <div class="container mt-3">
+      <div class="p-0 table-content">
+        <div class="table-responsive tabla-item" style="max-height: 60vh; overflow: auto;">
+          <p-table #dt [value]="saldosFiltrados" [paginator]="true" [rows]="20" [totalRecords]="saldosFiltrados.length"
+            [loading]="loading" responsiveLayout="stack" breakpoint="768px" [pageLinks]="5"
+            [showCurrentPageReport]="true" currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+            styleClass="p-datatable-sm custom-table mobile-cards">
+
+            <ng-template pTemplate="header">
+              <tr>
+                <th style="width:40px"></th>
+                <th>#</th>
+                <th>#Req</th>
+                <th>Item</th>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-c let-i="rowIndex">
+              <tr [ngClass]="c.estadoSaldo === 'APROBADO' ? 'fila-enviada' : 'fila-sin-enviar'" class="fila-responsive">
+                <!-- CHECKBOX -->
+                <td>
+                  <p-checkbox [(ngModel)]="c.seleccionado" binary="true" (ngModelChange)="seleccionarSaldo(c)"
+                    *ngIf="c.estadoSaldo === 'PENDIENTE' || c.estadoSaldo === 'ESPERANDO_STOCK'">
+                  </p-checkbox>
+                </td>
+                <td>
+                  <span class="p-column-title">#</span>
+                  {{ i + 1 }}
+                </td>
+                <td>
+                  <span class="p-column-title">#Req</span>
+                  {{ c.requerimientoOrigen }}
+                </td>
+                <td>
+                  <span class="p-column-title">Item</span>
+                  {{ c.item }}
+                </td>
+                <td>
+                  <span class="p-column-title">Descripción</span>
+                  {{ c.descripcion }}
+                </td>
+                <td>
+                  <span class="p-column-title">Cantidad</span>
+                  {{ c.cantidadPendiente }}
+                </td>
+                <td>
+                  <span class="p-column-title">Estado</span>
+                  <!-- <span class="badge" [ngClass]="c.estadoSaldo === 'APROBADO' ? 'enviado-badge' : 'sinenviar-badge'"> -->
+                  <span [ngClass]="getEstadoClase(c.estadoSaldo)">
+                    {{ c.estadoSaldo }}
+                  </span>
+                </td>
+                <td>
+                  <span class="p-column-title">Acciones</span>
+                  <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-info" title="Confirmar atención" (click)="confirmarAtencion(c)"
+                      *ngIf="c.estadoSaldo === 'PENDIENTE'">
+                      <i class="bx bxs-stopwatch"></i> Esperar
+                    </button>
+                    <button class="btn btn-sm btn-danger" title="Cerrar saldo de Requerimiento" (click)="cerrarSaldo(c)"
+                      *ngIf="c.estadoSaldo === 'PENDIENTE' || c.estadoSaldo === 'ESPERANDO_STOCK'">
+                      <i class="bx bx-lock"></i> Cerrar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="7" class="text-center">No hay registros</td>
+              </tr>
+            </ng-template>
+
+          </p-table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL ================= -->
+<p-dialog header="Consolidar Requerimiento de Compra" [(visible)]="mostrarModal" [modal]="true"
+  [style]="{width: '70vw'}">
+
+  <div *ngFor="let grupo of listaConsolidada" class="grupo-familia">
+
+    <!-- TÍTULO FAMILIA -->
+    <h4 class="familia-titulo">{{ grupo.familia }}</h4>
+
+    <!-- CABECERA -->
+    <div class="tabla-header">
+      <div class="col-codigo">Código</div>
+      <div class="col-descripcion">Descripción</div>
+      <div class="col-cantidad">Cantidad</div>
+    </div>
+
+    <!-- FILA ITEM -->
+    <div class="tabla-row">
+      <div class="col-codigo">
+        {{ grupo.item }}
+      </div>
+
+      <div class="col-descripcion">
+        {{ grupo.descripcion }}
+      </div>
+
+      <div class="col-cantidad">
+        {{ grupo.cantidad }}
+      </div>
+    </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button class="btn btn-secondary" (click)="mostrarModal=false">
+      Seguir agregando
+    </button>
+
+    <button class="btn btn-success" (click)="confirmarConsolidacion()">
+      Confirmar y Crear RC
+    </button>
+  </ng-template>
+
+</p-dialog>

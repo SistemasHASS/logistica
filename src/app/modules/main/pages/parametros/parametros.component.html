@@ -56,12 +56,12 @@
             </label>
             <div class="col-lg-9">
               <select [(ngModel)]="configuracion.idcultivo" name="cultivo" class="form-select mb-2"
-                (ngModelChange)="onCecoTurnoProyectoChange(true)" [ngClass]="{
+                (ngModelChange)="onCultivoChange()" [ngClass]="{
                   'is-invalid': showValidation && !configuracion.idcultivo,
                   'is-valid': configuracion.idcultivo
                 }">
                 <option [ngValue]="''" disabled>Seleccione un cultivo</option>
-                <option *ngFor="let t of cultivos" [ngValue]="t.id">
+                <option *ngFor="let t of cultivos" [ngValue]="t.codigo">
                   {{ t.descripcion }}
                 </option>
               </select>
@@ -74,12 +74,14 @@
         <fieldset>
           <div class="form-group row box-labelFloat">
             <label class="col-lg-3 col-form-label">
-              <b class="text-danger">*</b> Turno
+              <b class="text-danger" [hidden]="configuracion.idTipoItem === 'COMPRA'">*</b> Turno
             </label>
             <div class="col-lg-9">
               <app-dropdown [(ngModel)]="configuracion.idturno" (ngModelChange)="darProyectoCecos(true)"
                 [editable]="true" [data]="filteredTurnos" [valueField]="'codTurno'" [optionLabel]="'nombreTurno'"
-                [textShow]="'Turno'" [textShow2]="'un Turno'">
+                [textShow]="'Turno'" [textShow2]="'un Turno'"
+                [disabled]="configuracion.idTipoItem === 'COMPRA'"
+                [required]="configuracion.idTipoItem !== 'COMPRA'">
               </app-dropdown>
             </div>
           </div>
@@ -98,7 +100,9 @@
             <div class="col-lg-9">
               <app-dropdown [(ngModel)]="configuracion.idceco" (ngModelChange)="darProyectoInversionLabor(true)"
                 [editable]="true" [data]="filteredCecos" [valueField]="'id'" [optionLabel]="'localname'"
-                [textShow]="'Ceco'" [textShow2]="'un ceco'" [required]="true">
+                [textShow]="'Ceco'" [textShow2]="'un ceco'"
+                [disabled]="false"
+                [required]="true">
               </app-dropdown>
             </div>
           </div>
@@ -114,17 +118,15 @@
             <div class="col-lg-9">
               <app-dropdown [(ngModel)]="configuracion.idlabor" (ngModelChange)="filtrarProyectoPorLabor()"
                 [editable]="true" [data]="filteredLabores" [valueField]="'idlabor'" [optionLabel]="'labor'"
-                [textShow]="'Labor'" [textShow2]="'una Labor'" [required]="true">
+                [textShow]="'Labor'" [textShow2]="'una Labor'"
+                [disabled]="false"
+                [required]="true">
               </app-dropdown>
             </div>
           </div>
         </fieldset>
       </div>
     </div>
-        <!-- <pre style="background:#111;color:#0f0;padding:8px">
-    {{ filteredProyectos | json }}
-    </pre> -->
-
 
     <!-- PROYECTO / ALMACÉN -->
     <div class="row">
@@ -137,6 +139,7 @@
             <div class="col-lg-9">
               <app-dropdown [(ngModel)]="configuracion.idproyecto" [editable]="true" [data]="filteredProyectos"
                 [valueField]="'afe'" [optionLabel]="'proyectoio'" [textShow]="'Proyecto'" [textShow2]="'un proyecto'"
+                [disabled]="false"
                 [required]="true">
               </app-dropdown>
             </div>
@@ -193,7 +196,7 @@
         <fieldset>
           <div class="form-group row box-labelFloat">
             <label class="col-lg-3 col-form-label">
-              <b class="text-danger">*</b> Tipo Item
+              <b class="text-danger">*</b> Tipo
             </label>
             <div class="col-lg-9">
               <select [(ngModel)]="configuracion.idTipoItem" name="tipoItem" class="form-select mb-2" 
@@ -211,6 +214,32 @@
         </fieldset>
       </div>
     </div>
+
+    <!-- INFORMACIÓN IMPORTANTE SOBRE CAMPOS SEGÚN TIPO -->
+    <!-- <div class="row mb-3">
+      <div class="col-12">
+        <div class="alert alert-info" *ngIf="configuracion.idTipoItem === 'COMPRA'">
+          <i class="bi bi-info-circle me-2"></i>
+          <strong>Configuración para COMPRA:</strong> 
+          Seleccione <strong>Cultivo</strong> → <strong>CECO</strong> → <strong>Labor</strong> → <strong>Proyecto</strong>. 
+          El campo Turno está deshabilitado para este tipo de requerimiento.
+        </div>
+
+        <div class="alert alert-success" *ngIf="configuracion.idTipoItem === 'CONSUMO'">
+          <i class="bi bi-check-circle me-2"></i>
+          <strong>Configuración para CONSUMO:</strong> 
+          Seleccione <strong>Cultivo</strong> → <strong>Turno</strong>. 
+          Los campos CECO, Labor y Proyecto están deshabilitados para este tipo de requerimiento.
+        </div>
+
+        <div class="alert alert-warning" *ngIf="configuracion.idTipoItem === 'TRANSFERENCIA'">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <strong>Configuración para TRANSFERENCIA:</strong> 
+          Seleccione <strong>Cultivo</strong> → <strong>Turno</strong> → <strong>CECO</strong> → <strong>Labor</strong> → <strong>Proyecto</strong>. 
+          Todos los campos son requeridos para este tipo de requerimiento.
+        </div>
+      </div>
+    </div> -->
 
     <!-- BOTONES -->
     <div class="botonGuardar mb-4 mt-4 d-flex align-items-center justify-content-center gap-3">

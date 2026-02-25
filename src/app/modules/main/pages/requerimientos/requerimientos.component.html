@@ -226,10 +226,19 @@
                 <h2>
                     {{ modoEdicion ? "Editar Requerimiento" : "Registrar Requerimiento" }}
                 </h2>
-
                 <!-- FORMULARIO COMPLETO DE REQUERIMIENTO ITEMS-->
                 <div class="requerimientos-form">
                     <div class="row g-3">
+
+                        <div class="col-6" hidden="true">
+                            <label>Tipo de Requerimiento <span class="text-danger">*</span></label>
+                            <select class="form-select" [(ngModel)]="requerimiento.itemtipo" (change)="onTipoChange()">
+                                <option value="">Selecciona un tipo</option>
+                                <option value="COMPRA">COMPRA</option>
+                                <option value="CONSUMO">CONSUMO</option>
+                                <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+                            </select>
+                        </div>
 
                         <div class="col-6">
                             <label>Prioridad <span class="text-danger">*</span></label>
@@ -256,10 +265,7 @@
                             </select>
                             <small class="text-muted" *ngIf="SeleccionaPrioridadITEM && TipoSelecionado">
                                 <i class="bi bi-info-circle me-1"></i>
-                                {{ prioridadService.obtenerDescripcionPlazo(
-                                    SeleccionaPrioridadITEM, 
-                                    TipoSelecionado
-                                ) }}
+                                {{ prioridadService.obtenerDescripcionPlazo(SeleccionaPrioridadITEM, TipoSelecionado) }}
                             </small>
                         </div>
 
@@ -267,7 +273,7 @@
                             <label>Almacén <span class="text-danger">*</span></label>
                             <app-dropdown [(ngModel)]="almacenSeleccionado"
                                 [required]="true"
-                                [editable]="true" [data]="almacenes" [valueField]="'idalmacen'"
+                                [editable]="false" [data]="almacenes" [valueField]="'idalmacen'"
                                 [textShow2]="'un almacen'" [optionLabel]="'almacen'" />
                         </div>
 
@@ -314,6 +320,22 @@
                             <textarea class="form-control" rows="3" [(ngModel)]="glosa"
                                 placeholder="Escriba aquí la glosa..."></textarea>
                         </div>
+
+                        <!-- 🔥 INFORMACIÓN IMPORTANTE SOBRE CAMPOS ADICIONALES -->
+                        <!-- <div class="alert alert-info mb-3" *ngIf="esCompraConConsumo()">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Requerimiento de Compra con Consumo:</strong> 
+                            Los campos CECO, Proyecto y Labor están habilitados para asignación específica. 
+                            El campo Turno está bloqueado para este tipo de requerimiento.
+                        </div>
+
+                        <div class="alert alert-warning mb-3" 
+                             *ngIf="TipoSelecionado === 'COMPRA' && !esCompraConConsumo()">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Requerimiento de Compra:</strong> 
+                            Los campos CECO, Proyecto y Labor están deshabilitados (solo para Compra con Consumo). 
+                            El campo Turno está bloqueado para este tipo de requerimiento.
+                        </div> -->
 
                         <div class="d-flex justify-content-end gap-3 acciones-movil">
                             <!-- CARGA MASIVA -->
@@ -412,18 +434,19 @@
                                         </div>
 
                                         <div class="col-6">
-                                            <label>Turno <span class="text-danger">*</span></label>
+                                            <label>Turno <span class="text-danger" [hidden]="TipoSelecionado === 'COMPRA'">*</span></label>
                                             <app-dropdown [data]="turnos" optionLabel="nombreTurno"
                                                 valueField="nombreTurno" [(ngModel)]="lineaTemp.turno"
-                                                [editable]="false" [required]="true" [disabled]="true">
+                                                [editable]="false" [required]="TipoSelecionado !== 'COMPRA'" 
+                                                [disabled]="TipoSelecionado === 'COMPRA'">
                                             </app-dropdown>
                                         </div>
 
                                         <div class="col-6">
                                             <label>CECO <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="cecos" optionLabel="localname" valueField="localname"
-                                                [(ngModel)]="lineaTemp.ceco" [editable]="false" [required]="true"
-                                                [disabled]="true">
+                                                [(ngModel)]="lineaTemp.ceco" [editable]="false" [required]="esCompraConConsumo()"
+                                                [disabled]="!esCompraConConsumo()">
                                             </app-dropdown>
                                         </div>
 
@@ -431,15 +454,16 @@
                                             <label>Proyecto <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="proyectos" optionLabel="proyectoio"
                                                 valueField="proyectoio" [(ngModel)]="lineaTemp.proyecto"
-                                                [editable]="true" [required]="false" [disabled]="true">
+                                                [editable]="esCompraConConsumo()" [required]="false" 
+                                                [disabled]="!esCompraConConsumo()">
                                             </app-dropdown>
                                         </div>
 
                                         <div class="col-6">
                                             <label>Labor <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="labores" optionLabel="labor" valueField="labor"
-                                                [(ngModel)]="lineaTemp.labor" [editable]="false" [required]="true"
-                                                [disabled]="true">
+                                                [(ngModel)]="lineaTemp.labor" [editable]="esCompraConConsumo()" [required]="true"
+                                                [disabled]="!esCompraConConsumo()">
                                             </app-dropdown>
                                         </div>
 

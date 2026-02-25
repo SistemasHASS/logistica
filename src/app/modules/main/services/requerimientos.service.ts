@@ -44,6 +44,17 @@ export class RequerimientosService {
     }
   }
 
+  cerrarRequerimiento(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/cerrar-requerimiento`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message || 'Error al cerrar requerimiento'
+      );
+    }
+  }
+
   getBuscarRequerimietnos(body: any): Observable<any> {
     const url = `${this.baseUrl}/api/logistica/listar-requerimiento-consumo`;
     try {

@@ -80,7 +80,8 @@ export class AlertService {
   showConfirm(title: string, message: string, icon: SweetAlertIcon): Promise<boolean> {
     return Swal.fire({
       title: title,
-      text: message,
+      // text: message,
+      html: message,
       icon: icon,
       showCancelButton: true,
       cancelButtonText: 'Cancelar',
@@ -94,7 +95,7 @@ export class AlertService {
   showPrompt(title: string, message: string): Promise<string | null> {
     return Swal.fire({
       title: title,
-      text: message,
+      html: message,
       input: 'text',
       inputPlaceholder: 'Escriba aquí...',
       showCancelButton: true,
@@ -200,7 +201,7 @@ export class AlertService {
     button2Text: string,
     button3Text: string,
     button4Text: string = 'Cancelar'
-  ): Promise<'button1' | 'button2' | 'button3' | 'cancel'> {
+  ): Promise<'button1' | 'button2' | 'button3' | 'button4' | 'cancel'> {
     return new Promise((resolve) => {
       Swal.fire({
         title: title,
@@ -238,8 +239,13 @@ export class AlertService {
           });
           button4?.addEventListener('click', () => {
             Swal.close();
-            resolve('cancel');
+            resolve('button4');
           });
+        }
+      }).then((result) => {
+        // Si el usuario cierra el diálogo con ESC o haciendo clic fuera
+        if (result.dismiss === Swal.DismissReason.backdrop || result.dismiss === Swal.DismissReason.esc) {
+          resolve('cancel');
         }
       });
     });

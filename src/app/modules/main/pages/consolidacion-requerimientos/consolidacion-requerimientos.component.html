@@ -1,0 +1,689 @@
+<div class="card">
+  <!-- <div class="card-header bg-primary text-white">
+    <h4 class="mb-0">
+      <i class="icon icon-layers me-2"></i>
+      Consolidación de Requerimientos
+    </h4>
+  </div> -->
+
+  <h4 class="mb-2 titulo-pagina">LISTA DE REQUERIMIENTOS PENDIENTES DE CONSOLIDAR</h4>
+
+  <div class="card-body">
+
+    <!-- Badge de lista temporal -->
+    <div class="alert alert-info d-flex justify-content-between align-items-center mb-3"
+      *ngIf="contadorItemsTemporales > 0">
+      <div>
+        <i class="icon icon-list me-2"></i>
+        <strong>Lista Temporal de Consolidación:</strong> {{ contadorItemsTemporales }} ítem(s) guardado(s)
+      </div>
+      <button class="btn btn-sm btn-info" (click)="verListaTemporal()">
+        <i class="icon icon-eye me-1"></i> Ver Lista
+      </button>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="tabActiva === 0" (click)="tabActiva = 0" type="button">
+          <i class="icon icon-file-plus me-1"></i> Items Pendientes
+          <span class="badge bg-danger ms-1" *ngIf="itemsPendientes.length > 0">{{ itemsPendientes.length }}</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="tabActiva === 1" (click)="tabActiva = 1" type="button">
+          <i class="icon icon-history me-1"></i> Historial Consolidaciones
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="tabActiva === 2" (click)="tabActiva = 2; cargarSaldosPendientes()" type="button">
+          <i class="icon icon-alert-circle me-1"></i> Saldos Pendientes Aprobación
+          <span class="badge bg-warning text-dark ms-1" *ngIf="saldosPendientes.length > 0">{{ saldosPendientes.length }}</span>
+        </button>
+      </li>
+    </ul>
+
+    <!-- ================================================ -->
+    <!-- TAB 1: ITEMS PENDIENTES DE CONSOLIDAR            -->
+    <!-- ================================================ -->
+    <div *ngIf="tabActiva === 0">
+
+      <!-- Panel de Filtros -->
+      <div class="filtros-panel mb-3">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-2">
+            <label class="form-label form-label-sm">Areas</label>
+            <p-multiSelect [(ngModel)]="filtroAreas" [options]="areaOpciones" optionLabel="label" optionValue="value"
+              placeholder="Todas" [maxSelectedLabels]="1" selectedItemsLabel="{0} seleccionadas"
+              class="w-100 filtro-select">
+            </p-multiSelect>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label form-label-sm">Familia</label>
+            <p-multiSelect [(ngModel)]="filtroFamilias" [options]="familiaOpciones" optionLabel="label"
+              optionValue="value" placeholder="Todas" [maxSelectedLabels]="1" selectedItemsLabel="{0} seleccionadas"
+              class="w-100 filtro-select">
+            </p-multiSelect>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label form-label-sm">Categoría</label>
+            <p-multiSelect [(ngModel)]="filtroCategorias" [options]="categoriaOpciones" optionLabel="label"
+              optionValue="value" placeholder="Todas" [maxSelectedLabels]="1" selectedItemsLabel="{0} seleccionadas"
+              class="w-100 filtro-select">
+            </p-multiSelect>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label form-label-sm">Item</label>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="filtroItem"
+              placeholder="Código o descripción" (keyup.enter)="aplicarFiltros()">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label form-label-sm">Fecha desde</label>
+            <p-datePicker [(ngModel)]="filtroFechaInicio" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Desde"
+              class="w-100 filtro-date">
+            </p-datePicker>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label form-label-sm">Fecha hasta</label>
+            <p-datePicker [(ngModel)]="filtroFechaFin" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Hasta"
+              class="w-100 filtro-date">
+            </p-datePicker>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label form-label-sm">Tipo</label>
+            <p-select [(ngModel)]="filtroTipo" [options]="tipoOpciones" optionLabel="label" optionValue="value"
+              placeholder="Todos" class="w-100 filtro-select">
+            </p-select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label form-label-sm">Usuario</label>
+            <p-multiSelect [(ngModel)]="filtroUsuarios" [options]="usuarioOpciones" optionLabel="label"
+              optionValue="value" placeholder="Todas" [maxSelectedLabels]="1" selectedItemsLabel="{0} seleccionadas"
+              class="w-100 filtro-select">
+            </p-multiSelect>
+          </div>
+        </div>
+        <div class="row mt-2">
+          <div class="col-md-12 text-end">
+            <button class="btn btn-sm btn-outline-secondary me-2" (click)="limpiarFiltros()">
+              <i class="icon icon-x me-1"></i> Limpiar
+            </button>
+            <button class="btn btn-sm btn-primary" (click)="aplicarFiltros()">
+              <i class="icon icon-search me-1"></i> Buscar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra de acciones -->
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <span class="text-muted" *ngIf="itemsPendientes.length > 0">
+            {{ itemsSeleccionados.length }} de {{ itemsPendientes.length }} seleccionados
+          </span>
+        </div>
+        <div class="d-flex gap-2">
+          <!-- Botón para agregar a lista temporal -->
+          <button class="btn btn-sm btn-outline-info" (click)="agregarSeleccionadosAListaTemporal()"
+            [disabled]="itemsSeleccionados.length === 0 || loading" title="Agregar seleccionados a la lista temporal">
+            <i class="icon icon-plus me-1"></i>
+            Agregar a Lista ({{ itemsSeleccionados.length }})
+          </button>
+          <button class="btn btn-sm btn-outline-success me-2" (click)="exportarExcel()"
+            [disabled]="itemsPendientes.length === 0">
+            <i class="icon icon-download me-1"></i> Exportar Excel
+          </button>
+          <button class="btn btn-sm btn-success me-2" (click)="consolidarSeleccionados()"
+            [disabled]="itemsSeleccionados.length === 0 || loading">
+            <i class="icon icon-check me-1"></i>
+            Consolidar ({{ itemsSeleccionados.length }})
+          </button>
+          <button class="btn btn-sm btn-primary" (click)="consolidarYCotizar()"
+            [disabled]="itemsSeleccionados.length === 0 || loading">
+            <i class="icon icon-box me-1"></i>
+            Consolidar y Cotizar ({{ itemsSeleccionados.length }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Grilla Unificada -->
+      <div class="table-responsive">
+        <p-table #dtPendientes [value]="itemsPendientes" [paginator]="true" [rows]="15"
+          [rowsPerPageOptions]="[10,15,25,50]" [loading]="loading" [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ítems"
+          styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 45px;">
+                <input type="checkbox" class="form-check-input" [(ngModel)]="seleccionarTodos"
+                  (change)="toggleSeleccionarTodos()">
+              </th>
+              <th pSortableColumn="fechaCreacion">Fecha <p-sortIcon field="fechaCreacion"></p-sortIcon></th>
+              <th pSortableColumn="item">Item <p-sortIcon field="item"></p-sortIcon></th>
+              <th pSortableColumn="descripcion">Descripción <p-sortIcon field="descripcion"></p-sortIcon></th>
+              <th pSortableColumn="familia">Familia <p-sortIcon field="familia"></p-sortIcon></th>
+              <th pSortableColumn="categoria">Categoría <p-sortIcon field="categoria"></p-sortIcon></th>
+              <th pSortableColumn="cantidad" class="text-center">Cantidad <p-sortIcon field="cantidad"></p-sortIcon>
+              </th>
+              <th>Unidad</th>
+              <th pSortableColumn="tipoRequerimiento">Tipo <p-sortIcon field="tipoRequerimiento"></p-sortIcon></th>
+              <th pSortableColumn="requerimientoOrigen">Req. Origen <p-sortIcon
+                  field="requerimientoOrigen"></p-sortIcon></th>
+              <th>Estado</th>
+              <th>Area</th>
+              <th>Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr [class.row-selected]="item.seleccionado">
+              <td>
+                <input type="checkbox" class="form-check-input" [(ngModel)]="item.seleccionado"
+                  [class.row-in-temp-list]="item.seleccionado" (change)="actualizarSeleccionarTodos()">
+              </td>
+              <td>{{ item.fechaCreacion | date:'dd/MM/yyyy hh:mm:ss a' }}</td>
+              <td><strong>{{ item.item }}</strong></td>
+              <td>{{ item.descripcion }}</td>
+              <td>{{ item.familia || '-' }}</td>
+              <td>{{ item.categoria || '-' }}</td>
+              <td class="text-center"><strong>{{ item.cantidad }}</strong></td>
+              <td>{{ item.unidad }}</td>
+              <td>
+                <span [ngClass]="getTipoBadgeClass(item.tipoRequerimiento)">
+                  {{ item.tipoRequerimiento }}
+                </span>
+              </td>
+              <td>{{ item.requerimientoOrigen }}</td>
+              <td>
+                <span class="badge bg-warning text-dark">{{ item.estadoDetalleConsolidacion }}</span>
+              </td>
+              <td>{{ item.area }}</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-info" (click)="verDetallePendiente(item)" title="Ver Requerimiento">
+                    <i class="icon icon-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="anularItemPendiente(item)" title="Anular ítem - cierra el flujo">
+                    <i class="icon icon-x"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="11" class="text-center text-muted py-5">
+                <i class="icon icon-inbox" style="font-size: 2.5rem;"></i>
+                <p class="mt-2 mb-0">No hay ítems pendientes de consolidar</p>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+
+    <!-- ================================================ -->
+    <!-- TAB 2: HISTORIAL DE CONSOLIDACIONES              -->
+    <!-- ================================================ -->
+    <div *ngIf="tabActiva === 1">
+
+      <!-- Filtros historial -->
+      <div class="filtros-panel mb-3">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label form-label-sm">Estado</label>
+            <p-select [(ngModel)]="filtroHistEstado" [options]="estadoOpciones" optionLabel="label" optionValue="value"
+              placeholder="Todos" class="w-100 filtro-select">
+            </p-select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label form-label-sm">Fecha desde</label>
+            <p-datePicker [(ngModel)]="filtroHistFechaInicio" dateFormat="dd/mm/yy" [showIcon]="true"
+              placeholder="Desde" class="w-100 filtro-date">
+            </p-datePicker>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label form-label-sm">Fecha hasta</label>
+            <p-datePicker [(ngModel)]="filtroHistFechaFin" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Hasta"
+              class="w-100 filtro-date">
+            </p-datePicker>
+          </div>
+          <div class="col-md-3 text-end" style="padding-top: 24px;">
+            <button class="btn btn-sm btn-primary" (click)="aplicarFiltrosHistorial()">
+              <i class="icon icon-search me-1"></i> Buscar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grilla historial -->
+      <div class="table-responsive">
+        <p-table #dtHistorial [value]="historialConsolidaciones" [paginator]="true" [rows]="10"
+          [rowsPerPageOptions]="[10,20,50]" [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+          styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr>
+              <th pSortableColumn="codigo">Código <p-sortIcon field="codigo"></p-sortIcon></th>
+              <th pSortableColumn="fechaConsolidacion">Fecha <p-sortIcon field="fechaConsolidacion"></p-sortIcon></th>
+              <th>Estado</th>
+              <th pSortableColumn="usuarioCreador">Usuario <p-sortIcon field="usuarioCreador"></p-sortIcon></th>
+              <th class="text-center">Total Ítems</th>
+              <th>Proceso</th>
+              <th>Observaciones</th>
+              <th style="width: 180px;">Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-cons>
+            <tr>
+              <td><strong>{{ cons.codigo }}</strong></td>
+              <td>{{ cons.fechaConsolidacion | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>
+                <span [ngClass]="getEstadoBadgeClass(cons.estado)">{{ cons.estado }}</span>
+              </td>
+              <td>{{ cons.usuarioCreador }}</td>
+              <td class="text-center">{{ cons.totalItems }}</td>
+              <td>
+                <span [ngClass]="getEstadoProcesoBadgeClass(cons.estadoProceso)">{{ cons.estadoProceso || 'PENDIENTE'
+                  }}</span>
+              </td>
+              <td>{{ cons.observaciones || '-' }}</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-info" (click)="verDetalle(cons)" title="Ver Detalle">
+                    <i class="icon icon-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-primary" (click)="generarSolicitudCotizacion(cons)"
+                    title="Generar Solicitud de Cotización" *ngIf="cons.estado === 'CONSOLIDADO'">
+                    <i class="icon icon-box"></i>
+                  </button>
+                  <button class="btn btn-sm btn-danger" (click)="anularConsolidacion(cons)" title="Anular Consolidación"
+                    *ngIf="cons.estado !== 'ANULADO'">
+                    <i class="icon icon-x"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="8" class="text-center text-muted py-4">
+                No hay consolidaciones registradas
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+
+    <!-- ================================================ -->
+    <!-- TAB 3: SALDOS PENDIENTES DE APROBACIÓN           -->
+    <!-- ================================================ -->
+    <div *ngIf="tabActiva === 2">
+
+      <div class="alert alert-warning mb-3">
+        <i class="icon icon-alert-circle me-2"></i>
+        <strong>Saldos pendientes de aprobación por jefatura.</strong>
+        Estos son ítems con saldo de atención pendiente del despacho que requieren aprobación para pasar a compra (consolidación).
+        Si se rechaza, el saldo se anula y el flujo termina.
+      </div>
+
+      <div class="table-responsive">
+        <p-table [value]="saldosPendientes" [paginator]="true" [rows]="10"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} solicitudes"
+          styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Req. Número</th>
+              <th>Fecha Solicitud</th>
+              <th>Usuario Solicita</th>
+              <th>CECO</th>
+              <th class="text-center">Total Ítems</th>
+              <th>Estado</th>
+              <th style="width: 180px;">Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-saldo>
+            <tr>
+              <td><strong>{{ saldo.requerimientoNumero }}</strong></td>
+              <td>{{ saldo.fechaSolicitud | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ saldo.usuarioSolicita }}</td>
+              <td>{{ saldo.ceco }}</td>
+              <td class="text-center">{{ saldo.totalItems }}</td>
+              <td>
+                <span class="badge" [ngClass]="{
+                  'bg-warning text-dark': saldo.estado === 'PENDIENTE',
+                  'bg-success': saldo.estado === 'APROBADO',
+                  'bg-danger': saldo.estado === 'RECHAZADO'
+                }">{{ saldo.estado }}</span>
+              </td>
+              <td>
+                <div class="d-flex gap-1" *ngIf="saldo.estado === 'PENDIENTE'">
+                  <button class="btn btn-sm btn-success" (click)="aprobarSaldoPendiente(saldo)"
+                    title="Aprobar - pasa a consolidación de compra">
+                    <i class="icon icon-check me-1"></i> Aprobar
+                  </button>
+                  <button class="btn btn-sm btn-danger" (click)="rechazarSaldoPendiente(saldo)"
+                    title="Rechazar - anula el saldo y cierra flujo">
+                    <i class="icon icon-x me-1"></i> Rechazar
+                  </button>
+                </div>
+                <span *ngIf="saldo.estado !== 'PENDIENTE'" class="text-muted">-</span>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="7" class="text-center text-muted py-5">
+                <i class="icon icon-inbox" style="font-size: 2.5rem;"></i>
+                <p class="mt-2 mb-0">No hay saldos pendientes de aprobación</p>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: LISTA TEMPORAL DE CONSOLIDACIÓN           -->
+<!-- ================================================ -->
+<div class="modal-backdrop" *ngIf="modalListaTemporalAbierto">
+  <div class="modal-content-large">
+    <div class="modal-header-custom bg-info text-white">
+      <h5>
+        <i class="icon icon-list me-2"></i>
+        Lista Temporal de Consolidación
+      </h5>
+      <button class="btn-close-custom text-white" (click)="cerrarModalListaTemporal()">
+        <i class="icon icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-custom">
+      <div class="alert alert-info mb-3">
+        <i class="icon icon-info-circle me-2"></i>
+        <strong>{{ itemsTemporales.length }}</strong> ítem(s) en lista temporal.
+        Estos items se mantendrán guardados incluso si cambia de filtros o recarga la página.
+      </div>
+
+      <!-- Acciones sobre la lista temporal -->
+      <div class="d-flex justify-content-between mb-3">
+        <div>
+          <button class="btn btn-sm btn-outline-success me-2" (click)="exportarListaTemporal()">
+            <i class="icon icon-download me-1"></i> Exportar Excel
+          </button>
+        </div>
+        <div>
+          <button class="btn btn-sm btn-outline-danger me-2" (click)="limpiarListaTemporal()"
+            [disabled]="itemsTemporales.length === 0">
+            <i class="icon icon-trash me-1"></i> Limpiar Lista
+          </button>
+          <button class="btn btn-sm btn-success me-2" (click)="consolidarListaTemporal()"
+            [disabled]="itemsTemporales.length === 0 || loading">
+            <i class="icon icon-check me-1"></i> Consolidar Todo
+          </button>
+          <button class="btn btn-sm btn-primary" (click)="consolidarListaTemporalYCotizar()"
+            [disabled]="itemsTemporales.length === 0 || loading">
+            <i class="icon icon-box me-1"></i> Consolidar y Cotizar
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla de items temporales -->
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered table-striped">
+          <thead class="table-light">
+            <tr>
+              <th>Item</th>
+              <th>Descripción</th>
+              <th>Familia</th>
+              <th>Categoría</th>
+              <th class="text-center">Cantidad</th>
+              <th>UM</th>
+              <th>Tipo</th>
+              <th>Req. Origen</th>
+              <th>Fecha Agregado</th>
+              <th style="width: 80px;">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of itemsTemporales">
+              <td><strong>{{ item.item }}</strong></td>
+              <td>{{ item.descripcion }}</td>
+              <td>{{ item.familia || '-' }}</td>
+              <td>{{ item.categoria || '-' }}</td>
+              <td class="text-center"><strong>{{ item.cantidad }}</strong></td>
+              <td>{{ item.unidad }}</td>
+              <td>
+                <span [ngClass]="getTipoBadgeClass(item.tipoRequerimiento)">
+                  {{ item.tipoRequerimiento }}
+                </span>
+              </td>
+              <td>{{ item.requerimientoOrigen }}</td>
+              <td>{{ item.fechaSeleccion | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-danger" (click)="eliminarDeListaTemporal(item)"
+                  title="Eliminar de lista">
+                  <i class="icon icon-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div *ngIf="itemsTemporales.length === 0" class="text-center text-muted py-5">
+          <i class="icon icon-inbox" style="font-size: 2.5rem;"></i>
+          <p class="mt-2 mb-0">No hay ítems en la lista temporal</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer-custom">
+      <button class="btn btn-secondary" (click)="cerrarModalListaTemporal()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================ -->
+<!-- MODAL: DETALLE DE CONSOLIDACIÓN                  -->
+<!-- ================================================ -->
+<div class="modal-backdrop" *ngIf="modalDetalleAbierto">
+  <div class="modal-content-large">
+    <div class="modal-header-custom">
+      <h5>
+        <i class="icon icon-file-text me-2"></i>
+        Detalle de Consolidación
+      </h5>
+      <button class="btn-close-custom" (click)="cerrarModalDetalle()">
+        <i class="icon icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-custom" *ngIf="consolidacionSeleccionada">
+      <!-- Cabecera -->
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <p><strong>Código:</strong> {{ consolidacionSeleccionada.codigo }}</p>
+        </div>
+        <div class="col-md-4">
+          <p><strong>Fecha:</strong> {{ consolidacionSeleccionada.fechaConsolidacion | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+        <div class="col-md-4">
+          <p><strong>Estado:</strong>
+            <span [ngClass]="getEstadoBadgeClass(consolidacionSeleccionada.estado)">
+              {{ consolidacionSeleccionada.estado }}
+            </span>
+          </p>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <p><strong>Usuario:</strong> {{ consolidacionSeleccionada.usuarioCreador }}</p>
+        </div>
+        <div class="col-md-4">
+          <p><strong>Total Ítems:</strong> {{ consolidacionSeleccionada.totalItems }}</p>
+        </div>
+        <div class="col-md-4">
+          <p><strong>Proceso:</strong>
+            <span class="badge bg-secondary">{{ consolidacionSeleccionada.estadoProceso }}</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Detalles -->
+      <h6 class="mb-3">Líneas Consolidadas:</h6>
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Familia</th>
+              <th>Categoría</th>
+              <th class="text-center">Cantidad Total</th>
+              <th>UM</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let det of consolidacionSeleccionada.detalles; let i = index">
+              <td>{{ det.noLinea }}</td>
+              <td><strong>{{ det.codigoItem }}</strong></td>
+              <td>{{ det.descripcionItem }}</td>
+              <td>{{ det.familia || '-' }}</td>
+              <td>{{ det.categoria || '-' }}</td>
+              <td class="text-center"><strong>{{ det.cantidadTotal }}</strong></td>
+              <td>{{ det.unidadMedida }}</td>
+              <td>
+                <button class="btn btn-sm btn-danger" (click)="anularRequerimiento(i)" title="anular línea">
+                  <i class="icon-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Orígenes por línea -->
+      <div *ngFor="let det of consolidacionSeleccionada.detalles">
+        <div *ngIf="det.origenes && det.origenes.length > 0" class="mt-3">
+          <h6 class="text-muted">Orígenes de {{ det.codigoItem }} - {{ det.descripcionItem }}:</h6>
+          <table class="table table-sm table-bordered">
+            <thead class="table-secondary">
+              <tr>
+                <th>Tipo</th>
+                <th>Req. Origen</th>
+                <th class="text-center">Cantidad</th>
+                <th>Usuario</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let ori of det.origenes">
+                <td>
+                  <span [ngClass]="getTipoBadgeClass(ori.tipoOrigen)">{{ ori.tipoOrigen }}</span>
+                </td>
+                <td>{{ ori.requerimientoOrigen }}</td>
+                <td class="text-center">{{ ori.cantidadConsolidada }}</td>
+                <td>{{ ori.usuarioConsolida }}</td>
+                <td>{{ ori.fechaConsolidacion | date:'dd/MM/yyyy HH:mm' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer-custom">
+      <button class="btn btn-secondary" (click)="cerrarModalDetalle()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================ -->
+<!-- MODAL: DETALLE DE REQUERIMIENTO PENDIENTE        -->
+<!-- ================================================ -->
+<div class="modal-pendiente-backdrop" *ngIf="modalDetallePendienteAbierto">
+
+  <div class="modal-pendiente-content">
+
+    <div class="modal-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h5 class="modal-title mb-0">
+        Detalle del Requerimiento: {{ detallePendienteSeleccionado?.RequisicionNumero }}
+      </h5>
+
+      <button type="button" class="btn-close btn-close-white" (click)="cerrarModalDetallePendiente()"></button>
+    </div>
+
+    <div class="modal-body" *ngIf="detallePendienteSeleccionado">
+
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <b>ID Requerimiento:</b> {{ detallePendienteSeleccionado.idrequerimiento }}
+        </div>
+        <div class="col-md-4">
+          <b>RUC:</b> {{ detallePendienteSeleccionado.ruc }}
+        </div>
+        <div class="col-md-4">
+          <b>Fecha:</b> {{ detallePendienteSeleccionado.fecharegistro | date:'dd/MM/yyyy HH:mm' }}
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <b>Glosa:</b> {{ detallePendienteSeleccionado.glosa }}
+        </div>
+        <div class="col-md-4">
+          <b>Tipo:</b> {{ detallePendienteSeleccionado.itemtipo }}
+        </div>
+        <div class="col-md-4">
+          <b>Estado:</b> {{ detallePendienteSeleccionado.estados }}
+        </div>
+      </div>
+
+      <hr>
+
+      <h6 class="fw-bold">Detalle de Ítems</h6>
+
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered table-striped">
+          <thead class="table-light">
+            <tr>
+              <th>Item</th>
+              <th>Descripción</th>
+              <th>Cantidad</th>
+              <th>Familia</th>
+              <th>Categoría</th>
+              <th>Centro Costo</th>
+              <th>Proyecto</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let d of detallePendienteSeleccionado.detalle">
+              <td>{{ d.codigo }}</td>
+              <td>{{ d.idproducto }}</td>
+              <td>{{ d.cantidad }}</td>
+              <td>{{ d.familia }}</td>
+              <td>{{ d.categoria }}</td>
+              <td>{{ d.idcentrocosto }}</td>
+              <td>{{ d.idproyecto }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrarModalDetallePendiente()">Cerrar</button>
+    </div>
+
+  </div>
+</div>

@@ -5,6 +5,7 @@ export const environment = {
   updateMode: 'AUTO',      // 'AUTO' | 'MANUAL' | 'DISABLED'
   showUpdateModal: true,   // true | false
   // baseUrl: 'https://localhost:7140',
-  baserUrl: 'https://apilogistica.agroapps.net:7018',
+  baseUrl: 'http://localhost:5213',
+  // baserUrl: 'https://apilogistica.agroapps.net:7018',
   apiMaestra: 'https://apimaestra.agroapps.net:7003'
 }

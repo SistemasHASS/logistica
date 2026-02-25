@@ -23,8 +23,21 @@
               <!-- <span class="nombre" style="font-size: 10px;">V. 1.0.0</span> -->
               <span class="nombre" style="font-size: 10px;">V. {{ appVersion }}</span>
               <!-- <span class="nombre" style="font-size: 10px;">V. {{ appInfo.version }} • {{ appInfo.buildDate | date:'dd/MM/yyyy' }}</span> -->
-
             </div>
+            <!-- Contador de notificaciones moderno -->
+            <!-- @if (contadorNotificaciones > 0) {
+              <div class="modern-notification-counter" (click)="irANotificaciones()">
+                <div class="notification-icon">
+                  <i class="bx bx-bell"></i>
+                  <span class="notification-badge">{{ contadorNotificaciones }}</span>
+                </div>
+                <div class="notification-text">
+                  <span class="notification-title">Notificaciones pendientes</span>
+                  <span class="notification-subtitle">{{ contadorNotificaciones }} por leer</span>
+                </div>
+                <i class="bx bx-chevron-right notification-arrow"></i>
+              </div>
+            } -->
           </div>
         </div>
       </div>
@@ -85,6 +98,28 @@
               <span class="hide-menu"> Parámetros</span>
             </a>
           </li>
+          <li
+            *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST') || usuario?.idrol.includes('ALLOGIST')"
+            class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Notificaciones</span>
+          </li>
+          <li
+            *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST') || usuario?.idrol.includes('ALLOGIST')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./notificaciones" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span class="position-relative">
+                <i class="bx bx-bell"></i>
+                @if (contadorNotificaciones > 0) {
+                  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {{ contadorNotificaciones }}
+                    <span class="visually-hidden">notificaciones no leídas</span>
+                  </span>
+                }
+              </span>
+              <span class="hide-menu"> Notificaciones</span>
+            </a>
+          </li>
           <li *ngIf="usuario?.idrol.includes('TI')" class="sidebar-item" (click)="toggleSidebar()">
             <a routerLink="./configuracionaprobaciones" routerLinkActive="active" class="sidebar-link"
               aria-expanded="false">
@@ -95,7 +130,7 @@
             </a>
           </li>
           <li
-            *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST')"
+            *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST')"
             class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Requerimientos</span>
@@ -106,6 +141,19 @@
             <a routerLink="./requerimientos" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class="icon icon-stack"></i>
+              </span>
+              <span class="hide-menu"> Requerimientos</span>
+            </a>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST')" class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Saldo Pendiente</span>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./saldo-requerimiento" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-circle'></i>
               </span>
               <span class="hide-menu"> Requerimientos</span>
             </a>
@@ -158,7 +206,8 @@
           <li
             *ngIf="usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST')"
             class="sidebar-item" (click)="toggleSidebar()">
-            <a routerLink="./reporte-requerimientos" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+            <a routerLink="./reporte-requerimientos" routerLinkActive="active" class="sidebar-link"
+              aria-expanded="false">
               <span>
                 <i class='icon icon-file-check'></i>
               </span>
@@ -189,6 +238,20 @@
                 <i class='icon icon-file-check'></i>
               </span>
               <span class="hide-menu"> Reporte de saldo</span>
+            </a>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('LOLOGIST')" class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Consolidación</span>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('LOLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./consolidacion-requerimientos" routerLinkActive="active" class="sidebar-link"
+              aria-expanded="false">
+              <span>
+                <i class='icon icon-circle'></i>
+              </span>
+              <span class="hide-menu"> Requerimientos</span>
             </a>
           </li>
           <!-- ============================================= -->
@@ -291,7 +354,7 @@
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Procesos</span>
           </li>
-          <!-- <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')" class="nav-small-cap">
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Aprobaciones</span>
           </li>
@@ -303,7 +366,7 @@
               </span>
               <span class="hide-menu"> Aprobacion de comsumo</span>
             </a>
-          </li> -->
+          </li>
           <!-- <li
             *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('APLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST')"
             class="nav-small-cap">
@@ -327,21 +390,7 @@
               </span>
               <span class="hide-menu"> Reporte aprobaciones</span>
             </a>
-          </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
-            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
-            <span class="hide-menu"> Saldo</span>
-          </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item"
-            (click)="toggleSidebar()">
-            <a routerLink="./reporte-saldos" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
-              <span>
-                <i class='icon icon-file-check'></i>
-              </span>
-              <span class="hide-menu"> Reporte de saldo</span>
-            </a>
-          </li>
-          <!-- <li *ngIf="usuario?.idrol.includes('TI')" class="nav-small-cap">
+          <li *ngIf="usuario?.idrol.includes('TI')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Reportes</span>
           </li>
@@ -391,6 +440,11 @@
               <li class="nav-item dropdown">
                 <span class="nombre2"><i class="icon-pin"></i>{{this.usuario?.razonSocial}}</span>
               </li>
+              <!-- <li class="nav-item dropdown">
+                <button class="btn btn-sm btn-outline-warning" (click)="probarNotificaciones()" title="Probar Notificaciones">
+                  <i class="bx bx-bell"></i> Test
+                </button>
+              </li> -->
             </div>
           </ul>
         </div>
@@ -399,5 +453,11 @@
     <div class="container-fluid">
       <router-outlet></router-outlet>
     </div>
+    <!-- Componente de notificaciones flotantes -->
+    <app-notification-container></app-notification-container>
+    <!-- Componente de test de notificaciones (solo en desarrollo) - COMENTADO -->
+    <!-- @if (isDevelopment()) {
+      <app-test-notifications></app-test-notifications>
+    } -->
   </div>
 </div>

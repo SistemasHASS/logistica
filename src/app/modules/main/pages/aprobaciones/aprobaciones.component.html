@@ -90,45 +90,6 @@
 
                     </p-table>
 
-                    <!-- <table class="table table-bordered">
-                        <thead class="table-light">
-                            <tr>
-                                <th><input type="checkbox" [(ngModel)]="allCheckedItems"
-                                        (change)="seleccionarTodos('ITEM')"></th>
-                                <th>#</th>
-                                <th>Fecha</th>
-                                <th>Tipo</th>
-                                <th>Almacén</th>
-                                <th>Usuario</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let req of requerimientosItems; let i = index">
-                                <td><input type="checkbox" [(ngModel)]="req.checked" (change)="simpleSelected('ITEM')">
-                                </td>
-                                <td>{{ i + 1 }}</td>
-                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
-                                <td>{{ req.tipo }}</td>
-                                <td>{{ req.idalmacen }}</td>
-                                <td>{{ req.nrodocumento }}</td>
-                                <td>{{ req.estados}}</td>
-                                <td> -->
-                                    <!-- Botón Visualizar -->
-                                    <!-- <button class="btn btn-info btn-sm me-1" (click)="visualizarDetalle(req, 'ITEM')"
-                                        title="Ver detalle">
-                                        <i class="icon-eye"></i>
-                                    </button>
-                                    <button class="btn btn-success btn-sm me-1"
-                                        (click)="aprobar(req, 'ITEM')">Aprobar</button>
-                                    <button class="btn btn-danger btn-sm"
-                                        (click)="rechazar(req, 'ITEM')">Rechazar</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table> -->
-
                     <div *ngIf="!requerimientosItems.length" class="text-center text-muted mt-2">
                         No hay requerimientos pendientes
                     </div>
@@ -209,47 +170,6 @@
                         </ng-template>
 
                     </p-table>
-
-                    <!-- <table class="table table-bordered">
-                        <thead class="table-light">
-                            <tr>
-                                <th><input type="checkbox" [(ngModel)]="allCheckedCommodity"
-                                        (change)="seleccionarTodos('COMMODITY')"></th>
-                                <th>#</th>
-                                <th>Fecha</th>
-                                <th>Tipo</th>
-                                <th>Almacén Origen</th>
-                                <th>Almacén Destino</th>
-                                <th>Usuario</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let req of requerimientosCommodity; let i = index">
-                                <td><input type="checkbox" [(ngModel)]="req.checked"
-                                        (change)="simpleSelected('COMMODITY')"></td>
-                                <td>{{ i + 1 }}</td>
-                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
-                                <td>{{ req.tipo }}</td>
-                                <td>{{ req.idalmacen }}</td>
-                                <td>{{ req.idalmacen_destino || '-' }}</td>
-                                <td>{{ req.nrodocumento }}</td>
-                                <td>{{ req.estados}}</td>
-                                <td> -->
-                                    <!-- Botón Visualizar -->
-                                    <!-- <button class="btn btn-info btn-sm me-1"
-                                        (click)="visualizarDetalle(req, 'COMMODITY')" title="Ver detalle">
-                                        <i class="icon-eye"></i>
-                                    </button>
-                                    <button class="btn btn-success btn-sm me-1"
-                                        (click)="aprobar(req, 'COMMODITY')">Aprobar</button>
-                                    <button class="btn btn-danger btn-sm"
-                                        (click)="rechazar(req, 'COMMODITY')">Rechazar</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table> -->
 
                     <div *ngIf="!requerimientosCommodity.length" class="text-center text-muted mt-2">
                         No hay requerimientos pendientes
@@ -332,47 +252,6 @@
 
                     </p-table>
 
-                    <!-- <table class="table table-bordered">
-                        <thead class="table-light">
-                            <tr>
-                                <th><input type="checkbox" [(ngModel)]="allCheckedActivo"
-                                        (change)="seleccionarTodos('ACTIVOFIJO')"></th>
-                                <th>#</th>
-                                <th>Fecha</th>
-                                <th>Tipo</th>
-                                <th>Almacén Origen</th>
-                                <th>Almacén Destino</th>
-                                <th>Usuario</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let req of requerimientosActivoFijo; let i = index">
-                                <td><input type="checkbox" [(ngModel)]="req.checked"
-                                        (change)="simpleSelected('ACTIVOFIJO')"></td>
-                                <td>{{ i + 1 }}</td>
-                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
-                                <td>{{ req.tipo }}</td>
-                                <td>{{ req.idalmacen }}</td>
-                                <td>{{ req.idalmacen_destino || '-' }}</td>
-                                <td>{{ req.nrodocumento }}</td>
-                                <td>{{ req.estados}}</td>
-                                <td> -->
-                                    <!-- Botón Visualizar -->
-                                    <!-- <button class="btn btn-info btn-sm me-1"
-                                        (click)="visualizarDetalle(req, 'ACTIVOFIJO')" title="Ver detalle">
-                                        <i class="icon-eye"></i>
-                                    </button>
-                                    <button class="btn btn-success btn-sm me-1"
-                                        (click)="aprobar(req, 'ACTIVOFIJO')">Aprobar</button>
-                                    <button class="btn btn-danger btn-sm"
-                                        (click)="rechazar(req, 'ACTIVOFIJO')">Rechazar</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table> -->
-
                     <div *ngIf="!requerimientosActivoFijo.length" class="text-center text-muted mt-2">
                         No hay requerimientos pendientes
                     </div>
@@ -454,47 +333,6 @@
                         </ng-template>
 
                     </p-table>
-
-                    <!-- <table class="table table-bordered">
-                        <thead class="table-light">
-                            <tr>
-                                <th><input type="checkbox" [(ngModel)]="allCheckedActivoMenor"
-                                        (change)="seleccionarTodos('ACTIVOFIJOMENOR')"></th>
-                                <th>#</th>
-                                <th>Fecha</th>
-                                <th>Tipo</th>
-                                <th>Almacén Origen</th>
-                                <th>Almacén Destino</th>
-                                <th>Usuario</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let req of requerimientosActivoFijoMenor; let i = index">
-                                <td><input type="checkbox" [(ngModel)]="req.checked"
-                                        (change)="simpleSelected('ACTIVOFIJOMENOR')"></td>
-                                <td>{{ i + 1 }}</td>
-                                <td>{{ req.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
-                                <td>{{ req.tipo }}</td>
-                                <td>{{ req.idalmacen }}</td>
-                                <td>{{ req.idalmacen_destino || '-' }}</td>
-                                <td>{{ req.nrodocumento }}</td>
-                                <td>{{ req.estados}}</td>
-                                <td> -->
-                                    <!-- Botón Visualizar -->
-                                    <!-- <button class="btn btn-info btn-sm me-1"
-                                        (click)="visualizarDetalle(req, 'ACTIVOFIJOMENOR')" title="Ver detalle">
-                                        <i class="icon-eye"></i>
-                                    </button>
-                                    <button class="btn btn-success btn-sm me-1"
-                                        (click)="aprobar(req, 'ACTIVOFIJOMENOR')">Aprobar</button>
-                                    <button class="btn btn-danger btn-sm"
-                                        (click)="rechazar(req, 'ACTIVOFIJOMENOR')">Rechazar</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table> -->
 
                     <div *ngIf="!requerimientosActivoFijoMenor.length" class="text-center text-muted mt-2">
                         No hay requerimientos pendientes

@@ -217,17 +217,20 @@ export class PrioridadRequerimientoService {
       return [
         { 
           value: '1', 
-          label: 'Normal (7-21 días)', 
+          /* label: 'Normal (7-21 días)', */
+          label: 'Normal',
           descripcion: 'Compra estándar, importación (120d) o fabricación (45d)'
         },
         { 
           value: '2', 
-          label: 'Urgente (48 horas)', 
+          label: 'Urgente',
+          /* label: 'Urgente (48 horas)', */ 
           descripcion: 'Requiere atención prioritaria'
         },
         { 
           value: '3', 
-          label: 'Emergencia (24 horas)', 
+          label: 'Emergencia', 
+          /* label: 'Emergencia (24 horas)', */ 
           descripcion: 'Máxima prioridad, requiere aprobación especial'
         }
       ];
@@ -235,17 +238,20 @@ export class PrioridadRequerimientoService {
       return [
         { 
           value: '1', 
-          label: 'Normal (mismo día)', 
+          label: 'Normal', 
+          /* label: 'Normal (mismo día)', */
           descripcion: 'Consumo estándar del almacén'
         },
         { 
           value: '2', 
-          label: 'Urgente (dentro del día)', 
+          label: 'Urgente', 
+          /* label: 'Urgente (dentro del día)', */ 
           descripcion: 'Requiere atención prioritaria'
         },
         { 
           value: '3', 
-          label: 'Emergencia (inmediato)', 
+          label: 'Emergencia', 
+          /* label: 'Emergencia (inmediato)', */ 
           descripcion: 'Máxima prioridad, 6 horas'
         }
       ];
@@ -253,17 +259,20 @@ export class PrioridadRequerimientoService {
       return [
         { 
           value: '1', 
-          label: 'Normal (mismo día)', 
+          label: 'Normal', 
+          /* label: 'Normal (mismo día)', */ 
           descripcion: 'Transferencia estándar'
         },
         { 
           value: '2', 
-          label: 'Urgente (dentro del día)', 
+          label: 'Urgente', 
+          /* label: 'Urgente (dentro del día)', */ 
           descripcion: 'Requiere atención prioritaria'
         },
         { 
           value: '3', 
-          label: 'Emergencia (inmediato)', 
+          label: 'Emergencia', 
+          /* label: 'Emergencia (inmediato)', */ 
           descripcion: 'Máxima prioridad'
         }
       ];

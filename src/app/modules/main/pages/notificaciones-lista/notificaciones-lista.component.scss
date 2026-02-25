@@ -1,0 +1,23 @@
+.card {
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+  border: none;
+}
+
+.badge {
+  font-size: 0.75rem;
+}
+
+.bg-light {
+  background-color: #f8f9fa !important;
+  border-left: 4px solid #007bff;
+}
+
+:host ::ng-deep .p-paginator {
+  background: transparent;
+  border: none;
+  padding: 1rem 0 0 0;
+}
+
+.text-success {
+  color: #28a745 !important;
+}

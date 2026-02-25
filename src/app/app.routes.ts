@@ -4,6 +4,7 @@ import { LayoutComponent } from './modules/main/pages/layout/layout.component';
 import { ParametrosComponent } from './modules/main/pages/parametros/parametros.component';
 import { RequerimientosComponent } from './modules/main/pages/requerimientos/requerimientos.component';
 import { AprobacionesComponent } from './modules/main/pages/aprobaciones/aprobaciones.component';
+import { NotificacionesListaComponent } from './modules/main/pages/notificaciones-lista/notificaciones-lista.component';
 import { AprobadorGuard } from './modules/auth/guard/aprobador.guard';
 import { AlmacenGuard } from './modules/auth/guard/almacen.guard';
 import { OperativoGuard } from './modules/auth/guard/operativo.guard';
@@ -36,6 +37,9 @@ import { MaestroProveedoresComponent } from './modules/main/pages/maestro-provee
 import { DevolucionesProveedoresComponent } from './modules/main/pages/devoluciones-proveedores/devoluciones-proveedores.component';
 import { ReportesComprasComponent } from './modules/main/pages/reportes-compras/reportes-compras.component';
 import { EvaluacionProveedoresComponent } from './modules/main/pages/evaluacion-proveedores/evaluacion-proveedores.component';
+import { ConsolidacionRequerimientosComponent } from './modules/main/pages/consolidacion-requerimientos/consolidacion-requerimientos.component';
+import { LogisticoGuard } from './modules/auth/guard/logistico.guard';
+import { SaldoRequerimientoComponent } from './modules/main/pages/saldo-requerimiento/saldo-requerimiento.component';
 
 
 export const routes: Routes = [
@@ -84,6 +88,8 @@ export const routes: Routes = [
       { path: 'parametros', component: ParametrosComponent, canActivate: [OperativoEmpaqueGuard] },
       // { path: 'requerimientos', component: RequerimientosComponent, canActivate: [OperativoGuard, ConfigGuard] },
       { path: 'requerimientos', component: RequerimientosComponent, canActivate: [OperativoEmpaqueGuard, ConfigGuard] },
+      { path: 'notificaciones', component: NotificacionesListaComponent, canActivate: [OperativoEmpaqueGuard] },
+      { path: 'saldo-requerimiento', component: SaldoRequerimientoComponent, canActivate: [OperativoEmpaqueGuard] },
       { path: 'solicitudes-compra', component: SolicitudesCompraComponent, canActivate: [AlmacenGuard] },
       { path: 'cotizaciones', component: CotizacionesComponent, canActivate: [AlmacenGuard] },
       { path: 'ordenes-compra', component: OrdenesCompraComponent, canActivate: [AlmacenGuard] },
@@ -99,6 +105,7 @@ export const routes: Routes = [
       { path: 'reporte-saldos', component: ReporteSaldosComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte-despachos', component: ReporteDespachosComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte-requerimientos', component: ReporteRequerimientos },
+      { path: 'consolidacion-requerimientos', component: ConsolidacionRequerimientosComponent, canActivate: [LogisticoGuard] },
       { path: '**', redirectTo: 'auth/login' }
     ],
     canActivate: [AuthGuard]

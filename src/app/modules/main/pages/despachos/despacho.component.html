@@ -2,6 +2,58 @@
 
   <h4 class="mb-2 titulo-pagina">LISTA DE REQUERIMIENTOS APROBADOS</h4>
   
+  <!-- SECCIÓN DE NOTIFICACIONES -->
+  <div class="row mb-3" *ngIf="usuario && usuario.idrol && usuario.idrol.includes('ALLOGIST')">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer;" (click)="mostrarNotificaciones = !mostrarNotificaciones">
+          <div class="d-flex align-items-center">
+            <i class='bx bx-bell me-2'></i>
+            <h6 class="mb-0">Notificaciones de Almacén</h6>
+            @if (notificacionesNoLeidas > 0) {
+              <span class="badge bg-danger ms-2">{{ notificacionesNoLeidas }}</span>
+            }
+          </div>
+          <i [class]="mostrarNotificaciones ? 'bx bx-chevron-up' : 'bx bx-chevron-down'"></i>
+        </div>
+        @if (mostrarNotificaciones) {
+          <div class="card-body p-0">
+            @if (notificaciones.length === 0) {
+              <div class="text-center py-3 text-muted">
+                <i class='bx bx-bell-off' style="font-size: 2rem;"></i>
+                <p class="mb-0 mt-2">No tienes notificaciones</p>
+              </div>
+            } @else {
+              <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                @for (notificacion of notificaciones; track notificacion.id_notificacion) {
+                  <div class="list-group-item list-group-item-action" 
+                       [class]="!notificacion.leida ? 'bg-light' : ''"
+                       (click)="marcarNotificacionComoLeida(notificacion)">
+                    <div class="d-flex w-100 justify-content-between">
+                      <div class="d-flex align-items-start">
+                        <i [class]="getTipoNotificacionIcon(notificacion.tipo_notificacion)" class="me-2 mt-1"></i>
+                        <div class="flex-grow-1">
+                          <p class="mb-1">{{ notificacion.mensaje }}</p>
+                          <small class="text-muted">
+                            <i class='bx bx-time'></i>
+                            {{ notificacion.fecha_creacion | date:'dd/MM/yyyy HH:mm' }}
+                          </small>
+                        </div>
+                      </div>
+                      @if (!notificacion.leida) {
+                        <span class="badge bg-primary rounded-pill">Nueva</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+  
   <!-- FILTRO - Responsive (apilados en móvil) -->
   <div class="filtros-mobile">
     <div class="filtro-item">
