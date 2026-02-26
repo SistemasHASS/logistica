@@ -164,28 +164,28 @@
     
     <div class="modal-body-custom" *ngIf="requerimientoSeleccionado">
       <div class="row g-3">
-        <div class="col-md-6">
+        <div class="col-md-6 colResp">
           <div class="detalle-item">
             <label>ID Requerimiento:</label>
             <span>{{ requerimientoSeleccionado.idrequerimiento }}</span>
           </div>
         </div>
         
-        <div class="col-md-6">
+        <div class="col-md-6 colResp">
           <div class="detalle-item">
             <label>Requisición Número:</label>
             <span>{{ requerimientoSeleccionado.RequisicionNumero || 'N/A' }}</span>
           </div>
         </div>
         
-        <div class="col-md-6">
+        <div class="col-md-6 colResp">
           <div class="detalle-item">
             <label>Fecha Registro:</label>
             <span>{{ requerimientoSeleccionado.fecharegistro }}</span>
           </div>
         </div>
         
-        <div class="col-md-6">
+        <div class="col-md-6 colResp">
           <div class="detalle-item">
             <label>Estado:</label>
             <span class="badge" 
@@ -195,105 +195,105 @@
           </div>
         </div>
         
-        <div class="col-md-6">
+        <div class="col-md-6 colResp">
           <div class="detalle-item">
             <label>Empresa:</label>
             <span>{{ getDisplayValue('ruc', requerimientoSeleccionado) }}</span>
           </div>
         </div>
         
-        <div class="col-md-6">
+        <div class="col-md-6 colResp">
           <div class="detalle-item">
             <label>Fundo:</label>
             <span>{{ getDisplayValue('idfundo', requerimientoSeleccionado) }}</span>
           </div>
         </div>
         
-        <div class="col-md-6">
+        <div class="col-md-6 colResp">
           <div class="detalle-item">
             <label>Almacén:</label>
             <span>{{ getDisplayValue('idalmacen', requerimientoSeleccionado) }}</span>
           </div>
         </div>
         
-        <div class="col-md-6" *ngIf="requerimientoSeleccionado.idalmacendestino">
+        <div class="col-md-6 colResp" *ngIf="requerimientoSeleccionado.idalmacendestino">
           <div class="detalle-item">
             <label>Almacén Destino:</label>
             <span>{{ getDisplayValue('idalmacendestino', requerimientoSeleccionado) }}</span>
           </div>
         </div>
         
-        <div class="col-md-6">
+        <div class="col-md-6 colResp">
           <div class="detalle-item">
             <label>Tipo:</label>
             <span>{{ requerimientoSeleccionado.tipo || 'N/A' }}</span>
           </div>
         </div>
         
-        <div class="col-md-6">
+        <div class="col-md-6 colResp">
           <div class="detalle-item">
             <label>Prioridad:</label>
             <span>{{ requerimientoSeleccionado.prioridad || 'N/A' }}</span>
           </div>
         </div>
         
-        <div class="col-12">
+        <div class="col-12 colResp">
           <div class="detalle-item">
             <label>Glosa:</label>
             <span>{{ requerimientoSeleccionado.glosa || 'Sin descripción' }}</span>
           </div>
         </div>
         
-        <div class="col-md-6" *ngIf="requerimientoSeleccionado.idclasificacion">
+        <div class="col-md-6 colResp" *ngIf="requerimientoSeleccionado.idclasificacion">
           <div class="detalle-item">
             <label>Clasificación:</label>
             <span>{{ requerimientoSeleccionado.idclasificacion }}</span>
           </div>
         </div>
         
-        <div class="col-md-6" *ngIf="requerimientoSeleccionado.idarea">
+        <div class="col-md-6 colResp" *ngIf="requerimientoSeleccionado.idarea">
           <div class="detalle-item">
             <label>Área:</label>
             <span>{{ requerimientoSeleccionado.idarea }}</span>
           </div>
         </div>
         
-        <div class="col-md-6">
+        <div class="col-md-6 colResp">
           <div class="detalle-item">
             <label>Creador:</label>
             <span>{{ requerimientoSeleccionado.nombreCreador || 'N/A' }}</span>
           </div>
         </div>
         
-        <div class="col-md-6">
+        <div class="col-md-6 colResp">
           <div class="detalle-item">
             <label>DNI Creador:</label>
             <span>{{ requerimientoSeleccionado.nrodocumento || 'N/A' }}</span>
           </div>
         </div>
         
-        <div class="col-md-6" *ngIf="requerimientoSeleccionado.fechaAprobacion">
+        <div class="col-md-6 colResp" *ngIf="requerimientoSeleccionado.fechaAprobacion">
           <div class="detalle-item">
             <label>Fecha Aprobación:</label>
             <span>{{ requerimientoSeleccionado.fechaAprobacion | date:'dd/MM/yyyy HH:mm' }}</span>
           </div>
         </div>
         
-        <div class="col-md-6" *ngIf="requerimientoSeleccionado.usuarioAprueba">
+        <div class="col-md-6 colResp" *ngIf="requerimientoSeleccionado.usuarioAprueba">
           <div class="detalle-item">
             <label>Usuario Aprueba:</label>
             <span>{{ requerimientoSeleccionado.usuarioAprueba }}</span>
           </div>
         </div>
         
-        <div class="col-md-6">
+        <div class="col-md-6 colResp">
           <div class="detalle-item">
             <label>Item Tipo:</label>
             <span>{{ requerimientoSeleccionado.itemtipo || 'N/A' }}</span>
           </div>
         </div>
         
-        <div class="col-12" *ngIf="requerimientoSeleccionado.detalle && requerimientoSeleccionado.detalle.length > 0">
+        <div class="col-12 itemDelReq" *ngIf="requerimientoSeleccionado.detalle && requerimientoSeleccionado.detalle.length > 0">
           <h5>Ítems del Requerimiento</h5>
           <div class="table-responsive">
             <table class="table table-sm table-bordered">
