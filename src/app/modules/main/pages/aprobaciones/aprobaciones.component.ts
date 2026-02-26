@@ -93,9 +93,66 @@ export class AprobacionesComponent {
 
   async ngOnInit() {
     await this.getUsuario();
+    await this.limpiarDetallesDuplicados(); // 🔥 Limpiar duplicados al iniciar
     await this.sincronizarTablasMaestras();
     await this.sincronizarRequerimientos();
     await this.cargar();
+  }
+
+  /**
+   * Limpia los detalles duplicados en Dexie
+   * Agrupa por idrequerimiento y mantiene solo los registros únicos
+   */
+  async limpiarDetallesDuplicados() {
+    try {
+      const todosLosDetalles = await this.dexieService.detalles.toArray();
+      
+      // Agrupar por idrequerimiento
+      const detallesPorRequerimiento = new Map<string, any[]>();
+      
+      todosLosDetalles.forEach(detalle => {
+        const key = detalle.idrequerimiento;
+        if (!detallesPorRequerimiento.has(key)) {
+          detallesPorRequerimiento.set(key, []);
+        }
+        detallesPorRequerimiento.get(key)!.push(detalle);
+      });
+      
+      // Para cada requerimiento, eliminar duplicados
+      for (const [idrequerimiento, detalles] of detallesPorRequerimiento) {
+        if (detalles.length > 1) {
+          // Verificar si son realmente duplicados (mismo código)
+          const detallesUnicos = new Map<string, any>();
+          
+          detalles.forEach(det => {
+            const key = `${det.codigo}-${det.descripcion}`;
+            if (!detallesUnicos.has(key)) {
+              detallesUnicos.set(key, det);
+            }
+          });
+          
+          // Si hay duplicados, eliminar todos y volver a insertar solo los únicos
+          if (detallesUnicos.size < detalles.length) {
+            console.log(`🧹 Limpiando ${detalles.length - detallesUnicos.size} duplicados para ${idrequerimiento}`);
+            
+            // Eliminar todos los detalles de este requerimiento
+            await this.dexieService.detalles
+              .where('idrequerimiento')
+              .equals(idrequerimiento)
+              .delete();
+            
+            // Reinsertar solo los únicos
+            for (const detalle of detallesUnicos.values()) {
+              await this.dexieService.detalles.add(detalle);
+            }
+          }
+        }
+      }
+      
+      console.log('✅ Limpieza de duplicados completada');
+    } catch (error) {
+      console.error('❌ Error al limpiar duplicados:', error);
+    }
   }
 
   async sincronizarTablasMaestras() {
@@ -364,6 +421,13 @@ export class AprobacionesComponent {
           for (const req of resp) {
             console.log('Requerimiento', req);
             if (req.detalle && req.detalle.length) {
+              // 🔥 Primero eliminar los detalles existentes para este requerimiento
+              await this.dexieService.detalles
+                .where('idrequerimiento')
+                .equals(req.idrequerimiento)
+                .delete();
+              
+              // Luego agregar los nuevos detalles
               for (const det of req.detalle) {
                 // Añadimos un campo idrequerimiento para enlazarlo
                 await this.dexieService.detalles.add({
@@ -391,15 +455,19 @@ export class AprobacionesComponent {
   }
 
   /** ✅ Sincronizar requerimiento aprobado a SPRING */
-  async sincronizaRequerimientoSPRING(req: any) {
+  async sincronizaRequerimientoSPRING(req: any, skipConfirmation: boolean = false) {
     // debugger;
-    const confirmacion = await this.alertService.showConfirm(
-      'Confirmación',
-      '¿Desea enviar los datos?',
-      'warning'
-    );
+    
+    // Solo mostrar confirmación si no se está procesando en lote
+    if (!skipConfirmation) {
+      const confirmacion = await this.alertService.showConfirm(
+        'Confirmación',
+        '¿Desea enviar los datos?',
+        'warning'
+      );
 
-    if (!confirmacion) return;
+      if (!confirmacion) return;
+    }
 
     let origenapp = 'app_logistica';
     let comprasAlmacenFlag;
@@ -948,11 +1016,13 @@ export class AprobacionesComponent {
     }
 
     Swal.fire({
-      title: '¿Aprobar requerimientos?',
+      title: `¿Aprobar ${seleccionados.length} requerimiento(s)?`,
+      text: 'Los requerimientos aprobados se enviarán a SPRING',
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Sí, aprobar',
-    }).then((result) => {
+      confirmButtonText: 'Sí, aprobar y enviar',
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
       if (!result.isConfirmed) return;
 
       const payload = seleccionados.map((req) => ({
@@ -967,19 +1037,28 @@ export class AprobacionesComponent {
         .aprobarRequerimiento(payload)
         .subscribe(async (resp) => {
           if (resp[0]?.errorgeneral === 0) {
+            // 🔥 Mostrar progreso
+            this.alertService.mostrarModalCarga();
+            
+            let enviados = 0;
             for (const req of seleccionados) {
               req.estados = 'APROBADO';
               req.estado = 1;
               req.usuarioAprueba = this.usuario.usuario;
               req.fechaAprobacion = new Date().toISOString();
               await this.dexieService.saveRequerimiento(req);
-              await this.sincronizaRequerimientoSPRING(req);
+              
+              // 🔥 Enviar a SPRING sin confirmación adicional
+              await this.sincronizaRequerimientoSPRING(req, true);
+              enviados++;
+              console.log(`✅ Enviado ${enviados}/${seleccionados.length} a SPRING`);
             }
 
+            this.alertService.cerrarModalCarga();
             await this.cargarRequerimientos();
             this.alertService.showAlert(
               '✅ Aprobado',
-              'Registros aprobados',
+              `${seleccionados.length} requerimiento(s) aprobado(s) y enviado(s) a SPRING`,
               'success'
             );
           }
