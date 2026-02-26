@@ -9,12 +9,46 @@
   margin-bottom: 15px;
 
   >div {
-    overflow: auto;
+    // overflow: auto;
+    width: 100%;
     border-left: 5px solid #57b596;
     padding-left: 5px;
 
     p {
       margin: 0;
+    }
+    .info{
+        width: 100%;
+    }
+
+    // Estilos para radio buttons en cards
+    .form-check {
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
+        padding: 0;
+      
+        .form-check-input {
+            margin-top: 8px;
+            margin-right: 10px;
+            margin-left: 0;
+            cursor: pointer;
+            
+            &:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            }
+        }
+      
+      .form-check-label {
+            cursor: pointer;
+            flex: 1;
+            
+        }
+        .card-content {
+            flex: 1;
+            overflow: auto;
+        }
     }
   }
 }
@@ -95,6 +129,8 @@
     max-width: 800px;
     width: 90%;
     max-height: 90vh;
+    display: flex;
+    flex-direction: column;
     // overflow-y: auto;
     animation: slideDown 0.3s ease-out;
 }
@@ -142,6 +178,8 @@
 
 .modal-body-custom {
     padding: 24px;
+    height: 100%;
+    overflow: auto;
 }
 
 .detalle-item {

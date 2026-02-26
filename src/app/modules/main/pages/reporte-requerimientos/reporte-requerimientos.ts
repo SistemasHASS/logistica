@@ -26,6 +26,9 @@ export class ReporteRequerimientos {
   filtro: string = '';
   dataFiltrada: any[] = [];
 
+  // Propiedades para selección de requerimientos
+  selectedRequerimientoId: string = '';
+
   // Paginación para cards (vista mobile)
   cardFirst = 0;
   cardRows = 10;
@@ -102,6 +105,7 @@ export class ReporteRequerimientos {
     const formato = this.formatoReporteListar()
     this.logisticaService.reporteRequerimientos(formato).subscribe((res: any[]) => {
       this.data = res
+      console.log(res)
 
       // Formatear fecharegistro a dd/mm/yyyy
       this.data = this.data.map(item => {
@@ -140,7 +144,8 @@ export class ReporteRequerimientos {
         'dniedita',
         'fechaedicion',
         'dnielimina',
-        'servicio'
+        'servicio',
+        'detalle'
       ];
 
       this.columnas = Array.from(
@@ -270,6 +275,17 @@ export class ReporteRequerimientos {
   verDetalles(row: any) {
     this.requerimientoSeleccionado = row;
     this.modalDetallesAbierto = true;
+  }
+
+  verDetallesSeleccionado() {
+    if (!this.selectedRequerimientoId) return;
+    
+    // Buscar el requerimiento completo en dataFiltrada
+    const requerimiento = this.dataFiltrada.find(item => item.idrequerimiento === this.selectedRequerimientoId);
+    
+    if (requerimiento) {
+      this.verDetalles(requerimiento);
+    }
   }
 
   cerrarModalDetalles() {

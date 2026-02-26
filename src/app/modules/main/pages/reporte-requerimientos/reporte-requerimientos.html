@@ -86,38 +86,41 @@
 
               <div class="contentCard">
                 <div class="info" [ngClass]="{ 'eliminadoTR': item.eliminado }">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="selectedRequerimiento" id="radio-{{item.idrequerimiento}}" [value]="item.idrequerimiento" [(ngModel)]="selectedRequerimientoId">
+                    <div class="card-content">
+                      <p class="item-card">
+                        <span
+                          [ngClass]="{
+                            'is-enviado': item.estados == 'APROBADO',
+                            'is-noenviado': item.estados != 'APROBADO'
+                          }">
+                          [{{ item.estados == 'APROBADO' ? 'Enviado' : 'Sin enviar' }}]
+                        </span>
+                      </p>
 
-                  <p class="item-card">
-                    <span
-                      [ngClass]="{
-                        'is-enviado': item.estados == 'APROBADO',
-                        'is-noenviado': item.estados != 'APROBADO'
-                      }">
-                      [{{ item.estados == 'APROBADO' ? 'Enviado' : 'Sin enviar' }}]
-                    </span>
-                  </p>
+                      <p class="item-card">
+                        <strong>#Requerimiento:</strong>
+                        {{ item.idrequerimiento }}
+                      </p>
 
-                  <p class="item-card">
-                    <strong>#Requerimiento:</strong>
-                    {{ item.idrequerimiento }}
-                  </p>
+                      <p class="item-card">
+                        <strong>#Requerimiento Spring:</strong>
+                        {{ item.RequisicionNumero }}
+                      </p>
+                      
+                      <p class="item-card">
+                        <strong>Fecha:</strong>
+                        {{ item.fecharegistro }}
+                        - <strong>Almacén:</strong> {{ getNombreAlmacenCard(item, 'idalmacen') }}
+                      </p>
 
-                  <p class="item-card">
-                    <strong>#Requerimiento Spring:</strong>
-                    {{ item.RequisicionNumero }}
-                  </p>
-                  
-                  <p class="item-card">
-                    <strong>Fecha:</strong>
-                    {{ item.fecharegistro }}
-                    - <strong>Almacén:</strong> {{ getNombreAlmacenCard(item, 'idalmacen') }}
-                  </p>
-
-                  <p class="item-card">
-                    <strong>Glosa:</strong>
-                    {{ getDisplayValue('glosa', item) }} - {{ getDisplayValue('tipo', item) }}
-                  </p>
-
+                      <p class="item-card">
+                        <strong>Glosa:</strong>
+                        {{ getDisplayValue('glosa', item) }} - {{ getDisplayValue('tipo', item) }}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -133,6 +136,15 @@
             (onPageChange)="onCardPageChange($event)"
             styleClass="mt-2"
           ></p-paginator>
+
+          <!-- Botón de detalles centralizado -->
+          <div class="text-center mt-3" *ngIf="dataFiltrada.length > 0">
+            <button class="btn btn-info" 
+                    [disabled]="!selectedRequerimientoId" 
+                    (click)="verDetallesSeleccionado()">
+              <i class="icon icon-eye"></i> Ver Detalle
+            </button>
+          </div>
 
         </div>
       </div>
@@ -243,6 +255,77 @@
           <div class="detalle-item">
             <label>Área:</label>
             <span>{{ requerimientoSeleccionado.idarea }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="detalle-item">
+            <label>Creador:</label>
+            <span>{{ requerimientoSeleccionado.nombreCreador || 'N/A' }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="detalle-item">
+            <label>DNI Creador:</label>
+            <span>{{ requerimientoSeleccionado.nrodocumento || 'N/A' }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6" *ngIf="requerimientoSeleccionado.fechaAprobacion">
+          <div class="detalle-item">
+            <label>Fecha Aprobación:</label>
+            <span>{{ requerimientoSeleccionado.fechaAprobacion | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6" *ngIf="requerimientoSeleccionado.usuarioAprueba">
+          <div class="detalle-item">
+            <label>Usuario Aprueba:</label>
+            <span>{{ requerimientoSeleccionado.usuarioAprueba }}</span>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="detalle-item">
+            <label>Item Tipo:</label>
+            <span>{{ requerimientoSeleccionado.itemtipo || 'N/A' }}</span>
+          </div>
+        </div>
+        
+        <div class="col-12" *ngIf="requerimientoSeleccionado.detalle && requerimientoSeleccionado.detalle.length > 0">
+          <h5>Ítems del Requerimiento</h5>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead class="table-light">
+                <tr>
+                  <th>Código</th>
+                  <th>Producto</th>
+                  <th>Descripción</th>
+                  <th>Cantidad</th>
+                  <th>CECO</th>
+                  <th>Turno</th>
+                  <th>Labor</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of requerimientoSeleccionado.detalle">
+                  <td>{{ item.codigo }}</td>
+                  <td>{{ item.producto }}</td>
+                  <td>{{ item.descripcion || '-' }}</td>
+                  <td class="text-center">{{ item.cantidad }}</td>
+                  <td>{{ item.ceco }}</td>
+                  <td>{{ item.turno || '-' }}</td>
+                  <td>{{ item.labor || '-' }}</td>
+                  <td class="text-center">
+                    <span class="badge" [ngClass]="item.estado === 1 ? 'bg-success' : 'bg-danger'">
+                      {{ item.estado === 1 ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
