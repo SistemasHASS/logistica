@@ -1,6 +1,6 @@
 {
   "name": "logistica",
-  "version": "1.0.32",
+  "version": "1.0.36",
   "scripts": {
     "ng": "ng",
     "start": "node scripts/update-version.js && ng serve",

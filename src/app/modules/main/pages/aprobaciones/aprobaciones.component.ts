@@ -301,17 +301,17 @@ export class AprobacionesComponent {
     this.requerimientos = await this.dexieService.showRequerimiento();
     this.requerimientosItems = this.requerimientos.filter(
       (x) => x.tipo === 'ITEM' && x.estados === 'PENDIENTE'
-    );
+    ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
     this.ordenarRequerimientos();
     this.requerimientosCommodity = this.requerimientos.filter(
       (x) => x.tipo === 'COMMODITY' && x.estados === 'PENDIENTE'
-    );
+    ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
     this.requerimientosActivoFijo = this.requerimientos.filter(
       (x) => x.tipo === 'ACTIVOFIJO' && x.estados === 'PENDIENTE'
-    );
+    ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
     this.requerimientosActivoFijoMenor = this.requerimientos.filter(
       (x) => x.tipo === 'ACTIVOFIJOMENOR' && x.estados === 'PENDIENTE'
-    );
+    ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
   }
 
   async cargarRequerimientos() {
@@ -319,16 +319,16 @@ export class AprobacionesComponent {
 
     this.requerimientosItems = data.filter(
       (x: { tipo: string; estados: string; }) => x.tipo === 'ITEM' && x.estados === 'PENDIENTE'
-    );
+    ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
     this.requerimientosCommodity = data.filter(
       (x: { tipo: string; estados: string; }) => x.tipo === 'COMMODITY' && x.estados === 'PENDIENTE'
-    );
+    ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
     this.requerimientosActivoFijo = data.filter(
       (x: { tipo: string; estados: string; }) => x.tipo === 'ACTIVOFIJO' && x.estados === 'PENDIENTE'
-    );
+    ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
     this.requerimientosActivoFijoMenor = data.filter(
       (x: { tipo: string; estados: string; }) => x.tipo === 'ACTIVOFIJOMENOR' && x.estados === 'PENDIENTE'
-    );
+    ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
   }
 
   async cambiarEstado(req: any, estado: 'APROBADO' | 'RECHAZADO') {
@@ -918,8 +918,8 @@ export class AprobacionesComponent {
   }
 
   aprobarRequerimientos(tipo: string) {
-    // ✅ Forzamos actualización usando tu método seleccionarTodos
-    this.seleccionarTodos(tipo);
+    // ✅ Actualizar las listas de seleccionados según los checkboxes marcados
+    this.simpleSelected(tipo);
 
     let seleccionados: any[] = [];
 

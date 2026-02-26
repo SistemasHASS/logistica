@@ -489,10 +489,10 @@ export class RequerimientosComponent implements OnInit {
     this.actualizarContadores();
     
     // Verificar si viene de una consolidación
-    this.verificarRequerimientoConsolidado();
+    await this.verificarRequerimientoConsolidado();
   }
 
-  verificarRequerimientoConsolidado() {
+  async verificarRequerimientoConsolidado() {
     const consolidadoData = sessionStorage.getItem('requerimientoConsolidado');
     
     if (consolidadoData) {
@@ -501,6 +501,15 @@ export class RequerimientosComponent implements OnInit {
         
         // Configurar el tipo como COMPRA
         this.TipoSelecionado = data.tipo;
+        this.requerimiento.itemtipo = data.tipo;
+        
+        // 🔥 Cargar opciones de prioridad según el tipo
+        this.opcionesPrioridadITEM = this.prioridadService.obtenerOpcionesPrioridad(
+          this.TipoSelecionado as 'COMPRA' | 'CONSUMO' | 'TRANSFERENCIA'
+        );
+        
+        // 🔥 Llamar a onTipoChange para establecer la clasificación automáticamente
+        await this.onTipoChange();
         
         // Abrir el formulario de items
         this.mostrarFormulario = true;
@@ -635,7 +644,7 @@ export class RequerimientosComponent implements OnInit {
       this.TipoSelecionado = config.idTipoItem as TipoRequerimiento | '';
 
       // 🔥 Ejecutar lógica según tipo
-      this.onTipoChange();
+      await this.onTipoChange();
 
       if (!this.requerimiento.idalmacen) {
         this.requerimiento.idalmacen = config.idalmacen;
@@ -1425,7 +1434,7 @@ export class RequerimientosComponent implements OnInit {
     console.log(this.clasificacionesFiltrados);
   }
 
-  onTipoChange() {
+  async onTipoChange() {
     // Actualizar la variable local para compatibilidad con el resto del código
     this.TipoSelecionado = this.requerimiento.itemtipo as TipoRequerimiento | '';
     
@@ -1447,8 +1456,11 @@ export class RequerimientosComponent implements OnInit {
         (c) => c.id === 'STO',
       );
       
-      // Limpiar campos específicos de COMPRA
-      this.limpiarCamposCompra();
+      // Limpiar campos específicos de COMPRA (pero mantener proyecto, ceco, labor)
+      this.limpiarCamposCompraEspecificos();
+      
+      // 🔥 Cargar datos para CONSUMO desde configuración
+      await this.cargarDatosParaConsumo();
       
     } else if (this.TipoSelecionado === 'COMPRA') {
       this.clasificacionSeleccionado = 'CMP';
@@ -1516,6 +1528,31 @@ export class RequerimientosComponent implements OnInit {
       }
     } catch (error) {
       console.error('❌ Error al recargar valores desde configuración:', error);
+    }
+  }
+
+  // Método para limpiar campos específicos de COMPRA (pero mantener proyecto, ceco, labor para CONSUMO)
+  limpiarCamposCompraEspecificos() {
+    // No limpiar proyecto, ceco, labor ya que se usan en CONSUMO
+    // Solo limpiar si NO estamos cambiando a CONSUMO
+    if (this.TipoSelecionado !== 'CONSUMO') {
+      this.proyectoSeleccionado = null;
+      this.cecoSeleccionado = null;
+      this.laborSeleccionado = null;
+      
+      // Limpiar también en las líneas temporales si hay modal abierto
+      if (this.modalAbierto && this.lineaTemp) {
+        this.lineaTemp.proyecto = '';
+        this.lineaTemp.ceco = '';
+        this.lineaTemp.labor = '';
+      }
+      
+      // Limpiar detalles existentes
+      this.detalles.forEach(detalle => {
+        detalle.proyecto = '';
+        detalle.ceco = '';
+        detalle.labor = '';
+      });
     }
   }
 
@@ -1587,6 +1624,62 @@ export class RequerimientosComponent implements OnInit {
   }
 
   /**
+   * Carga los datos necesarios para el flujo de CONSUMO
+   */
+  async cargarDatosParaConsumo() {
+    try {
+      // Cargar valores desde configuración si existen
+      const config = await this.dexieService.obtenerPrimeraConfiguracion();
+      
+      if (config) {
+        // Cargar turno
+        if (config.idturno) {
+          this.turnoSeleccionado = config.idturno;
+          console.log('🔄 TURNO cargado desde config:', this.turnoSeleccionado);
+        }
+        
+        // Cargar CECO
+        if (config.idceco) {
+          this.cecoSeleccionado = (await this.dexieService.getCecoById(config.idceco)) as Ceco | null;
+          console.log('🔄 CECO cargado desde config:', this.cecoSeleccionado);
+        }
+        
+        // Cargar labor
+        if (config.idlabor) {
+          this.laborSeleccionado = (await this.dexieService.getLaborById(config.idlabor)) as Labor | null;
+          console.log('🔄 LABOR cargada desde config:', this.laborSeleccionado);
+        }
+        
+        // Cargar proyecto
+        if (config.idproyecto) {
+          this.proyectoSeleccionado = (await this.dexieService.getProyectoByAfe(config.idproyecto)) as Proyecto | null;
+          console.log('🔄 PROYECTO cargado desde config:', this.proyectoSeleccionado);
+        }
+      }
+      
+      // Asegurarse que los datos estén cargados
+      if (!this.cecos || this.cecos.length === 0) {
+        await this.ListarCecos();
+      }
+      if (!this.labores || this.labores.length === 0) {
+        await this.ListarLabores();
+      }
+      if (!this.proyectos || this.proyectos.length === 0) {
+        await this.ListarProyectos();
+      }
+      
+      console.log('📊 Datos para CONSUMO cargados:', {
+        cecos: this.cecos.length,
+        labores: this.labores.length,
+        proyectos: this.proyectos.length,
+        turno: this.turnoSeleccionado
+      });
+    } catch (error) {
+      console.error('❌ Error al cargar datos para CONSUMO:', error);
+    }
+  }
+
+  /**
    * Carga los datos necesarios para el flujo de COMPRA
    */
   async cargarDatosParaCompra() {
@@ -1613,11 +1706,19 @@ export class RequerimientosComponent implements OnInit {
   }
 
   /**
-   * Verifica si el tipo de requerimiento es COMPRA con CONSUMO
-   * Para determinar si los campos CECO, LABOR, PROYECTO deben ser editables
+   * Verifica si los campos CECO, LABOR, PROYECTO deben ser editables
+   * Para COMPRA y CONSUMO, estos campos deben estar disponibles
    */
   esCompraConConsumo(): boolean {
-    return this.TipoSelecionado === 'COMPRA' && this.RequerimientoSelecionado === 'I';
+    return this.TipoSelecionado === 'COMPRA' || this.TipoSelecionado === 'CONSUMO';
+  }
+
+  /**
+   * Verifica si los campos CECO, LABOR, PROYECTO deben ser editables en el modal
+   * Retorna false para que siempre estén bloqueados y no se puedan editar
+   */
+  camposParametrosEditables(): boolean {
+    return false; // Siempre bloqueados para que no se puedan editar
   }
 
   async filtrarClasificaciones() {
@@ -1684,12 +1785,12 @@ export class RequerimientosComponent implements OnInit {
       this.TipoSelecionado = this.configuracion.idTipoItem as TipoRequerimiento | '';
       this.requerimiento.itemtipo = this.configuracion.idTipoItem;
       console.log('🎯 Tipo asignado desde configuración:', this.TipoSelecionado);
-      this.onTipoChange();
+      await this.onTipoChange();
     } else {
       console.log('⚠️ No hay configuración de tipo, usando CONSUMO por defecto');
       this.TipoSelecionado = 'CONSUMO';
       this.requerimiento.itemtipo = 'CONSUMO';
-      this.onTipoChange();
+      await this.onTipoChange();
     }
     
     // 🔹 Asignar almacén desde configuración si existe
@@ -4496,7 +4597,7 @@ export class RequerimientosComponent implements OnInit {
   }
 
   async eliminarRequerimiento(index: number) {
-    debugger;
+    // debugger;
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
       '¿Desea eliminar este requerimiento?',

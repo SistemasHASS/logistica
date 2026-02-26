@@ -34,59 +34,59 @@ export class ConsolidacionService {
 
   constructor(private http: HttpClient) { }
 
-  // POST api/logistica/listar-items-pendientes-consolidacion
+  // POST api/consolidacion/listar-items-pendientes-consolidacion
   async listarItemsPendientes(filtros: FiltroConsolidacion): Promise<ItemPendienteConsolidacion[]> {
-    const url = `${this.baseUrl}/api/logistica/listar-items-pendientes-consolidacion`;
+    const url = `${this.baseUrl}/api/consolidacion/listar-items-pendientes-consolidacion`;
     const resp = await firstValueFrom(this.http.post<any>(url, filtros));
     return Array.isArray(resp) ? resp : [];
   }
 
-  // POST api/logistica/crear-consolidacion
+  // POST api/consolidacion/crear-consolidacion
   async crearConsolidacion(request: CrearConsolidacionRequest): Promise<CrearConsolidacionResponse> {
-    const url = `${this.baseUrl}/api/logistica/crear-consolidacion`;
+    const url = `${this.baseUrl}/api/consolidacion/crear-consolidacion`;
     return firstValueFrom(this.http.post<CrearConsolidacionResponse>(url, request));
   }
 
-  // POST api/logistica/obtener-consolidacion
+  // POST api/consolidacion/obtener-consolidacion
   async obtenerConsolidacion(idConsolidacion: number): Promise<ConsolidacionCab> {
-    const url = `${this.baseUrl}/api/logistica/obtener-consolidacion`;
+    const url = `${this.baseUrl}/api/consolidacion/obtener-consolidacion`;
     return firstValueFrom(this.http.post<ConsolidacionCab>(url, { idConsolidacion }));
   }
 
-  // POST api/logistica/listar-historial-consolidaciones
+  // POST api/consolidacion/listar-historial-consolidaciones
   async listarHistorial(filtros: FiltroHistorial): Promise<ConsolidacionCab[]> {
-    const url = `${this.baseUrl}/api/logistica/listar-historial-consolidaciones`;
+    const url = `${this.baseUrl}/api/consolidacion/listar-historial-consolidaciones`;
     const resp = await firstValueFrom(this.http.post<any>(url, filtros));
     return Array.isArray(resp) ? resp : [];
   }
 
-  // POST api/logistica/generar-solicitud-cotizacion
+  // POST api/consolidacion/generar-solicitud-cotizacion
   async generarSolicitudCotizacion(request: GenerarSolicitudCotizacionRequest): Promise<GenerarSolicitudCotizacionResponse> {
-    const url = `${this.baseUrl}/api/logistica/generar-solicitud-cotizacion`;
+    const url = `${this.baseUrl}/api/consolidacion/generar-solicitud-cotizacion`;
     return firstValueFrom(this.http.post<GenerarSolicitudCotizacionResponse>(url, request));
   }
 
-  // POST api/logistica/anular-consolidacion
+  // POST api/consolidacion/anular-consolidacion
   async anularConsolidacion(request: AnularConsolidacionRequest): Promise<AnularConsolidacionResponse> {
-    const url = `${this.baseUrl}/api/logistica/anular-consolidacion`;
+    const url = `${this.baseUrl}/api/consolidacion/anular-consolidacion`;
     return firstValueFrom(this.http.post<AnularConsolidacionResponse>(url, request));
   }
 
-  // POST api/logistica/obtener-detalle-requerimiento
+  // POST api/consolidacion/obtener-detalle-requerimiento
   async obtenerDetalleRequerimiento(idDetalle: number): Promise<any> {
-    const url = `${this.baseUrl}/api/logistica/obtener-detalle-requerimiento`;
+    const url = `${this.baseUrl}/api/consolidacion/obtener-detalle-requerimiento`;
     return firstValueFrom(this.http.post<any>(url, [{ idDetalle }]));
   }
 
-  // POST api/logistica/anular-linea-consolidacion
+  // POST api/consolidacion/anular-linea-consolidacion
   async anularLineaConsolidacion(request: AnularLineaConsolidacionRequest): Promise<AnularLineaConsolidacionResponse> {
-    const url = `${this.baseUrl}/api/logistica/anular-linea-consolidacion`;
+    const url = `${this.baseUrl}/api/consolidacion/anular-linea-consolidacion`;
     return firstValueFrom(this.http.post<AnularLineaConsolidacionResponse>(url, request));
   }
 
-  // POST api/logistica/anular-item-pendiente
+  // POST api/consolidacion/anular-item-pendiente
   async anularItemPendiente(request: AnularItemPendienteRequest): Promise<AnularItemPendienteResponse> {
-    const url = `${this.baseUrl}/api/logistica/anular-item-pendiente`;
+    const url = `${this.baseUrl}/api/consolidacion/anular-item-pendiente`;
     return firstValueFrom(this.http.post<AnularItemPendienteResponse>(url, request));
   }
 
@@ -96,9 +96,9 @@ export class ConsolidacionService {
     return firstValueFrom(this.http.post<RegistrarSaldoPendienteResponse>(url, request));
   }
 
-  // POST api/logistica/listar-saldos-pendientes-aprobacion
+  // POST api/consolidacion/listar-saldos-pendientes-aprobacion
   async listarSaldosPendientesAprobacion(filtros: any = {}): Promise<SaldoPendienteAprobacion[]> {
-    const url = `${this.baseUrl}/api/logistica/listar-saldos-pendientes-aprobacion`;
+    const url = `${this.baseUrl}/api/consolidacion/listar-saldos-pendientes-aprobacion`;
     const resp = await firstValueFrom(this.http.post<any>(url, filtros));
     return Array.isArray(resp) ? resp : [];
   }
@@ -144,11 +144,11 @@ export class ConsolidacionService {
     }
   }
 
-  // POST api/logistica/listar-mis-notificaciones
+  // POST api/consolidacion/listar-mis-notificaciones
   async listarMisNotificaciones(request: { dni: string }): Promise<any> {
     try {
       return await firstValueFrom(
-        this.http.post<any>(`${this.baseUrl}/api/logistica/listar-mis-notificaciones`, request)
+        this.http.post<any>(`${this.baseUrl}/api/consolidacion/listar-mis-notificaciones`, request)
       );
     } catch (error: any) {
       return {

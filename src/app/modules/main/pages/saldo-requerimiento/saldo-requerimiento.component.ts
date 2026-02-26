@@ -53,6 +53,7 @@ export class SaldoRequerimientoComponent implements OnInit {
   filtroTexto = '';
   mostrarModal = false;
   listaConsolidada: GrupoConsolidado[] = [];
+  prioridadSeleccionada: 'NORMAL' | 'URGENTE' | 'CRITICA' = 'NORMAL';
   private searchSubject = new Subject<string>();
   private selectionDebounce = new Map<number, boolean>(); // Track debounced selections
 
@@ -386,6 +387,32 @@ export class SaldoRequerimientoComponent implements OnInit {
     const detalles = this.listaConsolidada.flatMap((x) => x.detalles);
 
     try {
+      // 0️⃣ Validar que todos los idDetalles existan antes de continuar
+      const idsDetalles = detalles.map(d => d.idSaldo);
+      console.log('Validando idDetalles:', idsDetalles);
+      
+      try {
+        // Llamar al endpoint de validación
+        const respuestaValidacion = await this.saldoService.validarIdsDetalles(idsDetalles);
+        
+        if (respuestaValidacion && respuestaValidacion.invalidos && respuestaValidacion.invalidos.length > 0) {
+          this.alertService.showAlert(
+            'Error de Validación',
+            `Los siguientes detalles no existen o no son válidos: ${respuestaValidacion.invalidos.join(', ')}. No se puede consolidar el requerimiento.`,
+            'error',
+          );
+          return;
+        }
+      } catch (error) {
+        console.error('Error al validar idDetalles:', error);
+        this.alertService.showAlert(
+          'Error',
+          'No se pudieron validar los detalles del requerimiento. Por favor, recargue la página e intente nuevamente.',
+          'error',
+        );
+        return;
+      }
+
       // 1️⃣ Crear detalles primero para poder incluirlos en la solicitud
       const detallesSolicitud: any[] = [];
       
@@ -418,7 +445,7 @@ export class SaldoRequerimientoComponent implements OnInit {
         observaciones: `Generado desde consolidación de ${detalles.length} saldos pendientes`,
         detalle: detallesSolicitud,
         requerimientosOrigen: detalles.map(d => d.requerimientoOrigen).join(', '),
-        prioridad: 'NORMAL' as const,
+        prioridad: this.prioridadSeleccionada,
         moneda: 'PEN'
       };
       
@@ -432,26 +459,54 @@ export class SaldoRequerimientoComponent implements OnInit {
         await this.dexieService.detalleSolicitudCompra.add(detalleToSave);
       }
 
-      // 4️⃣ Cerrar los requerimientos de consumo originales
+      // 4️⃣ Cerrar los requerimientos de consumo originales y verificar si hay errores
+      let idsInvalidos: number[] = [];
+      
       for (const detalle of detalles) {
         try {
-          await this.saldoService.cerrarSaldo(detalle.idSaldo);
+          const respuesta = await this.saldoService.cerrarSaldo(detalle.idSaldo);
+          
+          // Verificar si hay IDs inválidos en la respuesta
+          if (respuesta && respuesta.invalidos && respuesta.invalidos.length > 0) {
+            idsInvalidos.push(...respuesta.invalidos.map((inv: { value: number }) => inv.value));
+          }
         } catch (error) {
           console.error(`Error al cerrar saldo ${detalle.idSaldo}:`, error);
+          idsInvalidos.push(detalle.idSaldo);
         }
       }
 
-      // 5️⃣ Limpiar tabla temporal
+      // 5️⃣ Si hay IDs inválidos, mostrar error y no crear el requerimiento de compra
+      if (idsInvalidos.length > 0) {
+        // Eliminar la solicitud de compra que se creó
+        await this.dexieService.solicitudesCompra.delete(idSolicitud);
+        
+        // También eliminar los detalles asociados
+        await this.dexieService.detalleSolicitudCompra
+          .where('solicitudCompraId')
+          .equals(idSolicitud)
+          .delete();
+        
+        // No limpiar la tabla temporal para que el usuario pueda reintentar
+        this.alertService.showAlertAcept(
+          'No se puede consolidar',
+          `No se encontraron los siguientes detalles en el requerimiento original: ${idsInvalidos.join(', ')}. Por favor, verifique los requerimientos de consumo e intente nuevamente.`,
+          'error',
+        );
+        return;
+      }
+
+      // 6️⃣ Limpiar tabla temporal solo si todo fue exitoso
       await this.dexieService.limpiarListaTemporal();
 
-      // 6️⃣ Mostrar mensaje de éxito
+      // 7️⃣ Mostrar mensaje de éxito
       this.alertService.showAlertAcept(
         'Requerimiento de compra creado',
         'El requerimiento de compra ha sido creado exitosamente. Los requerimientos de consumo originales han sido cerrados.',
         'success',
       );
 
-      // 7️⃣ Navegar al módulo de requerimientos con datos prellenados
+      // 8️⃣ Navegar al módulo de requerimientos con datos prellenados
       const requerimientoData = {
         tipo: 'COMPRA',
         descripcion: 'REQUERIMIENTO DE COMPRA CONSOLIDADO',

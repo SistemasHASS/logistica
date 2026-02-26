@@ -131,6 +131,16 @@
 
   </div>
 
+  <!-- CAMPO DE PRIORIDAD -->
+  <div class="form-group mt-3">
+    <label for="prioridad">Prioridad del Requerimiento:</label>
+    <select id="prioridad" class="form-select" [(ngModel)]="prioridadSeleccionada">
+      <option value="NORMAL">NORMAL</option>
+      <option value="CRITICA">CRITICA</option>
+      <option value="URGENTE">URGENTE</option>
+    </select>
+  </div>
+
   <ng-template pTemplate="footer">
     <button class="btn btn-secondary" (click)="mostrarModal=false">
       Seguir agregando

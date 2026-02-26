@@ -224,7 +224,7 @@
             <div *ngIf="mostrarFormulario" class="formulario mt-4 p-4 shadow rounded">
                 <!-- <h4 class="fw-bold mb-3">REGISTRAR REQUERIMIENTO</h4> -->
                 <h2>
-                    {{ modoEdicion ? "Editar Requerimiento" : "Registrar Requerimiento" }}
+                    {{ modoEdicion ? "Editar Requerimiento" : "Registrar Requerimiento" }} - {{ TipoSelecionado }}
                 </h2>
                 <!-- FORMULARIO COMPLETO DE REQUERIMIENTO ITEMS-->
                 <div class="requerimientos-form">
@@ -263,10 +263,10 @@
                                     {{ opcion.label }}
                                 </option>
                             </select>
-                            <small class="text-muted" *ngIf="SeleccionaPrioridadITEM && TipoSelecionado">
+                            <!-- <small class="text-muted" *ngIf="SeleccionaPrioridadITEM && TipoSelecionado">
                                 <i class="bi bi-info-circle me-1"></i>
                                 {{ prioridadService.obtenerDescripcionPlazo(SeleccionaPrioridadITEM, TipoSelecionado) }}
-                            </small>
+                            </small> -->
                         </div>
 
                         <div class="col-6" *ngIf="TipoSelecionado === 'CONSUMO' || TipoSelecionado === 'COMPRA'">
@@ -446,7 +446,7 @@
                                             <label>CECO <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="cecos" optionLabel="localname" valueField="localname"
                                                 [(ngModel)]="lineaTemp.ceco" [editable]="false" [required]="esCompraConConsumo()"
-                                                [disabled]="!esCompraConConsumo()">
+                                                [disabled]="!camposParametrosEditables()">
                                             </app-dropdown>
                                         </div>
 
@@ -454,16 +454,16 @@
                                             <label>Proyecto <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="proyectos" optionLabel="proyectoio"
                                                 valueField="proyectoio" [(ngModel)]="lineaTemp.proyecto"
-                                                [editable]="esCompraConConsumo()" [required]="false" 
-                                                [disabled]="!esCompraConConsumo()">
+                                                [editable]="camposParametrosEditables()" [required]="false" 
+                                                [disabled]="!camposParametrosEditables()">
                                             </app-dropdown>
                                         </div>
 
                                         <div class="col-6">
                                             <label>Labor <span class="text-danger">*</span></label>
                                             <app-dropdown [data]="labores" optionLabel="labor" valueField="labor"
-                                                [(ngModel)]="lineaTemp.labor" [editable]="esCompraConConsumo()" [required]="true"
-                                                [disabled]="!esCompraConConsumo()">
+                                                [(ngModel)]="lineaTemp.labor" [editable]="camposParametrosEditables()" [required]="true"
+                                                [disabled]="!camposParametrosEditables()">
                                             </app-dropdown>
                                         </div>
 
@@ -755,7 +755,7 @@
                 <h2>
                     {{
                     modoEdicionCommodity ? "Editar Servicios" : "Registrar Servicios"
-                    }}
+                    }} - {{ TipoSelecionado }}
                 </h2>
 
                 <div class="form-group">
@@ -1111,7 +1111,7 @@
                     modoEdicionActivoFijo
                     ? "Editar Activo Fijo"
                     : "Registrar Activo Fijo"
-                    }}
+                    }} - {{ TipoSelecionado }}
                 </h2>
 
                 <div class="form-group">
@@ -1204,7 +1204,7 @@
                         <!-- Modal de edición Activo Fijo - Detalle-->
                         <!-- Modal Activo Fijo - Detalle-->
                         <div class="modal-backdrop" *ngIf="modalAbiertoActivoFijo">
-                            <div class="modal-content">
+                            <div class="modal-content modal-linea-detalle">
                                 <!-- <h5>Registrar Línea de Detalle</h5>     -->
                                 <h5>
                                     {{
@@ -1469,7 +1469,7 @@
                     modoEdicionActivoFijoMenor
                     ? "Editar Activo Menor"
                     : "Registrar Activo Menor"
-                    }}
+                    }} - {{ TipoSelecionado }}
                 </h2>
 
                 <div class="form-group">

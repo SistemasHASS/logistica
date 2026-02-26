@@ -35,12 +35,14 @@
           <i class="icon icon-history me-1"></i> Historial Consolidaciones
         </button>
       </li>
+      <!-- COMENTADO: Tab de saldos pendientes de aprobación
       <li class="nav-item" role="presentation">
         <button class="nav-link" [class.active]="tabActiva === 2" (click)="tabActiva = 2; cargarSaldosPendientes()" type="button">
           <i class="icon icon-alert-circle me-1"></i> Saldos Pendientes Aprobación
           <span class="badge bg-warning text-dark ms-1" *ngIf="saldosPendientes.length > 0">{{ saldosPendientes.length }}</span>
         </button>
       </li>
+      -->
     </ul>
 
     <!-- ================================================ -->
@@ -316,8 +318,8 @@
     </div>
 
     <!-- ================================================ -->
-    <!-- TAB 3: SALDOS PENDIENTES DE APROBACIÓN           -->
-    <!-- ================================================ -->
+    <!-- COMENTADO: TAB 3: SALDOS PENDIENTES DE APROBACIÓN
+    <!-- ================================================
     <div *ngIf="tabActiva === 2">
 
       <div class="alert alert-warning mb-3">
@@ -334,19 +336,17 @@
           styleClass="p-datatable-sm p-datatable-striped">
           <ng-template pTemplate="header">
             <tr>
-              <th>Req. Número</th>
-              <th>Fecha Solicitud</th>
+              <th>Requerimiento</th>
               <th>Usuario Solicita</th>
               <th>CECO</th>
               <th class="text-center">Total Ítems</th>
               <th>Estado</th>
-              <th style="width: 180px;">Acciones</th>
+              <th>Acciones</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-saldo>
             <tr>
               <td><strong>{{ saldo.requerimientoNumero }}</strong></td>
-              <td>{{ saldo.fechaSolicitud | date:'dd/MM/yyyy HH:mm' }}</td>
               <td>{{ saldo.usuarioSolicita }}</td>
               <td>{{ saldo.ceco }}</td>
               <td class="text-center">{{ saldo.totalItems }}</td>
@@ -383,6 +383,7 @@
         </p-table>
       </div>
     </div>
+    -->
   </div>
 </div>
 

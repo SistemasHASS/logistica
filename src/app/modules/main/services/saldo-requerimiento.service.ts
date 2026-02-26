@@ -46,4 +46,16 @@ export class SaldoRequerimientoService {
       throw new Error(error.error?.message || 'Error al cerrar saldo');
     }
   }
+
+  async validarIdsDetalles(idsDetalles: number[]): Promise<any> {
+    const url = `${this.baseUrl}/api/logistica/validar-ids-detalles`;
+    
+    try {
+      return await lastValueFrom(this.http.post<any>(url, { 
+        idsDetalles: idsDetalles
+      }));
+    } catch(error: any) {
+      throw new Error(error.error?.message || 'Error al validar ids de detalles');
+    }
+  }
 }
