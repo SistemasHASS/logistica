@@ -359,7 +359,6 @@ export class AprobacionesComponent {
     this.requerimientosItems = this.requerimientos.filter(
       (x) => x.tipo === 'ITEM' && x.estados === 'PENDIENTE'
     ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
-    this.ordenarRequerimientos();
     this.requerimientosCommodity = this.requerimientos.filter(
       (x) => x.tipo === 'COMMODITY' && x.estados === 'PENDIENTE'
     ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
@@ -369,6 +368,7 @@ export class AprobacionesComponent {
     this.requerimientosActivoFijoMenor = this.requerimientos.filter(
       (x) => x.tipo === 'ACTIVOFIJOMENOR' && x.estados === 'PENDIENTE'
     ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
+    this.ordenarRequerimientos();
   }
 
   async cargarRequerimientos() {
@@ -404,6 +404,18 @@ export class AprobacionesComponent {
 
   ordenarRequerimientos() {
     this.requerimientosItems.sort((a, b) => {
+      // 1️⃣ Fecha más reciente primero
+      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+    });
+    this.requerimientosCommodity.sort((a, b) => {
+      // 1️⃣ Fecha más reciente primero
+      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+    });
+    this.requerimientosActivoFijo.sort((a, b) => {
+      // 1️⃣ Fecha más reciente primero
+      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+    });
+    this.requerimientosActivoFijoMenor.sort((a, b) => {
       // 1️⃣ Fecha más reciente primero
       return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
     });

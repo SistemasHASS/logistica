@@ -124,7 +124,7 @@ export class DexieService extends Dexie {
   public itemsTemporales!: Dexie.Table<ItemTemporalConsolidacion, number>;
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 30; // Agregadas tablas para Recepciones, Devoluciones y Evaluaciones
+  private static readonly DB_VERSION = 31; // Agregadas tablas para Recepciones, Devoluciones y Evaluaciones
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -148,7 +148,7 @@ export class DexieService extends Dexie {
         acopios: `id,nave,codigoAcopio,acopio`,
         cecos: `id,costcenter,localname,cultivo,conturno,esinversion,estado,ccontable,div`,
         labores: `id,idlabor,idgrupolabor,ceco,labor,estado`,
-        itemComoditys: `id,tipoclasificacion,codigo,descripcion`,
+        itemComoditys: `id,tipoclasificacion,codigo,descripcion,almacen,um`,
         clasificaciones: `id,idclasificacion,descripcion_clasificacion,tipoClasificacion`,
         detalles: `++id,idOriginal,idrequerimiento,codigo,descripcion,producto,cantidad,proyecto,ceco,turno,labor,esActivoFijo,activoFijo,estado,atendida`,
         requerimientos: `++id,idrequerimiento,fecha,idfundo,idarea,idalmacen,estados,estado,tipo,idproyecto,glosa,detalle,despachado,prioridad`,

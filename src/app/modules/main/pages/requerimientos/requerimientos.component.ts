@@ -129,6 +129,15 @@ export class RequerimientosComponent implements OnInit {
     this.mostrarFormularioCommodity = false;
     this.mostrarFormularioActivoFijo = false;
     this.mostrarFormularioActivoFijoMenor = false;
+    
+    // 🔥 Cargar opciones de prioridad según el tab activo
+    if (tab === 'COMMODITY' && this.opcionesPrioridadCOMMODITY.length === 0) {
+      this.opcionesPrioridadCOMMODITY = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
+    } else if (tab === 'ACTIVOFIJO' && this.opcionesPrioridadACTIVOFIJO.length === 0) {
+      this.opcionesPrioridadACTIVOFIJO = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
+    } else if (tab === 'ACTIVOFIJOMENOR' && this.opcionesPrioridadACTIVOFIJOMENOR.length === 0) {
+      this.opcionesPrioridadACTIVOFIJOMENOR = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
+    }
   }
 
   //Requerimiento Item
@@ -434,12 +443,16 @@ export class RequerimientosComponent implements OnInit {
   enviadosActivoFijoMenor: number = 0;
 
   SeleccionaPrioridadITEM: PrioridadSpring | '' = '';
-  SeleccionaPrioridadCOMMODITY = '';
-  SeleccionaPrioridadACTIVOFIJO = '';
-  SeleccionaPrioridadACTIVOFIJOMENOR = '';
+  SeleccionaPrioridadCOMMODITY: PrioridadSpring | '' = '';
+  SeleccionaPrioridadACTIVOFIJO: PrioridadSpring | '' = '';
+  SeleccionaPrioridadACTIVOFIJOMENOR: PrioridadSpring | '' = '';
 
   // Opciones dinámicas de prioridad según tipo de requerimiento
   opcionesPrioridadITEM: { value: PrioridadSpring; label: string; descripcion: string }[] = [];
+  opcionesPrioridadCOMMODITY: { value: PrioridadSpring; label: string; descripcion: string }[] = [];
+  opcionesPrioridadACTIVOFIJO: { value: PrioridadSpring; label: string; descripcion: string }[] = [];
+  opcionesPrioridadACTIVOFIJOMENOR: { value: PrioridadSpring; label: string; descripcion: string }[] = [];
+
   fundoSeleccionado = '';
   cultivoSeleccionado = '';
   areaSeleccionada = '';
@@ -482,11 +495,17 @@ export class RequerimientosComponent implements OnInit {
 
   async ngOnInit() {
     await this.cargarUsuario(); // 👈 carga el usuario primero
-    await this.cargarMaestras();
+    // await this.cargarMaestras();
     await this.cargarConfiguracion(); // 👈 REUTILIZA LO GUARDADO EN PARÁMETROSs
+    await this.cargarMaestras();
     await this.cargarRequerimientos(); // 👈 Esto llena la tabla al inicio
     await this.cargarPendientes(); // 👈 carga el número de pendientes
     this.actualizarContadores();
+    
+    // 🔥 Inicializar opciones de prioridad para todos los tipos
+    this.opcionesPrioridadCOMMODITY = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
+    this.opcionesPrioridadACTIVOFIJO = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
+    this.opcionesPrioridadACTIVOFIJOMENOR = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
     
     // Verificar si viene de una consolidación
     await this.verificarRequerimientoConsolidado();
@@ -702,6 +721,9 @@ export class RequerimientosComponent implements OnInit {
     this.glosaCommodity = '';
     this.mostrarFormularioCommodity = true;
     this.modoEdicionCommodity = false;
+    
+    // 🔹 Prioridad por defecto: Normal (1)
+    this.SeleccionaPrioridadCOMMODITY = '1';
   }
 
   editarCommodity(index: number) {
@@ -712,7 +734,10 @@ export class RequerimientosComponent implements OnInit {
     this.mostrarFormularioCommodity = true;
     this.modoEdicionCommodity = true;
     this.commodityEditIndex = index;
-
+    
+    // 🔥 Cargar opciones de prioridad para COMMODITY (usa las mismas que COMPRA)
+    this.opcionesPrioridadCOMMODITY = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
+    
     // Copiar el requerimiento seleccionado
     this.requerimientoCommodity = { ...req };
     // ⭐ CARGA CORRECTA DE DETALLES
@@ -725,7 +750,7 @@ export class RequerimientosComponent implements OnInit {
     this.areaSeleccionada = req.idarea;
     this.almacenSeleccionado = req.idalmacen;
     this.clasificacionSeleccionado = req.idclasificacion;
-    this.SeleccionaPrioridadCOMMODITY = req.prioridad;
+    this.SeleccionaPrioridadCOMMODITY = req.prioridad as PrioridadSpring | '';
     // Find the proyecto object that matches the ID
     const proyectoObj = this.proyectos.find(
       (p) => p.idproyecto === req.idproyecto,
@@ -752,13 +777,24 @@ export class RequerimientosComponent implements OnInit {
     if (!confirmacion) return;
     try {
       const req = this.requerimientosCommodity[index];
-      // 1️⃣ Eliminar solo ese requerimiento en Dexie
-      await this.dexieService.deleteRequerimiento(req.idrequerimiento);
+      
+      // 1️⃣ Eliminar detalles del requerimiento en la tabla detallesCommodity
+      await this.dexieService.detallesCommodity
+        .where('idrequerimiento')
+        .equals(req.idrequerimiento)
+        .delete();
+      
+      // 2️⃣ Eliminar el requerimiento de la tabla requerimientosCommodity
+      await this.dexieService.deleteRequerimientoCommodity(req.idrequerimiento);
 
-      // 2️⃣ Eliminar del array local sin recargar toda la BD
+      // 3️⃣ Eliminar del array local sin recargar toda la BD
       this.requerimientosCommodity.splice(index, 1);
 
-      // 3️⃣ Notificar
+      // 4️⃣ Actualizar contadores y ordenar
+      this.actualizarContadores();
+      this.ordenarRequerimientosCommodity();
+
+      // 5️⃣ Notificar
       this.alertService.showAlert(
         'Éxito',
         'Requerimiento eliminado correctamente.',
@@ -841,6 +877,12 @@ export class RequerimientosComponent implements OnInit {
 
       // =============== EDITAR ==================
       if (this.modoEdicionCommodity) {
+        // Eliminar detalles antiguos antes de guardar los nuevos
+        await this.dexieService.detallesCommodity
+          .where('idrequerimiento')
+          .equals(reqCommodity.idrequerimiento)
+          .delete();
+        
         await this.dexieService.requerimientosCommodity.put(reqCommodity);
 
         const index = this.requerimientosCommodity.findIndex(
@@ -871,6 +913,7 @@ export class RequerimientosComponent implements OnInit {
 
       this.alertService.cerrarModalCarga();
       this.actualizarContadores();
+      this.ordenarRequerimientosCommodity();
       this.alertService.showAlert(
         'Éxito',
         `Requerimiento de Servicio #${idGuardado} guardado correctamente.`,
@@ -932,6 +975,12 @@ export class RequerimientosComponent implements OnInit {
     this.detallesActivoFijoMenor = [];
     this.glosaActivoFijoMenor = '';
     this.modoEdicionActivoFijoMenor = false;
+    
+    // 🔥 Cargar opciones de prioridad para ACTIVOFIJOMENOR (usa las mismas que COMPRA)
+    this.opcionesPrioridadACTIVOFIJOMENOR = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
+    
+    // 🔹 Prioridad por defecto: Normal (1)
+    this.SeleccionaPrioridadACTIVOFIJOMENOR = '1';
   }
 
   editarActivoFijoMenor(index: number) {
@@ -941,7 +990,10 @@ export class RequerimientosComponent implements OnInit {
     this.mostrarFormularioActivoFijoMenor = true;
     this.modoEdicionActivoFijoMenor = true;
     this.activoFijoMenorEditIndex = index;
-
+    
+    // 🔥 Cargar opciones de prioridad para ACTIVOFIJOMENOR (usa las mismas que COMPRA)
+    this.opcionesPrioridadACTIVOFIJOMENOR = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
+    
     // Copia del registro
     this.requerimientoActivoFijoMenor = { ...req };
 
@@ -953,7 +1005,7 @@ export class RequerimientosComponent implements OnInit {
     this.areaSeleccionada = req.idarea;
     this.almacenSeleccionado = req.idalmacen;
     this.clasificacionSeleccionado = req.idclasificacion;
-    this.SeleccionaPrioridadACTIVOFIJOMENOR = req.prioridad;
+    this.SeleccionaPrioridadACTIVOFIJOMENOR = req.prioridad as PrioridadSpring | '';
     const proyectoEncontrado = this.proyectos.find(
       (p) => p.id === req.idproyecto,
     );
@@ -1124,6 +1176,7 @@ export class RequerimientosComponent implements OnInit {
 
       this.alertService.cerrarModalCarga();
       this.actualizarContadores();
+      this.ordenarRequerimientosActivoFijoMenor();
       this.alertService.showAlert(
         'Éxito',
         `Requerimiento Activo Fijo #${idGuardado} guardado correctamente.`,
@@ -1189,6 +1242,12 @@ export class RequerimientosComponent implements OnInit {
     this.detallesActivoFijo = [];
     this.glosaActivoFijo = '';
     this.modoEdicionActivoFijo = false;
+    
+    // 🔥 Cargar opciones de prioridad para ACTIVOFIJO (usa las mismas que COMPRA)
+    this.opcionesPrioridadACTIVOFIJO = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
+    
+    // 🔹 Prioridad por defecto: Normal (1)
+    this.SeleccionaPrioridadACTIVOFIJO = '1';
   }
 
   editarActivoFijo(index: number) {
@@ -1198,7 +1257,10 @@ export class RequerimientosComponent implements OnInit {
     this.mostrarFormularioActivoFijo = true;
     this.modoEdicionActivoFijo = true;
     this.activoFijoEditIndex = index;
-
+    
+    // 🔥 Cargar opciones de prioridad para ACTIVOFIJO (usa las mismas que COMPRA)
+    this.opcionesPrioridadACTIVOFIJO = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
+    
     // Copia del registro
     this.requerimientoActivoFijo = { ...req };
 
@@ -1213,7 +1275,7 @@ export class RequerimientosComponent implements OnInit {
     this.areaSeleccionada = req.idarea;
     this.almacenSeleccionado = req.idalmacen;
     this.clasificacionSeleccionado = req.idclasificacion;
-    this.SeleccionaPrioridadACTIVOFIJO = req.prioridad;
+    this.SeleccionaPrioridadACTIVOFIJO = req.prioridad as PrioridadSpring | '';
     this.proyectoSeleccionado =
       this.proyectos.find((p) => p.proyectoio === req.idproyecto) ?? null;
 
@@ -1382,6 +1444,7 @@ export class RequerimientosComponent implements OnInit {
 
       this.alertService.cerrarModalCarga();
       this.actualizarContadores();
+      this.ordenarRequerimientosActivoFijo();
       this.alertService.showAlert(
         'Éxito',
         `Requerimiento Activo Fijo #${idGuardado} guardado correctamente.`,
@@ -1812,6 +1875,9 @@ export class RequerimientosComponent implements OnInit {
       this.almacenSeleccionado = this.configuracion.idalmacen;
       console.log('🏪 Almacén asignado desde configuración (Commodity):', this.almacenSeleccionado);
     }
+    
+    // 🔥 Cargar opciones de prioridad para COMMODITY (usa las mismas que COMPRA)
+    this.opcionesPrioridadCOMMODITY = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
     
     this.requerimientoCommodity = {
       idrequerimiento: '',
@@ -2645,64 +2711,72 @@ export class RequerimientosComponent implements OnInit {
   }
 
   async sincronizarRequerimientoCommodity() {
-    if (this.requerimientoCommodity.detalleCommodity.length === 0) {
+    // if (this.requerimientoCommodity.detalleCommodity.length === 0) {
+    //   this.alertService.showAlert(
+    //     'Alerta',
+    //     'Debe ingresar al menos un requerimiento de commodity',
+    //     'warning',
+    //   );
+    //   return;
+    // }
+
+    // 1️⃣ Obtener pendientes reales desde Dexie
+    const pendientes = await this.dexieService.requerimientosCommodity
+      .filter((r) => (r.estado === 0 || r.modificado === 1) && r.estado !== 1)
+      .toArray();
+
+    if (pendientes.length === 0) {
       this.alertService.showAlert(
-        'Alerta',
-        'Debe ingresar al menos un requerimiento de commodity',
-        'warning',
+        'Información',
+        'No hay requerimientos pendientes por sincronizar',
+        'info',
       );
       return;
     }
 
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
-      '¿Desea enviar los datos?',
+      `¿Desea enviar ${pendientes.length} requerimiento(s) pendiente(s)?`,
       'warning',
     );
 
     if (!confirmacion) return;
 
-    const prioridadFinal =
-      this.SeleccionaPrioridadCOMMODITY &&
-        this.SeleccionaPrioridadCOMMODITY !== ''
-        ? this.SeleccionaPrioridadCOMMODITY
-        : (this.requerimientoCommodity.prioridad ?? '1');
-
-    // 👇 Aquí formamos el objeto según el SP
-    const requerimiento = {
-      idrequerimiento: `${this.usuario.ruc}${this.requerimientoCommodity.idalmacen
-        }${this.usuario.documentoidentidad}${new Date()
-          .toISOString()
-          .replace(/[-:TZ.]/g, '')}`,
-      ruc: this.usuario.ruc,
-      idfundo: this.requerimientoCommodity.idfundo,
-      // idarea: this.areaSeleccionada,
-      idarea: this.requerimientoCommodity.idarea,
-      idclasificacion: 'SER',
-      servicio: this.requerimientoCommodity.servicio,
-      nrodocumento: this.usuario.documentoidentidad,
-      idalmacen: this.requerimientoCommodity.idalmacen,
-      idalmacendestino: this.requerimientoCommodity.idalmacendestino || '',
-      glosa: this.requerimientoCommodity.glosa || '',
-      eliminado: 0,
-      tipo: this.requerimientoCommodity.tipo,
-      estados: 'PENDIENTE',
-      prioridad: prioridadFinal,
-      detalle: this.requerimientoCommodity.detalleCommodity.map((d: any) => ({
-        codigo: d.codigo,
-        tipoclasificacion: 'C',
-        cantidad: d.cantidad,
-        iddescripcion: d.descripcion,
-        idproyecto: d.proyecto || '',
-        idcentrocosto: d.ceco || '',
-        idturno: d.turno || '',
-        idlabor: d.labor || '',
+    // 2️⃣ Preparar todos los requerimientos pendientes para enviar
+    const requerimientos = pendientes.map((req) => {
+      const prioridadFinal = req.prioridad || '1';
+      
+      return {
+        idrequerimiento: req.idrequerimiento,
+        ruc: req.ruc,
+        idfundo: req.idfundo,
+        idarea: req.idarea,
+        idclasificacion: 'SER',
+        servicio: req.servicio,
+        nrodocumento: req.nrodocumento,
+        idalmacen: req.idalmacen,
+        idalmacendestino: req.idalmacendestino || '',
+        glosa: req.glosa || '',
         eliminado: 0,
-      })),
-    };
+        tipo: req.tipo,
+        estados: 'PENDIENTE',
+        prioridad: prioridadFinal,
+        detalle: req.detalleCommodity?.map((d: any) => ({
+          codigo: d.codigo,
+          tipoclasificacion: 'C',
+          cantidad: d.cantidad,
+          iddescripcion: d.descripcion,
+          idproyecto: d.proyecto || '',
+          idcentrocosto: d.ceco || '',
+          idturno: d.turno || '',
+          idlabor: d.labor || '',
+          eliminado: 0,
+        })) || [],
+      };
+    });
 
-    // 👇 Mandamos directamente el array (NO dentro de { json: ... })
-    const payload = [requerimiento];
+    // 👇 Mandamos directamente el array de todos los requerimientos pendientes
+    const payload = requerimientos;
 
     console.log('📤 Enviando al backend:', payload);
 
@@ -2714,19 +2788,30 @@ export class RequerimientosComponent implements OnInit {
         if (Array.isArray(resp) && resp[0]?.errorgeneral === 0) {
           this.alertService.showAlert(
             'Éxito',
-            'Requerimiento sincronizado correctamente',
+            `${pendientes.length} requerimiento(s) sincronizado(s) correctamente`,
             'success',
           );
-          // ---- 5️⃣ GUARDO EN DEXIE ----
-          this.dexieService.requerimientos
-            .update(this.requerimientoCommodity.id!, { estado: 1 })
-            .then(() => {
-              this.cargarRequerimientos();
-            });
+          
+          // ---- 5️⃣ ACTUALIZAR TODOS LOS REQUERIMIENTOS ENVIADOS ----
+          const idsParaActualizar = pendientes.map(p => p.id!);
+          
+          // Actualizar todos los requerimientos que se enviaron
+          Promise.all(
+            idsParaActualizar.map(id => 
+              this.dexieService.requerimientosCommodity.update(id, { 
+                estado: 1,
+                modificado: 0 
+              })
+            )
+          ).then(async () => {
+            await this.cargarRequerimientos();
+            // 2️⃣ Recalcular contadores
+            this.actualizarContadores();
+          });
         } else {
           this.alertService.showAlert(
             'Error',
-            'Hubo un problema al sincronizar el requerimiento',
+            'Hubo un problema al sincronizar los requerimientos',
             'error',
           );
           console.error('Detalles del error:', resp);
@@ -2744,64 +2829,72 @@ export class RequerimientosComponent implements OnInit {
   }
 
   async sincronizarRequerimientoActivoFijo() {
-    if (this.requerimientoActivoFijo.detalleActivoFijo.length === 0) {
+    // if (this.requerimientoActivoFijo.detalleActivoFijo.length === 0) {
+    //   this.alertService.showAlert(
+    //     'Alerta',
+    //     'Debe ingresar al menos un requerimiento de activo fijo',
+    //     'warning',
+    //   );
+    //   return;
+    // }
+
+    // 1️⃣ Obtener pendientes reales desde Dexie
+    const pendientes = await this.dexieService.requerimientosActivoFijo
+      .filter((r) => (r.estado === 0 || r.modificado === 1) && r.estado !== 1)
+      .toArray();
+
+    if (pendientes.length === 0) {
       this.alertService.showAlert(
-        'Alerta',
-        'Debe ingresar al menos un requerimiento de activo fijo',
-        'warning',
+        'Información',
+        'No hay requerimientos pendientes por sincronizar',
+        'info',
       );
       return;
     }
 
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
-      '¿Desea enviar los datos?',
+      `¿Desea enviar ${pendientes.length} requerimiento(s) pendiente(s)?`,
       'warning',
     );
 
     if (!confirmacion) return;
 
-    const prioridadFinal =
-      this.SeleccionaPrioridadACTIVOFIJO &&
-        this.SeleccionaPrioridadACTIVOFIJO !== ''
-        ? this.SeleccionaPrioridadACTIVOFIJO
-        : (this.requerimientoActivoFijo.prioridad ?? '1');
-
-    // 👇 Aquí formamos el objeto según el SP
-    const requerimiento = {
-      idrequerimiento: `${this.usuario.ruc}${this.requerimientoActivoFijo.idalmacen
-        }${this.usuario.documentoidentidad}${new Date()
-          .toISOString()
-          .replace(/[-:TZ.]/g, '')}`,
-      ruc: this.usuario.ruc,
-      idfundo: this.requerimientoActivoFijo.idfundo,
-      // idarea: this.areaSeleccionada,
-      idarea: this.requerimientoActivoFijo.idarea,
-      idclasificacion: 'ACT',
-      servicio: this.requerimientoActivoFijo.servicio,
-      nrodocumento: this.usuario.documentoidentidad,
-      idalmacen: this.requerimientoActivoFijo.idalmacen,
-      idalmacendestino: this.requerimientoActivoFijo.idalmacendestino || '',
-      glosa: this.requerimientoActivoFijo.glosa || '',
-      eliminado: 0,
-      tipo: this.requerimientoActivoFijo.tipo,
-      estados: 'PENDIENTE',
-      prioridad: prioridadFinal,
-      detalle: this.requerimientoActivoFijo.detalleActivoFijo.map((d: any) => ({
-        codigo: d.codigo,
-        tipoclasificacion: d.tipoclasificacion,
-        cantidad: d.cantidad,
-        iddescripcion: d.descripcion,
-        idproyecto: d.proyecto || '',
-        idcentrocosto: d.ceco || '',
-        idturno: d.turno || '',
-        idlabor: d.labor || '',
+    // 2️⃣ Preparar todos los requerimientos pendientes para enviar
+    const requerimientos = pendientes.map((req) => {
+      const prioridadFinal = req.prioridad || '1';
+      
+      return {
+        idrequerimiento: req.idrequerimiento,
+        ruc: req.ruc,
+        idfundo: req.idfundo,
+        idarea: req.idarea,
+        idclasificacion: 'ACT',
+        servicio: req.servicio,
+        nrodocumento: req.nrodocumento,
+        idalmacen: req.idalmacen,
+        idalmacendestino: req.idalmacendestino || '',
+        glosa: req.glosa || '',
         eliminado: 0,
-      })),
-    };
+        tipo: req.tipo,
+        estados: 'PENDIENTE',
+        prioridad: prioridadFinal,
+        detalle: req.detalleActivoFijo?.map((d: any) => ({
+          codigo: d.codigo,
+          tipoclasificacion: d.tipoclasificacion,
+          cantidad: d.cantidad,
+          iddescripcion: d.descripcion,
+          idproyecto: d.proyecto || '',
+          idcentrocosto: d.ceco || '',
+          idturno: d.turno || '',
+          idlabor: d.labor || '',
+          eliminado: 0,
+        })) || [],
+      };
+    });
 
-    // 👇 Mandamos directamente el array (NO dentro de { json: ... })
-    const payload = [requerimiento];
+    // 👇 Mandamos directamente el array de todos los requerimientos pendientes
+    const payload = requerimientos;
 
     console.log('📤 Enviando al backend:', payload);
 
@@ -2813,13 +2906,30 @@ export class RequerimientosComponent implements OnInit {
         if (Array.isArray(resp) && resp[0]?.errorgeneral === 0) {
           this.alertService.showAlert(
             'Éxito',
-            'Requerimiento sincronizado correctamente',
+            `${pendientes.length} requerimiento(s) sincronizado(s) correctamente`,
             'success',
           );
+          
+          // ---- ACTUALIZAR TODOS LOS REQUERIMIENTOS ENVIADOS ----
+          const idsParaActualizar = pendientes.map(p => p.id!);
+          
+          // Actualizar todos los requerimientos que se enviaron
+          Promise.all(
+            idsParaActualizar.map(id => 
+              this.dexieService.requerimientosActivoFijo.update(id, { 
+                estado: 1,
+                modificado: 0 
+              })
+            )
+          ).then(async () => {
+            await this.cargarRequerimientos();
+            // Recalcular contadores
+            this.actualizarContadores();
+          });
         } else {
           this.alertService.showAlert(
             'Error',
-            'Hubo un problema al sincronizar el requerimiento',
+            'Hubo un problema al sincronizar los requerimientos',
             'error',
           );
           console.error('Detalles del error:', resp);
@@ -2837,49 +2947,48 @@ export class RequerimientosComponent implements OnInit {
   }
 
   async sincronizarRequerimientoActivoFijoMenor() {
-    if (this.requerimientoActivoFijoMenor.detalleActivoFijoMenor.length === 0) {
+    // 1️⃣ Obtener pendientes reales desde Dexie
+    const pendientes = await this.dexieService.requerimientosActivoFijoMenor
+      .filter((r) => (r.estado === 0 || r.modificado === 1) && r.estado !== 1)
+      .toArray();
+
+    if (pendientes.length === 0) {
       this.alertService.showAlert(
-        'Alerta',
-        'Debe ingresar al menos un requerimiento de activo fijo menor',
-        'warning',
+        'Información',
+        'No hay requerimientos pendientes por sincronizar',
+        'info',
       );
       return;
     }
 
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
-      '¿Desea enviar los datos?',
+      `¿Desea enviar ${pendientes.length} requerimiento(s) pendiente(s)?`,
       'warning',
     );
 
     if (!confirmacion) return;
 
-    const prioridadFinal =
-      this.SeleccionaPrioridadACTIVOFIJOMENOR &&
-        this.SeleccionaPrioridadACTIVOFIJOMENOR !== ''
-        ? this.SeleccionaPrioridadACTIVOFIJOMENOR
-        : (this.requerimientoActivoFijoMenor.prioridad ?? '1');
-
-    // 👇 Aquí formamos el objeto según el SP
-    const requerimiento = {
-      idrequerimiento: `${this.usuario.ruc}${this.configuracion.idalmacen}${this.usuario.documentoidentidad
-        }${new Date().toISOString().replace(/[-:TZ.]/g, '')}`,
-      ruc: this.usuario.ruc,
-      idfundo: this.requerimientoActivoFijoMenor.idfundo,
-      idarea: this.requerimientoActivoFijoMenor.idarea,
-      idclasificacion: 'ACM',
-      servicio: this.requerimientoActivoFijoMenor.servicio,
-      nrodocumento: this.usuario.documentoidentidad,
-      idalmacen: this.requerimientoActivoFijoMenor.idalmacen,
-      idalmacendestino:
-        this.requerimientoActivoFijoMenor.idalmacendestino || '',
-      glosa: this.requerimientoActivoFijoMenor.glosa || '',
-      eliminado: 0,
-      tipo: this.requerimientoActivoFijoMenor.tipo,
-      estados: 'PENDIENTE',
-      prioridad: prioridadFinal,
-      detalle: this.requerimientoActivoFijoMenor.detalleActivoFijoMenor.map(
-        (d: any) => ({
+    // 2️⃣ Preparar todos los requerimientos pendientes para enviar
+    const requerimientos = pendientes.map((req) => {
+      const prioridadFinal = req.prioridad || '1';
+      
+      return {
+        idrequerimiento: req.idrequerimiento,
+        ruc: req.ruc,
+        idfundo: req.idfundo,
+        idarea: req.idarea,
+        idclasificacion: 'ACM',
+        servicio: req.servicio,
+        nrodocumento: req.nrodocumento,
+        idalmacen: req.idalmacen,
+        idalmacendestino: req.idalmacendestino || '',
+        glosa: req.glosa || '',
+        eliminado: 0,
+        tipo: req.tipo,
+        estados: 'PENDIENTE',
+        prioridad: prioridadFinal,
+        detalle: req.detalleActivoFijoMenor?.map((d: any) => ({
           codigo: d.codigo,
           tipoclasificacion: d.tipoclasificacion,
           cantidad: d.cantidad,
@@ -2889,12 +2998,12 @@ export class RequerimientosComponent implements OnInit {
           idturno: d.turno || '',
           idlabor: d.labor || '',
           eliminado: 0,
-        }),
-      ),
-    };
+        })) || [],
+      };
+    });
 
-    // 👇 Mandamos directamente el array (NO dentro de { json: ... })
-    const payload = [requerimiento];
+    // 👇 Mandamos directamente el array de todos los requerimientos pendientes
+    const payload = requerimientos;
 
     console.log('📤 Enviando al backend:', payload);
 
@@ -2906,13 +3015,30 @@ export class RequerimientosComponent implements OnInit {
         if (Array.isArray(resp) && resp[0]?.errorgeneral === 0) {
           this.alertService.showAlert(
             'Éxito',
-            'Requerimiento sincronizado correctamente',
+            `${pendientes.length} requerimiento(s) sincronizado(s) correctamente`,
             'success',
           );
+          
+          // ---- ACTUALIZAR TODOS LOS REQUERIMIENTOS ENVIADOS ----
+          const idsParaActualizar = pendientes.map(p => p.id!);
+          
+          // Actualizar todos los requerimientos que se enviaron
+          Promise.all(
+            idsParaActualizar.map(id => 
+              this.dexieService.requerimientosActivoFijoMenor.update(id, { 
+                estado: 1,
+                modificado: 0 
+              })
+            )
+          ).then(async () => {
+            await this.cargarRequerimientos();
+            // Recalcular contadores
+            this.actualizarContadores();
+          });
         } else {
           this.alertService.showAlert(
             'Error',
-            'Hubo un problema al sincronizar el requerimiento',
+            'Hubo un problema al sincronizar los requerimientos',
             'error',
           );
           console.error('Detalles del error:', resp);
@@ -3094,9 +3220,14 @@ export class RequerimientosComponent implements OnInit {
 
   async ListarItems() {
     this.items = await this.dexieService.showItemComoditys();
+    console.log("ITEMS",this.items);
+    // this.itemsFiltrados = this.items.filter(
+    //   (it) => it.tipoclasificacion === 'I',
+    // );
     this.itemsFiltrados = this.items.filter(
-      (it) => it.tipoclasificacion === 'I',
+      (it) => it.tipoclasificacion === 'I' && it.almacen === this.configuracion.idalmacen,
     );
+    console.log("Items Filtrados",this.itemsFiltrados);
   }
 
   async ListarClasificaciones() {
@@ -3474,32 +3605,25 @@ export class RequerimientosComponent implements OnInit {
 
     // 2. Eliminar de la tabla separada de detalles en Dexie
     if (id) {
-      await this.dexieService.deleteDetalleRequerimiento(id);
+      await this.dexieService.deleteDetalleCommodity(id);
     }
 
     // 3. Eliminar del array local que alimenta la tabla
     this.detallesCommodity.splice(index, 1);
 
-    // 4. Actualizar el array embebido en el requerimiento actual
-    (this.requerimiento as any).detalle = [...this.detallesCommodity];
-
-    // 5. Actualizar en Dexie el requerimiento con el nuevo detalle embebido
-    if (this.requerimiento.id) {
-      await (this.dexieService.requerimientos as any).update(this.requerimiento.id, {
-        detalle: this.detallesCommodity,
-        modificado: 1
-      });
+    // 4. Actualizar el array embebido en el requerimiento commodity actual
+    if (this.requerimientoCommodity) {
+      this.requerimientoCommodity.detalleCommodity = [...this.detallesCommodity];
+      
+      // 5. Actualizar en Dexie el requerimiento con el nuevo detalle embebido
+      if (this.requerimientoCommodity.id) {
+        await this.dexieService.requerimientosCommodity.update(this.requerimientoCommodity.id, {
+          detalleCommodity: this.detallesCommodity
+        });
+      }
     }
 
-    // 6. Actualizar también en la lista local de requerimientos
-    const idx = this.requerimientos.findIndex(
-      (r) => r.idrequerimiento === this.requerimiento.idrequerimiento
-    );
-    if (idx >= 0) {
-      (this.requerimientos[idx] as any).detalle = [...this.detallesCommodity];
-    }
-
-    // 7. Notificación
+    // 6. Notificación
     this.alertService.mostrarInfo('Línea eliminada.');
   }
 
@@ -5397,6 +5521,9 @@ export class RequerimientosComponent implements OnInit {
     this.modoEdicionCommodity = true;
     this.mostrarFormularioCommodity = true;
     this.modalAbiertoCommodity = false;
+    
+    // 🔥 Cargar opciones de prioridad para COMMODITY (usa las mismas que COMPRA)
+    this.opcionesPrioridadCOMMODITY = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
 
     this.reasignarAlmacenDesdeDescripcion();
   }
@@ -5451,6 +5578,9 @@ export class RequerimientosComponent implements OnInit {
     this.modoEdicionActivoFijo = true;
     this.mostrarFormularioActivoFijo = true;
     this.modalAbiertoActivoFijo = false;
+    
+    // 🔥 Cargar opciones de prioridad para ACTIVOFIJO (usa las mismas que COMPRA)
+    this.opcionesPrioridadACTIVOFIJO = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
 
     this.reasignarAlmacenDesdeDescripcion();
   }
@@ -5504,6 +5634,9 @@ export class RequerimientosComponent implements OnInit {
     this.modoEdicionActivoFijoMenor = true;
     this.mostrarFormularioActivoFijoMenor = true;
     this.modalAbiertoActivoFijoMenor = false;
+    
+    // 🔥 Cargar opciones de prioridad para ACTIVOFIJOMENOR (usa las mismas que COMPRA)
+    this.opcionesPrioridadACTIVOFIJOMENOR = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
 
     this.reasignarAlmacenDesdeDescripcion();
   }

@@ -215,6 +215,8 @@ export interface ItemComodity {
   tipoclasificacion: string;
   codigo: string;
   descripcion: string;
+  almacen: string;
+  um: string;
 }
 
 export interface Clasificacion {
@@ -1040,4 +1042,36 @@ export interface ItemTemporalConsolidacion {
   // Metadatos
   observaciones?: string;
   estado?: string;
+}
+
+// =====================================================================
+// SOLICITUDES DE COTIZACIÓN
+// =====================================================================
+
+export interface SolicitudCotizacion {
+  id?: number;
+  noSolicitud: string;                    // SOL-COT-2026-00001
+  idConsolidacion?: number;               // FK a consolidación (si viene de consolidación)
+  fechaGeneracion: string;
+  fechaLimite?: string;                   // Fecha límite para recibir cotizaciones
+  usuarioGenera: string;
+  totalItems: number;
+  estado: 'PENDIENTE' | 'EN_REVISION' | 'CERRADA' | 'ANULADA';
+  observaciones?: string;
+  detalle: DetalleSolicitudCotizacion[];
+  cotizacionesRecibidas?: number;         // Contador de cotizaciones recibidas
+  fechaModificacion?: string;
+  usuarioModifica?: string;
+}
+
+export interface DetalleSolicitudCotizacion {
+  id?: number;
+  idSolicitudCotizacion?: number;
+  noLinea: number;
+  codigoItem: string;
+  descripcionItem: string;
+  cantidad: number;
+  unidadMedida: string;
+  especificaciones?: string;              // Especificaciones técnicas del item
+  estado?: 'ACTIVO' | 'ANULADO';
 }

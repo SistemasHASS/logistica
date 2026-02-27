@@ -91,7 +91,7 @@ export const routes: Routes = [
       { path: 'notificaciones', component: NotificacionesListaComponent, canActivate: [OperativoEmpaqueGuard] },
       { path: 'saldo-requerimiento', component: SaldoRequerimientoComponent, canActivate: [OperativoEmpaqueGuard] },
       { path: 'solicitudes-compra', component: SolicitudesCompraComponent, canActivate: [AlmacenGuard] },
-      { path: 'cotizaciones', component: CotizacionesComponent, canActivate: [AlmacenGuard] },
+      { path: 'cotizaciones', component: CotizacionesComponent, canActivate: [LogisticoGuard] },
       { path: 'ordenes-compra', component: OrdenesCompraComponent, canActivate: [AlmacenGuard] },
       { path: 'recepcion-mercaderia', component: RecepcionMercaderiaComponent, canActivate: [AlmacenGuard] },
       { path: 'devoluciones-proveedores', component: DevolucionesProveedoresComponent, canActivate: [AlmacenGuard] },

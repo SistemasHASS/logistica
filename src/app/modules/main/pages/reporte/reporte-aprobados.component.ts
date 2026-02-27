@@ -31,6 +31,7 @@ export class ReporteAprobadosComponent implements OnInit {
   requerimientoSeleccionado: any = null;
   detalleRequerimiento: any[] = [];
   loadingDetalle: boolean = false;
+  mensajeNoDetalle: string | null = null;
 
   constructor(
     private requerimientoService: RequerimientosService,
@@ -76,20 +77,41 @@ export class ReporteAprobadosComponent implements OnInit {
   }
 
   verDetalle(row: any) {
+    // Validar que existe un requerimiento
+    if (!row || !row.idrequerimiento) {
+      this.alertService.showAlert('Información', 'No se encontró el requerimiento', 'info');
+      return;
+    }
+
     this.requerimientoSeleccionado = row;
     this.loadingDetalle = true;
-    this.displayDetalle = true;
+    this.displayDetalle = true; // Siempre mostrar el modal
 
     this.requerimientoService.listarDetalleRequerimiento(row.idrequerimiento).subscribe({
       next: (data: any) => {
-        this.detalleRequerimiento = Array.isArray(data) ? data : [];
+        if (Array.isArray(data) && data.length > 0) {
+          // Tiene detalle, mostrarlo
+          this.detalleRequerimiento = data;
+          this.mensajeNoDetalle = null;
+        } else {
+          // No tiene detalle, mostrar mensaje
+          this.detalleRequerimiento = [];
+          this.mensajeNoDetalle = 'El requerimiento no cuenta con detalle';
+          this.alertService.showAlert('Información', 'El requerimiento no cuenta con detalle', 'info');
+        }
         this.loadingDetalle = false;
       },
       error: (err) => {
-        console.error('Error al cargar detalle:', err);
+        // Error comentado por el momento
+        // console.error('Error al cargar detalle:', err);
+        // this.detalleRequerimiento = [];
+        // this.loadingDetalle = false;
+        // this.alertService.showAlertError('Error', 'Error al cargar detalle del requerimiento');
+        // Si hay error, asumir que no tiene detalle
         this.detalleRequerimiento = [];
         this.loadingDetalle = false;
-        this.alertService.showAlertError('Error', 'Error al cargar detalle del requerimiento');
+        this.mensajeNoDetalle = 'El requerimiento no cuenta con detalle';
+        this.alertService.showAlert('Información', 'El requerimiento no cuenta con detalle', 'info');
       }
     });
   }
@@ -98,6 +120,7 @@ export class ReporteAprobadosComponent implements OnInit {
     this.displayDetalle = false;
     this.requerimientoSeleccionado = null;
     this.detalleRequerimiento = [];
+    this.mensajeNoDetalle = null;
   }
 
   filtrar() {

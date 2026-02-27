@@ -1,0 +1,609 @@
+<div class="cotizaciones-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2>Cotizaciones de Proveedores</h2>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="nuevaCotizacionForm()">
+        <i class="icon-plus"></i> Nueva Cotización
+      </button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-container">
+    <button 
+      class="tab-button" 
+      [class.active]="!mostrarFormulario"
+      (click)="mostrarFormulario = false">
+      <i class="icon-list"></i> Listado de Cotizaciones
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="mostrarFormulario"
+      (click)="mostrarFormulario = true">
+      <i class="icon-file-text"></i> {{ modoEdicion ? 'Editar' : 'Nueva' }} Cotización
+    </button>
+  </div>
+
+  <!-- CONTADORES -->
+  <div class="stats-cards" *ngIf="!mostrarFormulario">
+    <div class="stat-card info">
+      <div class="stat-icon"><i class="icon-inbox"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalRecibidas }}</span>
+        <span class="stat-label">Recibidas</span>
+      </div>
+    </div>
+    <div class="stat-card warning">
+      <div class="stat-icon"><i class="icon-search"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalEnEvaluacion }}</span>
+        <span class="stat-label">En Evaluación</span>
+      </div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-icon"><i class="icon-check-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalSeleccionadas }}</span>
+        <span class="stat-label">Seleccionadas</span>
+      </div>
+    </div>
+    <div class="stat-card danger">
+      <div class="stat-icon"><i class="icon-x-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalRechazadas }}</span>
+        <span class="stat-label">Rechazadas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTADO DE COTIZACIONES -->
+  <div class="content-section" *ngIf="!mostrarFormulario">
+    <!-- FILTROS -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Estado:</label>
+        <select [(ngModel)]="filtroEstado" class="form-control">
+          <option value="TODAS">Todas</option>
+          <option value="RECIBIDA">Recibida</option>
+          <option value="EN_EVALUACION">En Evaluación</option>
+          <option value="SELECCIONADA">Seleccionada</option>
+          <option value="RECHAZADA">Rechazada</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Proveedor:</label>
+        <input 
+          type="text" 
+          [(ngModel)]="filtroProveedor" 
+          class="form-control"
+          placeholder="Buscar por nombre o código...">
+      </div>
+      <div class="filter-group">
+        <label>Fecha Inicio:</label>
+        <input type="date" [(ngModel)]="filtroFechaInicio" class="form-control">
+      </div>
+      <div class="filter-group">
+        <label>Fecha Fin:</label>
+        <input type="date" [(ngModel)]="filtroFechaFin" class="form-control">
+      </div>
+      <button class="btn-secondary" (click)="limpiarFiltros()">
+        <i class="icon-x"></i> Limpiar
+      </button>
+    </div>
+
+    <!-- TABLA DE COTIZACIONES -->
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Número</th>
+            <th>Fecha</th>
+            <th>Solicitud</th>
+            <th>Proveedor</th>
+            <th>Monto Total</th>
+            <th>Plazo Entrega</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let cotizacion of cotizacionesFiltradas(); let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>
+              <strong>{{ cotizacion.numeroCotizacion }}</strong>
+            </td>
+            <td>{{ formatearFecha(cotizacion.fecha) }}</td>
+            <td>{{ cotizacion.numeroSolicitud }}</td>
+            <td>
+              <div class="proveedor-info">
+                <strong>{{ cotizacion.nombreProveedor }}</strong>
+                <small>RUC: {{ cotizacion.rucProveedor }}</small>
+              </div>
+            </td>
+            <td class="text-right">
+              <strong>{{ formatearMoneda(cotizacion.montoTotal, cotizacion.moneda) }}</strong>
+            </td>
+            <td class="text-center">{{ cotizacion.plazoEntrega }} días</td>
+            <td>
+              <span class="badge" [ngClass]="obtenerClaseEstado(cotizacion.estado)">
+                {{ cotizacion.estado }}
+              </span>
+            </td>
+            <td class="actions">
+              <button 
+                class="btn btn-sm btn-info me-2" 
+                (click)="verDetalle(cotizacion)"
+                title="Ver Detalle">
+                <i class="icon-eye"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-warning me-2" 
+                (click)="editarCotizacion(i)"
+                [disabled]="cotizacion.estado !== 'RECIBIDA'"
+                title="Editar">
+                <i class="icon-pencil"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-success me-2" 
+                (click)="seleccionarCotizacion(cotizacion)"
+                [disabled]="cotizacion.estado === 'SELECCIONADA' || cotizacion.estado === 'RECHAZADA'"
+                title="Seleccionar">
+                <i class="icon-check"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-danger me-2" 
+                (click)="rechazarCotizacion(cotizacion)"
+                [disabled]="cotizacion.estado === 'SELECCIONADA' || cotizacion.estado === 'RECHAZADA'"
+                title="Rechazar">
+                <i class="icon-x"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-danger" 
+                (click)="eliminarCotizacion(i)"
+                [disabled]="cotizacion.estado !== 'RECIBIDA'"
+                title="Eliminar">
+                <i class="icon-trash"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="cotizacionesFiltradas().length === 0">
+            <td colspan="9" class="text-center">
+              <p class="no-data">No hay cotizaciones registradas.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FORMULARIO DE COTIZACIÓN -->
+  <div class="content-section" *ngIf="mostrarFormulario">
+    <div class="form-container">
+      <h3>{{ modoEdicion ? 'Editar' : 'Nueva' }} Cotización</h3>
+
+      <!-- INFORMACIÓN GENERAL -->
+      <div class="section-title">Información General</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Solicitud de Compra: <span class="required">*</span></label>
+          <select 
+            [(ngModel)]="cotizacion.solicitudCompraId" 
+            (change)="onSolicitudChange()"
+            class="form-control"
+            [disabled]="modoEdicion">
+            <option value="">Seleccione...</option>
+            <option *ngFor="let sol of solicitudesCompra" [value]="sol.id">
+              {{ sol.numeroSolicitud }} - {{ sol.almacen }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Número de Cotización:</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="cotizacion.numeroCotizacion"
+            [disabled]="true"
+            placeholder="Se generará automáticamente">
+        </div>
+
+        <div class="form-group">
+          <label>Código Proveedor: <span class="required">*</span></label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="cotizacion.proveedor"
+            placeholder="Ingrese código del proveedor">
+        </div>
+
+        <div class="form-group">
+          <label>Nombre Proveedor: <span class="required">*</span></label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="cotizacion.nombreProveedor"
+            placeholder="Ingrese nombre del proveedor">
+        </div>
+
+        <div class="form-group">
+          <label>RUC Proveedor: <span class="required">*</span></label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="cotizacion.rucProveedor"
+            placeholder="Ingrese RUC del proveedor"
+            maxlength="11">
+        </div>
+
+        <div class="form-group">
+          <label>Fecha Vencimiento: <span class="required">*</span></label>
+          <input 
+            type="date" 
+            class="form-control" 
+            [(ngModel)]="cotizacion.fechaVencimiento">
+        </div>
+
+        <div class="form-group">
+          <label>Moneda:</label>
+          <select [(ngModel)]="cotizacion.moneda" class="form-control">
+            <option value="PEN">Soles (PEN)</option>
+            <option value="USD">Dólares (USD)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Plazo Entrega (días):</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            [(ngModel)]="cotizacion.plazoEntrega"
+            min="0">
+        </div>
+
+        <div class="form-group">
+          <label>Validez Oferta (días):</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            [(ngModel)]="cotizacion.validezOferta"
+            min="0">
+        </div>
+
+        <div class="form-group">
+          <label>Forma de Pago:</label>
+          <select [(ngModel)]="cotizacion.formaPago" class="form-control">
+            <option value="CONTADO">Contado</option>
+            <option value="CREDITO_15">Crédito 15 días</option>
+            <option value="CREDITO_30">Crédito 30 días</option>
+            <option value="CREDITO_45">Crédito 45 días</option>
+            <option value="CREDITO_60">Crédito 60 días</option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Condiciones de Pago:</label>
+          <textarea 
+            [(ngModel)]="cotizacion.condicionesPago" 
+            class="form-control" 
+            rows="2"
+            placeholder="Ingrese condiciones de pago..."></textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Lugar de Entrega:</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="cotizacion.lugarEntrega"
+            placeholder="Ingrese lugar de entrega">
+        </div>
+
+        <div class="form-group full-width">
+          <label>Garantía:</label>
+          <textarea 
+            [(ngModel)]="cotizacion.garantia" 
+            class="form-control" 
+            rows="2"
+            placeholder="Ingrese información de garantía..."></textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Observaciones:</label>
+          <textarea 
+            [(ngModel)]="cotizacion.observaciones" 
+            class="form-control" 
+            rows="3"
+            placeholder="Ingrese observaciones adicionales..."></textarea>
+        </div>
+      </div>
+
+      <!-- DETALLE DE ITEMS -->
+      <div class="detalle-section">
+        <div class="section-header">
+          <h4>Detalle de Items</h4>
+          <button class="btn-primary btn-sm" (click)="abrirModalDetalle()">
+            <i class="icon-plus"></i> Agregar Item
+          </button>
+        </div>
+        
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>P. Unit.</th>
+                <th>Desc. %</th>
+                <th>Subtotal</th>
+                <th>IGV</th>
+                <th>Total</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let det of detalleCotizacion; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ det.codigo }}</td>
+                <td>{{ det.descripcion }}</td>
+                <td class="text-right">{{ det.cantidad }}</td>
+                <td class="text-right">{{ formatearMoneda(det.precioUnitario, cotizacion.moneda) }}</td>
+                <td class="text-right">{{ det.porcentajeDescuento }}%</td>
+                <td class="text-right">{{ formatearMoneda(det.subtotal, cotizacion.moneda) }}</td>
+                <td class="text-right">{{ formatearMoneda(det.impuesto, cotizacion.moneda) }}</td>
+                <td class="text-right"><strong>{{ formatearMoneda(det.total, cotizacion.moneda) }}</strong></td>
+                <td class="actions">
+                  <button 
+                    class="btn btn-sm btn-warning me-2" 
+                    (click)="editarDetalle(i)"
+                    title="Editar">
+                    <i class="icon-pencil"></i>
+                  </button>
+                  <button 
+                    class="btn btn-sm btn-danger" 
+                    (click)="eliminarDetalle(i)"
+                    title="Eliminar">
+                    <i class="icon-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="detalleCotizacion.length === 0">
+                <td colspan="10" class="text-center">
+                  <p class="no-data">No hay items agregados.</p>
+                </td>
+              </tr>
+              <tr *ngIf="detalleCotizacion.length > 0" class="total-row">
+                <td colspan="8" class="text-right"><strong>TOTAL:</strong></td>
+                <td class="text-right">
+                  <strong class="total-amount">{{ formatearMoneda(cotizacion.montoTotal, cotizacion.moneda) }}</strong>
+                </td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BOTONES -->
+      <div class="form-actions">
+        <button class="btn-secondary" (click)="cancelarFormulario()">
+          <i class="icon-x"></i> Cancelar
+        </button>
+        <button class="btn-primary" (click)="guardarCotizacion()">
+          <i class="icon-save"></i> Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE ITEM -->
+<div class="modal-overlay" *ngIf="modalDetalleAbierto" (click)="cerrarModalDetalle()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ detalleEditIndex >= 0 ? 'Editar' : 'Agregar' }} Item</h3>
+      <button class="btn-close" (click)="cerrarModalDetalle()">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Código: <span class="required">*</span></label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="lineaTemporal.codigo"
+            placeholder="Código del item">
+        </div>
+
+        <div class="form-group full-width">
+          <label>Descripción: <span class="required">*</span></label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="lineaTemporal.descripcion"
+            placeholder="Descripción del item">
+        </div>
+
+        <div class="form-group">
+          <label>Cantidad: <span class="required">*</span></label>
+          <input 
+            type="number" 
+            class="form-control" 
+            [(ngModel)]="lineaTemporal.cantidad"
+            min="0"
+            step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label>Unidad Medida:</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="lineaTemporal.unidadMedida"
+            placeholder="UND">
+        </div>
+
+        <div class="form-group">
+          <label>Precio Unitario: <span class="required">*</span></label>
+          <input 
+            type="number" 
+            class="form-control" 
+            [(ngModel)]="lineaTemporal.precioUnitario"
+            min="0"
+            step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label>Descuento %:</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            [(ngModel)]="lineaTemporal.porcentajeDescuento"
+            min="0"
+            max="100"
+            step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label>IGV %:</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            [(ngModel)]="lineaTemporal.porcentajeImpuesto"
+            min="0"
+            step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label>Marca:</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="lineaTemporal.marca"
+            placeholder="Marca del producto">
+        </div>
+
+        <div class="form-group">
+          <label>Modelo:</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="lineaTemporal.modelo"
+            placeholder="Modelo del producto">
+        </div>
+
+        <div class="form-group full-width">
+          <label>Especificaciones:</label>
+          <textarea 
+            [(ngModel)]="lineaTemporal.especificaciones" 
+            class="form-control" 
+            rows="2"
+            placeholder="Especificaciones técnicas..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalDetalle()">
+        Cancelar
+      </button>
+      <button class="btn-primary" (click)="agregarDetalle()">
+        {{ detalleEditIndex >= 0 ? 'Actualizar' : 'Agregar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE COTIZACIÓN -->
+<div class="modal-overlay" *ngIf="modalDetalleCotizacionAbierto" (click)="cerrarModalDetalleCotizacion()">
+  <div class="modal-content large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Detalle de Cotización: {{ cotizacionDetalle?.numeroCotizacion }}</h3>
+      <button class="btn-close" (click)="cerrarModalDetalleCotizacion()">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="cotizacionDetalle">
+      <!-- INFO GENERAL -->
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Fecha:</label>
+          <span>{{ formatearFecha(cotizacionDetalle.fecha) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Solicitud:</label>
+          <span>{{ cotizacionDetalle.numeroSolicitud }}</span>
+        </div>
+        <div class="info-item">
+          <label>Proveedor:</label>
+          <span>{{ cotizacionDetalle.nombreProveedor }}</span>
+        </div>
+        <div class="info-item">
+          <label>RUC:</label>
+          <span>{{ cotizacionDetalle.rucProveedor }}</span>
+        </div>
+        <div class="info-item">
+          <label>Estado:</label>
+          <span class="badge" [ngClass]="obtenerClaseEstado(cotizacionDetalle.estado)">
+            {{ cotizacionDetalle.estado }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Monto Total:</label>
+          <span class="amount-highlight">{{ formatearMoneda(cotizacionDetalle.montoTotal, cotizacionDetalle.moneda) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Plazo Entrega:</label>
+          <span>{{ cotizacionDetalle.plazoEntrega }} días</span>
+        </div>
+        <div class="info-item">
+          <label>Forma Pago:</label>
+          <span>{{ cotizacionDetalle.formaPago }}</span>
+        </div>
+      </div>
+
+      <!-- DETALLE -->
+      <h4>Items Cotizados</h4>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Cantidad</th>
+              <th>P. Unit.</th>
+              <th>Desc.</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let det of cotizacionDetalle.detalle; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>{{ det.codigo }}</td>
+              <td>{{ det.descripcion }}</td>
+              <td class="text-right">{{ det.cantidad }}</td>
+              <td class="text-right">{{ formatearMoneda(det.precioUnitario, cotizacionDetalle.moneda) }}</td>
+              <td class="text-right">{{ det.porcentajeDescuento }}%</td>
+              <td class="text-right"><strong>{{ formatearMoneda(det.total, cotizacionDetalle.moneda) }}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalDetalleCotizacion()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>

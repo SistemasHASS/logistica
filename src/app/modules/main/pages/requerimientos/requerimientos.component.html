@@ -438,7 +438,7 @@
                                             <app-dropdown [data]="turnos" optionLabel="nombreTurno"
                                                 valueField="nombreTurno" [(ngModel)]="lineaTemp.turno"
                                                 [editable]="false" [required]="TipoSelecionado !== 'COMPRA'" 
-                                                [disabled]="TipoSelecionado === 'COMPRA'">
+                                                [disabled]="TipoSelecionado === 'COMPRA' || TipoSelecionado === 'CONSUMO'">
                                             </app-dropdown>
                                         </div>
 
@@ -761,13 +761,30 @@
                 <div class="form-group">
                     <div class="row g-3">
 
-                        <div class="col-6">
+                        <!-- <div class="col-6">
                             <label>Prioridad <span class="text-danger">*</span></label>
                             <select class="form-select" [(ngModel)]="SeleccionaPrioridadCOMMODITY">
                                 <option value="">Selecciona</option>
                                 <option value="1">Normal</option>
                                 <option value="2">Urgente</option>
                                 <option value="3">Muy Urgente</option>
+                            </select>
+                        </div> -->
+
+                        <div class="col-6">
+                            <label>Prioridad <span class="text-danger">*</span></label>
+                            
+                            <!-- 🔥 CÓDIGO NUEVO - Dropdown dinámico según tipo de requerimiento -->
+                            <select class="form-select" 
+                                    [(ngModel)]="SeleccionaPrioridadCOMMODITY"
+                                    [disabled]="!TipoSelecionado">
+                                <option value="">
+                                    {{ TipoSelecionado ? 'Selecciona prioridad' : 'Primero selecciona un tipo' }}
+                                </option>
+                                <option *ngFor="let opcion of opcionesPrioridadCOMMODITY" [value]="opcion.value"
+                                    [title]="opcion.descripcion">
+                                    {{ opcion.label }}
+                                </option>
                             </select>
                         </div>
 
@@ -1117,13 +1134,30 @@
                 <div class="form-group">
                     <div class="row g-3">
 
-                        <div class="col-6">
+                        <!-- <div class="col-6">
                             <label>Prioridad <span class="text-danger">*</span></label>
                             <select class="form-select" [(ngModel)]="SeleccionaPrioridadACTIVOFIJO">
                                 <option value="">Selecciona</option>
                                 <option value="1">Normal</option>
                                 <option value="2">Urgente</option>
                                 <option value="3">Muy Urgente</option>
+                            </select>
+                        </div> -->
+
+                        <div class="col-6">
+                            <label>Prioridad <span class="text-danger">*</span></label>
+                            
+                            <!-- 🔥 CÓDIGO NUEVO - Dropdown dinámico según tipo de requerimiento -->
+                            <select class="form-select" 
+                                    [(ngModel)]="SeleccionaPrioridadACTIVOFIJO"
+                                    [disabled]="!TipoSelecionado">
+                                <option value="">
+                                    {{ TipoSelecionado ? 'Selecciona prioridad' : 'Primero selecciona un tipo' }}
+                                </option>
+                                <option *ngFor="let opcion of opcionesPrioridadACTIVOFIJO" [value]="opcion.value"
+                                    [title]="opcion.descripcion">
+                                    {{ opcion.label }}
+                                </option>
                             </select>
                         </div>
 
@@ -1475,13 +1509,30 @@
                 <div class="form-group">
                     <div class="row g-3">
 
-                        <div class="col-6">
+                        <!-- <div class="col-6">
                             <label>Prioridad <span class="text-danger">*</span></label>
                             <select class="form-select" [(ngModel)]="SeleccionaPrioridadACTIVOFIJOMENOR">
                                 <option value="">Selecciona</option>
                                 <option value="1">Normal</option>
                                 <option value="2">Urgente</option>
                                 <option value="3">Muy Urgente</option>
+                            </select>
+                        </div> -->
+
+                       <div class="col-6">
+                            <label>Prioridad <span class="text-danger">*</span></label>
+                            
+                            <!-- 🔥 CÓDIGO NUEVO - Dropdown dinámico según tipo de requerimiento -->
+                            <select class="form-select" 
+                                    [(ngModel)]="SeleccionaPrioridadACTIVOFIJOMENOR"
+                                    [disabled]="!TipoSelecionado">
+                                <option value="">
+                                    {{ TipoSelecionado ? 'Selecciona prioridad' : 'Primero selecciona un tipo' }}
+                                </option>
+                                <option *ngFor="let opcion of opcionesPrioridadACTIVOFIJOMENOR" [value]="opcion.value"
+                                    [title]="opcion.descripcion">
+                                    {{ opcion.label }}
+                                </option>
                             </select>
                         </div>
 

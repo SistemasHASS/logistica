@@ -1,9 +1,8 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import Swal from 'sweetalert2';
 import moment from 'moment';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { ConnectivityService } from '../../services/connectivity.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
@@ -21,7 +20,7 @@ import { environment } from 'src/environments/environment';
   selector: 'app-layout',
   standalone: true,
   // imports: [CommonModule, RouterModule, NotificationContainerComponent, TestNotificationsComponent],
-  imports: [CommonModule, RouterModule, NotificationContainerComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, NotificationContainerComponent],
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss',
 })
