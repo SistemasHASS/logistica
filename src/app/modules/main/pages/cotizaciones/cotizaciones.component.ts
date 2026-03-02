@@ -159,9 +159,47 @@ export class CotizacionesComponent implements OnInit {
   }
 
   async cargarSolicitudesCotizacion() {
-    // TODO: Cargar desde API cuando esté disponible
-    // Por ahora, datos de ejemplo
-    this.solicitudesCotizacion = [];
+    this.solicitudesCotizacion = await this.dexieService.showSolicitudesCotizacion();
+    this.actualizarContadoresSolicitudes();
+  }
+
+  // MÉTODO TEMPORAL PARA CREAR DATOS DE PRUEBA - ELIMINAR DESPUÉS
+  async crearSolicitudPrueba() {
+    const solicitud: SolicitudCotizacion = {
+      noSolicitud: 'SC-20260226-0001',
+      idConsolidacion: 1,
+      fechaGeneracion: new Date('2026-02-26').toISOString(),
+      usuarioGenera: this.usuario.documentoidentidad,
+      totalItems: 1,
+      estado: 'PENDIENTE',
+      detalle: [
+        {
+          noLinea: 1,
+          codigoItem: '000011',
+          descripcionItem: '2245475612Z Female Swivel Hose Connector with Washer 16mm x 3/4" TEFFEN',
+          cantidad: 5,
+          unidadMedida: 'UND'
+        }
+      ]
+    };
+
+    try {
+      const id = await this.dexieService.saveSolicitudCotizacion(solicitud);
+      console.log('✅ Solicitud de prueba creada con ID:', id);
+      await this.cargarSolicitudesCotizacion();
+      this.alertService.showAlert(
+        'Éxito',
+        'Solicitud de cotización de prueba creada correctamente.',
+        'success'
+      );
+    } catch (error) {
+      console.error('Error al crear solicitud de prueba:', error);
+      this.alertService.showAlert(
+        'Error',
+        'No se pudo crear la solicitud de prueba.',
+        'error'
+      );
+    }
   }
 
   actualizarContadores() {
@@ -189,6 +227,11 @@ export class CotizacionesComponent implements OnInit {
     this.totalSolicitudesCerradas = this.solicitudesCotizacion.filter(
       (s) => s.estado === 'CERRADA'
     ).length;
+  }
+
+  contarCotizacionesPorSolicitud(solicitudId: number | undefined): number {
+    if (!solicitudId) return 0;
+    return this.cotizaciones.filter(c => c.idSolicitudCotizacion === solicitudId).length;
   }
 
   nuevaCotizacion(): Cotizacion {
@@ -834,8 +877,10 @@ export class CotizacionesComponent implements OnInit {
   // =====================================================================
 
   verDetalleSolicitud(solicitud: SolicitudCotizacion) {
+    console.log('Ver detalle solicitud:', solicitud);
     this.solicitudCotizacionSeleccionada = solicitud;
     this.modalDetalleSolicitudAbierto = true;
+    console.log('Modal abierto:', this.modalDetalleSolicitudAbierto);
   }
 
   cerrarModalDetalleSolicitud() {

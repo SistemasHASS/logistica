@@ -24,6 +24,7 @@ import {
   SaldoPendienteAprobacion,
   AprobarRechazarSaldoPendienteRequest,
 } from '../../../../models/consolidacion.model';
+import { SolicitudCotizacion } from '@/app/shared/interfaces/Tables';
 import {
   ItemTemporalConsolidacion,
   TipoRequerimiento,
@@ -625,6 +626,36 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
           this.alertService.cerrarModalCarga();
 
           if (resCotizacion.success) {
+            // Guardar la solicitud en Dexie para que aparezca en el módulo de cotizaciones
+            try {
+              // Obtener detalles de la consolidación para guardar en Dexie
+              const consolidacionCompleta = await this.consolidacionService.obtenerConsolidacion(resultado.idConsolidacion);
+              console.log('Consolidación completa:', consolidacionCompleta);
+              
+              const solicitudDexie: SolicitudCotizacion = {
+                noSolicitud: resCotizacion.noSolicitud,
+                idConsolidacion: resultado.idConsolidacion,
+                fechaGeneracion: new Date().toISOString(),
+                usuarioGenera: this.usuario?.documentoidentidad || this.usuario?.usuario || 'SYSTEM',
+                totalItems: resultado.totalItems,
+                estado: 'PENDIENTE',
+                detalle: consolidacionCompleta.detalles?.map((det: any) => ({
+                  noLinea: det.noLinea,
+                  codigoItem: det.codigoItem,
+                  descripcionItem: det.descripcionItem,
+                  cantidad: det.cantidadTotal,
+                  unidadMedida: det.unidadMedida
+                })) || []
+              };
+              
+              console.log('Guardando en Dexie:', solicitudDexie);
+              await this.dexieService.saveSolicitudCotizacion(solicitudDexie);
+              console.log('✅ Solicitud guardada en Dexie:', resCotizacion.noSolicitud);
+            } catch (errDexie: any) {
+              console.error('Error al guardar en Dexie:', errDexie);
+              // No mostrar error al usuario, solo log
+            }
+
             this.alertService.showAlert(
               'Consolidación y Cotización Generadas',
               `Consolidación: <strong>${resultado.codigo}</strong><br>` +
@@ -850,6 +881,35 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
       this.alertService.cerrarModalCarga();
 
       if (resultado.success) {
+        // Guardar la solicitud en Dexie para que aparezca en el módulo de cotizaciones
+        try {
+          // Obtener detalles de la consolidación para guardar en Dexie
+          const consolidacionCompleta = await this.consolidacionService.obtenerConsolidacion(consolidacion.idConsolidacion);
+          console.log('Consolidación completa (individual):', consolidacionCompleta);
+          
+          const solicitudDexie: SolicitudCotizacion = {
+            noSolicitud: resultado.noSolicitud,
+            idConsolidacion: consolidacion.idConsolidacion,
+            fechaGeneracion: new Date().toISOString(),
+            usuarioGenera: this.usuario?.documentoidentidad || this.usuario?.usuario || 'SYSTEM',
+            totalItems: resultado.totalItems,
+            estado: 'PENDIENTE',
+            detalle: consolidacionCompleta.detalles?.map((det: any, index: number) => ({
+              noLinea: index + 1,
+              codigoItem: det.codigoItem,
+              descripcionItem: det.descripcionItem,
+              cantidad: det.cantidadTotal || det.cantidad,
+              unidadMedida: det.unidadMedida
+            })) || []
+          };
+          
+          await this.dexieService.saveSolicitudCotizacion(solicitudDexie);
+          console.log('✅ Solicitud guardada en Dexie:', resultado.noSolicitud);
+        } catch (errDexie: any) {
+          console.error('Error al guardar en Dexie:', errDexie);
+          // No mostrar error al usuario, solo log
+        }
+
         this.alertService.showAlert(
           'Solicitud Generada',
           `Solicitud de Cotización: <strong>${resultado.noSolicitud}</strong><br>Total ítems: ${resultado.totalItems}`,
@@ -1007,6 +1067,36 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
           this.alertService.cerrarModalCarga();
 
           if (resCotizacion.success) {
+            // Guardar la solicitud en Dexie para que aparezca en el módulo de cotizaciones
+            try {
+              // Obtener detalles de la consolidación para guardar en Dexie
+              const consolidacionCompleta = await this.consolidacionService.obtenerConsolidacion(resultado.idConsolidacion);
+              console.log('Consolidación completa:', consolidacionCompleta);
+              
+              const solicitudDexie: SolicitudCotizacion = {
+                noSolicitud: resCotizacion.noSolicitud,
+                idConsolidacion: resultado.idConsolidacion,
+                fechaGeneracion: new Date().toISOString(),
+                usuarioGenera: this.usuario?.documentoidentidad || this.usuario?.usuario || 'SYSTEM',
+                totalItems: resultado.totalItems,
+                estado: 'PENDIENTE',
+                detalle: consolidacionCompleta.detalles?.map((det: any) => ({
+                  noLinea: det.noLinea,
+                  codigoItem: det.codigoItem,
+                  descripcionItem: det.descripcionItem,
+                  cantidad: det.cantidadTotal,
+                  unidadMedida: det.unidadMedida
+                })) || []
+              };
+              
+              console.log('Guardando en Dexie:', solicitudDexie);
+              await this.dexieService.saveSolicitudCotizacion(solicitudDexie);
+              console.log('✅ Solicitud guardada en Dexie:', resCotizacion.noSolicitud);
+            } catch (errDexie: any) {
+              console.error('Error al guardar en Dexie:', errDexie);
+              // No mostrar error al usuario, solo log
+            }
+
             this.alertService.showAlert(
               'Consolidación y Cotización Generadas',
               `Consolidación: <strong>${resultado.codigo}</strong><br>` +

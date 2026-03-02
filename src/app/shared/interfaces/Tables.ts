@@ -707,6 +707,7 @@ export interface Cotizacion {
   numeroCotizacion: string;
   solicitudCompraId: number;
   numeroSolicitud: string;
+  idSolicitudCotizacion?: number; // FK a solicitud de cotización
   proveedor: string;
   nombreProveedor: string;
   rucProveedor: string;

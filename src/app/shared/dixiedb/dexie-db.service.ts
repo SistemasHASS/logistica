@@ -51,6 +51,8 @@ import {
   EvaluacionProveedor,
   CriterioEvaluacionProveedor,
   ItemTemporalConsolidacion,
+  SolicitudCotizacion,
+  DetalleSolicitudCotizacion,
 } from '../interfaces/Tables';
 import Dexie from 'dexie';
 
@@ -122,9 +124,11 @@ export class DexieService extends Dexie {
   public evaluacionesProveedor!: Dexie.Table<EvaluacionProveedor, number>;
   public criteriosEvaluacion!: Dexie.Table<CriterioEvaluacionProveedor, number>;
   public itemsTemporales!: Dexie.Table<ItemTemporalConsolidacion, number>;
+  public solicitudesCotizacion!: Dexie.Table<SolicitudCotizacion, number>;
+  public detalleSolicitudCotizacion!: Dexie.Table<DetalleSolicitudCotizacion, number>;
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 31; // Agregadas tablas para Recepciones, Devoluciones y Evaluaciones
+  private static readonly DB_VERSION = 33; // Corregido campo idSolicitudCotizacion en detalles
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -201,6 +205,8 @@ export class DexieService extends Dexie {
         evaluacionesProveedor: `++id,proveedor,periodo,fechaEvaluacion,calificacionTotal,nivel,estado`,
         criteriosEvaluacion: `++id,evaluacionId,criterio,calificacion,peso`,
         itemsTemporales: `++id,idDetalle,item,familia,categoria,tipoRequerimiento,fechaSeleccion,estado`,
+        solicitudesCotizacion: `++id,numeroSolicitud,consolidacionId,fecha,estado,usuarioSolicita`,
+        detalleSolicitudCotizacion: `++id,idSolicitudCotizacion,codigoItem,descripcionItem,cantidad,unidadMedida`,
       });
 
       this.usuario = this.table('usuario');
@@ -257,6 +263,8 @@ export class DexieService extends Dexie {
       this.evaluacionesProveedor = this.table('evaluacionesProveedor');
       this.criteriosEvaluacion = this.table('criteriosEvaluacion');
       this.itemsTemporales = this.table('itemsTemporales');
+      this.solicitudesCotizacion = this.table('solicitudesCotizacion');
+      this.detalleSolicitudCotizacion = this.table('detalleSolicitudCotizacion');
 
       // 🔧 Manejo automático de errores por versión o corrupción
       this.open().catch(async (err) => {
@@ -1376,5 +1384,69 @@ export class DexieService extends Dexie {
   // Obtener cantidad de items en lista temporal
   async contarItemsTemporales(): Promise<number> {
     return await this.itemsTemporales.count();
+  }
+
+  // =====================================================================
+  // MÉTODOS PARA SOLICITUDES DE COTIZACIÓN
+  // =====================================================================
+
+  async saveSolicitudCotizacion(solicitud: SolicitudCotizacion): Promise<number> {
+    const id = await this.solicitudesCotizacion.add(solicitud);
+    
+    // Guardar detalles si existen
+    if (solicitud.detalle && solicitud.detalle.length > 0) {
+      for (const detalle of solicitud.detalle) {
+        await this.detalleSolicitudCotizacion.add({
+          ...detalle,
+          idSolicitudCotizacion: id as number,
+        });
+      }
+    }
+    
+    return id as number;
+  }
+
+  async showSolicitudesCotizacion(): Promise<SolicitudCotizacion[]> {
+    const solicitudes = await this.solicitudesCotizacion.toArray();
+    
+    // Cargar detalles para cada solicitud
+    for (const solicitud of solicitudes) {
+      const detalles = await this.detalleSolicitudCotizacion
+        .where('idSolicitudCotizacion')
+        .equals(solicitud.id!)
+        .toArray();
+      solicitud.detalle = detalles;
+    }
+    
+    return solicitudes;
+  }
+
+  async getSolicitudCotizacionById(id: number): Promise<SolicitudCotizacion | undefined> {
+    const solicitud = await this.solicitudesCotizacion.get(id);
+    
+    if (solicitud) {
+      const detalles = await this.detalleSolicitudCotizacion
+        .where('solicitudCotizacionId')
+        .equals(id)
+        .toArray();
+      solicitud.detalle = detalles;
+    }
+    
+    return solicitud;
+  }
+
+  async updateSolicitudCotizacion(solicitud: SolicitudCotizacion): Promise<void> {
+    await this.solicitudesCotizacion.put(solicitud);
+  }
+
+  async deleteSolicitudCotizacion(id: number): Promise<void> {
+    // Eliminar detalles primero
+    await this.detalleSolicitudCotizacion
+      .where('solicitudCotizacionId')
+      .equals(id)
+      .delete();
+    
+    // Eliminar solicitud
+    await this.solicitudesCotizacion.delete(id);
   }
 }

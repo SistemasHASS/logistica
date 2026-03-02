@@ -28,7 +28,13 @@
     <!-- TAB 1: SOLICITUDES DE COTIZACIÓN                 -->
     <!-- ================================================ -->
     <div *ngIf="tabActiva === 'SOLICITUDES'">
-      <!-- Contadores -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Solicitudes de Cotización Generadas</h5>
+        <!-- BOTÓN TEMPORAL DE PRUEBA - ELIMINAR DESPUÉS -->
+        <button pButton type="button" class="p-button-sm p-button-help" (click)="crearSolicitudPrueba()">
+          <i class="pi pi-plus me-1"></i> Crear Solicitud de Prueba
+        </button>
+      </div>
       <div class="row mb-3">
         <div class="col-md-4">
           <div class="card border-warning">
@@ -77,7 +83,7 @@
             <td>{{ formatearFecha(solicitud.fechaGeneracion) }}</td>
             <td class="text-center">{{ solicitud.totalItems }}</td>
             <td class="text-center">
-              <span class="badge bg-info">{{ solicitud.cotizacionesRecibidas || 0 }}</span>
+              <span class="badge bg-info">{{ contarCotizacionesPorSolicitud(solicitud.id) }}</span>
             </td>
             <td>
               <span class="badge" [ngClass]="obtenerClaseEstadoSolicitud(solicitud.estado)">
@@ -86,18 +92,21 @@
             </td>
             <td>
               <div class="d-flex gap-1">
-                <button pButton type="button" class="p-button-sm p-button-info" icon="pi pi-eye" 
+                <button pButton type="button" class="p-button-sm p-button-info" 
                   (click)="verDetalleSolicitud(solicitud)" pTooltip="Ver Detalle">
+                  <i class="bx bx-show"></i>
                 </button>
-                <button pButton type="button" class="p-button-sm p-button-primary" icon="pi pi-plus" 
+                <button pButton type="button" class="p-button-sm p-button-primary" 
                   (click)="abrirRegistroCotizacionDesdeSolicitud(solicitud)" 
                   [disabled]="solicitud.estado === 'CERRADA' || solicitud.estado === 'ANULADA'"
                   pTooltip="Registrar Cotización">
+                  <i class="bx bx-plus"></i>
                 </button>
-                <button pButton type="button" class="p-button-sm p-button-success" icon="pi pi-chart-bar" 
+                <button pButton type="button" class="p-button-sm p-button-success" 
                   (click)="abrirComparacionPorSolicitud(solicitud)" 
                   [disabled]="(solicitud.cotizacionesRecibidas || 0) < 2"
                   pTooltip="Comparar Cotizaciones">
+                  <i class="bx bx-bar-chart"></i>
                 </button>
               </div>
             </td>
@@ -247,18 +256,21 @@
             </td>
             <td>
               <div class="d-flex gap-1">
-                <button pButton type="button" class="p-button-sm p-button-info" icon="pi pi-eye" 
+                <button pButton type="button" class="p-button-sm p-button-info" 
                   (click)="verDetalle(cotizacion)" pTooltip="Ver Detalle">
+                  <i class="bx bx-show"></i>
                 </button>
-                <button pButton type="button" class="p-button-sm p-button-success" icon="pi pi-check" 
+                <button pButton type="button" class="p-button-sm p-button-success" 
                   (click)="seleccionarCotizacion(cotizacion)" 
                   [disabled]="cotizacion.estado === 'SELECCIONADA' || cotizacion.estado === 'RECHAZADA'"
                   pTooltip="Seleccionar como ganadora">
+                  <i class="bx bx-check"></i>
                 </button>
-                <button pButton type="button" class="p-button-sm p-button-danger" icon="pi pi-times" 
+                <button pButton type="button" class="p-button-sm p-button-danger" 
                   (click)="rechazarCotizacion(cotizacion)" 
                   [disabled]="cotizacion.estado === 'SELECCIONADA' || cotizacion.estado === 'RECHAZADA'"
                   pTooltip="Rechazar">
+                  <i class="bx bx-x"></i>
                 </button>
               </div>
             </td>
@@ -339,24 +351,24 @@
         <!-- Botones de acción -->
         <div class="d-flex justify-content-between mt-4">
           <button pButton type="button" class="p-button-secondary" (click)="tabActiva = 'SOLICITUDES'">
-            <i class="pi pi-arrow-left me-1"></i> Volver a Solicitudes
+            <i class="bx bx-arrow-left"></i> Volver a Solicitudes
           </button>
           <div class="d-flex gap-2">
             <button pButton type="button" *ngFor="let cot of cotizacionesComparativo" 
               class="p-button-success" 
               [disabled]="cot.estado === 'SELECCIONADA'"
               (click)="seleccionarProveedorGanador(cot)">
-              <i class="pi pi-check me-1"></i> Seleccionar {{ cot.nombreProveedor }}
+              <i class="bx bx-check"></i> Seleccionar {{ cot.nombreProveedor }}
             </button>
           </div>
         </div>
       </div>
 
       <div *ngIf="!solicitudCotizacionSeleccionada || cotizacionesComparativo.length === 0" class="text-center my-5">
-        <i class="pi pi-chart-bar" style="font-size: 4rem; color: #ccc;"></i>
+        <i class="bx bx-chart" style="font-size: 4rem; color: #ccc;"></i>
         <p class="text-muted mt-3">Seleccione una solicitud con al menos 2 cotizaciones para comparar</p>
         <button pButton type="button" class="p-button-primary mt-2" (click)="tabActiva = 'SOLICITUDES'">
-          <i class="pi pi-arrow-left me-1"></i> Ir a Solicitudes
+          <i class="bx bx-arrow-left"></i> Ir a Solicitudes
         </button>
       </div>
     </div>
@@ -407,7 +419,9 @@
     </p-table>
   </div>
   <ng-template pTemplate="footer">
-    <button pButton type="button" class="p-button-secondary" (click)="cerrarModalDetalleSolicitud()">Cerrar</button>
+    <button pButton type="button" class="p-button-secondary" (click)="cerrarModalDetalleSolicitud()">
+      <i class="bx bx-x"></i> Cerrar
+    </button>
   </ng-template>
 </p-dialog>
 
@@ -500,9 +514,11 @@
     </p-table>
   </div>
   <ng-template pTemplate="footer">
-    <button pButton type="button" class="p-button-secondary" (click)="cerrarModalRegistrarCotizacion()">Cancelar</button>
+    <button pButton type="button" class="p-button-secondary" (click)="cerrarModalRegistrarCotizacion()">
+      <i class="bx bx-x"></i> Cancelar
+    </button>
     <button pButton type="button" class="p-button-primary" (click)="guardarCotizacionDesdeSolicitud()">
-      <i class="pi pi-check me-1"></i> Guardar Cotización
+      <i class="bx bx-check"></i> Guardar Cotización
     </button>
   </ng-template>
 </p-dialog>
@@ -587,7 +603,9 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="d-flex justify-content-end">
-      <button pButton type="button" class="p-button-secondary" icon="pi pi-times" (click)="cerrarModalDetalleCotizacion()" label="Cerrar"></button>
+      <button pButton type="button" class="p-button-secondary" (click)="cerrarModalDetalleCotizacion()" label="Cerrar">
+        <i class="bx bx-x"></i> Cerrar
+      </button>
     </div>
   </ng-template>
 </p-dialog>
@@ -655,7 +673,7 @@
   <div class="d-flex justify-content-between align-items-center mb-2">
     <span class="text-muted">Items: {{ detalleCotizacion.length }}</span>
     <button pButton type="button" class="p-button-sm p-button-primary item" (click)="abrirModalAgregarItem()">
-      <i class="pi pi-plus me-1"></i> Agregar Item
+      <i class="bx bx-plus"></i> Agregar Item
     </button>
   </div>
 
@@ -683,11 +701,13 @@
         <td class="text-right"><strong>{{ formatearMoneda(detalle.total) }}</strong></td>
         <td>
           <div class="d-flex gap-1">
-            <button pButton type="button" class="p-button-sm p-button-warning" icon="pi pi-pencil"
+            <button pButton type="button" class="p-button-sm p-button-warning" 
               (click)="editarItemCotizacion(i)">
+              <i class="bx bx-pencil"></i>
             </button>
-            <button pButton type="button" class="p-button-sm p-button-danger" icon="pi pi-trash"
+            <button pButton type="button" class="p-button-sm p-button-danger" 
               (click)="eliminarItemCotizacion(i)">
+              <i class="bx bx-trash"></i>
             </button>
           </div>
         </td>
