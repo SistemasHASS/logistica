@@ -85,14 +85,14 @@
         <tr>
           <th style="width:50px"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
           <th style="width:50px">#</th>
+          <th style="min-width:30px">Acciones</th>
           <th style="min-width:100px" pSortableColumn="fechaAprobacion">Fecha Aprobación</th>
-          <th style="min-width:100px">Código</th>
+          <!-- <th style="min-width:100px">Código</th> -->
           <th style="min-width:100px">RequisicionNumero</th>
           <th style="min-width:100px">Requerimiento</th>
           <th style="min-width:80px">Tipo</th>
           <th style="min-width:120px">Proyecto</th>
           <th style="min-width:100px">Estado</th>
-          <th style="min-width:30px">Acciones</th>
         </tr>
       </ng-template>
 
@@ -100,8 +100,15 @@
         <tr>
           <td><p-tableCheckbox [value]="c"></p-tableCheckbox></td>
           <td>{{ i + 1 }}</td>
-          <td>{{ c.fechaAprobacion | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
-          <td>{{ c.idrequerimiento }}</td>
+          <td>
+            <button class="btn btn-primary btn-sm" (click)="verDetalle(c)">Atender</button>
+            <button class="btn btn-success btn-sm ms-2"
+              *ngIf="c.estado === 'ATENCION_PARCIAL' || c.estado === 'ATENCION_COMPLETA'" 
+              (click)="abrirDespachoFinal(c)">Despachar</button>
+          </td>
+          <!-- <td>{{ c.fechaAprobacion | date: 'dd/MM/yyyy HH:mm:ss' }}</td> -->
+          <td>{{ c.fechaAprobacion | date: 'dd/MM/yyyy' }}</td>
+          <!-- <td>{{ c.idrequerimiento }}</td> -->
           <td>{{ c.RequisicionNumero }}</td>
           <td>{{ c.glosa }}</td>
           <td><span class="badge bg-info">{{ c.tipo }}</span></td>
@@ -109,12 +116,6 @@
             <div *ngFor="let proyecto of obtenerProyectosUnicos(c.detalle)">{{ proyecto }}</div>
           </td>
           <td><span class="badge bg-success">{{ c.estados }}</span></td>
-          <td>
-            <button class="btn btn-primary btn-sm" (click)="verDetalle(c)">Atender</button>
-            <button class="btn btn-success btn-sm ms-2"
-              *ngIf="c.estado === 'ATENCION_PARCIAL' || c.estado === 'ATENCION_COMPLETA'" 
-              (click)="abrirDespachoFinal(c)">Despachar</button>
-          </td>
         </tr>
       </ng-template>
 
@@ -223,7 +224,7 @@
             <td>{{ c.compra || 0 }}</td>
             <td>
               <span class="badge" [ngClass]="{
-                'bg-success': c.estadoAtencion === 'COMPLETO',
+                'bg-success': c.estadoAtencion === 'CON STOCK',
                 'bg-warning text-dark': c.estadoAtencion === 'PARCIAL',
                 'bg-danger': c.estadoAtencion === 'SIN STOCK'
               }">

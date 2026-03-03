@@ -907,7 +907,11 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
           console.log('✅ Solicitud guardada en Dexie:', resultado.noSolicitud);
         } catch (errDexie: any) {
           console.error('Error al guardar en Dexie:', errDexie);
-          // No mostrar error al usuario, solo log
+          this.alertService.showAlert(
+            'Advertencia',
+            'La solicitud se generó correctamente, pero hubo un error al guardarla localmente: ' + errDexie.message,
+            'warning'
+          );
         }
 
         this.alertService.showAlert(

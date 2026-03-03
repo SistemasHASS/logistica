@@ -53,4 +53,13 @@ export class VersionService {
   getStoredVersion(): string | null {
     return localStorage.getItem('app_version');
   }
+
+  /** Guardar la versión actualizada para no volver a mostrar el modal */
+  setUpdatedVersion(version: string) {
+    localStorage.setItem('app_updated_version', version);
+  }
+
+  getUpdatedVersion(): string | null {
+    return localStorage.getItem('app_updated_version');
+  }
 }

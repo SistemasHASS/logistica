@@ -474,7 +474,7 @@ export class ParametrosComponent implements OnInit {
       });
 
       const almacenes = this.maestrasService.getAlmacenes([
-        { ruc: this.usuario?.ruc },
+        { ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA' },
       ]);
       almacenes.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
@@ -1227,7 +1227,9 @@ export class ParametrosComponent implements OnInit {
     // 🔐 LOLOGIST / OPLOGIST → SOLO UNO
     console.log('🔐 Rol LOLOGIST/OPLOGIST detectado, asignando primer almacén');
     // const almacenUsuario = almacenes[0];
-    this.almacenes = [almacenes[0]];
+    // this.almacenes = [almacenes[0]];
+    const almentrada = almacenes.find((c: any) => c.almentrada === "S"); 
+    this.almacenes = [almentrada];
 
     // 🔹 Auto-seleccionar si solo hay un almacén
     if (this.almacenes.length === 1 && !this.configuracion.idalmacen) {

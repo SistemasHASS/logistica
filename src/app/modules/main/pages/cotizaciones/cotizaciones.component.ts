@@ -8,10 +8,14 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
+import { DropdownComponent } from '@/app/modules/main/components/dropdown/dropdown.component';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { UserService } from '@/app/shared/services/user.service';
 import { UtilsService } from '@/app/shared/utils/utils.service';
+import { MaestrasService } from '@/app/modules/main/services/maestras.service';
+import { CotizacionesService } from '@/app/modules/main/services/cotizaciones.service';
+import { ConsolidacionService } from '@/app/services/consolidacion.service';
 import {
   Cotizacion,
   DetalleCotizacion,
@@ -35,6 +39,7 @@ import {
     DialogModule,
     InputTextModule,
     TooltipModule,
+    DropdownComponent,
   ],
   templateUrl: './cotizaciones.component.html',
   styleUrls: ['./cotizaciones.component.scss'],
@@ -52,6 +57,9 @@ export class CotizacionesComponent implements OnInit {
   solicitudesCotizacion: SolicitudCotizacion[] = [];
   cotizaciones: Cotizacion[] = [];
   solicitudesCompra: SolicitudCompra[] = [];
+  
+  // Lista de proveedores del ERP
+  proveedores: any[] = [];
 
   // Formulario
   mostrarFormulario = false;
@@ -126,11 +134,15 @@ export class CotizacionesComponent implements OnInit {
     private dexieService: DexieService,
     private alertService: AlertService,
     private userService: UserService,
-    private utilsService: UtilsService
+    private utilsService: UtilsService,
+    private maestrasService: MaestrasService,
+    private cotizacionesService: CotizacionesService,
+    private consolidacionService: ConsolidacionService
   ) {}
 
   async ngOnInit() {
     await this.cargarUsuario();
+    await this.cargarProveedores();
     await this.cargarSolicitudesCotizacion();
     await this.cargarCotizaciones();
     await this.cargarSolicitudesCompra();
@@ -145,8 +157,145 @@ export class CotizacionesComponent implements OnInit {
     }
   }
 
+  async cargarProveedores() {
+    try {
+      console.log('🔍 Cargando proveedores...');
+      console.log('👤 Usuario:', this.usuario);
+      
+      const body = { 
+        sociedad: this.usuario?.sociedad || '001',
+        idproyecto: this.usuario?.idProyecto
+      };
+      
+      console.log('📤 Enviando request con body:', body);
+      const response = await this.maestrasService.getProveedores(body).toPromise();
+      console.log('📥 Response:', response);
+      
+      if (response && Array.isArray(response)) {
+        this.proveedores = response;
+        console.log('✅ Proveedores cargados:', this.proveedores.length);
+        console.log('📊 Primer proveedor:', this.proveedores[0]);
+      } else if (response && response.data) {
+        this.proveedores = response.data;
+        console.log('✅ Proveedores cargados desde data:', this.proveedores.length);
+        console.log('📊 Primer proveedor:', this.proveedores[0]);
+      } else {
+        console.log('❌ No se encontró response.data ni array directo');
+      }
+    } catch (error) {
+      console.error('❌ Error cargando proveedores:', error);
+      this.alertService.showAlert(
+        'Error',
+        'No se pudieron cargar los proveedores del ERP',
+        'error'
+      );
+    }
+  }
+
+  onProveedorChange(event: any) {
+    const proveedorSeleccionado = this.proveedores.find(p => p.id === event);
+    if (proveedorSeleccionado) {
+      this.cotizacion.proveedor = proveedorSeleccionado.id;
+      this.cotizacion.nombreProveedor = proveedorSeleccionado.proveedor;
+      this.cotizacion.rucProveedor = proveedorSeleccionado.ruc;
+    }
+  }
+
+  onProveedorSelected(event: any) {
+    if (event) {
+      this.cotizacion.proveedor = event.id;
+      this.cotizacion.nombreProveedor = event.proveedor;
+      this.cotizacion.rucProveedor = event.ruc;
+    }
+  }
+
+  getProveedorRUC(id: string): string {
+    const proveedor = this.proveedores.find(p => p.id === id);
+    return proveedor ? proveedor.ruc : '';
+  }
+
   async cargarCotizaciones() {
-    this.cotizaciones = await this.dexieService.showCotizaciones();
+    console.log('🔍 Cargando cotizaciones desde backend...');
+    
+    try {
+      // Cargar desde backend
+      const filtros = {
+        sociedad: this.usuario?.sociedad || '001',
+        idproyecto: this.usuario?.idProyecto
+      };
+      
+      // const cotizacionesBackend = await this.cotizacionesService.listarCotizaciones(filtros);
+      // console.log('📊 Cotizaciones desde backend:', cotizacionesBackend);
+
+      // Por:
+      const response = await this.cotizacionesService.listarCotizaciones(filtros);
+      let cotizacionesBackend = [];
+      
+      if (typeof response === 'string') {
+        cotizacionesBackend = JSON.parse(response);
+      } else {
+        cotizacionesBackend = response;
+      }
+      
+      // Limpiar y guardar en Dexie
+      await this.dexieService.cotizaciones.clear();
+      
+      // Guardar cada cotización
+      for (const cot of cotizacionesBackend) {
+        // Parsear detalles si vienen como string
+        let detalleParsed = [];
+        if (cot.detalles) {
+          if (typeof cot.detalles === 'string') {
+            try {
+              detalleParsed = JSON.parse(cot.detalles);
+            } catch (e) {
+              console.error('Error al parsear detalles:', cot.detalles);
+              detalleParsed = [];
+            }
+          } else {
+            detalleParsed = cot.detalles;
+          }
+        }
+        
+        const cotizacionDexie: Cotizacion = {
+          id: cot.id,
+          numeroCotizacion: cot.idcotizacion,
+          solicitudCompraId: cot.solicitudCompraId || 0, // Required property
+          numeroSolicitud: cot.idsolicitud,
+          proveedor: cot.proveedor,
+          nombreProveedor: cot.nombreProveedor,
+          rucProveedor: cot.rucProveedor,
+          fecha: cot.fechaCotizacion,
+          fechaVencimiento: cot.fechaValidez,
+          montoTotal: cot.montoTotal || 0,
+          moneda: cot.moneda,
+          plazoEntrega: cot.tiempoEntrega || 0, // Required as number
+          condicionesPago: cot.condicionesPago || '', // Required property
+          validezOferta: cot.validezOferta || 0, // Required property
+          formaPago: cot.formaPago,
+          lugarEntrega: cot.lugarEntrega || '', // Required property
+          observaciones: cot.observaciones,
+          detalle: detalleParsed,
+          estado: cot.estado || 'RECIBIDA', // Required with default
+          seleccionada: cot.seleccionada || false, // Required property
+          usuarioRegistra: cot.usuario,
+          idSolicitudCotizacion: cot.idSolicitudCotizacion
+        };
+        
+        await this.dexieService.saveCotizacion(cotizacionDexie);
+      }
+      
+      // Cargar desde Dexie para tener los datos consistentes
+      this.cotizaciones = await this.dexieService.showCotizaciones();
+      console.log('📊 Cotizaciones guardadas en Dexie:', this.cotizaciones.length);
+      
+    } catch (error) {
+      console.error('❌ Error al cargar cotizaciones desde backend:', error);
+      // Si hay error, cargar desde Dexie como fallback
+      this.cotizaciones = await this.dexieService.showCotizaciones();
+      console.log('📊 Cargando desde Dexie como fallback:', this.cotizaciones.length);
+    }
+    
     this.actualizarContadores();
   }
 
@@ -159,44 +308,114 @@ export class CotizacionesComponent implements OnInit {
   }
 
   async cargarSolicitudesCotizacion() {
-    this.solicitudesCotizacion = await this.dexieService.showSolicitudesCotizacion();
+    console.log('🔍 Cargando solicitudes de cotización desde backend...');
+    
+    try {
+      // Cargar desde backend
+      const filtros = {
+        sociedad: this.usuario?.sociedad || '001',
+        idproyecto: this.usuario?.idProyecto
+      };
+      
+      const solicitudesBackend = await this.consolidacionService.listarSolicitudesCotizacion(filtros);
+      console.log('📊 Solicitudes desde backend:', solicitudesBackend);
+      
+      // Limpiar y guardar en Dexie
+      await this.dexieService.solicitudesCotizacion.clear();
+      await this.dexieService.detalleSolicitudCotizacion.clear();
+      
+      // Guardar cada solicitud con sus detalles
+      for (const sol of solicitudesBackend) {
+        // Parsear el detalle si viene como string
+        let detalleParsed = [];
+        if (sol.detalle) {
+          if (typeof sol.detalle === 'string') {
+            try {
+              detalleParsed = JSON.parse(sol.detalle);
+            } catch (e) {
+              console.error('Error al parsear detalle:', sol.detalle);
+              detalleParsed = [];
+            }
+          } else {
+            detalleParsed = sol.detalle;
+          }
+        }
+        
+        const solicitudDexie: SolicitudCotizacion = {
+          id: sol.id,
+          noSolicitud: sol.noSolicitud,
+          idConsolidacion: sol.idConsolidacion,
+          fechaGeneracion: sol.fechaGeneracion,
+          fechaLimite: sol.fechaLimite,
+          usuarioGenera: sol.usuarioGenera,
+          totalItems: sol.totalItems,
+          estado: sol.estado,
+          observaciones: sol.observaciones,
+          cotizacionesRecibidas: sol.cotizacionesRecibidas,
+          fechaModificacion: sol.fechaModificacion,
+          usuarioModifica: sol.usuarioModifica,
+          detalle: detalleParsed
+        };
+        
+        await this.dexieService.saveSolicitudCotizacion(solicitudDexie);
+      }
+      
+      // Cargar desde Dexie para tener los datos consistentes
+      this.solicitudesCotizacion = await this.dexieService.showSolicitudesCotizacion();
+      console.log('📊 Solicitudes guardadas en Dexie:', this.solicitudesCotizacion);
+      console.log('📊 Total de solicitudes:', this.solicitudesCotizacion.length);
+      
+    } catch (error) {
+      console.error('❌ Error al cargar solicitudes desde backend:', error);
+      // Si hay error, cargar desde Dexie como fallback
+      this.solicitudesCotizacion = await this.dexieService.showSolicitudesCotizacion();
+      console.log('📊 Cargando desde Dexie como fallback:', this.solicitudesCotizacion);
+    }
+    
     this.actualizarContadoresSolicitudes();
   }
 
   // MÉTODO TEMPORAL PARA CREAR DATOS DE PRUEBA - ELIMINAR DESPUÉS
   async crearSolicitudPrueba() {
+    console.log('🧪 Creando solicitud de prueba...');
+    
     const solicitud: SolicitudCotizacion = {
-      noSolicitud: 'SC-20260226-0001',
+      noSolicitud: 'SC-TEST-' + Date.now(),
       idConsolidacion: 1,
-      fechaGeneracion: new Date('2026-02-26').toISOString(),
-      usuarioGenera: this.usuario.documentoidentidad,
+      fechaGeneracion: new Date().toISOString(),
+      usuarioGenera: this.usuario?.documentoidentidad || 'TEST_USER',
       totalItems: 1,
       estado: 'PENDIENTE',
       detalle: [
         {
           noLinea: 1,
-          codigoItem: '000011',
-          descripcionItem: '2245475612Z Female Swivel Hose Connector with Washer 16mm x 3/4" TEFFEN',
-          cantidad: 5,
-          unidadMedida: 'UND'
+          codigoItem: '002482',
+          descripcionItem: 'SANIX - Producto de prueba',
+          cantidad: 40,
+          unidadMedida: 'KG'
         }
       ]
     };
 
+    console.log('📝 Solicitud a guardar:', solicitud);
+
     try {
       const id = await this.dexieService.saveSolicitudCotizacion(solicitud);
       console.log('✅ Solicitud de prueba creada con ID:', id);
+      
+      // Verificar que se guardó
       await this.cargarSolicitudesCotizacion();
+      
       this.alertService.showAlert(
         'Éxito',
-        'Solicitud de cotización de prueba creada correctamente.',
+        `Solicitud de prueba ${solicitud.noSolicitud} creada correctamente.`,
         'success'
       );
     } catch (error) {
-      console.error('Error al crear solicitud de prueba:', error);
+      console.error('❌ Error al crear solicitud de prueba:', error);
       this.alertService.showAlert(
         'Error',
-        'No se pudo crear la solicitud de prueba.',
+        'No se pudo crear la solicitud de prueba: ' + error,
         'error'
       );
     }
@@ -219,7 +438,7 @@ export class CotizacionesComponent implements OnInit {
 
   actualizarContadoresSolicitudes() {
     this.totalSolicitudesPendientes = this.solicitudesCotizacion.filter(
-      (s) => s.estado === 'PENDIENTE'
+      (s) => s.estado === 'GENERADA' || s.estado === 'PENDIENTE'
     ).length;
     this.totalSolicitudesEnRevision = this.solicitudesCotizacion.filter(
       (s) => s.estado === 'EN_REVISION'
@@ -784,6 +1003,9 @@ export class CotizacionesComponent implements OnInit {
 
       await this.dexieService.saveCotizacion(this.cotizacion);
 
+      // Verificar si hay múltiples cotizaciones para esta solicitud
+      await this.verificarYEvaluarCotizaciones(this.cotizacion.numeroSolicitud);
+
       this.alertService.cerrarModalCarga();
       this.alertService.showAlert(
         'Éxito',
@@ -888,8 +1110,14 @@ export class CotizacionesComponent implements OnInit {
     this.solicitudCotizacionSeleccionada = null;
   }
 
-  abrirRegistroCotizacionDesdeSolicitud(solicitud: SolicitudCotizacion) {
+  async abrirRegistroCotizacionDesdeSolicitud(solicitud: SolicitudCotizacion) {
     this.solicitudCotizacionSeleccionada = solicitud;
+    
+    // Recargar proveedores si es necesario
+    if (this.proveedores.length === 0) {
+      console.log('🔄 Recargando proveedores...');
+      await this.cargarProveedores();
+    }
     
     // Preparar formulario de cotización
     this.cotizacion = this.nuevaCotizacion();
@@ -961,12 +1189,46 @@ export class CotizacionesComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
 
-      this.cotizacion.numeroCotizacion = this.generarNumeroCotizacion();
+      // Preparar datos para el backend
+      const cotizacionBackend = {
+        idcotizacion: this.generarNumeroCotizacion(),
+        idsolicitud: this.solicitudCotizacionSeleccionada?.noSolicitud,
+        proveedor: this.cotizacion.proveedor,
+        nombreProveedor: this.cotizacion.nombreProveedor,
+        rucProveedor: this.cotizacion.rucProveedor,
+        fechaCotizacion: new Date().toISOString().split('T')[0],
+        fechaValidez: this.cotizacion.fechaVencimiento ? 
+          new Date(this.cotizacion.fechaVencimiento).toISOString().split('T')[0] : 
+          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        moneda: this.cotizacion.moneda || 'PEN',
+        tiempoEntrega: this.cotizacion.plazoEntrega || 0,
+        formaPago: this.cotizacion.formaPago || 'CONTADO',
+        observaciones: this.cotizacion.observaciones || '',
+        detalles: JSON.stringify(this.detalleCotizacion.map(d => ({
+          codigo: d.codigo,
+          descripcion: d.descripcion,
+          cantidad: d.cantidad,
+          precioUnitario: d.precioUnitario,
+          subtotal: d.subtotal,
+          total: d.total
+        }))),
+        usuario: this.usuario.documentoidentidad
+      };
+
+      // Guardar en backend
+      const response = await this.cotizacionesService.registrarCotizacion(cotizacionBackend);
+      
+      // También guardar localmente para Dexie
+      this.cotizacion.numeroCotizacion = cotizacionBackend.idcotizacion;
       this.cotizacion.detalle = [...this.detalleCotizacion];
       this.cotizacion.usuarioRegistra = this.usuario.documentoidentidad;
       this.cotizacion.estado = 'RECIBIDA';
+      this.cotizacion.idSolicitudCotizacion = this.solicitudCotizacionSeleccionada?.id;
 
       await this.dexieService.saveCotizacion(this.cotizacion);
+
+      // Verificar si hay múltiples cotizaciones para esta solicitud
+      await this.verificarYEvaluarCotizaciones(this.cotizacion.numeroSolicitud);
 
       // Actualizar contador de cotizaciones recibidas en la solicitud
       if (this.solicitudCotizacionSeleccionada) {
@@ -979,20 +1241,22 @@ export class CotizacionesComponent implements OnInit {
       this.alertService.cerrarModalCarga();
       this.alertService.showAlert(
         'Éxito',
-        'Cotización registrada correctamente.',
+        'Cotización registrada correctamente en el sistema.',
         'success'
       );
 
       this.cerrarModalRegistrarCotizacion();
       this.tabActiva = 'COTIZACIONES';
       await this.cargarCotizaciones();
+      // Recargar solicitudes desde backend para actualizar estados
       await this.cargarSolicitudesCotizacion();
     } catch (error) {
       console.error('Error al guardar cotización:', error);
       this.alertService.cerrarModalCarga();
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.alertService.showAlert(
         'Error',
-        'Ocurrió un error al guardar la cotización.',
+        'Ocurrió un error al guardar la cotización: ' + errorMessage,
         'error'
       );
     }
@@ -1102,5 +1366,111 @@ export class CotizacionesComponent implements OnInit {
         'error'
       );
     }
+  }
+
+  // =====================================================================
+  // MÉTODOS PARA EVALUACIÓN DE COTIZACIONES
+  // =====================================================================
+
+  /**
+   * Verifica si hay múltiples cotizaciones para una solicitud y las marca como EN_EVALUACION
+   */
+  async verificarYEvaluarCotizaciones(numeroSolicitud: string) {
+    if (!numeroSolicitud) return;
+
+    // Obtener todas las cotizaciones de la solicitud
+    const cotizacionesSolicitud = this.cotizaciones.filter(
+      c => c.numeroSolicitud === numeroSolicitud && c.estado !== 'RECHAZADA'
+    );
+
+    // Si hay 2 o más cotizaciones recibidas, marcar todas como EN_EVALUACION
+    if (cotizacionesSolicitud.length >= 2) {
+      for (const cot of cotizacionesSolicitud) {
+        if (cot.estado === 'RECIBIDA') {
+          cot.estado = 'EN_EVALUACION';
+          await this.dexieService.saveCotizacion(cot);
+        }
+      }
+      
+      // Recargar para actualizar contadores
+      await this.cargarCotizaciones();
+    }
+  }
+
+  /**
+   * Marca manualmente una cotización como EN_EVALUACION
+   */
+  async marcarComoEnEvaluacion(cotizacion: Cotizacion) {
+    const confirmacion = await this.alertService.showConfirm(
+      'Confirmación',
+      '¿Desea marcar esta cotización como "En Evaluación"?',
+      'info'
+    );
+
+    if (!confirmacion) return;
+
+    try {
+      cotizacion.estado = 'EN_EVALUACION';
+      cotizacion.usuarioEvalua = this.usuario.documentoidentidad;
+      cotizacion.fechaEvaluacion = new Date().toISOString();
+
+      await this.dexieService.saveCotizacion(cotizacion);
+
+      this.alertService.showAlert(
+        'Éxito',
+        'Cotización marcada como "En Evaluación".',
+        'success'
+      );
+
+      await this.cargarCotizaciones();
+    } catch (error) {
+      console.error('Error al marcar cotización como en evaluación:', error);
+      this.alertService.showAlert(
+        'Error',
+        'Ocurrió un error al actualizar el estado.',
+        'error'
+      );
+    }
+  }
+
+  /**
+   * Abre el modal de comparación y marca las cotizaciones como EN_EVALUACION
+   */
+  async abrirComparativoYEvaluar(solicitudId: number) {
+    this.cotizacionesComparativo = this.cotizaciones.filter(
+      (c) => c.solicitudCompraId === solicitudId
+    );
+
+    // Marcar todas las cotizaciones del comparativo como EN_EVALUACION
+    for (const cot of this.cotizacionesComparativo) {
+      if (cot.estado === 'RECIBIDA') {
+        cot.estado = 'EN_EVALUACION';
+        await this.dexieService.saveCotizacion(cot);
+      }
+    }
+
+    this.modalComparativoAbierto = true;
+    await this.cargarCotizaciones();
+  }
+
+  /**
+   * Abre la comparación por solicitud y marca como EN_EVALUACION
+   */
+  async abrirComparacionPorSolicitudYEvaluar(solicitud: SolicitudCotizacion) {
+    this.solicitudCotizacionSeleccionada = solicitud;
+    this.cotizacionesComparativo = this.cotizaciones.filter(
+      (c) => c.numeroSolicitud === solicitud.noSolicitud
+    );
+
+    // Marcar todas como EN_EVALUACION si están en RECIBIDA
+    for (const cot of this.cotizacionesComparativo) {
+      if (cot.estado === 'RECIBIDA') {
+        cot.estado = 'EN_EVALUACION';
+        await this.dexieService.saveCotizacion(cot);
+      }
+    }
+
+    this.tabActiva = 'COMPARACION';
+    await this.cargarCotizaciones();
   }
 }

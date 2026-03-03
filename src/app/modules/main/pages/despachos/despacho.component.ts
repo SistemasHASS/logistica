@@ -360,11 +360,11 @@ export class DespachoComponent implements OnInit {
           d.compra = Math.max(0, pendiente - stock);
 
           d.estadoAtencion =
-            atender === 0
+            stock === 0
               ? 'SIN STOCK'
-              : atender < pendiente
+              : stock < pendiente
               ? 'PARCIAL'
-              : 'COMPLETO';
+              : 'CON STOCK';
         });
 
         // Verificar si todos los items están SIN STOCK
@@ -432,6 +432,7 @@ export class DespachoComponent implements OnInit {
           x.glosa?.toLowerCase().includes(f) ||
           x.tipo?.toLowerCase().includes(f) ||
           x.idrequerimiento?.toString().includes(f) ||
+          x.RequisicionNumero?.toLowerCase().includes(f) ||
           x.estados?.toLowerCase().includes(f) ||
           this.formatearFecha(x.fechaAprobacion).includes(f) ||
           x.detalle?.some((d: any) =>
@@ -1238,15 +1239,29 @@ export class DespachoComponent implements OnInit {
     // Obtener códigos únicos de los detalles
     const codigosUnicos = [...new Set(detalle.map(d => d.codigo))];
     
-    // Obtener stock para estos códigos en el almacén especificado
-    const stockFiltrado = this.stockDisponible.filter(s => 
-      codigosUnicos.includes(s.codigo) && s.almacen === idalmacen
-    );
+    console.log('📦 Stock disponible total:', this.stockDisponible);
+    console.log('📦 Almacén seleccionado:', idalmacen);
+    console.log('📦 Códigos únicos buscados:', codigosUnicos);
+    
+    // Agrupar y sumar stock por código
+    const stockAgrupado = new Map();
+    
+    this.stockDisponible.forEach(s => {
+      if (codigosUnicos.includes(s.codigo) && s.almacen === idalmacen) {
+        const key = s.codigo;
+        const stockActual = stockAgrupado.get(key) || 0;
+        stockAgrupado.set(key, stockActual + (s.stockDisponible || s.cantidad || 0));
+      }
+    });
+
+    console.log('📦 Stock agrupado por código:', Object.fromEntries(stockAgrupado));
 
     // Actualizar stock en cada detalle
     detalle.forEach((d: any) => {
-      const stockItem = stockFiltrado.find(s => s.codigo === d.codigo);
-      d.stock = stockItem?.cantidad || 0;
+      const stockValue = stockAgrupado.get(d.codigo) || 0;
+      // Asegurar que el stock no sea negativo
+      d.stock = Math.max(0, stockValue);
+      console.log(`📦 Item ${d.codigo}: stock=${d.stock}, cantidad=${d.cantidad}`);
     });
   }
 
@@ -1254,10 +1269,20 @@ export class DespachoComponent implements OnInit {
    * Obtener stock disponible para un item en un almacén
    */
   obtenerStock(codigo: string, almacen: string): number {
-    const stockItem = this.stockDisponible.find(s => 
+    // Sumar el stock de todos los registros del mismo código y almacén
+    const stockItems = this.stockDisponible.filter(s => 
       s.codigo === codigo && s.almacen === almacen
     );
-    return stockItem?.cantidad || 0;
+    
+    const stockTotal = stockItems.reduce((total, item) => {
+      return total + (item.stockDisponible || item.stockActual || item.cantidad || 0);
+    }, 0);
+    
+    console.log(`🔍 obtenerStock - Código: ${codigo}, Almacén: ${almacen}`);
+    console.log(`  - Registros encontrados: ${stockItems.length}`);
+    console.log(`  - Stock total: ${stockTotal}`);
+    
+    return stockTotal;
   }
 
   async actualizarStock(
@@ -1299,9 +1324,24 @@ export class DespachoComponent implements OnInit {
     this.loading = true;
     const requerimientos = await this.dexieService.showRequerimiento();
     console.log('Requerimientos desde Dexie:', requerimientos);
-    this.requerimientosAprobadosAll = (requerimientos || []).filter(
-      (r: { estados: string; }) => r.estados === 'APROBADO'
-    );
+    
+    // Agrupar requerimientos únicos por idrequerimiento
+    const requerimientosUnicos = new Map();
+    
+    (requerimientos || []).forEach((req: any) => {
+      if (req.estados === 'APROBADO') {
+        const key = req.idrequerimiento;
+        if (!requerimientosUnicos.has(key)) {
+          // Guardar el requerimiento completo con sus detalles
+          requerimientosUnicos.set(key, {
+            ...req,
+            detalle: req.detalle || []
+          });
+        }
+      }
+    });
+
+    this.requerimientosAprobadosAll = Array.from(requerimientosUnicos.values());
 
     // Ordenar por fecha de aprobación (más reciente primero)
     this.requerimientosAprobadosAll.sort((a: any, b: any) => {
@@ -1314,7 +1354,7 @@ export class DespachoComponent implements OnInit {
     this.requerimientosAprobados = [...this.requerimientosAprobadosAll];
     this.totalRegistros = this.requerimientosAprobados.length;
     this.loading = false;
-    console.log('Requerimientos aprobados:', this.requerimientosAprobados);
+    console.log('Requerimientos aprobados únicos:', this.requerimientosAprobados);
   }
 
   obtenerRol() {
@@ -1355,21 +1395,21 @@ export class DespachoComponent implements OnInit {
           // Guardar requerimientos usando bulkPut para evitar errores de duplicados
           await this.dexieService.requerimientos.bulkPut(requerimientosSinId);
 
-          // Guardar detalles
-          const detallesPlanos: any[] = [];
-          for (const req of resp) {
-            if (req.detalle?.length) {
-              for (const det of req.detalle) {
-                const { id, ...detSinId } = det;
-                detallesPlanos.push({
-                  ...detSinId,
-                  idrequerimiento: req.idrequerimiento
-                });
-              }
-            }
-          }
-
-          await this.dexieService.detalles.bulkPut(detallesPlanos);
+          // No guardar detalles separados ya que vienen embebidos en el requerimiento
+          // Esto evita la duplicación en joinDetalle
+          // const detallesPlanos: any[] = [];
+          // for (const req of resp) {
+          //   if (req.detalle?.length) {
+          //     for (const det of req.detalle) {
+          //       const { id, ...detSinId } = det;
+          //       detallesPlanos.push({
+          //         ...detSinId,
+          //         idrequerimiento: req.idrequerimiento
+          //       });
+          //     }
+          //   }
+          // }
+          // await this.dexieService.detalles.bulkPut(detallesPlanos);
 
           console.log('✅ Requerimientos y detalles guardados correctamente');
           await this.cargarRequerimientosAprobados();

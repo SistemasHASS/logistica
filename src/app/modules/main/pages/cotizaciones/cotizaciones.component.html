@@ -31,9 +31,9 @@
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">Solicitudes de Cotización Generadas</h5>
         <!-- BOTÓN TEMPORAL DE PRUEBA - ELIMINAR DESPUÉS -->
-        <button pButton type="button" class="p-button-sm p-button-help" (click)="crearSolicitudPrueba()">
+        <!-- <button pButton type="button" class="p-button-sm p-button-help" (click)="crearSolicitudPrueba()">
           <i class="pi pi-plus me-1"></i> Crear Solicitud de Prueba
-        </button>
+        </button> -->
       </div>
       <div class="row mb-3">
         <div class="col-md-4">
@@ -103,8 +103,8 @@
                   <i class="bx bx-plus"></i>
                 </button>
                 <button pButton type="button" class="p-button-sm p-button-success" 
-                  (click)="abrirComparacionPorSolicitud(solicitud)" 
-                  [disabled]="(solicitud.cotizacionesRecibidas || 0) < 2"
+                  (click)="abrirComparacionPorSolicitudYEvaluar(solicitud)" 
+                  [disabled]="contarCotizacionesPorSolicitud(solicitud.id) < 2"
                   pTooltip="Comparar Cotizaciones">
                   <i class="bx bx-bar-chart"></i>
                 </button>
@@ -260,6 +260,12 @@
                   (click)="verDetalle(cotizacion)" pTooltip="Ver Detalle">
                   <i class="bx bx-show"></i>
                 </button>
+                <button pButton type="button" class="p-button-sm p-button-warning" 
+                  (click)="marcarComoEnEvaluacion(cotizacion)" 
+                  [disabled]="cotizacion.estado !== 'RECIBIDA'"
+                  pTooltip="Marcar como En Evaluación">
+                  <i class="bx bx-search"></i>
+                </button>
                 <button pButton type="button" class="p-button-sm p-button-success" 
                   (click)="seleccionarCotizacion(cotizacion)" 
                   [disabled]="cotizacion.estado === 'SELECCIONADA' || cotizacion.estado === 'RECHAZADA'"
@@ -349,17 +355,23 @@
         </div>
 
         <!-- Botones de acción -->
-        <div class="d-flex justify-content-between mt-4">
-          <button pButton type="button" class="p-button-secondary" (click)="tabActiva = 'SOLICITUDES'">
-            <i class="bx bx-arrow-left"></i> Volver a Solicitudes
-          </button>
-          <div class="d-flex gap-2">
-            <button pButton type="button" *ngFor="let cot of cotizacionesComparativo" 
-              class="p-button-success" 
-              [disabled]="cot.estado === 'SELECCIONADA'"
-              (click)="seleccionarProveedorGanador(cot)">
-              <i class="bx bx-check"></i> Seleccionar {{ cot.nombreProveedor }}
+        <div class="row mt-4">
+          <div class="col-12 mb-3">
+            <button pButton type="button" class="p-button-secondary w-100 w-md-auto" (click)="tabActiva = 'SOLICITUDES'">
+              <i class="bx bx-arrow-left"></i> Volver a Solicitudes
             </button>
+          </div>
+          <div class="col-12">
+            <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-md-start">
+              <button pButton type="button" *ngFor="let cot of cotizacionesComparativo" 
+                class="p-button-success flex-fill flex-md-grow-0 flex-md-shrink-0" 
+                [disabled]="cot.estado === 'SELECCIONADA'"
+                (click)="seleccionarProveedorGanador(cot)">
+                <i class="bx bx-check"></i> 
+                <span class="d-none d-md-inline">Seleccionar {{ cot.nombreProveedor }}</span>
+                <span class="d-md-none">{{ cot.nombreProveedor }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -434,18 +446,40 @@
     </div>
 
     <div class="row mb-3">
-      <div class="col-md-4">
-        <label class="form-label">Código Proveedor <span class="text-danger">*</span></label>
-        <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.proveedor" placeholder="Código">
+      <div class="col-md-12">
+        <label class="form-label">Proveedor <span class="text-danger">*</span></label>
+        <app-dropdown 
+          [(ngModel)]="cotizacion.proveedor"
+          (ngModelChange)="onProveedorChange($event)"
+          (itemSelected)="onProveedorSelected($event)"
+          [editable]="true"
+          [data]="proveedores"
+          [valueField]="'id'"
+          [optionLabel]="'proveedor'"
+          [textShow]="'Proveedor'"
+          [textShow2]="'un proveedor'"
+          [required]="true"
+          placeholder="Seleccione un proveedor...">
+        </app-dropdown>
+        <small class="text-muted" *ngIf="cotizacion.proveedor">
+          Código: {{ cotizacion.proveedor }} | RUC: {{ getProveedorRUC(cotizacion.proveedor) }}
+        </small>
       </div>
+    </div>
+    <div class="row mb-3" *ngIf="cotizacion.proveedor">
       <div class="col-md-4">
-        <label class="form-label">Nombre Proveedor <span class="text-danger">*</span></label>
-        <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.nombreProveedor" placeholder="Nombre">
+        <label class="form-label">Código</label>
+        <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.proveedor" readonly>
       </div>
       <div class="col-md-4">
         <label class="form-label">RUC</label>
-        <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.rucProveedor" placeholder="RUC">
+        <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.rucProveedor" readonly>
       </div>
+      <div class="col-md-4">
+        <label class="form-label">Nombre</label>
+        <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.nombreProveedor" readonly>
+      </div>
+    </div>
     </div>
 
     <div class="row mb-3">
@@ -512,7 +546,6 @@
         </tr>
       </ng-template>
     </p-table>
-  </div>
   <ng-template pTemplate="footer">
     <button pButton type="button" class="p-button-secondary" (click)="cerrarModalRegistrarCotizacion()">
       <i class="bx bx-x"></i> Cancelar
@@ -524,87 +557,158 @@
 </p-dialog>
 
 <!-- Modal: Detalle de Cotización (ya existente) -->
-<p-dialog header="Detalle de Cotización" [(visible)]="modalDetalleCotizacionAbierto" [modal]="true" [style]="{width: '80vw'}">
-  <div *ngIf="cotizacionDetalle">
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <h6>Datos Generales</h6>
-        <table class="table table-sm">
-          <tr>
-            <td><strong>Número:</strong></td>
-            <td>{{ cotizacionDetalle.numeroCotizacion }}</td>
-          </tr>
-          <tr>
-            <td><strong>Fecha:</strong></td>
-            <td>{{ formatearFecha(cotizacionDetalle.fecha) }}</td>
-          </tr>
-          <tr>
-            <td><strong>Proveedor:</strong></td>
-            <td>{{ cotizacionDetalle.nombreProveedor }}</td>
-          </tr>
-          <tr>
-            <td><strong>RUC:</strong></td>
-            <td>{{ cotizacionDetalle.rucProveedor }}</td>
-          </tr>
-        </table>
+<p-dialog header="Detalle de Cotización" [(visible)]="modalDetalleCotizacionAbierto" [modal]="true" 
+         [style]="{width: '95vw', maxWidth: '1200px'}" [contentStyle]="{'max-height': '70vh', 'overflow': 'auto'}">
+  <div *ngIf="cotizacionDetalle" class="detalle-cotizacion-container">
+    <!-- Datos Generales y Condiciones -->
+    <div class="row mb-4">
+      <div class="col-12 col-lg-6 mb-3 mb-lg-0">
+        <div class="card h-100">
+          <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bx bx-info-circle"></i> Datos Generales</h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-12 col-sm-6">
+                <p class="mb-2"><strong>Número:</strong> {{ cotizacionDetalle.numeroCotizacion }}</p>
+                <p class="mb-2"><strong>Fecha:</strong> {{ formatearFecha(cotizacionDetalle.fecha) }}</p>
+              </div>
+              <div class="col-12 col-sm-6">
+                <p class="mb-2"><strong>Proveedor:</strong> {{ cotizacionDetalle.nombreProveedor }}</p>
+                <p class="mb-2"><strong>RUC:</strong> {{ cotizacionDetalle.rucProveedor }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="col-md-6">
-        <h6>Condiciones</h6>
-        <table class="table table-sm">
-          <tr>
-            <td><strong>Plazo Entrega:</strong></td>
-            <td>{{ cotizacionDetalle.plazoEntrega }} días</td>
-          </tr>
-          <tr>
-            <td><strong>Forma Pago:</strong></td>
-            <td>{{ cotizacionDetalle.formaPago }}</td>
-          </tr>
-          <tr>
-            <td><strong>Condiciones Pago:</strong></td>
-            <td>{{ cotizacionDetalle.condicionesPago }}</td>
-          </tr>
-          <tr>
-            <td><strong>Lugar Entrega:</strong></td>
-            <td>{{ cotizacionDetalle.lugarEntrega }}</td>
-          </tr>
-        </table>
+      <div class="col-12 col-lg-6">
+        <div class="card h-100">
+          <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bx bx-cog"></i> Condiciones</h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-12 col-sm-6">
+                <p class="mb-2"><strong>Plazo Entrega:</strong> {{ cotizacionDetalle.plazoEntrega || 0 }} días</p>
+                <p class="mb-2"><strong>Forma Pago:</strong> {{ cotizacionDetalle.formaPago || '-' }}</p>
+              </div>
+              <div class="col-12 col-sm-6">
+                <p class="mb-2"><strong>Moneda:</strong> {{ cotizacionDetalle.moneda || 'PEN' }}</p>
+                <p class="mb-2"><strong>Lugar Entrega:</strong> {{ cotizacionDetalle.lugarEntrega || '-' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <h6>Detalle de Items</h6>
-    <p-table [value]="cotizacionDetalle.detalle" responsiveLayout="scroll" styleClass="p-datatable-sm">
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Código</th>
-          <th>Descripción</th>
-          <th class="text-right">Cantidad</th>
-          <th class="text-right">P.U.</th>
-          <th class="text-right">Descuento</th>
-          <th class="text-right">Total</th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-detalle>
-        <tr>
-          <td>{{ detalle.codigo }}</td>
-          <td>{{ detalle.descripcion }}</td>
-          <td class="text-right">{{ detalle.cantidad }}</td>
-          <td class="text-right">{{ formatearMoneda(detalle.precioUnitario) }}</td>
-          <td class="text-right">{{ formatearMoneda(detalle.descuento) }}</td>
-          <td class="text-right"><strong>{{ formatearMoneda(detalle.total) }}</strong></td>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="footer">
-        <tr>
-          <td colspan="5" class="text-right"><strong>Monto Total:</strong></td>
-          <td class="text-right"><strong>{{ formatearMoneda(cotizacionDetalle.montoTotal) }}</strong></td>
-        </tr>
-      </ng-template>
-    </p-table>
+    <!-- Observaciones si existen -->
+    <div class="row mb-4" *ngIf="cotizacionDetalle.observaciones">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bx bx-comment"></i> Observaciones</h6>
+          </div>
+          <div class="card-body">
+            <p class="mb-0">{{ cotizacionDetalle.observaciones }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detalle de Items -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bx bx-list-ul"></i> Detalle de Items</h6>
+            <span class="badge bg-primary">{{ cotizacionDetalle.detalle.length || 0 }} items</span>
+          </div>
+          <div class="card-body p-0">
+            <!-- Tabla para desktop -->
+            <div class="table-responsive d-none d-md-block">
+              <table class="table table-sm table-striped mb-0">
+                <thead class="table-dark">
+                  <tr>
+                    <th class="text-center" style="width: 60px">#</th>
+                    <th>Código</th>
+                    <th>Descripción</th>
+                    <th class="text-center" style="width: 100px">Cantidad</th>
+                    <th class="text-center" style="width: 100px">U.M.</th>
+                    <th class="text-end" style="width: 120px">P. Unitario</th>
+                    <th class="text-end" style="width: 120px">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of cotizacionDetalle.detalle; let i = index" [class]="cotizacionDetalle.detalle.length === 0 ? 'd-none' : ''">
+                    <td class="text-center">{{ i + 1 }}</td>
+                    <td><small>{{ item.codigo }}</small></td>
+                    <td>{{ item.descripcion }}</td>
+                    <td class="text-center">{{ item.cantidad }}</td>
+                    <td class="text-center">{{ item.unidadMedida || 'UND' }}</td>
+                    <td class="text-end">{{ formatearMoneda(item.precioUnitario) }}</td>
+                    <td class="text-end"><strong>{{ formatearMoneda(item.total) }}</strong></td>
+                  </tr>
+                  <tr *ngIf="!cotizacionDetalle.detalle || cotizacionDetalle.detalle.length === 0">
+                    <td colspan="7" class="text-center text-muted py-3">No hay items registrados</td>
+                  </tr>
+                </tbody>
+                <tfoot class="table-light" *ngIf="cotizacionDetalle.detalle && cotizacionDetalle.detalle.length > 0">
+                  <tr>
+                    <th colspan="6" class="text-end">Total:</th>
+                    <th class="text-end">{{ formatearMoneda(cotizacionDetalle.montoTotal || 0) }}</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            
+            <!-- Cards para móvil -->
+            <div class="d-md-none p-3">
+              <div class="card mb-3" *ngFor="let item of cotizacionDetalle.detalle; let i = index" [class]="cotizacionDetalle.detalle.length === 0 ? 'd-none' : ''">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="badge bg-primary">{{ i + 1 }}</span>
+                    <small class="text-muted">{{ item.codigo }}</small>
+                  </div>
+                  <h6 class="card-title mb-2">{{ item.descripcion }}</h6>
+                  <div class="row">
+                    <div class="col-6">
+                      <small class="text-muted d-block">Cantidad</small>
+                      <strong>{{ item.cantidad }} {{ item.unidadMedida || 'UND' }}</strong>
+                    </div>
+                    <div class="col-6 text-end">
+                      <small class="text-muted d-block">P. Unitario</small>
+                      <strong>{{ formatearMoneda(item.precioUnitario) }}</strong>
+                    </div>
+                  </div>
+                  <hr class="my-2">
+                  <div class="d-flex justify-content-between">
+                    <span class="fw-bold">Total:</span>
+                    <span class="fw-bold text-primary">{{ formatearMoneda(item.total) }}</span>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="!cotizacionDetalle.detalle || cotizacionDetalle.detalle.length === 0" class="text-center text-muted py-3">
+                No hay items registrados
+              </div>
+              <div class="card bg-light" *ngIf="cotizacionDetalle.detalle && cotizacionDetalle.detalle.length > 0">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between">
+                    <span class="h5 mb-0">Total:</span>
+                    <span class="h5 mb-0 text-primary">{{ formatearMoneda(cotizacionDetalle.montoTotal || 0) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <ng-template pTemplate="footer">
-    <div class="d-flex justify-content-end">
-      <button pButton type="button" class="p-button-secondary" (click)="cerrarModalDetalleCotizacion()" label="Cerrar">
-        <i class="bx bx-x"></i> Cerrar
+    <div class="d-flex justify-content-end gap-2">
+      <button pButton type="button" class="p-button-secondary" (click)="cerrarModalDetalleCotizacion()" 
+              label="Cerrar" icon="bx bx-x">
       </button>
     </div>
   </ng-template>
@@ -613,23 +717,42 @@
 <!-- Modal: Nueva Cotización Manual -->
 <p-dialog header="Nueva Cotización Manual" [(visible)]="modalNuevaCotizacionAbierto" [modal]="true" [style]="{width: '90vw'}" [maximizable]="true">
   <div class="row mb-3">
-    <div class="col-md-3">
-      <label class="form-label">Código Proveedor <span class="text-danger">*</span></label>
-      <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.proveedor" placeholder="Código">
+      <div class="col-md-12">
+        <label class="form-label">Proveedor <span class="text-danger">*</span></label>
+        <p-select 
+          [options]="proveedores" 
+          optionLabel="nombre" 
+          optionValue="codigo"
+          [(ngModel)]="cotizacion.proveedor"
+          (onChange)="onProveedorChange($event)"
+          placeholder="Seleccione un proveedor..."
+          class="w-100">
+        </p-select>
+        <small class="text-muted" *ngIf="cotizacion.proveedor">
+          Código: {{ cotizacion.proveedor }} | RUC: {{ cotizacion.rucProveedor }}
+        </small>
+      </div>
     </div>
-    <div class="col-md-3">
-      <label class="form-label">Nombre Proveedor <span class="text-danger">*</span></label>
-      <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.nombreProveedor" placeholder="Nombre">
+    <div class="row mb-3" *ngIf="cotizacion.proveedor">
+      <div class="col-md-4">
+        <label class="form-label">Código</label>
+        <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.proveedor" readonly>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">RUC</label>
+        <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.rucProveedor" readonly>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Nombre</label>
+        <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.nombreProveedor" readonly>
+      </div>
     </div>
-    <div class="col-md-3">
-      <label class="form-label">RUC</label>
-      <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.rucProveedor" placeholder="RUC">
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <label class="form-label">Fecha Cotización</label>
+        <p-datePicker [(ngModel)]="cotizacion.fecha" dateFormat="dd/mm/yy" [showIcon]="true" class="w-100"></p-datePicker>
+      </div>
     </div>
-    <div class="col-md-3">
-      <label class="form-label">Fecha Cotización</label>
-      <p-datePicker [(ngModel)]="cotizacion.fecha" dateFormat="dd/mm/yy" [showIcon]="true" class="w-100"></p-datePicker>
-    </div>
-  </div>
 
   <div class="row mb-3">
     <div class="col-md-3">

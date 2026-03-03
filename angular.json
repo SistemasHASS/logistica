@@ -64,6 +64,27 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "prod-api": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "10mb",
+                  "maximumError": "12mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "20kb",
+                  "maximumError": "50kb"
+                }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod-api.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

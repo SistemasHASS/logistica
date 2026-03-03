@@ -1391,10 +1391,13 @@ export class DexieService extends Dexie {
   // =====================================================================
 
   async saveSolicitudCotizacion(solicitud: SolicitudCotizacion): Promise<number> {
+    console.log('💾 Guardando solicitud de cotización:', solicitud);
     const id = await this.solicitudesCotizacion.add(solicitud);
+    console.log('✅ Solicitud guardada con ID:', id);
     
     // Guardar detalles si existen
     if (solicitud.detalle && solicitud.detalle.length > 0) {
+      console.log('💾 Guardando detalles:', solicitud.detalle.length);
       for (const detalle of solicitud.detalle) {
         await this.detalleSolicitudCotizacion.add({
           ...detalle,
@@ -1426,7 +1429,7 @@ export class DexieService extends Dexie {
     
     if (solicitud) {
       const detalles = await this.detalleSolicitudCotizacion
-        .where('solicitudCotizacionId')
+        .where('idSolicitudCotizacion')
         .equals(id)
         .toArray();
       solicitud.detalle = detalles;
@@ -1442,7 +1445,7 @@ export class DexieService extends Dexie {
   async deleteSolicitudCotizacion(id: number): Promise<void> {
     // Eliminar detalles primero
     await this.detalleSolicitudCotizacion
-      .where('solicitudCotizacionId')
+      .where('idSolicitudCotizacion')
       .equals(id)
       .delete();
     

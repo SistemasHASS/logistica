@@ -81,6 +81,13 @@ export class AppComponent implements OnInit, OnDestroy {
     
     const remote = await this.versionService.getServerVersion();
     const local = this.versionService.getLocalVersion();
+    const updated = this.versionService.getUpdatedVersion();
+
+    // Si ya se actualizó a esta versión, no mostrar el modal
+    if (remote && updated && remote === updated) {
+      console.log('✅ La aplicación ya está actualizada a la versión', remote);
+      return;
+    }
 
     if (remote && remote !== local) {
       const lastPrompt = localStorage.getItem(this.lastPromptKey);
@@ -138,6 +145,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
   async clearDexieAndReload() {
     try {
+      // Guardar la versión que se está actualizando
+      const remote = await this.versionService.getServerVersion();
+      if (remote) {
+        this.versionService.setUpdatedVersion(remote);
+        console.log('💾 Guardando versión actualizada:', remote);
+      }
+
       const dbs = await indexedDB.databases();
       for (const db of dbs) {
         if (db.name) indexedDB.deleteDatabase(db.name);

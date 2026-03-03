@@ -1,6 +1,6 @@
 {
   "name": "logistica",
-  "version": "1.0.37",
+  "version": "1.0.45",
   "scripts": {
     "ng": "ng",
     "start": "node scripts/update-version.js && ng serve",
@@ -9,7 +9,10 @@
     "dev": "ng serve --configuration=development",
     "update-version": "node scripts/update-version.js",
     "build": "node scripts/update-version.js && ng build --configuration=production",
-    "build:prod": "node scripts/update-version.js && ng build --configuration=production"
+    "build:prod": "node scripts/update-version.js && ng build --configuration=production",
+    "build:dev": "node scripts/update-version.js && ng build --configuration=development",
+    "build:prod-api": "node scripts/update-version.js && ng build --configuration=prod-api",
+    "build-with-env": "node scripts/build-with-env.js"
   },
   "private": true,
   "dependencies": {

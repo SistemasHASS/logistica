@@ -621,6 +621,9 @@ export interface Stock {
   codigo: string;
   almacen: string;
   cantidad: number;
+  stockDisponible?: number;
+  stockActual?: number;
+  stockComprometido?: number;
   descripcion: string;
   unidadMedida: string;
   ultimaActualizacion: string;
@@ -1057,7 +1060,7 @@ export interface SolicitudCotizacion {
   fechaLimite?: string;                   // Fecha límite para recibir cotizaciones
   usuarioGenera: string;
   totalItems: number;
-  estado: 'PENDIENTE' | 'EN_REVISION' | 'CERRADA' | 'ANULADA';
+  estado: 'GENERADA' | 'PENDIENTE' | 'EN_REVISION' | 'CERRADA' | 'ANULADA';
   observaciones?: string;
   detalle: DetalleSolicitudCotizacion[];
   cotizacionesRecibidas?: number;         // Contador de cotizaciones recibidas
