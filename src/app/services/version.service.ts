@@ -32,7 +32,17 @@ export class VersionService {
 
   async getServerVersion(): Promise<string | null> {
     try {
-      const response = await fetch(this.versionUrl, { cache: 'no-store' });
+      // Agregar timestamp para evitar caché del navegador
+      const timestamp = new Date().getTime();
+      const url = `${this.versionUrl}?t=${timestamp}`;
+      const response = await fetch(url, { 
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       if (!response.ok) throw new Error('Error al obtener version.json');
       const data = await response.json();
       return data.version;

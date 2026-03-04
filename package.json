@@ -11,8 +11,14 @@
     "build": "node scripts/update-version.js && ng build --configuration=production",
     "build:prod": "node scripts/update-version.js && ng build --configuration=production",
     "build:dev": "node scripts/update-version.js && ng build --configuration=development",
-    "build:prod-api": "node scripts/update-version.js && ng build --configuration=prod-api",
-    "build-with-env": "node scripts/build-with-env.js"
+    "build:prod-api": "node scripts/git-commit-and-build.js && node scripts/update-version.js && ng build --configuration=prod-api",
+    "build-with-env": "node scripts/build-with-env.js",
+    "git-commit": "node scripts/git-commit-and-build.js",
+    "docs": "node scripts/generate-docs.js",
+    "docs:backend": "powershell -ExecutionPolicy Bypass -File ../api_logistica/scripts/generate-docs-backend.ps1",
+    "docs:all": "npm run docs && npm run docs:backend",
+    "deploy": "powershell -ExecutionPolicy Bypass -File scripts/deploy-to-server.ps1",
+    "deploy:full": "npm run build:prod-api && npm run deploy"
   },
   "private": true,
   "dependencies": {
