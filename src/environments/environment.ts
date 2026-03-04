@@ -1,9 +1,9 @@
 export const environment = {
-  production: false,    appVersion: '1.0.48', // se reemplaza automáticamente
+  production: false,    appVersion: '1.0.50', // se reemplaza automáticamente
 
   updateMode: 'AUTO',      // 'AUTO' | 'MANUAL' | 'DISABLED'
   showUpdateModal: true,   // true | false
-  baseUrl: 'http://localhost:5213',
-  // baseUrl: 'https://apilogistica.agroapps.net:7018',
+  // baseUrl: 'http://localhost:5213',
+  baseUrl: 'https://apilogistica.agroapps.net:7018',
   apiMaestra: 'https://apimaestra.agroapps.net:7003'
 };
