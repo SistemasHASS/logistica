@@ -28,9 +28,10 @@ npm run deploy:full
 Este comando:
 1. ✅ Guarda cambios en Git automáticamente
 2. ✅ Actualiza la versión automáticamente
-3. ✅ Genera el build de producción
-4. ✅ Copia los archivos al servidor
-5. ✅ Verifica que la versión sea correcta
+3. ✅ Genera el build de producción (SIN web.config)
+4. ✅ Crea backup completo de C:\logistica en C:\logistica_backup_[timestamp]
+5. ✅ Copia SOLO el contenido del build (preserva web.config existente)
+6. ✅ Verifica que la versión sea correcta
 
 #### Opción B: Deploy solo (si ya tienes el build)
 
@@ -38,7 +39,10 @@ Este comando:
 npm run deploy
 ```
 
-Este comando solo copia el build existente al servidor.
+Este comando:
+1. ✅ Crea backup completo de C:\logistica
+2. ✅ Copia el build al servidor
+3. ✅ Verifica que la versión sea correcta
 
 ---
 

@@ -2,8 +2,8 @@
 # Uso: .\deploy-to-server.ps1
 
 param(
-    # [string]$ServerPath = "\\172.16.20.3\C$\logistica",
-    [string]$ServerPath = "\\172.16.20.3\logistica",
+    [string]$ServerPath = "\\172.16.20.3\C$\logistica",
+    # [string]$ServerPath = "\\172.16.20.3\logistica",
     [string]$LocalBuildPath = "dist\logistica\browser"
 )
 
@@ -52,33 +52,27 @@ try {
         exit 1
     }
 
-    # Crear backup de la version actual en el servidor
-    $backupPath = Join-Path $ServerPath "backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
-    Write-Host "Creando backup en: $backupPath" -ForegroundColor Yellow
+    # Crear backup completo de la carpeta logistica actual
+    $timestamp = Get-Date -Format 'yyyyMMdd_HHmmss'
+    $backupPath = "\\172.16.20.3\C$\logistica_backup_$timestamp"
+    Write-Host "Creando backup completo en: $backupPath" -ForegroundColor Yellow
     
-    # Solo hacer backup de archivos criticos
-    $criticalFiles = @("index.html", "assets\version.json")
-    New-Item -ItemType Directory -Path $backupPath -Force | Out-Null
-    
-    foreach ($file in $criticalFiles) {
-        $sourcePath = Join-Path $ServerPath $file
-        if (Test-Path $sourcePath) {
-            $destPath = Join-Path $backupPath $file
-            $destDir = Split-Path $destPath -Parent
-            if (-not (Test-Path $destDir)) {
-                New-Item -ItemType Directory -Path $destDir -Force | Out-Null
-            }
-            Copy-Item $sourcePath $destPath -Force
-        }
+    # Copiar toda la carpeta logistica actual como backup
+    if (Test-Path $ServerPath) {
+        Copy-Item -Path $ServerPath -Destination $backupPath -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Host "  OK - Backup completo creado" -ForegroundColor Green
+    } else {
+        Write-Host "  ADVERTENCIA - No existe carpeta para hacer backup" -ForegroundColor Yellow
     }
-    Write-Host "  OK - Backup creado" -ForegroundColor Green
     Write-Host ""
 
-    # Copiar archivos al servidor
-    Write-Host "Copiando archivos al servidor..." -ForegroundColor Cyan
+    # Copiar archivos del build al servidor
+    Write-Host "Copiando archivos del build al servidor..." -ForegroundColor Cyan
     
-    # Copiar todo el contenido
-    Copy-Item -Path "$LocalBuildPath\*" -Destination $ServerPath -Recurse -Force
+    # Copiar solo el contenido del build (sin eliminar web.config existente)
+    Get-ChildItem -Path $LocalBuildPath | ForEach-Object {
+        Copy-Item -Path $_.FullName -Destination $ServerPath -Recurse -Force -ErrorAction SilentlyContinue
+    }
     
     Write-Host "  OK - Archivos copiados" -ForegroundColor Green
     Write-Host ""

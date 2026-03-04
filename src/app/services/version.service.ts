@@ -52,8 +52,26 @@ export class VersionService {
     }
   }
 
-  getLocalVersion(): string {
-    return environment.appVersion;
+  async getLocalVersion(): Promise<string> {
+    // Obtener versión desde version.json local para evitar problemas de caché
+    try {
+      const timestamp = new Date().getTime();
+      const url = `${this.versionUrl}?t=${timestamp}`;
+      const response = await fetch(url, { 
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      if (!response.ok) throw new Error('Error al obtener version.json local');
+      const data = await response.json();
+      return data.version;
+    } catch (err) {
+      console.error('❌ No se pudo obtener la versión local, usando environment:', err);
+      return environment.appVersion;
+    }
   }
 
   setLocalVersion(version: string) {

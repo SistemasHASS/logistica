@@ -80,12 +80,20 @@ export class AppComponent implements OnInit, OnDestroy {
     if (this.versionService.getMode() !== 'AUTO') return;
     
     const remote = await this.versionService.getServerVersion();
-    const local = this.versionService.getLocalVersion();
+    const local = await this.versionService.getLocalVersion();
     const updated = this.versionService.getUpdatedVersion();
+
+    console.log('🔍 Verificando versiones:', { remote, local, updated });
 
     // Si ya se actualizó a esta versión, no mostrar el modal
     if (remote && updated && remote === updated) {
       console.log('✅ La aplicación ya está actualizada a la versión', remote);
+      return;
+    }
+
+    // Si las versiones son iguales, no mostrar modal
+    if (remote && local && remote === local) {
+      console.log('✅ La aplicación ya tiene la versión más reciente:', local);
       return;
     }
 
@@ -110,7 +118,7 @@ export class AppComponent implements OnInit, OnDestroy {
   /** 🎯 punto único de decisión */
   async handleUpdate() {
     const remote = await this.versionService.getServerVersion();
-    const local = this.versionService.getLocalVersion();
+    const local = await this.versionService.getLocalVersion();
 
     if (!remote || remote === local) return;
 
