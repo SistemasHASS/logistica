@@ -1,0 +1,131 @@
+<!-- CORRECCIONES PARA APROBACIONES-AREA.COMPONENT.HTML -->
+
+<!-- 1. CORREGIR TABLA DE PENDIENTES (líneas 89-95) -->
+<!-- Reemplazar el contenido de <ng-template pTemplate="body" let-req> -->
+
+<ng-template pTemplate="body" let-req>
+  <tr>
+    <!-- CAMBIAR: -->
+    <td>{{ req.RequisicionNumero || req.idrequerimiento }}</td>
+    <td>{{ req.fecha }}</td>
+    <td>{{ req.nombreSolicitante }}</td>
+    <td>{{ req.nombreArea }}</td>
+    <td>{{ req.estados }}</td>
+    <td>{{ req.descripcion || 'Sin descripción' }}</td>
+    <!-- <td>{{ formatMoneda(req.montoTotal) }}</td> -->
+    <td>
+      <p-tag [severity]="'warn'">
+        PENDIENTE
+      </p-tag>
+    </td>
+    <td>-</td>
+    <td>
+      <button pButton type="button" icon="pi pi-eye" 
+              class="p-button-sm p-button-info me-2"
+              (click)="verDetalle(req)"
+              label="Ver Detalle">
+      </button>
+      <button pButton type="button" icon="pi pi-check" 
+              class="p-button-sm p-button-success"
+              (click)="abrirModalAprobacion(req)"
+              label="Revisar">
+      </button>
+    </td>
+  </tr>
+</ng-template>
+
+<!-- 2. CORREGIR MODAL DE DETALLE (líneas 257-287) -->
+<!-- Reemplazar el modal de detalle -->
+
+<!-- Modal de Detalle -->
+<p-dialog [(visible)]="displayDetalleModal" [modal]="true" [style]="{width: '800px'}"
+          header="Detalle del Requerimiento">
+  <div *ngIf="requerimientoDetalle">
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <strong>Número:</strong> {{ requerimientoDetalle.idrequerimiento }}
+      </div>
+      <div class="col-md-6">
+        <strong>Requisición:</strong> {{ requerimientoDetalle.RequisicionNumero || 'N/A' }}
+      </div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <strong>Estado:</strong>
+        <p-tag [severity]="requerimientoDetalle.estados === 'PENDIENTE' ? 'warn' : 'success'">
+          {{ requerimientoDetalle.estadoDescripcion || requerimientoDetalle.estados }}
+        </p-tag>
+      </div>
+      <div class="col-md-6">
+        <strong>Fecha:</strong> {{ requerimientoDetalle.fecha }}
+      </div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <strong>Solicitante:</strong> {{ requerimientoDetalle.nombreSolicitante }}
+      </div>
+      <div class="col-md-6">
+        <strong>Área:</strong> {{ requerimientoDetalle.nombreArea }}
+      </div>
+    </div>
+    
+    <!-- Tabla de detalles -->
+    <div class="mt-4">
+      <h5>Ítems del Requerimiento</h5>
+      <p-table [value]="requerimientoDetalle.detalles" [paginator]="true" [rows]="5" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Centro Costo</th>
+            <th>Turno</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-det>
+          <tr>
+            <td>{{ det.codigo }}</td>
+            <td>{{ det.descripcionItem || 'Sin descripción' }}</td>
+            <td>{{ det.idproducto }}</td>
+            <td>{{ det.cantidad }}</td>
+            <td>{{ det.idcentrocosto }}</td>
+            <td>{{ det.idturno }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="text-center">No hay detalles para mostrar</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Cerrar" icon="pi pi-times" 
+            (click)="displayDetalleModal = false"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- 3. CORREGIR MÉTODO aprobar() en el TS (línea 319) -->
+<!-- Cambiar idRequerimiento por idrequerimiento -->
+
+async aprobar() {
+  if (!this.requerimientoSeleccionado || !this.usuario) return;
+  
+  try {
+    const response = await this.aprobacionesAreaService
+      .aprobarRequerimientoArea({
+        idrequerimiento: this.requerimientoSeleccionado.idrequerimiento,  // CAMBIADO
+        documentoidentidad: this.usuario.documentoidentidad,
+        accion: 'APROBADO',
+        comentarios: this.observaciones,
+        ruc: '20481121966'
+      })
+      .toPromise();
+      
+    // ... resto del código
+  }
+}
+
+// 4. CORREGIR MÉTODO rechazar() de la misma manera (línea 319)

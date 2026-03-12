@@ -1,0 +1,247 @@
+.kardex-container {
+  padding: 20px;
+
+  .page-header {
+    margin-bottom: 30px;
+
+    h2 {
+      color: #2c3e50;
+      font-weight: 600;
+      margin-bottom: 5px;
+
+      i {
+        color: #3498db;
+        margin-right: 10px;
+      }
+    }
+
+    .text-muted {
+      font-size: 0.9rem;
+    }
+  }
+
+  .nav-tabs {
+    border-bottom: 2px solid #dee2e6;
+
+    .nav-link {
+      color: #6c757d;
+      border: none;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+
+      i {
+        margin-right: 8px;
+      }
+
+      &:hover {
+        color: #3498db;
+        background-color: #f8f9fa;
+      }
+
+      &.active {
+        color: #3498db;
+        background-color: #fff;
+        border-bottom: 3px solid #3498db;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .tab-content {
+    animation: fadeIn 0.3s;
+  }
+
+  .card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+
+    .card-header {
+      background-color: #f8f9fa;
+      border-bottom: 2px solid #dee2e6;
+      padding: 15px 20px;
+
+      h5, h6 {
+        margin: 0;
+        color: #2c3e50;
+        font-weight: 600;
+
+        i {
+          color: #3498db;
+          margin-right: 8px;
+        }
+      }
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    &.bg-primary,
+    &.bg-success,
+    &.bg-warning,
+    &.bg-info {
+      .card-body {
+        h6 {
+          font-size: 0.9rem;
+          margin-bottom: 10px;
+          opacity: 0.9;
+        }
+
+        h3 {
+          font-size: 2rem;
+          font-weight: 700;
+          margin: 0;
+        }
+      }
+    }
+  }
+
+  .form-control,
+  .form-select {
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+
+    &:focus {
+      border-color: #3498db;
+      box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+    }
+  }
+
+  .btn {
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-weight: 500;
+    transition: all 0.3s;
+
+    i {
+      margin-right: 5px;
+    }
+
+    &.btn-primary {
+      background-color: #3498db;
+      border-color: #3498db;
+
+      &:hover {
+        background-color: #2980b9;
+        border-color: #2980b9;
+      }
+    }
+
+    &.btn-success {
+      background-color: #27ae60;
+      border-color: #27ae60;
+
+      &:hover {
+        background-color: #229954;
+        border-color: #229954;
+      }
+    }
+
+    &.btn-danger {
+      background-color: #e74c3c;
+      border-color: #e74c3c;
+
+      &:hover {
+        background-color: #c0392b;
+        border-color: #c0392b;
+      }
+    }
+
+    &.btn-sm {
+      padding: 4px 8px;
+      font-size: 0.875rem;
+    }
+  }
+
+  .badge {
+    padding: 6px 12px;
+    font-weight: 500;
+    border-radius: 4px;
+  }
+
+  .table {
+    margin-bottom: 0;
+
+    th {
+      background-color: #f8f9fa;
+      color: #2c3e50;
+      font-weight: 600;
+      border-bottom: 2px solid #dee2e6;
+      padding: 12px;
+    }
+
+    td {
+      padding: 10px 12px;
+      vertical-align: middle;
+    }
+
+    &.table-sm {
+      th, td {
+        padding: 8px;
+      }
+    }
+  }
+
+  ::ng-deep {
+    .p-datatable {
+      .p-datatable-header {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 12px;
+      }
+
+      .p-datatable-thead > tr > th {
+        background-color: #f8f9fa;
+        color: #2c3e50;
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+      }
+
+      .p-datatable-tbody > tr {
+        &:hover {
+          background-color: #f8f9fa;
+        }
+      }
+
+      .p-paginator {
+        background-color: #fff;
+        border-top: 1px solid #dee2e6;
+      }
+    }
+
+    .p-tag {
+      padding: 4px 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .kardex-container {
+    padding: 10px;
+
+    .nav-tabs .nav-link {
+      padding: 8px 12px;
+      font-size: 0.9rem;
+    }
+
+    .card .card-body {
+      padding: 15px;
+    }
+  }
+}

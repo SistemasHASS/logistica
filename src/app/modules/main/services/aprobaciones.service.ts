@@ -45,4 +45,43 @@ export class AprobacionesService {
       this.http.post(`${this.baseUrl}/aprobar-rechazar-servicio`, request)
     );
   }
+
+  // Obtener requerimientos con aprobación
+  obtenerRequerimientosConAprobacion(data: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/obtener-requerimientos-con-aprobacion`, data);
+  }
+
+  // Obtener dashboard de aprobaciones
+  obtenerDashboardAprobaciones(dni: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/api/logistica/obtener-dashboard-aprobaciones/${dni}`);
+  }
+
+  // Métodos para badges
+  getUrgenciaBadge(urgencia: string): 'success' | 'info' | 'secondary' | 'warn' | 'danger' | 'contrast' {
+    switch (urgencia?.toUpperCase()) {
+      case 'ALTA':
+        return 'danger';
+      case 'MEDIA':
+        return 'warn';
+      case 'BAJA':
+        return 'info';
+      default:
+        return 'secondary';
+    }
+  }
+
+  getEstadoBadge(estado: string): 'success' | 'info' | 'secondary' | 'warn' | 'danger' | 'contrast' {
+    switch (estado?.toUpperCase()) {
+      case 'APROBADO':
+        return 'success';
+      case 'RECHAZADO':
+        return 'danger';
+      case 'PENDIENTE':
+        return 'warn';
+      case 'EN PROCESO':
+        return 'info';
+      default:
+        return 'secondary';
+    }
+  }
 }

@@ -152,7 +152,7 @@ export class RequerimientosService {
     }
   }
 
-    getNumeroRequerimientoPRING(body: any): Observable<any> {
+  getNumeroRequerimientoPRING(body: any): Observable<any> {
     const url = `${this.baseUrl}/api/logistica/listar-numero-requision`;
     try {
       return this.http.post<any>(url, body);

@@ -65,6 +65,15 @@
           </li>
           <li *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('APLOGIST')"
             class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./usuarios-por-area" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-users'></i>
+              </span>
+              <span class="hide-menu"> Usuarios por Área</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('APLOGIST')"
+            class="sidebar-item" (click)="toggleSidebar()">
             <a routerLink="./admin-roles" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class='icon icon-lock'></i>

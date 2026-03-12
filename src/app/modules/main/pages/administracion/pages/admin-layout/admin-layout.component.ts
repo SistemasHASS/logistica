@@ -122,6 +122,7 @@ export class AdminLayoutComponent implements OnInit {
       'admin-perfiles': 'Gestión de Perfiles',
       'admin-roles': 'Gestión de Roles',
       'admin-flujos': 'Gestión de Flujos de Aprobación',
+      'usuarios-por-area': 'Usuarios por Área',
       'reportes': 'Lista de requerimientos',
     };
 

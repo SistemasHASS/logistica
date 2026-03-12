@@ -1,0 +1,36 @@
+.card {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.badge {
+  padding: 0.5em 0.75em;
+  font-size: 0.875rem;
+}
+
+.table {
+  font-size: 0.9rem;
+}
+
+.nav-tabs .nav-link {
+  cursor: pointer;
+}
+
+.nav-tabs .nav-link.active {
+  font-weight: bold;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}

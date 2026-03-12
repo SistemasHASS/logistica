@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { environment } from '@/environments/environment';
 import { lastValueFrom } from 'rxjs';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
+import { AprobacionesAreaService } from '@/app/modules/main/services/aprobaciones-area.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,7 +14,12 @@ export class AuthService {
   private readonly aplicaciones: string = 'LOGISTICA';
   private readonly baseUrlMaestra: string = environment.apiMaestra;
 
-  constructor(private http: HttpClient, private dexieService: DexieService) { }
+  constructor(
+    private http: HttpClient, 
+    private dexieService: DexieService, 
+    private aprobacionesAreaService: AprobacionesAreaService,
+    private router: Router
+  ) { }
 
   async login(
     usuario: string,
@@ -93,5 +100,82 @@ export class AuthService {
     const resp: any = await lastValueFrom(this.http.get(url));
 
     return resp?.permitido === true;
+  }
+
+  /**
+   * Carga el área del usuario logueado y la guarda en Dexie
+   */
+  async cargarAreaUsuario(): Promise<any> {
+    let usuario: any = null;
+    
+    try {
+      usuario = await this.getUser();
+      if (!usuario) return null;
+
+      // Obtener información del área del usuario
+      const response = await lastValueFrom(
+        this.aprobacionesAreaService.obtenerAreaUsuario({
+          documentoidentidad: usuario.documentoidentidad,
+          ruc: usuario.ruc
+        })
+      );
+
+      console.log('Respuesta de obtenerAreaUsuario:', response);
+
+      // Verificar si la respuesta es un array y tiene datos
+      if (response && Array.isArray(response) && response.length > 0) {
+        const areaInfo = response[0];
+        
+        // Actualizar el usuario con la información del área
+        const usuarioActualizado = {
+          ...usuario,
+          idarea: areaInfo.idarea?.toString(),
+          nombreArea: areaInfo.nombreArea,
+          esJefeArea: areaInfo.esJefeArea,
+          rolArea: areaInfo.rolArea
+        };
+
+        // Guardar usuario actualizado en Dexie
+        await this.dexieService.saveUsuario(usuarioActualizado);
+        
+        console.log('Usuario actualizado con información de área:', usuarioActualizado);
+        
+        // ✅ Redirección según rol y área para APLOGIST
+        if (usuarioActualizado.idrol === 'APLOGIST') {
+          if (usuarioActualizado.idarea) {
+            // Si tiene área, redirigir a aprobaciones-area
+            console.log('🔄 APLOGIST con área - Redirigiendo a aprobaciones-area');
+            this.router.navigate(['/main/aprobaciones-area']);
+          } else {
+            // Si no tiene área, redirigir a aprobaciones
+            console.log('🔄 APLOGIST sin área - Redirigiendo a aprobaciones');
+            this.router.navigate(['/main/aprobaciones']);
+          }
+        }
+        
+        return usuarioActualizado;
+      } else {
+        // El usuario no tiene área asignada, continuar sin área
+        console.log('ℹ️ Usuario sin área asignada - Usando flujo de aprobación normal');
+        console.log('📝 Para asignar un área, contacte al administrador del sistema');
+        
+        // ✅ Redirección para APLOGIST sin área
+        if (usuario && usuario.idrol === 'APLOGIST') {
+          console.log('🔄 APLOGIST sin área - Redirigiendo a aprobaciones');
+          this.router.navigate(['/main/aprobaciones']);
+        }
+        
+        // Mostrar mensaje informativo al usuario (opcional)
+        // Podrías usar un toast o notificación aquí si quieres
+        
+        return usuario;
+      }
+    } catch (error) {
+      console.error('Error al cargar área del usuario:', error);
+      console.log('ℹ️ Continuando sin área asignada - Usando flujo normal');
+      
+      // En caso de error, continuar sin área
+      return usuario;
+    }
   }
 }

@@ -1,0 +1,627 @@
+<div class="kardex-container">
+  <div class="page-header">
+    <h2><i class="bi bi-database"></i> Kardex e Inventario</h2>
+    <p class="text-muted">Gestión completa de inventario, kardex y transacciones</p>
+    <!-- Botones de prueba y sincronización -->
+    <div class="mt-3">
+      <div class="btn-group me-2" role="group">
+        <button type="button" class="btn btn-outline-primary" (click)="probarFlujoCompleto()" [disabled]="loading">
+          <i class="bi bi-play-circle"></i> Probar Flujo
+        </button>
+        <button type="button" class="btn btn-outline-success" (click)="ejecutarRecepcionOC()" [disabled]="loading">
+          <i class="bi bi-box-arrow-in-down"></i> Recepción OC
+        </button>
+      </div>
+      <div class="btn-group me-2" role="group">
+        <button type="button" class="btn btn-outline-info" (click)="sincronizarSpring()" [disabled]="loading">
+          <i class="bi bi-cloud-upload"></i> Sincronizar
+        </button>
+        <button type="button" class="btn btn-outline-warning" (click)="ejecutarSincronizacionSpring()" [disabled]="loading">
+          <i class="bi bi-send"></i> Ejecutar Sync
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="verificarEstadoSincronizacion()" [disabled]="loading">
+          <i class="bi bi-info-circle"></i> Estado Sync
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs de navegación -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="tabActiva === 0" (click)="tabActiva = 0">
+        <i class="bi bi-box-seam"></i> Stock Actual
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="tabActiva === 1" (click)="tabActiva = 1">
+        <i class="bi bi-journal-text"></i> Kardex
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="tabActiva === 2" (click)="tabActiva = 2">
+        <i class="bi bi-arrow-left-right"></i> Transacciones
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="tabActiva === 3" (click)="tabActiva = 3">
+        <i class="bi bi-graph-up"></i> Dashboard
+      </a>
+    </li>
+  </ul>
+
+  <!-- TAB 1: STOCK ACTUAL -->
+  <div *ngIf="tabActiva === 0" class="tab-content">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="bi bi-box-seam"></i> Stock Actual por Almacén</h5>
+      </div>
+      <div class="card-body">
+        <!-- Filtros -->
+        <div class="row mb-3">
+          <div class="col-md-3">
+            <label>Almacén</label>
+            <select class="form-control" [(ngModel)]="filtroStock.almacen" (change)="filtrarStock()" name="filtroStockAlmacen">
+              <option value="">Todos</option>
+              <option value="ALM-PRINCIPAL">ALM-PRINCIPAL</option>
+              <option value="ALM-SUCURSAL">ALM-SUCURSAL</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label>Buscar Item</label>
+            <input type="text" class="form-control" [(ngModel)]="filtroStock.codigoItem" 
+                   (input)="filtrarStock()" placeholder="Código o descripción" name="filtroStockCodigoItem">
+          </div>
+          <div class="col-md-3">
+            <label>&nbsp;</label>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" [(ngModel)]="filtroStock.stockBajo" 
+                     (change)="filtrarStock()" id="stockBajo" name="filtroStockStockBajo">
+              <label class="form-check-label" for="stockBajo">Solo stock bajo</label>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <label>&nbsp;</label>
+            <button class="btn btn-secondary w-100" (click)="limpiarFiltrosStock()">
+              <i class="bi bi-x-circle"></i> Limpiar
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabla de stock -->
+        <p-table [value]="stockFiltrado" [paginator]="true" [rows]="10" [loading]="loading"
+                 styleClass="p-datatable-sm" [rowsPerPageOptions]="[10,25,50]">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Almacén</th>
+              <th>Stock Actual</th>
+              <th>Stock Mín</th>
+              <th>Stock Máx</th>
+              <th>Costo Prom.</th>
+              <th>Valor Total</th>
+              <th>Estado</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr>
+              <td>{{ item.codigoItem }}</td>
+              <td>{{ item.descripcionItem }}</td>
+              <td><span class="badge bg-info">{{ item.almacen }}</span></td>
+              <td class="text-end"><strong>{{ formatearNumero(item.stockActual) }}</strong></td>
+              <td class="text-end">{{ formatearNumero(item.stockMinimo) }}</td>
+              <td class="text-end">{{ formatearNumero(item.stockMaximo) }}</td>
+              <td class="text-end">{{ formatearMoneda(item.costoPromedio) }}</td>
+              <td class="text-end"><strong>{{ formatearMoneda(item.valorTotal) }}</strong></td>
+              <!-- <td class="text-end"><strong>{{ formatearMoneda(item.valorInventario) }}</strong></td> -->
+              <td>
+                <p-tag [value]="getEstadoStock(item)" [severity]="getSeverityStock(getEstadoStock(item))"></p-tag>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="9" class="text-center">No hay datos disponibles</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: KARDEX -->
+  <div *ngIf="tabActiva === 1" class="tab-content">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="bi bi-journal-text"></i> Consulta de Kardex</h5>
+      </div>
+      <div class="card-body">
+        <!-- Filtros -->
+        <div class="row mb-3">
+          <div class="col-md-3">
+            <label>Código Item <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="filtroKardex.codigoItem" 
+                   placeholder="Ej: ITEM-001">
+          </div>
+          <div class="col-md-2">
+            <label>Almacén</label>
+            <select class="form-control" [(ngModel)]="filtroKardex.almacen">
+              <option value="">Todos</option>
+              <option value="ALM-PRINCIPAL">ALM-PRINCIPAL</option>
+              <option value="ALM-SUCURSAL">ALM-SUCURSAL</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label>Fecha Inicio</label>
+            <input type="date" class="form-control" [(ngModel)]="filtroKardex.fechaInicio">
+          </div>
+          <div class="col-md-2">
+            <label>Fecha Fin</label>
+            <input type="date" class="form-control" [(ngModel)]="filtroKardex.fechaFin">
+          </div>
+          <div class="col-md-2">
+            <label>&nbsp;</label>
+            <button class="btn btn-primary w-100" (click)="buscarKardex()">
+              <i class="bi bi-search"></i> Buscar
+            </button>
+          </div>
+          <div class="col-md-1">
+            <label>&nbsp;</label>
+            <button class="btn btn-secondary w-100" (click)="limpiarKardex()">
+              <i class="bi bi-x-circle"></i> Limpiar
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabla de kardex -->
+        <p-table [value]="movimientosKardex" [paginator]="true" [rows]="15" [loading]="loading"
+                 styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Documento</th>
+              <th>Almacén Origen</th>
+              <th>Almacén Destino</th>
+              <th>Entrada</th>
+              <th>Salida</th>
+              <th>Saldo</th>
+              <th>Costo Unit.</th>
+              <th>Costo Total</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-mov>
+            <tr>
+              <td>{{ formatearFecha(mov.fecha) }}</td>
+              <td>
+                <p-tag [value]="mov.tipoMovimiento" [severity]="getSeverityMovimiento(mov.tipoMovimiento)"></p-tag>
+              </td>
+              <td>{{ mov.tipoDocumento }} - {{ mov.numeroDocumento }}</td>
+              <td>{{ mov.almacenOrigen || '-' }}</td>
+              <td>{{ mov.almacenDestino || '-' }}</td>
+              <td class="text-end text-success"><strong>{{ mov.cantidadEntrada > 0 ? formatearNumero(mov.cantidadEntrada) : '-' }}</strong></td>
+              <td class="text-end text-danger"><strong>{{ mov.cantidadSalida > 0 ? formatearNumero(mov.cantidadSalida) : '-' }}</strong></td>
+              <td class="text-end"><strong>{{ formatearNumero(mov.saldo) }}</strong></td>
+              <td class="text-end">{{ formatearMoneda(mov.costoUnitario) }}</td>
+              <td class="text-end">{{ formatearMoneda(mov.costoTotal) }}</td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="10" class="text-center">Ingrese un código de item y presione buscar</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: TRANSACCIONES -->
+  <div *ngIf="tabActiva === 2" class="tab-content">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5><i class="bi bi-arrow-left-right"></i> Transacciones de Inventario</h5>
+        <button class="btn btn-primary" (click)="abrirModalNuevaTransaccion()">
+          <i class="bi bi-plus-circle"></i> Nueva Transacción
+        </button>
+      </div>
+      <div class="card-body">
+        <!-- Filtros -->
+        <div class="row mb-3">
+          <div class="col-md-3">
+            <label>Tipo Transacción</label>
+            <select class="form-control" [(ngModel)]="filtroTransacciones.tipoTransaccion" (change)="listarTransacciones()">
+              <option value="">Todos</option>
+              <option value="INGRESO">INGRESO</option>
+              <option value="SALIDA">SALIDA</option>
+              <option value="AJUSTE">AJUSTE</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label>Estado</label>
+            <select class="form-control" [(ngModel)]="filtroTransacciones.estado" (change)="listarTransacciones()">
+              <option value="">Todos</option>
+              <option value="PENDIENTE">PENDIENTE</option>
+              <option value="PROCESADO">PROCESADO</option>
+              <option value="ANULADO">ANULADO</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label>Fecha Inicio</label>
+            <input type="date" class="form-control" [(ngModel)]="filtroTransacciones.fechaInicio">
+          </div>
+          <div class="col-md-2">
+            <label>Fecha Fin</label>
+            <input type="date" class="form-control" [(ngModel)]="filtroTransacciones.fechaFin">
+          </div>
+          <div class="col-md-2">
+            <label>&nbsp;</label>
+            <button class="btn btn-secondary w-100" (click)="limpiarFiltrosTransacciones()">
+              <i class="bi bi-x-circle"></i> Limpiar
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabla de transacciones -->
+        <p-table [value]="transaccionesFiltradas" [paginator]="true" [rows]="10" [loading]="loading"
+                 styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Número</th>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Documento Origen</th>
+              <th>Almacén</th>
+              <th>Items</th>
+              <th>Valor Total</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-trans>
+            <tr>
+              <td><strong>{{ trans.numeroTransaccion }}</strong></td>
+              <td>{{ formatearFecha(trans.fecha) }}</td>
+              <td>{{ trans.tipoTransaccion }}</td>
+              <td>{{ trans.tipoDocumentoOrigen }} - {{ trans.numeroDocumentoOrigen }}</td>
+              <td>{{ trans.almacenDestino || trans.almacenOrigen }}</td>
+              <td class="text-center">{{ trans.totalItems }}</td>
+              <td class="text-end">{{ formatearMoneda(trans.valorTotal) }}</td>
+              <td>
+                <p-tag [value]="trans.estado" [severity]="getSeverityEstado(trans.estado)"></p-tag>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-info me-1" (click)="verDetalleTransaccion(trans)" 
+                        pTooltip="Ver detalle">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button *ngIf="trans.estado === 'PENDIENTE'" class="btn btn-sm btn-success me-1" 
+                        (click)="procesarTransaccion(trans.idTransaccion)" pTooltip="Procesar">
+                  <i class="bi bi-check-circle"></i>
+                </button>
+                <button *ngIf="trans.estado === 'PENDIENTE'" class="btn btn-sm btn-danger" 
+                        (click)="anularTransaccion(trans)" pTooltip="Anular">
+                  <i class="bi bi-x-circle"></i>
+                </button>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="9" class="text-center">No hay transacciones disponibles</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: DASHBOARD -->
+  <div *ngIf="tabActiva === 3" class="tab-content">
+    <div class="row">
+      <!-- Indicadores -->
+      <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+          <div class="card-body">
+            <h6>Total Items</h6>
+            <h3>{{ dashboard.indicadores.totalItems || 0 }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+          <div class="card-body">
+            <h6>Almacenes</h6>
+            <h3>{{ dashboard.indicadores.totalAlmacenes || 0 }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white">
+          <div class="card-body">
+            <h6>Items Bajo Stock</h6>
+            <h3>{{ dashboard.indicadores.itemsBajoStock || 0 }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
+          <div class="card-body">
+            <h6>Valor Total</h6>
+            <h3>{{ formatearMoneda(dashboard.indicadores.valorTotal || 0) }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items bajo stock -->
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <div class="card">
+          <div class="card-header">
+            <h6><i class="bi bi-exclamation-triangle"></i> Items con Stock Bajo</h6>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Almacén</th>
+                  <th>Stock</th>
+                  <th>Mínimo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of dashboard.itemsBajoStock">
+                  <td>{{ item.codigoItem }}</td>
+                  <td>{{ item.almacen }}</td>
+                  <td class="text-danger"><strong>{{ formatearNumero(item.stockActual) }}</strong></td>
+                  <td>{{ formatearNumero(item.stockMinimo) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <div class="card">
+          <div class="card-header">
+            <h6><i class="bi bi-star"></i> Items de Mayor Valor</h6>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Almacén</th>
+                  <th>Stock</th>
+                  <th>Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of dashboard.itemsMayorValor">
+                  <td>{{ item.codigoItem }}</td>
+                  <td>{{ item.almacen }}</td>
+                  <td>{{ formatearNumero(item.stockActual) }}</td>
+                  <td class="text-success"><strong>{{ formatearMoneda(item.valorInventario) }}</strong></td>
+                  <!-- <td class="text-end"><strong>{{ formatearMoneda(item.valorTotal) }}</strong></td> -->
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Nueva Transacción -->
+  <p-dialog header="Nueva Transacción de Inventario" [(visible)]="modalNuevaTransaccion" [modal]="true" [style]="{width: '90vw'}" [draggable]="false" [resizable]="false">
+    <form #formTransaccion="ngForm" class="container-fluid">
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="tipoTransaccion" class="form-label fw-bold">Tipo Transacción *</label>
+            <p-select 
+              id="tipoTransaccion" 
+              name="tipoTransaccion"
+              [(ngModel)]="nuevaTransaccion.tipoTransaccion" 
+              [options]="tiposTransaccion" 
+              optionLabel="label" 
+              optionValue="value"
+              (onChange)="cambiarTipoTransaccion()"
+              class="w-100"
+              required>
+            </p-select>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="tipoDocumentoOrigen" class="form-label fw-bold">Tipo Documento *</label>
+            <p-select 
+              id="tipoDocumentoOrigen" 
+              name="tipoDocumentoOrigen"
+              [(ngModel)]="nuevaTransaccion.tipoDocumentoOrigen" 
+              [options]="tiposDocumento" 
+              optionLabel="label" 
+              optionValue="value"
+              class="w-100"
+              required>
+            </p-select>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="numeroDocumentoOrigen" class="form-label fw-bold">Número Documento *</label>
+            <input 
+              type="text" 
+              id="numeroDocumentoOrigen" 
+              name="numeroDocumentoOrigen"
+              pInputText 
+              [(ngModel)]="nuevaTransaccion.numeroDocumentoOrigen" 
+              class="form-control"
+              readonly
+              required>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="almacenOrigen" class="form-label fw-bold">Almacén Origen *</label>
+            <p-select 
+              id="almacenOrigen" 
+              name="almacenOrigen"
+              [(ngModel)]="nuevaTransaccion.almacenOrigen" 
+              [options]="almacenes" 
+              optionLabel="label" 
+              optionValue="value"
+              (onChange)="cambiarAlmacen()"
+              class="w-100"
+              required>
+            </p-select>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="almacenDestino" class="form-label fw-bold">Almacén Destino *</label>
+            <p-select 
+              id="almacenDestino" 
+              name="almacenDestino"
+              [(ngModel)]="nuevaTransaccion.almacenDestino" 
+              [options]="almacenes" 
+              optionLabel="label" 
+              optionValue="value"
+              class="w-100">
+            </p-select>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="form-group">
+            <label for="observaciones" class="form-label fw-bold">Observaciones</label>
+            <textarea 
+              id="observaciones" 
+              name="observaciones"
+              pInputTextarea 
+              [(ngModel)]="nuevaTransaccion.observaciones" 
+              rows="3"
+              class="form-control">
+            </textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detalles de la transacción -->
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center bg-light">
+          <h6 class="mb-0"><i class="bi bi-list-ul"></i> Detalles de la Transacción</h6>
+          <button type="button" class="btn btn-sm btn-success" (click)="agregarDetalleTransaccion()">
+            <i class="bi bi-plus"></i> Agregar Item
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead class="table-dark">
+                <tr>
+                  <th width="20%">Item</th>
+                  <th width="30%">Descripción</th>
+                  <th width="10%">Cantidad</th>
+                  <th width="10%">Costo Unit.</th>
+                  <th width="15%">Total</th>
+                  <th width="5%">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let det of nuevaTransaccion.detalles; let i = index">
+                  <td>
+                    <p-autoComplete [(ngModel)]="det.itemSeleccionado" name="item{{i}}" [suggestions]="itemsFiltrados" field="label"
+                      (completeMethod)="buscarItem($event)" (onSelect)="seleccionarItemEnDetalle(i)" placeholder="Buscar item" appendTo="body"
+                      [forceSelection]="true" class="w-100">
+                    </p-autoComplete>
+                    <!-- <p-select 
+                      [(ngModel)]="det.idItem" 
+                      name="item{{i}}"
+                      [options]="items" 
+                      optionLabel="codigoItem" 
+                      optionValue="idItem"
+                      (onChange)="seleccionarItemEnDetalle(i)"
+                      placeholder="Seleccionar item"
+                      class="w-100">
+                    </p-select> -->
+                  </td>
+                  <td>
+                    <span class="d-block pt-2">{{ det.descripcionItem || '-' }}</span>
+                  </td>
+                  <td>
+                    <input 
+                      type="number" 
+                      pInputText 
+                      [(ngModel)]="det.cantidad" 
+                      name="cantidad{{i}}"
+                      (ngModelChange)="calcularTotalDetalle(i)"
+                      class="form-control form-control-sm"
+                      step="0.01"
+                      min="0">
+                  </td>
+                  <td>
+                    <input 
+                      type="number" 
+                      pInputText 
+                      [(ngModel)]="det.costoUnitario" 
+                      name="costo{{i}}"
+                      (ngModelChange)="calcularTotalDetalle(i)"
+                      class="form-control form-control-sm"
+                      step="0.01"
+                      min="0">
+                  </td>
+                  <td>
+                    <span class="d-block pt-2 fw-bold">{{ formatearMoneda(det.costoTotal) }}</span>
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-sm btn-danger" (click)="eliminarDetalleTransaccion(i)">
+                      <i class="icon-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="nuevaTransaccion.detalles.length === 0">
+                  <td colspan="6" class="text-center text-muted py-3">
+                    <i class="bi bi-inbox"></i> No hay detalles agregados
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="row mt-3" *ngIf="nuevaTransaccion.detalles.length > 0">
+            <div class="col-md-4 offset-md-8">
+              <div class="card bg-light">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between">
+                    <span class="fs-5 fw-bold">Total:</span>
+                    <span class="fs-5 fw-bold text-primary">{{ formatearMoneda(calcularTotalTransaccion()) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <div class="d-flex justify-content-between">
+        <button type="button" pButton icon="pi pi-times" label="Cancelar" class="p-button-outlined" (click)="modalNuevaTransaccion = false"></button>
+        <button type="button" pButton icon="pi pi-check" label="Guardar Transacción" (click)="guardarTransaccion()" [disabled]="loading || !formTransaccion.valid"></button>
+      </div>
+    </ng-template>
+  </p-dialog>
+</div>

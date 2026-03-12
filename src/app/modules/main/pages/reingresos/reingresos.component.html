@@ -1,0 +1,319 @@
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-arrow-repeat me-2"></i>
+      Reingresos
+    </h2>
+  </div>
+
+  <!-- Dashboard de Estadísticas -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card bg-primary text-white">
+        <div class="card-body">
+          <h5 class="card-title">Total Reingresos</h5>
+          <h2 class="mb-0">{{ totalReingresos }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-warning text-white">
+        <div class="card-body">
+          <h5 class="card-title">Pendientes</h5>
+          <h2 class="mb-0">{{ reingresosPendientes }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-success text-white">
+        <div class="card-body">
+          <h5 class="card-title">Aprobados</h5>
+          <h2 class="mb-0">{{ reingresosAprobados }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-danger text-white">
+        <div class="card-body">
+          <h5 class="card-title">Rechazados</h5>
+          <h2 class="mb-0">{{ reingresosRechazados }}</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="tabActiva === 'saldos'" (click)="tabActiva = 'saldos'">
+        <i class="bi bi-clock-history me-2"></i>Saldos Pendientes
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="tabActiva === 'reingresos'" (click)="tabActiva = 'reingresos'">
+        <i class="bi bi-arrow-repeat me-2"></i>Reingresos Registrados
+      </a>
+    </li>
+  </ul>
+
+  <!-- Tab: Saldos Pendientes -->
+  <div *ngIf="tabActiva === 'saldos'" class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Saldos Pendientes para Reingreso</h5>
+      <p class="text-muted mb-0 small">Items de requerimientos que no fueron despachados completamente</p>
+    </div>
+    <div class="card-body">
+      <p-table [value]="saldosPendientes" [paginator]="true" [rows]="10" [loading]="loading"
+               styleClass="p-datatable-sm" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Requerimiento</th>
+            <th>Fecha</th>
+            <th>Área</th>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>Solicitado</th>
+            <th>Despachado</th>
+            <th>Pendiente</th>
+            <th>UM</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-saldo>
+          <tr>
+            <td><strong>{{ saldo.numeroRequerimiento }}</strong></td>
+            <td>{{ formatearFecha(saldo.fecha) }}</td>
+            <td>{{ saldo.nombreArea }}</td>
+            <td>{{ saldo.codigo }}</td>
+            <td>{{ saldo.descripcion }}</td>
+            <td class="text-center">{{ saldo.cantidadSolicitada }}</td>
+            <td class="text-center">{{ saldo.cantidadDespachada }}</td>
+            <td class="text-center"><strong class="text-danger">{{ saldo.cantidadPendiente }}</strong></td>
+            <td>{{ saldo.unidadMedida }}</td>
+            <td>
+              <button class="btn btn-sm btn-primary" (click)="generarReingresoDesdeSaldo(saldo)"
+                      pTooltip="Generar Reingreso">
+                <i class="bi bi-arrow-repeat"></i> Generar
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="10" class="text-center">No hay saldos pendientes disponibles</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Tab: Reingresos Registrados -->
+  <div *ngIf="tabActiva === 'reingresos'" class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Reingresos Registrados</h5>
+    </div>
+    <div class="card-body">
+      <!-- Filtros -->
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <label class="form-label">Estado</label>
+          <select class="form-select" [(ngModel)]="filtroEstado">
+            <option value="">Todos</option>
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="APROBADO">Aprobado</option>
+            <option value="RECHAZADO">Rechazado</option>
+            <option value="ANULADO">Anulado</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Fecha Inicio</label>
+          <input type="date" class="form-control" [(ngModel)]="filtroFechaInicio">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Fecha Fin</label>
+          <input type="date" class="form-control" [(ngModel)]="filtroFechaFin">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button class="btn btn-secondary" (click)="limpiarFiltros()">
+            <i class="bi bi-x-circle me-2"></i>Limpiar
+          </button>
+        </div>
+      </div>
+
+      <p-table [value]="reingresosFiltrados" [paginator]="true" [rows]="10" [loading]="loading"
+               styleClass="p-datatable-sm" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Número</th>
+            <th>Fecha</th>
+            <th>Área</th>
+            <th>Req. Original</th>
+            <th>Motivo</th>
+            <th>Estado</th>
+            <th>Req. Generado</th>
+            <th>Items</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-reingreso>
+          <tr>
+            <td><strong>{{ reingreso.numeroReingreso }}</strong></td>
+            <td>{{ formatearFecha(reingreso.fecha) }}</td>
+            <td>{{ reingreso.nombreArea }}</td>
+            <td>{{ reingreso.numeroRequerimientoOriginal }}</td>
+            <td>{{ reingreso.motivo }}</td>
+            <td>
+              <span [class]="obtenerClaseEstado(reingreso.estado)">
+                {{ reingreso.estado }}
+              </span>
+            </td>
+            <td>
+              <span *ngIf="reingreso.numeroRequerimientoGenerado" class="badge bg-info">
+                {{ reingreso.numeroRequerimientoGenerado }}
+              </span>
+              <span *ngIf="!reingreso.numeroRequerimientoGenerado" class="text-muted">-</span>
+            </td>
+            <td class="text-center">{{ reingreso.detalle?.length || 0 }}</td>
+            <td>
+              <button class="btn btn-sm btn-info me-1" (click)="verDetalle(reingreso)"
+                      pTooltip="Ver Detalle">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button *ngIf="reingreso.estado === 'PENDIENTE'" 
+                      class="btn btn-sm btn-success me-1" 
+                      (click)="aprobarReingreso(reingreso)"
+                      pTooltip="Aprobar y Generar Requerimiento">
+                <i class="bi bi-check-circle"></i>
+              </button>
+              <button *ngIf="reingreso.estado === 'PENDIENTE'" 
+                      class="btn btn-sm btn-danger me-1" 
+                      (click)="rechazarReingreso(reingreso)"
+                      pTooltip="Rechazar">
+                <i class="bi bi-x-circle"></i>
+              </button>
+              <button *ngIf="reingreso.estado !== 'APROBADO'" 
+                      class="btn btn-sm btn-secondary" 
+                      (click)="anularReingreso(reingreso)"
+                      pTooltip="Anular">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="9" class="text-center">No hay reingresos registrados</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Detalle de Reingreso -->
+<p-dialog [(visible)]="modalDetalleAbierto" [modal]="true" [style]="{width: '70vw'}" 
+          header="Detalle de Reingreso" [closable]="true">
+  <div *ngIf="reingresoDetalle">
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <strong>Número:</strong> {{ reingresoDetalle.numeroReingreso }}
+      </div>
+      <div class="col-md-4">
+        <strong>Fecha:</strong> {{ formatearFecha(reingresoDetalle.fecha) }}
+      </div>
+      <div class="col-md-4">
+        <strong>Estado:</strong>
+        <span [class]="obtenerClaseEstado(reingresoDetalle.estado)">
+          {{ reingresoDetalle.estado }}
+        </span>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <strong>Área:</strong> {{ reingresoDetalle.nombreArea }}
+      </div>
+      <div class="col-md-6">
+        <strong>Req. Original:</strong> {{ reingresoDetalle.numeroRequerimientoOriginal }}
+      </div>
+    </div>
+
+    <div class="row mb-3" *ngIf="reingresoDetalle.numeroRequerimientoGenerado">
+      <div class="col-12">
+        <div class="alert alert-info">
+          <strong>Requerimiento Generado:</strong> {{ reingresoDetalle.numeroRequerimientoGenerado }}
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-12">
+        <strong>Motivo:</strong> {{ reingresoDetalle.motivo }}
+      </div>
+    </div>
+
+    <div class="row mb-3" *ngIf="reingresoDetalle.observaciones">
+      <div class="col-12">
+        <strong>Observaciones:</strong> {{ reingresoDetalle.observaciones }}
+      </div>
+    </div>
+
+    <div class="row mb-3" *ngIf="reingresoDetalle.motivoRechazo">
+      <div class="col-12">
+        <div class="alert alert-danger">
+          <strong>Motivo de Rechazo/Anulación:</strong> {{ reingresoDetalle.motivoRechazo }}
+        </div>
+      </div>
+    </div>
+
+    <h5 class="mt-4 mb-3">Items del Reingreso</h5>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Descripción</th>
+          <th>Cantidad Solicitada</th>
+          <th>Cantidad Pendiente</th>
+          <th>UM</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let detalle of reingresoDetalle.detalle">
+          <td>{{ detalle.codigo }}</td>
+          <td>{{ detalle.descripcion }}</td>
+          <td class="text-center">{{ detalle.cantidadSolicitada }}</td>
+          <td class="text-center"><strong>{{ detalle.cantidadPendiente }}</strong></td>
+          <td>{{ detalle.unidadMedida }}</td>
+          <td>
+            <span [class]="obtenerClaseEstado(detalle.estado)">
+              {{ detalle.estado }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="row mt-3">
+      <div class="col-md-6">
+        <small class="text-muted">
+          <strong>Registrado por:</strong> {{ reingresoDetalle.usuarioRegistra }} 
+          el {{ formatearFecha(reingresoDetalle.fechaRegistro || '') }}
+        </small>
+      </div>
+      <div class="col-md-6" *ngIf="reingresoDetalle.usuarioAprueba">
+        <small class="text-muted">
+          <strong>Aprobado/Rechazado por:</strong> {{ reingresoDetalle.usuarioAprueba }} 
+          el {{ formatearFecha(reingresoDetalle.fechaAprobacion || '') }}
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button class="btn btn-secondary" (click)="cerrarModal()">
+      <i class="bi bi-x-circle me-2"></i>Cerrar
+    </button>
+  </ng-template>
+</p-dialog>

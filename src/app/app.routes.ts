@@ -28,6 +28,7 @@ import { ReporteRequerimientos } from './modules/main/pages/reporte-requerimient
 import { AdminModule } from './modules/main/pages/administracion/admin.module';
 import { AdminLoginComponent } from './modules/admin-login/admin-login.component';
 import { SolicitudesCompraComponent } from './modules/main/pages/solicitudes-compra/solicitudes-compra.component';
+import { KardexComponent } from './modules/main/pages/kardex/kardex.component';
 import { CotizacionesComponent } from './modules/main/pages/cotizaciones/cotizaciones.component';
 import { OrdenesCompraComponent } from './modules/main/pages/ordenes-compra/ordenes-compra.component';
 import { RecepcionMercaderiaComponent } from './modules/main/pages/recepcion-mercaderia/recepcion-mercaderia.component';
@@ -35,11 +36,16 @@ import { DashboardComprasComponent } from './modules/main/pages/dashboard-compra
 import { GestionInventarioComponent } from './modules/main/pages/gestion-inventario/gestion-inventario.component';
 import { MaestroProveedoresComponent } from './modules/main/pages/maestro-proveedores/maestro-proveedores.component';
 import { DevolucionesProveedoresComponent } from './modules/main/pages/devoluciones-proveedores/devoluciones-proveedores.component';
+import { DevolucionesConsumoComponent } from './modules/main/pages/devoluciones-consumo/devoluciones-consumo.component';
+import { ReingresosComponent } from './modules/main/pages/reingresos/reingresos.component';
 import { ReportesComprasComponent } from './modules/main/pages/reportes-compras/reportes-compras.component';
 import { EvaluacionProveedoresComponent } from './modules/main/pages/evaluacion-proveedores/evaluacion-proveedores.component';
 import { ConsolidacionRequerimientosComponent } from './modules/main/pages/consolidacion-requerimientos/consolidacion-requerimientos.component';
 import { LogisticoGuard } from './modules/auth/guard/logistico.guard';
 import { SaldoRequerimientoComponent } from './modules/main/pages/saldo-requerimiento/saldo-requerimiento.component';
+import { AprobacionesAreaComponent } from './modules/main/pages/aprobaciones-area/aprobaciones-area.component';
+import { ReporteAprobacionesAreaComponent } from './modules/main/pages/reporte-aprobaciones-area/reporte-aprobaciones-area.component';
+import { DevolucionConsumoGuard, ReingresoGuard } from './modules/main/guards/role.guard';
 
 
 export const routes: Routes = [
@@ -95,9 +101,14 @@ export const routes: Routes = [
       { path: 'ordenes-compra', component: OrdenesCompraComponent, canActivate: [AlmacenGuard] },
       { path: 'recepcion-mercaderia', component: RecepcionMercaderiaComponent, canActivate: [AlmacenGuard] },
       { path: 'devoluciones-proveedores', component: DevolucionesProveedoresComponent, canActivate: [AlmacenGuard] },
+      { path: 'devoluciones-consumo', component: DevolucionesConsumoComponent, canActivate: [DevolucionConsumoGuard] },
+      { path: 'reingresos', component: ReingresosComponent, canActivate: [ReingresoGuard] },
       { path: 'reportes-compras', component: ReportesComprasComponent, canActivate: [AlmacenGuard] },
       { path: 'gestion-inventario', component: GestionInventarioComponent, canActivate: [AlmacenGuard] },
+      { path: 'kardex', component: KardexComponent, canActivate: [AlmacenGuard] },
       { path: 'aprobaciones', component: AprobacionesComponent, canActivate: [AprobadorGuard] },
+      { path: 'aprobaciones-area', component: AprobacionesAreaComponent, canActivate: [AprobadorGuard] },
+      { path: 'reporte-aprobaciones-area', component: ReporteAprobacionesAreaComponent, canActivate: [AprobadorGuard] },
       { path: 'reporte-aprobados', component: ReporteAprobadosComponent, canActivate: [AprobadorGuard] },
       // { path: 'listas-stock', component: ListasStockComponent, canActivate: [AlmacenGuard] },
       { path: 'despachos', component: DespachoComponent, canActivate: [AlmacenGuard] },

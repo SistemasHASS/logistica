@@ -49,6 +49,8 @@ export class LayoutComponent {
 
   async ngOnInit() {
     this.usuario = await this.dexieService.showUsuario();
+    console.log('Layout - Usuario cargado:', this.usuario);
+    console.log('Layout - Rol del usuario:', this.usuario?.idrol);
     this.rol = this.usuario?.idrol;
     this.userService.setUsuario(this.usuario);
     this.connectivityService.isOnline.subscribe((status: boolean) => {
@@ -322,11 +324,17 @@ export class LayoutComponent {
 
       reportes: 'Lista de requerimientos',
 
+      'aprobaciones-area': 'Aprobación de Requerimiento',
+
       'reporte-requerimientos': 'Reporte requerimientos',
+
+      'reporte-aprobaciones-area': 'Reporte Aprobación de Requerimiento',
 
       'consolidacion-requerimientos': 'Consolidación de Requerimientos',
 
       'solicitudes-compra': 'Solicitudes de Compra',
+
+      kardex: 'Kardex e Inventario',
 
       cotizaciones: 'Cotizaciones',
 
@@ -341,6 +349,12 @@ export class LayoutComponent {
       'gestion-inventario': 'Gestión de Inventario',
 
       'dashboard-compras': 'Dashboard de Compras',
+
+      'devoluciones-proveedores': 'Devoluciones a Proveedores',
+
+      'devoluciones-consumo': 'Devoluciones de Consumo',
+
+      'reingresos': 'Reingresos',
 
       'reporte-saldos': 'Reporte de Saldos',
 

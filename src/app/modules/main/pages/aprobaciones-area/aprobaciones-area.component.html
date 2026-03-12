@@ -1,0 +1,334 @@
+<div class="aprobaciones-container p-4">
+  <!-- Dashboard de Indicadores -->
+  <div class="row mb-4" *ngIf="dashboard">
+    <div class="col-md-3">
+      <p-card>
+        <div class="text-center">
+          <i class="pi pi-clock text-warning" style="font-size: 2rem;"></i>
+          <h3 class="mt-2">{{ getIndicador('pendientes') }}</h3>
+          <p class="text-muted">Pendientes</p>
+        </div>
+      </p-card>
+    </div>
+    <div class="col-md-3">
+      <p-card>
+        <div class="text-center">
+          <i class="pi pi-check-circle text-success" style="font-size: 2rem;"></i>
+          <h3 class="mt-2">{{ getIndicador('aprobados_hoy') }}</h3>
+          <p class="text-muted">Aprobados Hoy</p>
+        </div>
+      </p-card>
+    </div>
+    <div class="col-md-3">
+      <p-card>
+        <div class="text-center">
+          <i class="pi pi-times-circle text-danger" style="font-size: 2rem;"></i>
+          <h3 class="mt-2">{{ getIndicador('rechazados_hoy') }}</h3>
+          <p class="text-muted">Rechazados Hoy</p>
+        </div>
+      </p-card>
+    </div>
+    <div class="col-md-3">
+      <p-card>
+        <div class="text-center">
+          <i class="pi pi-stopwatch text-info" style="font-size: 2rem;"></i>
+          <h3 class="mt-2">{{ getIndicador('tiempo_promedio') }} min</h3>
+          <p class="text-muted">Tiempo Promedio</p>
+        </div>
+      </p-card>
+    </div>
+  </div>
+
+  <!-- Tabs de Contenido -->
+  <p-card>
+    <div class="tabs-container">
+      <!-- Tab Headers -->
+      <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeTabIndex === 0" (click)="activeTabIndex = 0">
+            Pendientes de Aprobación
+            <span class="badge bg-warning ms-2">{{ requerimientosPendientes.length }}</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeTabIndex === 1" (click)="activeTabIndex = 1; cargarMisRequerimientos()">
+            Mis Requerimientos
+          <span class="badge bg-success ms-2">{{ misRequerimientos.length }}</span>
+          </a>
+        </li>
+        <li class="nav-item" *ngIf="usuario?.idrol === 'TI'">
+          <a class="nav-link" [class.active]="activeTabIndex === 2" (click)="activeTabIndex = 2; cargarTodosRequerimientos()">
+            Todos los Requerimientos
+          </a>
+        </li>
+      </ul>
+
+      <!-- Tab Content -->
+      <div class="tab-content">
+        <!-- Tab 1: Pendientes de Aprobación -->
+        <div *ngIf="activeTabIndex === 0">
+          <p-table [value]="requerimientosPendientes" [loading]="loadingPendientes" 
+                   [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+                   currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} requerimientos"
+                   [rowsPerPageOptions]="[10,25,50]" styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Número</th>
+                <th>Fecha</th>
+                <th>Solicitante</th>
+                <th>Área</th>
+                <th>Tipo</th>
+                <th>Descripción</th>
+                <!-- <th>Monto</th> -->
+                <th>Urgencia</th>
+                <th>Tiempo Espera</th>
+                <th>Acciones</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-req>
+              <tr>
+                <!-- <td>{{ req.numeroRequerimiento }}</td> -->
+                <td>{{ req.RequisicionNumero || req.idrequerimiento }}</td>
+                <td>{{ req.fecha }}</td>
+                <td>{{ req.nombreSolicitante }}</td>
+                <td>{{ req.nombreArea }}</td>
+                <td>{{ req.tipoRequerimiento }}</td>
+                <td>{{ req.glosa || 'Sin descripción' }}</td>
+                <td>{{ req.estados }}</td>
+                <!-- <td>{{ formatMoneda(req.montoTotal) }}</td> -->
+                <td>
+                  <p-tag [severity]="'warn'">
+                    PENDIENTE
+                  </p-tag>
+                </td>
+                <td>-</td>
+                <td>
+                  <button pButton type="button" icon="pi pi-eye" 
+                          class="p-button-sm p-button-info me-2"
+                          (click)="verDetalle(req)"
+                          label="Ver Detalle">
+                  </button>
+                  <button pButton type="button" icon="pi pi-check" 
+                          class="p-button-sm p-button-success"
+                          (click)="abrirModalAprobacion(req)"
+                          label="Revisar">
+                  </button>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="10" class="text-center">No hay requerimientos pendientes de aprobación</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+
+        <!-- Tab 2: Mis Requerimientos -->
+        <div *ngIf="activeTabIndex === 1">
+          <p-table [value]="misRequerimientos" [loading]="loadingMisRequerimientos" [showCurrentPageReport]="true"
+                   currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} requerimientos"
+                   [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10,25,50]" styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Número</th>
+                <th>Area</th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Descripción</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-req>
+              <tr>
+                <td>{{ req.idrequerimiento }}</td>
+                <td>{{ req.nombreArea }}</td>
+                <td>{{ req.fechaRegistro | date: 'dd/MM/yyyy' }}</td>
+                <td>{{ req.tipoRequerimiento }}</td>
+                <td>{{ req.glosa || 'Sin descripción' }}</td>
+                <td>
+                  <p-tag [severity]="req.estado === 'APROBADO' ? 'success' : req.estado === 'RECHAZADO' ? 'danger' : 'warn'">
+                    {{ req.estado }}
+                  </p-tag>
+                </td>
+                <td>
+                  <button pButton type="button" icon="pi pi-eye" 
+                          class="p-button-sm p-button-info"
+                          (click)="verDetalle(req)"
+                          label="Ver">
+                  </button>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+
+        <!-- Tab 3: Todos los Requerimientos (Solo TI) -->
+        <div *ngIf="activeTabIndex === 2 && usuario?.idrol === 'TI'">
+          <p-table [value]="todosRequerimientos" [loading]="loadingTodos"
+                   [paginator]="true" [rows]="10" styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Número</th>
+                <th>Solicitante</th>
+                <th>Área</th>
+                <th>Tipo</th>
+                <th>Monto</th>
+                <th>Estado</th>
+                <th>Progreso</th>
+                <th>Acciones</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-req>
+              <tr>
+                <td>{{ req.numeroRequerimiento }}</td>
+                <td>{{ req.nombreSolicitante }}</td>
+                <td>{{ req.areaSolicitante }}</td>
+                <td>{{ req.tipo }}</td>
+                <td>{{ formatMoneda(req.montoTotal) }}</td>
+                <td>
+                  <p-tag [severity]="getEstadoBadge(req.estado).severity">
+                    {{ getEstadoBadge(req.estado).label }}
+                  </p-tag>
+                </td>
+                <td>
+                  <small>{{ req.aprobacionesCompletadas }}/{{ req.totalAprobaciones }}</small>
+                </td>
+                <td>
+                  <button pButton type="button" icon="pi pi-eye" 
+                          class="p-button-sm p-button-info"
+                          (click)="verDetalle(req)">
+                  </button>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </div>
+    </div>
+  </p-card>
+</div>
+
+<!-- Modal de Aprobación -->
+<p-dialog [(visible)]="displayAprobacionModal" [modal]="true" [style]="{width: '600px'}"
+          header="Procesar Aprobación">
+  <div *ngIf="requerimientoSeleccionado">
+    <div class="mb-3">
+      <strong>Requerimiento:</strong> {{ requerimientoSeleccionado.idrequerimiento }}
+    </div>
+    <div class="mb-3">
+      <strong>Solicitante:</strong> {{ requerimientoSeleccionado.nombreSolicitante || requerimientoSeleccionado.nombreCreador || 'N/A' }}
+    </div>
+    <div class="mb-3">
+      <strong>Área:</strong> {{ requerimientoSeleccionado.nombreArea }}
+    </div>
+    <div class="mb-3">
+      <strong>Tipo:</strong> {{ requerimientoSeleccionado.tipoRequerimiento || 'N/A' }}
+    </div>
+    <!-- <div class="mb-3">
+      <strong>Descripción:</strong> {{ requerimientoSeleccionado.descripcion || requerimientoSeleccionado.glosa || 'Sin descripción' }}
+    </div> -->
+    <div class="mb-3">
+      <strong>Glosa:</strong> {{ requerimientoSeleccionado.glosa || 'N/A' }}
+    </div>
+    <div class="mb-3">
+      <strong>Fecha Creación:</strong> {{ requerimientoSeleccionado.fechaCreacion || requerimientoSeleccionado.fecha || 'N/A' }}
+    </div>
+    <div class="mb-3">
+      <strong>Estado:</strong> {{ requerimientoSeleccionado.estado || requerimientoSeleccionado.estados || 'N/A' }}
+    </div>
+    <!-- <div class="mb-3">
+      <strong>Monto:</strong> {{ formatMoneda(requerimientoSeleccionado.montoTotal) }}
+    </div> -->
+    <div class="mb-3">
+      <label for="observaciones" class="form-label">Observaciones:</label>
+      <textarea id="observaciones" class="form-control" rows="3" 
+                [(ngModel)]="observaciones" 
+                placeholder="Ingrese sus observaciones..."></textarea>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Rechazar" icon="pi pi-times" 
+            class="p-button-danger" (click)="rechazar()"></button>
+    <button pButton type="button" label="Aprobar" icon="pi pi-check" 
+            class="p-button-success" (click)="aprobar()"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal de Detalle -->
+<p-dialog [(visible)]="displayDetalleModal" [modal]="true" [style]="{width: '800px'}"
+          header="Detalle del Requerimiento">
+  <div *ngIf="requerimientoDetalle">
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <strong>Número:</strong> {{ requerimientoDetalle.idrequerimiento }}
+      </div>
+      <div class="col-md-6">
+        <strong>Requisición:</strong> {{ requerimientoDetalle.RequisicionNumero || 'N/A' }}
+      </div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <strong>Estado:</strong>
+        <p-tag [severity]="requerimientoDetalle.estado === 'APROBADO' ? 'success' : requerimientoDetalle.estado === 'RECHAZADO' ? 'danger' : 'warn'">
+          {{ requerimientoDetalle.estado || requerimientoDetalle.estados }}
+        </p-tag>
+      </div>
+      <div class="col-md-6">
+        <strong>Fecha:</strong> {{ requerimientoDetalle.fechaRegistro || requerimientoDetalle.fecha }}
+      </div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <strong>Solicitante:</strong> {{ requerimientoDetalle.nombreSolicitante || 'N/A' }}
+      </div>
+      <div class="col-md-6">
+        <strong>Área:</strong> {{ requerimientoDetalle.nombreArea }}
+      </div>
+    </div>
+    <div class="row mb-3" *ngIf="requerimientoDetalle.glosa">
+      <div class="col-12">
+        <strong>Descripción:</strong> {{ requerimientoDetalle.glosa }}
+      </div>
+    </div>
+    
+    <!-- Tabla de detalles -->
+    <div class="mt-4">
+      <h5>Ítems del Requerimiento</h5>
+      <p-table [value]="requerimientoDetalle.detalles || requerimientoDetalle.detalle" [paginator]="true" [rows]="5" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Centro Costo</th>
+            <th>Turno</th>
+            <th *ngIf="requerimientoDetalle.detalles">Labor</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-det>
+          <tr>
+            <td>{{ det.codigo }}</td>
+            <td>{{ det.descripcionItem || det.descripcion || 'Sin descripción' }}</td>
+            <td>{{ det.idproducto || det.producto }}</td>
+            <td>{{ det.cantidad }}</td>
+            <td>{{ det.idcentrocosto || det.ceco }}</td>
+            <td>{{ det.idturno || det.turno }}</td>
+            <td *ngIf="requerimientoDetalle.detalles">{{ det.idlabor }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td [attr.colspan]="requerimientoDetalle.detalles ? 7 : 6" class="text-center">No hay detalles para mostrar</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Cerrar" icon="pi pi-times" 
+            (click)="displayDetalleModal = false"></button>
+  </ng-template>
+</p-dialog>

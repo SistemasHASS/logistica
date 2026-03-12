@@ -45,7 +45,13 @@ export class LoginComponent {
     if (!!this.usuario) {
       // Recargar notificaciones para el usuario existente
       await this.stockNotificationService.recargarUsuario();
-      this.login()
+      
+      // Si es APLOGIST, cargar área antes de redirigir
+      if (this.usuario.idrol === 'APLOGIST') {
+        await this.authService.cargarAreaUsuario();
+      } else {
+        this.login();
+      }
     }
   }
 
@@ -53,7 +59,14 @@ export class LoginComponent {
     const user = await this.dexieService.showUsuario();
     // if (!user) return;
     if (user) {
-      this.redireccionarPorRol(user.idrol);
+      // ✅ No redirigir inmediatamente, esperar a cargarAreaUsuario
+      // this.redireccionarPorRol(user.idrol, user);
+      
+      // Si no es APLOGIST, redirigir normalmente
+      if (user.idrol !== 'APLOGIST') {
+        this.redireccionarPorRol(user.idrol);
+      }
+      // Si es APLOGIST, la redirección ocurrirá en cargarAreaUsuario
     }
 
     // const rol = user.idrol;
@@ -138,6 +151,8 @@ export class LoginComponent {
             this.mensajeLogin = 'El usuario cuenta con más de una cuenta, comuníquese con su administrador del servicio.';
           } else {
             await this.dexieService.saveUsuario(resp[0]);
+            // Cargar información del área del usuario
+            await this.authService.cargarAreaUsuario();
             // Recargar notificaciones para el nuevo usuario
             await this.stockNotificationService.recargarUsuario();
             this.login();

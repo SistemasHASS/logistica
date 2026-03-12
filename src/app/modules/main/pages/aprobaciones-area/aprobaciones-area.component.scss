@@ -1,0 +1,161 @@
+.aprobaciones-container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.tabs-container {
+  .nav-tabs {
+    border-bottom: 2px solid #dee2e6;
+
+    .nav-link {
+      color: #495057;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        color: #007bff;
+        border-bottom-color: #007bff;
+      }
+
+      &.active {
+        color: #007bff;
+        background-color: transparent;
+        border-bottom-color: #007bff;
+        font-weight: 600;
+      }
+
+      .badge {
+        font-size: 0.75rem;
+      }
+    }
+  }
+
+  .tab-content {
+    padding: 1.5rem 0;
+  }
+}
+
+// Timeline para flujo de aprobación
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #dee2e6;
+  }
+
+  .timeline-item {
+    position: relative;
+
+    i {
+      font-size: 1.5rem;
+      position: relative;
+      z-index: 1;
+      background-color: white;
+    }
+  }
+}
+
+// Estilos para las cards del dashboard
+::ng-deep {
+  .p-card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .p-card-body {
+      padding: 1.5rem;
+    }
+  }
+
+  // Estilos para la tabla
+  .p-datatable {
+    .p-datatable-thead > tr > th {
+      background-color: #f8f9fa;
+      color: #495057;
+      font-weight: 600;
+      border-bottom: 2px solid #dee2e6;
+    }
+
+    .p-datatable-tbody > tr {
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: #f8f9fa;
+      }
+    }
+  }
+
+  // Estilos para los tags
+  .p-tag {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  // Estilos para el progress bar
+  .p-progressbar {
+    height: 0.5rem;
+    background-color: #e9ecef;
+
+    .p-progressbar-value {
+      background-color: #28a745;
+    }
+  }
+
+  // Estilos para los botones
+  .p-button {
+    &.p-button-sm {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  // Estilos para el dialog
+  .p-dialog {
+    .p-dialog-header {
+      background-color: #f8f9fa;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .p-dialog-content {
+      padding: 1.5rem;
+    }
+
+    .p-dialog-footer {
+      background-color: #f8f9fa;
+      border-top: 1px solid #dee2e6;
+      padding: 1rem 1.5rem;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .aprobaciones-container {
+    padding: 1rem !important;
+  }
+
+  .tabs-container .nav-tabs .nav-link {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  ::ng-deep .p-datatable {
+    font-size: 0.875rem;
+  }
+}

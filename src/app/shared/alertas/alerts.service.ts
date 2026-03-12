@@ -250,4 +250,89 @@ export class AlertService {
       });
     });
   }
+
+  /**
+   * Muestra un diálogo con formulario personalizado
+   * @param title Título del diálogo
+   * @param fields Array de campos del formulario
+   * @returns Promise con los valores del formulario o null si se cancela
+   */
+  async showFormDialog(title: string, fields: Array<{
+    label: string;
+    name: string;
+    type: 'text' | 'number' | 'date' | 'checkbox';
+    required?: boolean;
+    defaultValue?: any;
+  }>): Promise<{ [key: string]: any } | null> {
+    let html = '<div style="text-align: left;">';
+    
+    fields.forEach(field => {
+      const required = field.required ? 'required' : '';
+      const value = field.defaultValue || '';
+      
+      if (field.type === 'checkbox') {
+        const checked = value ? 'checked' : '';
+        html += `
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">${field.label}:</label>
+            <input type="checkbox" id="${field.name}" name="${field.name}" ${checked} style="width: 20px; height: 20px;">
+          </div>
+        `;
+      } else if (field.type === 'date') {
+        html += `
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">${field.label}:</label>
+            <input type="date" id="${field.name}" name="${field.name}" value="${value}" ${required} style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          </div>
+        `;
+      } else {
+        html += `
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">${field.label}:</label>
+            <input type="${field.type}" id="${field.name}" name="${field.name}" value="${value}" ${required} style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          </div>
+        `;
+      }
+    });
+    
+    html += '</div>';
+
+    const result = await Swal.fire({
+      title: title,
+      html: html,
+      icon: 'info',
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar',
+      confirmButtonText: 'Aceptar',
+      allowOutsideClick: false,
+      preConfirm: () => {
+        const values: { [key: string]: any } = {};
+        let isValid = true;
+        
+        fields.forEach(field => {
+          const element = document.getElementById(field.name) as HTMLInputElement;
+          if (element) {
+            if (field.type === 'checkbox') {
+              values[field.name] = element.checked;
+            } else {
+              values[field.name] = element.value;
+              
+              if (field.required && !element.value) {
+                Swal.showValidationMessage(`El campo "${field.label}" es requerido`);
+                isValid = false;
+              }
+            }
+          }
+        });
+        
+        return isValid ? values : Swal.DismissReason.cancel;
+      }
+    });
+
+    if (result.isConfirmed) {
+      return result.value;
+    }
+    
+    return null;
+  }
 }

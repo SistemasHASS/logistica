@@ -1,0 +1,241 @@
+<div class="container-fluid p-0">
+  <div class="card shadow-sm">
+    <div class="card-header bg-white py-3 border-bottom">
+      <h4 class="card-title mb-0">
+        <i class="fas fa-users me-2 text-primary"></i>
+        Administración de Usuarios por Área
+      </h4>
+    </div>
+    <div class="card-body">
+
+      <!-- Debug: Mostrar estado de las áreas -->
+      <!-- <div class="alert alert-info mb-3" *ngIf="areas.length === 0">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Debug:</strong> No hay áreas cargadas. Total: {{ areas.length }}
+      </div>
+      <div class="alert alert-success mb-3" *ngIf="areas.length > 0">
+        <i class="fas fa-check-circle me-2"></i>
+        <strong>Debug:</strong> Áreas cargadas: {{ areas.length }} - 
+        Primera área: {{ areas[0]?.nombre || 'N/A' }}
+      </div> -->
+
+      <!-- Filtros -->
+      <div class="row mb-5">
+        <div class="col-lg-4 col-md-6">
+          <div class="filter-container">
+            <label class="form-label">Filtrar por Área</label>
+            <!-- Debug: Mostrar opciones del select -->
+            <!-- <div class="text-muted small mb-2">Debug: Opciones disponibles: {{ areas.length || 0 }}</div> -->
+            <p-select [options]="areas" [(ngModel)]="areaSeleccionada" optionLabel="nombre" optionValue="idarea"
+              placeholder="Todas las áreas" (onChange)="cargarAreas()" styleClass="w-100">
+            </p-select>
+          </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+          <div class="filter-container">
+            <label class="form-label">Filtrar por Rol</label>
+            <p-select [options]="roles" [(ngModel)]="rolSeleccionado" optionLabel="label" optionValue="value"
+              placeholder="Todos los roles" (onChange)="cargarUsuarios()" styleClass="w-100">
+            </p-select>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="filter-container">
+            <label class="form-label">Buscar por DNI o Nombre</label>
+            <span class="p-input-icon-left w-100">
+              <i class="pi pi-search"></i>
+              <input type="text" pInputText class="w-100" placeholder="Ingrese DNI o nombre completo..."
+                (input)="filtrarUsuarios($event)">
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="row mb-4 mt-3">
+        <div class="col-12">
+          <button pButton label="Nuevo Usuario" icon="pi pi-plus" class="p-button-success me-2" 
+                  (click)="mostrarModalNuevo()" [disabled]="loading">
+          </button>
+          <button pButton label="Asignar Usuario Existente" icon="pi pi-user-plus" class="p-button-info me-2" 
+                  (click)="mostrarModalAsignar()" [disabled]="loading">
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="table-responsive">
+        <p-table [value]="usuariosFiltrados" [paginator]="true" [rows]="10" [loading]="loading"
+          responsiveLayout="scroll" [scrollable]="true" scrollHeight="400px" styleClass="p-datatable-sm"
+          [globalFilterFields]="['documentoidentidad', 'nombreCompleto', 'email', 'nombreArea']">
+
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="min-width: 100px">DNI</th>
+              <th style="min-width: 200px">Nombre Completo</th>
+              <th style="min-width: 200px">Email</th>
+              <th style="min-width: 120px">Área</th>
+              <th style="min-width: 100px">Rol</th>
+              <th style="min-width: 80px" class="text-center">Jefe</th>
+              <th style="min-width: 80px" class="text-center">Aprob</th>
+              <th style="min-width: 80px" class="text-center">Activo</th>
+              <th style="min-width: 120px" class="text-center">Acciones</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-usuario>
+            <tr>
+              <td>{{ usuario.documentoidentidad }}</td>
+              <td>{{ usuario.nombreCompleto }}</td>
+              <td>{{ usuario.email || '-' }}</td>
+              <td>{{ usuario.nombreArea || 'Sin área' }}</td>
+              <td>
+                <span class="badge px-2 py-1" [ngClass]="{
+                    'bg-primary': usuario.rol === 'JEFE_AREA',
+                    'bg-success': usuario.rol === 'APLOGIST',
+                    'bg-info': usuario.rol === 'OPLOGIST',
+                    'bg-warning text-dark': usuario.rol === 'TI',
+                    'bg-secondary': usuario.rol === 'ADLOGIST'
+                  }">
+                  {{ usuario.rol }}
+                </span>
+              </td>
+              <td class="text-center">
+                <i class="fas fa-lg" [ngClass]="{
+                    'fa-check-circle text-success': usuario.esJefeArea,
+                    'fa-times-circle text-danger': !usuario.esJefeArea
+                  }"></i>
+              </td>
+              <td class="text-center">
+                <i class="fas fa-lg" [ngClass]="{
+                    'fa-check-circle text-success': usuario.esAprobador,
+                    'fa-times-circle text-danger': !usuario.esAprobador
+                  }"></i>
+              </td>
+              <td class="text-center">
+                <i class="fas fa-lg" [ngClass]="{
+                    'fa-check-circle text-success': usuario.activo,
+                    'fa-times-circle text-danger': !usuario.activo
+                  }"></i>
+              </td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-warning me-2" (click)="editarUsuario(usuario)" title="editar línea">
+                  <i class="icon-pencil"></i>
+                </button>
+                <!-- <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-info me-2"
+                  style="width: 36px; height: 36px;" (click)="editarUsuario(usuario)">
+                </button>
+                <button pButton icon="pi pi-trash" class="p-button-rounded p-button-danger"
+                  style="width: 36px; height: 36px;" (click)="eliminarUsuario(usuario)">
+                </button> -->
+                <button class="btn btn-sm btn-danger" (click)="eliminarUsuario(usuario)" title="eliminar línea">
+                  <i class="icon-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal con backdrop estilo requerimientos -->
+<div class="modal-backdrop" *ngIf="mostrarModal">
+  <div class="modal-content modal-usuario">
+    <div class="modal-header bg-light border-bottom">
+      <h5 class="modal-title fw-semibold">{{ modoEdicion ? 'Editar Usuario' : 'Nuevo Usuario' }}</h5>
+      <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+    </div>
+    <div class="modal-body p-4">
+      <form [formGroup]="usuarioForm">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">DNI *</label>
+            <input type="text" class="form-control" formControlName="documentoidentidad" [readonly]="modoEdicion"
+              placeholder="Ingrese DNI">
+            <div class="invalid-feedback d-block"
+              *ngIf="usuarioForm.get('documentoidentidad')?.invalid && usuarioForm.get('documentoidentidad')?.touched">
+              DNI es requerido
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Nombre Completo *</label>
+            <input type="text" class="form-control" formControlName="nombreCompleto"
+              placeholder="Ingrese nombre completo">
+            <div class="invalid-feedback d-block"
+              *ngIf="usuarioForm.get('nombreCompleto')?.invalid && usuarioForm.get('nombreCompleto')?.touched">
+              Nombre es requerido
+            </div>
+          </div>
+        </div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Email</label>
+            <input type="email" class="form-control" formControlName="email" placeholder="email@ejemplo.com">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Teléfono</label>
+            <input type="text" class="form-control" formControlName="telefono" placeholder="Número de teléfono">
+          </div>
+        </div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Área *</label>
+            <select class="form-select" formControlName="idarea">
+              <option value="">Seleccione área</option>
+              <option *ngFor="let area of areas" [value]="area.idarea">
+                {{ area.nombre }}
+              </option>
+            </select>
+            <div class="invalid-feedback d-block"
+              *ngIf="usuarioForm.get('idarea')?.invalid && usuarioForm.get('idarea')?.touched">
+              Área es requerida
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Rol *</label>
+            <select class="form-select" formControlName="rol">
+              <option value="">Seleccione rol</option>
+              <option *ngFor="let rol of roles" [value]="rol.value">
+                {{ rol.label }}
+              </option>
+            </select>
+            <div class="invalid-feedback d-block"
+              *ngIf="usuarioForm.get('rol')?.invalid && usuarioForm.get('rol')?.touched">
+              Rol es requerido
+            </div>
+          </div>
+        </div>
+        <div class="row g-3 mt-3">
+          <div class="col-12">
+            <div class="d-flex flex-wrap gap-4">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" formControlName="esJefeArea" id="esJefeArea">
+                <label class="form-check-label fw-semibold" for="esJefeArea">Es Jefe de Área</label>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" formControlName="esAprobador" id="esAprobador">
+                <label class="form-check-label fw-semibold" for="esAprobador">Es Aprobador</label>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" formControlName="activo" id="activo">
+                <label class="form-check-label fw-semibold" for="activo">Activo</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer bg-light border-top">
+      <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+      <button type="button" class="btn btn-primary" (click)="guardarUsuario()" [disabled]="!usuarioForm.valid">
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>

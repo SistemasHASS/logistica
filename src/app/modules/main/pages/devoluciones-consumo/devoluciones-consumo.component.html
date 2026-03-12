@@ -1,0 +1,373 @@
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-arrow-return-left me-2"></i>
+      Devoluciones de Consumo
+    </h2>
+  </div>
+
+  <!-- Dashboard de Estadísticas -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card bg-primary text-white">
+        <div class="card-body">
+          <h5 class="card-title">Total Devoluciones</h5>
+          <h2 class="mb-0">{{ totalDevoluciones }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-warning text-white">
+        <div class="card-body">
+          <h5 class="card-title">Pendientes</h5>
+          <h2 class="mb-0">{{ devolucionesPendientes }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-success text-white">
+        <div class="card-body">
+          <h5 class="card-title">Aprobadas</h5>
+          <h2 class="mb-0">{{ devolucionesAprobadas }}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-danger text-white">
+        <div class="card-body">
+          <h5 class="card-title">Rechazadas</h5>
+          <h2 class="mb-0">{{ devolucionesRechazadas }}</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="tabActiva === 'despachos'" (click)="tabActiva = 'despachos'">
+        <i class="bi bi-truck me-2"></i>Despachos de Consumo
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="tabActiva === 'devoluciones'" (click)="tabActiva = 'devoluciones'">
+        <i class="bi bi-arrow-return-left me-2"></i>Devoluciones Registradas
+      </a>
+    </li>
+  </ul>
+
+  <!-- Tab: Despachos de Consumo -->
+  <div *ngIf="tabActiva === 'despachos'" class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Despachos de Consumo</h5>
+    </div>
+    <div class="card-body">
+      <p-table [value]="despachosConsumo" [paginator]="true" [rows]="10" [loading]="loading"
+               styleClass="p-datatable-sm" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Número Despacho</th>
+            <th>Fecha</th>
+            <th>Área</th>
+            <th>Requerimiento</th>
+            <th>Almacén</th>
+            <th>Items</th>
+            <th>Cantidad</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-despacho>
+          <tr>
+            <td><strong>{{ despacho.numeroDespacho }}</strong></td>
+            <td>{{ formatearFecha(despacho.fecha) }}</td>
+            <td>{{ despacho.nombreArea }}</td>
+            <td>{{ despacho.numeroRequerimiento }}</td>
+            <td>{{ despacho.almacen }}</td>
+            <td class="text-center">{{ despacho.totalItems }}</td>
+            <td class="text-center">{{ despacho.cantidadTotal }}</td>
+            <td>
+              <button class="btn btn-sm btn-warning" (click)="generarDevolucionDesdeDespacho(despacho)"
+                      pTooltip="Generar Devolución">
+                <i class="bi bi-arrow-return-left"></i> Devolver
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8" class="text-center">No hay despachos de consumo disponibles</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Tab: Devoluciones Registradas -->
+  <div *ngIf="tabActiva === 'devoluciones'" class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Devoluciones Registradas</h5>
+    </div>
+    <div class="card-body">
+      <!-- Filtros -->
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <label class="form-label">Estado</label>
+          <select class="form-select" [(ngModel)]="filtroEstado">
+            <option value="">Todos</option>
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="APROBADA">Aprobada</option>
+            <option value="RECHAZADA">Rechazada</option>
+            <option value="ANULADA">Anulada</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Fecha Inicio</label>
+          <input type="date" class="form-control" [(ngModel)]="filtroFechaInicio">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Fecha Fin</label>
+          <input type="date" class="form-control" [(ngModel)]="filtroFechaFin">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button class="btn btn-secondary" (click)="limpiarFiltros()">
+            <i class="bi bi-x-circle me-2"></i>Limpiar
+          </button>
+        </div>
+      </div>
+
+      <p-table [value]="devolucionesFiltradas" [paginator]="true" [rows]="10" [loading]="loading"
+               styleClass="p-datatable-sm" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Número</th>
+            <th>Fecha</th>
+            <th>Área</th>
+            <th>Despacho</th>
+            <th>Motivo</th>
+            <th>Estado</th>
+            <th>Items</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-devolucion>
+          <tr>
+            <td><strong>{{ devolucion.numeroDevolucion }}</strong></td>
+            <td>{{ formatearFecha(devolucion.fecha) }}</td>
+            <td>{{ devolucion.nombreArea }}</td>
+            <td>{{ devolucion.numeroDespacho }}</td>
+            <td>{{ devolucion.motivo }}</td>
+            <td>
+              <span [class]="obtenerClaseEstado(devolucion.estado)">
+                {{ devolucion.estado }}
+              </span>
+            </td>
+            <td class="text-center">{{ devolucion.detalle?.length || 0 }}</td>
+            <td>
+              <button class="btn btn-sm btn-info me-1" (click)="verDetalle(devolucion)"
+                      pTooltip="Ver Detalle">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button *ngIf="devolucion.estado === 'PENDIENTE'" 
+                      class="btn btn-sm btn-success me-1" 
+                      (click)="aprobarDevolucion(devolucion)"
+                      pTooltip="Aprobar">
+                <i class="bi bi-check-circle"></i>
+              </button>
+              <button *ngIf="devolucion.estado === 'PENDIENTE'" 
+                      class="btn btn-sm btn-danger me-1" 
+                      (click)="rechazarDevolucion(devolucion)"
+                      pTooltip="Rechazar">
+                <i class="bi bi-x-circle"></i>
+              </button>
+              <button *ngIf="devolucion.estado !== 'APROBADA'" 
+                      class="btn btn-sm btn-secondary" 
+                      (click)="anularDevolucion(devolucion)"
+                      pTooltip="Anular">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8" class="text-center">No hay devoluciones registradas</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Formulario de Devolución -->
+<p-dialog [(visible)]="mostrarFormulario" [modal]="true" [style]="{width: '80vw'}" 
+          header="Registrar Devolución de Consumo" [closable]="true">
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-bold">Número Devolución</label>
+      <input type="text" class="form-control" [(ngModel)]="devolucion.numeroDevolucion" readonly>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-bold">Fecha</label>
+      <input type="date" class="form-control" [(ngModel)]="devolucion.fecha">
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-bold">Despacho</label>
+      <input type="text" class="form-control" [value]="devolucion.numeroDespacho" readonly>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-bold">Área</label>
+      <input type="text" class="form-control" [value]="devolucion.nombreArea" readonly>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-12">
+      <label class="form-label fw-bold">Motivo *</label>
+      <textarea class="form-control" rows="3" [(ngModel)]="devolucion.motivo" 
+                placeholder="Ingrese el motivo de la devolución"></textarea>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-12">
+      <label class="form-label fw-bold">Observaciones</label>
+      <textarea class="form-control" rows="2" [(ngModel)]="devolucion.observaciones"></textarea>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5>Detalle de Items</h5>
+      <button class="btn btn-sm btn-primary" (click)="agregarDetalle()">
+        <i class="bi bi-plus-circle me-2"></i>Agregar Item
+      </button>
+    </div>
+
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Descripción</th>
+          <th>Cantidad Devuelta</th>
+          <th>Cantidad Despachada</th>
+          <th>UM</th>
+          <th>Motivo</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let detalle of devolucion.detalle; let i = index">
+          <td>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="detalle.codigo">
+          </td>
+          <td>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="detalle.descripcion">
+          </td>
+          <td>
+            <input type="number" class="form-control form-control-sm" [(ngModel)]="detalle.cantidadDevuelta">
+          </td>
+          <td>
+            <input type="number" class="form-control form-control-sm" [(ngModel)]="detalle.cantidadDespachada">
+          </td>
+          <td>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="detalle.unidadMedida">
+          </td>
+          <td>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="detalle.motivoDetalle">
+          </td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-danger" (click)="eliminarDetalle(i)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="devolucion.detalle.length === 0">
+          <td colspan="7" class="text-center">No hay items agregados</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button class="btn btn-secondary me-2" (click)="cancelarFormulario()">
+      <i class="bi bi-x-circle me-2"></i>Cancelar
+    </button>
+    <button class="btn btn-primary" (click)="guardarDevolucion()">
+      <i class="bi bi-save me-2"></i>Guardar Devolución
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal: Detalle de Devolución -->
+<p-dialog [(visible)]="modalDetalleAbierto" [modal]="true" [style]="{width: '70vw'}" 
+          header="Detalle de Devolución" [closable]="true">
+  <div *ngIf="devolucionDetalle">
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <strong>Número:</strong> {{ devolucionDetalle.numeroDevolucion }}
+      </div>
+      <div class="col-md-4">
+        <strong>Fecha:</strong> {{ formatearFecha(devolucionDetalle.fecha) }}
+      </div>
+      <div class="col-md-4">
+        <strong>Estado:</strong>
+        <span [class]="obtenerClaseEstado(devolucionDetalle.estado)">
+          {{ devolucionDetalle.estado }}
+        </span>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <strong>Área:</strong> {{ devolucionDetalle.nombreArea }}
+      </div>
+      <div class="col-md-6">
+        <strong>Despacho:</strong> {{ devolucionDetalle.numeroDespacho }}
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-12">
+        <strong>Motivo:</strong> {{ devolucionDetalle.motivo }}
+      </div>
+    </div>
+
+    <h5 class="mt-4 mb-3">Items Devueltos</h5>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Descripción</th>
+          <th>Cantidad Devuelta</th>
+          <th>Cantidad Despachada</th>
+          <th>UM</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let detalle of devolucionDetalle.detalle">
+          <td>{{ detalle.codigo }}</td>
+          <td>{{ detalle.descripcion }}</td>
+          <td class="text-center">{{ detalle.cantidadDevuelta }}</td>
+          <td class="text-center">{{ detalle.cantidadDespachada }}</td>
+          <td>{{ detalle.unidadMedida }}</td>
+          <td>
+            <span [class]="obtenerClaseEstado(detalle.estado)">
+              {{ detalle.estado }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button class="btn btn-secondary" (click)="cerrarModal()">
+      <i class="bi bi-x-circle me-2"></i>Cerrar
+    </button>
+  </ng-template>
+</p-dialog>

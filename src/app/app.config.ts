@@ -1,6 +1,6 @@
 import { ApplicationConfig,isDevMode,provideZoneChangeDetection } from '@angular/core';
 import { provideRouter,withHashLocation } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -10,12 +10,14 @@ import Aura from '@primeuix/themes/aura';
 import { NotificationService } from './shared/services/notification.service';
 import { StockNotificationService } from './shared/services/stock-notification.service';
 import { DexieService } from './shared/dixiedb/dexie-db.service';
+import { authInterceptor } from './modules/main/interceptors/auth.interceptor.fn';
+import { testInterceptor } from './modules/main/interceptors/test.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes,withHashLocation()), 
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([testInterceptor, authInterceptor])),
     provideAnimations(),
     provideAnimationsAsync(),
     provideServiceWorker('ngsw-worker.js', {

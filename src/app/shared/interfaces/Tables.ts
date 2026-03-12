@@ -14,6 +14,11 @@ export interface Usuario {
   nombre: string;
   idrol: string;
   rol: string;
+  // Campos para aprobaciones por área (opcionales)
+  idarea?: string;
+  nombreArea?: string;
+  esJefeArea?: boolean;
+  rolArea?: string;
 }
 
 export interface Perfil {

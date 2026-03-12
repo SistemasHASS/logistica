@@ -20,6 +20,7 @@ import {
   ErrorExcel,
 } from 'src/app/shared/interfaces/Tables';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
+import { AprobacionesAreaService } from '@/app/modules/main/services/aprobaciones-area.service';
 import { PrioridadRequerimientoService } from '@/app/shared/services/prioridad-requerimiento.service';
 import { PrioridadSpring, TipoRequerimiento } from '@/app/shared/interfaces/PrioridadRequerimiento';
 import {
@@ -490,6 +491,7 @@ export class RequerimientosComponent implements OnInit {
     private dexieService: DexieService,
     private alertService: AlertService, // ✅ inyectar el servicio
     private requerimientosService: RequerimientosService,
+    private aprobacionesAreaService: AprobacionesAreaService, // ✅ Servicio de aprobaciones por área
     public prioridadService: PrioridadRequerimientoService, // ✅ Servicio de prioridades (public para usar en template)
   ) { }
 
@@ -509,6 +511,22 @@ export class RequerimientosComponent implements OnInit {
     
     // Verificar si viene de una consolidación
     await this.verificarRequerimientoConsolidado();
+    
+    // Mostrar información del área si está asignada
+    this.mostrarInformacionArea();
+  }
+
+  mostrarInformacionArea() {
+    if (this.usuario.idarea) {
+      console.log(`📍 Usuario asignado al área: ${this.usuario.nombreArea || this.usuario.idarea}`);
+      
+      // Si es jefe de área, mostrar mensaje especial
+      if (this.usuario.esJefeArea) {
+        console.log('👑 El usuario es Jefe de Área - puede aprobar requerimientos de su área');
+      }
+    } else {
+      console.log('⚠️ Usuario sin área asignada - usará flujo de aprobación normal');
+    }
   }
 
   async verificarRequerimientoConsolidado() {
@@ -654,7 +672,8 @@ export class RequerimientosComponent implements OnInit {
 
       // Opcional: precargar selects con esta configuración
       this.fundoSeleccionado = config.idfundo;
-      this.areaSeleccionada = config.idarea;
+      // Priorizar el área del usuario sobre la configuración
+      this.areaSeleccionada = this.usuario.idarea || config.idarea;
       this.cultivoSeleccionado = config.idcultivo;
       this.almacenSeleccionado = config.idalmacen;
       this.clasificacionSeleccionado = config.idclasificacion;
@@ -909,6 +928,42 @@ export class RequerimientosComponent implements OnInit {
           ...d,
           idrequerimiento: idreq,
         });
+      }
+
+      // 🔹 Integración con Sistema de Aprobaciones por Área
+      try {
+        // Solo registrar aprobaciones si tiene área asignada
+        if (reqCommodity.idarea) {
+          // 1. Registrar el requerimiento en el sistema de aprobaciones
+          const dataRegistro = {
+            ruc: reqCommodity.ruc,
+            idrequerimiento: reqCommodity.idrequerimiento,
+            idarea: Number(reqCommodity.idarea),
+            tipoRequerimiento: 'SERVICIO',
+            descripcion: reqCommodity.glosa,
+            usuarioSolicitud: this.usuario.documentoidentidad,
+            glosa: reqCommodity.glosa,
+            monto: 0
+          };
+
+          await this.aprobacionesAreaService.registrarRequerimiento(dataRegistro).toPromise();
+
+          // 2. Asignar aprobadores automáticamente
+          const dataAsignacion = {
+            ruc: reqCommodity.ruc,
+            idrequerimiento: reqCommodity.idrequerimiento,
+            idarea: Number(reqCommodity.idarea),
+            tipoRequerimiento: 'SERVICIO',
+            usuarioSolicitud: this.usuario.documentoidentidad
+          };
+
+          await this.aprobacionesAreaService.asignarAprobadoresRequerimiento(dataAsignacion).toPromise();
+
+          console.log('✅ Requerimiento Commodity registrado en sistema de aprobaciones por área');
+        }
+      } catch (error) {
+        console.error('⚠️ Error al registrar Commodity en sistema de aprobaciones:', error);
+        // No fallamos el guardado principal, solo lo registramos en consola
       }
 
       this.alertService.cerrarModalCarga();
@@ -1863,6 +1918,13 @@ export class RequerimientosComponent implements OnInit {
       console.log('🏪 Almacén asignado desde configuración:', this.almacenSeleccionado);
     }
     
+    // 🔹 Asignar área desde el usuario o configuración
+    this.areaSeleccionada = this.usuario.idarea || this.configuracion?.idarea || '';
+    this.requerimiento.idarea = this.areaSeleccionada;
+    console.log('📍 Área asignada en nuevoRequerimiento:', this.areaSeleccionada);
+    console.log('📍 Usuario.idarea:', this.usuario.idarea);
+    console.log('📍 Configuracion.idarea:', this.configuracion?.idarea);
+    
     // 🔹 Prioridad por defecto: Normal (1)
     this.SeleccionaPrioridadITEM = '1';
     
@@ -1992,6 +2054,11 @@ export class RequerimientosComponent implements OnInit {
   }
 
   async sincronizarRequerimiento() {
+    console.log('🔄 Sincronizando requerimiento...');
+    console.log('Área seleccionada:', this.areaSeleccionada);
+    console.log('Área del usuario:', this.usuario.idarea);
+    console.log('Área del requerimiento:', this.requerimiento.idarea);
+    
     // 1️⃣ Validación de detalles
     if (this.requerimiento.detalle.length === 0) {
       this.alertService.showAlert(
@@ -2052,8 +2119,7 @@ export class RequerimientosComponent implements OnInit {
       idrequerimiento: idReq,
       ruc: this.usuario.ruc,
       idfundo: this.requerimiento.idfundo,
-      // idarea: this.areaSeleccionada,
-      idarea: this.requerimiento.idarea,
+      idarea: this.areaSeleccionada, // ✅ Usar areaSeleccionada en lugar de requerimiento.idarea
       idclasificacion: this.requerimiento.idclasificacion,
       prioridad: prioridadFinal,
       nrodocumento: this.usuario.documentoidentidad,
@@ -4525,6 +4591,42 @@ export class RequerimientosComponent implements OnInit {
           ...d,
           idrequerimiento: idReq,
         });
+      }
+
+      // 🔹 Integración con Sistema de Aprobaciones por Área
+      try {
+        // Solo registrar aprobaciones si tiene área asignada y es tipo COMPRA o CONSUMO
+        if (nuevoReq.idarea && (nuevoReq.itemtipo === 'COMPRA' || nuevoReq.itemtipo === 'CONSUMO')) {
+          // 1. Registrar el requerimiento en el sistema de aprobaciones
+          const dataRegistro = {
+            ruc: nuevoReq.ruc,
+            idrequerimiento: nuevoReq.idrequerimiento,
+            idarea: Number(nuevoReq.idarea),
+            tipoRequerimiento: nuevoReq.itemtipo,
+            descripcion: nuevoReq.glosa,
+            usuarioSolicitud: this.usuario.documentoidentidad,
+            glosa: nuevoReq.glosa,
+            monto: 0 // El monto se puede calcular luego si se necesita
+          };
+
+          await this.aprobacionesAreaService.registrarRequerimiento(dataRegistro).toPromise();
+
+          // 2. Asignar aprobadores automáticamente
+          const dataAsignacion = {
+            ruc: nuevoReq.ruc,
+            idrequerimiento: nuevoReq.idrequerimiento,
+            idarea: Number(nuevoReq.idarea),
+            tipoRequerimiento: nuevoReq.itemtipo,
+            usuarioSolicitud: this.usuario.documentoidentidad
+          };
+
+          await this.aprobacionesAreaService.asignarAprobadoresRequerimiento(dataAsignacion).toPromise();
+
+          console.log('✅ Requerimiento registrado en sistema de aprobaciones por área');
+        }
+      } catch (error) {
+        console.error('⚠️ Error al registrar en sistema de aprobaciones:', error);
+        // No fallamos el guardado principal, solo lo registramos en consola
       }
 
       // 🔹 Agregar a la lista en memoria

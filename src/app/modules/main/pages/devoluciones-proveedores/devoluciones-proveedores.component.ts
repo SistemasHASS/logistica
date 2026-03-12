@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
+import { DevolucionProveedorService } from '../../services/devolucion-proveedor.service';
 import {
   DevolucionProveedor,
   DetalleDevolucion,
@@ -73,7 +74,8 @@ export class DevolucionesProveedoresComponent implements OnInit {
 
   constructor(
     private dexieService: DexieService,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private devolucionService: DevolucionProveedorService
   ) {}
 
   async ngOnInit() {
@@ -93,18 +95,21 @@ export class DevolucionesProveedoresComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
 
-      // Cargar recepciones no conformes
-      const todasRecepciones = await this.dexieService.showRecepcionesOrdenCompra();
-      this.recepcionesNoConformes = todasRecepciones.filter(r => !r.conformidad);
-
-      // Cargar devoluciones
-      this.devoluciones = await this.dexieService.showDevolucionesProveedor();
+      // Cargar recepciones no conformes desde backend
+      this.recepcionesNoConformes = await this.devolucionService.listarRecepcionesNoConformes();
+      
+      // Cargar devoluciones desde backend
+      this.devoluciones = await this.devolucionService.listarDevoluciones();
 
       this.alertService.cerrarModalCarga();
     } catch (error) {
       console.error('Error al cargar datos:', error);
+      this.alertService.showAlert(
+        'Error',
+        'No se pudieron cargar los datos',
+        'error'
+      );
       this.alertService.cerrarModalCarga();
-      this.alertService.showAlert('Error', 'Error al cargar los datos.', 'error');
     }
   }
 
@@ -141,57 +146,40 @@ export class DevolucionesProveedoresComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
 
-      // Cargar orden de compra
-      const ordenes = await this.dexieService.showOrdenesCompra();
-      this.ordenCompra = ordenes.find(o => o.id === recepcion.ordenCompraId) || null;
+      // Generar devolución desde backend
+      const resultado = await this.devolucionService.generarDevolucionDesdeRecepcion(
+        recepcion.id || 0,
+        this.usuario.documentoidentidad
+      );
 
-      if (!this.ordenCompra) {
+      if (resultado.resultado === 'OK') {
         this.alertService.cerrarModalCarga();
-        this.alertService.showAlert('Error', 'No se encontró la orden de compra asociada.', 'error');
-        return;
+        this.alertService.showAlert('Éxito', 'Devolución generada correctamente.', 'success');
+        
+        // Abrir formulario con la devolución generada
+        const devolucionGenerada = await this.devolucionService.obtenerDevolucionPorId(resultado.devolucionId);
+        this.devolucion = devolucionGenerada;
+        this.recepcionSeleccionada = recepcion;
+        this.mostrarFormulario = true;
+        
+        await this.cargarDatos();
+        this.calcularContadores();
+      } else {
+        this.alertService.cerrarModalCarga();
+        this.alertService.showAlert('Error', resultado.mensaje, 'error');
       }
-
-      this.recepcionSeleccionada = recepcion;
-      this.devolucion = this.nuevaDevolucion();
-      this.devolucion.recepcionId = recepcion.id || 0;
-      this.devolucion.numeroRecepcion = recepcion.numeroRecepcion;
-      this.devolucion.ordenCompraId = recepcion.ordenCompraId;
-      this.devolucion.numeroOrden = recepcion.numeroOrden;
-      this.devolucion.proveedor = this.ordenCompra.proveedor;
-      this.devolucion.nombreProveedor = this.ordenCompra.nombreProveedor;
-      this.devolucion.rucProveedor = this.ordenCompra.rucProveedor;
-      this.devolucion.numeroDevolucion = this.generarNumeroDevolucion();
-
-      // Cargar solo items rechazados
-      const itemsRechazados = recepcion.detalle.filter(d => d.cantidadRechazada > 0);
-      
-      this.devolucion.detalle = itemsRechazados.map(item => {
-        const detalleOrden = this.ordenCompra!.detalle.find(d => d.codigo === item.codigo);
-        return {
-          devolucionId: 0,
-          codigo: item.codigo,
-          descripcion: item.descripcion,
-          cantidadDevuelta: item.cantidadRechazada,
-          cantidadRecibida: item.cantidadRecibida,
-          unidadMedida: detalleOrden?.unidadMedida || 'UND',
-          precioUnitario: detalleOrden?.precioUnitario || 0,
-          subtotal: (detalleOrden?.precioUnitario || 0) * item.cantidadRechazada,
-          motivoDetalle: item.motivoRechazo || 'No conforme',
-          lote: item.lote,
-          estado: 'PENDIENTE',
-        };
-      });
-
-      this.calcularMontoTotal();
-      this.mostrarFormulario = true;
-      this.tabActiva = 'devoluciones';
-
-      this.alertService.cerrarModalCarga();
     } catch (error) {
       console.error('Error al generar devolución:', error);
       this.alertService.cerrarModalCarga();
-      this.alertService.showAlert('Error', 'Error al generar la devolución.', 'error');
+      this.alertService.showAlert('Error', 'Ocurrió un error al generar la devolución.', 'error');
     }
+  }
+
+  calcularMontoTotal() {
+    this.devolucion.montoTotal = this.devolucion.detalle.reduce(
+      (sum, d) => sum + d.subtotal,
+      0
+    );
   }
 
   generarNumeroDevolucion(): string {
@@ -203,10 +191,6 @@ export class DevolucionesProveedoresComponent implements OnInit {
     const minuto = String(fecha.getMinutes()).padStart(2, '0');
     const segundo = String(fecha.getSeconds()).padStart(2, '0');
     return `DEV-${año}${mes}${dia}-${hora}${minuto}${segundo}`;
-  }
-
-  calcularMontoTotal() {
-    this.devolucion.montoTotal = this.devolucion.detalle.reduce((sum, d) => sum + d.subtotal, 0);
   }
 
   actualizarSubtotal(detalle: DetalleDevolucion) {
@@ -230,10 +214,9 @@ export class DevolucionesProveedoresComponent implements OnInit {
       this.alertService.mostrarModalCarga();
 
       this.devolucion.usuarioRegistra = this.usuario.documentoidentidad;
-      await this.dexieService.saveDevolucionProveedor(this.devolucion);
-
-      // Generar movimiento de salida en inventario
-      await this.generarMovimientoSalida();
+      
+      // Guardar en backend
+      await this.devolucionService.registrarDevolucion(this.devolucion);
 
       this.alertService.cerrarModalCarga();
       this.alertService.showAlert('Éxito', 'Devolución registrada correctamente.', 'success');

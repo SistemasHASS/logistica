@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 import { Observable, lastValueFrom } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -16,9 +17,21 @@ export class AdminAreasService {
    */
   listarAreas(body: any): Observable<any> {
     const url = `${this.baseUrl}/api/logistica/listar-areas`;
+    console.log('Making request to:', url);
+    console.log('Request body:', body);
+    
     try {
-      return this.http.post<any>(url, body);
+      return this.http.post<any>(url, body).pipe(
+        tap(response => {
+          console.log('HTTP Response received:', response);
+        }),
+        catchError(error => {
+          console.error('HTTP Error:', error);
+          throw error;
+        })
+      );
     } catch (error: any) {
+      console.error('Service error:', error);
       throw new Error(error.error?.message || 'Error al listar áreas');
     }
   }

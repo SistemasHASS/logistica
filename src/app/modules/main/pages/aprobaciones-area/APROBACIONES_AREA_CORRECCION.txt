@@ -1,0 +1,21 @@
+<!-- CORRECCIÓN DE LA TABLA DE PENDIENTES -->
+<!-- Reemplazar las líneas 89-95 del archivo aprobaciones-area.component.html -->
+
+<!-- CAMBIAR ESTO: -->
+<td>{{ req.idRequerimiento }}</td>
+<td>{{ formatFecha(req.fechaCreacion) }}</td>
+<td>{{ req.nombreCreador }}</td>
+<td>{{ req.nombreArea }}</td>
+<td>{{ req.tipoRequerimiento }}</td>
+<td>{{ req.glosa }}</td>
+
+<!-- POR ESTO: -->
+<td>{{ req.RequisicionNumero || req.idrequerimiento }}</td>
+<td>{{ req.fecha }}</td>
+<td>{{ req.nombreSolicitante }}</td>
+<td>{{ req.nombreArea }}</td>
+<td>{{ req.estados }}</td>
+<td>{{ req.descripcion || 'Sin descripción' }}</td>
+
+<!-- TAMBIÉN CORREGIR EL BOTÓN VER DETALLE -->
+<!-- Línea 106 - debe mostrar los detalles que ya vienen en el array 'detalles' -->
