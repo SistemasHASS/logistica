@@ -128,7 +128,7 @@ export class DexieService extends Dexie {
   public detalleSolicitudCotizacion!: Dexie.Table<DetalleSolicitudCotizacion, number>;
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 33; // Corregido campo idSolicitudCotizacion en detalles
+  private static readonly DB_VERSION = 34; // Added missing fields to solicitudesCompra
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -185,7 +185,7 @@ export class DexieService extends Dexie {
         unidadporDefecto,cuentaContableGasto,elementoGasto,clasificacionActivo,estado,ultimoUsuario,
         montoReferencial,montoReferencialMoneda,descripcionEditableFlag,igvExoneradoFlag`,
         // ✅ NUEVAS TABLAS PARA EL FLUJO DE COMPRAS
-        solicitudesCompra: `++id,numeroSolicitud,fecha,estado,usuarioSolicita,almacen,tipo`,
+        solicitudesCompra: `++id,numeroSolicitud,fecha,estado,usuarioSolicita,nombreSolicita,almacen,tipo,prioridad,fechaEnvio,fechaAprobacion,observaciones,motivoRechazo,requerimientosOrigen,montoEstimado,moneda,fechaRequerida`,
         detalleSolicitudCompra: `++id,solicitudCompraId,codigo,descripcion,cantidad,estado`,
         cotizaciones: `++id,numeroCotizacion,solicitudCompraId,proveedor,fecha,estado,seleccionada`,
         detalleCotizacion: `++id,cotizacionId,codigo,descripcion,cantidad,precioUnitario,total`,

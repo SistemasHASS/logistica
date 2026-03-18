@@ -482,7 +482,18 @@ export class AprobacionesAreaComponent implements OnInit {
   }
 
   async aprobar() {
-    if (!this.requerimientoSeleccionado || !this.usuario) return;
+    console.log('🟢 Iniciando método aprobar()');
+    if (!this.requerimientoSeleccionado || !this.usuario) {
+      console.error('❌ Falta requerimiento seleccionado o usuario');
+      return;
+    }
+    
+    console.log('📋 Datos para aprobar:', {
+      idrequerimiento: this.requerimientoSeleccionado.idrequerimiento,
+      documentoidentidad: this.usuario.documentoidentidad,
+      accion: 'APROBADO'
+    });
+    
     try {
       const response = await this.aprobacionesAreaService
         .aprobarRequerimientoArea({
@@ -494,6 +505,7 @@ export class AprobacionesAreaComponent implements OnInit {
         })
         .toPromise();
 
+      console.log('📤 Respuesta de aprobación:', response);
       this.displayAprobacionModal = false;
 
       // console.log('📤 Respuesta de aprobación:', response);
@@ -506,36 +518,62 @@ export class AprobacionesAreaComponent implements OnInit {
 
       if (response && Array.isArray(response) && response.length > 0) {
         const firstItem = response[0];
+        console.log('🔍 Analizando respuesta:', firstItem);
+        console.log('🔍 Tiene propiedad "success":', 'success' in firstItem);
+        console.log('🔍 Valor de success:', firstItem.success);
+        
         if ('success' in firstItem) {
           // Formato nuevo: [{ success: true, mensaje: "..." }]
           esExitoso = firstItem.success === true;
           mensaje = firstItem.mensaje || 'Operación realizada correctamente';
+          console.log('✅ Formato nuevo detectado, esExitoso:', esExitoso);
         } else if ('resultado' in firstItem) {
           // Formato antiguo: [{ resultado: "SUCCESS", mensaje: "..." }]
           esExitoso =
             firstItem.resultado === 'SUCCESS' || firstItem.resultado === 'OK';
           mensaje = firstItem.mensaje || 'Operación realizada correctamente';
+          console.log('✅ Formato antiguo detectado, esExitoso:', esExitoso);
         }
+      } else {
+        console.error('❌ Respuesta vacía o inválida:', response);
       }
+      
+      console.log('🔍 esExitoso final:', esExitoso);
 
       if (esExitoso) {
         Swal.fire('Éxito', mensaje, 'success');
-        console.log(this.requerimientoSeleccionado);
+        console.log('✅ Aprobación exitosa, requerimiento:', this.requerimientoSeleccionado);
+        console.log('🔄 Iniciando sincronización con SPRING...');
+        
         // Sincronizar con SPRING después de aprobar
-        await this.sincronizarRequerimientoSPRING(
-          this.requerimientoSeleccionado,
-        );
+        try {
+          await this.sincronizarRequerimientoSPRING(
+            this.requerimientoSeleccionado,
+          );
+          console.log('✅ Sincronización con SPRING completada');
+        } catch (error) {
+          console.error('❌ Error en sincronización con SPRING:', error);
+          // No interrumpir el flujo si falla la sincronización
+        }
 
+        console.log('🔄 Recargando datos...');
         await this.cargarRequerimientosPendientes();
         await this.cargarDashboard();
         // También cargar mis requerimientos para que aparezca en el tab 2
         await this.cargarMisRequerimientos();
+        console.log('✅ Datos recargados');
       } else {
-        // console.error('❌ Respuesta inesperada:', response);
+        console.error('❌ Respuesta inesperada:', response);
         Swal.fire('Error', 'Error al aprobar el requerimiento', 'error');
       }
     } catch (error) {
-      // console.error('Error al aprobar:', error);
+      console.error('❌ Error en el método aprobar():', error);
+      console.error('❌ Detalles del error:', {
+        message: error instanceof Error ? error.message : String(error),
+        status: (error as any)?.status,
+        statusText: (error as any)?.statusText,
+        error: (error as any)?.error
+      });
       Swal.fire('Error', 'Error al procesar la aprobación', 'error');
     }
   }
@@ -610,8 +648,10 @@ export class AprobacionesAreaComponent implements OnInit {
   // =============================================
 
   async sincronizarRequerimientoSPRING(req: any) {
+    console.log('🟢 INICIO sincronizarRequerimientoSPRING');
+    console.log('📋 Objeto recibido en sincronizarSPRING:', req);
+    
     try {
-      // console.log('📋 Objeto recibido en sincronizarSPRING:', req);
 
       // Verificar si el objeto ya tiene el detalle (puede venir como array directo o como propiedad detalle)
       let requerimientoCompleto = null;
@@ -741,8 +781,11 @@ export class AprobacionesAreaComponent implements OnInit {
 
       const requerimiento = [
         {
-          // ✅ Corregido: Enviar CompaniaSocio con "00" como espera el SP
+          // ✅ Corregido: CompaniaSocio con "00" como espera el SP
           CompaniaSocio: this.usuario.idempresa + '00',
+          // DEBUG: Mostrar valores para diagnóstico
+          DEBUG_idempresa: this.usuario.idempresa,
+          DEBUG_CompaniaSocio_final: this.usuario.idempresa + '00',
           // ✅ Corregido: Clasificación debe venir del requerimiento (Stock Almacen para consumo)
           Clasificacion: requerimientoCompleto.idClasificacion,
           // ✅ Corregido: Calcular según itemtipo
@@ -757,13 +800,13 @@ export class AprobacionesAreaComponent implements OnInit {
             20,
           ),
           MonedaCodigo: 'LO',
-          // ✅ Corregido: Formato de fecha para SQL Server (yyyy-mm-ddThh:mm:ss)
-          FechaRequerida: new Date().toISOString(),
+          // ✅ Corregido: Formato de fecha - igual que en aprobaciones.component.ts
+          FechaRequerida: new Date(req.fecha).toISOString(),
           FechaPreparacion: new Date().toISOString(),
-          FechaAprobacion: new Date().toISOString(),
+          FechaAprobacion: req.fechaAprobacion ? new Date(req.fechaAprobacion).toISOString() : new Date().toISOString(),
           PreparadaPor: -1,
           AprobadaPor: -1,
-          PrecioTotal: 0.0,
+          // PrecioTotal: 0.0,
           // ✅ Corregido: Usar prioridad del requerimiento
           PrioridadCodigo: String(
             requerimientoCompleto.prioridad || '1',
@@ -788,10 +831,7 @@ export class AprobacionesAreaComponent implements OnInit {
           UltimoUsuario: (
             this.usuario.documentoidentidad || 'MISESF'
           ).substring(0, 50),
-          UltimaFechaModif: new Date()
-            .toISOString()
-            .replace('T', ' ')
-            .substring(0, 23),
+          UltimaFechaModif: new Date().toISOString(),
           UltimoUsuarioNumero: -1,
           // ✅ Limitar longitud de transacción a 10 caracteres
           TransaccionOperacion: '999'.substring(0, 10),
@@ -846,10 +886,7 @@ export class AprobacionesAreaComponent implements OnInit {
               UltimoUsuario: (
                 this.usuario.documentoidentidad || 'MISESF'
               ).substring(0, 50),
-              UltimaFechaModif: new Date()
-                .toISOString()
-                .replace('T', ' ')
-                .substring(0, 23),
+              UltimaFechaModif: new Date().toISOString(),
               IGVExoneradoFlag: 'N',
               GenerarContratoFlag: 'N',
               origen: origenapp,
@@ -881,6 +918,7 @@ export class AprobacionesAreaComponent implements OnInit {
       ];
 
       console.log('📤 Enviando al SP SPRING:', requerimiento);
+      console.log('🔍 Llamando a getRegristroRequerimientoSPRING...');
 
       this.requerimientosService
         .getRegristroRequerimientoSPRING(requerimiento)
@@ -919,12 +957,22 @@ export class AprobacionesAreaComponent implements OnInit {
             }
           },
           error: (error) => {
-            // console.error('❌ Error al sincronizar con SPRING:', error);
+            console.error('❌ Error al sincronizar con SPRING:', error);
+            console.error('❌ Detalles del error:', {
+              message: error instanceof Error ? error.message : String(error),
+              status: (error as any)?.status,
+              statusText: (error as any)?.statusText
+            });
             Swal.fire('Error', 'Error al sincronizar con SPRING', 'error');
           },
         });
     } catch (error) {
-      // console.error('❌ Error en sincronizarRequerimientoSPRING:', error);
+      console.error('❌ Error en sincronizarRequerimientoSPRING:', error);
+      console.error('❌ Detalles del error catch:', {
+        message: error instanceof Error ? error.message : String(error),
+        status: (error as any)?.status,
+        statusText: (error as any)?.statusText
+      });
       Swal.fire('Error', 'Error al procesar la sincronización', 'error');
     }
   }
@@ -1034,6 +1082,26 @@ export class AprobacionesAreaComponent implements OnInit {
     return `${day}-${month}-${year} 00:00:00.000`;
   }
 
+  // ✅ Nuevo método para formatear fecha local sin problemas de zona horaria
+  formatDateForSQLLocal(date: any): string {
+    if (typeof date === 'string') {
+      // Si es string, asumimos formato yyyy-mm-dd
+      const parts = date.split('-');
+      if (parts.length === 3) {
+        return `${date} 00:00:00`;
+      }
+    }
+    // Si es Date o cualquier otro caso
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const seconds = String(d.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
+
   // =============================================
   // DETALLE DE REQUERIMIENTO
   // =============================================
@@ -1076,6 +1144,18 @@ export class AprobacionesAreaComponent implements OnInit {
     if (!this.dashboard?.indicadores) return 0;
     const indicador = this.dashboard.indicadores.find((i) => i.tipo === tipo);
     return indicador?.cantidad || 0;
+  }
+
+  // ✅ Método para formatear fecha para SQL Server
+  formatDateForSQL(date: Date): string {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const seconds = String(d.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
 
   onTabChange(event: any) {

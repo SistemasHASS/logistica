@@ -277,7 +277,14 @@ montoTotal = Σ(total de cada item)
 2. Click en botón **"Seleccionar"** (✓)
 3. Confirmar acción
 4. Estado cambia a **SELECCIONADA**
-5. Solicitud de compra cambia a **EN_COTIZACION**
+5. **Solicitud de compra cambia a "ORDEN_GENERADA"**
+6. **Se genera automáticamente una Orden de Compra** con:
+   - Número de orden automático (OC-YYYYMMDD-HHMMSS)
+   - Todos los detalles de la cotización ganadora
+   - Cálculo automático de subtotal, IGV (18%) y total
+   - Fecha de entrega estimada según plazo de entrega
+   - Datos del proveedor
+   - Estado inicial "GENERADA"
 
 ### Rechazar Cotización
 1. En la tabla de cotizaciones
@@ -286,7 +293,31 @@ montoTotal = Σ(total de cada item)
 4. Confirmar acción
 5. Estado cambia a **RECHAZADA**
 
-## 📊 Integración con Dexie (IndexedDB)
+## � Flujo Completo: Cotización → Orden de Compra
+
+### Proceso Automatizado
+1. **Evaluación de Cotizaciones**: Se reciben múltiples cotizaciones para una solicitud
+2. **Selección de Ganadora**: El usuario selecciona la cotización ganadora
+3. **Generación Automática**: El sistema crea automáticamente:
+   - Orden de Compra con todos los detalles
+   - Actualización del estado de la Solicitud a "ORDEN_GENERADA"
+   - Rechazo automático de las otras cotizaciones
+
+### Ventajas del Flujo Automatizado
+- **Reducción de errores**: No se requiere ingresar datos manualmente
+- **Velocidad**: La orden se genera instantáneamente
+- **Trazabilidad**: Se mantiene el vínculo entre Solicitud → Cotización → Orden
+- **Consistencia**: Los datos son exactos a los de la cotización seleccionada
+
+### Estados del Flujo
+| Estado | Descripción |
+|--------|-------------|
+| RECIBIDA | Cotización recibida, pendiente de evaluación |
+| EN_EVALUACION | Cotización en proceso de evaluación |
+| SELECCIONADA | **Cotización ganadora - Orden generada** |
+| RECHAZADA | Cotización no seleccionada |
+
+## �📊 Integración con Dexie (IndexedDB)
 
 ### Tablas Utilizadas
 - `cotizaciones` - Almacena las cotizaciones

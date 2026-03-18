@@ -139,7 +139,7 @@
       <div class="card-body">
         <!-- Filtros -->
         <div class="row mb-3">
-          <div class="col-md-3">
+          <div class="col-md-2">
             <label>Código Item <span class="text-danger">*</span></label>
             <input type="text" class="form-control" [(ngModel)]="filtroKardex.codigoItem" 
                    placeholder="Ej: ITEM-001">
@@ -152,25 +152,24 @@
               <option value="ALM-SUCURSAL">ALM-SUCURSAL</option>
             </select>
           </div>
-          <div class="col-md-2">
+          <div class="col-md-3">
             <label>Fecha Inicio</label>
             <input type="date" class="form-control" [(ngModel)]="filtroKardex.fechaInicio">
           </div>
-          <div class="col-md-2">
+          <div class="col-md-3">
             <label>Fecha Fin</label>
             <input type="date" class="form-control" [(ngModel)]="filtroKardex.fechaFin">
           </div>
           <div class="col-md-2">
             <label>&nbsp;</label>
-            <button class="btn btn-primary w-100" (click)="buscarKardex()">
-              <i class="bi bi-search"></i> Buscar
-            </button>
-          </div>
-          <div class="col-md-1">
-            <label>&nbsp;</label>
-            <button class="btn btn-secondary w-100" (click)="limpiarKardex()">
-              <i class="bi bi-x-circle"></i> Limpiar
-            </button>
+            <div class="d-grid gap-1">
+              <button class="btn btn-primary" (click)="buscarKardex()">
+                <i class="bi bi-search"></i> Buscar
+              </button>
+              <button class="btn btn-secondary" (click)="limpiarKardex()">
+                <i class="bi bi-x-circle"></i> Limpiar
+              </button>
+            </div>
           </div>
         </div>
 
@@ -322,35 +321,27 @@
     <div class="row">
       <!-- Indicadores -->
       <div class="col-md-3 mb-3">
-        <div class="card bg-primary text-white">
-          <div class="card-body">
-            <h6>Total Items</h6>
-            <h3>{{ dashboard.indicadores.totalItems || 0 }}</h3>
-          </div>
+        <div class="status-card status-card-primary">
+          <div class="status-card-number">{{ dashboard.indicadores.totalItems || 0 }}</div>
+          <div class="status-card-label">Total Items</div>
         </div>
       </div>
       <div class="col-md-3 mb-3">
-        <div class="card bg-success text-white">
-          <div class="card-body">
-            <h6>Almacenes</h6>
-            <h3>{{ dashboard.indicadores.totalAlmacenes || 0 }}</h3>
-          </div>
+        <div class="status-card status-card-success">
+          <div class="status-card-number">{{ dashboard.indicadores.totalAlmacenes || 0 }}</div>
+          <div class="status-card-label">Almacenes</div>
         </div>
       </div>
       <div class="col-md-3 mb-3">
-        <div class="card bg-warning text-white">
-          <div class="card-body">
-            <h6>Items Bajo Stock</h6>
-            <h3>{{ dashboard.indicadores.itemsBajoStock || 0 }}</h3>
-          </div>
+        <div class="status-card status-card-warning">
+          <div class="status-card-number">{{ dashboard.indicadores.itemsBajoStock || 0 }}</div>
+          <div class="status-card-label">Items Bajo Stock</div>
         </div>
       </div>
       <div class="col-md-3 mb-3">
-        <div class="card bg-info text-white">
-          <div class="card-body">
-            <h6>Valor Total</h6>
-            <h3>{{ formatearMoneda(dashboard.indicadores.valorTotal || 0) }}</h3>
-          </div>
+        <div class="status-card status-card-info">
+          <div class="status-card-number">{{ formatearMoneda(dashboard.indicadores.valorTotal || 0) }}</div>
+          <div class="status-card-label">Valor Total</div>
         </div>
       </div>
     </div>

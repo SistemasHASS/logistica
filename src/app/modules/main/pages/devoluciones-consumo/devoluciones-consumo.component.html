@@ -10,35 +10,27 @@
   <!-- Dashboard de Estadísticas -->
   <div class="row mb-4">
     <div class="col-md-3">
-      <div class="card bg-primary text-white">
-        <div class="card-body">
-          <h5 class="card-title">Total Devoluciones</h5>
-          <h2 class="mb-0">{{ totalDevoluciones }}</h2>
-        </div>
+      <div class="status-card status-card-primary">
+        <div class="status-card-number">{{ totalDevoluciones }}</div>
+        <div class="status-card-label">Total Devoluciones</div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card bg-warning text-white">
-        <div class="card-body">
-          <h5 class="card-title">Pendientes</h5>
-          <h2 class="mb-0">{{ devolucionesPendientes }}</h2>
-        </div>
+      <div class="status-card status-card-warning">
+        <div class="status-card-number">{{ devolucionesPendientes }}</div>
+        <div class="status-card-label">Pendientes</div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card bg-success text-white">
-        <div class="card-body">
-          <h5 class="card-title">Aprobadas</h5>
-          <h2 class="mb-0">{{ devolucionesAprobadas }}</h2>
-        </div>
+      <div class="status-card status-card-success">
+        <div class="status-card-number">{{ devolucionesAprobadas }}</div>
+        <div class="status-card-label">Aprobadas</div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card bg-danger text-white">
-        <div class="card-body">
-          <h5 class="card-title">Rechazadas</h5>
-          <h2 class="mb-0">{{ devolucionesRechazadas }}</h2>
-        </div>
+      <div class="status-card status-card-danger">
+        <div class="status-card-number">{{ devolucionesRechazadas }}</div>
+        <div class="status-card-label">Rechazadas</div>
       </div>
     </div>
   </div>

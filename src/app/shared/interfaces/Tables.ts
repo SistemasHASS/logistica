@@ -133,7 +133,7 @@ export interface Fundo {
 
 export interface Almacen {
   id: number;
-  idalmacen: number;
+  idalmacen: string;
   almacen: string;
 }
 

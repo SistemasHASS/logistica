@@ -17,6 +17,12 @@
         </button>
       </li>
       <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="tabActiva === 'GANADORES'" (click)="cambiarTabGanadores()" type="button">
+          <i class="pi pi-trophy me-1"></i> Cotizaciones Ganadoras
+          <span class="badge bg-success ms-1" *ngIf="cotizacionesGanadoras.length > 0">{{ cotizacionesGanadoras.length }}</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
         <button class="nav-link" [class.active]="tabActiva === 'COMPARACION'" (click)="tabActiva = 'COMPARACION'" type="button">
           <i class="pi pi-chart-bar me-1"></i> Comparación
           <span class="badge bg-info ms-1" *ngIf="cotizacionesComparativo.length > 0">{{ cotizacionesComparativo.length }}</span>
@@ -235,9 +241,9 @@
         <ng-template pTemplate="body" let-cotizacion let-i="rowIndex">
           <tr>
             <td>{{ i + 1 }}</td>
-            <td><strong>{{ cotizacion.numeroCotizacion }}</strong></td>
-            <td>{{ formatearFecha(cotizacion.fecha) }}</td>
-            <td>{{ cotizacion.numeroSolicitud }}</td>
+            <td><strong>{{ cotizacion.numeroCotizacion || 'COT-' + (cotizacion.id || 'N/A') }}</strong></td>
+            <td>{{ cotizacion.fecha ? formatearFecha(cotizacion.fecha) : 'Sin fecha' }}</td>
+            <td>{{ cotizacion.numeroSolicitud || 'SOL-' + (cotizacion.idSolicitudCotizacion || cotizacion.id || 'N/A') }}</td>
             <td>
               <div>
                 <strong>{{ cotizacion.nombreProveedor }}</strong>
@@ -248,7 +254,7 @@
             <td class="text-right">
               <strong>{{ formatearMoneda(cotizacion.montoTotal, cotizacion.moneda) }}</strong>
             </td>
-            <td class="text-center">{{ cotizacion.plazoEntrega }} días</td>
+            <td class="text-center">{{ cotizacion.plazoEntrega || 0 }} días</td>
             <td>
               <span class="badge" [ngClass]="obtenerClaseEstado(cotizacion.estado)">
                 {{ cotizacion.estado }}
@@ -293,7 +299,141 @@
     </div>
 
     <!-- ================================================ -->
-    <!-- TAB 3: COMPARACIÓN DE COTIZACIONES               -->
+    <!-- TAB 3: COTIZACIONES GANADORAS                   -->
+    <!-- ================================================ -->
+    <div *ngIf="tabActiva === 'GANADORES'">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">
+          <i class="pi pi-trophy text-success me-2"></i>
+          Cotizaciones Seleccionadas como Ganadoras
+        </h5>
+        <div class="d-flex gap-2">
+          <button pButton type="button" class="p-button-sm p-button-success" 
+            (click)="verResumenGanadoras()" pTooltip="Ver Resumen">
+            <i class="pi pi-chart-line me-1"></i> Resumen
+          </button>
+        </div>
+      </div>
+
+      <!-- Estadísticas rápidas -->
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <div class="card border-success">
+            <div class="card-body text-center">
+              <h5 class="card-title text-success">{{ cotizacionesGanadoras.length }}</h5>
+              <p class="card-text">Total Ganadoras</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-info">
+            <div class="card-body text-center">
+              <h5 class="card-title text-info">{{ totalMontoGanadoras | number:'1.2-2' }}</h5>
+              <p class="card-text">Monto Total (PEN)</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-warning">
+            <div class="card-body text-center">
+              <h5 class="card-title text-warning">{{ totalSolicitudesGeneradas }}</h5>
+              <p class="card-text">Solicitudes Generadas</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-primary">
+            <div class="card-body text-center">
+              <h5 class="card-title text-primary">{{ promedioPlazoEntrega }}</h5>
+              <p class="card-text">Plazo Promedio (días)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de cotizaciones ganadoras -->
+      <p-table [value]="cotizacionesGanadoras" [paginator]="true" [rows]="10" [loading]="loading"
+        responsiveLayout="scroll" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 3em">#</th>
+            <th>Número</th>
+            <th>Fecha Selección</th>
+            <th>Solicitud</th>
+            <th>Proveedor</th>
+            <th>Monto Total</th>
+            <th>Plazo Entrega</th>
+            <th>Solicitud Generada</th>
+            <th style="width: 12em">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-cotizacion let-i="rowIndex">
+          <tr class="table-success">
+            <td>{{ i + 1 }}</td>
+            <td>
+              <strong>{{ cotizacion.numeroCotizacion || 'COT-' + (cotizacion.id || 'N/A') }}</strong>
+              <br>
+              <small class="text-success">
+                <i class="pi pi-trophy-fill"></i> GANADORA
+              </small>
+            </td>
+            <td>{{ cotizacion.fechaEvaluacion ? formatearFecha(cotizacion.fechaEvaluacion) : (cotizacion.fecha ? formatearFecha(cotizacion.fecha) : 'Sin fecha') }}</td>
+            <td>{{ cotizacion.numeroSolicitud || 'SOL-' + (cotizacion.idSolicitudCotizacion || cotizacion.id || 'N/A') }}</td>
+            <td>
+              <div>
+                <strong>{{ cotizacion.nombreProveedor }}</strong>
+                <br>
+                <small class="text-muted">RUC: {{ cotizacion.rucProveedor }}</small>
+              </div>
+            </td>
+            <td class="text-right">
+              <strong class="text-success">{{ formatearMoneda(cotizacion.montoTotal, cotizacion.moneda) }}</strong>
+            </td>
+            <td class="text-center">{{ cotizacion.plazoEntrega }} días</td>
+            <td class="text-center">
+              <span class="badge bg-dark" *ngIf="tieneOrdenFromMap(cotizacion.id!)">
+                <i class="pi pi-check"></i> {{ getNumeroOrdenFromMap(cotizacion.id!) }}
+              </span>
+              <span class="badge bg-warning" *ngIf="!tieneOrdenFromMap(cotizacion.id!)">
+                <i class="pi pi-clock"></i> Pendiente
+              </span>
+            </td>
+            <td>
+              <div class="d-flex gap-1">
+                <button pButton type="button" class="p-button-sm p-button-info" 
+                  (click)="verDetalle(cotizacion)" pTooltip="Ver Detalle">
+                  <i class="bx bx-show"></i>
+                </button>
+                <button pButton type="button" class="p-button-sm p-button-success" 
+                  (click)="verSolicitudGenerada(cotizacion)" 
+                  [disabled]="!tieneOrdenFromMap(cotizacion.id!)"
+                  pTooltip="Ver Solicitud de Compra">
+                  <i class="bx bx-file"></i>
+                </button>
+                <button pButton type="button" class="p-button-sm p-button-secondary" 
+                  (click)="descargarCotizacion(cotizacion)" pTooltip="Descargar PDF">
+                  <i class="bx bx-download"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="9" class="text-center">
+              <p class="text-muted my-3">
+                <i class="pi pi-trophy" style="font-size: 2rem;"></i>
+                <br>
+                No hay cotizaciones ganadoras registradas
+              </p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- ================================================ -->
+    <!-- TAB 4: COMPARACIÓN DE COTIZACIONES               -->
     <!-- ================================================ -->
     <div *ngIf="tabActiva === 'COMPARACION'">
       <div *ngIf="solicitudCotizacionSeleccionada && cotizacionesComparativo.length > 0">

@@ -24,6 +24,8 @@ import {
   Usuario,
   SolicitudCotizacion,
   DetalleSolicitudCotizacion,
+  OrdenCompra,
+  DetalleOrdenCompra,
 } from '@/app/shared/interfaces/Tables';
 
 @Component({
@@ -48,7 +50,7 @@ export class CotizacionesComponent implements OnInit {
   @ViewChild('dt') table!: Table;
   
   // Tabs
-  tabActiva: 'SOLICITUDES' | 'COTIZACIONES' | 'COMPARACION' = 'SOLICITUDES';
+  tabActiva: 'SOLICITUDES' | 'COTIZACIONES' | 'GANADORES' | 'COMPARACION' = 'SOLICITUDES';
   
   // Loading
   loading: boolean = false;
@@ -57,6 +59,10 @@ export class CotizacionesComponent implements OnInit {
   solicitudesCotizacion: SolicitudCotizacion[] = [];
   cotizaciones: Cotizacion[] = [];
   solicitudesCompra: SolicitudCompra[] = [];
+  cotizacionesGanadoras: Cotizacion[] = [];
+  
+  // Mapa para almacenar los números de orden de las cotizaciones ganadoras
+  numerosOrden: Map<number, string> = new Map();
   
   // Lista de proveedores del ERP
   proveedores: any[] = [];
@@ -112,6 +118,28 @@ export class CotizacionesComponent implements OnInit {
   totalSolicitudesPendientes = 0;
   totalSolicitudesEnRevision = 0;
   totalSolicitudesCerradas = 0;
+
+  // Getters para estadísticas de cotizaciones ganadoras
+  get totalMontoGanadoras(): number {
+    return this.cotizacionesGanadoras.reduce((sum, c) => sum + c.montoTotal, 0);
+  }
+
+  get totalSolicitudesGeneradas(): number {
+    // Este valor se actualizará en actualizarCotizacionesGanadoras
+    return this._totalSolicitudesGeneradas;
+  }
+
+  get promedioPlazoEntrega(): number {
+    if (this.cotizacionesGanadoras.length === 0) return 0;
+    const total = this.cotizacionesGanadoras.reduce((sum, c) => {
+      const plazo = c.plazoEntrega || 0;
+      return sum + (isNaN(plazo) ? 0 : plazo);
+    }, 0);
+    return Math.round(total / this.cotizacionesGanadoras.length);
+  }
+
+  // Variable privada para almacenar el total de solicitudes generadas
+  private _totalSolicitudesGeneradas = 0;
 
   // Modal comparativo
   modalComparativoAbierto = false;
@@ -237,11 +265,34 @@ export class CotizacionesComponent implements OnInit {
         cotizacionesBackend = response;
       }
       
+      // Obtener cotizaciones locales para preservar estados
+      const cotizacionesLocales = await this.dexieService.showCotizaciones();
+      const mapaEstadosLocales = new Map();
+      
+      // Crear mapa de estados locales
+      for (const local of cotizacionesLocales) {
+        if (local.id) {
+          mapaEstadosLocales.set(local.id, {
+            estado: local.estado,
+            seleccionada: local.seleccionada,
+            usuarioEvalua: local.usuarioEvalua,
+            fechaEvaluacion: local.fechaEvaluacion,
+            motivoRechazo: local.motivoRechazo
+          });
+        }
+      }
+      
       // Limpiar y guardar en Dexie
       await this.dexieService.cotizaciones.clear();
       
-      // Guardar cada cotización
+      // Guardar cada cotización preservando estados locales
       for (const cot of cotizacionesBackend) {
+        console.log('📋 Cotización del backend:', cot);
+        console.log('🔍 Propiedades:', Object.keys(cot));
+        console.log('📝 numeroCotizacion:', cot.numeroCotizacion);
+        console.log('📝 numeroSolicitud:', cot.numeroSolicitud);
+        console.log('📝 id:', cot.id);
+        
         // Parsear detalles si vienen como string
         let detalleParsed = [];
         if (cot.detalles) {
@@ -257,38 +308,65 @@ export class CotizacionesComponent implements OnInit {
           }
         }
         
-        const cotizacionDexie: Cotizacion = {
+        // Crear objeto de cotización
+        // Generar número de cotización si no existe
+        const numeroCotizacionGenerado = cot.numeroCotizacion || 
+          (cot.numeroSolicitud ? `COT-${cot.numeroSolicitud}` : `COT-${cot.id}`);
+        
+        // Log para depurar fecha
+        if (!cot.fecha || cot.fecha === '') {
+          console.warn('⚠️ Sin fecha para cotización ID:', cot.id);
+        }
+        
+        const cotizacion: Cotizacion = {
           id: cot.id,
-          numeroCotizacion: cot.idcotizacion,
-          solicitudCompraId: cot.solicitudCompraId || 0, // Required property
-          numeroSolicitud: cot.idsolicitud,
+          numeroCotizacion: numeroCotizacionGenerado,
+          fecha: cot.fecha || new Date().toISOString(), // Usar fecha actual si no viene
+          fechaVencimiento: cot.fechaVencimiento || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 días por defecto
           proveedor: cot.proveedor,
           nombreProveedor: cot.nombreProveedor,
           rucProveedor: cot.rucProveedor,
-          fecha: cot.fechaCotizacion,
-          fechaVencimiento: cot.fechaValidez,
-          montoTotal: cot.montoTotal || 0,
+          montoTotal: cot.montoTotal,
           moneda: cot.moneda,
-          plazoEntrega: cot.tiempoEntrega || 0, // Required as number
-          condicionesPago: cot.condicionesPago || '', // Required property
-          validezOferta: cot.validezOferta || 0, // Required property
+          plazoEntrega: cot.plazoEntrega,
+          lugarEntrega: cot.lugarEntrega,
           formaPago: cot.formaPago,
-          lugarEntrega: cot.lugarEntrega || '', // Required property
-          observaciones: cot.observaciones,
+          condicionesPago: cot.condicionesPago,
+          garantia: cot.garantia,
+          validezOferta: cot.validezOferta,
+          estado: cot.estado || 'RECIBIDA', // Estado del backend
+          seleccionada: cot.seleccionada || false,
+          usuarioEvalua: cot.usuarioEvalua,
+          fechaEvaluacion: cot.fechaEvaluacion,
+          motivoRechazo: cot.motivoRechazo,
           detalle: detalleParsed,
-          estado: cot.estado || 'RECIBIDA', // Required with default
-          seleccionada: cot.seleccionada || false, // Required property
-          usuarioRegistra: cot.usuario,
-          idSolicitudCotizacion: cot.idSolicitudCotizacion
+          solicitudCompraId: cot.solicitudCompraId,
+          numeroSolicitud: cot.numeroSolicitud,
+          idSolicitudCotizacion: cot.idSolicitudCotizacion,
+          usuarioRegistra: cot.usuarioRegistra
         };
         
-        await this.dexieService.saveCotizacion(cotizacionDexie);
+        // Log para depurar
+        if (cot.numeroCotizacion === 'GANADORA' || cot.numeroCotizacion === 'ganadora') {
+          console.warn('⚠️ El backend está devolviendo "GANADORA" en numeroCotizacion para el ID:', cot.id);
+          console.warn('📋 Objeto completo del backend:', cot);
+        }
+        
+        // Restaurar estados locales si existen
+        const estadoLocal = mapaEstadosLocales.get(cot.id);
+        if (estadoLocal) {
+          cotizacion.estado = estadoLocal.estado;
+          cotizacion.seleccionada = estadoLocal.seleccionada;
+          cotizacion.usuarioEvalua = estadoLocal.usuarioEvalua;
+          cotizacion.fechaEvaluacion = estadoLocal.fechaEvaluacion;
+          cotizacion.motivoRechazo = estadoLocal.motivoRechazo;
+        }
+        
+        await this.dexieService.saveCotizacion(cotizacion);
       }
       
-      // Cargar desde Dexie para tener los datos consistentes
       this.cotizaciones = await this.dexieService.showCotizaciones();
       console.log('📊 Cotizaciones guardadas en Dexie:', this.cotizaciones.length);
-      
     } catch (error) {
       console.error('❌ Error al cargar cotizaciones desde backend:', error);
       // Si hay error, cargar desde Dexie como fallback
@@ -297,14 +375,67 @@ export class CotizacionesComponent implements OnInit {
     }
     
     this.actualizarContadores();
+    this.actualizarCotizacionesGanadoras();
+  }
+
+  async cambiarTabGanadores() {
+    console.log('🔄 Cambiando al tab de cotizaciones ganadoras...');
+    // Recargar datos antes de cambiar al tab
+    await this.cargarCotizaciones();
+    await this.actualizarCotizacionesGanadoras();
+    // Cambiar al tab
+    this.tabActiva = 'GANADORES';
+  }
+
+  async onTabChange(event: any) {
+    // Si se cambia al tab de ganadores, actualizar los datos
+    if (event.index === 3) { // Tab GANADORES
+      console.log('🔄 Cambiando al tab de cotizaciones ganadoras...');
+      await this.cargarCotizaciones();
+      this.actualizarCotizacionesGanadoras();
+    }
+  }
+
+  async actualizarCotizacionesGanadoras() {
+    console.log('🔍 Actualizando cotizaciones ganadoras...');
+    console.log('Total de cotizaciones:', this.cotizaciones.length);
+    
+    // Filtrar cotizaciones seleccionadas como ganadoras
+    this.cotizacionesGanadoras = this.cotizaciones.filter(c => c.estado === 'SELECCIONADA');
+    console.log('Cotizaciones con estado SELECCIONADA:', this.cotizacionesGanadoras.length);
+    
+    // Limpiar el mapa
+    this.numerosOrden.clear();
+    
+    // Verificar cuántas tienen solicitud generada y llenar el mapa
+    let conSolicitud = 0;
+    const solicitudes = await this.dexieService.showSolicitudesCompra();
+    console.log('Total de solicitudes en Dexie:', solicitudes.length);
+    
+    for (const cotizacion of this.cotizacionesGanadoras) {
+      console.log('Buscando solicitud para cotización:', cotizacion.numeroCotizacion);
+      // Buscar solicitud por número de solicitud o por coincidencia en observaciones
+      const solicitud = solicitudes.find(s => 
+        s.numeroSolicitud === cotizacion.numeroSolicitud ||
+        (s.observaciones && s.observaciones.includes(cotizacion.numeroCotizacion))
+      );
+      if (solicitud) {
+        console.log('✅ Solicitud encontrada:', solicitud.numeroSolicitud);
+        conSolicitud++;
+        this.numerosOrden.set(cotizacion.id!, solicitud.numeroSolicitud);
+      } else {
+        console.log('❌ No se encontró solicitud para la cotización');
+      }
+    }
+    
+    this._totalSolicitudesGeneradas = conSolicitud;
+    console.log('Total de solicitudes generadas:', this._totalSolicitudesGeneradas);
   }
 
   async cargarSolicitudesCompra() {
-    const todas = await this.dexieService.showSolicitudesCompra();
-    // Filtrar solo solicitudes enviadas o aprobadas
-    this.solicitudesCompra = todas.filter(
-      (s: SolicitudCompra) => s.estado === 'ENVIADA' || s.estado === 'APROBADA'
-    );
+    // Cargar todas las solicitudes para poder encontrar la asociada a la cotización
+    this.solicitudesCompra = await this.dexieService.showSolicitudesCompra();
+    console.log('📊 Solicitudes de compra cargadas:', this.solicitudesCompra.length);
   }
 
   async cargarSolicitudesCotizacion() {
@@ -753,40 +884,285 @@ export class CotizacionesComponent implements OnInit {
     }
   }
 
+  async generarSolicitudDesdeCotizacion(cotizacion: Cotizacion) {
+    try {
+      // Validar que la cotización tenga detalles
+      if (!cotizacion.detalle || cotizacion.detalle.length === 0) {
+        console.error('La cotización no tiene detalles');
+        return;
+      }
+
+      // Verificar que no exista ya una solicitud para esta cotización
+      const solicitudes = await this.dexieService.showSolicitudesCompra();
+      const solicitudExistente = solicitudes.find(s => 
+        s.numeroSolicitud === cotizacion.numeroSolicitud && 
+        s.estado !== 'RECHAZADA'
+      );
+      
+      if (solicitudExistente) {
+        console.log('Ya existe una solicitud para esta cotización');
+        return;
+      }
+
+      // Generar número de solicitud
+      const numeroSolicitud = this.generarNumeroSolicitud();
+
+      // Crear detalles de la solicitud
+      const detallesSolicitud: DetalleSolicitudCompra[] = cotizacion.detalle.map(det => ({
+        id: 0, // Se asignará automáticamente por Dexie
+        solicitudCompraId: 0, // Se actualizará después de crear la solicitud
+        codigo: det.codigo,
+        descripcion: det.descripcion,
+        cantidad: det.cantidad,
+        cantidadAprobada: det.cantidad,
+        cantidadAtendida: 0,
+        unidadMedida: det.unidadMedida || 'UND',
+        precioReferencial: det.precioUnitario || 0,
+        montoReferencial: (det.precioUnitario || 0) * det.cantidad,
+        proyecto: '', // Se asignará después de obtener del requerimiento
+        ceco: '', // Se asignará después de obtener del requerimiento
+        turno: '', // No se usa en compras
+        labor: '', // No se usa en compras
+        especificacionesTecnicas: det.especificaciones || '',
+        estado: 'PENDIENTE',
+      }));
+
+      // Calcular montos totales
+      const montoEstimado = detallesSolicitud.reduce((sum, d) => sum + (d.montoReferencial || 0), 0);
+
+      // Obtener datos del requerimiento original (almacen, proyecto, CECCO)
+      let almacen = '001'; // Valor por defecto
+      let idAlmacen = 1;
+      let proyecto = this.usuario.idProyecto || '';
+      let ceco = '';
+      
+      console.log('🔍 Datos iniciales - Cotización:', {
+        id: cotizacion.id,
+        idSolicitudCotizacion: cotizacion.idSolicitudCotizacion,
+        numeroSolicitud: cotizacion.numeroSolicitud
+      });
+      
+      if (cotizacion.idSolicitudCotizacion) {
+        // Buscar la solicitud de cotización para obtener la consolidación
+        const solicitudCotizacion = await this.dexieService.solicitudesCotizacion
+          .where('id')
+          .equals(cotizacion.idSolicitudCotizacion)
+          .first();
+        
+        console.log('📋 Solicitud de cotización encontrada:', solicitudCotizacion);
+        
+        if (solicitudCotizacion && solicitudCotizacion.idConsolidacion) {
+          console.log('📦 ID Consolidación:', solicitudCotizacion.idConsolidacion);
+          
+          try {
+            // Obtener la consolidación para acceder a sus detalles
+            const consolidacion = await this.consolidacionService.obtenerConsolidacion(solicitudCotizacion.idConsolidacion);
+            console.log('📊 Consolidación obtenida:', consolidacion);
+            
+            if (consolidacion && consolidacion.detalles && consolidacion.detalles.length > 0) {
+              // Obtener el primer detalle para encontrar el origen
+              const primerDetalle = consolidacion.detalles[0];
+              console.log('📝 Primer detalle:', primerDetalle);
+              
+              if (primerDetalle.origenes && primerDetalle.origenes.length > 0) {
+                const origen = primerDetalle.origenes[0];
+                console.log('🔎 Origen encontrado:', origen);
+                
+                // Si el origen es un requerimiento de consumo, obtener sus detalles
+                if (origen.tipoOrigen === 'CONSUMO' && origen.idOrigen) {
+                  console.log('🔍 Buscando datos del requerimiento ID:', origen.idOrigen);
+                  
+                  const detalleRequerimiento = await this.consolidacionService.obtenerDetalleRequerimiento(origen.idOrigen);
+                  console.log('📄 Detalle del requerimiento completo:', detalleRequerimiento);
+                  console.log('📋 Campos disponibles:', Object.keys(detalleRequerimiento));
+                  
+                  if (detalleRequerimiento.idalmacen) {
+                    almacen = detalleRequerimiento.idalmacen;
+                    idAlmacen = parseInt(detalleRequerimiento.idalmacen) || 1;
+                    console.log('✅ Almacén encontrado:', almacen);
+                  } else {
+                    console.warn('⚠️ No se encontró campo idalmacen en el detalle del requerimiento');
+                  }
+                  
+                  // Los campos de proyecto y CECO están en el array detalle
+                  if (detalleRequerimiento.detalle && detalleRequerimiento.detalle.length > 0) {
+                    const primerDetalle = detalleRequerimiento.detalle[0];
+                    console.log('📝 Primer detalle del requerimiento:', primerDetalle);
+                    
+                    // Buscar proyecto en varios campos posibles
+                    proyecto = primerDetalle.idproyecto || 
+                              primerDetalle.proyecto || 
+                              primerDetalle.nombreProyecto ||
+                              primerDetalle.idproyectoDescripcion ||
+                              this.usuario.idProyecto || '';
+                    
+                    if (proyecto) {
+                      console.log('✅ Proyecto encontrado:', proyecto);
+                    } else {
+                      console.warn('⚠️ No se encontró campo de proyecto en el detalle. Campos disponibles:', Object.keys(primerDetalle));
+                    }
+                    
+                    // Buscar CECO en varios campos posibles
+                    ceco = primerDetalle.idcentrocosto || 
+                          primerDetalle.centroCosto || 
+                          primerDetalle.nombreCentroCosto ||
+                          primerDetalle.idcentrocostoDescripcion ||
+                          primerDetalle.ceco;
+                    
+                    if (ceco) {
+                      console.log('✅ CECO encontrado:', ceco);
+                    } else {
+                      console.warn('⚠️ No se encontró campo de CECO en el detalle. Campos disponibles:', Object.keys(primerDetalle));
+                    }
+                  } else {
+                    console.warn('⚠️ No se encontró array detalle en el requerimiento o está vacío');
+                  }
+                } else {
+                  console.warn('⚠️ El origen no es de tipo CONSUMO o no tiene idOrigen');
+                }
+              } else {
+                console.warn('⚠️ El detalle no tiene orígenes');
+              }
+            } else {
+              console.warn('⚠️ La consolidación no tiene detalles');
+            }
+          } catch (error) {
+            console.error('❌ Error al obtener datos de la consolidación:', error);
+            // Se mantienen los valores por defecto
+          }
+        } else {
+          console.warn('⚠️ No se encontró consolidación asociada a la solicitud de cotización');
+        }
+      } else {
+        console.warn('⚠️ La cotización no tiene idSolicitudCotizacion');
+      }
+
+      // Actualizar los detalles con los datos obtenidos
+      detallesSolicitud.forEach(det => {
+        det.proyecto = proyecto;
+        det.ceco = ceco;
+      });
+
+      // Mostrar valores finales antes de crear la solicitud
+      console.log('📋 Valores finales para la solicitud:', {
+        almacen,
+        idAlmacen,
+        proyecto,
+        ceco,
+        cantidadDetalles: detallesSolicitud.length
+      });
+
+      // Crear la solicitud de compra
+      const solicitudCompra: SolicitudCompra = {
+        numeroSolicitud,
+        fecha: new Date().toISOString(),
+        tipo: 'DIRECTA', // Tipo válido según la interfaz
+        prioridad: 'NORMAL',
+        almacen,
+        usuarioSolicita: this.usuario.documentoidentidad,
+        nombreSolicita: this.usuario.nombre || this.usuario.usuario,
+        estado: 'GENERADA',
+        observaciones: `Solicitud generada automáticamente desde la cotización ganadora ${cotizacion.numeroCotizacion} del proveedor ${cotizacion.nombreProveedor}.`,
+        detalle: detallesSolicitud,
+        montoEstimado,
+        moneda: cotizacion.moneda || 'PEN',
+        fechaRequerida: new Date(Date.now() + (cotizacion.plazoEntrega || 15) * 24 * 60 * 60 * 1000).toISOString(),
+      };
+
+      // Guardar la solicitud en Dexie
+      const solicitudId = await this.dexieService.saveSolicitudCompra(solicitudCompra);
+
+      // Actualizar los detalles con el ID de la solicitud, almacen, proyecto y CECO
+      for (const det of detallesSolicitud) {
+        // Crear un nuevo objeto sin la propiedad id para que Dexie lo asigne automáticamente
+        const detalleParaGuardar = {
+          ...det,
+          solicitudCompraId: solicitudId as number,
+          almacen,
+          idAlmacen,
+          proyecto, // Asignar el proyecto obtenido del requerimiento
+          ceco // Asignar el CECO obtenido del requerimiento
+        };
+        delete (detalleParaGuardar as any).id;
+        await this.dexieService.detalleSolicitudCompra.add(detalleParaGuardar);
+      }
+
+      console.log('✅ Solicitud de compra generada:', numeroSolicitud);
+      
+      // Mostrar mensaje de éxito
+      this.alertService.showAlert(
+        'Éxito',
+        `Solicitud de Compra ${numeroSolicitud} generada automáticamente desde la cotización seleccionada.\n\nLa solicitud está lista para enviar a aprobación.`,
+        'success'
+      );
+
+    } catch (error) {
+      console.error('Error al generar solicitud desde cotización:', error);
+      this.alertService.showAlert(
+        'Error',
+        'No se pudo generar la solicitud de compra automáticamente.',
+        'error'
+      );
+    }
+  }
+
+  generarNumeroSolicitud(): string {
+    const fecha = new Date();
+    const año = fecha.getFullYear();
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const hora = String(fecha.getHours()).padStart(2, '0');
+    const min = String(fecha.getMinutes()).padStart(2, '0');
+    const seg = String(fecha.getSeconds()).padStart(2, '0');
+    return `SC-${año}${mes}${dia}-${hora}${min}${seg}`;
+  }
+
+  generarNumeroOrden(): string {
+    const fecha = new Date();
+    const año = fecha.getFullYear();
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const hora = String(fecha.getHours()).padStart(2, '0');
+    const min = String(fecha.getMinutes()).padStart(2, '0');
+    const seg = String(fecha.getSeconds()).padStart(2, '0');
+    return `OC-${año}${mes}${dia}-${hora}${min}${seg}`;
+  }
+
   async seleccionarCotizacion(cotizacion: Cotizacion) {
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
-      '¿Desea seleccionar esta cotización como ganadora?',
+      '¿Desea seleccionar esta cotización como ganadora y generar la solicitud de compra automáticamente?',
       'info'
     );
 
     if (!confirmacion) return;
 
     try {
+      console.log('🏆 Seleccionando cotización ganadora:', cotizacion.numeroCotizacion);
+      
       // Marcar como seleccionada
       cotizacion.estado = 'SELECCIONADA';
       cotizacion.seleccionada = true;
       cotizacion.usuarioEvalua = this.usuario.documentoidentidad;
       cotizacion.fechaEvaluacion = new Date().toISOString();
-
+      
+      console.log('📝 Cotización actualizada - Estado:', cotizacion.estado);
+      
       await this.dexieService.saveCotizacion(cotizacion);
+      console.log('✅ Cotización guardada en Dexie');
 
-      // Actualizar solicitud de compra a EN_COTIZACION
-      const solicitud = this.solicitudesCompra.find(
-        (s) => s.id === cotizacion.solicitudCompraId
-      );
-      if (solicitud) {
-        solicitud.estado = 'EN_COTIZACION';
-        await this.dexieService.saveSolicitudCompra(solicitud);
-      }
+      // Generar solicitud de compra automáticamente
+      await this.generarSolicitudDesdeCotizacion(cotizacion);
+      console.log('✅ Solicitud de compra generada');
 
-      this.alertService.showAlert(
-        'Éxito',
-        'Cotización seleccionada correctamente.',
-        'success'
-      );
-
+      console.log('🔄 Recargando cotizaciones...');
       await this.cargarCotizaciones();
+      console.log('📊 Total de cotizaciones después de recargar:', this.cotizaciones.length);
+      
+      this.actualizarCotizacionesGanadoras();
+      
+      // Cambiar al tab de cotizaciones ganadoras
+      this.tabActiva = 'GANADORES';
     } catch (error) {
       console.error('Error al seleccionar cotización:', error);
       this.alertService.showAlert(
@@ -912,13 +1288,25 @@ export class CotizacionesComponent implements OnInit {
   }
 
   formatearFecha(fecha: string): string {
-    if (!fecha) return '-';
-    const date = new Date(fecha);
-    return date.toLocaleDateString('es-PE', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
+    if (!fecha || fecha === '' || fecha === null) return 'Sin fecha';
+    
+    try {
+      const date = new Date(fecha);
+      // Verificar si la fecha es válida
+      if (isNaN(date.getTime())) {
+        console.warn('⚠️ Fecha inválida:', fecha);
+        return 'Fecha inválida';
+      }
+      
+      return date.toLocaleDateString('es-PE', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+    } catch (error) {
+      console.error('❌ Error al formatear fecha:', fecha, error);
+      return 'Error fecha';
+    }
   }
 
   formatearMoneda(monto: number, moneda: string = 'PEN'): string {
@@ -1317,7 +1705,7 @@ export class CotizacionesComponent implements OnInit {
   async seleccionarProveedorGanador(cotizacion: Cotizacion) {
     const confirmacion = await this.alertService.showConfirm(
       'Confirmación',
-      `¿Desea seleccionar a ${cotizacion.nombreProveedor} como proveedor ganador?`,
+      `¿Desea seleccionar a ${cotizacion.nombreProveedor} como proveedor ganador y generar la orden de compra automáticamente?`,
       'info'
     );
 
@@ -1339,30 +1727,35 @@ export class CotizacionesComponent implements OnInit {
 
       for (const otra of otrasCotizaciones) {
         otra.estado = 'RECHAZADA';
-        otra.motivoRechazo = 'Se seleccionó otra cotización';
+        otra.motivoRechazo = 'No seleccionada como proveedor ganador';
+        otra.usuarioEvalua = this.usuario.documentoidentidad;
+        otra.fechaEvaluacion = new Date().toISOString();
         await this.dexieService.saveCotizacion(otra);
       }
 
-      // Cerrar solicitud
-      if (this.solicitudCotizacionSeleccionada) {
-        this.solicitudCotizacionSeleccionada.estado = 'CERRADA';
-        // TODO: Guardar solicitud actualizada cuando esté disponible el servicio
-      }
+      // Generar orden de compra automáticamente
+      await this.generarSolicitudDesdeCotizacion(cotizacion);
+
+      // Cerrar modal de comparación
+      this.modalComparativoAbierto = false;
+
+      // Recargar datos
+      await this.cargarCotizaciones();
+      this.actualizarCotizacionesGanadoras();
+      
+      // Cambiar al tab de cotizaciones ganadoras
+      this.tabActiva = 'GANADORES';
 
       this.alertService.showAlert(
         'Éxito',
-        'Proveedor seleccionado correctamente.',
+        `Proveedor ${cotizacion.nombreProveedor} seleccionado y Solicitud de Compra generada correctamente.`,
         'success'
       );
-
-      await this.cargarCotizaciones();
-      await this.cargarSolicitudesCotizacion();
-      this.tabActiva = 'COTIZACIONES';
     } catch (error) {
-      console.error('Error al seleccionar proveedor:', error);
+      console.error('Error al seleccionar proveedor ganador:', error);
       this.alertService.showAlert(
         'Error',
-        'Ocurrió un error al seleccionar el proveedor.',
+        'Ocurrió un error al seleccionar el proveedor ganador.',
         'error'
       );
     }
@@ -1457,10 +1850,26 @@ export class CotizacionesComponent implements OnInit {
    * Abre la comparación por solicitud y marca como EN_EVALUACION
    */
   async abrirComparacionPorSolicitudYEvaluar(solicitud: SolicitudCotizacion) {
+    console.log('🔄 Abriendo comparación para solicitud:', solicitud.noSolicitud);
+    console.log('📋 ID Solicitud:', solicitud.id);
+    
     this.solicitudCotizacionSeleccionada = solicitud;
+    
+    // Filtrar cotizaciones por idSolicitudCotizacion o por numeroSolicitud
     this.cotizacionesComparativo = this.cotizaciones.filter(
-      (c) => c.numeroSolicitud === solicitud.noSolicitud
+      (c) => c.idSolicitudCotizacion === solicitud.id || 
+             c.numeroSolicitud === solicitud.noSolicitud ||
+             (solicitud.noSolicitud && c.numeroSolicitud && c.numeroSolicitud.includes(solicitud.noSolicitud))
     );
+    
+    console.log('📊 Cotizaciones para comparación:', this.cotizacionesComparativo.length);
+    console.log('📝 Detalle:', this.cotizacionesComparativo.map(c => ({
+      id: c.id,
+      numeroCotizacion: c.numeroCotizacion,
+      numeroSolicitud: c.numeroSolicitud,
+      idSolicitudCotizacion: c.idSolicitudCotizacion,
+      proveedor: c.nombreProveedor
+    })));
 
     // Marcar todas como EN_EVALUACION si están en RECIBIDA
     for (const cot of this.cotizacionesComparativo) {
@@ -1471,6 +1880,191 @@ export class CotizacionesComponent implements OnInit {
     }
 
     this.tabActiva = 'COMPARACION';
-    await this.cargarCotizaciones();
+    // No recargar aquí para no perder los datos
+  }
+
+  // Métodos para cotizaciones ganadoras
+  getNumeroOrdenFromMap(cotizacionId: number): string {
+    return this.numerosOrden.get(cotizacionId) || '';
+  }
+
+  tieneOrdenFromMap(cotizacionId: number): boolean {
+    return this.numerosOrden.has(cotizacionId);
+  }
+
+  async verResumenGanadoras() {
+    const resumen = `
+RESUMEN DE COTIZACIONES GANADORAS
+================================
+
+Total de cotizaciones ganadoras: ${this.cotizacionesGanadoras.length}
+Monto total acumulado: ${this.formatearMoneda(this.totalMontoGanadoras, 'PEN')}
+Solicitudes generadas: ${this.totalSolicitudesGeneradas}
+Plazo promedio de entrega: ${this.promedioPlazoEntrega} días
+
+Proveedores seleccionados:
+${this.cotizacionesGanadoras.map(c => `- ${c.nombreProveedor} (${c.numeroCotizacion})`).join('\n')}
+    `;
+    
+    this.alertService.showAlert('Resumen de Cotizaciones Ganadoras', resumen, 'info');
+  }
+
+  async verSolicitudGenerada(cotizacion: Cotizacion) {
+    try {
+      const solicitudes = await this.dexieService.showSolicitudesCompra();
+      // Buscar solicitud por número de solicitud o por coincidencia en observaciones
+      const solicitud = solicitudes.find(s => 
+        s.numeroSolicitud === cotizacion.numeroSolicitud ||
+        (s.observaciones && s.observaciones.includes(cotizacion.numeroCotizacion))
+      );
+      
+      if (solicitud) {
+        // Extraer nombre del proveedor desde las observaciones
+        const proveedorMatch = solicitud.observaciones?.match(/proveedor\s+([^\.]+)/i);
+        const nombreProveedor = proveedorMatch ? proveedorMatch[1] : 'No especificado';
+        
+        this.alertService.showAlert(
+          'Solicitud de Compra Generada',
+          `Número: ${solicitud.numeroSolicitud}\n` +
+          `Fecha: ${this.formatearFecha(solicitud.fecha)}\n` +
+          `Proveedor: ${nombreProveedor}\n` +
+          `Monto Estimado: ${this.formatearMoneda(solicitud.montoEstimado || 0, solicitud.moneda || 'PEN')}\n` +
+          `Estado: ${solicitud.estado}`,
+          'success'
+        );
+      } else {
+        this.alertService.showAlert('Información', 'No se encontró la solicitud de compra asociada', 'warning');
+      }
+    } catch (error) {
+      console.error('Error al buscar solicitud:', error);
+      this.alertService.showAlert('Error', 'Ocurrió un error al buscar la solicitud de compra', 'error');
+    }
+  }
+
+  descargarCotizacion(cotizacion: Cotizacion) {
+    console.log('📥 Generando PDF para cotización');
+    console.log('📋 Objeto cotización completo:', JSON.stringify(cotizacion, null, 2));
+    console.log('📋 Numero de cotización:', cotizacion.numeroCotizacion);
+    console.log('📋 ID de cotización:', cotizacion.id);
+    console.log('📋 Propiedades disponibles:', Object.keys(cotizacion));
+    
+    // Importar jsPDF dinámicamente
+    import('jspdf').then((jsPDF) => {
+      const { jsPDF: JsPDF } = jsPDF;
+      const doc = new JsPDF();
+      
+      // Configurar fuentes
+      doc.setFont('helvetica');
+      
+      // Título
+      doc.setFontSize(20);
+      doc.text('COTIZACION', 105, 20, { align: 'center' });
+      
+      // Información principal
+      doc.setFontSize(12);
+      // Buscar el número real de cotización en diferentes propiedades
+      let numCotizacion = 'N/A';
+      
+      // Intentar obtener desde diferentes propiedades
+      if (cotizacion.numeroCotizacion && 
+          cotizacion.numeroCotizacion !== 'SELECCIONADA' && 
+          cotizacion.numeroCotizacion !== 'GANADORA' && 
+          cotizacion.numeroCotizacion !== 'ganadora' &&
+          !cotizacion.numeroCotizacion.includes('GANADORA')) {
+        numCotizacion = cotizacion.numeroCotizacion;
+      } else if (cotizacion.numeroSolicitud) {
+        // Usar el número de solicitud como referencia
+        numCotizacion = `COT-${cotizacion.numeroSolicitud}`;
+      } else if (cotizacion.id) {
+        // Usar el ID como último recurso
+        numCotizacion = `COT-${cotizacion.id}`;
+      }
+      
+      doc.text(`Numero: ${numCotizacion}`, 20, 40);
+      doc.text(`Fecha: ${this.formatearFecha(cotizacion.fecha || '')}`, 20, 50);
+      doc.text(`Fecha Vencimiento: ${this.formatearFecha(cotizacion.fechaVencimiento || '')}`, 20, 60);
+      doc.text(`Estado: ${cotizacion.estado || 'N/A'}`, 20, 70);
+      
+      // Información del proveedor
+      doc.setFontSize(14);
+      doc.text('DATOS DEL PROVEEDOR', 20, 90);
+      doc.setFontSize(11);
+      doc.text(`RUC: ${cotizacion.rucProveedor || 'N/A'}`, 20, 100);
+      doc.text(`Razon Social: ${cotizacion.nombreProveedor || 'N/A'}`, 20, 110);
+      
+      // Condiciones comerciales
+      doc.setFontSize(14);
+      doc.text('CONDICIONES COMERCIALES', 20, 130);
+      doc.setFontSize(11);
+      doc.text(`Moneda: ${cotizacion.moneda || 'N/A'}`, 20, 140);
+      doc.text(`Monto Total: ${this.formatearMoneda(cotizacion.montoTotal || 0, cotizacion.moneda || '')}`, 20, 150);
+      doc.text(`Plazo de Entrega: ${cotizacion.plazoEntrega || 0} dias`, 20, 160);
+      doc.text(`Lugar de Entrega: ${cotizacion.lugarEntrega || 'N/A'}`, 20, 170);
+      doc.text(`Forma de Pago: ${cotizacion.formaPago || 'N/A'}`, 20, 180);
+      doc.text(`Condiciones de Pago: ${cotizacion.condicionesPago || 'N/A'}`, 20, 190);
+      doc.text(`Validez de Oferta: ${cotizacion.validezOferta || 0} dias`, 20, 200);
+      
+      // Detalles de la cotización
+      let yPosition = 220;
+      doc.setFontSize(14);
+      doc.text('DETALLE DE ITEMS', 20, yPosition);
+      yPosition += 10;
+      
+      doc.setFontSize(10);
+      doc.text('Codigo', 20, yPosition);
+      doc.text('Descripcion', 50, yPosition);
+      doc.text('Cantidad', 130, yPosition);
+      doc.text('Precio Unit.', 150, yPosition);
+      doc.text('Total', 180, yPosition);
+      yPosition += 5;
+      
+      // Línea separadora
+      doc.line(20, yPosition, 190, yPosition);
+      yPosition += 10;
+      
+      // Items del detalle
+      if (cotizacion.detalle && cotizacion.detalle.length > 0) {
+        cotizacion.detalle.forEach((item) => {
+          if (yPosition > 270) {
+            doc.addPage();
+            yPosition = 20;
+          }
+          
+          doc.text(item.codigo || '', 20, yPosition);
+          // Truncar descripción si es muy larga
+          const descripcion = item.descripcion || '';
+          doc.text(descripcion.length > 40 ? descripcion.substring(0, 40) + '...' : descripcion, 50, yPosition);
+          doc.text(item.cantidad?.toString() || '0', 130, yPosition);
+          doc.text(this.formatearMoneda(item.precioUnitario || 0, ''), 150, yPosition);
+          doc.text(this.formatearMoneda((item.precioUnitario || 0) * (item.cantidad || 0), ''), 180, yPosition);
+          yPosition += 8;
+        });
+      }
+      
+      // Pie de página
+      const pageCount = (doc as any).internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.text(`Pagina ${i} de ${pageCount}`, 105, 285, { align: 'center' });
+        doc.text('Generado por Sistema de Logistica - Hass Peru', 105, 290, { align: 'center' });
+      }
+      
+      // Descargar el PDF
+      doc.save(`Cotizacion_${cotizacion.numeroCotizacion}.pdf`);
+      
+      this.alertService.showAlert(
+        'Éxito',
+        `PDF de la cotización ${cotizacion.numeroCotizacion} generado correctamente.`,
+        'success'
+      );
+    }).catch((error) => {
+      console.error('Error al generar PDF:', error);
+      this.alertService.showAlert(
+        'Error',
+        'No se pudo generar el PDF. Asegúrese de tener instalada la librería jsPDF.',
+        'error'
+      );
+    });
   }
 }

@@ -10,35 +10,27 @@
   <!-- Dashboard de Estadísticas -->
   <div class="row mb-4">
     <div class="col-md-3">
-      <div class="card bg-primary text-white">
-        <div class="card-body">
-          <h5 class="card-title">Total Reingresos</h5>
-          <h2 class="mb-0">{{ totalReingresos }}</h2>
-        </div>
+      <div class="status-card status-card-primary">
+        <div class="status-card-number">{{ totalReingresos }}</div>
+        <div class="status-card-label">Total Reingresos</div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card bg-warning text-white">
-        <div class="card-body">
-          <h5 class="card-title">Pendientes</h5>
-          <h2 class="mb-0">{{ reingresosPendientes }}</h2>
-        </div>
+      <div class="status-card status-card-warning">
+        <div class="status-card-number">{{ reingresosPendientes }}</div>
+        <div class="status-card-label">Pendientes</div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card bg-success text-white">
-        <div class="card-body">
-          <h5 class="card-title">Aprobados</h5>
-          <h2 class="mb-0">{{ reingresosAprobados }}</h2>
-        </div>
+      <div class="status-card status-card-success">
+        <div class="status-card-number">{{ reingresosAprobados }}</div>
+        <div class="status-card-label">Aprobados</div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card bg-danger text-white">
-        <div class="card-body">
-          <h5 class="card-title">Rechazados</h5>
-          <h2 class="mb-0">{{ reingresosRechazados }}</h2>
-        </div>
+      <div class="status-card status-card-danger">
+        <div class="status-card-number">{{ reingresosRechazados }}</div>
+        <div class="status-card-label">Rechazados</div>
       </div>
     </div>
   </div>
@@ -178,25 +170,25 @@
             <td>
               <button class="btn btn-sm btn-info me-1" (click)="verDetalle(reingreso)"
                       pTooltip="Ver Detalle">
-                <i class="bi bi-eye"></i>
+                <i class="icon icon-eye"></i>
               </button>
               <button *ngIf="reingreso.estado === 'PENDIENTE'" 
                       class="btn btn-sm btn-success me-1" 
                       (click)="aprobarReingreso(reingreso)"
                       pTooltip="Aprobar y Generar Requerimiento">
-                <i class="bi bi-check-circle"></i>
+                <i class="bx bx-check-circle"></i>
               </button>
               <button *ngIf="reingreso.estado === 'PENDIENTE'" 
                       class="btn btn-sm btn-danger me-1" 
                       (click)="rechazarReingreso(reingreso)"
                       pTooltip="Rechazar">
-                <i class="bi bi-x-circle"></i>
+                <i class="bx bx-x-circle"></i>
               </button>
               <button *ngIf="reingreso.estado !== 'APROBADO'" 
                       class="btn btn-sm btn-secondary" 
                       (click)="anularReingreso(reingreso)"
                       pTooltip="Anular">
-                <i class="bi bi-trash"></i>
+                <i class="bx bx-x"></i>
               </button>
             </td>
           </tr>

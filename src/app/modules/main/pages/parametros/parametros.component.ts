@@ -373,11 +373,22 @@ export class ParametrosComponent implements OnInit {
     if (this.configuracion.idcultivo) {
       console.log('📊 Total de CECOs disponibles:', this.cecos.length);
       console.log('📊 Cultivos disponibles:', this.cultivos.map(c => ({ id: c.id, codigo: c.codigo })));
+      console.log('📊 Total de turnos disponibles:', this.turnos.length);
+      
+      // Mostrar turnos disponibles para depurar
+      if (this.turnos.length > 0) {
+        console.log('📋 Ejemplos de turnos disponibles:');
+        this.turnos.slice(0, 3).forEach((turno, index) => {
+          console.log(`  ${index + 1}. ID: ${turno.id}, idcultivo: "${turno.idcultivo}", codTurno: "${turno.codTurno}", nombreTurno: "${turno.nombreTurno}"`);
+        });
+      }
       
       // Cargar turnos según cultivo (para CONSUMO y TRANSFERENCIA)
       this.filteredTurnos = this.turnos.filter(
         (x: Turno) => x.idcultivo?.trim() === this.configuracion.idcultivo
       );
+      
+      console.log(`🔍 Filtrando turnos para cultivo "${this.configuracion.idcultivo}": ${this.filteredTurnos.length} encontrados`);
       
       // Para COMPRA: cargar CECOs según cultivo
       if (this.configuracion.idTipoItem === 'COMPRA') {
@@ -842,9 +853,15 @@ export class ParametrosComponent implements OnInit {
   async ListarCecos() {
     const cecos = await this.dexieService.showCecos();
     this.cecos = cecos;
-    if (this.cecos.length == 1) {
-      this.configuracion.idceco = this.cecos[0].id;
+    console.log('Cecos: ', cecos);
+    // if (this.cecos.length == 1) {
+    //   this.configuracion.idceco = this.cecos[0].id;
+    //   // this.configuracion.idceco = this.cecos[0].costcenter;
+    // }
+    if (this.cecos.length > 0) {
+    this.configuracion.idceco = this.cecos[0].costcenter;
     }
+    console.log(this.configuracion.idceco);
   }
 
   async ListarTipoGastos() {
@@ -927,7 +944,6 @@ export class ParametrosComponent implements OnInit {
   }
 
   async darProyectoCecos(limpiar = false) {
-
     this.filteredCecos = [];
 
     if (limpiar) {
@@ -1023,7 +1039,8 @@ export class ParametrosComponent implements OnInit {
       } else {
         // Lógica original para otros tipos
         const ceco = this.filteredCecos.find(
-          (e: any) => e.id === this.configuracion.idceco
+          // (e: any) => e.id === this.configuracion.idceco
+          (e: any) => e.costcenter === this.configuracion.idceco
         );
         if (ceco) {
           if (ceco.esinversion === 1) {
@@ -1032,9 +1049,12 @@ export class ParametrosComponent implements OnInit {
             this.filteredProyectos = proyectos;
           }
           const labores = await this.dexieService.showLabores();
+          console.log('labores: ',labores);
           this.filteredLabores = labores.filter(
-            (x: Labor) => x.ceco == this.configuracion.idceco
+            // (x: Labor) => x.ceco == this.configuracion.idceco
+            (x: Labor) => x.ceco === ceco.costcenter
           );
+          console.log('filtro de labores: ', this.filteredLabores);
         }
       }
     }
@@ -1060,7 +1080,6 @@ export class ParametrosComponent implements OnInit {
   }
 
   async filtrarProyectoPorLabor(preservarSeleccion = false) {
-
     console.log('🔥 CULTIVO SELECCIONADO:', this.configuracion.idcultivo);
     console.log('🔥 TURNO SELECCIONADO:', this.configuracion.idturno);
     console.log('🔥 CECO SELECCIONADO:', this.configuracion.idceco);
@@ -1087,7 +1106,8 @@ export class ParametrosComponent implements OnInit {
       this.filteredProyectos = this.proyectos.filter(
         (p: any) =>
           p.ceco?.trim() === this.configuracion.idceco?.trim() &&
-          p.idlabor?.trim() === this.configuracion.idlabor?.trim()
+          p.idlabor?.trim() === this.configuracion.idlabor?.trim() &&
+          p.idcultivo?.trim() === this.configuracion.idcultivo?.trim()
       );
       
       console.log('✅ PROYECTOS FILTRADOS (CECO + LABOR):', this.filteredProyectos.length);
@@ -1229,7 +1249,7 @@ export class ParametrosComponent implements OnInit {
     // const almacenUsuario = almacenes[0];
     // this.almacenes = [almacenes[0]];
     const almentrada = almacenes.find((c: any) => c.almentrada === "S"); 
-    this.almacenes = [almentrada];
+    this.almacenes = almentrada ? [almentrada] : almacenes.slice(0, 1);
 
     // 🔹 Auto-seleccionar si solo hay un almacén
     if (this.almacenes.length === 1 && !this.configuracion.idalmacen) {

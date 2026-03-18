@@ -99,7 +99,7 @@
             </label>
             <div class="col-lg-9">
               <app-dropdown [(ngModel)]="configuracion.idceco" (ngModelChange)="darProyectoInversionLabor(true)"
-                [editable]="true" [data]="filteredCecos" [valueField]="'id'" [optionLabel]="'localname'"
+                [editable]="true" [data]="filteredCecos" [valueField]="'costcenter'" [optionLabel]="'localname'"
                 [textShow]="'Ceco'" [textShow2]="'un ceco'"
                 [disabled]="false"
                 [required]="true">
@@ -159,8 +159,8 @@
                   'is-valid': configuracion.idalmacen
                 }">
                 <option [ngValue]="''" disabled>Seleccione una opción</option>
-                <option *ngFor="let a of almacenes" [ngValue]="a.idalmacen">
-                  {{ a.almacen }}
+                <option *ngFor="let a of almacenes" [ngValue]="a?.idalmacen" [hidden]="!a">
+                  {{ a?.almacen }}
                 </option>
               </select>
             </div>
