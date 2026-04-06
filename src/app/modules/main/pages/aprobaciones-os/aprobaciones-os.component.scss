@@ -1,0 +1,324 @@
+.aprobaciones-os-container {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  min-height: calc(100vh - 100px);
+
+  .header-section {
+    margin-bottom: 2rem;
+
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      i {
+        color: #3498db;
+      }
+    }
+
+    .page-subtitle {
+      color: #7f8c8d;
+      font-size: 0.95rem;
+      margin: 0;
+    }
+  }
+
+  .contadores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+
+    .contador-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      transition: all 0.3s ease;
+      border-left: 4px solid;
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      }
+
+      &.pendientes {
+        border-left-color: #f39c12;
+
+        .contador-icon {
+          background: rgba(243, 156, 18, 0.1);
+          color: #f39c12;
+        }
+      }
+
+      &.aprobadas {
+        border-left-color: #27ae60;
+
+        .contador-icon {
+          background: rgba(39, 174, 96, 0.1);
+          color: #27ae60;
+        }
+      }
+
+      &.rechazadas {
+        border-left-color: #e74c3c;
+
+        .contador-icon {
+          background: rgba(231, 76, 60, 0.1);
+          color: #e74c3c;
+        }
+      }
+
+      &.vencidas {
+        border-left-color: #e67e22;
+
+        .contador-icon {
+          background: rgba(230, 126, 34, 0.1);
+          color: #e67e22;
+        }
+      }
+
+      .contador-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+      }
+
+      .contador-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        .contador-label {
+          font-size: 0.9rem;
+          color: #7f8c8d;
+          font-weight: 500;
+        }
+
+        .contador-valor {
+          font-size: 2rem;
+          font-weight: 700;
+          color: #2c3e50;
+        }
+      }
+    }
+  }
+
+  .filtros-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+    .filtros-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      align-items: end;
+
+      .filtro-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        label {
+          font-weight: 500;
+          color: #2c3e50;
+          font-size: 0.9rem;
+        }
+
+        &.filtro-actions {
+          display: flex;
+          justify-content: flex-end;
+        }
+      }
+    }
+  }
+
+  .acciones-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  .nivel-badge {
+    background: #3498db;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .detalle-os-content {
+    .detalle-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+
+      .detalle-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        &.full-width {
+          grid-column: 1 / -1;
+        }
+
+        label {
+          font-weight: 600;
+          color: #7f8c8d;
+          font-size: 0.85rem;
+        }
+
+        span {
+          color: #2c3e50;
+          font-size: 0.95rem;
+        }
+      }
+    }
+
+    h4 {
+      color: #2c3e50;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #ecf0f1;
+    }
+  }
+
+  .aprobacion-content {
+    p {
+      margin-bottom: 0.5rem;
+      color: #2c3e50;
+    }
+
+    label {
+      font-weight: 500;
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .aprobaciones-os-container {
+    padding: 1rem;
+
+    .contadores-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .filtros-section .filtros-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .detalle-os-content .detalle-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+// PrimeNG overrides
+::ng-deep {
+  .p-tabview {
+    .p-tabview-nav {
+      background: white;
+      border-radius: 8px 8px 0 0;
+      border: none;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+      li {
+        .p-tabview-nav-link {
+          border: none;
+          color: #7f8c8d;
+          font-weight: 500;
+          padding: 1rem 1.5rem;
+
+          &:not(.p-disabled):focus {
+            box-shadow: none;
+          }
+        }
+
+        &.p-highlight .p-tabview-nav-link {
+          background: transparent;
+          color: #3498db;
+          border-bottom: 3px solid #3498db;
+        }
+      }
+    }
+
+    .p-tabview-panels {
+      background: white;
+      border-radius: 0 0 8px 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+  }
+
+  .p-datatable {
+    .p-datatable-thead > tr > th {
+      background: #f8f9fa;
+      color: #2c3e50;
+      font-weight: 600;
+      border: none;
+      padding: 1rem;
+    }
+
+    .p-datatable-tbody > tr {
+      &:hover {
+        background: #f8f9fa;
+      }
+
+      > td {
+        border: none;
+        padding: 1rem;
+        color: #2c3e50;
+      }
+    }
+  }
+
+  .p-dialog {
+    .p-dialog-header {
+      background: #3498db;
+      color: white;
+      border-radius: 8px 8px 0 0;
+      padding: 1.25rem 1.5rem;
+
+      .p-dialog-title {
+        font-weight: 600;
+      }
+
+      .p-dialog-header-icon {
+        color: white;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
+    }
+
+    .p-dialog-content {
+      padding: 1.5rem;
+    }
+
+    .p-dialog-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #ecf0f1;
+    }
+  }
+}

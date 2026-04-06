@@ -312,13 +312,21 @@ export class LayoutComponent {
 
       'maestros/comodities': 'Maestros',
 
+      notificaciones: 'Notificaciones',
+
+      'listas-stock': 'Configuración de Stock',
+
       aprobadores: 'Aprobadores',
 
       parametros: 'Parámetros',
 
       requerimientos: 'Requerimientos',
 
+      'saldo-requerimiento': 'Saldo de Requerimiento',
+
       aprobaciones: 'Aprobaciones',
+
+      'reporte-aprobados': 'Reporte Requerimientos Aprobados',
 
       despachos: 'Despachos',
 
@@ -334,9 +342,19 @@ export class LayoutComponent {
 
       'solicitudes-compra': 'Solicitudes de Compra',
 
+      'reportes-compras': 'Reportes de Compras',
+
       kardex: 'Kardex e Inventario',
 
+      'aprobaciones-oc': 'Aprobación Orden de Compra',
+
       cotizaciones: 'Cotizaciones',
+
+      'solicitudes-servicio': 'Solicitud de Servicio',
+
+      'ordenes-servicio': 'Órden de Servicio',
+
+      'aprobaciones-os': 'Aprobacion de Órdenes de Servicio',
 
       'ordenes-compra': 'Órdenes de Compra',
 

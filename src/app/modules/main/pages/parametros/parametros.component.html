@@ -1,6 +1,51 @@
 <div class="card firstCard">
   <div class="card-body p-0">
 
+        <!-- ITEM / TIPO ITEM -->
+    <div class="row">
+      <div class="col-12 col-lg-6 marginBottom" [hidden]="ocultarItem">
+        <fieldset>
+          <div class="form-group row box-labelFloat">
+            <label class="col-lg-3 col-form-label">
+              <b class="text-danger">*</b> Item
+            </label>
+            <div class="col-lg-9">
+              <select [(ngModel)]="configuracion.iditem" name="item" class="form-select mb-2" [ngClass]="{
+                  'is-invalid': showValidation && !configuracion.iditem,
+                  'is-valid': configuracion.iditem
+                }">
+                <option [ngValue]="''" disabled>Seleccione una opción</option>
+                <option *ngFor="let it of items" [ngValue]="it.id">
+                  {{ it.descripcion }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="col-6 col-lg-6 marginBottom">
+        <fieldset>
+          <div class="form-group row box-labelFloat">
+            <label class="col-lg-3 col-form-label">
+              <b class="text-danger">*</b> Tipo
+            </label>
+            <div class="col-lg-9">
+              <select [(ngModel)]="configuracion.idTipoItem" name="tipoItem" class="form-select mb-2" 
+                 (ngModelChange)="onTipoItemChange()" [ngClass]="{
+                  'is-invalid': showValidation && !configuracion.idTipoItem,
+                  'is-valid': configuracion.idTipoItem
+                }">
+                <option [ngValue]="''" disabled>Seleccione una opción</option>
+                <option *ngFor="let ti of tipoItem" [ngValue]="ti.id">
+                  {{ ti.descripcion }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
     <!-- EMPRESA / FUNDO -->
     <div class="row">
       <div class="col-6 col-lg-6 marginBottom">
@@ -161,52 +206,6 @@
                 <option [ngValue]="''" disabled>Seleccione una opción</option>
                 <option *ngFor="let a of almacenes" [ngValue]="a?.idalmacen" [hidden]="!a">
                   {{ a?.almacen }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-      </div>
-    </div>
-
-    <!-- ITEM / TIPO ITEM -->
-    <div class="row">
-      <div class="col-12 col-lg-6 marginBottom" [hidden]="ocultarItem">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label">
-              <b class="text-danger">*</b> Item
-            </label>
-            <div class="col-lg-9">
-              <select [(ngModel)]="configuracion.iditem" name="item" class="form-select mb-2" [ngClass]="{
-                  'is-invalid': showValidation && !configuracion.iditem,
-                  'is-valid': configuracion.iditem
-                }">
-                <option [ngValue]="''" disabled>Seleccione una opción</option>
-                <option *ngFor="let it of items" [ngValue]="it.id">
-                  {{ it.descripcion }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-      </div>
-
-      <div class="col-6 col-lg-6 marginBottom">
-        <fieldset>
-          <div class="form-group row box-labelFloat">
-            <label class="col-lg-3 col-form-label">
-              <b class="text-danger">*</b> Tipo
-            </label>
-            <div class="col-lg-9">
-              <select [(ngModel)]="configuracion.idTipoItem" name="tipoItem" class="form-select mb-2" 
-                 (ngModelChange)="onTipoItemChange()" [ngClass]="{
-                  'is-invalid': showValidation && !configuracion.idTipoItem,
-                  'is-valid': configuracion.idTipoItem
-                }">
-                <option [ngValue]="''" disabled>Seleccione una opción</option>
-                <option *ngFor="let ti of tipoItem" [ngValue]="ti.id">
-                  {{ ti.descripcion }}
                 </option>
               </select>
             </div>

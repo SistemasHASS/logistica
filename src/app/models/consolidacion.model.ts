@@ -26,6 +26,7 @@ export interface FiltroConsolidacion {
   fechaInicio?: string;
   fechaFin?: string;
   tipo?: string;
+  empresa?: string;
 }
 
 // --- Request para crear consolidación ---
@@ -77,6 +78,7 @@ export interface ConsolidacionDet {
   categoria: string;
   cantidadTotal: number;
   unidadMedida: string;
+  tipo?: string; // 'ITEM' o 'COMMODITY' para identificar si es item o servicio
   origenes?: ConsolidacionOrigen[];
 }
 

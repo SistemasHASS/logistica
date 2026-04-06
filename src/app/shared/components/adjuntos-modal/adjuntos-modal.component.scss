@@ -1,0 +1,218 @@
+// Estilos para el modal de adjuntos
+.adjuntos-modal {
+  .modal-body-content {
+    padding: 0;
+  }
+
+  .upload-zone {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: #0d6efd;
+      background: linear-gradient(135deg, #e7f1ff 0%, #cfe2ff 100%);
+    }
+  }
+
+  .table-container {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+
+    ::ng-deep {
+      .p-datatable {
+        .p-datatable-thead > tr > th {
+          background-color: #f8f9fa;
+          color: #495057;
+          font-weight: 600;
+          border-bottom: 2px solid #dee2e6;
+          padding: 0.75rem;
+        }
+
+        .p-datatable-tbody > tr {
+          transition: background-color 0.2s ease;
+
+          &:hover {
+            background-color: #f8f9fa;
+          }
+
+          > td {
+            padding: 0.75rem;
+            vertical-align: middle;
+          }
+        }
+
+        .p-datatable-scrollable-body {
+          &::-webkit-scrollbar {
+            width: 8px;
+          }
+
+          &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+          }
+
+          &::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+
+            &:hover {
+              background: #555;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .empty-state {
+    padding: 2rem;
+    
+    i {
+      color: #6c757d;
+    }
+  }
+
+  .empty-state-large {
+    padding: 3rem 1rem;
+    
+    i {
+      color: #adb5bd;
+    }
+  }
+
+  .info-panel {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    border-left: 4px solid #0d6efd;
+  }
+
+  .btn-group-sm {
+    .btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    font-weight: 600;
+  }
+
+  // Animaciones
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .table-container {
+    animation: fadeIn 0.3s ease;
+  }
+}
+
+// Estilos para el modal de vista previa
+::ng-deep {
+  .p-dialog {
+    .p-dialog-header {
+      background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+      color: white;
+      border-radius: 8px 8px 0 0;
+
+      .p-dialog-header-icon {
+        color: white;
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+      }
+    }
+
+    .p-dialog-content {
+      padding: 1.5rem;
+    }
+
+    .p-dialog-footer {
+      background-color: #f8f9fa;
+      border-top: 1px solid #dee2e6;
+      padding: 1rem 1.5rem;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .adjuntos-modal {
+    .upload-zone {
+      .row {
+        .col-md-8,
+        .col-md-4 {
+          width: 100%;
+          text-align: left !important;
+          margin-bottom: 0.5rem;
+        }
+      }
+    }
+
+    .table-container {
+      ::ng-deep {
+        .p-datatable {
+          font-size: 0.875rem;
+
+          .p-datatable-thead > tr > th,
+          .p-datatable-tbody > tr > td {
+            padding: 0.5rem;
+          }
+        }
+      }
+    }
+
+    .info-panel {
+      .row {
+        .col-md-6 {
+          width: 100%;
+          text-align: left !important;
+          margin-bottom: 0.25rem;
+        }
+      }
+    }
+  }
+}
+
+// Estilos para inputs dentro de la tabla
+.form-control-sm {
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+  &:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+}
+
+// Tooltips de PrimeNG
+::ng-deep {
+  .p-tooltip {
+    .p-tooltip-text {
+      background-color: #212529;
+      color: white;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+
+    .p-tooltip-arrow {
+      border-top-color: #212529;
+    }
+  }
+}

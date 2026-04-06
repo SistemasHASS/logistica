@@ -35,21 +35,21 @@
       </div>
     </div>
     <div class="stat-card warning">
-      <div class="stat-icon"><i class="icon-send"></i></div>
+      <div class="stat-icon"><i class="bx-send"></i></div>
       <div class="stat-content">
         <span class="stat-value">{{ totalEnviadas }}</span>
         <span class="stat-label">Enviadas</span>
       </div>
     </div>
     <div class="stat-card primary">
-      <div class="stat-icon"><i class="icon-check-circle"></i></div>
+      <div class="stat-icon"><i class="bx-check-circle"></i></div>
       <div class="stat-content">
         <span class="stat-value">{{ totalConfirmadas }}</span>
         <span class="stat-label">Confirmadas</span>
       </div>
     </div>
     <div class="stat-card secondary">
-      <div class="stat-icon"><i class="icon-clock"></i></div>
+      <div class="stat-icon"><i class="bx-clock"></i></div>
       <div class="stat-content">
         <span class="stat-value">{{ totalEnProceso }}</span>
         <span class="stat-label">En Proceso</span>
@@ -250,7 +250,7 @@
   </div>
 
   <!-- FORMULARIO DE ORDEN DE COMPRA -->
-  <div class="content-section" *ngIf="mostrarFormulario">
+  <div class="content-section" *ngIf="mostrarFormulario && ordenCompra">
     <div class="form-container">
       <h3>{{ modoEdicion ? 'Editar' : 'Nueva' }} Orden de Compra</h3>
 

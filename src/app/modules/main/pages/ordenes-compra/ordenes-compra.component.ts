@@ -5,6 +5,7 @@ import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { UserService } from '@/app/shared/services/user.service';
 import { UtilsService } from '@/app/shared/utils/utils.service';
+import { OrdenCompraService } from '@/app/services/orden-compra.service';
 import {
   OrdenCompra,
   DetalleOrdenCompra,
@@ -34,7 +35,7 @@ export class OrdenesCompraComponent implements OnInit {
   editIndex = -1;
 
   // Orden actual
-  ordenCompra: OrdenCompra = this.nuevaOrdenCompra();
+  ordenCompra: OrdenCompra | null = null;
   detalleOrden: DetalleOrdenCompra[] = [];
 
   // Usuario
@@ -78,15 +79,21 @@ export class OrdenesCompraComponent implements OnInit {
   modalSeguimientoAbierto = false;
   ordenSeguimiento: OrdenCompra | null = null;
 
+  // Sistema Híbrido
+  estaConectado = true;
+  sincronizacionPendiente = false;
+
   constructor(
     private dexieService: DexieService,
     private alertService: AlertService,
     private userService: UserService,
-    private utilsService: UtilsService
+    private utilsService: UtilsService,
+    private ordenCompraService: OrdenCompraService
   ) {}
 
   async ngOnInit() {
     await this.cargarUsuario();
+    this.ordenCompra = this.nuevaOrdenCompra();
     await this.cargarOrdenesCompra();
     await this.cargarCotizaciones();
     await this.cargarAlmacenes();
@@ -244,6 +251,15 @@ export class OrdenesCompraComponent implements OnInit {
   }
 
   async guardarOrdenCompra() {
+    if (!this.ordenCompra) {
+      this.alertService.showAlert(
+        'Error',
+        'No hay una orden de compra activa.',
+        'error'
+      );
+      return;
+    }
+
     if (!this.ordenCompra.proveedor) {
       this.alertService.showAlert(
         'Atención',
@@ -289,8 +305,29 @@ export class OrdenesCompraComponent implements OnInit {
 
       this.ordenCompra.detalle = [...this.detalleOrden];
       this.ordenCompra.usuarioGenera = this.usuario.documentoidentidad;
+      this.ordenCompra.estado = 'GENERADA';
 
+      // Guardar localmente primero
       await this.dexieService.saveOrdenCompra(this.ordenCompra);
+
+      // Si está conectado, asignar aprobadores automáticamente
+      if (this.estaConectado && !this.modoEdicion) {
+        try {
+          const respuesta = await this.ordenCompraService
+            .asignarAprobadores(this.ordenCompra.id!, this.ordenCompra.montoTotal)
+            .toPromise();
+
+          if (respuesta?.status === 'success') {
+            console.log('Aprobadores asignados:', respuesta);
+            this.ordenCompra.estadoAprobacion = 'PENDIENTE';
+            this.ordenCompra.requiereAprobacion = true;
+            await this.dexieService.saveOrdenCompra(this.ordenCompra);
+          }
+        } catch (errorAprobacion) {
+          console.warn('Error al asignar aprobadores:', errorAprobacion);
+          // Continuar aunque falle la asignación de aprobadores
+        }
+      }
 
       // Si se generó desde cotización, actualizar solicitud
       if (this.ordenCompra.solicitudCompraId) {
@@ -304,11 +341,12 @@ export class OrdenesCompraComponent implements OnInit {
       }
 
       this.alertService.cerrarModalCarga();
-      this.alertService.showAlert(
-        'Éxito',
-        'Orden de compra guardada correctamente.',
-        'success'
-      );
+      
+      const mensajeExito = this.ordenCompra.requiereAprobacion
+        ? 'Orden de compra generada y enviada a aprobación correctamente.'
+        : 'Orden de compra guardada correctamente.';
+      
+      this.alertService.showAlert('Éxito', mensajeExito, 'success');
 
       this.mostrarFormulario = false;
       await this.cargarOrdenesCompra();

@@ -1,0 +1,752 @@
+<div class="aprobaciones-os-container">
+  <div class="header-section">
+    <h2 class="page-title">
+      <i class="pi pi-check-circle"></i>
+      Aprobaciones de Órdenes de Servicio
+    </h2>
+    <p class="page-subtitle">Gestión de aprobaciones de órdenes de servicio</p>
+  </div>
+
+  <!-- Tarjetas de Contadores -->
+  <div class="contadores-grid">
+    <div class="contador-card pendientes">
+      <div class="contador-icon">
+        <i class="pi pi-clock"></i>
+      </div>
+      <div class="contador-info">
+        <span class="contador-label">Pendientes</span>
+        <span class="contador-valor">{{ contadores.totalPendientes }}</span>
+      </div>
+    </div>
+
+    <div class="contador-card aprobadas">
+      <div class="contador-icon">
+        <i class="pi pi-check"></i>
+      </div>
+      <div class="contador-info">
+        <span class="contador-label">Aprobadas</span>
+        <span class="contador-valor">{{ contadores.totalAprobadas }}</span>
+      </div>
+    </div>
+
+    <div class="contador-card rechazadas">
+      <div class="contador-icon">
+        <i class="pi pi-times"></i>
+      </div>
+      <div class="contador-info">
+        <span class="contador-label">Rechazadas</span>
+        <span class="contador-valor">{{ contadores.totalRechazadas }}</span>
+      </div>
+    </div>
+
+    <div class="contador-card vencidas">
+      <div class="contador-icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <div class="contador-info">
+        <span class="contador-label">Vencidas</span>
+        <span class="contador-valor">{{ contadores.totalVencidas }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="tabActiva === 0" data-bs-toggle="tab" href="#tab-pendientes" (click)="tabActiva = 0">
+        <i class="pi pi-clock me-2"></i>Órdenes Pendientes
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="tabActiva === 1" data-bs-toggle="tab" href="#tab-historial" (click)="tabActiva = 1">
+        <i class="pi pi-history me-2"></i>Historial de Aprobaciones
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="tabActiva === 2" data-bs-toggle="tab" href="#tab-usuarios" (click)="tabActiva = 2">
+        <i class="pi pi-users me-2"></i>Usuarios Aprobadores
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="tabActiva === 3" data-bs-toggle="tab" href="#tab-flujos" (click)="tabActiva = 3">
+        <i class="pi pi-sitemap me-2"></i>Flujos de Aprobación
+      </a>
+    </li>
+  </ul>
+
+  <div class="tab-content mt-3">
+    <!-- Tab 1: Órdenes Pendientes -->
+    <div class="tab-pane fade" [class.show]="tabActiva === 0" [class.active]="tabActiva === 0" id="tab-pendientes">
+      <div class="filtros-section">
+        <div class="filtros-grid">
+          <div class="filtro-item">
+            <label>Estado</label>
+            <p-select
+              [options]="opcionesEstado"
+              [(ngModel)]="filtroEstado"
+              optionLabel="label"
+              optionValue="value"
+              (onChange)="aplicarFiltros()"
+              placeholder="Seleccione estado"
+            ></p-select>
+          </div>
+
+          <div class="filtro-item">
+            <label>Proveedor</label>
+            <input
+              type="text"
+              pInputText
+              [(ngModel)]="filtroProveedor"
+              (input)="aplicarFiltros()"
+              placeholder="Buscar por proveedor"
+            />
+          </div>
+
+          <div class="filtro-item">
+            <label>Fecha Inicio</label>
+            <input
+              type="date"
+              pInputText
+              [(ngModel)]="filtroFechaInicio"
+              (change)="aplicarFiltros()"
+            />
+          </div>
+
+          <div class="filtro-item">
+            <label>Fecha Fin</label>
+            <input
+              type="date"
+              pInputText
+              [(ngModel)]="filtroFechaFin"
+              (change)="aplicarFiltros()"
+            />
+          </div>
+
+          <div class="filtro-item filtro-actions">
+            <button
+              pButton
+              type="button"
+              label="Limpiar Filtros"
+              icon="pi pi-filter-slash"
+              class="p-button-outlined"
+              (click)="limpiarFiltros()"
+            ></button>
+          </div>
+        </div>
+      </div>
+
+      <p-table
+        [value]="osPendientesFiltradas"
+        [paginator]="true"
+        [rows]="10"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} órdenes"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        styleClass="p-datatable-sm"
+        [responsiveLayout]="'scroll'"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>N° Orden</th>
+            <th>Proveedor</th>
+            <th>Descripción</th>
+            <th>Monto Total</th>
+            <th>Nivel</th>
+            <th>Estado</th>
+            <th>Fecha Generación</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-os>
+          <tr>
+            <td>{{ os.numeroOrden }}</td>
+            <td>{{ os.nombreProveedor }}</td>
+            <td>{{ os.descripcion }}</td>
+            <td>{{ formatearMoneda(os.montoTotal) }}</td>
+            <td>
+              <span class="nivel-badge">Nivel {{ os.nivel }}</span>
+            </td>
+            <td>
+              <p-tag
+                [value]="os.estado"
+                [severity]="getEstadoSeverity(os.estado)"
+              ></p-tag>
+            </td>
+            <td>{{ formatearFecha(os.fechaGeneracion) }}</td>
+            <td>
+              <div class="acciones-buttons">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-eye"
+                  class="p-button-rounded p-button-info p-button-sm"
+                  pTooltip="Ver Detalle"
+                  (click)="verDetalleOS(os)"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-check"
+                  class="p-button-rounded p-button-success p-button-sm"
+                  pTooltip="Aprobar"
+                  (click)="abrirModalAprobacion(os, 'APROBAR')"
+                  [disabled]="os.estado !== 'PENDIENTE'"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-times"
+                  class="p-button-rounded p-button-danger p-button-sm"
+                  pTooltip="Rechazar"
+                  (click)="abrirModalAprobacion(os, 'RECHAZAR')"
+                  [disabled]="os.estado !== 'PENDIENTE'"
+                ></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8" class="text-center">
+              No hay órdenes de servicio pendientes
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Tab 2: Historial de Aprobaciones -->
+    <div class="tab-pane fade" [class.show]="tabActiva === 1" [class.active]="tabActiva === 1" id="tab-historial">
+      <p-table
+        [value]="historialAprobaciones"
+        [paginator]="true"
+        [rows]="10"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        styleClass="p-datatable-sm"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>N° Orden</th>
+            <th>Proveedor</th>
+            <th>Monto</th>
+            <th>Nivel</th>
+            <th>Estado</th>
+            <th>Fecha Aprobación</th>
+            <th>Observaciones</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td>{{ item.numeroOrden }}</td>
+            <td>{{ item.nombreProveedor }}</td>
+            <td>{{ formatearMoneda(item.montoTotal) }}</td>
+            <td>
+              <span class="nivel-badge">Nivel {{ item.nivel }}</span>
+            </td>
+            <td>
+              <p-tag
+                [value]="item.estado"
+                [severity]="getEstadoSeverity(item.estado)"
+              ></p-tag>
+            </td>
+            <td>{{ formatearFecha(item.fechaAprobacion) }}</td>
+            <td>{{ item.observaciones || '-' }}</td>
+            <td>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-eye"
+                class="p-button-rounded p-button-info p-button-sm"
+                pTooltip="Ver Detalle"
+                (click)="verDetalleOS(item)"
+              ></button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8" class="text-center">
+              No hay registros en el historial
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Tab 3: Usuarios Aprobadores -->
+    <div class="tab-pane fade" [class.show]="tabActiva === 2" [class.active]="tabActiva === 2" id="tab-usuarios">
+      <div class="mb-3">
+        <button
+          pButton
+          type="button"
+          label="Nuevo Usuario Aprobador"
+          icon="pi pi-plus"
+          class="p-button-success"
+          (click)="nuevoUsuarioAprobador()"
+        ></button>
+      </div>
+
+      <p-table
+        [value]="usuariosAprobadores"
+        styleClass="p-datatable-sm"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Documento</th>
+            <th>Nombre</th>
+            <th>Rol</th>
+            <th>Nivel Máximo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-usuario>
+          <tr>
+            <td>{{ usuario.documentoIdentidad }}</td>
+            <td>{{ usuario.nombre }}</td>
+            <td>{{ usuario.rol }}</td>
+            <td>{{ usuario.nivelMaximo }}</td>
+            <td>
+              <p-tag
+                [value]="usuario.activo ? 'Activo' : 'Inactivo'"
+                [severity]="usuario.activo ? 'success' : 'danger'"
+              ></p-tag>
+            </td>
+            <td>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                class="p-button-rounded p-button-warning p-button-sm me-2"
+                pTooltip="Editar"
+              ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-danger p-button-sm"
+                pTooltip="Eliminar"
+              ></button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="text-center">
+              No hay usuarios aprobadores registrados
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Tab 4: Flujos de Aprobación -->
+    <div class="tab-pane fade" [class.show]="tabActiva === 3" [class.active]="tabActiva === 3" id="tab-flujos">
+      <div class="mb-3">
+        <button
+          pButton
+          type="button"
+          label="Nuevo Flujo"
+          icon="pi pi-plus"
+          class="p-button-success"
+          (click)="nuevoFlujoAprobacion()"
+        ></button>
+      </div>
+
+      <p-table
+        [value]="flujosAprobacion"
+        styleClass="p-datatable-sm"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Nombre</th>
+            <th>Monto Desde</th>
+            <th>Monto Hasta</th>
+            <th>Niveles</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-flujo>
+          <tr>
+            <td>{{ flujo.nombre }}</td>
+            <td>{{ formatearMoneda(flujo.montoDesde) }}</td>
+            <td>{{ formatearMoneda(flujo.montoHasta) }}</td>
+            <td>{{ flujo.niveles }}</td>
+            <td>
+              <p-tag
+                [value]="flujo.activo ? 'Activo' : 'Inactivo'"
+                [severity]="flujo.activo ? 'success' : 'danger'"
+              ></p-tag>
+            </td>
+            <td>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                class="p-button-rounded p-button-warning p-button-sm me-2"
+                pTooltip="Editar"
+              ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-danger p-button-sm"
+                pTooltip="Eliminar"
+              ></button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="text-center">
+              No hay flujos de aprobación configurados
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalle OS -->
+<p-dialog
+  [(visible)]="modalDetalleOS"
+  [modal]="true"
+  [style]="{ width: '80vw' }"
+  [draggable]="false"
+  [resizable]="false"
+  header="Detalle de Orden de Servicio"
+>
+  <div *ngIf="osDetalle" class="detalle-os-content">
+    <div class="detalle-grid">
+      <div class="detalle-item">
+        <label>N° Orden:</label>
+        <span>{{ osDetalle.numeroOrden }}</span>
+      </div>
+      <div class="detalle-item">
+        <label>Proveedor:</label>
+        <span>{{ osDetalle.nombreProveedor }}</span>
+      </div>
+      <div class="detalle-item">
+        <label>Tipo Servicio:</label>
+        <span>{{ osDetalle.tipoServicio }}</span>
+      </div>
+      <div class="detalle-item">
+        <label>Monto Total:</label>
+        <span>{{ formatearMoneda(osDetalle.montoTotal) }}</span>
+      </div>
+      <div class="detalle-item full-width">
+        <label>Descripción:</label>
+        <span>{{ osDetalle.descripcion }}</span>
+      </div>
+      <div class="detalle-item full-width">
+        <label>Alcance:</label>
+        <span>{{ osDetalle.alcance }}</span>
+      </div>
+      <div class="detalle-item">
+        <label>Fecha Inicio:</label>
+        <span>{{ formatearFecha(osDetalle.fechaInicioServicio) }}</span>
+      </div>
+      <div class="detalle-item">
+        <label>Fecha Fin:</label>
+        <span>{{ formatearFecha(osDetalle.fechaFinServicio) }}</span>
+      </div>
+      <div class="detalle-item">
+        <label>Plazo Ejecución:</label>
+        <span>{{ osDetalle.plazoEjecucion }} días</span>
+      </div>
+      <div class="detalle-item">
+        <label>Centro Costo:</label>
+        <span>{{ osDetalle.centroCosto }}</span>
+      </div>
+    </div>
+
+    <h4 class="mt-4">Historial de Aprobaciones</h4>
+    <p-table [value]="historialOS" styleClass="p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nivel</th>
+          <th>Aprobador</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Fecha</th>
+          <th>Observaciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td>{{ item.nivel }}</td>
+          <td>{{ item.nombreAprobador }}</td>
+          <td>{{ item.rolAprobador }}</td>
+          <td>
+            <p-tag
+              [value]="item.estado"
+              [severity]="getEstadoSeverity(item.estado)"
+            ></p-tag>
+          </td>
+          <td>{{ formatearFecha(item.fechaAprobacion) }}</td>
+          <td>{{ item.observaciones || '-' }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="Cerrar"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="modalDetalleOS = false"
+    ></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal Aprobación/Rechazo -->
+<p-dialog
+  [(visible)]="modalAprobacion"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+  [draggable]="false"
+  [resizable]="false"
+  [header]="accionAprobacion === 'APROBAR' ? 'Aprobar Orden de Servicio' : 'Rechazar Orden de Servicio'"
+>
+  <div class="aprobacion-content">
+    <div class="mb-3">
+      <p><strong>N° Orden:</strong> {{ osSeleccionada?.numeroOrden }}</p>
+      <p><strong>Proveedor:</strong> {{ osSeleccionada?.nombreProveedor }}</p>
+      <p><strong>Monto:</strong> {{ formatearMoneda(osSeleccionada?.montoTotal) }}</p>
+    </div>
+
+    <div class="mb-3">
+      <label>{{ accionAprobacion === 'APROBAR' ? 'Observaciones (opcional)' : 'Motivo del Rechazo *' }}</label>
+      <p-textarea
+        [(ngModel)]="observacionesAprobacion"
+        rows="4"
+        class="w-100"
+        placeholder="Ingrese observaciones o motivo del rechazo..."
+      ></p-textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="Cancelar"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="modalAprobacion = false"
+    ></button>
+    <button
+      pButton
+      type="button"
+      [label]="accionAprobacion === 'APROBAR' ? 'Aprobar' : 'Rechazar'"
+      [icon]="accionAprobacion === 'APROBAR' ? 'pi pi-check' : 'pi pi-times'"
+      [class]="accionAprobacion === 'APROBAR' ? 'p-button-success' : 'p-button-danger'"
+      (click)="confirmarAprobacion()"
+    ></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal Usuario Aprobador -->
+<p-dialog
+  [(visible)]="modalUsuarioAprobador"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [draggable]="false"
+  [resizable]="false"
+  [header]="(usuarioAprobadorForm?.idUsuarioAprobador ? 'Editar' : 'Nuevo') + ' Usuario Aprobador'"
+>
+  <div class="modal-body" *ngIf="usuarioAprobadorForm">
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label>Documento de Identidad: *</label>
+        <input 
+          type="text" 
+          class="form-control" 
+          [(ngModel)]="usuarioAprobadorForm.documentoIdentidad"
+          placeholder="DNI">
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label>Nombre Completo: *</label>
+        <input 
+          type="text" 
+          class="form-control" 
+          [(ngModel)]="usuarioAprobadorForm.nombreCompleto"
+          placeholder="Nombre completo">
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label>Email:</label>
+        <input 
+          type="email" 
+          class="form-control" 
+          [(ngModel)]="usuarioAprobadorForm.email"
+          placeholder="correo@ejemplo.com">
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label>Rol: *</label>
+        <select class="form-control" [(ngModel)]="usuarioAprobadorForm.rol">
+          <option value="">Seleccione...</option>
+          <option value="LOLOGIST">Jefe de Logística</option>
+          <option value="FINANZAS">Finanzas</option>
+          <option value="GERENTE">Gerencia</option>
+        </select>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label>Monto Mínimo:</label>
+        <input 
+          type="number" 
+          class="form-control" 
+          [(ngModel)]="usuarioAprobadorForm.montoMinimo"
+          step="0.01">
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label>Monto Máximo:</label>
+        <input 
+          type="number" 
+          class="form-control" 
+          [(ngModel)]="usuarioAprobadorForm.montoMaximo"
+          step="0.01">
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label>Nivel:</label>
+        <input 
+          type="number" 
+          class="form-control" 
+          [(ngModel)]="usuarioAprobadorForm.nivel"
+          min="1">
+      </div>
+
+      <div class="col-12 mb-3">
+        <div class="form-check">
+          <input 
+            type="checkbox" 
+            class="form-check-input"
+            id="activoUsuario"
+            [(ngModel)]="usuarioAprobadorForm.activo">
+          <label class="form-check-label" for="activoUsuario">Activo</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="Cancelar"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="modalUsuarioAprobador = false"
+    ></button>
+    <button
+      pButton
+      type="button"
+      label="Guardar"
+      icon="pi pi-save"
+      class="p-button-success"
+      (click)="guardarUsuarioAprobador()"
+    ></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal Flujo Aprobación -->
+<p-dialog
+  [(visible)]="modalFlujoAprobacion"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [draggable]="false"
+  [resizable]="false"
+  [header]="(flujoAprobacionForm?.idFlujoAprobacion ? 'Editar' : 'Nuevo') + ' Flujo de Aprobación'"
+>
+  <div class="modal-body" *ngIf="flujoAprobacionForm">
+    <div class="row">
+      <div class="col-12 mb-3">
+        <label>Nombre: *</label>
+        <input 
+          type="text" 
+          class="form-control" 
+          [(ngModel)]="flujoAprobacionForm.nombre"
+          placeholder="Nombre del flujo">
+      </div>
+
+      <div class="col-12 mb-3">
+        <label>Descripción:</label>
+        <textarea 
+          class="form-control" 
+          [(ngModel)]="flujoAprobacionForm.descripcion"
+          rows="3"
+          placeholder="Descripción del flujo"></textarea>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label>Monto Mínimo:</label>
+        <input 
+          type="number" 
+          class="form-control" 
+          [(ngModel)]="flujoAprobacionForm.montoMinimo"
+          step="0.01">
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label>Monto Máximo:</label>
+        <input 
+          type="number" 
+          class="form-control" 
+          [(ngModel)]="flujoAprobacionForm.montoMaximo"
+          step="0.01">
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label>Niveles:</label>
+        <input 
+          type="number" 
+          class="form-control" 
+          [(ngModel)]="flujoAprobacionForm.niveles"
+          min="1">
+      </div>
+
+      <div class="col-12 mb-3">
+        <div class="form-check">
+          <input 
+            type="checkbox" 
+            class="form-check-input"
+            id="activoFlujo"
+            [(ngModel)]="flujoAprobacionForm.activo">
+          <label class="form-check-label" for="activoFlujo">Activo</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="Cancelar"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="modalFlujoAprobacion = false"
+    ></button>
+    <button
+      pButton
+      type="button"
+      label="Guardar"
+      icon="pi pi-save"
+      class="p-button-success"
+      (click)="guardarFlujoAprobacion()"
+    ></button>
+  </ng-template>
+</p-dialog>

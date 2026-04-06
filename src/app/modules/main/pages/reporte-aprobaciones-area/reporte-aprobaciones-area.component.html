@@ -1,202 +1,402 @@
-<div class="container-fluid">
-  <p-card>
-    <ng-template pTemplate="header">
-      <div class="p-3">
-        <h4 class="mb-0">Reporte de Aprobaciones por Área</h4>
-        <p class="text-muted mb-0">Historial de aprobaciones y rechazos realizados</p>
+<div class="reporte-container">
+  <!-- Header Principal -->
+  <div class="header-section">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="main-title">Reporte de Aprobaciones</h1>
+        <p class="subtitle">Historial detallado de aprobaciones y rechazos por área</p>
       </div>
-    </ng-template>
-
-    <!-- Filtros -->
-    <div class="row mb-4">
-      <div class="col-md-4">
-        <label class="form-label">Fecha Inicio</label>
-        <input type="date" class="form-control" [(ngModel)]="fechaInicio" />
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Fecha Fin</label>
-        <input type="date" class="form-control" [(ngModel)]="fechaFin" />
-      </div>
-      <div class="col-md-4 d-flex align-items-end gap-2">
-        <button pButton type="button" label="Buscar" icon="pi pi-search"
-                class="p-button-primary" (click)="cargarReporte()"></button>
-        <button pButton type="button" label="Limpiar" icon="pi pi-times"
-                class="p-button-secondary" (click)="limpiarFiltros()"></button>
-        <button pButton type="button" label="Exportar" icon="pi pi-file-excel"
-                class="p-button-success" (click)="exportarExcel()"></button>
+      <div class="header-actions">
+        <button class="btn-export" (click)="exportarExcel()">
+          <i class="icon-download"></i>
+          Exportar a Excel
+        </button>
       </div>
     </div>
+  </div>
 
-    <!-- Estadísticas -->
-    <div class="row mb-4">
-      <div class="col-md-4">
-        <div class="card bg-success text-white">
-          <div class="card-body">
-            <h3 class="mb-0">{{ totalAprobados }}</h3>
-            <p class="mb-0">Aprobados</p>
+  <!-- Filtros Modernos -->
+  <div class="filters-section">
+    <div class="filters-card">
+      <div class="filters-header">
+        <h3 class="filters-title">
+          <i class="pi pi-filter"></i>
+          Filtros de Búsqueda
+        </h3>
+      </div>
+      <div class="filters-content">
+        <div class="filter-group">
+          <div class="filter-item">
+            <label class="filter-label">📅 Fecha Inicio</label>
+            <div class="input-wrapper">
+              <input type="date" class="modern-input" [(ngModel)]="fechaInicio" />
+            </div>
+          </div>
+          <div class="filter-item">
+            <label class="filter-label">📅 Fecha Fin</label>
+            <div class="input-wrapper">
+              <input type="date" class="modern-input" [(ngModel)]="fechaFin" />
+            </div>
           </div>
         </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card bg-danger text-white">
-          <div class="card-body">
-            <h3 class="mb-0">{{ totalRechazados }}</h3>
-            <p class="mb-0">Rechazados</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card bg-warning text-white">
-          <div class="card-body">
-            <h3 class="mb-0">{{ totalPendientes }}</h3>
-            <p class="mb-0">Pendientes</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tabla de Aprobaciones -->
-    <p-table [value]="aprobaciones" [loading]="loading"
-             [paginator]="true" [rows]="20" styleClass="p-datatable-sm"
-             [showCurrentPageReport]="true" 
-             currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} requerimientos"
-             [globalFilterFields]="['idrequerimiento', 'glosa', 'usuarioSolicitud']">
-      <ng-template pTemplate="caption">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Historial de Aprobaciones</h5>
-          <span class="p-input-icon-left">
+        <div class="filter-actions">
+          <button class="btn-primary" (click)="cargarReporte()">
             <i class="pi pi-search"></i>
-            <input type="text" class="form-control" placeholder="Buscar..." />
-          </span>
+            Buscar
+          </button>
+          <button class="btn-secondary" (click)="limpiarFiltros()">
+            <i class="pi pi-refresh"></i>
+            Limpiar
+          </button>
         </div>
-      </ng-template>
-      
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Número Req.</th>
-          <th>Fecha Req.</th>
-          <th>Solicitante</th>
-          <th>Tipo</th>
-          <th>Descripción</th>
-          <th>Estado</th>
-          <th>Fecha Aprobación</th>
-          <th>Comentarios</th>
-          <th>Acciones</th>
-        </tr>
-      </ng-template>
-      
-      <ng-template pTemplate="body" let-aprobacion>
-        <tr>
-          <td>{{ aprobacion['idrequerimiento'] }}</td>
-          <td>{{ formatFecha(aprobacion['fechaSolicitud']) }}</td>
-          <td>{{ aprobacion['nombreSolicitante'] }}</td>
-          <td>{{ aprobacion['tipo'] }}</td>
-          <td>{{ aprobacion['glosa'] }}</td>
-          <td>
-            <p-tag [severity]="getEstadoBadge(aprobacion['estado']).severity">
-              {{ getEstadoBadge(aprobacion['estado']).label }}
-            </p-tag>
-          </td>
-          <td>{{ formatFecha(aprobacion['fechaAprobacion']) }}</td>
-          <td>{{ aprobacion['motivoRechazo'] || '-' }}</td>
-          <td>
-            <button class="btn btn-sm btn-primary" (click)="verDetalle(aprobacion)">
-              <i class="pi pi-eye"></i> Ver Detalle
-            </button>
-          </td>
-        </tr>
-      </ng-template>
-      
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="9" class="text-center">
-            No se encontraron aprobaciones en el rango de fechas seleccionado
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </p-card>
+      </div>
+    </div>
+  </div>
 
-  <!-- Modal de Detalle del Requerimiento -->
-  <p-dialog [(visible)]="mostrarModalDetalle" [modal]="true" [style]="{width: '60vw'}" 
-            [draggable]="false" [resizable]="false" header="Detalle del Requerimiento">
-    <div *ngIf="requerimientoDetalle" class="row">
-      <div class="col-md-6">
-        <h6 class="text-muted">Número de Requerimiento</h6>
-        <p class="font-weight-bold">{{ requerimientoDetalle['RequisicionNumero'] }}</p>
+  <!-- Estadísticas Modernas -->
+  <div class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-card approved">
+        <div class="stat-icon">
+          <i class="bx bx-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ totalAprobados }}</div>
+          <div class="stat-label">Aprobados</div>
+          <div class="stat-progress">
+            <div class="progress-bar approved-bar" 
+                 [style.width.%]="totalAprobados > 0 ? (totalAprobados / (totalAprobados + totalRechazados + totalPendientes)) * 100 : 0"></div>
+          </div>
+        </div>
       </div>
-      <div class="col-md-6">
-        <h6 class="text-muted">Fecha de Registro</h6>
-        <p class="font-weight-bold">{{ formatFecha(requerimientoDetalle['fechaSolicitud']) }}</p>
+
+      <div class="stat-card rejected">
+        <div class="stat-icon">
+          <i class="bx bx-block"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ totalRechazados }}</div>
+          <div class="stat-label">Rechazados</div>
+          <div class="stat-progress">
+            <div class="progress-bar rejected-bar" 
+                 [style.width.%]="totalRechazados > 0 ? (totalRechazados / (totalAprobados + totalRechazados + totalPendientes)) * 100 : 0"></div>
+          </div>
+        </div>
       </div>
-      <div class="col-md-6">
-        <h6 class="text-muted">Usuario que Solicita</h6>
-        <p class="font-weight-bold">{{ requerimientoDetalle['nombreSolicitante'] }}</p>
+
+      <div class="stat-card pending">
+        <div class="stat-icon">
+          <i class="bx bx-clock"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ totalPendientes }}</div>
+          <div class="stat-label">Pendientes</div>
+          <div class="stat-progress">
+            <div class="progress-bar pending-bar" 
+                 [style.width.%]="totalPendientes > 0 ? (totalPendientes / (totalAprobados + totalRechazados + totalPendientes)) * 100 : 0"></div>
+          </div>
+        </div>
       </div>
-      <div class="col-md-6">
-        <h6 class="text-muted">Área</h6>
-        <p class="font-weight-bold">{{ requerimientoDetalle['nombreArea'] }}</p>
+
+      <div class="stat-card total">
+        <div class="stat-icon">
+          <i class="bx bx-bar-chart"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ totalAprobados + totalRechazados + totalPendientes }}</div>
+          <div class="stat-label">Total Procesados</div>
+          <div class="stat-description">En el período seleccionado</div>
+        </div>
       </div>
-      <div class="col-md-6">
-        <h6 class="text-muted">Tipo de Requerimiento</h6>
-        <p class="font-weight-bold">{{ requerimientoDetalle['tipo'] }}</p>
+    </div>
+  </div>
+
+  <!-- Tabla Moderna -->
+  <div class="table-section">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">
+          <h3>
+            <i class="pi pi-list"></i>
+            Historial de Aprobaciones
+          </h3>
+          <span class="table-count">{{ aprobaciones.length }} registros</span>
+        </div>
+        <div class="table-search">
+          <div class="search-wrapper">
+            <i class="pi pi-search"></i>
+            <input type="text" class="search-input" placeholder="Buscar requerimiento..." />
+          </div>
+        </div>
       </div>
-      <div class="col-md-6">
-        <h6 class="text-muted">Estado</h6>
-        <p-tag [severity]="getEstadoBadge(requerimientoDetalle['estado']).severity">
-          {{ getEstadoBadge(requerimientoDetalle['estado']).label }}
-        </p-tag>
-      </div>
-      <div class="col-12">
-        <h6 class="text-muted">Descripción</h6>
-        <p class="font-weight-bold">{{ requerimientoDetalle['glosa'] }}</p>
-      </div>
-      <div class="col-md-6">
-        <h6 class="text-muted">Fecha de Aprobación</h6>
-        <p class="font-weight-bold">{{ formatFecha(requerimientoDetalle['fechaAprobacion']) }}</p>
-      </div>
-      <div class="col-md-6">
-        <h6 class="text-muted">Comentarios</h6>
-        <p class="font-weight-bold">{{ requerimientoDetalle['motivoRechazo'] || '-' }}</p>
-      </div>
-      
-      <!-- Detalle de ítems -->
-      <div class="col-12 mt-4">
-        <h6 class="text-muted mb-3">Detalle de Ítems</h6>
-        <p-table [value]="getDetalleItems(requerimientoDetalle)" styleClass="p-datatable-sm">
+
+      <!-- <div class="table-container"> -->
+      <div class="container">
+        <p-table [value]="aprobaciones" [loading]="loading"
+                 [paginator]="true" [rows]="15" 
+                 styleClass="modern-table"
+                 [showCurrentPageReport]="true" 
+                 currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+                 [globalFilterFields]="['idrequerimiento', 'glosa', 'nombreSolicitante']">
+          
           <ng-template pTemplate="header">
             <tr>
-              <th>Código</th>
-              <th>Descripción</th>
-              <th>Cantidad</th>
-              <th>CECO</th>
-              <th>Labor</th>
-              <th>Proyecto</th>
-              <th>Turno</th>
+              <th class="table-header-cell">
+                <div class="header-cell-content">
+                  <span>N° Req.</span>
+                  <i class="pi pi-sort"></i>
+                </div>
+              </th>
+              <th class="table-header-cell">
+                <div class="header-cell-content">
+                  <span>Fecha</span>
+                  <i class="pi pi-sort"></i>
+                </div>
+              </th>
+              <th class="table-header-cell">
+                <div class="header-cell-content">
+                  <span>Solicitante</span>
+                  <i class="pi pi-sort"></i>
+                </div>
+              </th>
+              <th class="table-header-cell">
+                <div class="header-cell-content">
+                  <span>Tipo</span>
+                  <i class="pi pi-sort"></i>
+                </div>
+              </th>
+              <th class="table-header-cell">
+                <div class="header-cell-content">
+                  <span>Descripción</span>
+                  <i class="pi pi-sort"></i>
+                </div>
+              </th>
+              <th class="table-header-cell">
+                <div class="header-cell-content">
+                  <span>Estado</span>
+                  <i class="pi pi-sort"></i>
+                </div>
+              </th>
+              <th class="table-header-cell">
+                <div class="header-cell-content">
+                  <span>Fecha Aprobación</span>
+                  <i class="pi pi-sort"></i>
+                </div>
+              </th>
+              <th class="table-header-cell">Acciones</th>
             </tr>
           </ng-template>
-          <ng-template pTemplate="body" let-item>
-            <tr>
-              <td>{{ item.codigo }}</td>
-              <td>{{ item.descripcion }}</td>
-              <td>{{ item.cantidad }}</td>
-              <td>{{ item.ceco }}</td>
-              <td>{{ item.labor }}</td>
-              <td>{{ item.proyecto }}</td>
-              <td>{{ item.turno }}</td>
+          
+          <ng-template pTemplate="body" let-aprobacion>
+            <tr class="table-row">
+              <td class="table-cell">
+                <div class="cell-content">
+                  <span class="req-number">{{ aprobacion['idrequerimiento'] }}</span>
+                </div>
+              </td>
+              <td class="table-cell">
+                <div class="cell-content">
+                  <span class="date-text">{{ formatFecha(aprobacion['fechaSolicitud']) }}</span>
+                </div>
+              </td>
+              <td class="table-cell">
+                <div class="cell-content">
+                  <div class="user-info">
+                    <!-- <div class="user-avatar">{{ aprobacion['nombreSolicitante']?.charAt(0) || 'U' }}</div> -->
+                    <span class="user-name">{{ aprobacion['nombreSolicitante'] }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="table-cell">
+                <div class="cell-content">
+                  <span class="type-badge">{{ aprobacion['tipo'] }}</span>
+                </div>
+              </td>
+              <td class="table-cell">
+                <div class="cell-content">
+                  <span class="description-text" [title]="aprobacion['glosa']">
+                    {{ aprobacion['glosa']?.length > 50 ? aprobacion['glosa'].substring(0, 50) + '...' : aprobacion['glosa'] }}
+                  </span>
+                </div>
+              </td>
+              <td class="table-cell">
+                <div class="cell-content">
+                  <span class="status-badge" [ngClass]="getStatusClass(aprobacion['estado'])">
+                    {{ getEstadoBadge(aprobacion['estado']).label }}
+                  </span>
+                </div>
+              </td>
+              <td class="table-cell">
+                <div class="cell-content">
+                  <span class="date-text">{{ formatFecha(aprobacion['fechaAprobacion']) }}</span>
+                </div>
+              </td>
+              <td class="table-cell">
+                <div class="cell-content">
+                  <!-- <button class="action-btn view-btn" (click)="verDetalle(aprobacion)" title="Ver detalle"> -->
+                  <button class="btn btn-sm btn-outline-info" (click)="verDetalle(aprobacion)" title="Ver detalle">
+                    <i class="bx bx-eye"></i>
+                  </button>
+                </div>
+              </td>
             </tr>
           </ng-template>
+          
           <ng-template pTemplate="emptymessage">
-            <tr>
-              <td colspan="8" class="text-center">No hay ítems para mostrar</td>
-            </tr>
+            <div class="empty-state">
+              <div class="empty-icon">
+                <i class="pi pi-inbox"></i>
+              </div>
+              <div class="empty-text">
+                <h4>No se encontraron aprobaciones</h4>
+                <p>Intenta ajustar los filtros de búsqueda</p>
+              </div>
+            </div>
           </ng-template>
         </p-table>
       </div>
     </div>
+  </div>
+
+  <!-- Modal Moderno de Detalle -->
+  <p-dialog [(visible)]="mostrarModalDetalle" [modal]="true" [style]="{width: '70vw'}" 
+            [draggable]="false" [resizable]="false" 
+            headerClass="modal-header" contentStyleClass="modal-content">
+    
+    <ng-template pTemplate="header">
+      <div class="modal-header-content">
+        <div class="modal-icon">
+          <i class="bx bx-file"></i>
+        </div>
+        <div class="modal-title">
+          <h3>Detalle del Requerimiento</h3>
+          <p>Información completa del requerimiento seleccionado</p>
+        </div>
+      </div>
+    </ng-template>
+
+    <div *ngIf="requerimientoDetalle" class="modal-body">
+      <!-- Información Principal -->
+      <div class="detail-section">
+        <h4 class="section-title">
+          <i class="pi pi-info-circle"></i>
+          Información General
+        </h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label class="detail-label">Número de Requerimiento</label>
+            <div class="detail-value highlight">{{ requerimientoDetalle['idrequerimiento'] || requerimientoDetalle['RequisicionNumero'] }}</div>
+          </div>
+          <div class="detail-item">
+            <label class="detail-label">Fecha de Registro</label>
+            <div class="detail-value">{{ formatFecha(requerimientoDetalle['fechaSolicitud']) }}</div>
+          </div>
+          <div class="detail-item">
+            <label class="detail-label">Solicitante</label>
+            <div class="detail-value user-info">
+              <!-- <div class="user-avatar">{{ requerimientoDetalle['nombreSolicitante']?.charAt(0) || 'U' }}</div> -->
+              <span>{{ requerimientoDetalle['nombreSolicitante'] }}</span>
+            </div>
+          </div>
+          <div class="detail-item">
+            <label class="detail-label">Área</label>
+            <div class="detail-value">{{ requerimientoDetalle['nombreArea'] }}</div>
+          </div>
+          <div class="detail-item">
+            <label class="detail-label">Tipo de Requerimiento</label>
+            <div class="detail-value">
+              <span class="type-badge">{{ requerimientoDetalle['tipo'] }}</span>
+            </div>
+          </div>
+          <div class="detail-item">
+            <label class="detail-label">Estado</label>
+            <div class="detail-value">
+              <span class="status-badge" [ngClass]="getStatusClass(requerimientoDetalle['estado'])">
+                {{ getEstadoBadge(requerimientoDetalle['estado']).label }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Descripción -->
+      <div class="detail-section">
+        <h4 class="section-title">
+          <i class="pi pi-align-left"></i>
+          Descripción del Requerimiento
+        </h4>
+        <div class="description-box">
+          <p>{{ requerimientoDetalle['glosa'] }}</p>
+        </div>
+      </div>
+
+      <!-- Información de Aprobación -->
+      <div class="detail-section">
+        <h4 class="section-title">
+          <i class="pi pi-check-square"></i>
+          Información de Aprobación
+        </h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label class="detail-label">Fecha de Aprobación</label>
+            <div class="detail-value">{{ formatFecha(requerimientoDetalle['fechaAprobacion']) }}</div>
+          </div>
+          <div class="detail-item">
+            <label class="detail-label">Comentarios</label>
+            <div class="detail-value">{{ requerimientoDetalle['motivoRechazo'] || 'Sin comentarios' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detalle de Ítems -->
+      <div class="detail-section">
+        <h4 class="section-title">
+          <i class="pi pi-list"></i>
+          Detalle de Ítems Solicitados
+        </h4>
+        <!-- <div class="items-table-container"> -->
+        <div class="container">
+          <p-table [value]="getDetalleItems(requerimientoDetalle)" styleClass="modern-detail-table">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>CECO</th>
+                <th>Labor</th>
+                <th>Proyecto</th>
+                <th>Turno</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-item>
+              <tr>
+                <td><span class="item-code">{{ item.codigo }}</span></td>
+                <td><span class="item-description">{{ item.descripcion }}</span></td>
+                <td><span class="item-quantity">{{ item.cantidad }}</span></td>
+                <td><span class="item-ceco">{{ item.ceco }}</span></td>
+                <td><span class="item-labor">{{ item.labor }}</span></td>
+                <td><span class="item-project">{{ item.proyecto }}</span></td>
+                <td><span class="item-turn">{{ item.turno }}</span></td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <div class="empty-items">
+                <i class="pi pi-inbox"></i>
+                <p>No hay ítems para mostrar</p>
+              </div>
+            </ng-template>
+          </p-table>
+        </div>
+      </div>
+    </div>
     
     <ng-template pTemplate="footer">
-      <button pButton icon="pi pi-times" label="Cerrar" (click)="mostrarModalDetalle = false" class="p-button-text"></button>
+      <div class="modal-footer">
+        <button class="btn-close-modal" (click)="mostrarModalDetalle = false">
+          <i class="bx bx-times"></i>
+          Cerrar
+        </button>
+      </div>
     </ng-template>
   </p-dialog>
 </div>

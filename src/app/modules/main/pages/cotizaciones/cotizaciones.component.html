@@ -36,10 +36,6 @@
     <div *ngIf="tabActiva === 'SOLICITUDES'">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">Solicitudes de Cotización Generadas</h5>
-        <!-- BOTÓN TEMPORAL DE PRUEBA - ELIMINAR DESPUÉS -->
-        <!-- <button pButton type="button" class="p-button-sm p-button-help" (click)="crearSolicitudPrueba()">
-          <i class="pi pi-plus me-1"></i> Crear Solicitud de Prueba
-        </button> -->
       </div>
       <div class="row mb-3">
         <div class="col-md-4">
@@ -68,14 +64,40 @@
         </div>
       </div>
 
+      <!-- Sub-tabs para filtrar por estado -->
+      <ul class="nav nav-pills mb-3">
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="subTabSolicitudes === 'PENDIENTES'" 
+                  (click)="cambiarSubTab('PENDIENTES')" type="button">
+            <i class="pi pi-exclamation-triangle me-1"></i> Pendientes
+            <span class="badge bg-warning ms-1">{{ totalSolicitudesPendientes }}</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="subTabSolicitudes === 'EN_REVISION'" 
+                  (click)="cambiarSubTab('EN_REVISION')" type="button">
+            <i class="pi pi-clock me-1"></i> En Revisión
+            <span class="badge bg-info ms-1">{{ totalSolicitudesEnRevision }}</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="subTabSolicitudes === 'CERRADA'" 
+                  (click)="cambiarSubTab('CERRADA')" type="button">
+            <i class="pi pi-check-circle me-1"></i> Cerradas
+            <span class="badge bg-success ms-1">{{ totalSolicitudesCerradas }}</span>
+          </button>
+        </li>
+      </ul>
+
       <!-- Tabla de solicitudes -->
-      <p-table [value]="solicitudesCotizacion" [paginator]="true" [rows]="10" [loading]="loading"
-        responsiveLayout="scroll" styleClass="p-datatable-sm">
+      <p-table [value]="solicitudesFiltradasConRefresh" [paginator]="true" [rows]="10" [loading]="loading"
+        responsiveLayout="scroll" styleClass="p-datatable-sm" [rowTrackBy]="trackBySolicitudId">
         <ng-template pTemplate="header">
           <tr>
             <th style="width: 3em">#</th>
             <th>No. Solicitud</th>
             <th>Fecha Generación</th>
+            <th>Tipo</th>
             <th>Total Items</th>
             <th>Cotizaciones Recibidas</th>
             <th>Estado</th>
@@ -87,7 +109,20 @@
             <td>{{ i + 1 }}</td>
             <td><strong>{{ solicitud.noSolicitud }}</strong></td>
             <td>{{ formatearFecha(solicitud.fechaGeneracion) }}</td>
-            <td class="text-center">{{ solicitud.totalItems }}</td>
+            <td>
+              <span class="badge" 
+                    [class]="(solicitud.tipo === 'COMPRA' ? 'bg-primary' : 
+                              solicitud.tipo === 'SERVICIO' ? 'bg-warning text-dark' : 'bg-secondary')"
+                    style="font-size: 0.8em; padding: 6px 12px;">
+                <i [class]="(solicitud.tipo === 'COMPRA' ? 'bx bx-box' : 
+                            solicitud.tipo === 'SERVICIO' ? 'bx bx-wrench' : 'bx bx-help-circle')" 
+                   class="me-1"></i>
+                {{ solicitud.tipo || 'SIN TIPO' }}
+              </span>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-info">{{ solicitud.totalItems || 0 }}</span>
+            </td>
             <td class="text-center">
               <span class="badge bg-info">{{ contarCotizacionesPorSolicitud(solicitud.id) }}</span>
             </td>
@@ -99,19 +134,20 @@
             <td>
               <div class="d-flex gap-1">
                 <button pButton type="button" class="p-button-sm p-button-info" 
-                  (click)="verDetalleSolicitud(solicitud)" pTooltip="Ver Detalle">
+                        (click)="verDetalleSolicitud(solicitud)" 
+                        pTooltip="Ver detalles">
                   <i class="bx bx-show"></i>
                 </button>
-                <button pButton type="button" class="p-button-sm p-button-primary" 
-                  (click)="abrirRegistroCotizacionDesdeSolicitud(solicitud)" 
-                  [disabled]="solicitud.estado === 'CERRADA' || solicitud.estado === 'ANULADA'"
-                  pTooltip="Registrar Cotización">
-                  <i class="bx bx-plus"></i>
-                </button>
                 <button pButton type="button" class="p-button-sm p-button-success" 
-                  (click)="abrirComparacionPorSolicitudYEvaluar(solicitud)" 
-                  [disabled]="contarCotizacionesPorSolicitud(solicitud.id) < 2"
-                  pTooltip="Comparar Cotizaciones">
+                        (click)="abrirRegistroCotizacionDesdeSolicitud(solicitud)"
+                        [disabled]="solicitud.estado === 'CERRADA' || solicitud.estado === 'ANULADA'"
+                        pTooltip="Registrar cotización">
+                  <i class="bx bx-plus-circle"></i>
+                </button>
+                <button pButton type="button" class="p-button-sm p-button-warning" 
+                        (click)="abrirComparacionPorSolicitudYEvaluar(solicitud)"
+                        [disabled]="contarCotizacionesPorSolicitud(solicitud.id) < 2"
+                        pTooltip="Comparar cotizaciones">
                   <i class="bx bx-bar-chart"></i>
                 </button>
               </div>
@@ -120,7 +156,7 @@
         </ng-template>
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td colspan="7" class="text-center">
+            <td colspan="8" class="text-center">
               <p class="text-muted my-3">No hay solicitudes de cotización generadas</p>
             </td>
           </tr>
@@ -407,7 +443,7 @@
                 <button pButton type="button" class="p-button-sm p-button-success" 
                   (click)="verSolicitudGenerada(cotizacion)" 
                   [disabled]="!tieneOrdenFromMap(cotizacion.id!)"
-                  pTooltip="Ver Solicitud de Compra">
+                  [pTooltip]="obtenerTipoSolicitud(cotizacion) === 'SERVICIO' ? 'Ver Solicitud de Servicio' : 'Ver Solicitud de Compra'">
                   <i class="bx bx-file"></i>
                 </button>
                 <button pButton type="button" class="p-button-sm p-button-secondary" 
@@ -474,8 +510,19 @@
                   {{ cot.formaPago }}
                 </td>
               </tr>
-              <!-- Detalle por item -->
-              <tr *ngFor="let item of solicitudCotizacionSeleccionada.detalle">
+              <!-- Detalle para SERVICIOS -->
+              <tr *ngIf="solicitudCotizacionSeleccionada.tipo === 'SERVICIO'">
+                <td>
+                  <strong>Descripción del Servicio</strong>
+                </td>
+                <td *ngFor="let cot of cotizacionesComparativo" class="text-center">
+                  <small>{{ cot.detalle[0]?.descripcion || 'Servicio' }}</small>
+                </td>
+              </tr>
+              
+              <!-- Detalle por item (COMPRA) -->
+              <tr *ngFor="let item of solicitudCotizacionSeleccionada.detalle" 
+                  [hidden]="solicitudCotizacionSeleccionada.tipo === 'SERVICIO'">
                 <td>
                   <strong>{{ item.codigoItem }}</strong>
                   <br>
@@ -538,6 +585,7 @@
     <div class="row mb-3">
       <div class="col-md-6">
         <p><strong>No. Solicitud:</strong> {{ solicitudCotizacionSeleccionada.noSolicitud }}</p>
+        <p><strong>Tipo:</strong> {{ solicitudCotizacionSeleccionada.tipo }}</p>
         <p><strong>Fecha Generación:</strong> {{ formatearFecha(solicitudCotizacionSeleccionada.fechaGeneracion) }}</p>
       </div>
       <div class="col-md-6">
@@ -647,45 +695,80 @@
       </div>
     </div>
 
-    <h6>Detalle de Cotización</h6>
-    <p-table [value]="detalleCotizacion" responsiveLayout="scroll" styleClass="p-datatable-sm" [scrollable]="true" scrollHeight="300px">
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Código</th>
-          <th>Descripción</th>
-          <th>Cant.</th>
-          <th>P.U.</th>
-          <th>% Desc.</th>
-          <th>Total</th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-detalle let-i="rowIndex">
-        <tr>
-          <td>{{ detalle.codigo }}</td>
-          <td>{{ detalle.descripcion }}</td>
-          <td>{{ detalle.cantidad }}</td>
-          <td>
-            <input pInputText type="number" class="form-control form-control-sm" 
-              [(ngModel)]="detalle.precioUnitario" 
-              (input)="calcularMontos(detalle); calcularTotales()"
-              style="width: 100px;">
-          </td>
-          <td>
-            <input pInputText type="number" class="form-control form-control-sm" 
-              [(ngModel)]="detalle.porcentajeDescuento" 
-              (input)="calcularMontos(detalle); calcularTotales()"
-              style="width: 80px;">
-          </td>
-          <td><strong>{{ formatearMoneda(detalle.total) }}</strong></td>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="footer">
-        <tr>
-          <td colspan="5" class="text-right"><strong>TOTAL:</strong></td>
-          <td><strong>{{ formatearMoneda(cotizacion.montoTotal) }}</strong></td>
-        </tr>
-      </ng-template>
-    </p-table>
+    <!-- Detalle para SERVICIOS -->
+    <div *ngIf="solicitudCotizacionSeleccionada?.tipo === 'SERVICIO' && detalleCotizacion.length > 0">
+      <h6>Detalle del Servicio</h6>
+      <div class="row mb-3">
+        <div class="col-md-12">
+          <label class="form-label">Descripción del Servicio <span class="text-danger">*</span></label>
+          <textarea class="form-control" rows="3" 
+            [(ngModel)]="detalleCotizacion[0].descripcion"
+            placeholder="Describa el servicio a cotizar..."></textarea>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label">Monto Total del Servicio <span class="text-danger">*</span></label>
+          <input pInputText type="number" class="form-control" 
+            [(ngModel)]="detalleCotizacion[0].precioUnitario" 
+            (input)="calcularMontos(detalleCotizacion[0]); calcularTotales()"
+            placeholder="0.00">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">% Descuento (opcional)</label>
+          <input pInputText type="number" class="form-control" 
+            [(ngModel)]="detalleCotizacion[0].porcentajeDescuento" 
+            (input)="calcularMontos(detalleCotizacion[0]); calcularTotales()"
+            placeholder="0">
+        </div>
+      </div>
+      <div class="alert alert-info">
+        <strong>Monto Final:</strong> {{ formatearMoneda(cotizacion.montoTotal, cotizacion.moneda) }}
+      </div>
+    </div>
+
+    <!-- Detalle para ITEMS/PRODUCTOS -->
+    <div *ngIf="solicitudCotizacionSeleccionada?.tipo !== 'SERVICIO'">
+      <h6>Detalle de Cotización</h6>
+      <p-table [value]="detalleCotizacion" responsiveLayout="scroll" styleClass="p-datatable-sm" [scrollable]="true" scrollHeight="300px">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>Cant.</th>
+            <th>P.U.</th>
+            <th>% Desc.</th>
+            <th>Total</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-detalle let-i="rowIndex">
+          <tr>
+            <td>{{ detalle.codigo }}</td>
+            <td>{{ detalle.descripcion }}</td>
+            <td>{{ detalle.cantidad }}</td>
+            <td>
+              <input pInputText type="number" class="form-control form-control-sm" 
+                [(ngModel)]="detalle.precioUnitario" 
+                (input)="calcularMontos(detalle); calcularTotales()"
+                style="width: 100px;">
+            </td>
+            <td>
+              <input pInputText type="number" class="form-control form-control-sm" 
+                [(ngModel)]="detalle.porcentajeDescuento" 
+                (input)="calcularMontos(detalle); calcularTotales()"
+                style="width: 80px;">
+            </td>
+            <td><strong>{{ formatearMoneda(detalle.total) }}</strong></td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="footer">
+          <tr>
+            <td colspan="5" class="text-right"><strong>TOTAL:</strong></td>
+            <td><strong>{{ formatearMoneda(cotizacion.montoTotal) }}</strong></td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
   <ng-template pTemplate="footer">
     <button pButton type="button" class="p-button-secondary" (click)="cerrarModalRegistrarCotizacion()">
       <i class="bx bx-x"></i> Cancelar
@@ -861,8 +944,8 @@
         <label class="form-label">Proveedor <span class="text-danger">*</span></label>
         <p-select 
           [options]="proveedores" 
-          optionLabel="nombre" 
-          optionValue="codigo"
+          optionLabel="proveedor" 
+          optionValue="id"
           [(ngModel)]="cotizacion.proveedor"
           (onChange)="onProveedorChange($event)"
           placeholder="Seleccione un proveedor..."
@@ -935,9 +1018,14 @@
   
   <div class="d-flex justify-content-between align-items-center mb-2">
     <span class="text-muted">Items: {{ detalleCotizacion.length }}</span>
-    <button pButton type="button" class="p-button-sm p-button-primary item" (click)="abrirModalAgregarItem()">
-      <i class="bx bx-plus"></i> Agregar Item
-    </button>
+    <div class="d-flex gap-2">
+      <button pButton type="button" class="p-button-sm p-button-primary" (click)="abrirModalAgregarItem()">
+        <i class="bx bx-plus"></i> Agregar Item
+      </button>
+      <button pButton type="button" class="p-button-sm p-button-success" (click)="abrirModalAgregarComodity()">
+        <i class="bx bx-plus"></i> Agregar Comodity
+      </button>
+    </div>
   </div>
 
   <p-table [value]="detalleCotizacion" responsiveLayout="scroll" styleClass="p-datatable-sm" [scrollable]="true" scrollHeight="300px">
@@ -1000,16 +1088,34 @@
   </ng-template>
 </p-dialog>
 
-<!-- Modal: Agregar/Editar Item -->
-<p-dialog header="Agregar Item" [(visible)]="modalDetalleAbierto" [modal]="true" [style]="{width: '60vw'}">
+<!-- Modal: Agregar Item -->
+<p-dialog header="Agregar Item" [(visible)]="modalItemAbierto" [modal]="true" [style]="{width: '60vw'}">
+  <div class="row mb-3">
+    <div class="col-md-12">
+      <label class="form-label">Item <span class="text-danger">*</span></label>
+      <app-dropdown 
+        [(ngModel)]="lineaTemporal.codigo"
+        (itemSelected)="onItemSelected($event)"
+        [editable]="true"
+        [data]="items"
+        [valueField]="'codigo'"
+        [optionLabel]="'descripcion'"
+        [textShow]="'Item'"
+        [textShow2]="'un item'"
+        [required]="true"
+        placeholder="Seleccione un item...">
+      </app-dropdown>
+    </div>
+  </div>
+  
   <div class="row mb-3">
     <div class="col-md-6">
-      <label class="form-label">Código <span class="text-danger">*</span></label>
-      <input pInputText type="text" class="form-control" [(ngModel)]="lineaTemporal.codigo" placeholder="Código del item">
+      <label class="form-label">Código</label>
+      <input pInputText type="text" class="form-control" [(ngModel)]="lineaTemporal.codigo" readonly>
     </div>
     <div class="col-md-6">
-      <label class="form-label">Descripción <span class="text-danger">*</span></label>
-      <input pInputText type="text" class="form-control" [(ngModel)]="lineaTemporal.descripcion" placeholder="Descripción del item">
+      <label class="form-label">Descripción</label>
+      <input pInputText type="text" class="form-control" [(ngModel)]="lineaTemporal.descripcion" readonly>
     </div>
   </div>
 
@@ -1057,6 +1163,112 @@
   <ng-template pTemplate="footer">
     <button pButton type="button" class="p-button-secondary" (click)="cerrarModalAgregarItem()">Cancelar</button>
     <button pButton type="button" class="p-button-primary" (click)="agregarItemCotizacion()">
+      {{ detalleEditIndex >= 0 ? 'Actualizar' : 'Agregar' }}
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal: Agregar Comodity -->
+<p-dialog header="Agregar Comodity" [(visible)]="modalComodityAbierto" [modal]="true" [style]="{width: '60vw'}">
+  <div class="row mb-3">
+    <div class="col-md-12">
+      <label class="form-label">Comodity <span class="text-danger">*</span></label>
+      <app-dropdown 
+        (itemSelected)="onComoditySelected($event)"
+        [editable]="true"
+        [data]="commodities"
+        [valueField]="'codigo'"
+        [optionLabel]="'descripcion'"
+        [textShow]="'Comodity'"
+        [textShow2]="'un comodity'"
+        [required]="true"
+        placeholder="Seleccione un comodity...">
+      </app-dropdown>
+    </div>
+  </div>
+
+  <!-- Selector de Subcomodity (aparece después de seleccionar comodity) -->
+  <div class="row mb-3" *ngIf="comoditySeleccionado && subComoditiesFiltrados.length > 0">
+    <div class="col-md-12">
+      <label class="form-label">Subcomodity <span class="text-danger">*</span></label>
+      <app-dropdown 
+        (itemSelected)="onSubComoditySelected($event)"
+        [editable]="true"
+        [data]="subComoditiesFiltrados"
+        [valueField]="'subClase'"
+        [optionLabel]="'descripcion'"
+        [textShow]="'Subcomodity'"
+        [textShow2]="'un subcomodity'"
+        [required]="true"
+        placeholder="Seleccione un subcomodity...">
+      </app-dropdown>
+    </div>
+  </div>
+
+  <!-- Mensaje si no hay subcomodities -->
+  <div class="row mb-3" *ngIf="comoditySeleccionado && subComoditiesFiltrados.length === 0">
+    <div class="col-md-12">
+      <div class="alert alert-info">
+        <i class="bx bx-info-circle"></i> Este comodity no tiene subcomodities asociados.
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label class="form-label">Código</label>
+      <input pInputText type="text" class="form-control" [(ngModel)]="lineaTemporal.codigo" readonly>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Descripción</label>
+      <input pInputText type="text" class="form-control" [(ngModel)]="lineaTemporal.descripcion" readonly>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-3">
+      <label class="form-label">Cantidad <span class="text-danger">*</span></label>
+      <input pInputText type="number" class="form-control" [(ngModel)]="lineaTemporal.cantidad">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Unidad Medida</label>
+      <input pInputText type="text" class="form-control" [(ngModel)]="lineaTemporal.unidadMedida" placeholder="UND">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Precio Unitario <span class="text-danger">*</span></label>
+      <input pInputText type="number" class="form-control" [(ngModel)]="lineaTemporal.precioUnitario"
+        (input)="calcularMontos(lineaTemporal)">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">% Descuento</label>
+      <input pInputText type="number" class="form-control" [(ngModel)]="lineaTemporal.porcentajeDescuento"
+        (input)="calcularMontos(lineaTemporal)">
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-3">
+      <label class="form-label">% Impuesto</label>
+      <input pInputText type="number" class="form-control" [(ngModel)]="lineaTemporal.porcentajeImpuesto"
+        (input)="calcularMontos(lineaTemporal)">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Subtotal</label>
+      <input pInputText type="text" class="form-control" [value]="formatearMoneda(lineaTemporal.subtotal)" readonly>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Impuesto</label>
+      <input pInputText type="text" class="form-control" [value]="formatearMoneda(lineaTemporal.impuesto)" readonly>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Total</label>
+      <input pInputText type="text" class="form-control" [value]="formatearMoneda(lineaTemporal.total)" readonly>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" class="p-button-secondary" (click)="cerrarModalAgregarComodity()">Cancelar</button>
+    <button pButton type="button" class="p-button-success" (click)="agregarItemCotizacion()">
       {{ detalleEditIndex >= 0 ? 'Actualizar' : 'Agregar' }}
     </button>
   </ng-template>

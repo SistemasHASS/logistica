@@ -1,3 +1,193 @@
+// Estilos para badge offline
+.badge-offline {
+  background-color: #e74c3c;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-left: 4px;
+  font-weight: 600;
+}
+
+// Estilo para stat-card dark
+.stat-card.dark {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  
+  .stat-icon {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+
+  .stat-value {
+    color: white;
+  }
+
+  .stat-label {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(44, 62, 80, 0.3);
+  }
+}
+
+// Estilos para tabs deshabilitados
+.tab-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  
+  &:hover {
+    background-color: transparent;
+    color: #7f8c8d;
+  }
+}
+
+// Estilos para botones de acción en PrimeNG Table
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+
+  button {
+    margin: 0 !important;
+  }
+}
+
+// Estilos para el modal de detalle de solicitud procesada
+.detalle-solicitud-content {
+  .info-section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+
+    h4 {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #2c3e50;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      i {
+        color: #3498db;
+      }
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+
+      .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        label {
+          font-size: 12px;
+          font-weight: 600;
+          color: #7f8c8d;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        span {
+          font-size: 14px;
+          color: #2c3e50;
+          font-weight: 500;
+        }
+      }
+    }
+
+    .observaciones-text {
+      margin: 0;
+      padding: 12px;
+      background: white;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #2c3e50;
+      line-height: 1.6;
+    }
+  }
+
+  .adjuntos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .adjunto-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: #3498db;
+        box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
+      }
+
+      .adjunto-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+
+        strong {
+          font-size: 14px;
+          color: #2c3e50;
+        }
+
+        small {
+          font-size: 12px;
+          color: #7f8c8d;
+          display: block;
+        }
+      }
+    }
+  }
+}
+
+// Estilos globales para PrimeNG Dialog
+::ng-deep .solicitud-detalle-dialog {
+  .p-dialog-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 24px;
+
+    .p-dialog-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .p-dialog-header-icon {
+      color: white;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+
+  .p-dialog-content {
+    padding: 24px;
+  }
+
+  .p-dialog-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e0e0e0;
+  }
+}
+
 // Estilos para modales fuera del encapsulado de Angular
 ::ng-deep .modal-overlay {
   position: fixed !important;
@@ -176,6 +366,45 @@
       font-size: 28px;
       font-weight: 600;
       color: #2c3e50;
+    }
+
+    .connection-status {
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 500;
+
+      .status-online {
+        color: #27ae60;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+
+        i {
+          font-size: 16px;
+        }
+      }
+
+      .status-offline {
+        color: #e74c3c;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+
+        i {
+          font-size: 16px;
+        }
+      }
+
+      .status-syncing {
+        color: #3498db;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+
+        i {
+          font-size: 16px;
+        }
+      }
     }
 
     .header-actions {
@@ -912,5 +1141,131 @@
     padding: 16px;
     background-color: #f8f9fa;
     border-radius: 8px;
+  }
+}
+
+// Estilos para adjuntos en el modal de detalle
+.adjuntos-detalle-section {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #e0e0e0;
+
+  h4 {
+    margin-bottom: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    i {
+      font-size: 20px;
+      color: #3498db;
+    }
+  }
+
+  .adjuntos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+
+    .adjunto-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: #3498db;
+        box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
+      }
+
+      .adjunto-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e3f2fd;
+        border-radius: 8px;
+
+        i {
+          font-size: 24px;
+          color: #3498db;
+        }
+      }
+
+      .adjunto-info {
+        flex: 1;
+        min-width: 0;
+
+        .adjunto-nombre {
+          font-size: 14px;
+          font-weight: 600;
+          color: #2c3e50;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin-bottom: 4px;
+        }
+
+        .adjunto-meta {
+          display: flex;
+          gap: 12px;
+          font-size: 12px;
+          color: #7f8c8d;
+
+          .adjunto-size,
+          .adjunto-fecha {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+          }
+        }
+
+        .adjunto-descripcion {
+          font-size: 12px;
+          color: #95a5a6;
+          margin-top: 4px;
+          font-style: italic;
+        }
+      }
+
+      .adjunto-actions {
+        display: flex;
+        gap: 8px;
+
+        .btn {
+          padding: 6px 12px;
+          font-size: 14px;
+
+          i {
+            font-size: 16px;
+          }
+        }
+      }
+    }
+  }
+}
+
+.no-adjuntos {
+  text-align: center;
+  padding: 40px 20px;
+  color: #95a5a6;
+
+  i {
+    font-size: 48px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
   }
 }

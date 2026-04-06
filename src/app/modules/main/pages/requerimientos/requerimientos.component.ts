@@ -226,6 +226,7 @@ export class RequerimientosComponent implements OnInit {
     producto: null,
     descripcion: '',
     cantidad: 0,
+    unidadMedida: '', // Unidad de medida del producto
     proyecto: '',
     ceco: '',
     turno: '',
@@ -497,9 +498,9 @@ export class RequerimientosComponent implements OnInit {
 
   async ngOnInit() {
     await this.cargarUsuario(); // 👈 carga el usuario primero
-    // await this.cargarMaestras();
-    await this.cargarConfiguracion(); // 👈 REUTILIZA LO GUARDADO EN PARÁMETROSs
-    await this.cargarMaestras();
+    await this.cargarMaestras(); // 👈 Cargar las maestras primero (incluyendo CECOS)
+    await this.cargarConfiguracion(); // 👈 REUTILIZA LO GUARDADO EN PARÁMETROS
+    await this.ListarItems(); // 👈 Cargar items después de tener la configuración del almacén
     await this.cargarRequerimientos(); // 👈 Esto llena la tabla al inicio
     await this.cargarPendientes(); // 👈 carga el número de pendientes
     this.actualizarContadores();
@@ -597,8 +598,8 @@ export class RequerimientosComponent implements OnInit {
       unidadMedida: 'UNIDAD',
       precioReferencial: 0,
       montoReferencial: 0,
-      proyecto: this.proyectoSeleccionado?.proyectoio || '', // Use the project ID
-      ceco: this.cecoSeleccionado?.localname || '', // Use the ceco display name
+      proyecto: detalle.proyecto || this.proyectoSeleccionado?.proyectoio || '', // Use from consolidated detail first
+      ceco: detalle.ceco || this.cecoSeleccionado?.localname || '', // Use from consolidated detail first
       turno: '', // No se usa turnos en compras
       labor: this.laborSeleccionado?.labor || '', // Use the labor display name
       familia: detalle.familia,
@@ -681,30 +682,50 @@ export class RequerimientosComponent implements OnInit {
       this.itemSeleccionado = config.iditem;
       this.TipoSelecionado = config.idTipoItem as TipoRequerimiento | '';
 
+      // 🌟 Cargar el CECO completo desde la configuración
+      if (config.idceco) {
+        console.log('🔍 Buscando CECO con id:', config.idceco);
+        console.log('🔍 Lista de CECOS disponibles:', this.cecos.slice(0, 3));
+        
+        this.cecoSeleccionado = (await this.dexieService.getCecoById(
+          config.idceco,
+        )) as Ceco | null;
+        
+        console.log('🔍 CECO cargado desde config:', this.cecoSeleccionado);
+        
+        // Si no encuentra por ID, intentar buscar por localname o costcenter
+        if (!this.cecoSeleccionado) {
+          console.log('⚠️ No se encontró CECO por ID, intentando por localname...');
+          const cecoByLocalname = this.cecos.find(c => c.localname === config.idceco || c.costcenter === config.idceco);
+          if (cecoByLocalname) {
+            this.cecoSeleccionado = cecoByLocalname;
+            console.log('✅ CECO encontrado por localname/costcenter:', this.cecoSeleccionado);
+          }
+        }
+      }
+
+      // 🌟 Cargar el proyecto completo desde la configuración
+      if (config.idproyecto) {
+        this.proyectoSeleccionado = (await this.dexieService.getProyectoByAfe(
+          config.idproyecto,
+        )) as Proyecto | null;
+        console.log('🔍 Proyecto cargado desde config:', this.proyectoSeleccionado);
+      }
+
+      // 🌟 Cargar la labor completa desde la configuración
+      if (config.idlabor) {
+        this.laborSeleccionado = (await this.dexieService.getLaborById(
+          config.idlabor,
+        )) as Labor | null;
+        console.log('🔍 Labor cargada desde config:', this.laborSeleccionado);
+      }
+
       // 🔥 Ejecutar lógica según tipo
       await this.onTipoChange();
 
       if (!this.requerimiento.idalmacen) {
         this.requerimiento.idalmacen = config.idalmacen;
       }
-
-      // 🌟 1. BUSCAR EL CECO COMPLETO
-      this.cecoSeleccionado = (await this.dexieService.getCecoById(
-        config.idceco,
-      )) as Ceco | null;
-      console.log('ceco seleccionado: ', this.cecoSeleccionado);
-      // 🌟 2. BUSCAR EL PROYECTO COMPLETO
-      if (config.idproyecto) {
-        this.proyectoSeleccionado = (await this.dexieService.getProyectoByAfe(
-          config.idproyecto,
-        )) as Proyecto | null;
-      }
-      console.log('proyecto seleccionado: ', this.proyectoSeleccionado);
-      // 🌟 3. BUSCAR LA LABOR COMPLETA
-      this.laborSeleccionado = (await this.dexieService.getLaborById(
-        config.idlabor,
-      )) as Labor | null;
-      console.log('labor seleccionado: ', this.laborSeleccionado);
     } else {
       console.warn('⚠️ No existe configuración guardada.');
     }
@@ -2127,6 +2148,7 @@ export class RequerimientosComponent implements OnInit {
       idalmacendestino:
         this.TipoSelecionado === 'TRANSFERENCIA' ? this.almacenDestino : '',
       glosa: this.requerimiento.glosa || '',
+      referenciaGasto: this.SeleccionaTipoGasto || '',
       eliminado: 0,
       tipo: this.requerimiento.tipo,
       itemtipo: this.requerimiento.itemtipo,
@@ -2252,6 +2274,7 @@ export class RequerimientosComponent implements OnInit {
       idalmacendestino:
         req.tipo === 'TRANSFERENCIA' ? req.idalmacendestino : '',
       glosa: req.glosa || '',
+      referenciaGasto: req.referenciaGasto || '',
       eliminado: 0,
       tipo: req.tipo,
       itemtipo: req.itemtipo,
@@ -2395,6 +2418,7 @@ export class RequerimientosComponent implements OnInit {
       idalmacendestino:
         req.tipo === 'TRANSFERENCIA' ? req.idalmacendestino : '',
       glosa: req.glosa || '',
+      referenciaGasto: req.referenciaGasto || '',
       eliminado: 0,
       tipo: req.tipo,
       itemtipo: req.itemtipo,
@@ -2539,6 +2563,7 @@ export class RequerimientosComponent implements OnInit {
       idalmacendestino:
         req.tipo === 'TRANSFERENCIA' ? req.idalmacendestino : '',
       glosa: req.glosa || '',
+      referenciaGasto: req.referenciaGasto || '',
       eliminado: 0,
       tipo: req.tipo,
       itemtipo: req.itemtipo,
@@ -2683,6 +2708,7 @@ export class RequerimientosComponent implements OnInit {
       idalmacendestino:
         req.tipo === 'TRANSFERENCIA' ? req.idalmacendestino : '',
       glosa: req.glosa || '',
+      referenciaGasto: req.referenciaGasto || '',
       eliminado: 0,
       tipo: req.tipo,
       itemtipo: req.itemtipo,
@@ -3142,7 +3168,7 @@ export class RequerimientosComponent implements OnInit {
     await this.ListarAlmacenes();
     await this.ListarAlmacenDestino();
     await this.ListarProyectos();
-    await this.ListarItems();
+    // ListarItems se moverá después de cargarConfiguracion para tener el almacén disponible
     await this.ListarTurnos();
     await this.ListarLabores();
     await this.ListarCecos();
@@ -3286,14 +3312,24 @@ export class RequerimientosComponent implements OnInit {
 
   async ListarItems() {
     this.items = await this.dexieService.showItemComoditys();
-    console.log("ITEMS",this.items);
-    // this.itemsFiltrados = this.items.filter(
-    //   (it) => it.tipoclasificacion === 'I',
-    // );
-    this.itemsFiltrados = this.items.filter(
-      (it) => it.tipoclasificacion === 'I' && it.almacen === this.configuracion.idalmacen,
-    );
-    console.log("Items Filtrados",this.itemsFiltrados);
+    console.log("ITEMS", this.items);
+    console.log("Configuración:", this.configuracion);
+    console.log("ID Almacen configuración:", this.configuracion?.idalmacen);
+    
+    // Si hay configuración y almacén, filtrar por almacén
+    if (this.configuracion?.idalmacen) {
+      this.itemsFiltrados = this.items.filter(
+        (it) => it.tipoclasificacion === 'I' && it.almacen === this.configuracion.idalmacen,
+      );
+    } else {
+      // Si no hay configuración, filtrar solo por tipo
+      this.itemsFiltrados = this.items.filter(
+        (it) => it.tipoclasificacion === 'I',
+      );
+      console.warn("⚠️ No hay configuración de almacén, mostrando todos los items");
+    }
+    
+    console.log("Items Filtrados", this.itemsFiltrados);
   }
 
   async ListarClasificaciones() {
@@ -3414,6 +3450,7 @@ export class RequerimientosComponent implements OnInit {
       producto: null,
       descripcion: '',
       cantidad: 0,
+      unidadMedida: '', // Unidad de medida del producto
       proyecto: this.proyectoSeleccionado
         ? String(this.proyectoSeleccionado)
         : '',
@@ -3485,6 +3522,31 @@ export class RequerimientosComponent implements OnInit {
 
   async abrirModal() {
     if (this.editIndex === -1) {
+      console.log('🔍 Datos al abrir modal:', {
+        cecoSeleccionado: this.cecoSeleccionado,
+        localname: this.cecoSeleccionado?.localname,
+        cecosDisponibles: this.cecos.length
+      });
+      
+      // Si no hay CECO seleccionado pero hay configuración, intentar cargarlo
+      if (!this.cecoSeleccionado && this.configuracion?.idceco) {
+        console.log('🔄 Intentando cargar CECO desde configuración...');
+        this.cecoSeleccionado = (await this.dexieService.getCecoById(
+          this.configuracion.idceco,
+        )) as Ceco | null;
+        
+        if (!this.cecoSeleccionado) {
+          // Intentar buscar por localname o costcenter
+          const cecoByLocalname = this.cecos.find(c => 
+            c.localname === this.configuracion.idceco || 
+            c.costcenter === this.configuracion.idceco
+          );
+          if (cecoByLocalname) {
+            this.cecoSeleccionado = cecoByLocalname;
+          }
+        }
+      }
+      
       this.lineaTemp = {
         idrequerimiento: '', // ⚠️ SE ASIGNA AL GUARDAR CABECERA
         codigo: '',
@@ -3492,6 +3554,7 @@ export class RequerimientosComponent implements OnInit {
         descripcion: '',
         estado: 0,
         cantidad: 0,
+        unidadMedida: '', // Unidad de medida del producto
         proyecto: this.proyectoSeleccionado
           ? String(this.proyectoSeleccionado.proyectoio)
           : '',
@@ -3501,6 +3564,8 @@ export class RequerimientosComponent implements OnInit {
         esActivoFijo: false,
         activoFijo: '',
       };
+      
+      console.log('🔍 lineaTemp.ceco:', this.lineaTemp.ceco);
     }
     this.modalAbierto = true;
   }
@@ -4087,6 +4152,7 @@ export class RequerimientosComponent implements OnInit {
       producto: productoSeleccionado.descripcion, // 👈 Guardamos la descripción visible
       descripcion: '',
       cantidad: this.lineaTemp.cantidad,
+      unidadMedida: this.lineaTemp.unidadMedida, // Unidad de medida del producto
       proyecto: this.lineaTemp.proyecto,
       ceco: this.lineaTemp.ceco,
       turno: this.TipoSelecionado === 'COMPRA' ? '' : this.lineaTemp.turno, // Vacío para COMPRA
@@ -5898,6 +5964,7 @@ export class RequerimientosComponent implements OnInit {
         codigo: r['Cod. Item'],
         descripcion: r['Descripcion Item'],
         cantidad: Number(r['Cantidad']),
+        unidadMedida: r['Unidad Medida'] || 'UND', // Unidad de medida del producto
         turno: r['Turno'],
         activofijo: r['ActivoFijo'],
         proyecto: this.proyectoSeleccionado?.proyectoio ?? '',
@@ -5989,6 +6056,7 @@ export class RequerimientosComponent implements OnInit {
       codigo: l.codigo,
       descripcion: l.descripcion,
       cantidad: l.cantidad,
+      unidadMedida: l.unidadMedida || 'UND', // Unidad de medida del producto
       turno: l.turno,
       proyecto: l.proyecto,
       ceco: l.ceco,
@@ -6004,6 +6072,7 @@ export class RequerimientosComponent implements OnInit {
         producto: l.descripcion, // o el objeto producto si ya lo manejas
         descripcion: l.descripcion,
         cantidad: l.cantidad,
+        unidadMedida: l.unidadMedida || 'UND', // Unidad de medida del producto
         proyecto: l.proyecto,
         ceco: l.ceco,
         turno: l.turno,
@@ -6051,5 +6120,59 @@ export class RequerimientosComponent implements OnInit {
 
   contarLineasSinError(): number {
     return this.lineasPreview.filter((l) => !l.error).length;
+  }
+
+  unidadesMedidaFiltradas: any[] = [];
+
+  // Métodos para obtener información de productos
+  obtenerDescripcionProducto(producto: any): string {
+    if (!producto) return '';
+    
+    // Si es un objeto con descripción directa
+    if (producto.descripcion) {
+      return producto.descripcion;
+    }
+    
+    // Si es solo el código, buscar en el array de items
+    if (typeof producto === 'string' || producto.codigo) {
+      const codigo = typeof producto === 'string' ? producto : producto.codigo;
+      const itemEncontrado = this.items.find(item => item.codigo === codigo);
+      return itemEncontrado ? itemEncontrado.descripcion : '';
+    }
+    
+    return '';
+  }
+
+  obtenerUnidadMedidaProducto(producto: any): string {
+    if (!producto) return 'UND';
+    
+    // Si es un objeto con unidadMedida directa
+    if (producto.unidadMedida) {
+      return producto.unidadMedida;
+    }
+    
+    // Si es solo el código, buscar en el array de items
+    if (typeof producto === 'string' || producto.codigo) {
+      const codigo = typeof producto === 'string' ? producto : producto.codigo;
+      const itemEncontrado = this.items.find(item => item.codigo === codigo);
+      return itemEncontrado ? (itemEncontrado.unidadMedida || itemEncontrado.um || 'UND') : 'UND';
+    }
+    
+    return 'UND';
+  }
+
+  actualizarUnidadMedidaDesdeProducto() {
+    if (this.lineaTemp.producto) {
+      const unidadMedida = this.obtenerUnidadMedidaProducto(this.lineaTemp.producto);
+      this.lineaTemp.unidadMedida = unidadMedida;
+      
+      // Actualizar el dropdown de unidades de medida
+      this.unidadesMedidaFiltradas = [
+        { label: unidadMedida, value: unidadMedida }
+      ];
+    } else {
+      this.unidadesMedidaFiltradas = [];
+      this.lineaTemp.unidadMedida = '';
+    }
   }
 }

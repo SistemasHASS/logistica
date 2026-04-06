@@ -11,6 +11,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { ConsolidacionService } from '../../../../services/consolidacion.service';
 import { AlertService } from '../../../../shared/alertas/alerts.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
+import { LogisticaService } from '../../services/logistica.service';
 import {
   ItemPendienteConsolidacion,
   FiltroConsolidacion,
@@ -61,6 +62,11 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
   itemsPendientes: ItemPendienteConsolidacion[] = [];
   seleccionarTodos: boolean = false;
 
+  // Servicios pendientes de consolidar
+  serviciosPendientes: any[] = [];
+  serviciosPendientesFiltrados: any[] = [];
+  seleccionarTodosServicios: boolean = false;
+
   // Historial de consolidaciones
   historialConsolidaciones: ConsolidacionCab[] = [];
 
@@ -76,7 +82,7 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
   // Loading
   loading: boolean = false;
 
-  // Filtros pendientes
+  // Filtros pendientes (items)
   filtroFamilias: string[] = [];
   filtroCategorias: string[] = [];
   filtroItem: string = '';
@@ -85,6 +91,14 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
   filtroTipo: string = '';
   filtroAreas: string[] = [];
   filtroUsuarios: string[] = [];
+  filtroEmpresa: string = '';
+
+  // Filtros servicios
+  filtroServicioCommodity: string = '';
+  filtroServicioUsuarios: string[] = [];
+  filtroServicioFechaInicio: Date | null = null;
+  filtroServicioFechaFin: Date | null = null;
+  filtroServicioEmpresa: string = '';
 
   // Opciones de filtro dinámicas
   familiaOpciones: { label: string; value: string }[] = [];
@@ -96,6 +110,7 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
   ];
   areaOpciones: { label: string; value: string }[] = [];
   usuarioOpciones: { label: string; value: string }[] = [];
+  empresaOpciones: { label: string; value: string }[] = [];
 
   // Filtros historial
   filtroHistEstado: string = '';
@@ -115,17 +130,52 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
     private consolidacionService: ConsolidacionService,
     private alertService: AlertService,
     private dexieService: DexieService,
+    private logisticaService: LogisticaService,
   ) {
     const usuarioStr = localStorage.getItem('usuario');
     this.usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
   }
 
   async ngOnInit() {
+    await this.cargarEmpresas();
     await this.cargarItemsPendientes();
     await this.cargarHistorial();
     await this.cargarSaldosPendientes();
     await this.actualizarContadorTemporales();
     await this.marcarItemsYaEnListaTemporal();
+  }
+
+  // =============================================
+  // CARGAR EMPRESAS
+  // =============================================
+
+  async cargarEmpresas() {
+    try {
+      this.logisticaService.listarEmpresas([]).subscribe({
+        next: (empresas: any) => {
+          console.log('📊 Empresas recibidas del backend:', empresas);
+          if (Array.isArray(empresas)) {
+            this.empresaOpciones = [
+              { label: 'Todas las empresas', value: '' },
+              ...empresas.map((emp: any) => {
+                const label = emp.razonSocial || emp.razonsocial || emp.nombre || emp.ruc;
+                const value = emp.ruc || emp.id;
+                console.log(`  Empresa: ${label} → RUC: ${value}`);
+                return { label, value };
+              })
+            ];
+            console.log('✅ Opciones de empresa cargadas:', this.empresaOpciones);
+          }
+        },
+        error: (error) => {
+          console.error('❌ Error al cargar empresas:', error);
+          this.empresaOpciones = [{ label: 'Todas las empresas', value: '' }];
+        }
+      });
+    } catch (error) {
+      console.error('❌ Error al cargar empresas:', error);
+      this.empresaOpciones = [{ label: 'Todas las empresas', value: '' }];
+    }
   }
 
   // =============================================
@@ -325,6 +375,7 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
       if (this.filtroFechaFin)
         filtros.fechaFin = this.formatearFecha(this.filtroFechaFin);
       if (this.filtroTipo) filtros.tipo = this.filtroTipo;
+      if (this.filtroEmpresa) filtros.empresa = this.filtroEmpresa;
       this.itemsPendientes =
         await this.consolidacionService.listarItemsPendientes(filtros);
       console.log('Items pendientes:', this.itemsPendientes);
@@ -373,6 +424,7 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
     this.filtroFechaInicio = null;
     this.filtroFechaFin = null;
     this.filtroTipo = '';
+    this.filtroEmpresa = '';
     this.cargarItemsPendientes();
   }
 
@@ -786,7 +838,12 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
         await this.consolidacionService.obtenerConsolidacion(
           consolidacion.idConsolidacion,
         );
-      console.log(this.consolidacionSeleccionada);
+      console.log('📦 Consolidación seleccionada:', this.consolidacionSeleccionada);
+      console.log('📋 Detalles:', this.consolidacionSeleccionada.detalles);
+      if (this.consolidacionSeleccionada.detalles && this.consolidacionSeleccionada.detalles.length > 0) {
+        console.log('🔍 Primer detalle tipo:', this.consolidacionSeleccionada.detalles[0].tipo);
+        console.log('🔍 Primer detalle completo:', this.consolidacionSeleccionada.detalles[0]);
+      }
       this.alertService.cerrarModalCarga();
       this.modalDetalleAbierto = true;
     } catch (error) {
@@ -1395,6 +1452,310 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
       document.body.classList.add('modal-open');
     } catch (error) {
       console.error(error);
+    }
+  }
+
+  // =============================================
+  // MÉTODOS PARA TAB DE SERVICIOS
+  // =============================================
+
+  cambiarTab(tab: number) {
+    this.tabActiva = tab;
+    if (tab === 1) {
+      this.cargarServiciosPendientes();
+    }
+  }
+
+  async cargarServiciosPendientes() {
+    try {
+      this.loading = true;
+      
+      const filtros: any = {
+        sociedad: this.usuario?.sociedad || '001',
+        idproyecto: this.usuario?.idProyecto
+      };
+
+      // Agregar filtros si están seleccionados
+      if (this.filtroServicioEmpresa) {
+        filtros.empresa = this.filtroServicioEmpresa;
+      }
+      if (this.filtroServicioFechaInicio) {
+        filtros.fechaInicio = this.formatearFecha(this.filtroServicioFechaInicio);
+      }
+      if (this.filtroServicioFechaFin) {
+        filtros.fechaFin = this.formatearFecha(this.filtroServicioFechaFin);
+      }
+      if (this.filtroServicioCommodity?.trim()) {
+        filtros.servicio = this.filtroServicioCommodity.trim();
+      }
+
+      console.log('📤 Enviando filtros al backend (servicios):', filtros);
+
+      const servicios = await this.consolidacionService.listarCommoditiesPendientes(filtros);
+      console.log('📥 Servicios recibidos del backend:', servicios.length, servicios);
+      
+      this.serviciosPendientes = servicios.map((s: any) => ({ ...s, seleccionado: false }));
+      
+      // Limpiar selección
+      this.serviciosPendientesFiltrados = [...this.serviciosPendientes];
+      this.seleccionarTodosServicios = false;
+    } catch (error) {
+      console.error('❌ Error al cargar servicios pendientes:', error);
+      this.alertService.showAlertError('Error', 'No se pudieron cargar los servicios pendientes');
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  async aplicarFiltrosServicios() {
+    // Recargar desde backend con el filtro de empresa (si existe)
+    await this.cargarServiciosPendientes();
+  }
+
+  async limpiarFiltrosServicios() {
+    this.filtroServicioEmpresa = '';
+    this.filtroServicioCommodity = '';
+    this.filtroServicioFechaInicio = null;
+    this.filtroServicioFechaFin = null;
+    await this.cargarServiciosPendientes();
+  }
+
+  toggleSeleccionTodosServicios() {
+    this.serviciosPendientesFiltrados.forEach(s => s.seleccionado = this.seleccionarTodosServicios);
+  }
+
+  hayServiciosSeleccionados(): boolean {
+    return this.serviciosPendientesFiltrados.some(s => s.seleccionado);
+  }
+
+  contarServiciosSeleccionados(): number {
+    return this.serviciosPendientesFiltrados.filter(s => s.seleccionado).length;
+  }
+
+  async consolidarServiciosSeleccionados() {
+    const seleccionados = this.serviciosPendientesFiltrados.filter(s => s.seleccionado);
+
+    if (seleccionados.length === 0) {
+      this.alertService.showAlert('Atención', 'Debe seleccionar al menos un servicio', 'warning');
+      return;
+    }
+
+    const confirmacion = await this.alertService.showConfirm(
+      'Confirmar Consolidación',
+      `¿Desea consolidar ${seleccionados.length} servicio(s)?`,
+      'question'
+    );
+
+    if (!confirmacion) return;
+
+    try {
+      this.loading = true;
+      this.alertService.mostrarModalCarga();
+
+      const request: CrearConsolidacionRequest = {
+        usuario: this.usuario?.documentoidentidad || this.usuario?.usuario || 'SYSTEM',
+        itemsSeleccionados: seleccionados.map(s => ({
+          idDetalle: s.idDetalle,
+          tipo: 'CONSUMO' as TipoRequerimiento
+        }))
+      };
+
+      const resultado = await this.consolidacionService.crearConsolidacion(request);
+      this.alertService.cerrarModalCarga();
+
+      if (resultado.success) {
+        this.alertService.showAlert(
+          'Éxito',
+          `Consolidación creada: ${resultado.codigo}`,
+          'success'
+        );
+        await this.cargarServiciosPendientes();
+        await this.cargarHistorial();
+      } else {
+        this.alertService.showAlertError('Error', resultado.mensaje || 'No se pudo consolidar');
+      }
+    } catch (error: any) {
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlertError('Error', error?.message || 'Error al consolidar servicios');
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  async consolidarYCotizarServicios() {
+    const seleccionados = this.serviciosPendientesFiltrados.filter(s => s.seleccionado);
+
+    if (seleccionados.length === 0) {
+      this.alertService.showAlert(
+        'Atención',
+        'Debe seleccionar al menos un servicio para consolidar',
+        'warning'
+      );
+      return;
+    }
+
+    const opcion = await this.alertService.showThreeButtons(
+      'Consolidar Servicios',
+      `Se consolidarán <strong>${seleccionados.length}</strong> servicio(s) seleccionado(s).<br><br>¿Qué desea hacer después de consolidar?`,
+      'question',
+      'Consolidar y Cotizar',
+      'Solo Consolidar',
+      'Cancelar'
+    );
+
+    if (opcion === 'button3') return;
+
+    try {
+      this.loading = true;
+      this.alertService.mostrarModalCarga();
+
+      const request: CrearConsolidacionRequest = {
+        usuario: this.usuario?.documentoidentidad || this.usuario?.usuario || 'SYSTEM',
+        itemsSeleccionados: seleccionados.map(s => ({
+          idDetalle: s.idDetalle,
+          tipo: s.tipoRequerimiento || 'CONSUMO' as TipoRequerimiento
+        }))
+      };
+
+      const resultado = await this.consolidacionService.crearConsolidacion(request);
+
+      if (!resultado.success) {
+        this.alertService.cerrarModalCarga();
+        this.alertService.showAlertError(
+          'Error',
+          resultado.mensaje || 'No se pudo crear la consolidación'
+        );
+        return;
+      }
+
+      // Si eligió consolidar y cotizar
+      if (opcion === 'button1') {
+        const reqCotizacion: GenerarSolicitudCotizacionRequest = {
+          idConsolidacion: resultado.idConsolidacion,
+          usuario: this.usuario?.documentoidentidad || this.usuario?.usuario || 'SYSTEM'
+        };
+
+        try {
+          const resCotizacion = await this.consolidacionService.generarSolicitudCotizacion(reqCotizacion);
+          this.alertService.cerrarModalCarga();
+
+          if (resCotizacion.success) {
+            // Guardar la solicitud en Dexie
+            try {
+              const consolidacionCompleta = await this.consolidacionService.obtenerConsolidacion(resultado.idConsolidacion);
+              
+              const solicitudDexie: SolicitudCotizacion = {
+                noSolicitud: resCotizacion.noSolicitud,
+                idConsolidacion: resultado.idConsolidacion,
+                fechaGeneracion: new Date().toISOString(),
+                usuarioGenera: this.usuario?.documentoidentidad || this.usuario?.usuario || 'SYSTEM',
+                totalItems: resultado.totalItems,
+                estado: 'PENDIENTE',
+                detalle: consolidacionCompleta.detalles?.map((det: any) => ({
+                  noLinea: det.noLinea,
+                  codigoItem: det.codigoItem,
+                  descripcionItem: det.descripcionItem,
+                  cantidad: det.cantidadTotal,
+                  unidadMedida: det.unidadMedida
+                })) || []
+              };
+              
+              await this.dexieService.saveSolicitudCotizacion(solicitudDexie);
+            } catch (errDexie: any) {
+              console.error('Error al guardar en Dexie:', errDexie);
+            }
+
+            this.alertService.showAlert(
+              'Consolidación y Cotización Generadas',
+              `Consolidación: <strong>${resultado.codigo}</strong><br>` +
+                `Solicitud Cotización: <strong>${resCotizacion.noSolicitud}</strong><br>` +
+                `Total servicios: ${resultado.totalItems}`,
+              'success'
+            );
+          } else {
+            this.alertService.showAlert(
+              'Consolidación creada, Cotización con error',
+              `Consolidación: <strong>${resultado.codigo}</strong> creada correctamente.<br>` +
+                `Error en cotización: ${resCotizacion.mensaje}`,
+              'warning'
+            );
+          }
+        } catch (errCot: any) {
+          this.alertService.cerrarModalCarga();
+          this.alertService.showAlert(
+            'Consolidación creada, Cotización con error',
+            `Consolidación: <strong>${resultado.codigo}</strong> creada correctamente.<br>` +
+              `Error al generar cotización: ${errCot?.message || 'Error inesperado'}`,
+            'warning'
+          );
+        }
+      } else {
+        this.alertService.cerrarModalCarga();
+        this.alertService.showAlert(
+          'Consolidación Exitosa',
+          `Código: <strong>${resultado.codigo}</strong><br>Total servicios: ${resultado.totalItems}`,
+          'success'
+        );
+      }
+
+      await this.cargarServiciosPendientes();
+      await this.cargarHistorial();
+    } catch (error: any) {
+      this.alertService.cerrarModalCarga();
+      console.error('Error al consolidar:', error);
+      const msg = error?.error?.mensaje || error?.message || 'Error inesperado al consolidar';
+      this.alertService.showAlertError('Error', msg);
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  async verDetalleServicioPendiente(servicio: any) {
+    try {
+      const resp = await this.consolidacionService.obtenerDetalleRequerimiento(servicio.idDetalle);
+      this.detallePendienteSeleccionado = resp;
+      this.modalDetallePendienteAbierto = true;
+      document.body.classList.add('modal-open');
+    } catch (error) {
+      console.error('Error al cargar detalle:', error);
+      this.alertService.showAlertError('Error', 'No se pudo cargar el detalle del servicio');
+    }
+  }
+
+  async anularServicioPendiente(servicio: any) {
+    const confirmacion = await this.alertService.showConfirm(
+      'Confirmar Anulación',
+      `¿Está seguro de anular el servicio ${servicio.commodity}? Esta acción no se puede deshacer.`,
+      'warning'
+    );
+
+    if (!confirmacion) return;
+
+    try {
+      this.loading = true;
+      this.alertService.mostrarModalCarga();
+
+      const request: AnularItemPendienteRequest = {
+        idDetalle: servicio.idDetalle,
+        tipoRequerimiento: 'CONSUMO',
+        usuario: this.usuario?.documentoidentidad || this.usuario?.usuario || 'SYSTEM',
+        motivo: 'Anulado desde consolidación de servicios'
+      };
+
+      const resultado = await this.consolidacionService.anularItemPendiente(request);
+      this.alertService.cerrarModalCarga();
+
+      if (resultado.success) {
+        this.alertService.showAlert('Éxito', 'Servicio anulado correctamente', 'success');
+        await this.cargarServiciosPendientes();
+      } else {
+        this.alertService.showAlertError('Error', resultado.mensaje || 'No se pudo anular');
+      }
+    } catch (error: any) {
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlertError('Error', error?.message || 'Error al anular servicio');
+    } finally {
+      this.loading = false;
     }
   }
 

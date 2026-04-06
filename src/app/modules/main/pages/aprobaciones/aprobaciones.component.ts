@@ -92,11 +92,25 @@ export class AprobacionesComponent {
   ) { }
 
   async ngOnInit() {
+    console.time('⏱️ ngOnInit total');
+    
+    // 1️⃣ Cargar usuario primero (crítico)
     await this.getUsuario();
-    await this.limpiarDetallesDuplicados(); // 🔥 Limpiar duplicados al iniciar
-    await this.sincronizarTablasMaestras();
-    await this.sincronizarRequerimientos();
+    
+    // 2️⃣ Cargar datos existentes en Dexie INMEDIATAMENTE (sin esperar backend)
     await this.cargar();
+    
+    // 3️⃣ Ejecutar tareas en segundo plano (no bloquean la UI)
+    Promise.all([
+      this.limpiarDetallesDuplicados(),
+      this.sincronizarTablasMaestras(),
+      this.sincronizarRequerimientos() // Esto recargará la tabla cuando termine
+    ]).then(() => {
+      console.timeEnd('⏱️ ngOnInit total');
+      console.log('✅ Todas las tareas de inicialización completadas');
+    }).catch(error => {
+      console.error('❌ Error en tareas de inicialización:', error);
+    });
   }
 
   /**
@@ -105,51 +119,39 @@ export class AprobacionesComponent {
    */
   async limpiarDetallesDuplicados() {
     try {
+      console.time('🧹 Limpieza de duplicados');
       const todosLosDetalles = await this.dexieService.detalles.toArray();
       
-      // Agrupar por idrequerimiento
-      const detallesPorRequerimiento = new Map<string, any[]>();
-      
-      todosLosDetalles.forEach(detalle => {
-        const key = detalle.idrequerimiento;
-        if (!detallesPorRequerimiento.has(key)) {
-          detallesPorRequerimiento.set(key, []);
-        }
-        detallesPorRequerimiento.get(key)!.push(detalle);
-      });
-      
-      // Para cada requerimiento, eliminar duplicados
-      for (const [idrequerimiento, detalles] of detallesPorRequerimiento) {
-        if (detalles.length > 1) {
-          // Verificar si son realmente duplicados (mismo código)
-          const detallesUnicos = new Map<string, any>();
-          
-          detalles.forEach(det => {
-            const key = `${det.codigo}-${det.descripcion}`;
-            if (!detallesUnicos.has(key)) {
-              detallesUnicos.set(key, det);
-            }
-          });
-          
-          // Si hay duplicados, eliminar todos y volver a insertar solo los únicos
-          if (detallesUnicos.size < detalles.length) {
-            console.log(`🧹 Limpiando ${detalles.length - detallesUnicos.size} duplicados para ${idrequerimiento}`);
-            
-            // Eliminar todos los detalles de este requerimiento
-            await this.dexieService.detalles
-              .where('idrequerimiento')
-              .equals(idrequerimiento)
-              .delete();
-            
-            // Reinsertar solo los únicos
-            for (const detalle of detallesUnicos.values()) {
-              await this.dexieService.detalles.add(detalle);
-            }
-          }
-        }
+      if (todosLosDetalles.length === 0) {
+        console.log('ℹ️ No hay detalles para limpiar');
+        return;
       }
       
-      console.log('✅ Limpieza de duplicados completada');
+      // Agrupar por idrequerimiento y eliminar duplicados en memoria
+      const detallesUnicos = new Map<string, any>();
+      
+      todosLosDetalles.forEach(detalle => {
+        const key = `${detalle.idrequerimiento}-${detalle.codigo}-${detalle.descripcion}`;
+        if (!detallesUnicos.has(key)) {
+          detallesUnicos.set(key, detalle);
+        }
+      });
+      
+      const duplicadosCount = todosLosDetalles.length - detallesUnicos.size;
+      
+      if (duplicadosCount > 0) {
+        console.log(`🧹 Encontrados ${duplicadosCount} duplicados. Limpiando...`);
+        
+        // Operación en bloque: limpiar y reinsertar
+        await this.dexieService.detalles.clear();
+        await this.dexieService.detalles.bulkAdd(Array.from(detallesUnicos.values()));
+        
+        console.log(`✅ ${duplicadosCount} duplicados eliminados`);
+      } else {
+        console.log('✅ No se encontraron duplicados');
+      }
+      
+      console.timeEnd('🧹 Limpieza de duplicados');
     } catch (error) {
       console.error('❌ Error al limpiar duplicados:', error);
     }
@@ -157,7 +159,7 @@ export class AprobacionesComponent {
 
   async sincronizarTablasMaestras() {
     try {
-      this.alertService.mostrarModalCarga();
+      console.log('🔄 Sincronizando tablas maestras en segundo plano...');
 
       const fundos = this.maestrasService.getFundos([
         { idempresa: this.usuario.idempresa },
@@ -166,12 +168,7 @@ export class AprobacionesComponent {
         if (!!resp && resp.length) {
           await this.dexieService.saveFundos(resp);
           await this.ListarFundos();
-          this.alertService.cerrarModalCarga();
-          this.alertService.showAlert(
-            'Exito!',
-            'Sincronizado con exito',
-            'success'
-          );
+          console.log('✅ Fundos sincronizados');
         }
       });
 
@@ -302,11 +299,21 @@ export class AprobacionesComponent {
   }
 
   async ListarLabores() {
+    console.log('🔍 Cargando labores desde Dexie...');
     this.labores = await this.dexieService.showLabores();
+    console.log('✅ Labores cargadas:', this.labores.length, 'registros');
+    if (this.labores.length > 0) {
+      console.log('📋 Primera labor:', this.labores[0]);
+    }
   }
 
   async ListarCecos() {
+    console.log('🔍 Cargando CECOs desde Dexie...');
     this.cecos = await this.dexieService.showCecos();
+    console.log('✅ CECOs cargados:', this.cecos.length, 'registros');
+    if (this.cecos.length > 0) {
+      console.log('📋 Primer CECO:', this.cecos[0]);
+    }
   }
 
   async ListarTipoGastos() {
@@ -355,20 +362,32 @@ export class AprobacionesComponent {
   }
 
   async cargar() {
+    console.time('⏱️ Cargar requerimientos');
     this.requerimientos = await this.dexieService.showRequerimiento();
-    this.requerimientosItems = this.requerimientos.filter(
-      (x) => x.tipo === 'ITEM' && x.estados === 'PENDIENTE'
-    ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
-    this.requerimientosCommodity = this.requerimientos.filter(
-      (x) => x.tipo === 'COMMODITY' && x.estados === 'PENDIENTE'
-    ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
-    this.requerimientosActivoFijo = this.requerimientos.filter(
-      (x) => x.tipo === 'ACTIVOFIJO' && x.estados === 'PENDIENTE'
-    ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
-    this.requerimientosActivoFijoMenor = this.requerimientos.filter(
-      (x) => x.tipo === 'ACTIVOFIJOMENOR' && x.estados === 'PENDIENTE'
-    ).map(req => ({ ...req, checked: false })); // Inicializar checked en false
+    
+    // Filtrar en una sola pasada para mejor rendimiento
+    const pendientes = this.requerimientos.filter(x => x.estados === 'PENDIENTE');
+    
+    this.requerimientosItems = pendientes
+      .filter(x => x.tipo === 'ITEM')
+      .map(req => ({ ...req, checked: false }));
+    
+    this.requerimientosCommodity = pendientes
+      .filter(x => x.tipo === 'COMMODITY')
+      .map(req => ({ ...req, checked: false }));
+    
+    this.requerimientosActivoFijo = pendientes
+      .filter(x => x.tipo === 'ACTIVOFIJO')
+      .map(req => ({ ...req, checked: false }));
+    
+    this.requerimientosActivoFijoMenor = pendientes
+      .filter(x => x.tipo === 'ACTIVOFIJOMENOR')
+      .map(req => ({ ...req, checked: false }));
+    
     this.ordenarRequerimientos();
+    
+    console.log(`✅ Cargados: ${this.requerimientosItems.length} Items, ${this.requerimientosCommodity.length} Servicios, ${this.requerimientosActivoFijo.length} Act.Fijos, ${this.requerimientosActivoFijoMenor.length} Act.Menores`);
+    console.timeEnd('⏱️ Cargar requerimientos');
   }
 
   async cargarRequerimientos() {
@@ -423,44 +442,67 @@ export class AprobacionesComponent {
 
   async sincronizarRequerimientos() {
     try {
+      console.time('⏱️ Sincronizar requerimientos');
+      console.log(`🌐 Sincronizando requerimientos (RUC: ${this.usuario.ruc}, Rol: ${this.obtenerRol()})...`);
+      
       const requerimmientos = this.requerimientosService.getRequerimientos([
         { ruc: this.usuario.ruc, idrol: this.obtenerRol() },
       ]);
+      
       requerimmientos.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
+          console.log(`� Recibidos ${resp.length} requerimientos del backend`);
+          
+          // Guardar requerimientos
           await this.dexieService.saveRequerimientos(resp);
-          // Ahora recorre cada requerimiento y guarda su detalle
-          for (const req of resp) {
-            console.log('Requerimiento', req);
-            if (req.detalle && req.detalle.length) {
-              // 🔥 Primero eliminar los detalles existentes para este requerimiento
-              await this.dexieService.detalles
-                .where('idrequerimiento')
-                .equals(req.idrequerimiento)
-                .delete();
-              
-              // Luego agregar los nuevos detalles
-              for (const det of req.detalle) {
-                // Añadimos un campo idrequerimiento para enlazarlo
-                await this.dexieService.detalles.add({
-                  ...det,
-                  idrequerimiento: req.idrequerimiento,
-                });
-              }
-            }
+          
+          // Procesar detalles en lote
+          const detallesParaAgregar: any[] = [];
+          const requerimientosConDetalle = resp.filter((req: any) => req.detalle && req.detalle.length);
+          
+          for (const req of requerimientosConDetalle) {
+            // Eliminar detalles existentes
+            await this.dexieService.detalles
+              .where('idrequerimiento')
+              .equals(req.idrequerimiento)
+              .delete();
+            
+            // Preparar detalles para inserción en lote
+            req.detalle.forEach((det: any) => {
+              detallesParaAgregar.push({
+                ...det,
+                idrequerimiento: req.idrequerimiento,
+              });
+            });
+          }
+          
+          // Insertar todos los detalles en una sola operación
+          if (detallesParaAgregar.length > 0) {
+            await this.dexieService.detalles.bulkAdd(detallesParaAgregar);
+            console.log(`💾 ${detallesParaAgregar.length} detalles guardados`);
           }
 
-          console.log('✅ Requerimientos y detalles guardados correctamente');
+          console.log('✅ Sincronización completada');
+          console.timeEnd('⏱️ Sincronizar requerimientos');
 
-          // 👇👇 AGREGA ESTO PARA REFRESCAR LA VISTA INMEDIATAMENTE
+          // Recargar la vista
           await this.cargar();
+        } else {
+          console.warn('⚠️ No se recibieron requerimientos del backend');
         }
+      }, (error) => {
+        console.error('❌ Error al sincronizar:', error);
+        this.alertService.showAlert(
+          'Error!',
+          'Error al sincronizar requerimientos: ' + (error?.message || 'Error desconocido'),
+          'error'
+        );
       });
     } catch (error: any) {
-      console.error(error);
+      console.error('❌ Error en sincronizarRequerimientos:', error);
       this.alertService.showAlert(
         'Error!',
-        '<p>Ocurrio un error</p><p>',
+        '<p>Ocurrio un error al sincronizar</p>',
         'error'
       );
     }
@@ -469,6 +511,70 @@ export class AprobacionesComponent {
   /** ✅ Sincronizar requerimiento aprobado a SPRING */
   async sincronizaRequerimientoSPRING(req: any, skipConfirmation: boolean = false) {
     // debugger;
+    
+    // ✅ CORRECCIÓN CRÍTICA: Cargar datos maestros si no están disponibles
+    if (!this.cecos || this.cecos.length === 0) {
+      console.log('⚠️ CECOs no cargados, cargando desde Dexie...');
+      await this.ListarCecos();
+      
+      // Si aún están vacíos, sincronizar desde el backend
+      if (!this.cecos || this.cecos.length === 0) {
+        console.log('⚠️ CECOs vacíos en Dexie, sincronizando desde backend...');
+        try {
+          const cecos = this.maestrasService.getCecos([{}]);
+          const resp: any = await cecos.toPromise();
+          if (!!resp && resp.length) {
+            console.log('📥 Recibidos', resp.length, 'CECOs del backend');
+            await this.dexieService.saveCecos(resp);
+            await this.ListarCecos();
+            console.log('✅ CECOs sincronizados y cargados:', this.cecos.length);
+          } else {
+            console.warn('⚠️ Backend no retornó CECOs');
+          }
+        } catch (error) {
+          console.error('❌ Error al sincronizar CECOs:', error);
+        }
+      }
+    }
+    
+    if (!this.labores || this.labores.length === 0) {
+      console.log('⚠️ Labores no cargadas, cargando desde Dexie...');
+      await this.ListarLabores();
+      
+      // Si aún están vacías, sincronizar desde el backend
+      if (!this.labores || this.labores.length === 0) {
+        console.log('⚠️ Labores vacías en Dexie, sincronizando desde backend...');
+        try {
+          const labores = await this.maestrasService.getLabores([{ aplicacion: 'LOGISTICA', esadmin: 0 }]);
+          if (!!labores && labores.length) {
+            console.log('📥 Recibidas', labores.length, 'Labores del backend');
+            await this.dexieService.saveLabores(labores);
+            await this.ListarLabores();
+            console.log('✅ Labores sincronizadas y cargadas:', this.labores.length);
+          } else {
+            console.warn('⚠️ Backend no retornó Labores');
+          }
+        } catch (error) {
+          console.error('❌ Error al sincronizar Labores:', error);
+        }
+      }
+    }
+    
+    if (!this.proyectos || this.proyectos.length === 0) {
+      console.log('⚠️ Proyectos no cargados, cargando ahora...');
+      await this.ListarProyectos();
+    }
+    if (!this.itemsFiltered || this.itemsFiltered.length === 0) {
+      console.log('⚠️ Items no cargados, cargando ahora...');
+      await this.ListarItems();
+    }
+    
+    console.log('✅ Datos maestros verificados:', {
+      cecos: this.cecos.length,
+      labores: this.labores.length,
+      proyectos: this.proyectos.length,
+      items: this.itemsFiltered.length
+    });
     
     // Solo mostrar confirmación si no se está procesando en lote
     if (!skipConfirmation) {
@@ -500,11 +606,22 @@ export class AprobacionesComponent {
 
     const first = req.detalle[0];
 
+    console.log('🔍 DEBUG - Datos del primer detalle:', first);
+    console.log('🔍 DEBUG - CECO del detalle:', first.ceco);
+    console.log('🔍 DEBUG - Labor del detalle:', first.labor);
+    console.log('🔍 DEBUG - Proyecto del detalle:', first.proyecto);
+    console.log('🔍 DEBUG - Array de CECOs disponibles:', this.cecos);
+    console.log('🔍 DEBUG - Array de Labores disponibles:', this.labores);
+    console.log('🔍 DEBUG - Primera labor del array:', this.labores[0]);
+
     centroCostoDefault = this.cecos.find(c => c.localname === first.ceco)?.costcenter ?? '0001';
+    console.log('🔍 DEBUG - Centro de Costo Default:', centroCostoDefault);
 
     accountDefault = this.cecos.find(c => c.localname === first.ceco)?.ccontable ?? '10411103';
+    console.log('🔍 DEBUG - Account Default:', accountDefault);
 
     proyectoAfeDefault = this.proyectos.find(p => p.proyectoio === first.proyecto)?.afe ?? 'FUNDO HP';
+    console.log('🔍 DEBUG - Proyecto AFE Default:', proyectoAfeDefault);
 
     let um = this.itemsFiltered.find(i => i.item === first.codigo)?.unidadCodigo;
 
@@ -513,9 +630,30 @@ export class AprobacionesComponent {
     let cuentacontable = '';
 
     let actividad = this.labores.find(l => l.labor === first.labor)?.idlabor;
+    console.log('🔍 DEBUG - Actividad (idlabor):', actividad);
 
     let ccostodestino = '';
 
+    // Obtener el costcenter del CECO para la distribución
+    const cecoParaDistribucion = this.cecos.find(c => c.localname === first.ceco);
+    console.log('🔍 DEBUG - CECO para distribución:', cecoParaDistribucion);
+    console.log('🔍 DEBUG - costcenter del CECO:', cecoParaDistribucion?.costcenter);
+
+    // ✅ CORRECCIÓN: Convertir almacén corto (001) a código completo (H001)
+    let almacenCodigo = req.idalmacen || 'H001';
+    console.log('🔍 DEBUG - Almacén del requerimiento:', almacenCodigo);
+    
+    if (almacenCodigo && almacenCodigo.length <= 3 && !isNaN(Number(almacenCodigo))) {
+      const almacenes = await this.dexieService.showAlmacenes();
+      const almacenCompleto = almacenes.find((a: any) => a.almacen === almacenCodigo);
+      if (almacenCompleto) {
+        almacenCodigo = almacenCompleto.idalmacen;
+        console.log('🔍 DEBUG - Almacén corregido de', req.idalmacen, 'a', almacenCodigo);
+      } else {
+        almacenCodigo = 'H' + almacenCodigo.padStart(3, '0');
+        console.log('🔍 DEBUG - Almacén convertido a formato estándar:', almacenCodigo);
+      }
+    }
 
     try {
       // 🟦 FORMAMOS el JSON EXACTO para el SP
@@ -526,7 +664,7 @@ export class AprobacionesComponent {
           RequisicionNumero: '',// AHORA LO GENERA EL SP
           Clasificacion: req.idclasificacion,
           ComprasAlmacenFlag: comprasAlmacenFlag,
-          AlmacenCodigo: req.idalmacen,
+          AlmacenCodigo: almacenCodigo,
           MonedaCodigo: 'LO',
           FechaRequerida: new Date(req.fecha).toISOString(),
           FechaPreparacion: new Date().toISOString(),
@@ -559,11 +697,18 @@ export class AprobacionesComponent {
             const ceco = this.cecos.find((c) => c.localname === d.ceco);
             console.log(ceco);
             const item = this.itemsFiltered.find(i => i.item === d.codigo);
-            cuentacontable =  this.itemsFiltered.find(i => i.item === d.codigo)?.cuentaGasto;
+            const itemCuentaContable = this.itemsFiltered.find(i => i.item === d.codigo)?.cuentaGasto;
             const labores = this.labores.find(l => l.labor === d.labor);
             console.log('labores', labores);
-            ccostodestino = labores?.idlabor ?? '';
-            console.log(cuentacontable);
+            // ✅ CORRECCIÓN: Para COMPRA, usar costcenter del CECO si no hay labor
+            const itemCcostodestino = labores?.idlabor ?? (ceco?.costcenter || '');
+            console.log(itemCuentaContable);
+            
+            // Actualizar variables globales para la distribución (solo del primer item)
+            if (index === 0) {
+              cuentacontable = itemCuentaContable;
+              ccostodestino = itemCcostodestino;
+            }
 
             return {
               Secuencia: index + 1,
@@ -587,8 +732,10 @@ export class AprobacionesComponent {
               CotizacionProveedor: 0,
               ControlPresupuestalFlag: 'S',
               Comentario: d.descripcion ?? '',
-              CentroCosto: (ceco?.id ?? '').toString(),
-              LoteProduccion: labores?.idlabor ?? '',
+              // ✅ CORRECCIÓN: Usar costcenter del CECO, no el id
+              CentroCosto: ceco?.costcenter ?? '',
+              // ✅ CORRECCIÓN: Usar labor específica del item o costcenter como fallback
+              LoteProduccion: itemCcostodestino,
               Estado: 'PE',
               UltimoUsuario: 'MISESF',
               UltimaFechaModif: new Date().toISOString(),
@@ -605,8 +752,8 @@ export class AprobacionesComponent {
               Account: cuentacontable,
               Afe: proyectoAfeDefault,
               Monto: '100.00',
-              //CentroCostoDestino: centroCostoDefault ?? '',
-              CentroCostoDestino: ccostodestino ?? '',
+              // ✅ CORRECCIÓN: CentroCostoDestino debe ser el costcenter del CECO, o usar ccostodestino como fallback
+              CentroCostoDestino: this.cecos.find(c => c.localname === first.ceco)?.costcenter ?? ccostodestino ?? centroCostoDefault,
               Sucursal: '0801',
               CampoReferencia: req.referenciaGasto ?? 'GA',
               ReferenciaFiscal01: '',
@@ -618,7 +765,16 @@ export class AprobacionesComponent {
       ];
 
       console.log('📤 Enviando al SP SPRING:', requerimiento);
+      console.log('� DETALLE - Verificando CentroCosto y LoteProduccion por item:');
+      requerimiento[0].detalle.forEach((det: any, idx: number) => {
+        console.log(`  Item ${idx + 1}: CentroCosto="${det.CentroCosto}", LoteProduccion="${det.LoteProduccion}"`);
+      });
+      console.log('� DISTRIBUCIÓN - Verificando valores:');
+      console.log(`  CentroCostoDestino="${requerimiento[0].distribucion[0].CentroCostoDestino}"`);
+      console.log(`  Account="${requerimiento[0].distribucion[0].Account}"`);
+      console.log(`  Afe="${requerimiento[0].distribucion[0].Afe}"`);
 
+      // 🟩 ENVIAMOS AL SERVICIO
       this.requerimientosService
         .getRegristroRequerimientoSPRING(requerimiento)
         .subscribe({

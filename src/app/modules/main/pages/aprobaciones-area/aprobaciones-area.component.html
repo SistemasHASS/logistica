@@ -80,8 +80,8 @@
                 <th>Tipo</th>
                 <th>Descripción</th>
                 <!-- <th>Monto</th> -->
-                <th>Urgencia</th>
-                <th>Tiempo Espera</th>
+                <th>Estado</th>
+                <!-- <th>Tiempo Espera</th> -->
                 <th>Acciones</th>
               </tr>
             </ng-template>
@@ -94,14 +94,14 @@
                 <td>{{ req.nombreArea }}</td>
                 <td>{{ req.tipoRequerimiento }}</td>
                 <td>{{ req.glosa || 'Sin descripción' }}</td>
-                <td>{{ req.estados }}</td>
+                <!-- <td>{{ req.estados }}</td> -->
                 <!-- <td>{{ formatMoneda(req.montoTotal) }}</td> -->
                 <td>
                   <p-tag [severity]="'warn'">
-                    PENDIENTE
+                    {{ req.estados }}
                   </p-tag>
                 </td>
-                <td>-</td>
+                <!-- <td>-</td> -->
                 <td>
                   <button pButton type="button" icon="pi pi-eye" 
                           class="p-button-sm p-button-info me-2"
@@ -153,7 +153,7 @@
                   </p-tag>
                 </td>
                 <td>
-                  <button pButton type="button" icon="pi pi-eye" 
+                  <button pButton type="button" icon="icon icon-eye" 
                           class="p-button-sm p-button-info"
                           (click)="verDetalle(req)"
                           label="Ver">

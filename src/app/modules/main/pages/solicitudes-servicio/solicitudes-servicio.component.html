@@ -1,0 +1,587 @@
+<div class="container-fluid">
+  <div class="page-header">
+    <h2 class="page-title">
+      Solicitudes de Servicio
+    </h2>
+    <p class="page-subtitle">Gestión de solicitudes de servicios (COMMODITY)</p>
+  </div>
+
+  <div class="stats-cards">
+    <div class="stat-card secondary">
+      <div class="stat-icon"><i class="bx bx-file"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ contadores.totalGeneradas }}</span>
+        <span class="stat-label">Generadas</span>
+      </div>
+    </div>
+    <div class="stat-card info">
+      <div class="stat-icon"><i class="bx bx-send"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ contadores.totalEnviadas }}</span>
+        <span class="stat-label">Enviadas</span>
+      </div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-icon"><i class="bx bx-check-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ contadores.totalAprobadas }}</span>
+        <span class="stat-label">Aprobadas</span>
+      </div>
+    </div>
+    <div class="stat-card danger">
+      <div class="stat-icon"><i class="bx bx-x-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ contadores.totalRechazadas }}</span>
+        <span class="stat-label">Rechazadas</span>
+      </div>
+    </div>
+    <div class="stat-card primary">
+      <div class="stat-icon"><i class="bx bx-shopping-bag"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ contadores.totalConOrden }}</span>
+        <span class="stat-label">Con Orden</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs de navegación -->
+  <ul class="nav nav-tabs mb-3" role="tablist" *ngIf="!mostrarFormulario">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="tabActiva === 'LOCALES'" (click)="cambiarTabLocales()" type="button">
+        <i class="bx bx-briefcase me-1"></i> Mis Solicitudes
+        <span class="badge bg-secondary ms-1" *ngIf="solicitudesLocales.length > 0">{{ solicitudesLocales.length }}</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="tabActiva === 'BACKEND'" (click)="tabActiva = 'BACKEND'" type="button">
+        <i class="bx bx-cloud me-1"></i> Solicitudes Procesadas
+        <span class="badge bg-primary ms-1" *ngIf="solicitudesServicio.length > 0">{{ solicitudesServicio.length }}</span>
+      </button>
+    </li>
+  </ul>
+
+  <!-- Tab: Solicitudes del Backend -->
+  <div *ngIf="tabActiva === 'BACKEND' && !mostrarFormulario">
+    <div class="actions-bar">
+      <button class="btn btn-primary" (click)="nuevaSolicitudServicio()">
+        <i class="bx bx-plus"></i> Nueva Solicitud
+      </button>
+      <div class="filters">
+        <select class="form-control" [(ngModel)]="filtroEstado" (ngModelChange)="cargarSolicitudes()">
+          <option value="">Todos los estados</option>
+          <option value="GENERADA">Generadas</option>
+          <option value="ENVIADA">Enviadas</option>
+          <option value="APROBADA">Aprobadas</option>
+          <option value="RECHAZADA">Rechazadas</option>
+          <option value="COTIZADA">Cotizadas</option>
+          <option value="ORDEN_GENERADA">Con Orden</option>
+        </select>
+        <select class="form-control" [(ngModel)]="filtroTipoServicio" (ngModelChange)="cargarSolicitudes()">
+          <option value="">Todos los tipos</option>
+          <option *ngFor="let tipo of tiposServicio" [value]="tipo.value">{{ tipo.label }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-container">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Número</th>
+          <th>Fecha</th>
+          <th>Tipo Servicio</th>
+          <th>Descripción</th>
+          <th>Monto Estimado</th>
+          <th>Prioridad</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let solicitud of solicitudesServicio">
+          <td><strong>{{ solicitud.numeroSolicitud }}</strong></td>
+          <td>{{ formatearFecha(solicitud.fecha) }}</td>
+          <td>{{ solicitud.tipoServicio }}</td>
+          <td>{{ solicitud.descripcion }}</td>
+          <td class="text-right"><strong>S/ {{ formatearMoneda(solicitud.montoEstimado) }}</strong></td>
+          <td><span class="badge" [ngClass]="obtenerClasePrioridad(solicitud.prioridad)">{{ solicitud.prioridad }}</span></td>
+          <td><span class="badge" [ngClass]="obtenerClaseEstado(solicitud.estado)">{{ solicitud.estado }}</span></td>
+          <td style="text-align: center">
+            <div class="action-buttons">
+              <button 
+                pButton 
+                type="button" 
+                icon="bx bx-show" 
+                class="p-button-rounded p-button-primary p-button-sm" 
+                (click)="editarSolicitud(solicitud)" 
+                pTooltip="Ver Detalle"
+                tooltipPosition="top">
+              </button>
+              <button 
+                *ngIf="solicitud.estado === 'GENERADA'"
+                pButton 
+                type="button" 
+                icon="bx bx-edit" 
+                class="p-button-rounded p-button-warning p-button-sm" 
+                (click)="editarSolicitud(solicitud)" 
+                pTooltip="Editar"
+                tooltipPosition="top">
+              </button>
+              <button 
+                *ngIf="solicitud.estado === 'GENERADA'"
+                pButton 
+                type="button" 
+                icon="bx bx-send" 
+                class="p-button-rounded p-button-success p-button-sm" 
+                (click)="enviarSolicitud(solicitud)" 
+                pTooltip="Enviar"
+                tooltipPosition="top">
+              </button>
+              <button 
+                *ngIf="solicitud.estado === 'GENERADA'"
+                pButton 
+                type="button" 
+                icon="bx bx-trash" 
+                class="p-button-rounded p-button-danger p-button-sm" 
+                (click)="anularSolicitud(solicitud)" 
+                pTooltip="Anular"
+                tooltipPosition="top">
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="solicitudesServicio.length === 0">
+          <td colspan="8" class="text-center">
+            <p class="no-data">No hay solicitudes de servicio registradas.</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Tab: Solicitudes Generadas desde Cotizaciones (Locales) -->
+  <div *ngIf="tabActiva === 'LOCALES' && !mostrarFormulario">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Fecha</th>
+            <th>Descripción</th>
+            <th>Proveedor</th>
+            <th>Monto Estimado</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let solicitud of solicitudesLocales">
+            <td><strong>{{ solicitud.numeroSolicitud }}</strong></td>
+            <td>{{ formatearFecha(solicitud.fecha) }}</td>
+            <td>{{ solicitud.descripcionServicio }}</td>
+            <td>{{ solicitud.empresa }}</td>
+            <td class="text-right"><strong>{{ solicitud.moneda }} {{ formatearMoneda(solicitud.montoEstimado) }}</strong></td>
+            <td><span class="badge" [ngClass]="obtenerClaseEstado(solicitud.estado)">{{ solicitud.estado }}</span></td>
+            <td style="text-align: center">
+              <div class="action-buttons">
+                <button 
+                  pButton 
+                  type="button" 
+                  icon="bx bx-show" 
+                  class="p-button-rounded p-button-primary p-button-sm" 
+                  (click)="verDetalleSolicitudLocal(solicitud)" 
+                  pTooltip="Ver Detalle"
+                  tooltipPosition="top">
+                </button>
+                <button 
+                  *ngIf="solicitud.estado === 'GENERADA'"
+                  pButton 
+                  type="button" 
+                  icon="bx bx-edit" 
+                  class="p-button-rounded p-button-warning p-button-sm" 
+                  (click)="editarSolicitudLocal(solicitud)" 
+                  pTooltip="Editar"
+                  tooltipPosition="top">
+                </button>
+                <button 
+                  *ngIf="solicitud.estado === 'GENERADA'"
+                  pButton 
+                  type="button" 
+                  icon="bx bx-send" 
+                  class="p-button-rounded p-button-success p-button-sm" 
+                  (click)="enviarSolicitudLocal(solicitud)" 
+                  pTooltip="Enviar"
+                  tooltipPosition="top">
+                </button>
+                <button 
+                  *ngIf="solicitud.estado === 'GENERADA'"
+                  pButton 
+                  type="button" 
+                  icon="bx bx-trash" 
+                  class="p-button-rounded p-button-danger p-button-sm" 
+                  (click)="eliminarSolicitudLocal(solicitud)" 
+                  pTooltip="Eliminar"
+                  tooltipPosition="top">
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="solicitudesLocales.length === 0">
+            <td colspan="7" class="text-center">
+              <p class="no-data">No hay solicitudes de servicio generadas desde cotizaciones.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="form-container" *ngIf="mostrarFormulario">
+    <div class="form-header">
+      <h3>{{ modoEdicion ? 'Editar' : 'Nueva' }} Solicitud de Servicio</h3>
+      <button class="btn-close" (click)="cancelarFormulario()">
+        <i class="bx bx-x"></i>
+      </button>
+    </div>
+
+    <div class="form-body">
+      <div class="form-section">
+        <h4>Información General</h4>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Número de Solicitud:</label>
+            <input type="text" class="form-control" [(ngModel)]="solicitudActual.numeroSolicitud" readonly>
+          </div>
+          <div class="form-group">
+            <label>Fecha:</label>
+            <input type="date" class="form-control" [(ngModel)]="solicitudActual.fecha">
+          </div>
+          <div class="form-group">
+            <label>Tipo de Servicio: *</label>
+            <select class="form-control" [(ngModel)]="solicitudActual.tipoServicio">
+              <option value="">Seleccione...</option>
+              <option *ngFor="let tipo of tiposServicio" [value]="tipo.value">{{ tipo.label }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Prioridad:</label>
+            <select class="form-control" [(ngModel)]="solicitudActual.prioridad">
+              <option *ngFor="let prioridad of prioridades" [value]="prioridad.value">{{ prioridad.label }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h4>Descripción del Servicio</h4>
+        <div class="form-group">
+          <label>Descripción: *</label>
+          <textarea class="form-control" [(ngModel)]="solicitudActual.descripcion" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Justificación:</label>
+          <textarea class="form-control" [(ngModel)]="solicitudActual.justificacion" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Alcance del Servicio:</label>
+          <textarea class="form-control" [(ngModel)]="solicitudActual.alcance" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Entregables Esperados:</label>
+          <textarea class="form-control" [(ngModel)]="solicitudActual.entregables" rows="2"></textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h4>Detalles de Ejecución</h4>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Plazo de Ejecución (días):</label>
+            <input type="number" class="form-control" [(ngModel)]="solicitudActual.plazoEjecucion">
+          </div>
+          <div class="form-group">
+            <label>Fecha Inicio Requerida:</label>
+            <input type="date" class="form-control" [(ngModel)]="solicitudActual.fechaInicioRequerida">
+          </div>
+          <div class="form-group">
+            <label>Fecha Fin Requerida:</label>
+            <input type="date" class="form-control" [(ngModel)]="solicitudActual.fechaFinRequerida">
+          </div>
+          <div class="form-group">
+            <label>Ubicación del Servicio:</label>
+            <input type="text" class="form-control" [(ngModel)]="solicitudActual.ubicacionServicio">
+          </div>
+          <div class="form-group">
+            <label>Centro de Costo:</label>
+            <input type="text" class="form-control" [(ngModel)]="solicitudActual.centroCosto">
+          </div>
+          <div class="form-group">
+            <label>Proyecto:</label>
+            <input type="text" class="form-control" [(ngModel)]="solicitudActual.proyecto">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-header">
+          <h4>Detalle de Servicios</h4>
+          <button class="btn btn-sm btn-success" (click)="agregarDetalleServicio()">
+            <i class="bx bx-plus"></i> Agregar Servicio
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Descripción</th>
+                <th>Especificaciones</th>
+                <th>U.M.</th>
+                <th>Cantidad</th>
+                <th>Precio Unit. Est.</th>
+                <th>Subtotal</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let detalle of detalleServicio; let i = index">
+                <td>{{ detalle.item }}</td>
+                <td>
+                  <input type="text" class="form-control" [(ngModel)]="detalle.descripcionServicio">
+                </td>
+                <td>
+                  <input type="text" class="form-control" [(ngModel)]="detalle.especificaciones">
+                </td>
+                <td>
+                  <select class="form-control" [(ngModel)]="detalle.unidadMedida">
+                    <option *ngFor="let um of unidadesMedida" [value]="um.value">{{ um.label }}</option>
+                  </select>
+                </td>
+                <td>
+                  <input type="number" class="form-control" [(ngModel)]="detalle.cantidad" 
+                         (ngModelChange)="calcularSubtotal(detalle)" step="0.01">
+                </td>
+                <td>
+                  <input type="number" class="form-control" [(ngModel)]="detalle.precioUnitarioEstimado" 
+                         (ngModelChange)="calcularSubtotal(detalle)" step="0.01">
+                </td>
+                <td class="text-right">
+                  <strong>{{ formatearMoneda(detalle.subtotal) }}</strong>
+                </td>
+                <td>
+                  <button class="btn btn-sm btn-danger" (click)="eliminarDetalleServicio(i)">
+                    <i class="bx bx-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="detalleServicio.length === 0">
+                <td colspan="8" class="text-center">
+                  <p class="no-data">No hay servicios agregados. Haga clic en "Agregar Servicio".</p>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot *ngIf="detalleServicio.length > 0">
+              <tr>
+                <td colspan="6" class="text-right"><strong>TOTAL ESTIMADO:</strong></td>
+                <td class="text-right"><strong>S/ {{ formatearMoneda(solicitudActual.montoEstimado) }}</strong></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-group">
+          <label>Observaciones:</label>
+          <textarea class="form-control" [(ngModel)]="solicitudActual.observaciones" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <button class="btn btn-primary" (click)="guardarSolicitud()">
+        <i class="bx bx-save"></i> Guardar
+      </button>
+      <button class="btn btn-secondary" (click)="cancelarFormulario()">
+        <i class="bx bx-x"></i> Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE SOLICITUD LOCAL (PRIMENG DIALOG) -->
+<p-dialog 
+  [(visible)]="modalDetalleLocalAbierto" 
+  [header]="'Detalle de Solicitud de Servicio: ' + (solicitudLocalDetalle?.numeroSolicitud || '')"
+  [modal]="true"
+  [closable]="true"
+  [closeOnEscape]="true"
+  [dismissableMask]="true"
+  [style]="{width: '90vw', maxWidth: '1200px'}"
+  [contentStyle]="{maxHeight: '80vh', overflow: 'auto'}"
+  styleClass="solicitud-detalle-dialog">
+  
+  <ng-template pTemplate="content">
+    <div class="detalle-solicitud-content" *ngIf="solicitudLocalDetalle">
+      <!-- Información General -->
+      <div class="info-section">
+        <h4><i class="pi pi-info-circle"></i> Información General</h4>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Número de Solicitud:</label>
+            <span><strong>{{ solicitudLocalDetalle.numeroSolicitud }}</strong></span>
+          </div>
+          <div class="info-item">
+            <label>Fecha:</label>
+            <span>{{ formatearFecha(solicitudLocalDetalle.fecha) }}</span>
+          </div>
+          <div class="info-item">
+            <label>Tipo:</label>
+            <span class="badge badge-secondary">{{ solicitudLocalDetalle.tipo || 'SERVICIO' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Estado:</label>
+            <span class="badge" [ngClass]="obtenerClaseEstado(solicitudLocalDetalle.estado)">
+              {{ solicitudLocalDetalle.estado }}
+            </span>
+          </div>
+          <div class="info-item">
+            <label>Proveedor:</label>
+            <span>{{ solicitudLocalDetalle.empresa }}</span>
+          </div>
+          <div class="info-item">
+            <label>Fecha Requerida:</label>
+            <span>{{ formatearFecha(solicitudLocalDetalle.fechaRequerida) }}</span>
+          </div>
+          <div class="info-item">
+            <label>Solicitante:</label>
+            <span>{{ solicitudLocalDetalle.nombreSolicita }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información Financiera -->
+      <div class="info-section">
+        <h4><i class="pi pi-dollar"></i> Información Financiera</h4>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Moneda:</label>
+            <span class="badge badge-info">{{ solicitudLocalDetalle.moneda || 'PEN' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Monto Estimado:</label>
+            <span><strong>{{ solicitudLocalDetalle.moneda }} {{ formatearMoneda(solicitudLocalDetalle.montoEstimado) }}</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Descripción del Servicio -->
+      <div class="info-section" *ngIf="solicitudLocalDetalle.descripcionServicio">
+        <h4><i class="pi pi-file-edit"></i> Descripción del Servicio</h4>
+        <p class="observaciones-text">{{ solicitudLocalDetalle.descripcionServicio }}</p>
+      </div>
+
+      <!-- Observaciones -->
+      <div class="info-section" *ngIf="solicitudLocalDetalle.observaciones">
+        <h4><i class="pi pi-comment"></i> Observaciones</h4>
+        <p class="observaciones-text" style="white-space: pre-line;">{{ solicitudLocalDetalle.observaciones }}</p>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <button 
+      pButton 
+      type="button" 
+      label="Cerrar" 
+      icon="pi pi-times" 
+      class="p-button-secondary" 
+      (click)="cerrarModalDetalleLocal()">
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- MODAL EDICIÓN SOLICITUD LOCAL (PRIMENG DIALOG) -->
+<p-dialog 
+  [(visible)]="modalEdicionLocalAbierto" 
+  [header]="'Editar Solicitud: ' + (solicitudLocalEdicion?.numeroSolicitud || '')"
+  [modal]="true"
+  [closable]="true"
+  [closeOnEscape]="true"
+  [dismissableMask]="true"
+  [style]="{width: '90vw', maxWidth: '800px'}"
+  [contentStyle]="{maxHeight: '80vh', overflow: 'auto'}"
+  styleClass="solicitud-edicion-dialog">
+  
+  <ng-template pTemplate="content">
+    <div class="edicion-solicitud-content" *ngIf="solicitudLocalEdicion">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="descripcionServicio">Descripción del Servicio *</label>
+          <textarea 
+            id="descripcionServicio"
+            class="form-control" 
+            rows="4"
+            [(ngModel)]="solicitudLocalEdicion.descripcionServicio"
+            placeholder="Describa el servicio requerido">
+          </textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="montoEstimado">Monto Estimado *</label>
+            <input 
+              type="number" 
+              id="montoEstimado"
+              class="form-control" 
+              [(ngModel)]="solicitudLocalEdicion.montoEstimado"
+              step="0.01"
+              min="0">
+          </div>
+
+          <div class="form-group">
+            <label for="fechaRequerida">Fecha Requerida *</label>
+            <input 
+              type="date" 
+              id="fechaRequerida"
+              class="form-control" 
+              [(ngModel)]="solicitudLocalEdicion.fechaRequerida">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="observaciones">Observaciones</label>
+          <textarea 
+            id="observaciones"
+            class="form-control" 
+            rows="3"
+            [(ngModel)]="solicitudLocalEdicion.observaciones"
+            placeholder="Observaciones adicionales">
+          </textarea>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <button 
+      pButton 
+      type="button" 
+      label="Cancelar" 
+      icon="pi pi-times" 
+      class="p-button-secondary" 
+      (click)="cerrarModalEdicionLocal()">
+    </button>
+    <button 
+      pButton 
+      type="button" 
+      label="Guardar Cambios" 
+      icon="pi pi-check" 
+      class="p-button-primary" 
+      (click)="guardarEdicionLocal()">
+    </button>
+  </ng-template>
+</p-dialog>

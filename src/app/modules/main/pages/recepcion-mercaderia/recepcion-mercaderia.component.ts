@@ -5,6 +5,8 @@ import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { UserService } from '@/app/shared/services/user.service';
 import { UtilsService } from '@/app/shared/utils/utils.service';
+import { RecepcionOCService } from '@/app/services/recepcion-oc.service';
+import { KardexService } from '@/app/services/kardex.service';
 import {
   RecepcionOrdenCompra,
   DetalleRecepcion,
@@ -34,7 +36,7 @@ export class RecepcionMercaderiaComponent implements OnInit {
   editIndex = -1;
 
   // Recepción actual
-  recepcion: RecepcionOrdenCompra = this.nuevaRecepcion();
+  recepcion: RecepcionOrdenCompra | null = null;
   detalleRecepcion: DetalleRecepcion[] = [];
 
   // Usuario
@@ -73,15 +75,26 @@ export class RecepcionMercaderiaComponent implements OnInit {
   modalDetalleRecepcionAbierto = false;
   recepcionDetalle: RecepcionOrdenCompra | null = null;
 
+  // Modal seguimiento
+  modalSeguimientoAbierto = false;
+  ordenSeguimiento: OrdenCompra | null = null;
+
+  // Sistema Híbrido
+  estaConectado = true;
+  sincronizacionPendiente = false;
+
   constructor(
     private dexieService: DexieService,
     private alertService: AlertService,
     private userService: UserService,
-    private utilsService: UtilsService
+    private utilsService: UtilsService,
+    private recepcionOCService: RecepcionOCService,
+    private kardexService: KardexService
   ) {}
 
   async ngOnInit() {
     await this.cargarUsuario();
+    this.recepcion = this.nuevaRecepcion();
     await this.cargarRecepciones();
     await this.cargarOrdenesCompra();
     await this.cargarAlmacenes();
@@ -136,6 +149,17 @@ export class RecepcionMercaderiaComponent implements OnInit {
     };
   }
 
+  nuevaRecepcionFormConOrden(ordenId: number) {
+    this.recepcion = this.nuevaRecepcion();
+    this.recepcion.ordenCompraId = ordenId;
+    this.detalleRecepcion = [];
+    this.ordenSeleccionada = null;
+    this.mostrarFormulario = true;
+    this.modoEdicion = false;
+    // Trigger order change to load details
+    this.onOrdenChange();
+  }
+
   nuevaRecepcionForm() {
     this.recepcion = this.nuevaRecepcion();
     this.detalleRecepcion = [];
@@ -145,13 +169,13 @@ export class RecepcionMercaderiaComponent implements OnInit {
   }
 
   async onOrdenChange() {
-    if (!this.recepcion.ordenCompraId) return;
+    if (!this.recepcion || !this.recepcion.ordenCompraId) return;
 
-    const orden = this.ordenesCompra.find((o) => o.id === this.recepcion.ordenCompraId);
+    const orden = this.ordenesCompra.find((o) => o.id === this.recepcion!.ordenCompraId);
 
     if (orden) {
       this.ordenSeleccionada = orden;
-      this.recepcion.numeroOrden = orden.numeroOrden;
+      this.recepcion!.numeroOrden = orden.numeroOrden;
 
       // Cargar items pendientes de la orden
       this.detalleRecepcion = orden.detalle.map((item) => ({
@@ -197,11 +221,21 @@ export class RecepcionMercaderiaComponent implements OnInit {
   }
 
   actualizarConformidadGeneral() {
+    if (!this.recepcion) return;
     const hayNoConformes = this.detalleRecepcion.some((d) => d.estado === 'NO_CONFORME');
     this.recepcion.conformidad = !hayNoConformes;
   }
 
   async guardarRecepcion() {
+    if (!this.recepcion) {
+      this.alertService.showAlert(
+        'Error',
+        'No hay una recepción activa.',
+        'error'
+      );
+      return;
+    }
+
     if (!this.recepcion.ordenCompraId) {
       this.alertService.showAlert(
         'Atención',
@@ -231,26 +265,58 @@ export class RecepcionMercaderiaComponent implements OnInit {
       this.alertService.mostrarModalCarga();
 
       if (!this.modoEdicion) {
-        this.recepcion.numeroRecepcion = this.generarNumeroRecepcion();
+        this.recepcion!.numeroRecepcion = this.generarNumeroRecepcion();
       }
 
       // Filtrar solo items con cantidad recibida
-      this.recepcion.detalle = this.detalleRecepcion.filter((d) => d.cantidadRecibida > 0);
-      this.recepcion.usuarioRecibe = this.usuario.documentoidentidad;
-
+      const detalleFiltrado = this.detalleRecepcion.filter((d) => d.cantidadRecibida > 0);
+      
       // Determinar si es parcial o completa
       const todosCompletos = this.detalleRecepcion.every(
         (d) => d.cantidadRecibida >= d.cantidadOrdenada
       );
-      this.recepcion.estado = todosCompletos ? 'COMPLETA' : 'PARCIAL';
+      const estadoFinal = todosCompletos ? 'COMPLETA' : 'PARCIAL';
 
-      await this.dexieService.saveRecepcionOrdenCompra(this.recepcion);
+      // Sistema Híbrido: Intentar guardar en backend primero
+      if (this.estaConectado) {
+        try {
+          const datosBackend = this.recepcionOCService.prepararDatosRecepcion(
+            this.recepcion!,
+            detalleFiltrado,
+            this.usuario
+          );
 
-      // Actualizar orden de compra
-      await this.actualizarOrdenCompra();
+          const respuesta = await this.recepcionOCService.registrarRecepcion(datosBackend).toPromise();
+          
+          if (respuesta?.mensaje?.includes('exitosamente')) {
+            // Guardado exitoso en backend
+            this.recepcion!.detalle = detalleFiltrado;
+            this.recepcion!.usuarioRecibe = this.usuario.documentoidentidad;
+            this.recepcion!.estado = estadoFinal;
+            this.recepcion!.id = respuesta.idRecepcion;
+            this.recepcion!.numeroRecepcion = respuesta.numeroRecepcion;
 
-      this.alertService.cerrarModalCarga();
-      this.alertService.showAlert('Éxito', 'Recepción guardada correctamente.', 'success');
+            // También guardar localmente para respaldo
+            await this.dexieService.saveRecepcionOrdenCompra(this.recepcion!);
+            
+            // Actualizar orden de compra
+            await this.actualizarOrdenCompra();
+
+            this.alertService.cerrarModalCarga();
+            this.alertService.showAlert('Éxito', 'Recepción guardada y sincronizada correctamente.', 'success');
+          } else {
+            throw new Error(respuesta?.error || 'Error al guardar en backend');
+          }
+        } catch (errorBackend) {
+          console.warn('Error en backend, guardando localmente:', errorBackend);
+          // Fallback a Dexie
+          await this.guardarLocalmente(detalleFiltrado, estadoFinal);
+        }
+      } else {
+        // Modo offline: guardar solo localmente
+        await this.guardarLocalmente(detalleFiltrado, estadoFinal);
+        this.sincronizacionPendiente = true;
+      }
 
       this.mostrarFormulario = false;
       await this.cargarRecepciones();
@@ -267,10 +333,10 @@ export class RecepcionMercaderiaComponent implements OnInit {
   }
 
   async actualizarOrdenCompra() {
-    if (!this.ordenSeleccionada) return;
+    if (!this.ordenSeleccionada || !this.recepcion) return;
 
     // Actualizar cantidades recibidas en la orden
-    for (const detRecep of this.recepcion.detalle) {
+    for (const detRecep of this.recepcion!.detalle) {
       const itemOrden = this.ordenSeleccionada.detalle.find(
         (d) => d.id === detRecep.detalleOrdenCompraId
       );
@@ -302,17 +368,7 @@ export class RecepcionMercaderiaComponent implements OnInit {
     await this.dexieService.saveOrdenCompra(this.ordenSeleccionada);
   }
 
-  generarNumeroRecepcion(): string {
-    const fecha = new Date();
-    const año = fecha.getFullYear();
-    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-    const dia = String(fecha.getDate()).padStart(2, '0');
-    const hora = String(fecha.getHours()).padStart(2, '0');
-    const min = String(fecha.getMinutes()).padStart(2, '0');
-    const seg = String(fecha.getSeconds()).padStart(2, '0');
-    return `REC-${año}${mes}${dia}-${hora}${min}${seg}`;
-  }
-
+  
   async eliminarRecepcion(index: number) {
     const recepcion = this.recepcionesFiltradas()[index];
     if (!recepcion) return;
@@ -393,6 +449,89 @@ export class RecepcionMercaderiaComponent implements OnInit {
     this.filtroFechaFin = '';
   }
 
+  // =============================================
+  // MÉTODOS DEL SISTEMA HÍBRIDO
+  // =============================================
+
+  /**
+   * Guardar recepción localmente en Dexie
+   */
+  private async guardarLocalmente(detalleFiltrado: any[], estadoFinal: 'PARCIAL' | 'COMPLETA') {
+    this.recepcion!.detalle = detalleFiltrado;
+    this.recepcion!.usuarioRecibe = this.usuario.documentoidentidad;
+    this.recepcion!.estado = estadoFinal;
+
+    await this.dexieService.saveRecepcionOrdenCompra(this.recepcion!);
+    
+    // Actualizar orden de compra
+    await this.actualizarOrdenCompra();
+
+    this.alertService.cerrarModalCarga();
+    this.alertService.showAlert(
+      'Éxito',
+      'Recepción guardada localmente. Se sincronizará cuando haya conexión.',
+      'success'
+    );
+  }
+
+  /**
+   * Verificar conexión con el backend
+   */
+  async verificarConexion() {
+    try {
+      const conectado = await this.recepcionOCService.verificarConexion().toPromise();
+      this.estaConectado = conectado || false;
+      
+      if (this.estaConectado && this.sincronizacionPendiente) {
+        await this.sincronizarPendientes();
+      }
+    } catch (error) {
+      this.estaConectado = false;
+      console.warn('Sin conexión al backend:', error);
+    }
+  }
+
+  /**
+   * Sincronizar recepciones pendientes
+   */
+  async sincronizarPendientes() {
+    try {
+      const recepcionesPendientes = await this.dexieService.showRecepcionesOrdenCompra();
+      
+      for (const recepcion of recepcionesPendientes) {
+        if (recepcion.id && recepcion.id > 0) {
+          // Ya fue sincronizada
+          continue;
+        }
+
+        try {
+          const datosBackend = this.recepcionOCService.prepararDatosRecepcion(
+            recepcion,
+            recepcion.detalle || [],
+            this.usuario
+          );
+
+          await this.recepcionOCService.registrarRecepcion(datosBackend).toPromise();
+          console.log(`Recepción ${recepcion.numeroRecepcion} sincronizada`);
+        } catch (error) {
+          console.warn(`Error sincronizando recepción ${recepcion.numeroRecepcion}:`, error);
+        }
+      }
+
+      this.sincronizacionPendiente = false;
+      await this.cargarRecepciones();
+    } catch (error) {
+      console.error('Error en sincronización:', error);
+    }
+  }
+
+  /**
+   * Generar número de recepción
+   */
+  generarNumeroRecepcion(): string {
+    return this.recepcionOCService.generarNumeroRecepcion();
+  }
+
   // Utilidades
   obtenerClaseEstado(estado: string): string {
     const clases: { [key: string]: string } = {
@@ -429,5 +568,65 @@ export class RecepcionMercaderiaComponent implements OnInit {
 
   calcularTotalRechazado(recepcion: RecepcionOrdenCompra): number {
     return recepcion.detalle.reduce((sum, d) => sum + d.cantidadRechazada, 0);
+  }
+
+  /**
+   * Ingresar recepción a Kardex automáticamente
+   */
+  async ingresarAKardex(recepcion: RecepcionOrdenCompra) {
+    try {
+      this.alertService.mostrarModalCarga();
+
+      // Preparar transacción para Kardex
+      const transaccion = {
+        tipoMovimiento: 'ENTRADA',
+        tipoDocumento: 'OC',
+        numeroDocumento: recepcion.numeroOrden,
+        almacen: recepcion.almacen,
+        observaciones: `Ingreso por recepción OC ${recepcion.numeroRecepcion}`,
+        usuarioRegistro: this.usuario.documentoidentidad,
+        detalle: recepcion.detalle
+          .filter(item => item.cantidadAceptada > 0)
+          .map(item => ({
+            codigoItem: item.codigo,
+            descripcionItem: item.descripcion,
+            cantidad: item.cantidadAceptada,
+            costoUnitario: (item as any).precioUnitario || 0,
+            unidadMedida: (item as any).unidadMedida || 'UND',
+            lote: (item as any).lote || '',
+            fechaVencimiento: (item as any).fechaVencimiento || null,
+          })),
+      };
+
+      // Registrar en Kardex
+      const respuesta = await this.kardexService.registrarTransaccion(transaccion);
+
+      if (respuesta?.status === 'success' || respuesta?.idTransaccion) {
+        // Marcar recepción como ingresada a Kardex
+        (recepcion as any).ingresadoKardex = true;
+        (recepcion as any).fechaIngresoKardex = new Date().toISOString();
+        (recepcion as any).idTransaccionKardex = respuesta.idTransaccion;
+
+        await this.dexieService.saveRecepcionOrdenCompra(recepcion);
+
+        this.alertService.cerrarModalCarga();
+        this.alertService.showAlert(
+          'Éxito',
+          'Recepción ingresada a Kardex correctamente',
+          'success'
+        );
+
+        await this.cargarRecepciones();
+      } else {
+        throw new Error(respuesta?.mensaje || 'Error al ingresar a Kardex');
+      }
+    } catch (error: any) {
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert(
+        'Error',
+        'Error al ingresar a Kardex: ' + (error.message || error),
+        'error'
+      );
+    }
   }
 }

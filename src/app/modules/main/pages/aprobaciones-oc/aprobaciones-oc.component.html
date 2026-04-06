@@ -1,0 +1,570 @@
+<div class="container-fluid">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2 class="page-title">
+      Aprobación de Órdenes de Compra
+    </h2>
+    <p class="page-subtitle">Gestión de aprobaciones de órdenes de compra</p>
+  </div>
+
+  <!-- CONTADORES -->
+  <div class="stats-cards">
+    <div class="stat-card warning">
+      <div class="stat-icon"><i class="bx bx-time"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ contadores.totalPendientes }}</span>
+        <span class="stat-label">Pendientes</span>
+      </div>
+    </div>
+
+    <div class="stat-card success">
+      <div class="stat-icon"><i class="bx bx-check-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ contadores.totalAprobadas }}</span>
+        <span class="stat-label">Aprobadas</span>
+      </div>
+    </div>
+
+    <div class="stat-card danger">
+      <div class="stat-icon"><i class="bx bx-x-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ contadores.totalRechazadas }}</span>
+        <span class="stat-label">Rechazadas</span>
+      </div>
+    </div>
+
+    <div class="stat-card info">
+      <div class="stat-icon"><i class="bx bx-error"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ contadores.totalVencidas }}</span>
+        <span class="stat-label">Vencidas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-container">
+    <div class="tabs-header">
+      <button 
+        class="tab-button" 
+        [class.active]="tabActiva === 0"
+        (click)="cambiarTab(0)">
+        <i class="bx bx-list-ul"></i> OC Pendientes
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="tabActiva === 1"
+        (click)="cambiarTab(1)">
+        <i class="bx bx-users"></i> Usuarios Aprobadores
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="tabActiva === 2"
+        (click)="cambiarTab(2)">
+        <i class="bx bx-sitemap"></i> Flujos de Aprobación
+      </button>
+    </div>
+
+    <!-- TAB 1: OC PENDIENTES -->
+    <div class="tab-content" *ngIf="tabActiva === 0">
+      <!-- FILTROS -->
+      <div class="filters-section">
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label>Proveedor:</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              [(ngModel)]="filtroProveedor"
+              (ngModelChange)="aplicarFiltros()"
+              placeholder="Buscar por proveedor...">
+          </div>
+
+          <div class="filter-group">
+            <label>Fecha Desde:</label>
+            <input 
+              type="date" 
+              class="form-control" 
+              [(ngModel)]="filtroFechaInicio"
+              (ngModelChange)="aplicarFiltros()">
+          </div>
+
+          <div class="filter-group">
+            <label>Fecha Hasta:</label>
+            <input 
+              type="date" 
+              class="form-control" 
+              [(ngModel)]="filtroFechaFin"
+              (ngModelChange)="aplicarFiltros()">
+          </div>
+
+          <div class="filter-group">
+            <button class="btn btn-secondary" (click)="limpiarFiltros()">
+              <i class="bx bx-x"></i> Limpiar Filtros
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLA OC PENDIENTES -->
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nro. Orden</th>
+              <th>Fecha</th>
+              <th>Proveedor</th>
+              <th>Monto Total</th>
+              <th>Nivel</th>
+              <th>Días Pendiente</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let oc of ocPendientesFiltradas">
+              <td><strong>{{ oc.numeroOrden }}</strong></td>
+              <td>{{ formatearFecha(oc.fechaOrden) }}</td>
+              <td>
+                <div>{{ oc.nombreProveedor }}</div>
+                <small class="text-muted">{{ oc.proveedor }}</small>
+              </td>
+              <td class="text-right">
+                <strong>S/ {{ formatearMoneda(oc.montoTotal) }}</strong>
+              </td>
+              <td class="text-center">
+                <span class="badge badge-info">
+                  Nivel {{ oc.nivel }} de {{ oc.nivelesAprobacionTotal }}
+                </span>
+              </td>
+              <td class="text-center" [ngClass]="obtenerClaseDiasPendiente(oc.diasPendiente)">
+                <strong>{{ oc.diasPendiente }}</strong> días
+              </td>
+              <td>
+                <span class="badge" [ngClass]="obtenerClaseEstado(oc.estado)">
+                  {{ oc.estado }}
+                </span>
+              </td>
+              <td class="actions">
+                <button 
+                  class="btn btn-sm btn-info" 
+                  (click)="verDetalleOC(oc)"
+                  title="Ver Detalle">
+                  <i class="bx bx-show"></i>
+                </button>
+                <button 
+                  class="btn btn-sm btn-success" 
+                  (click)="aprobarOC(oc)"
+                  title="Aprobar">
+                  <i class="bx bx-check"></i>
+                </button>
+                <button 
+                  class="btn btn-sm btn-danger" 
+                  (click)="rechazarOC(oc)"
+                  title="Rechazar">
+                  <i class="bx bx-x"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="ocPendientesFiltradas.length === 0">
+              <td colspan="8" class="text-center">
+                <p class="no-data">No hay órdenes de compra pendientes de aprobación.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: CONFIGURACIÓN -->
+    <div class="tab-content" *ngIf="tabActiva === 1">
+      <div class="config-section">
+        <div class="section-header">
+          <h3>Usuarios Aprobadores</h3>
+          <button class="btn btn-primary" (click)="nuevoUsuarioAprobador()">
+            <i class="bx bx-plus"></i> Nuevo Usuario
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Documento</th>
+                <th>Nombre Completo</th>
+                <th>Rol</th>
+                <th>Monto Mínimo</th>
+                <th>Monto Máximo</th>
+                <th>Nivel</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let usuario of usuariosAprobadores">
+                <td>{{ usuario.documentoIdentidad }}</td>
+                <td>{{ usuario.nombreCompleto }}</td>
+                <td><span class="badge badge-info">{{ usuario.rol }}</span></td>
+                <td class="text-right">S/ {{ formatearMoneda(usuario.montoMinimo) }}</td>
+                <td class="text-right">S/ {{ formatearMoneda(usuario.montoMaximo) }}</td>
+                <td class="text-center">{{ usuario.nivel }}</td>
+                <td>
+                  <span class="badge" [ngClass]="usuario.activo ? 'badge-success' : 'badge-secondary'">
+                    {{ usuario.activo ? 'ACTIVO' : 'INACTIVO' }}
+                  </span>
+                </td>
+                <td class="actions">
+                  <button 
+                    class="btn btn-sm btn-warning" 
+                    (click)="editarUsuarioAprobador(usuario)"
+                    title="Editar">
+                    <i class="bx bx-edit"></i>
+                  </button>
+                  <button 
+                    class="btn btn-sm btn-danger" 
+                    (click)="eliminarUsuarioAprobador(usuario)"
+                    title="Eliminar">
+                    <i class="bx bx-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="usuariosAprobadores.length === 0">
+                <td colspan="8" class="text-center">
+                  <p class="no-data">No hay usuarios aprobadores configurados.</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: FLUJOS DE APROBACIÓN -->
+    <div class="tab-content" *ngIf="tabActiva === 2">
+      <div class="config-section">
+        <div class="section-header">
+          <h3>Flujos de Aprobación</h3>
+          <button class="btn btn-primary" (click)="nuevoFlujoAprobacion()">
+            <i class="bx bx-plus"></i> Nuevo Flujo
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Monto Mínimo</th>
+                <th>Monto Máximo</th>
+                <th>Niveles</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let flujo of flujosAprobacion">
+                <td><strong>{{ flujo.nombre }}</strong></td>
+                <td>{{ flujo.descripcion || '-' }}</td>
+                <td class="text-right">S/ {{ formatearMoneda(flujo.montoMinimo) }}</td>
+                <td class="text-right">S/ {{ formatearMoneda(flujo.montoMaximo) }}</td>
+                <td class="text-center">{{ flujo.niveles }}</td>
+                <td>
+                  <span class="badge" [ngClass]="flujo.activo ? 'badge-success' : 'badge-secondary'">
+                    {{ flujo.activo ? 'ACTIVO' : 'INACTIVO' }}
+                  </span>
+                </td>
+                <td class="actions">
+                  <button 
+                    class="btn btn-sm btn-warning" 
+                    (click)="editarFlujoAprobacion(flujo)"
+                    title="Editar">
+                    <i class="bx bx-edit"></i>
+                  </button>
+                  <button 
+                    class="btn btn-sm btn-danger" 
+                    (click)="eliminarFlujoAprobacion(flujo)"
+                    title="Eliminar">
+                    <i class="bx bx-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="flujosAprobacion.length === 0">
+                <td colspan="7" class="text-center">
+                  <p class="no-data">No hay flujos de aprobación configurados.</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE OC -->
+<div class="modal" *ngIf="modalDetalleOC" (click)="cerrarModalDetalleOC()">
+  <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Detalle de Orden de Compra</h3>
+      <button class="btn-close" (click)="cerrarModalDetalleOC()">
+        <i class="bx bx-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="ocDetalle">
+      <!-- Información General -->
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Número de Orden:</label>
+          <strong>{{ ocDetalle.numeroOrden }}</strong>
+        </div>
+        <div class="info-item">
+          <label>Fecha:</label>
+          <span>{{ formatearFecha(ocDetalle.fechaOrden) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Proveedor:</label>
+          <span>{{ ocDetalle.nombreProveedor }}</span>
+        </div>
+        <div class="info-item">
+          <label>RUC:</label>
+          <span>{{ ocDetalle.rucProveedor }}</span>
+        </div>
+        <div class="info-item">
+          <label>Monto Total:</label>
+          <strong class="text-primary">S/ {{ formatearMoneda(ocDetalle.montoTotal) }}</strong>
+        </div>
+        <div class="info-item">
+          <label>Forma de Pago:</label>
+          <span>{{ ocDetalle.formaPago }}</span>
+        </div>
+        <div class="info-item">
+          <label>Plazo Entrega:</label>
+          <span>{{ ocDetalle.plazoEntrega }} días</span>
+        </div>
+        <div class="info-item">
+          <label>Estado Aprobación:</label>
+          <span class="badge" [ngClass]="obtenerClaseEstado(ocDetalle.estadoAprobacion)">
+            {{ ocDetalle.estadoAprobacion }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Historial de Aprobaciones -->
+      <div class="historial-section">
+        <h4>Historial de Aprobaciones</h4>
+        <div class="timeline">
+          <div class="timeline-item" *ngFor="let item of historialOC">
+            <div class="timeline-marker" [ngClass]="obtenerClaseEstado(item.estado)"></div>
+            <div class="timeline-content">
+              <div class="timeline-header">
+                <strong>Nivel {{ item.nivel }} - {{ item.nombreAprobador }}</strong>
+                <span class="timeline-date">{{ formatearFecha(item.fechaAprobacion || item.fechaAsignacion) }}</span>
+              </div>
+              <div class="timeline-body">
+                <p><strong>Rol:</strong> {{ item.rolAprobador }}</p>
+                <p><strong>Estado:</strong> 
+                  <span class="badge" [ngClass]="obtenerClaseEstado(item.estado)">
+                    {{ item.estado }}
+                  </span>
+                </p>
+                <p *ngIf="item.observaciones"><strong>Observaciones:</strong> {{ item.observaciones }}</p>
+                <p *ngIf="item.motivoRechazo"><strong>Motivo Rechazo:</strong> {{ item.motivoRechazo }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-success" (click)="aprobarOC(ocDetalle)">
+        <i class="bx bx-check"></i> Aprobar
+      </button>
+      <button class="btn btn-danger" (click)="rechazarOC(ocDetalle)">
+        <i class="bx bx-x"></i> Rechazar
+      </button>
+      <button class="btn btn-secondary" (click)="cerrarModalDetalleOC()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL USUARIO APROBADOR -->
+<div class="modal" *ngIf="modalUsuarioAprobador" (click)="modalUsuarioAprobador = false">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ usuarioAprobadorForm?.idUsuarioAprobador ? 'Editar' : 'Nuevo' }} Usuario Aprobador</h3>
+      <button class="btn-close" (click)="modalUsuarioAprobador = false">
+        <i class="bx bx-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="usuarioAprobadorForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Documento de Identidad: *</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="usuarioAprobadorForm.documentoIdentidad"
+            placeholder="DNI">
+        </div>
+
+        <div class="form-group">
+          <label>Nombre Completo: *</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="usuarioAprobadorForm.nombreCompleto"
+            placeholder="Nombre completo">
+        </div>
+
+        <div class="form-group">
+          <label>Email:</label>
+          <input 
+            type="email" 
+            class="form-control" 
+            [(ngModel)]="usuarioAprobadorForm.email"
+            placeholder="correo@ejemplo.com">
+        </div>
+
+        <div class="form-group">
+          <label>Rol: *</label>
+          <select class="form-control" [(ngModel)]="usuarioAprobadorForm.rol">
+            <option value="">Seleccione...</option>
+            <option value="LOLOGIST">Jefe de Logística</option>
+            <option value="FINANZAS">Finanzas</option>
+            <option value="GERENTE">Gerencia</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Monto Mínimo:</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            [(ngModel)]="usuarioAprobadorForm.montoMinimo"
+            step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label>Monto Máximo:</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            [(ngModel)]="usuarioAprobadorForm.montoMaximo"
+            step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label>Nivel:</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            [(ngModel)]="usuarioAprobadorForm.nivel"
+            min="1">
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input 
+              type="checkbox" 
+              [(ngModel)]="usuarioAprobadorForm.activo">
+            Activo
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-primary" (click)="guardarUsuarioAprobador()">
+        <i class="bx bx-save"></i> Guardar
+      </button>
+      <button class="btn btn-secondary" (click)="modalUsuarioAprobador = false">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FLUJO APROBACIÓN -->
+<div class="modal" *ngIf="modalFlujoAprobacion" (click)="modalFlujoAprobacion = false">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ flujoAprobacionForm?.idFlujoAprobacion ? 'Editar' : 'Nuevo' }} Flujo de Aprobación</h3>
+      <button class="btn-close" (click)="modalFlujoAprobacion = false">
+        <i class="bx bx-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="flujoAprobacionForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre: *</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="flujoAprobacionForm.nombre"
+            placeholder="Nombre del flujo">
+        </div>
+
+        <div class="form-group">
+          <label>Descripción:</label>
+          <textarea 
+            class="form-control" 
+            [(ngModel)]="flujoAprobacionForm.descripcion"
+            rows="3"
+            placeholder="Descripción del flujo"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Monto Mínimo:</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            [(ngModel)]="flujoAprobacionForm.montoMinimo"
+            step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label>Monto Máximo:</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            [(ngModel)]="flujoAprobacionForm.montoMaximo"
+            step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label>Niveles:</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            [(ngModel)]="flujoAprobacionForm.niveles"
+            min="1">
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input 
+              type="checkbox" 
+              [(ngModel)]="flujoAprobacionForm.activo">
+            Activo
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-primary" (click)="guardarFlujoAprobacion()">
+        <i class="bx bx-save"></i> Guardar
+      </button>
+      <button class="btn btn-secondary" (click)="modalFlujoAprobacion = false">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>

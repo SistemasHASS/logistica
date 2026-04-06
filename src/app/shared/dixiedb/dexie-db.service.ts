@@ -37,6 +37,9 @@ import {
   MovimientoStock,
   SolicitudCompra,
   DetalleSolicitudCompra,
+  SolicitudCompraAdjunto,
+  SolicitudServicio,
+  SolicitudServicioAdjunto,
   OrdenCompra,
   DetalleCotizacion,
   Cotizacion,
@@ -53,6 +56,7 @@ import {
   ItemTemporalConsolidacion,
   SolicitudCotizacion,
   DetalleSolicitudCotizacion,
+  DetalleSolicitudCotizacionLegacy,
 } from '../interfaces/Tables';
 import Dexie from 'dexie';
 
@@ -107,6 +111,9 @@ export class DexieService extends Dexie {
   public maestroSubCommoditys!: Dexie.Table<MaestroSubCommodity, number>;
   public solicitudesCompra!: Dexie.Table<SolicitudCompra, number>;
   public detalleSolicitudCompra!: Dexie.Table<DetalleSolicitudCompra, number>;
+  public solicitudCompraAdjuntos!: Dexie.Table<SolicitudCompraAdjunto, number>;
+  public solicitudesServicio!: Dexie.Table<SolicitudServicio, number>;
+  public solicitudServicioAdjuntos!: Dexie.Table<SolicitudServicioAdjunto, number>;
   public cotizaciones!: Dexie.Table<Cotizacion, number>;
   public detalleCotizacion!: Dexie.Table<DetalleCotizacion, number>;
   public ordenesCompra!: Dexie.Table<OrdenCompra, number>;
@@ -125,10 +132,10 @@ export class DexieService extends Dexie {
   public criteriosEvaluacion!: Dexie.Table<CriterioEvaluacionProveedor, number>;
   public itemsTemporales!: Dexie.Table<ItemTemporalConsolidacion, number>;
   public solicitudesCotizacion!: Dexie.Table<SolicitudCotizacion, number>;
-  public detalleSolicitudCotizacion!: Dexie.Table<DetalleSolicitudCotizacion, number>;
+  public detalleSolicitudCotizacion!: Dexie.Table<DetalleSolicitudCotizacionLegacy, number>;
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 34; // Added missing fields to solicitudesCompra
+  private static readonly DB_VERSION = 36; // Simplified solicitudesCotizacion table structure
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -187,6 +194,9 @@ export class DexieService extends Dexie {
         // ✅ NUEVAS TABLAS PARA EL FLUJO DE COMPRAS
         solicitudesCompra: `++id,numeroSolicitud,fecha,estado,usuarioSolicita,nombreSolicita,almacen,tipo,prioridad,fechaEnvio,fechaAprobacion,observaciones,motivoRechazo,requerimientosOrigen,montoEstimado,moneda,fechaRequerida`,
         detalleSolicitudCompra: `++id,solicitudCompraId,codigo,descripcion,cantidad,estado`,
+        solicitudCompraAdjuntos: `++idAdjunto,idSolicitud,nombreArchivo,rutaArchivo,tipoArchivo,usuarioCreacion,fechaCreacion,activo`,
+        solicitudesServicio: `++id,numeroSolicitud,fecha,estado,usuarioSolicita,nombreSolicita,area,tipo,prioridad,fechaEnvio,fechaAprobacion,descripcionServicio,observaciones,motivoRechazo,montoEstimado,moneda,proveedor,empresa,fechaRequerida`,
+        solicitudServicioAdjuntos: `++idAdjunto,idSolicitudServicio,nombreArchivo,rutaArchivo,tipoArchivo,usuarioCreacion,fechaCreacion,activo`,
         cotizaciones: `++id,numeroCotizacion,solicitudCompraId,proveedor,fecha,estado,seleccionada`,
         detalleCotizacion: `++id,cotizacionId,codigo,descripcion,cantidad,precioUnitario,total`,
         ordenesCompra: `++id,numeroOrden,solicitudCompraId,proveedor,fecha,estado,montoTotal`,
@@ -205,8 +215,8 @@ export class DexieService extends Dexie {
         evaluacionesProveedor: `++id,proveedor,periodo,fechaEvaluacion,calificacionTotal,nivel,estado`,
         criteriosEvaluacion: `++id,evaluacionId,criterio,calificacion,peso`,
         itemsTemporales: `++id,idDetalle,item,familia,categoria,tipoRequerimiento,fechaSeleccion,estado`,
-        solicitudesCotizacion: `++id,numeroSolicitud,consolidacionId,fecha,estado,usuarioSolicita`,
-        detalleSolicitudCotizacion: `++id,idSolicitudCotizacion,codigoItem,descripcionItem,cantidad,unidadMedida`,
+        solicitudesCotizacion: `++id`,
+        detalleSolicitudCotizacion: `++id,idSolicitudCotizacion`,
       });
 
       this.usuario = this.table('usuario');
@@ -246,6 +256,9 @@ export class DexieService extends Dexie {
       this.maestroSubCommoditys = this.table('maestroSubCommoditys');
       this.solicitudesCompra = this.table('solicitudesCompra');
       this.detalleSolicitudCompra = this.table('detalleSolicitudCompra');
+      this.solicitudCompraAdjuntos = this.table('solicitudCompraAdjuntos');
+      this.solicitudesServicio = this.table('solicitudesServicio');
+      this.solicitudServicioAdjuntos = this.table('solicitudServicioAdjuntos');
       this.cotizaciones = this.table('cotizaciones');
       this.detalleCotizacion = this.table('detalleCotizacion');
       this.ordenesCompra = this.table('ordenesCompra');
@@ -1391,22 +1404,27 @@ export class DexieService extends Dexie {
   // =====================================================================
 
   async saveSolicitudCotizacion(solicitud: SolicitudCotizacion): Promise<number> {
-    console.log('💾 Guardando solicitud de cotización:', solicitud);
-    const id = await this.solicitudesCotizacion.add(solicitud);
-    console.log('✅ Solicitud guardada con ID:', id);
+    const solicitudId = await this.solicitudesCotizacion.put(solicitud);
     
-    // Guardar detalles si existen
+    // Eliminar detalles antiguos de esta solicitud
+    await this.detalleSolicitudCotizacion
+      .where('idSolicitudCotizacion')
+      .equals(solicitudId as number)
+      .delete();
+    
+    // Guardar detalles nuevos si existen usando bulkPut para mejor rendimiento y sincronización
     if (solicitud.detalle && solicitud.detalle.length > 0) {
-      console.log('💾 Guardando detalles:', solicitud.detalle.length);
-      for (const detalle of solicitud.detalle) {
-        await this.detalleSolicitudCotizacion.add({
-          ...detalle,
-          idSolicitudCotizacion: id as number,
-        });
-      }
+      const detallesParaGuardar = solicitud.detalle.map(detalle => {
+        const { id, ...detallesSinId } = detalle; // Eliminar id para que Dexie genere uno automático
+        return {
+          ...detallesSinId,
+          idSolicitudCotizacion: solicitudId as number,
+        };
+      });
+      await this.detalleSolicitudCotizacion.bulkPut(detallesParaGuardar);
     }
     
-    return id as number;
+    return solicitudId as number;
   }
 
   async showSolicitudesCotizacion(): Promise<SolicitudCotizacion[]> {

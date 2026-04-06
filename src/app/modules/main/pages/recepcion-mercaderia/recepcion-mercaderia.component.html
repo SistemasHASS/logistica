@@ -28,28 +28,28 @@
   <!-- CONTADORES -->
   <div class="stats-cards" *ngIf="!mostrarFormulario">
     <div class="stat-card warning">
-      <div class="stat-icon"><i class="icon-clock"></i></div>
+      <div class="stat-icon"><i class="bx-clock"></i></div>
       <div class="stat-content">
         <span class="stat-value">{{ totalParciales }}</span>
         <span class="stat-label">Parciales</span>
       </div>
     </div>
     <div class="stat-card success">
-      <div class="stat-icon"><i class="icon-check-circle"></i></div>
+      <div class="stat-icon"><i class="bx-check-circle"></i></div>
       <div class="stat-content">
         <span class="stat-value">{{ totalCompletas }}</span>
         <span class="stat-label">Completas</span>
       </div>
     </div>
     <div class="stat-card info">
-      <div class="stat-icon"><i class="icon-thumbs-up"></i></div>
+      <div class="stat-icon"><i class="bx-thumb-up"></i></div>
       <div class="stat-content">
         <span class="stat-value">{{ totalConformes }}</span>
         <span class="stat-label">Conformes</span>
       </div>
     </div>
     <div class="stat-card danger">
-      <div class="stat-icon"><i class="icon-alert-triangle"></i></div>
+      <div class="stat-icon"><i class="bx-alert-triangle"></i></div>
       <div class="stat-content">
         <span class="stat-value">{{ totalNoConformes }}</span>
         <span class="stat-label">No Conformes</span>
@@ -93,7 +93,7 @@
               <td class="actions">
                 <button 
                   class="btn btn-sm btn-success" 
-                  (click)="nuevaRecepcionForm(); recepcion.ordenCompraId = orden.id!; onOrdenChange()"
+                  (click)="nuevaRecepcionFormConOrden(orden.id!)"
                   title="Registrar Recepción">
                   <i class="icon-package"></i> Recibir
                 </button>
@@ -197,7 +197,7 @@
   </div>
 
   <!-- FORMULARIO DE RECEPCIÓN -->
-  <div class="content-section" *ngIf="mostrarFormulario">
+  <div class="content-section" *ngIf="mostrarFormulario && recepcion">
     <div class="form-container">
       <h3>{{ modoEdicion ? 'Editar' : 'Nueva' }} Recepción de Mercadería</h3>
 

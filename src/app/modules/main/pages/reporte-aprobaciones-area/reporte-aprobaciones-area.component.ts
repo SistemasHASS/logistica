@@ -140,6 +140,19 @@ export class ReporteAprobacionesAreaComponent implements OnInit {
     }
   }
 
+  getStatusClass(estado: string): string {
+    switch (estado?.toUpperCase()) {
+      case 'APROBADO':
+        return 'status-approved';
+      case 'RECHAZADO':
+        return 'status-rejected';
+      case 'PENDIENTE':
+        return 'status-pending';
+      default:
+        return 'status-default';
+    }
+  }
+
   verDetalle(aprobacion: any) {
     this.requerimientoDetalle = aprobacion;
     this.mostrarModalDetalle = true;

@@ -651,6 +651,36 @@ export class AprobacionesAreaComponent implements OnInit {
     console.log('🟢 INICIO sincronizarRequerimientoSPRING');
     console.log('📋 Objeto recibido en sincronizarSPRING:', req);
     
+    // ✅ CORRECCIÓN CRÍTICA: Cargar datos maestros si no están disponibles
+    if (!this.cecos || this.cecos.length === 0) {
+      console.log('⚠️ CECOs no cargados, cargando ahora...');
+      this.cecos = await this.dexieService.showCecos();
+    }
+    if (!this.labores || this.labores.length === 0) {
+      console.log('⚠️ Labores no cargadas, cargando ahora...');
+      this.labores = await this.dexieService.showLabores();
+    }
+    if (!this.proyectos || this.proyectos.length === 0) {
+      console.log('⚠️ Proyectos no cargados, cargando ahora...');
+      this.proyectos = await this.dexieService.showProyectos();
+    }
+    if (!this.itemsFiltered || this.itemsFiltered.length === 0) {
+      console.log('⚠️ Items no cargados, cargando ahora...');
+      this.itemsFiltered = await this.dexieService.showItems();
+    }
+    if (!this.turnos || this.turnos.length === 0) {
+      console.log('⚠️ Turnos no cargados, cargando ahora...');
+      this.turnos = await this.dexieService.showTurnos();
+    }
+    
+    console.log('✅ Datos maestros verificados:', {
+      cecos: this.cecos.length,
+      labores: this.labores.length,
+      proyectos: this.proyectos.length,
+      items: this.itemsFiltered.length,
+      turnos: this.turnos.length
+    });
+    
     try {
 
       // Verificar si el objeto ya tiene el detalle (puede venir como array directo o como propiedad detalle)
@@ -757,10 +787,40 @@ export class AprobacionesAreaComponent implements OnInit {
 
       let origenapp = 'app_logistica';
 
+      // ✅ CORRECCIÓN: Convertir almacén corto (001) a código completo (H001)
+      let almacenCodigo = requerimientoCompleto.idalmacen || 'H001';
+      console.log('🔍 DEBUG - Almacén del requerimiento:', almacenCodigo);
+      
+      // Si el almacén es solo un número corto (ej: "001"), convertir a formato completo
+      if (almacenCodigo && almacenCodigo.length <= 3 && !isNaN(Number(almacenCodigo))) {
+        // Buscar en la lista de almacenes
+        const almacenes = await this.dexieService.showAlmacenes();
+        const almacenCompleto = almacenes.find((a: any) => a.almacen === almacenCodigo);
+        if (almacenCompleto) {
+          almacenCodigo = almacenCompleto.idalmacen;
+          console.log('🔍 DEBUG - Almacén corregido de', requerimientoCompleto.idalmacen, 'a', almacenCodigo);
+        } else {
+          // Si no se encuentra, usar formato H + código (ej: H001)
+          almacenCodigo = 'H' + almacenCodigo.padStart(3, '0');
+          console.log('🔍 DEBUG - Almacén convertido a formato estándar:', almacenCodigo);
+        }
+      }
+
       // ✅ Corregido: Obtener código del CECO y AFE del proyecto antes de construir el JSON
       const first = requerimientoCompleto.detalles?.[0];
+      
+      // 🔍 DEBUG: Ver qué datos tiene el primer item
+      console.log('🔍 DEBUG - Primer item del detalle:', first);
+      console.log('🔍 DEBUG - Campos disponibles:', Object.keys(first || {}));
+      console.log('🔍 DEBUG - idcentrocosto:', first?.idcentrocosto);
+      console.log('🔍 DEBUG - idlabor:', first?.idlabor);
+      console.log('🔍 DEBUG - idproyecto:', first?.idproyecto);
+      console.log('🔍 DEBUG - ceco (alternativo):', first?.ceco);
+      console.log('🔍 DEBUG - labor (alternativo):', first?.labor);
+      console.log('🔍 DEBUG - proyecto (alternativo):', first?.proyecto);
+      
       const centroCostoDefault =
-        this.cecos.find((c) => c.localname === first?.idcentrocosto)
+        this.cecos.find((c) => c.localname === (first?.idcentrocosto || first?.ceco))
           ?.costcenter ?? '0001';
       const cuentacontable = this.itemsFiltered.find(
         (i) => i.item === requerimientoCompleto.detalles?.[0].codigo,
@@ -770,11 +830,13 @@ export class AprobacionesAreaComponent implements OnInit {
         'FUNDO HP';
       const labores = this.labores.find((l) => l.labor === first?.idlabor);
       // console.log('labores', labores);
-      const ccostodestino = labores?.idlabor ?? '';
+      // ✅ CORRECCIÓN: Para COMPRA, usar centroCostoDefault si no hay labor
+      const ccostodestino = labores?.idlabor ?? centroCostoDefault;
 
       const turnos = this.turnos.find((t) => t.nombreTurno === first?.idturno);
       // console.log('turno', turnos);
-      const turno = turnos?.idturno ?? '';
+      // ✅ CORRECCIÓN: Para COMPRA, usar código de empresa si no hay turno
+      const turno = turnos?.idturno ?? this.usuario.idempresa.substring(this.usuario.idempresa.length - 4);
 
       // ✅ Determinar si es ITEM o COMMODITY
       const tipoReq = req.tipo || requerimientoCompleto.tipo || 'ITEM';
@@ -794,11 +856,8 @@ export class AprobacionesAreaComponent implements OnInit {
             requerimientoCompleto.itemtipo === 'CONSUMO'
               ? 'A'
               : 'C',
-          // ✅ Limitar longitud de código de almacén a 20 caracteres
-          AlmacenCodigo: (requerimientoCompleto.idalmacen || 'H001').substring(
-            0,
-            20,
-          ),
+          // ✅ CORRECCIÓN: Usar almacenCodigo corregido (convertido de 001 a H001)
+          AlmacenCodigo: almacenCodigo.substring(0, 20),
           MonedaCodigo: 'LO',
           // ✅ Corregido: Formato de fecha - igual que en aprobaciones.component.ts
           FechaRequerida: new Date(req.fecha).toISOString(),
@@ -847,77 +906,117 @@ export class AprobacionesAreaComponent implements OnInit {
 
           // ✅ Corregido: Detalle con TipoDetalle y manejo Item/Commodity
           detalle: (requerimientoCompleto.detalles || []).map(
-            (d: any, index: number) => ({
-              Secuencia: index + 1,
-              // ✅ Corregido: Usar tipoReq para decidir Item/Commodity
-              Item: tipoReq === 'ITEM' ? d.codigo : null,
-              Commodity: tipoReq !== 'ITEM' ? d.codigo : null,
-              Condicion: '0',
-              // Temporal: debería buscar unidad en una lista de items
-              UnidadCodigo: 'UND',
-              // ✅ Corregido: Descripción según tipo
-              Descripcion:
-                tipoReq === 'ITEM'
-                  ? d.idproducto || d.descripcion || ''
-                  : d.descripcion || '',
-              ComprasAlmacenFlag:
-                requerimientoCompleto.itemtipo === 'TRANSFERENCIA' ||
-                requerimientoCompleto.itemtipo === 'CONSUMO'
-                  ? 'A'
-                  : 'C',
-              RedefinidoFlag: 'N',
-              CantidadPedida: d.cantidad || 0,
-              CantidadOrdenCompra: 0.0,
-              CantidadRecibida: 0.0,
-              PrecioUnitario: 0.0,
-              PrecioxCantidad: 0.0,
-              CotizacionCantidad: 0.0,
-              CotizacionPrecioUnitario: 0.0,
-              CotizacionPrecioUnitarioconIGV: 0.0,
-              CotizacionProveedor: 0,
-              ControlPresupuestalFlag: 'S',
-              // ✅ Limitar longitud de comentario a 200 caracteres
-              Comentario: (d.comentario || '').substring(0, 200),
-              CentroCosto: centroCostoDefault,
-              // ✅ Limitar longitud de lote a 20 caracteres
-              LoteProduccion: ccostodestino,
-              Estado: 'PE',
-              // ✅ Limitar longitud de usuario a 50 caracteres
-              UltimoUsuario: (
-                this.usuario.documentoidentidad || 'MISESF'
-              ).substring(0, 50),
-              UltimaFechaModif: new Date().toISOString(),
-              IGVExoneradoFlag: 'N',
-              GenerarContratoFlag: 'N',
-              origen: origenapp,
-            }),
+            (d: any, index: number) => {
+              // ✅ CORRECCIÓN CRÍTICA: Calcular centro de costo y labor POR CADA ITEM
+              // Buscar con nombres alternativos de campos
+              const itemCeco = this.cecos.find((c) => c.localname === (d.idcentrocosto || d.ceco));
+              const itemCentroCosto = itemCeco?.costcenter ?? centroCostoDefault;
+              
+              const itemLabor = this.labores.find((l) => l.labor === (d.idlabor || d.labor));
+              const itemLoteProduccion = itemLabor?.idlabor ?? itemCentroCosto;
+              
+              return {
+                Secuencia: index + 1,
+                // ✅ Corregido: Usar tipoReq para decidir Item/Commodity
+                Item: tipoReq === 'ITEM' ? d.codigo : null,
+                Commodity: tipoReq !== 'ITEM' ? d.codigo : null,
+                Condicion: '0',
+                // Temporal: debería buscar unidad en una lista de items
+                UnidadCodigo: 'UND',
+                // ✅ Corregido: Descripción según tipo
+                Descripcion:
+                  tipoReq === 'ITEM'
+                    ? d.idproducto || d.descripcion || ''
+                    : d.descripcion || '',
+                ComprasAlmacenFlag:
+                  requerimientoCompleto.itemtipo === 'TRANSFERENCIA' ||
+                  requerimientoCompleto.itemtipo === 'CONSUMO'
+                    ? 'A'
+                    : 'C',
+                RedefinidoFlag: 'N',
+                CantidadPedida: d.cantidad || 0,
+                CantidadOrdenCompra: 0.0,
+                CantidadRecibida: 0.0,
+                PrecioUnitario: 0.0,
+                PrecioxCantidad: 0.0,
+                CotizacionCantidad: 0.0,
+                CotizacionPrecioUnitario: 0.0,
+                CotizacionPrecioUnitarioconIGV: 0.0,
+                CotizacionProveedor: 0,
+                ControlPresupuestalFlag: 'S',
+                // ✅ Limitar longitud de comentario a 200 caracteres
+                Comentario: (d.comentario || '').substring(0, 200),
+                CentroCosto: itemCentroCosto,
+                // ✅ CORRECCIÓN: Usar labor específica del item o centro de costo como fallback
+                LoteProduccion: itemLoteProduccion,
+                Estado: 'PE',
+                // ✅ Limitar longitud de usuario a 50 caracteres
+                UltimoUsuario: (
+                  this.usuario.documentoidentidad || 'MISESF'
+                ).substring(0, 50),
+                UltimaFechaModif: new Date().toISOString(),
+                IGVExoneradoFlag: 'N',
+                GenerarContratoFlag: 'N',
+                origen: origenapp,
+              };
+            }
           ),
 
           // ✅ Corregido: Distribución contable dinámica
           distribucion: (requerimientoCompleto.detalles || []).map(
-            (d: any, index: number) => ({
-              Secuencia: index + 1,
-              Linea: 1,
-              // ✅ Limitar longitud de Account a 50 caracteres
-              Account: cuentacontable,
-              // ✅ Corregido: Usar AFE del proyecto
-              Afe: proyectoAfeDefault,
-              Monto: 100,
-              CentroCostoDestino: ccostodestino,
-              // ✅ Limitar longitud de sucursal a 10 caracteres
-              Sucursal: requerimientoCompleto.idfundo,
-              // ✅ Limitar longitud de campo referencia a 20 caracteres
-              CampoReferencia: 'PL',
-              // ✅ Limitar longitud de referencias fiscales a 50 caracteres
-              ReferenciaFiscal01: '',
-              ReferenciaFiscal02: turno,
-              origen: origenapp,
-            }),
+            (d: any, index: number) => {
+              // ✅ CORRECCIÓN CRÍTICA: Calcular valores específicos POR CADA ITEM
+              const itemCuentaContable = this.itemsFiltered.find(
+                (i) => i.item === d.codigo
+              )?.cuentaGasto ?? cuentacontable;
+              
+              // Buscar con nombres alternativos de campos
+              const itemProyecto = this.proyectos.find((p) => p.proyectoio === (d.idproyecto || d.proyecto));
+              const itemAfe = itemProyecto?.afe ?? proyectoAfeDefault;
+              
+              const itemCeco = this.cecos.find((c) => c.localname === (d.idcentrocosto || d.ceco));
+              const itemCentroCosto = itemCeco?.costcenter ?? centroCostoDefault;
+              
+              const itemLabor = this.labores.find((l) => l.labor === (d.idlabor || d.labor));
+              const itemCentroCostoDestino = itemLabor?.idlabor ?? itemCentroCosto;
+              
+              const itemTurno = this.turnos.find((t) => t.nombreTurno === (d.idturno || d.turno));
+              const itemTurnoId = itemTurno?.idturno ?? this.usuario.idempresa.substring(this.usuario.idempresa.length - 4);
+              
+              return {
+                Secuencia: index + 1,
+                Linea: 1,
+                // ✅ CORRECCIÓN: Usar cuenta contable específica del item
+                Account: itemCuentaContable,
+                // ✅ CORRECCIÓN: Usar AFE específico del proyecto del item
+                Afe: itemAfe,
+                Monto: 100,
+                // ✅ CORRECCIÓN: Usar centro de costo destino específico del item
+                CentroCostoDestino: itemCentroCostoDestino,
+                // ✅ Limitar longitud de sucursal a 10 caracteres
+                Sucursal: requerimientoCompleto.idfundo,
+                // ✅ Limitar longitud de campo referencia a 20 caracteres
+                CampoReferencia: 'PL',
+                // ✅ Limitar longitud de referencias fiscales a 50 caracteres
+                ReferenciaFiscal01: '',
+                // ✅ CORRECCIÓN: Usar turno específico del item
+                ReferenciaFiscal02: itemTurnoId,
+                origen: origenapp,
+              };
+            }
           ),
         },
       ];
 
       console.log('📤 Enviando al SP SPRING:', requerimiento);
+      console.log('🔍 DETALLE - Verificando CentroCosto y LoteProduccion por item:');
+      requerimiento[0].detalle.forEach((det: any, idx: number) => {
+        console.log(`  Item ${idx + 1}: CentroCosto="${det.CentroCosto}", LoteProduccion="${det.LoteProduccion}"`);
+      });
+      console.log('🔍 DISTRIBUCIÓN - Verificando CentroCostoDestino por item:');
+      requerimiento[0].distribucion.forEach((dist: any, idx: number) => {
+        console.log(`  Item ${idx + 1}: CentroCostoDestino="${dist.CentroCostoDestino}", Account="${dist.Account}", Afe="${dist.Afe}"`);
+      });
       console.log('🔍 Llamando a getRegristroRequerimientoSPRING...');
 
       this.requerimientosService

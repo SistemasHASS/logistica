@@ -41,6 +41,13 @@ export class ConsolidacionService {
     return Array.isArray(resp) ? resp : [];
   }
 
+  // POST api/consolidacion/listar-commodities-pendientes-consolidacion
+  async listarCommoditiesPendientes(filtros: any = {}): Promise<any[]> {
+    const url = `${this.baseUrl}/api/consolidacion/listar-commodities-pendientes-consolidacion`;
+    const resp = await firstValueFrom(this.http.post<any>(url, filtros));
+    return Array.isArray(resp) ? resp : [];
+  }
+
   // POST api/consolidacion/crear-consolidacion
   async crearConsolidacion(request: CrearConsolidacionRequest): Promise<CrearConsolidacionResponse> {
     const url = `${this.baseUrl}/api/consolidacion/crear-consolidacion`;
@@ -71,6 +78,12 @@ export class ConsolidacionService {
     const url = `${this.baseUrl}/api/logistica/listar-solicitudes-cotizacion`;
     const resp = await firstValueFrom(this.http.post<any>(url, filtros));
     return Array.isArray(resp) ? resp : [];
+  }
+
+  // POST api/consolidacion/actualizar-estado-solicitud-cotizacion
+  async actualizarEstadoSolicitudCotizacion(data: { id: number; estado: string; usuarioModifica: string }): Promise<any> {
+    const url = `${this.baseUrl}/api/consolidacion/actualizar-estado-solicitud-cotizacion`;
+    return firstValueFrom(this.http.post<any>(url, data));
   }
 
   // POST api/consolidacion/anular-consolidacion

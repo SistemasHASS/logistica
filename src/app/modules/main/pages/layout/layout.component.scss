@@ -51,9 +51,24 @@
     color: #fff;
     border-radius: 10px;
   }
-  .nombre {
-    font-size: 1.2em;
-    color: #fff; /* Color del nombre */
+  .scroll-navbar {
+    max-height: calc(100vh - 150px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .scroll-navbar ul {
+    flex: 1 !important;
+    overflow-y: auto !important;
+  }
+
+  .unlimited-access {
+    position: sticky !important;
+    bottom: 0 !important;
+    // background: #238664 !important; /* Mismo color que el menú */
+    z-index: 10 !important;
   }
   @media(max-width: 500px){
     .currentPath{

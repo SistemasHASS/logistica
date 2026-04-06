@@ -25,24 +25,22 @@
     <!-- Tabs -->
     <ul class="nav nav-tabs mb-3" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link" [class.active]="tabActiva === 0" (click)="tabActiva = 0" type="button">
+        <button class="nav-link" [class.active]="tabActiva === 0" (click)="cambiarTab(0)" type="button">
           <i class="icon icon-file-plus me-1"></i> Items Pendientes
           <span class="badge bg-danger ms-1" *ngIf="itemsPendientes.length > 0">{{ itemsPendientes.length }}</span>
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" [class.active]="tabActiva === 1" (click)="tabActiva = 1" type="button">
+        <button class="nav-link" [class.active]="tabActiva === 1" (click)="cambiarTab(1)" type="button">
+          <i class="icon icon-briefcase me-1"></i> Servicios Pendientes
+          <span class="badge bg-warning ms-1" *ngIf="serviciosPendientes.length > 0">{{ serviciosPendientes.length }}</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="tabActiva === 2" (click)="cambiarTab(2)" type="button">
           <i class="icon icon-history me-1"></i> Historial Consolidaciones
         </button>
       </li>
-      <!-- COMENTADO: Tab de saldos pendientes de aprobación
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" [class.active]="tabActiva === 2" (click)="tabActiva = 2; cargarSaldosPendientes()" type="button">
-          <i class="icon icon-alert-circle me-1"></i> Saldos Pendientes Aprobación
-          <span class="badge bg-warning text-dark ms-1" *ngIf="saldosPendientes.length > 0">{{ saldosPendientes.length }}</span>
-        </button>
-      </li>
-      -->
     </ul>
 
     <!-- ================================================ -->
@@ -53,6 +51,12 @@
       <!-- Panel de Filtros -->
       <div class="filtros-panel mb-3">
         <div class="row g-2 align-items-end">
+          <div class="col-md-2">
+            <label class="form-label form-label-sm">Empresa</label>
+            <p-select [(ngModel)]="filtroEmpresa" [options]="empresaOpciones" optionLabel="label" optionValue="value"
+              placeholder="Todas las empresas" class="w-100 filtro-select">
+            </p-select>
+          </div>
           <div class="col-md-2">
             <label class="form-label form-label-sm">Areas</label>
             <p-multiSelect [(ngModel)]="filtroAreas" [options]="areaOpciones" optionLabel="label" optionValue="value"
@@ -80,30 +84,30 @@
               placeholder="Código o descripción" (keyup.enter)="aplicarFiltros()">
           </div>
           <div class="col-md-2">
-            <label class="form-label form-label-sm">Fecha desde</label>
-            <p-datePicker [(ngModel)]="filtroFechaInicio" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Desde"
-              class="w-100 filtro-date">
-            </p-datePicker>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label form-label-sm">Fecha hasta</label>
-            <p-datePicker [(ngModel)]="filtroFechaFin" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Hasta"
-              class="w-100 filtro-date">
-            </p-datePicker>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label form-label-sm">Tipo</label>
-            <p-select [(ngModel)]="filtroTipo" [options]="tipoOpciones" optionLabel="label" optionValue="value"
-              placeholder="Todos" class="w-100 filtro-select">
-            </p-select>
-          </div>
-          <div class="col-md-2">
             <label class="form-label form-label-sm">Usuario</label>
             <p-multiSelect [(ngModel)]="filtroUsuarios" [options]="usuarioOpciones" optionLabel="label"
               optionValue="value" placeholder="Todas" [maxSelectedLabels]="1" selectedItemsLabel="{0} seleccionadas"
               class="w-100 filtro-select">
             </p-multiSelect>
           </div>
+          <div class="col-md-3">
+            <label class="form-label form-label-sm">Fecha desde</label>
+            <p-datePicker [(ngModel)]="filtroFechaInicio" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Desde"
+              class="w-100 filtro-date">
+            </p-datePicker>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label form-label-sm">Fecha hasta</label>
+            <p-datePicker [(ngModel)]="filtroFechaFin" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Hasta"
+              class="w-100 filtro-date">
+            </p-datePicker>
+          </div>
+          <!-- <div class="col-md-2">
+            <label class="form-label form-label-sm">Tipo</label>
+            <p-select [(ngModel)]="filtroTipo" [options]="tipoOpciones" optionLabel="label" optionValue="value"
+              placeholder="Todos" class="w-100 filtro-select">
+            </p-select>
+          </div> -->
         </div>
         <div class="row mt-2">
           <div class="col-md-12 text-end">
@@ -160,6 +164,7 @@
                 <input type="checkbox" class="form-check-input" [(ngModel)]="seleccionarTodos"
                   (change)="toggleSeleccionarTodos()">
               </th>
+              <th pSortableColumn="Empresa">Empresa <p-sortIcon field="Empresa"></p-sortIcon></th>
               <th pSortableColumn="fechaCreacion">Fecha <p-sortIcon field="fechaCreacion"></p-sortIcon></th>
               <th pSortableColumn="item">Item <p-sortIcon field="item"></p-sortIcon></th>
               <th pSortableColumn="descripcion">Descripción <p-sortIcon field="descripcion"></p-sortIcon></th>
@@ -182,6 +187,7 @@
                 <input type="checkbox" class="form-check-input" [(ngModel)]="item.seleccionado"
                   [class.row-in-temp-list]="item.seleccionado" (change)="actualizarSeleccionarTodos()">
               </td>
+              <td>{{ item.empresa }}</td>
               <td>{{ item.fechaCreacion | date:'dd/MM/yyyy hh:mm:ss a' }}</td>
               <td><strong>{{ item.item }}</strong></td>
               <td>{{ item.descripcion }}</td>
@@ -224,9 +230,141 @@
     </div>
 
     <!-- ================================================ -->
-    <!-- TAB 2: HISTORIAL DE CONSOLIDACIONES              -->
+    <!-- TAB 2: SERVICIOS PENDIENTES DE CONSOLIDAR        -->
     <!-- ================================================ -->
     <div *ngIf="tabActiva === 1">
+
+      <!-- Panel de Filtros -->
+      <div class="filtros-panel mb-3">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-2">
+            <label class="form-label form-label-sm">Empresa</label>
+            <p-select [(ngModel)]="filtroServicioEmpresa" [options]="empresaOpciones" optionLabel="label" optionValue="value"
+              placeholder="Todas las empresas" class="w-100 filtro-select">
+            </p-select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label form-label-sm">Commodity</label>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="filtroServicioCommodity"
+              placeholder="Nombre del commodity" (keyup.enter)="aplicarFiltrosServicios()">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label form-label-sm">Usuario</label>
+            <p-multiSelect [(ngModel)]="filtroServicioUsuarios" [options]="usuarioOpciones" optionLabel="label"
+              optionValue="value" placeholder="Todas" [maxSelectedLabels]="1" selectedItemsLabel="{0} seleccionadas"
+              class="w-100 filtro-select">
+            </p-multiSelect>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label form-label-sm">Fecha desde</label>
+            <p-datePicker [(ngModel)]="filtroServicioFechaInicio" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Desde"
+              class="w-100 filtro-date">
+            </p-datePicker>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label form-label-sm">Fecha hasta</label>
+            <p-datePicker [(ngModel)]="filtroServicioFechaFin" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Hasta"
+              class="w-100 filtro-date">
+            </p-datePicker>
+          </div>
+        </div>
+        <div class="row mt-2">
+          <div class="col-md-12 text-end">
+            <button class="btn btn-sm btn-outline-secondary me-2" (click)="limpiarFiltrosServicios()">
+              <i class="icon icon-x me-1"></i> Limpiar
+            </button>
+            <button class="btn btn-sm btn-primary" (click)="aplicarFiltrosServicios()">
+              <i class="icon icon-search me-1"></i> Buscar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <button class="btn btn-success me-2" (click)="consolidarServiciosSeleccionados()"
+            [disabled]="!hayServiciosSeleccionados()">
+            <i class="icon icon-check me-1"></i> Consolidar ({{ contarServiciosSeleccionados() }})
+          </button>
+          <button class="btn btn-primary me-2" (click)="consolidarYCotizarServicios()"
+            [disabled]="!hayServiciosSeleccionados()">
+            <i class="icon icon-box me-1"></i> Consolidar y Cotizar ({{ contarServiciosSeleccionados() }})
+          </button>
+        </div>
+        <div>
+          <button class="btn btn-outline-primary btn-sm" (click)="cargarServiciosPendientes()">
+            <i class="icon icon-refresh-cw me-1"></i> Actualizar
+          </button>
+        </div>
+      </div>
+
+      <!-- Grilla de servicios pendientes -->
+      <div class="table-responsive">
+        <p-table #dtServiciosPendientes [value]="serviciosPendientesFiltrados" [paginator]="true" [rows]="10"
+          [rowsPerPageOptions]="[10,20,50]" [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} servicios"
+          styleClass="p-datatable-sm p-datatable-striped" [loading]="loading">
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 3em">
+                <p-checkbox [(ngModel)]="seleccionarTodosServicios" [binary]="true"
+                  (onChange)="toggleSeleccionTodosServicios()"></p-checkbox>
+              </th>
+              <th pSortableColumn="Empresa">Empresa <p-sortIcon field="Empresa"></p-sortIcon></th>
+              <th pSortableColumn="requerimientoNumero">Requerimiento <p-sortIcon field="requerimientoNumero"></p-sortIcon></th>
+              <th pSortableColumn="fechaRequerimiento">Fecha <p-sortIcon field="fechaRequerimiento"></p-sortIcon></th>
+              <th pSortableColumn="commodity">Commodity <p-sortIcon field="commodity"></p-sortIcon></th>
+              <th>Descripción</th>
+              <th pSortableColumn="cantidad">Cantidad <p-sortIcon field="cantidad"></p-sortIcon></th>
+              <th>Unidad</th>
+              <th pSortableColumn="usuarioSolicita">Usuario <p-sortIcon field="usuarioSolicita"></p-sortIcon></th>
+              <th>Área</th>
+              <th style="width: 120px;">Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-servicio>
+            <tr>
+              <td>
+                <p-checkbox [(ngModel)]="servicio.seleccionado" [binary]="true"></p-checkbox>
+              </td>
+              <td>{{ servicio.empresa }}</td>
+              <td><strong>{{ servicio.requerimientoOrigen }}</strong></td>
+              <td>{{ servicio.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+              <td><strong>{{ servicio.servicio }}</strong></td>
+              <td>{{ servicio.descripcion }}</td>
+              <td class="text-end">{{ servicio.cantidad | number:'1.2-2' }}</td>
+              <td>{{ servicio.unidadMedida || 'UND' }}</td>
+              <td>{{ servicio.usuarioSolicita }}</td>
+              <td>{{ servicio.area }}</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-info" (click)="verDetalleServicioPendiente(servicio)" title="Ver Requerimiento">
+                    <i class="icon icon-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="anularServicioPendiente(servicio)" title="Anular servicio">
+                    <i class="icon icon-x"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="11" class="text-center text-muted py-5">
+                <i class="pi pi-briefcase" style="font-size: 2.5rem;"></i>
+                <p class="mt-2 mb-0">No hay servicios pendientes de consolidar</p>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+
+    <!-- ================================================ -->
+    <!-- TAB 3: HISTORIAL DE CONSOLIDACIONES              -->
+    <!-- ================================================ -->
+    <div *ngIf="tabActiva === 2">
 
       <!-- Filtros historial -->
       <div class="filtros-panel mb-3">
@@ -249,7 +387,7 @@
               class="w-100 filtro-date">
             </p-datePicker>
           </div>
-          <div class="col-md-3 text-end" style="padding-top: 24px;">
+          <div class="col-md-2 text-end" style="padding-top: 24px;">
             <button class="btn btn-sm btn-primary" (click)="aplicarFiltrosHistorial()">
               <i class="icon icon-search me-1"></i> Buscar
             </button>
@@ -537,7 +675,8 @@
       <!-- Detalles -->
       <h6 class="mb-3">Líneas Consolidadas:</h6>
       <div class="table-responsive">
-        <table class="table table-bordered table-sm">
+        <!-- Tabla para ITEMS -->
+        <table class="table table-bordered table-sm" *ngIf="consolidacionSeleccionada.detalles && consolidacionSeleccionada.detalles.length > 0 && consolidacionSeleccionada.detalles[0].tipo !== 'COMMODITY'">
           <thead class="table-light">
             <tr>
               <th>#</th>
@@ -556,6 +695,36 @@
               <td><strong>{{ det.codigoItem }}</strong></td>
               <td>{{ det.descripcionItem }}</td>
               <td>{{ det.familia || '-' }}</td>
+              <td>{{ det.categoria || '-' }}</td>
+              <td class="text-center"><strong>{{ det.cantidadTotal }}</strong></td>
+              <td>{{ det.unidadMedida }}</td>
+              <td>
+                <button class="btn btn-sm btn-danger" (click)="anularRequerimiento(i)" title="anular línea">
+                  <i class="icon-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Tabla para SERVICIOS -->
+        <table class="table table-bordered table-sm" *ngIf="consolidacionSeleccionada.detalles && consolidacionSeleccionada.detalles.length > 0 && consolidacionSeleccionada.detalles[0].tipo === 'COMMODITY'">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Servicio/Commodity</th>
+              <th>Descripción</th>
+              <th>Categoría</th>
+              <th class="text-center">Cantidad Total</th>
+              <th>UM</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let det of consolidacionSeleccionada.detalles; let i = index">
+              <td>{{ det.noLinea }}</td>
+              <td><strong>{{ det.codigoItem }}</strong></td>
+              <td>{{ det.descripcionItem }}</td>
               <td>{{ det.categoria || '-' }}</td>
               <td class="text-center"><strong>{{ det.cantidadTotal }}</strong></td>
               <td>{{ det.unidadMedida }}</td>
@@ -650,15 +819,19 @@
 
       <hr>
 
-      <h6 class="fw-bold">Detalle de Ítems</h6>
+      <h6 class="fw-bold">
+        {{ detallePendienteSeleccionado.tipo === 'COMMODITY' ? 'Detalle de Servicios' : 'Detalle de Ítems' }}
+      </h6>
 
       <div class="table-responsive">
-        <table class="table table-sm table-bordered table-striped">
+        <!-- Tabla para ITEMS -->
+        <table class="table table-sm table-bordered table-striped" *ngIf="detallePendienteSeleccionado.tipo !== 'COMMODITY'">
           <thead class="table-light">
             <tr>
               <th>Item</th>
               <th>Descripción</th>
               <th>Cantidad</th>
+              <th>Unidad</th>
               <th>Familia</th>
               <th>Categoría</th>
               <th>Centro Costo</th>
@@ -670,11 +843,39 @@
             <tr *ngFor="let d of detallePendienteSeleccionado.detalle">
               <td>{{ d.codigo }}</td>
               <td>{{ d.idproducto }}</td>
-              <td>{{ d.cantidad }}</td>
+              <td class="text-end">{{ d.cantidad | number:'1.2-2' }}</td>
+              <td>{{ d.unidadMedida || 'UND' }}</td>
               <td>{{ d.familia }}</td>
               <td>{{ d.categoria }}</td>
               <td>{{ d.idcentrocosto }}</td>
               <td>{{ d.idproyecto }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Tabla para SERVICIOS/COMMODITIES -->
+        <table class="table table-sm table-bordered table-striped" *ngIf="detallePendienteSeleccionado.tipo === 'COMMODITY'">
+          <thead class="table-light">
+            <tr>
+              <th>Servicio/Commodity</th>
+              <th>Descripción</th>
+              <th>Cantidad</th>
+              <th>Unidad</th>
+              <th>Centro Costo</th>
+              <th>Proyecto</th>
+              <th>Observaciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let d of detallePendienteSeleccionado.detalle">
+              <td>{{ d.codigo }}</td>
+              <td>{{ d.iddescripcion }}</td>
+              <td class="text-end">{{ d.cantidad | number:'1.2-2' }}</td>
+              <td>{{ d.unidadMedida || 'UND' }}</td>
+              <td>{{ d.idcentrocosto }}</td>
+              <td>{{ d.idproyecto }}</td>
+              <td>{{ d.observaciones || '-' }}</td>
             </tr>
           </tbody>
         </table>

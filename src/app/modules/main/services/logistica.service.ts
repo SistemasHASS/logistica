@@ -38,4 +38,8 @@ export class LogisticaService {
   reporteRequerimientos(data: any): Observable<any[]> {
     return this.http.post<any[]>(`${this.apiUrl}/generar-reporte-requerimientos`, data);
   }
+
+  listarEmpresas(filtro: any = []): Observable<any[]> {
+    return this.http.post<any[]>(`${this.apiUrl}/lista-empresa`, filtro);
+  }
 }

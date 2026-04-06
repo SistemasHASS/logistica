@@ -42,7 +42,7 @@
         </div>
       </div>
       <!-- Sidebar navigation-->
-      <nav class="sidebar-nav scroll-sidebar" data-simplebar="">
+      <nav class="sidebar-nav scroll-sidebar scroll-navbar" data-simplebar="">
         <ul>
           <!-- ============================================= -->
           <!-- MÓDULOS -->
@@ -210,7 +210,7 @@
               <span class="hide-menu"> Aprobaciones por Área</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('LOLOGIST')" class="nav-small-cap">
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('APLOGIST') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('LOLOGIST') || usuario?.idrol.includes('EMLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Reporte</span>
           </li>
@@ -325,6 +325,41 @@
               <span class="hide-menu"> Solicitudes de Compra</span>
             </a>
           </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('LOLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./ordenes-compra" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class="icon icon-file-text"></i>
+              </span>
+              <span class="hide-menu"> Órdenes de Compra</span>
+            </a>
+          </li>
+          <li *ngIf="usuario?.idrol === 'TI' || usuario?.idrol === 'LOLOGIST' || usuario?.idrol === 'FINANZAS' || usuario?.idrol === 'GERENTE'" class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Aprobaciones OC</span>
+          </li>
+          <li *ngIf="usuario?.idrol === 'TI' || usuario?.idrol === 'LOLOGIST' || usuario?.idrol === 'FINANZAS' || usuario?.idrol === 'GERENTE'" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./aprobaciones-oc" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class="bx bx-check-circle"></i>
+              </span>
+              <span class="hide-menu"> Aprobación Órdenes Compra</span>
+            </a>
+          </li>
+          <li *ngIf="usuario?.idrol === 'TI' || usuario?.idrol === 'LOLOGIST' || usuario?.idrol === 'FINANZAS' || usuario?.idrol === 'GERENTE'" class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Aprobaciones OS</span>
+          </li>
+          <li *ngIf="usuario?.idrol === 'TI' || usuario?.idrol === 'LOLOGIST' || usuario?.idrol === 'FINANZAS' || usuario?.idrol === 'GERENTE'" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./aprobaciones-os" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class="bx bx-check-circle"></i>
+              </span>
+              <span class="hide-menu"> Aprobación Órdenes Servicio</span>
+            </a>
+          </li>
           <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Kardex</span>
@@ -349,6 +384,28 @@
                 <i class="icon icon-calculator"></i>
               </span>
               <span class="hide-menu"> Cotizaciones</span>
+            </a>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('LOLOGIST')" class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Servicios</span>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('LOLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./solicitudes-servicio" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class="bx bx-briefcase"></i>
+              </span>
+              <span class="hide-menu"> Solicitudes de Servicio</span>
+            </a>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('LOLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./ordenes-servicio" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class="bx bx-file-blank"></i>
+              </span>
+              <span class="hide-menu"> Órdenes de Servicio</span>
             </a>
           </li>
           <li *ngIf="usuario?.idrol === 'TI' || usuario?.idrol === 'ALLOGIST' || usuario?.idrol === 'ADLOGIST'" class="nav-small-cap">
@@ -377,15 +434,9 @@
               <span class="hide-menu"> Reingresos de Consumo</span>
             </a>
           </li>
-          <!--
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item"
-            (click)="toggleSidebar()">
-            <a routerLink="./ordenes-compra" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
-              <span>
-                <i class="icon icon-file-text"></i>
-              </span>
-              <span class="hide-menu"> Órdenes de Compra</span>
-            </a>
+          <li *ngIf="usuario?.idrol === 'TI' || usuario?.idrol === 'ALLOGIST' || usuario?.idrol === 'ADLOGIST'" class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Recepción OC</span>
           </li>
           <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item"
             (click)="toggleSidebar()">
@@ -396,6 +447,7 @@
               <span class="hide-menu"> Recepción de Mercadería</span>
             </a>
           </li>
+          <!--
           <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item"
             (click)="toggleSidebar()">
             <a routerLink="./devoluciones-proveedores" routerLinkActive="active" class="sidebar-link" aria-expanded="false">

@@ -1,0 +1,251 @@
+<!-- Modal de Adjuntos - Reutilizable para Solicitud de Compra y Servicio -->
+<p-dialog
+  [(visible)]="visible"
+  [header]="titulo"
+  [modal]="true"
+  [style]="{ width: '90vw', maxWidth: '1200px' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="adjuntos-modal"
+  (onHide)="onClose()"
+>
+  <ng-template pTemplate="header">
+    <div class="d-flex align-items-center w-100">
+      <i class="pi pi-paperclip me-2 text-primary"></i>
+      <span class="fw-bold">{{ titulo }}</span>
+      <span class="badge bg-info ms-2" *ngIf="adjuntos.length > 0">
+        {{ adjuntos.length }} archivo(s)
+      </span>
+    </div>
+  </ng-template>
+
+  <div class="modal-body-content">
+    <!-- Zona de carga de archivos -->
+    <div class="upload-zone mb-4">
+      <div class="row">
+        <div class="col-md-8">
+          <input
+            type="file"
+            #fileInput
+            (change)="onFileSelected($event)"
+            multiple
+            [accept]="acceptedFormats"
+            class="d-none"
+          />
+          <button
+            type="button"
+            class="btn btn-primary me-2"
+            (click)="fileInput.click()"
+          >
+            <i class="pi pi-plus me-2"></i>
+            Agregar Archivos
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="limpiarTodos()"
+            *ngIf="adjuntos.length > 0"
+          >
+            <i class="pi pi-trash me-2"></i>
+            Limpiar Todo
+          </button>
+        </div>
+        <div class="col-md-4 text-end">
+          <small class="text-muted">
+            <i class="pi pi-info-circle me-1"></i>
+            Max {{ maxFileSizeMB }}MB por archivo
+          </small>
+        </div>
+      </div>
+      <div class="mt-2">
+        <small class="text-muted">
+          <strong>Formatos permitidos:</strong> {{ formatosPermitidos }}
+        </small>
+      </div>
+    </div>
+
+    <!-- Tabla de archivos adjuntos -->
+    <div *ngIf="adjuntos.length > 0" class="table-container">
+      <p-table
+        [value]="adjuntos"
+        [scrollable]="true"
+        scrollHeight="400px"
+        styleClass="p-datatable-sm p-datatable-striped"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 5%">#</th>
+            <th style="width: 35%">Archivo</th>
+            <th style="width: 10%">Tipo</th>
+            <th style="width: 10%">Tamaño</th>
+            <th style="width: 30%">Descripción</th>
+            <th style="width: 10%">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-adjunto let-rowIndex="rowIndex">
+          <tr>
+            <td>{{ rowIndex + 1 }}</td>
+            <td>
+              <div class="d-flex align-items-center">
+                <i [class]="getFileIcon(adjunto.tipoArchivo)" class="me-2"></i>
+                <span
+                  class="text-truncate"
+                  style="max-width: 300px"
+                  [title]="adjunto.nombreArchivo"
+                >
+                  {{ adjunto.nombreArchivo }}
+                </span>
+              </div>
+            </td>
+            <td>
+              <span class="badge bg-secondary">
+                {{ getFileExtension(adjunto.nombreArchivo) }}
+              </span>
+            </td>
+            <td>
+              <small>{{ formatFileSize(adjunto.tamanoArchivo) }}</small>
+            </td>
+            <td>
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                [(ngModel)]="adjunto.descripcion"
+                placeholder="Descripción opcional"
+                maxlength="200"
+              />
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <button
+                  type="button"
+                  class="btn btn-outline-danger"
+                  (click)="eliminarAdjunto(rowIndex)"
+                  pTooltip="Eliminar"
+                  tooltipPosition="top"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+                <button
+                  *ngIf="adjunto.rutaArchivo && !adjunto.file"
+                  type="button"
+                  class="btn btn-outline-info"
+                  (click)="descargarAdjunto(adjunto)"
+                  pTooltip="Descargar"
+                  tooltipPosition="top"
+                >
+                  <i class="pi pi-download"></i>
+                </button>
+                <button
+                  *ngIf="adjunto.file"
+                  type="button"
+                  class="btn btn-outline-success"
+                  (click)="previsualizarArchivo(adjunto)"
+                  pTooltip="Vista previa"
+                  tooltipPosition="top"
+                >
+                  <i class="pi pi-eye"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="text-center py-5">
+              <div class="empty-state">
+                <i class="pi pi-inbox" style="font-size: 3rem; opacity: 0.3"></i>
+                <p class="text-muted mt-3 mb-0">No hay archivos adjuntos</p>
+                <small class="text-muted">
+                  Haga clic en "Agregar Archivos" para comenzar
+                </small>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Estado vacío cuando no hay archivos -->
+    <div *ngIf="adjuntos.length === 0" class="empty-state-large text-center py-5">
+      <i class="pi pi-cloud-upload" style="font-size: 4rem; opacity: 0.2"></i>
+      <h5 class="text-muted mt-3">No hay archivos adjuntos</h5>
+      <p class="text-muted">
+        Haga clic en "Agregar Archivos" para adjuntar documentos
+      </p>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="info-panel mt-3" *ngIf="adjuntos.length > 0">
+      <div class="row">
+        <div class="col-md-6">
+          <small class="text-muted">
+            <i class="pi pi-info-circle me-1"></i>
+            Total de archivos: <strong>{{ adjuntos.length }}</strong>
+          </small>
+        </div>
+        <div class="col-md-6 text-end">
+          <small class="text-muted">
+            Tamaño total: <strong>{{ getTotalSize() }}</strong>
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <small class="text-muted">
+          <i class="pi pi-check-circle me-1 text-success"></i>
+          Los archivos se guardarán al confirmar la solicitud
+        </small>
+      </div>
+      <div>
+        <button
+          type="button"
+          class="btn btn-outline-secondary me-2"
+          (click)="onCancel()"
+        >
+          <i class="pi pi-times me-2"></i>
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="onConfirm()"
+        >
+          <i class="pi pi-check me-2"></i>
+          Confirmar ({{ adjuntos.length }})
+        </button>
+      </div>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal de vista previa de imagen -->
+<p-dialog
+  [(visible)]="showPreview"
+  [header]="'Vista previa: ' + previewFileName"
+  [modal]="true"
+  [style]="{ width: '80vw', maxWidth: '900px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="text-center">
+    <img
+      [src]="previewUrl"
+      [alt]="previewFileName"
+      class="img-fluid"
+      style="max-height: 70vh"
+    />
+  </div>
+  <ng-template pTemplate="footer">
+    <button
+      type="button"
+      class="btn btn-secondary"
+      (click)="showPreview = false"
+    >
+      Cerrar
+    </button>
+  </ng-template>
+</p-dialog>

@@ -240,6 +240,7 @@ export interface DetalleRequerimiento {
   producto: any;
   descripcion: string;
   cantidad: number;
+  unidadMedida: string; // Unidad de medida del producto
   proyecto: string;
   ceco: string;
   turno: string;
@@ -657,6 +658,7 @@ export interface SolicitudCompra {
   almacen: string;
   usuarioSolicita: string;
   nombreSolicita: string;
+  sincronizado?: boolean; // Flag para indicar si está sincronizada con el backend
   usuarioAprueba?: string;
   estado:
     | 'GENERADA'
@@ -681,19 +683,36 @@ export interface DetalleSolicitudCompra {
   codigo: string;
   descripcion: string;
   cantidad: number;
-  cantidadAprobada: number;
-  cantidadAtendida: number;
+  cantidadAprobada?: number;
+  cantidadAtendida?: number;
   unidadMedida: string;
   precioReferencial?: number;
-  montoReferencial?: number;
-  proyecto?: string;
+  moneda?: string;
+  estado: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO' | 'ATENDIDO';
+  fechaRequerida?: string;
+  centroCosto?: string;
   ceco?: string;
   turno?: string;
   labor?: string;
-  requerimientosOrigen?: string;
-  especificacionesTecnicas?: string;
-  estado: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO' | 'PARCIAL';
+  proyecto?: string;
   observaciones?: string;
+  requerimientosOrigen?: string;
+  montoReferencial?: number;
+}
+
+export interface SolicitudCompraAdjunto {
+  idAdjunto?: number;
+  idSolicitud?: number;
+  nombreArchivo: string;
+  rutaArchivo: string;
+  tipoArchivo?: string;
+  tamanoArchivo?: number;
+  descripcion?: string;
+  fechaCreacion?: string;
+  usuarioCreacion?: string;
+  activo?: boolean;
+  contenidoBase64?: string; // Contenido del archivo en base64
+  file?: File; // Para el archivo temporal antes de subir
 }
 
 export interface AprobacionSolicitud {
@@ -810,7 +829,14 @@ export interface OrdenCompra {
     | 'EN_PROCESO'
     | 'RECIBIDA_PARCIAL'
     | 'RECIBIDA_TOTAL'
+    | 'APROBADA'
+    | 'RECHAZADA'
     | 'CANCELADA';
+  estadoAprobacion?: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
+  requiereAprobacion?: boolean;
+  nivelAprobacionActual?: number;
+  nivelesAprobacionTotal?: number;
+  fechaAprobacionTotal?: string;
   usuarioGenera: string;
   usuarioAprueba?: string;
   fechaAprobacion?: string;
@@ -936,6 +962,7 @@ export interface DetalleExcelPreview {
   codigo: string;
   descripcion: string;
   cantidad: number;
+  unidadMedida: string; // Unidad de medida del producto
   turno: string;
   proyecto: string;
   ceco: string;
@@ -1067,20 +1094,83 @@ export interface SolicitudCotizacion {
   totalItems: number;
   estado: 'GENERADA' | 'PENDIENTE' | 'EN_REVISION' | 'CERRADA' | 'ANULADA';
   observaciones?: string;
-  detalle: DetalleSolicitudCotizacion[];
+  detalle: DetalleSolicitudCotizacionLegacy[];  // Usar legacy para compatibilidad
   cotizacionesRecibidas?: number;         // Contador de cotizaciones recibidas
   fechaModificacion?: string;
   usuarioModifica?: string;
+  tipo?: 'COMPRA' | 'SERVICIO';           // Tipo de solicitud: COMPRA para items, SERVICIO para commodities
 }
 
 export interface DetalleSolicitudCotizacion {
   id?: number;
   idSolicitudCotizacion?: number;
-  noLinea: number;
-  codigoItem: string;
-  descripcionItem: string;
-  cantidad: number;
-  unidadMedida: string;
+  noLinea?: number;
+  codigo: string;                        // Backend retorna 'codigo'
+  descripcion: string;                   // Backend retorna 'descripcion'
+  cantidad: string;                      // Backend retorna como string
+  unidadMedida?: string;
   especificaciones?: string;              // Especificaciones técnicas del item
   estado?: 'ACTIVO' | 'ANULADO';
+}
+
+// Interfaz para compatibilidad con otros componentes que usan codigoItem/descripcionItem
+export interface DetalleSolicitudCotizacionLegacy {
+  id?: number;
+  idSolicitudCotizacion?: number;
+  noLinea?: number;
+  codigoItem: string;                    // Usado por otros componentes
+  descripcionItem: string;               // Usado por otros componentes
+  cantidad: number;                      // Usado por otros componentes
+  unidadMedida?: string;
+  especificaciones?: string;
+  estado?: 'ACTIVO' | 'ANULADO';
+}
+
+// =====================================================================
+// SOLICITUDES DE SERVICIO
+// =====================================================================
+
+export interface SolicitudServicio {
+  id?: number;
+  numeroSolicitud: string;
+  fecha: string;
+  fechaEnvio?: string;
+  fechaAprobacion?: string;
+  tipo: 'MANTENIMIENTO' | 'REPARACION' | 'INSTALACION' | 'CONSULTORIA' | 'OTRO';
+  area: string;
+  usuarioSolicita: string;
+  nombreSolicita: string;
+  usuarioAprueba?: string;
+  estado:
+    | 'GENERADA'
+    | 'ENVIADA'
+    | 'APROBADA'
+    | 'RECHAZADA'
+    | 'EN_PROCESO'
+    | 'COMPLETADA'
+    | 'CANCELADA';
+  descripcionServicio: string;
+  observaciones?: string;
+  motivoRechazo?: string;
+  prioridad?: 'NORMAL' | 'URGENTE' | 'CRITICA';
+  fechaRequerida?: string;
+  montoEstimado?: number;
+  moneda?: string;
+  proveedor?: string;
+  empresa?: string;
+  adjuntos?: SolicitudServicioAdjunto[];
+}
+
+export interface SolicitudServicioAdjunto {
+  idAdjunto?: number;
+  idSolicitudServicio?: number;
+  nombreArchivo: string;
+  rutaArchivo: string;
+  tipoArchivo?: string;
+  tamanoArchivo?: number;
+  descripcion?: string;
+  fechaCreacion?: string;
+  usuarioCreacion?: string;
+  activo?: boolean;
+  file?: File; // Para el archivo temporal antes de subir
 }
