@@ -1,0 +1,66 @@
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { DropdownComponent } from '../../../../components/dropdown/dropdown.component';
+
+@Component({
+  selector: 'app-modal-carga-masiva',
+  standalone: true,
+  styleUrls: ['../../requerimientos.component.scss'],
+  imports: [CommonModule, FormsModule, DropdownComponent],
+  templateUrl: './modal-carga-masiva.component.html',
+})
+export class ModalCargaMasivaComponent {
+  // Visibilidad del modal
+  @Input() visible = false;
+  // Líneas del Excel procesadas para preview
+  @Input() lineasPreview: any[] = [];
+  // Indica si hay errores de validación en el Excel cargado
+  @Input() tieneErroresExcel = false;
+  // Habilita el botón de guardar si todas las filas son válidas
+  @Input() puedeGuardar = false;
+  // Lista de turnos disponibles para corrección en tabla
+  @Input() turnos: any[] = [];
+  // Lista de activos fijos para corrección en tabla
+  @Input() activosFijosFiltrados: any[] = [];
+
+  // Eventos emitidos al padre
+  @Output() cerrarEvt = new EventEmitter<void>();
+  @Output() guardarEvt = new EventEmitter<void>();
+  @Output() validarFilaEvt = new EventEmitter<any>();
+
+  // Cierra el modal sin guardar
+  cerrar() {
+    this.cerrarEvt.emit();
+  }
+
+  // Guarda los detalles cargados masivamente
+  guardar() {
+    this.guardarEvt.emit();
+  }
+
+  // Emite la fila al padre para que la revalide
+  onValidarFila(row: any) {
+    this.validarFilaEvt.emit(row);
+  }
+
+  // Retorna true si la fila tiene error en el campo indicado
+  tieneError(row: any, campo: string): boolean {
+    return row.error && Array.isArray(row.errores) && row.errores.includes(campo);
+  }
+
+  // Retorna true si la fila tiene algún error
+  filaConError(row: any): boolean {
+    return !!row.error;
+  }
+
+  // Cuenta las filas sin errores
+  contarSinError(): number {
+    return this.lineasPreview.filter(r => !r.error).length;
+  }
+
+  // Cuenta las filas con errores
+  contarConError(): number {
+    return this.lineasPreview.filter(r => r.error).length;
+  }
+}

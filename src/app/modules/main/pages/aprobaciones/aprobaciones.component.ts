@@ -521,7 +521,7 @@ export class AprobacionesComponent {
       if (!this.cecos || this.cecos.length === 0) {
         console.log('⚠️ CECOs vacíos en Dexie, sincronizando desde backend...');
         try {
-          const cecos = this.maestrasService.getCecos([{}]);
+          const cecos = this.maestrasService.getCecos([{ aplicacion: 'LOGISTICA', esadmin: 0 }]);
           const resp: any = await cecos.toPromise();
           if (!!resp && resp.length) {
             console.log('📥 Recibidos', resp.length, 'CECOs del backend');
@@ -713,12 +713,14 @@ export class AprobacionesComponent {
             return {
               Secuencia: index + 1,
               TipoDetalle: d.tipoDetalle, // ITEM | COMMODITY | ACTIVOFIJO | ACTIVOFIJOMENOR
-              Item: req.tipo === 'ITEM' ? d.codigo : null,
-              Commodity: req.tipo !== 'ITEM' ? d.codigo : null,
+              // ✅ CORRECCIÓN: Usar idclasificacion para determinar si es Item o Commodity
+              Item: (req.idclasificacion !== 'SER' && req.idclasificacion !== 'COM') ? d.codigo : null,
+              Commodity: (req.idclasificacion === 'SER' || req.idclasificacion === 'COM') ? d.codigo : null,
               Condicion: '0',
               // UnidadCodigo: um,
               UnidadCodigo: item?.unidadCodigo ?? um, // ✅ CORRECTO
-              Descripcion: req.tipo === 'ITEM' ? d.producto : d.descripcion,
+              // ✅ CORRECCIÓN: Usar idclasificacion para determinar descripción
+              Descripcion: (req.idclasificacion !== 'SER' && req.idclasificacion !== 'COM') ? d.producto : d.descripcion,
               ComprasAlmacenFlag: comprasAlmacenFlag,
               RedefinidoFlag: 'N',
               CantidadPedida: d.cantidad,

@@ -1,0 +1,233 @@
+﻿<div class="requerimientos-container">
+  <div class="container container-card py-4">
+
+    <!-- ===================== -->
+    <!-- NAVEGACION DE TABS -->
+    <!-- ===================== -->
+    <ul class="nav nav-tabs mb-3 custom-tabs">
+      <li class="nav-item">
+        <button class="nav-link" [ngClass]="{ active: tabActiva === 'ITEM' }" (click)="cambiarTab('ITEM')">
+          Items
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [ngClass]="{ active: tabActiva === 'COMMODITY' }" (click)="cambiarTab('COMMODITY')">
+          Servicios
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [ngClass]="{ active: tabActiva === 'ACTIVOFIJO' }" (click)="cambiarTab('ACTIVOFIJO')">
+          Activos Fijos
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [ngClass]="{ active: tabActiva === 'ACTIVOFIJOMENOR' }" (click)="cambiarTab('ACTIVOFIJOMENOR')">
+          Activos Menores
+        </button>
+      </li>
+    </ul>
+
+    <!-- ===================== -->
+    <!-- CONTENIDO POR TAB (componentes hijos) -->
+    <!-- ===================== -->
+
+    <!-- TAB ITEM -->
+    <app-tab-item
+      *ngIf="tabActiva === 'ITEM'"
+      [ctx]="this"
+      [requerimientos]="requerimientos"
+      [loading]="loading"
+      [sinenviar]="sinenviar"
+      [enviados]="enviados"
+      [modoItemPrincipal]="modoItemPrincipal"
+      [verBotones]="verBotones"
+      [dataSelected]="dataSelected"
+      [sincronizando]="sincronizando"
+      [progreso]="progreso"
+      [mostrarFormulario]="mostrarFormulario"
+      [modoEdicion]="modoEdicion"
+      [TipoSelecionado]="TipoSelecionado"
+      [requerimiento]="requerimiento"
+      [SeleccionaPrioridadITEM]="SeleccionaPrioridadITEM"
+      [opcionesPrioridadITEM]="opcionesPrioridadITEM"
+      [almacenSeleccionado]="almacenSeleccionado"
+      [almacenes]="almacenes"
+      [almacenOrigen]="almacenOrigen"
+      [almacenDestino]="almacenDestino"
+      [alamcenesDestino]="alamcenesDestino"
+      [glosa]="glosa"
+      [detalles]="detalles"
+      [modalAbierto]="modalAbierto"
+      [editIndex]="editIndex"
+      [editingTempIndex]="editingTempIndex"
+      [lineaTemp]="lineaTemp"
+      [lineasTemporales]="lineasTemporales"
+      [itemsFiltrados]="itemsFiltrados"
+      [unidadesMedidaFiltradas]="unidadesMedidaFiltradas"
+      [turnos]="turnos"
+      [modalCecoData]="modalCecoData"
+      [modalLaborData]="modalLaborData"
+      [modalProyectoData]="modalProyectoData"
+      [activosFijosFiltrados]="activosFijosFiltrados"
+      [items]="items"
+      [modalTurnoValue]="modalTurnoValue"
+      [modalTurnoEditable]="modalTurnoEditable"
+      [modalTurnoDisabled]="modalTurnoDisabled"
+      [modalCecoValue]="modalCecoValue"
+      [modalCecoEditable]="modalCecoEditable"
+      [modalCecoDisabled]="modalCecoDisabled"
+      [modalLaborValue]="modalLaborValue"
+      [modalLaborEditable]="modalLaborEditable"
+      [modalLaborDisabled]="modalLaborDisabled"
+      [modalProyectoValue]="modalProyectoValue"
+      [modalProyectoEditable]="modalProyectoEditable"
+      [modalProyectoDisabled]="modalProyectoDisabled"
+      [permitirEditarParametros]="permitirEditarParametros"
+      [modalVisible]="modalVisible"
+      [lineasPreview]="lineasPreview"
+      [tieneErroresExcel]="tieneErroresExcel"
+      [puedeGuardar]="puedeGuardar"
+      [turnosParaCarga]="turnos"
+    ></app-tab-item>
+
+    <!-- TAB COMMODITY -->
+    <app-tab-commodity
+      *ngIf="tabActiva === 'COMMODITY'"
+      [ctx]="this"
+      [requerimientosCommodity]="requerimientosCommodity"
+      [loading]="loading"
+      [sinenviarCommodity]="sinenviarCommodity"
+      [enviadosCommodity]="enviadosCommodity"
+      [modoItemPrincipal]="modoItemPrincipal"
+      [verBotones]="verBotones"
+      [dataSelectedCommodity]="dataSelectedCommodity"
+      [sincronizando]="sincronizando"
+      [progreso]="progreso"
+      [mostrarFormularioCommodity]="mostrarFormularioCommodity"
+      [modoEdicionCommodity]="modoEdicionCommodity"
+      [requerimientoCommodity]="requerimientoCommodity"
+      [SeleccionaPrioridadCommodity]="SeleccionaPrioridadCOMMODITY"
+      [opcionesPrioridadCommodity]="opcionesPrioridadCOMMODITY"
+      [servicioSeleccionado]="SeleccionaServicio"
+      [servicios]="servicios"
+      [subservicioFiltrados]="subservicioFiltrados"
+      [glosaCommodity]="glosaCommodity"
+      [modalAbiertoCommodity]="modalAbiertoCommodity"
+      [lineaTempCommodity]="lineaTempCommodity"
+      [turnos]="turnos"
+      [modalCecoData]="modalCecoData"
+      [modalLaborData]="modalLaborData"
+      [modalProyectoData]="modalProyectoData"
+      [modalTurnoValue]="modalTurnoValue"
+      [modalTurnoEditable]="modalTurnoEditable"
+      [modalTurnoDisabled]="modalTurnoDisabled"
+      [modalCecoValue]="modalCecoValue"
+      [modalCecoEditable]="modalCecoEditable"
+      [modalCecoDisabled]="modalCecoDisabled"
+      [modalLaborValue]="modalLaborValue"
+      [modalLaborEditable]="modalLaborEditable"
+      [modalLaborDisabled]="modalLaborDisabled"
+      [modalProyectoValue]="modalProyectoValue"
+      [modalProyectoEditable]="modalProyectoEditable"
+      [modalProyectoDisabled]="modalProyectoDisabled"
+      [detallesCommodity]="detallesCommodity"
+    ></app-tab-commodity>
+
+    <!-- TAB ACTIVO FIJO -->
+    <app-tab-activo-fijo
+      *ngIf="tabActiva === 'ACTIVOFIJO'"
+      [ctx]="this"
+      [requerimientosActivoFijo]="requerimientosActivoFijo"
+      [loading]="loading"
+      [sinenviarActivoFijo]="sinenviarActivoFijo"
+      [enviadosActivoFijo]="enviadosActivoFijo"
+      [modoItemPrincipal]="modoItemPrincipal"
+      [verBotones]="verBotones"
+      [dataSelectedActivoFijo]="dataSelectedActivoFijo"
+      [sincronizando]="sincronizando"
+      [progreso]="progreso"
+      [mostrarFormularioActivoFijo]="mostrarFormularioActivoFijo"
+      [modoEdicionActivoFijo]="modoEdicionActivoFijo"
+      [requerimientoActivoFijo]="requerimientoActivoFijo"
+      [SeleccionaPrioridadActivoFijo]="SeleccionaPrioridadACTIVOFIJO"
+      [opcionesPrioridadActivoFijo]="opcionesPrioridadACTIVOFIJO"
+      [servicioActivoFijo]="SeleccionaServicioAF"
+      [serviciosActivoFijo]="servicioAF"
+      [subservicioFiltradosAF]="subservicioFiltradosAF"
+      [glosaActivoFijo]="glosaActivoFijo"
+      [detallesActivoFijo]="detallesActivoFijo"
+      [activosFijosServicioFiltrados]="activosFijosServicioFiltrados"
+      [modalAbiertoActivoFijo]="modalAbiertoActivoFijo"
+      [lineaTempActivoFijo]="lineaTempActivoFijo"
+      [turnos]="turnos"
+      [modalCecoData]="modalCecoData"
+      [modalLaborData]="modalLaborData"
+      [modalProyectoData]="modalProyectoData"
+      [modalTurnoValue]="modalTurnoValue"
+      [modalTurnoEditable]="modalTurnoEditable"
+      [modalTurnoDisabled]="modalTurnoDisabled"
+      [modalCecoValue]="modalCecoValue"
+      [modalCecoEditable]="modalCecoEditable"
+      [modalCecoDisabled]="modalCecoDisabled"
+      [modalLaborValue]="modalLaborValue"
+      [modalLaborEditable]="modalLaborEditable"
+      [modalLaborDisabled]="modalLaborDisabled"
+      [modalProyectoValue]="modalProyectoValue"
+      [modalProyectoEditable]="modalProyectoEditable"
+      [modalProyectoDisabled]="modalProyectoDisabled"
+    ></app-tab-activo-fijo>
+
+    <!-- TAB ACTIVO FIJO MENOR -->
+    <app-tab-activo-menor
+      *ngIf="tabActiva === 'ACTIVOFIJOMENOR'"
+      [ctx]="this"
+      [requerimientosActivoFijoMenor]="requerimientosActivoFijoMenor"
+      [loading]="loading"
+      [sienvinarActivoFijoMenor]="sienvinarActivoFijoMenor"
+      [enviadosActivoFijoMenor]="enviadosActivoFijoMenor"
+      [modoItemPrincipal]="modoItemPrincipal"
+      [verBotonesActivoFijoMenor]="verBotonesActivoFijoMenor"
+      [dataSelectedActivoFijoMenor]="dataSelectedActivoFijoMenor"
+      [sincronizando]="sincronizando"
+      [progreso]="progreso"
+      [mostrarFormularioActivoFijoMenor]="mostrarFormularioActivoFijoMenor"
+      [modoEdicionActivoFijoMenor]="modoEdicionActivoFijoMenor"
+      [requerimientoActivoFijoMenor]="requerimientoActivoFijoMenor"
+      [SeleccionaPrioridadActivoFijoMenor]="SeleccionaPrioridadACTIVOFIJOMENOR"
+      [opcionesPrioridadActivoFijoMenor]="opcionesPrioridadACTIVOFIJOMENOR"
+      [servicioActivoFijoMenor]="SeleccionaServicioAFMenor"
+      [serviciosActivoFijoMenor]="servicioAFMenor"
+      [subservicioFiltradosAFMenor]="subservicioFiltradosAFMenor"
+      [glosaActivoFijoMenor]="glosaActivoFijoMenor"
+      [detallesActivoFijoMenor]="detallesActivoFijoMenor"
+      [activosFijosServicioFiltrados]="activosFijosServicioFiltrados"
+      [modalAbiertoActivoFijoMenor]="modalAbiertoActivoFijoMenor"
+      [lineaTempActivoFijoMenor]="lineaTempActivoFijoMenor"
+      [turnos]="turnos"
+      [modalCecoData]="modalCecoData"
+      [modalLaborData]="modalLaborData"
+      [modalProyectoData]="modalProyectoData"
+      [modalTurnoValue]="modalTurnoValue"
+      [modalTurnoEditable]="modalTurnoEditable"
+      [modalTurnoDisabled]="modalTurnoDisabled"
+      [modalCecoValue]="modalCecoValue"
+      [modalCecoEditable]="modalCecoEditable"
+      [modalCecoDisabled]="modalCecoDisabled"
+      [modalLaborValue]="modalLaborValue"
+      [modalLaborEditable]="modalLaborEditable"
+      [modalLaborDisabled]="modalLaborDisabled"
+      [modalProyectoValue]="modalProyectoValue"
+      [modalProyectoEditable]="modalProyectoEditable"
+      [modalProyectoDisabled]="modalProyectoDisabled"
+    ></app-tab-activo-menor>
+
+    <!-- MODAL STOCK - GLOBAL (aplica a todos los tabs) -->
+    <app-modal-stock-validacion
+      [visible]="modalStockAbierto"
+      [itemsStock]="itemsStockValidacion"
+      (cerrarEvt)="cerrarModalStock()"
+      (confirmarEvt)="confirmarAjusteStock()"
+    ></app-modal-stock-validacion>
+
+  </div>
+</div>

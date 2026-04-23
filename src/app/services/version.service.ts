@@ -6,11 +6,11 @@ export type UpdateMode = 'AUTO' | 'MANUAL' | 'DISABLED';
 @Injectable({ providedIn: 'root' })
 export class VersionService {
 
-  private versionUrl = '/assets/version.json'; // 🔍 archivo con versión del servidor
+  private versionUrl = '/assets/version.json';
 
   /** 🔥 NUEVO: configuración */
-  private updateMode: UpdateMode = 'AUTO';
-  private showModal = true;
+  private updateMode: UpdateMode = environment.updateMode as UpdateMode ?? 'AUTO';
+  private showModal = environment.showUpdateModal ?? true;
 
   /** 🔧 setters */
   setMode(mode: UpdateMode) {
@@ -32,7 +32,7 @@ export class VersionService {
 
   async getServerVersion(): Promise<string | null> {
     try {
-      // Agregar timestamp para evitar caché del navegador
+      // Lee la versión actualmente publicada en IIS.
       const timestamp = new Date().getTime();
       const url = `${this.versionUrl}?t=${timestamp}`;
       const response = await fetch(url, { 
@@ -53,25 +53,8 @@ export class VersionService {
   }
 
   async getLocalVersion(): Promise<string> {
-    // Obtener versión desde version.json local para evitar problemas de caché
-    try {
-      const timestamp = new Date().getTime();
-      const url = `${this.versionUrl}?t=${timestamp}`;
-      const response = await fetch(url, { 
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-      if (!response.ok) throw new Error('Error al obtener version.json local');
-      const data = await response.json();
-      return data.version;
-    } catch (err) {
-      console.error('❌ No se pudo obtener la versión local, usando environment:', err);
-      return environment.appVersion;
-    }
+    // Esta es la versión con la que fue construido el bundle que ya está corriendo.
+    return environment.appVersion;
   }
 
   setLocalVersion(version: string) {

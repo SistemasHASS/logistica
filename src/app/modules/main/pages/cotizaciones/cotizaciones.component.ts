@@ -575,11 +575,19 @@ export class CotizacionesComponent implements OnInit {
       await this.generarSolicitudDesdeCotizacion(cotizacion);
 
       await this.cargarCotizaciones();
+      await this.cargarSolicitudesCotizacion();
       
       this.actualizarCotizacionesGanadoras();
+      this.actualizarContadoresSolicitudes();
+      
+      // Forzar actualización de la tabla
+      this._tableRefresh++;
+      this.cdr.detectChanges();
       
       // Cambiar al tab de cotizaciones ganadoras
       this.tabActiva = 'GANADORES';
+      
+      console.log('✅ Solicitud de cotización cambió a estado CERRADA y se movió a la pestaña correspondiente');
     } catch (error) {
       console.error('Error al seleccionar cotización:', error);
       this.alertService.showAlert(
@@ -647,7 +655,7 @@ export class CotizacionesComponent implements OnInit {
       const montoEstimado = detallesSolicitud.reduce((sum, d) => sum + (d.montoReferencial || 0), 0);
 
       // Obtener datos del requerimiento original
-      let almacen = '001';
+      let almacen = 'H001'; // ✅ CORRECCIÓN: Valor por defecto con formato completo
       let idAlmacen = 1;
       let proyecto = this.usuario!.idProyecto || '';
       let ceco = '';
@@ -665,8 +673,14 @@ export class CotizacionesComponent implements OnInit {
             if (consolidacion && consolidacion.detalles && consolidacion.detalles.length > 0) {
               const primerDetalle = consolidacion.detalles[0];
               
+              console.log('🔍 DEBUG - Consolidación completa:', consolidacion);
+              console.log('🔍 DEBUG - Primer detalle consolidación:', primerDetalle);
+              
               if (primerDetalle.origenes && primerDetalle.origenes.length > 0) {
                 const origen = primerDetalle.origenes[0];
+                console.log('🔍 DEBUG - Origen completo:', origen);
+                console.log('🔍 DEBUG - idOrigen:', origen.idOrigen);
+                console.log('🔍 DEBUG - Tipo de idOrigen:', typeof origen.idOrigen);
                 
                 // Obtener datos del requerimiento (CONSUMO o COMPRA)
                 if (origen.idOrigen) {
@@ -675,24 +689,53 @@ export class CotizacionesComponent implements OnInit {
                   // Obtener almacén del requerimiento
                   if (detalleRequerimiento.idalmacen) {
                     almacen = detalleRequerimiento.idalmacen;
+                    
+                    // ✅ CORRECCIÓN: Convertir código corto a formato completo (001 → H001)
+                    if (almacen && almacen.length <= 3 && !isNaN(Number(almacen))) {
+                      console.log('🏪 DEBUG - Almacén en formato corto detectado:', almacen);
+                      // Buscar en la lista de almacenes
+                      const almacenes = await this.dexieService.showAlmacenes();
+                      const almacenCompleto = almacenes.find((a: any) => a.almacen === almacen);
+                      if (almacenCompleto) {
+                        almacen = almacenCompleto.idalmacen;
+                        console.log('🏪 DEBUG - Almacén convertido a:', almacen);
+                      } else {
+                        // Si no se encuentra, usar formato H + código (ej: H001)
+                        almacen = 'H' + almacen.padStart(3, '0');
+                        console.log('🏪 DEBUG - Almacén convertido a formato estándar:', almacen);
+                      }
+                    }
+                    
+                    console.log('🏪 DEBUG - Almacén FINAL:', almacen);
                     idAlmacen = parseInt(detalleRequerimiento.idalmacen) || 1;
                   }
                   
-                  // Obtener proyecto y ceco del primer detalle
+                  // 🔍 DEBUG: Ver estructura completa del requerimiento
+                  console.log('🔍 DEBUG - Requerimiento completo:', detalleRequerimiento);
+                  console.log('🔍 DEBUG - Tiene detalle?', !!detalleRequerimiento.detalle);
+                  console.log('🔍 DEBUG - Cantidad de detalles:', detalleRequerimiento.detalle?.length);
+                  
+                  // ✅ CORRECCIÓN: Obtener proyecto y ceco del primer detalle del requerimiento
                   if (detalleRequerimiento.detalle && detalleRequerimiento.detalle.length > 0) {
                     const primerDetalle = detalleRequerimiento.detalle[0];
+                    console.log('🔍 DEBUG - Primer detalle del requerimiento:', primerDetalle);
+                    console.log('🔍 DEBUG - Campos disponibles:', Object.keys(primerDetalle));
                     
-                    proyecto = primerDetalle.idproyecto || 
-                              primerDetalle.proyecto || 
+                    // Los campos vienen directamente como 'proyecto' y 'ceco' en el detalle
+                    proyecto = primerDetalle.proyecto || 
+                              primerDetalle.idproyecto || 
                               primerDetalle.nombreProyecto ||
-                              primerDetalle.idproyectoDescripcion ||
                               this.usuario!.idProyecto || '';
                     
-                    ceco = primerDetalle.idcentrocosto || 
+                    ceco = primerDetalle.ceco || 
+                          primerDetalle.idcentrocosto || 
                           primerDetalle.centroCosto || 
-                          primerDetalle.nombreCentroCosto ||
-                          primerDetalle.idcentrocostoDescripcion ||
-                          primerDetalle.ceco;
+                          primerDetalle.nombreCentroCosto || '';
+                    
+                    console.log('✅ Proyecto obtenido del detalle:', proyecto);
+                    console.log('✅ CECO obtenido del detalle:', ceco);
+                  } else {
+                    console.warn('⚠️ No hay detalles en el requerimiento');
                   }
                 }
               }
@@ -1000,6 +1043,47 @@ export class CotizacionesComponent implements OnInit {
     }
   }
   
+  async cambiarEstadoSolicitudAEnRevision() {
+    try {
+      if (!this.solicitudCotizacionSeleccionada) {
+        console.warn('No hay solicitud de cotización seleccionada');
+        return;
+      }
+
+      // Verificar si la solicitud está en estado PENDIENTE o GENERADA
+      if (this.solicitudCotizacionSeleccionada.estado === 'GENERADA' || 
+          this.solicitudCotizacionSeleccionada.estado === 'PENDIENTE') {
+        
+        // Actualizar estado a EN_REVISION
+        this.solicitudCotizacionSeleccionada.estado = 'EN_REVISION';
+        this.solicitudCotizacionSeleccionada.fechaModificacion = new Date().toISOString();
+        this.solicitudCotizacionSeleccionada.usuarioModifica = this.usuario!.documentoidentidad;
+        
+        // Guardar en Dexie
+        await this.dexieService.saveSolicitudCotizacion(this.solicitudCotizacionSeleccionada);
+        
+        // Sincronizar con backend
+        try {
+          await this.consolidacionService.actualizarEstadoSolicitudCotizacion({
+            id: this.solicitudCotizacionSeleccionada.id!,
+            estado: 'EN_REVISION',
+            usuarioModifica: this.usuario!.documentoidentidad
+          });
+          console.log('✅ Estado de solicitud actualizado a EN_REVISION en backend');
+        } catch (errorBackend) {
+          console.warn('⚠️ Error al sincronizar estado con backend:', errorBackend);
+        }
+        
+        // Actualizar contadores
+        this.actualizarContadoresSolicitudes();
+        
+        console.log('✅ Solicitud de cotización cambió a estado EN_REVISION');
+      }
+    } catch (error) {
+      console.error('Error al cambiar estado de solicitud a EN_REVISION:', error);
+    }
+  }
+  
   // Otros métodos existentes (abreviados para espacio)
   async marcarComoEnEvaluacion(cotizacion: Cotizacion) {
     try {
@@ -1128,11 +1212,15 @@ export class CotizacionesComponent implements OnInit {
           // Guardar en Dexie
           await this.dexieService.saveCotizacion(this.cotizacion);
           
-          this.alertService.showAlert('Éxito', 'Cotización registrada correctamente.', 'success');
+          // Cambiar estado de la solicitud de cotización a EN_REVISION
+          await this.cambiarEstadoSolicitudAEnRevision();
+          
+          this.alertService.showAlert('Éxito', 'Cotización registrada correctamente. La solicitud pasó a estado EN REVISIÓN.', 'success');
           
           // Cerrar modal y recargar
           this.cerrarModalRegistrarCotizacion();
           await this.cargarCotizaciones();
+          await this.cargarSolicitudesCotizacion();
           
           // Limpiar formulario
           this.cotizacion = this.nuevaCotizacion();
@@ -1146,15 +1234,19 @@ export class CotizacionesComponent implements OnInit {
         // Guardar solo en Dexie como fallback
         await this.dexieService.saveCotizacion(this.cotizacion);
         
+        // Cambiar estado de la solicitud de cotización a EN_REVISION
+        await this.cambiarEstadoSolicitudAEnRevision();
+        
         this.alertService.showAlert(
           'Atención', 
-          'Cotización guardada localmente. No se pudo sincronizar con el servidor.', 
+          'Cotización guardada localmente. No se pudo sincronizar con el servidor. La solicitud pasó a estado EN REVISIÓN.', 
           'warning'
         );
         
         // Cerrar modal y recargar
         this.cerrarModalRegistrarCotizacion();
         await this.cargarCotizaciones();
+        await this.cargarSolicitudesCotizacion();
         
         // Limpiar formulario
         this.cotizacion = this.nuevaCotizacion();

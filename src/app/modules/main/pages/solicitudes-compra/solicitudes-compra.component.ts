@@ -51,6 +51,12 @@ export class SolicitudesCompraComponent implements OnInit {
   requerimientosAprobados: Requerimiento[] = [];
   almacenes: Almacen[] = [];
   items: ItemComodity[] = [];
+  
+  // Datos maestros para conversión de códigos a nombres
+  proyectos: any[] = [];
+  labores: any[] = [];
+  cecos: any[] = [];
+  formasPago: any[] = [];
 
   // Formulario
   mostrarFormulario = false;
@@ -176,6 +182,11 @@ export class SolicitudesCompraComponent implements OnInit {
   async cargarMaestras() {
     this.almacenes = await this.dexieService.showAlmacenes();
     this.items = await this.dexieService.showItemComoditys();
+    this.proyectos = await this.dexieService.showProyectos();
+    this.labores = await this.dexieService.showLabores();
+    this.cecos = await this.dexieService.showCecos();
+    // Formas de pago (puedes agregar el método en DexieService si no existe)
+    // this.formasPago = await this.dexieService.showFormasPago();
   }
 
   // Método para cargar items cuando cambia el almacén
@@ -199,6 +210,61 @@ export class SolicitudesCompraComponent implements OnInit {
     if (!codigo) return '';
     const almacen = this.almacenes.find(a => a.idalmacen == codigo);
     return almacen ? almacen.almacen : codigo;
+  }
+
+  // Método para obtener el nombre de la moneda
+  getNombreMoneda(codigo: string): string {
+    if (!codigo) return '';
+    const monedas: { [key: string]: string } = {
+      'LO': 'Soles',
+      'EX': 'Dólares',
+      'PEN': 'Soles',
+      'USD': 'Dólares'
+    };
+    return monedas[codigo] || codigo;
+  }
+
+  // Método para obtener el nombre del proyecto
+  getNombreProyecto(codigo: string): string {
+    if (!codigo) return 'N/A';
+    console.log('Poryectos: ',this.proyectos);
+    const proyecto = this.proyectos.find(p => p.ruc+p.ceco+p.afe === codigo || p.id === codigo);
+    return proyecto ? proyecto.proyectoio : codigo;
+  }
+
+  // Método para obtener el nombre del proyecto2
+  getNombreProyecto2(codigo: string): string {
+    if (!codigo) return 'N/A';
+    console.log('Poryectos: ',this.proyectos);
+    const proyecto = this.proyectos.find(p => p.ruc+p.afe === codigo || p.id === codigo);
+    return proyecto ? proyecto.proyectoio : codigo;
+  }
+  // Método para obtener el nombre de la labor
+  getNombreLabor(codigo: string): string {
+    if (!codigo) return 'N/A';
+    console.log('Labores: ',this.labores);
+    const labor = this.labores.find(l => l.id.slice(5) === codigo || l.labor === codigo);
+    return labor ? labor.labor : codigo;
+  }
+
+  // Método para obtener el nombre del centro de costo
+  getNombreCeco(codigo: string): string {
+    if (!codigo) return 'N/A';
+    const ceco = this.cecos.find(c => c.costcenter === codigo || c.localname === codigo);
+    return ceco ? ceco.localname : codigo;
+  }
+
+  // Método para obtener el nombre de la forma de pago
+  getNombreFormaPago(codigo: string): string {
+    if (!codigo) return 'N/A';
+    // Mapeo común de formas de pago
+    const formasPago: { [key: string]: string } = {
+      '001': 'Contado',
+      '002': 'Crédito 30 días',
+      '003': 'Crédito 60 días',
+      '004': 'Crédito 90 días'
+    };
+    return formasPago[codigo] || codigo;
   }
 
   async cargarSolicitudesLocales() {
@@ -1465,21 +1531,81 @@ export class SolicitudesCompraComponent implements OnInit {
           // Crear en backend
           const respuesta = await this.solicitudCompraService.crearSolicitud(solicitudBackend);
           
-          if (respuesta && respuesta.idSolicitud) {
+          console.log('📦 Respuesta del backend:', respuesta);
+          console.log('📦 Tipo de respuesta:', typeof respuesta);
+          console.log('📦 Claves de respuesta:', respuesta ? Object.keys(respuesta) : 'null');
+          
+          // Parsear respuesta según el patrón del backend
+          let idSolicitud = null;
+          let yaExiste = false;
+          
+          if (respuesta) {
+            // Verificar si es un error de duplicado (legacy)
+            if (respuesta.error && typeof respuesta.error === 'string' && 
+                respuesta.error.includes('UNIQUE KEY') && 
+                respuesta.error.includes(solicitud.numeroSolicitud)) {
+              console.log(`⚠️ Solicitud duplicada detectada (error): ${solicitud.numeroSolicitud}`);
+              yaExiste = true;
+            } 
+            // Verificar si el backend indica que ya existe (nuevo flag)
+            else if (respuesta.yaExiste === 1 || respuesta.yaExiste === true) {
+              console.log(`⚠️ Solicitud ya existe en backend: ${solicitud.numeroSolicitud}`);
+              yaExiste = true;
+              idSolicitud = respuesta.idSolicitud || respuesta.id || respuesta.idsolicitud;
+            }
+            // Parsear respuesta normal
+            else if (typeof respuesta === 'string') {
+              try {
+                const parsed = JSON.parse(respuesta);
+                idSolicitud = parsed.idSolicitud || parsed.id || parsed.idsolicitud;
+              } catch (e) {
+                console.error('Error parseando respuesta string:', e);
+              }
+            } else if (typeof respuesta === 'object') {
+              // Intentar diferentes posibles nombres de campo
+              idSolicitud = respuesta.idSolicitud || 
+                           respuesta.id || 
+                           respuesta.idsolicitud ||
+                           respuesta.IdSolicitud ||
+                           respuesta.IDSOLICITUD;
+            }
+          }
+          
+          console.log('🔑 idSolicitud extraído:', idSolicitud);
+          console.log('🔍 Ya existe:', yaExiste);
+          
+          // Si es duplicado y no tenemos ID, buscar en el backend
+          if (yaExiste && !idSolicitud) {
+            try {
+              const solicitudesProcesadas = await this.solicitudCompraService.listarSolicitudesProcesadas(this.usuario.ruc);
+              const existente = solicitudesProcesadas.find((s: any) => s.serie === solicitud.numeroSolicitud);
+              
+              if (existente && existente.idSolicitud) {
+                idSolicitud = existente.idSolicitud;
+                console.log(`✅ Encontrado ID de solicitud duplicada: ${idSolicitud}`);
+              }
+            } catch (error) {
+              console.error('Error buscando solicitud duplicada:', error);
+            }
+          }
+          
+          if (idSolicitud) {
             // Actualizar estado en backend
             await this.solicitudCompraService.actualizarEstado(
-              respuesta.idSolicitud,
+              idSolicitud,
               'ENVIADA',
               this.usuario.documentoidentidad
             );
             
             // Marcar como sincronizado en Dexie
             solicitud.sincronizado = true;
+            solicitud.idSolicitud = idSolicitud; // Guardar el ID del backend
             await this.dexieService.saveSolicitudCompra(solicitud);
             
-            console.log(`✅ Sincronizada: ${solicitud.numeroSolicitud}`);
+            console.log(`✅ Sincronizada: ${solicitud.numeroSolicitud} (ID Backend: ${idSolicitud})`);
           } else {
             console.error(`❌ No se recibió idSolicitud para: ${solicitud.numeroSolicitud}`);
+            console.error('Respuesta completa:', JSON.stringify(respuesta, null, 2));
           }
         } catch (error) {
           console.error(`❌ Error sincronizando ${solicitud.numeroSolicitud}:`, error);

@@ -278,8 +278,8 @@
             <td>{{ rowIndex + 1 }}</td>
             <td><strong>{{ solicitud.serie }}</strong></td>
             <td><small>{{ solicitud.idproveedor || 'N/A' }}</small></td>
-            <td>{{ solicitud.idalmacen }}</td>
-            <td>{{ solicitud.idmoneda }}</td>
+            <td>{{ getNombreAlmacen(solicitud.idalmacen) }}</td>
+            <td>{{ getNombreMoneda(solicitud.idmoneda) }}</td>
             <td style="text-align: right">
               <strong>{{ solicitud.montototal | number:'1.2-2' }}</strong>
             </td>
@@ -297,9 +297,9 @@
                 {{ solicitud.idestado }}
               </span>
             </td>
-            <td><small class="text-muted">{{ solicitud.idproyecto || 'N/A' }}</small></td>
-            <td><small class="text-muted">{{ solicitud.idlabor || 'N/A' }}</small></td>
-            <td><small class="text-muted">{{ solicitud.idcentrocosto || 'N/A' }}</small></td>
+            <td><small class="text-muted">{{ getNombreProyecto(solicitud.idproyecto) || 'N/A' }}</small></td>
+            <td><small class="text-muted">{{ getNombreLabor(solicitud.idlabor) || 'N/A' }}</small></td>
+            <td><small class="text-muted">{{ getNombreCeco(solicitud.idcentrocosto) || 'N/A' }}</small></td>
             <td style="text-align: center">
               <div class="action-buttons">
                 <button 
@@ -583,7 +583,7 @@
         </div>
         <div class="info-item">
           <label>Moneda:</label>
-          <span class="badge badge-info">{{ solicitudDetalle.moneda || 'PEN' }}</span>
+          <span class="badge badge-info">{{ getNombreMoneda(solicitudDetalle.moneda || 'PEN') }}</span>
         </div>
         <div class="info-item">
           <label>Solicitante:</label>
@@ -1051,7 +1051,7 @@
           </div>
           <div class="info-item">
             <label>Almacén:</label>
-            <span>{{ solicitudProcesadaDetalle.idalmacen }}</span>
+            <span>{{ getNombreAlmacen(solicitudProcesadaDetalle.idalmacen) }}</span>
           </div>
           <div class="info-item">
             <label>Estado:</label>
@@ -1074,7 +1074,7 @@
         <div class="info-grid">
           <div class="info-item">
             <label>Moneda:</label>
-            <span>{{ solicitudProcesadaDetalle.idmoneda }}</span>
+            <span>{{ getNombreMoneda(solicitudProcesadaDetalle.idmoneda) }}</span>
           </div>
           <div class="info-item">
             <label>Monto Total:</label>
@@ -1090,7 +1090,7 @@
           </div>
           <div class="info-item">
             <label>Forma de Pago:</label>
-            <span>{{ solicitudProcesadaDetalle.idformapago || 'N/A' }}</span>
+            <span>{{ getNombreFormaPago(solicitudProcesadaDetalle.idformapago) }}</span>
           </div>
         </div>
       </div>
@@ -1101,15 +1101,15 @@
         <div class="info-grid">
           <div class="info-item">
             <label>Proyecto:</label>
-            <span>{{ solicitudProcesadaDetalle.idproyecto || 'N/A' }}</span>
+            <span>{{ getNombreProyecto(solicitudProcesadaDetalle.idproyecto) }}</span>
           </div>
           <div class="info-item">
             <label>Labor:</label>
-            <span>{{ solicitudProcesadaDetalle.idlabor || 'N/A' }}</span>
+            <span>{{ getNombreLabor(solicitudProcesadaDetalle.idlabor) }}</span>
           </div>
           <div class="info-item">
             <label>Centro de Costo:</label>
-            <span>{{ solicitudProcesadaDetalle.idcentrocosto || 'N/A' }}</span>
+            <span>{{ getNombreCeco(solicitudProcesadaDetalle.idcentrocosto) }}</span>
           </div>
         </div>
       </div>
@@ -1156,8 +1156,8 @@
               <td>{{ item.unidadmedida }}</td>
               <td style="text-align: right">{{ item.preciounitario | number:'1.2-2' }}</td>
               <td style="text-align: right"><strong>{{ item.total | number:'1.2-2' }}</strong></td>
-              <td><small>{{ item.proyecto || 'N/A' }}</small></td>
-              <td><small>{{ item.centrocosto || 'N/A' }}</small></td>
+              <td><small>{{ getNombreProyecto2(item.proyecto) || 'N/A' }}</small></td>
+              <td><small>{{ getNombreCeco(item.centrocosto) || 'N/A' }}</small></td>
             </tr>
           </ng-template>
           

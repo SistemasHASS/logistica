@@ -55,17 +55,34 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
   // Usuario
   usuario: any;
 
-  // Tabs
-  tabActiva: number = 0;
+  // Tabs - nuevo diseño estilo despachos
+  activeTab: 'ITEMS' | 'COMMODITY' | 'ACTIVOFIJO' | 'ACTIVOMENOR' | 'SERVICIO' | 'HISTORIAL' = 'ITEMS';
 
   // Items pendientes de consolidar
   itemsPendientes: ItemPendienteConsolidacion[] = [];
+  itemsConsolidados: number = 0;
   seleccionarTodos: boolean = false;
 
   // Servicios pendientes de consolidar
   serviciosPendientes: any[] = [];
   serviciosPendientesFiltrados: any[] = [];
+  serviciosSeleccionados: any[] = [];
+  serviciosConsolidados: number = 0;
   seleccionarTodosServicios: boolean = false;
+
+  // Activos fijos pendientes de consolidar
+  activosFijosPendientes: any[] = [];
+  activosFijosFiltrados: any[] = [];
+  activosFijosSeleccionados: any[] = [];
+  activosFijosConsolidados: number = 0;
+  seleccionarTodosActivosFijos: boolean = false;
+
+  // Activos menores pendientes de consolidar
+  activosMenoresPendientes: any[] = [];
+  activosMenoresFiltrados: any[] = [];
+  activosMenoresSeleccionados: any[] = [];
+  activosMenoresConsolidados: number = 0;
+  seleccionarTodosActivosMenores: boolean = false;
 
   // Historial de consolidaciones
   historialConsolidaciones: ConsolidacionCab[] = [];
@@ -91,14 +108,16 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
   filtroTipo: string = '';
   filtroAreas: string[] = [];
   filtroUsuarios: string[] = [];
-  filtroEmpresa: string = '';
+  filtroEmpresa: any = null;
+  filtroActivoFijo: string = '';
+  filtroActivoMenor: string = '';
 
   // Filtros servicios
   filtroServicioCommodity: string = '';
-  filtroServicioUsuarios: string[] = [];
+  filtroServicioUsuarios: any[] = [];
   filtroServicioFechaInicio: Date | null = null;
   filtroServicioFechaFin: Date | null = null;
-  filtroServicioEmpresa: string = '';
+  filtroServicioEmpresa: any = null;
 
   // Opciones de filtro dinámicas
   familiaOpciones: { label: string; value: string }[] = [];
@@ -113,6 +132,7 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
   empresaOpciones: { label: string; value: string }[] = [];
 
   // Filtros historial
+  filtroHistCodigo: string = '';
   filtroHistEstado: string = '';
   filtroHistFechaInicio: Date | null = null;
   filtroHistFechaFin: Date | null = null;
@@ -1459,12 +1479,15 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
   // MÉTODOS PARA TAB DE SERVICIOS
   // =============================================
 
+  // Método antiguo - ELIMINADO con el nuevo diseño de tabs estilo despachos
+  /*
   cambiarTab(tab: number) {
     this.tabActiva = tab;
     if (tab === 1) {
       this.cargarServiciosPendientes();
     }
   }
+  */
 
   async cargarServiciosPendientes() {
     try {
@@ -1556,7 +1579,7 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
         usuario: this.usuario?.documentoidentidad || this.usuario?.usuario || 'SYSTEM',
         itemsSeleccionados: seleccionados.map(s => ({
           idDetalle: s.idDetalle,
-          tipo: 'CONSUMO' as TipoRequerimiento
+          tipo: 'COMPRA' as TipoRequerimiento
         }))
       };
 
@@ -1613,7 +1636,7 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
         usuario: this.usuario?.documentoidentidad || this.usuario?.usuario || 'SYSTEM',
         itemsSeleccionados: seleccionados.map(s => ({
           idDetalle: s.idDetalle,
-          tipo: s.tipoRequerimiento || 'CONSUMO' as TipoRequerimiento
+          tipo: s.tipoRequerimiento || 'COMPRA' as TipoRequerimiento
         }))
       };
 

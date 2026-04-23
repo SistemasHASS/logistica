@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
 import { VersionService } from './services/version.service';
+import { DeploymentTrackingService } from './services/deployment-tracking.service';
 import { StockNotificationService } from './shared/services/stock-notification.service';
 import { environment } from '../environments/environment';
 import Swal from 'sweetalert2';
@@ -20,16 +21,18 @@ export class AppComponent implements OnInit, OnDestroy {
   private checkInterval: any;
   private readonly CHECK_INTERVAL_MINUTES = 10;
   private lastPromptKey = 'last_update_prompt';
+  private isUpdateFlowRunning = false;
 
   constructor(
-    private swUpdate: SwUpdate, 
+    private swUpdate: SwUpdate,
     private versionService: VersionService,
+    private deploymentTrackingService: DeploymentTrackingService,
     private stockNotificationService: StockNotificationService
   ) { }
 
   ngOnInit() {
-
     const mode = this.versionService.getMode();
+    this.auditDeploymentVersions();
 
     /** 💤 SIN EFECTO */
     if (mode === 'DISABLED') {
@@ -78,54 +81,67 @@ export class AppComponent implements OnInit, OnDestroy {
 
   async checkVersionFromServer() {
     if (this.versionService.getMode() !== 'AUTO') return;
-    
+
     const remote = await this.versionService.getServerVersion();
     const local = await this.versionService.getLocalVersion();
     const updated = this.versionService.getUpdatedVersion();
+    const audit = await this.auditDeploymentVersions(local, remote);
 
     console.log('🔍 Verificando versiones:', { remote, local, updated });
 
+    const targetVersion = audit?.confirmedUpdateVersion ?? null;
+
+    if (!targetVersion) {
+      console.log('✅ No hay una nueva versión confirmada para mostrar al usuario.');
+      return;
+    }
+
     // Si ya se actualizó a esta versión, no mostrar el modal
-    if (remote && updated && remote === updated) {
-      console.log('✅ La aplicación ya está actualizada a la versión', remote);
+    if (updated && targetVersion === updated) {
+      console.log('✅ La aplicación ya está actualizada a la versión', targetVersion);
       return;
     }
 
-    // Si las versiones son iguales, no mostrar modal
-    if (remote && local && remote === local) {
-      console.log('✅ La aplicación ya tiene la versión más reciente:', local);
-      return;
-    }
+    const lastPrompt = localStorage.getItem(this.lastPromptKey);
+    const now = Date.now();
 
-    if (remote && remote !== local) {
-      const lastPrompt = localStorage.getItem(this.lastPromptKey);
-      const now = Date.now();
-
-      // Evita mostrar el modal muchas veces (cada 15 minutos máximo)
-      if (!lastPrompt || now - parseInt(lastPrompt) > 15 * 60 * 1000) {
-        this.handleUpdate();
-        localStorage.setItem(this.lastPromptKey, now.toString());
-      }
+    // Evita mostrar el modal muchas veces (cada 15 minutos máximo)
+    if (!lastPrompt || now - parseInt(lastPrompt) > 15 * 60 * 1000) {
+      await this.handleUpdate(targetVersion, local);
+      localStorage.setItem(this.lastPromptKey, now.toString());
     }
   }
 
   /** 🔥 manual */
-  triggerManualUpdate() {
+  async triggerManualUpdate() {
     if (this.versionService.getMode() !== 'MANUAL') return;
-    this.handleUpdate();
+    await this.handleUpdate();
   }
 
   /** 🎯 punto único de decisión */
-  async handleUpdate() {
-    const remote = await this.versionService.getServerVersion();
-    const local = await this.versionService.getLocalVersion();
+  async handleUpdate(remoteVersion?: string | null, localVersion?: string) {
+    if (this.isUpdateFlowRunning) return;
+
+    const local = localVersion ?? await this.versionService.getLocalVersion();
+    let remote = remoteVersion ?? null;
+
+    if (!remote) {
+      const audit = await this.auditDeploymentVersions(local);
+      remote = audit?.confirmedUpdateVersion ?? null;
+    }
 
     if (!remote || remote === local) return;
 
-    if (this.versionService.canShowModal()) {
-      this.askUserToUpdate(remote, local);
-    } else {
-      await this.clearDexieAndReload();
+    this.isUpdateFlowRunning = true;
+
+    try {
+      if (this.versionService.canShowModal()) {
+        await this.askUserToUpdate(remote, local);
+      } else {
+        await this.clearDexieAndReload();
+      }
+    } finally {
+      this.isUpdateFlowRunning = false;
     }
   }
 
@@ -149,6 +165,17 @@ export class AppComponent implements OnInit, OnDestroy {
     if (result.isConfirmed) {
       await this.clearDexieAndReload();
     }
+  }
+
+  async auditDeploymentVersions(localVersion?: string, serverVersion?: string | null) {
+    const local = localVersion ?? await this.versionService.getLocalVersion();
+    const server = typeof serverVersion === 'undefined'
+      ? await this.versionService.getServerVersion()
+      : serverVersion;
+
+    const audit = await this.deploymentTrackingService.buildVersionAudit(local, server);
+    this.deploymentTrackingService.logAuditResult(audit);
+    return audit;
   }
 
   async clearDexieAndReload() {

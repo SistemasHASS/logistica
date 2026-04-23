@@ -18,6 +18,7 @@ import { MaestrosComponent } from './modules/main/pages/maestros/maestros.compon
 import { MaestrosItemsComponent } from './modules/main/pages/maestros/items/maestros-items.component';
 import { MaestrosComoditiesComponent } from './modules/main/pages/maestros/comodities/maestros-comodities.component';
 import { DespachoComponent } from './modules/main/pages/despachos/despacho.component';
+import { DespachoOriginalComponent } from './modules/main/pages/despachos-original/despacho-original.component';
 import { ReporteSaldosComponent } from './modules/main/pages/reporte/reporte-saldos.component';
 import { ReporteAprobadosComponent } from './modules/main/pages/reporte/reporte-aprobados.component';
 import { ReporteDespachosComponent } from './modules/main/pages/reporte/reporte-despachos.component';
@@ -121,6 +122,7 @@ export const routes: Routes = [
       { path: 'reporte-aprobados', component: ReporteAprobadosComponent, canActivate: [AprobadorGuard] },
       { path: 'listas-stock', component: ListasStockComponent, canActivate: [AlmacenGuard] },
       { path: 'despachos', component: DespachoComponent, canActivate: [AlmacenGuard] },
+      { path: 'despachos-original', component: DespachoOriginalComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte_logistico', component: ReporteLogisticoComponent },
       { path: 'reporte-saldos', component: ReporteSaldosComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte-despachos', component: ReporteDespachosComponent, canActivate: [AlmacenGuard] },

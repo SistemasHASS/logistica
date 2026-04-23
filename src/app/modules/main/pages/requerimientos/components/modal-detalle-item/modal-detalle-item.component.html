@@ -1,0 +1,288 @@
+<div class="modal-backdrop" *ngIf="visible">
+  <div class="modal-content modal-detalle-mejorado">
+    <div class="modal-header">
+      <h5 class="modal-title">
+        <i class="bx" [class]="editIndex >= 0 ? 'bx-edit me-2' : 'bx-plus-circle me-2'"></i>
+        {{ editIndex >= 0 ? "Editar Detalle de Requerimiento" : "Agregar Detalle de Requerimiento" }}
+      </h5>
+      <button type="button" class="btn-close" (click)="cerrar()"></button>
+    </div>
+
+    <div class="modal-body">
+      <div class="row">
+        <!-- FORMULARIO (Izquierda) - Ocupa todo el ancho en modo edición -->
+        <div [class]="editIndex >= 0 ? 'col-12' : 'col-lg-7 col-12'">
+          <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+              <h6 class="mb-0"><i class="bx bx-edit me-2"></i>Formulario de Línea</h6>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <!-- Campo CODIGO oculto -->
+                <input type="hidden" [(ngModel)]="lineaTemp.codigo" name="codigo" />
+
+                <!-- Producto -->
+                <div class="col-12">
+                  <label class="form-label">
+                    <i class="bx bx-package me-1"></i>
+                    Producto <span class="text-danger">*</span>
+                  </label>
+                  <app-product-search-cards
+                    [(ngModel)]="lineaTemp.producto"
+                    name="producto"
+                    [data]="itemsFiltrados"
+                    [optionLabel]="'descripcion'"
+                    [valueField]="'codigo'"
+                    [placeholder]="'Buscar producto...'"
+                    (onSelect)="onProductoSelect($event)"
+                  ></app-product-search-cards>
+                  <small class="text-muted d-block mt-1" *ngIf="lineaTemp.producto">
+                    <strong>Descripción:</strong> {{ obtenerDescripcionProducto(lineaTemp.producto) }}
+                  </small>
+                </div>
+
+                <!-- Cantidad / Unidad de Medida -->
+                <div class="col-6">
+                  <label class="form-label">
+                    <i class="bx bx-hash me-1"></i>
+                    Cantidad <span class="text-danger">*</span>
+                  </label>
+                  <input type="number" class="form-control" [(ngModel)]="lineaTemp.cantidad" min="1" />
+                </div>
+
+                <div class="col-6">
+                  <label class="form-label">
+                    <i class="bx bx-ruler me-1"></i>
+                    Unidad de Medida
+                  </label>
+                  <app-dropdown
+                    [data]="unidadesMedidaFiltradas"
+                    optionLabel="label"
+                    valueField="value"
+                    [(ngModel)]="lineaTemp.unidadMedida"
+                    [editable]="false"
+                    [required]="false"
+                    [disabled]="!lineaTemp.producto"
+                    placeholder="Seleccione producto primero"
+                  ></app-dropdown>
+                </div>
+
+                <!-- Turno (solo si no es COMPRA) -->
+                <div class="col-6" *ngIf="tipoSelecionado !== 'COMPRA'">
+                  <label class="form-label">
+                    <i class="bx bx-time me-1"></i>
+                    Turno <span class="text-danger">*</span>
+                    <span class="badge badge-sm"
+                      [class]="permitirEditarParametros ? 'bg-warning' : 'bg-secondary'"
+                      *ngIf="editIndex === -1">
+                      {{ permitirEditarParametros ? "editable" : "desde config" }}
+                    </span>
+                  </label>
+                  <app-dropdown
+                    [data]="turnos"
+                    optionLabel="nombreTurno"
+                    valueField="nombreTurno"
+                    [(ngModel)]="modalTurnoValue"
+                    (ngModelChange)="onTurnoChange()"
+                    [editable]="modalTurnoEditable"
+                    [required]="true"
+                    [disabled]="modalTurnoDisabled"
+                  ></app-dropdown>
+                </div>
+
+                <!-- CECO -->
+                <div class="col-6">
+                  <label class="form-label">
+                    <i class="bx bx-building me-1"></i>
+                    CECO <span class="text-danger">*</span>
+                  </label>
+                  <app-dropdown
+                    [data]="modalCecoData"
+                    optionLabel="localname"
+                    valueField="localname"
+                    [(ngModel)]="modalCecoValue"
+                    (ngModelChange)="onCecoChange()"
+                    [editable]="modalCecoEditable"
+                    [required]="true"
+                    [disabled]="modalCecoDisabled"
+                  ></app-dropdown>
+                </div>
+
+                <!-- Proyecto -->
+                <div class="col-6">
+                  <label class="form-label">
+                    <i class="bx bx-briefcase me-1"></i>
+                    Proyecto <span class="text-danger">*</span>
+                  </label>
+                  <app-dropdown
+                    [data]="modalProyectoData"
+                    optionLabel="proyectoio"
+                    valueField="proyectoio"
+                    [(ngModel)]="modalProyectoValue"
+                    [editable]="modalProyectoEditable"
+                    [required]="true"
+                    [disabled]="modalProyectoDisabled"
+                  ></app-dropdown>
+                </div>
+
+                <!-- Labor -->
+                <div class="col-6">
+                  <label class="form-label">
+                    <i class="bx bx-wrench me-1"></i>
+                    Labor <span class="text-danger">*</span>
+                  </label>
+                  <app-dropdown
+                    [data]="modalLaborData"
+                    optionLabel="labor"
+                    valueField="labor"
+                    [(ngModel)]="modalLaborValue"
+                    (ngModelChange)="onLaborChange()"
+                    [editable]="modalLaborEditable"
+                    [required]="true"
+                    [disabled]="modalLaborDisabled"
+                  ></app-dropdown>
+                </div>
+
+                <!-- Activo Fijo (solo CONSUMO) -->
+                <div class="col-6" *ngIf="tipoSelecionado === 'CONSUMO'">
+                  <label class="form-label">
+                    <i class="bx bx-cog me-1"></i>
+                    Es para Activo Fijo
+                  </label>
+                  <app-dropdown
+                    [data]="activosFijosFiltrados"
+                    optionLabel="activo_descripcion"
+                    valueField="activo"
+                    [(ngModel)]="lineaTemp.activoFijo"
+                    [editable]="true"
+                    [required]="false"
+                  ></app-dropdown>
+                </div>
+              </div>
+
+              <!-- Botón Insertar/Actualizar - Solo en modo agregación -->
+              <div class="mt-4 text-center" *ngIf="editIndex === -1">
+                <button
+                  class="btn btn-lg"
+                  [class]="editingTempIndex >= 0 ? 'btn-warning' : 'btn-info'"
+                  (click)="insertarLineaEnTabla()"
+                >
+                  <i class="bx me-2" [class]="editingTempIndex >= 0 ? 'bx-save' : 'bx-plus'"></i>
+                  {{ editingTempIndex >= 0 ? "Actualizar Línea" : "Insertar Línea" }}
+                </button>
+                <button
+                  class="btn btn-secondary btn-lg ms-2"
+                  *ngIf="editingTempIndex >= 0"
+                  (click)="limpiarFormulario()"
+                >
+                  <i class="bx bx-x me-1"></i>Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLA DE LÍNEAS (Derecha) - Solo en modo agregación -->
+        <div class="col-lg-5 col-12" *ngIf="editIndex === -1">
+          <div class="card h-100">
+            <div class="card-header bg-success text-white">
+              <h6 class="mb-0"><i class="bx bx-list-ul me-2"></i>Líneas Agregadas</h6>
+            </div>
+            <div class="card-body">
+              <!-- Checkbox editar parámetros -->
+              <!-- <div class="form-check mb-3 p-3 bg-light rounded">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="permitirEditarParametros" id="permitirEditar" />
+                <label class="form-check-label fw-bold" for="permitirEditar">
+                  <i class="bx bx-edit-alt me-1"></i>
+                  Permitir editar parámetros
+                </label>
+                <small class="d-block text-muted mt-1">
+                  Habilita la edición de CECO, Proyecto, Labor y Turno con lógica de cascada
+                </small>
+              </div> -->
+
+              <!-- Tabla de líneas -->
+              <div class="table-responsive" style="max-height: 300px">
+                <table class="table table-sm table-striped" *ngIf="lineasTemporales.length > 0">
+                  <thead class="table-dark sticky-top">
+                    <tr>
+                      <th style="width: 8%">#</th>
+                      <th style="width: 42%">Producto</th>
+                      <th style="width: 15%">Cant.</th>
+                      <th style="width: 35%">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      *ngFor="let linea of lineasTemporales; let i = index"
+                      [class.table-warning]="editingTempIndex === i"
+                    >
+                      <td>
+                        <span *ngIf="editingTempIndex !== i">{{ i + 1 }}</span>
+                        <i *ngIf="editingTempIndex === i" class="bx bx-edit text-warning fw-bold"></i>
+                      </td>
+                      <td><small class="fw-bold">{{ linea.descripcion }}</small></td>
+                      <td>{{ linea.cantidad }}</td>
+                      <td>
+                        <button class="btn btn-warning btn-sm me-1" (click)="editarLineaTemporal(i)" title="Editar línea">
+                          <i class="bx bx-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" (click)="eliminarLineaTemporal(i)" title="Eliminar línea">
+                          <i class="bx bx-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="text-center py-4" *ngIf="lineasTemporales.length === 0">
+                  <i class="bx bx-info-circle text-muted" style="font-size: 2rem"></i>
+                  <p class="text-muted mt-2 mb-0">No hay líneas agregadas</p>
+                  <small class="text-muted">Complete el formulario y haga clic en "Insertar"</small>
+                </div>
+              </div>
+
+              <!-- Contador de líneas -->
+              <div class="mt-3 p-2 bg-info bg-opacity-10 rounded" *ngIf="lineasTemporales.length > 0">
+                <small class="fw-bold text-info">
+                  <i class="bx bx-check-circle me-1"></i>
+                  Total líneas: {{ lineasTemporales.length }}
+                </small>
+              </div>
+
+              <!-- Info parámetros -->
+              <div class="mt-3 p-2 rounded"
+                [class]="permitirEditarParametros ? 'bg-warning bg-opacity-10' : 'bg-secondary bg-opacity-10'">
+                <small class="fw-bold" [class]="permitirEditarParametros ? 'text-warning' : 'text-secondary'">
+                  <i class="bx" [class]="permitirEditarParametros ? 'bx-edit' : 'bx-lock'"></i>
+                  {{ permitirEditarParametros ? "Modo Editable" : "Usando Configuración" }}
+                </small>
+                <div class="mt-1">
+                  <small class="text-muted d-block">
+                    {{ permitirEditarParametros
+                        ? "Los campos se pueden editar con lógica de cascada"
+                        : "Los campos usan valores de la configuración guardada" }}
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button
+        class="btn btn-success btn-lg"
+        (click)="editIndex >= 0 ? guardarEdicion() : registrarTodas()"
+        [disabled]="editIndex >= 0 ? false : lineasTemporales.length === 0"
+      >
+        <i class="bx bx-check me-2"></i>
+        {{ editIndex >= 0 ? "Actualizar" : "Registrar Todo (" + lineasTemporales.length + ")" }}
+      </button>
+      <button class="btn btn-secondary" (click)="cerrar()">
+        <i class="bx bx-x me-2"></i>Cancelar
+      </button>
+    </div>
+  </div>
+</div>

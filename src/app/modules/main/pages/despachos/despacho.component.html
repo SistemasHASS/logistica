@@ -1,179 +1,193 @@
-<div class="container-fluid despachos-container">
+<div class="container-fluid despachos-container py-3">
 
-  <h4 class="mb-2 titulo-pagina">LISTA DE REQUERIMIENTOS APROBADOS</h4>
-  
-  <!-- SECCIÓN DE NOTIFICACIONES -->
-  <div class="row mb-3" *ngIf="usuario && usuario.idrol && usuario.idrol.includes('ALLOGIST')">
-    <div class="col-12">
-      <div class="card shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer;" (click)="mostrarNotificaciones = !mostrarNotificaciones">
-          <div class="d-flex align-items-center">
-            <i class='bx bx-bell me-2'></i>
-            <h6 class="mb-0">Notificaciones de Almacén</h6>
-            @if (notificacionesNoLeidas > 0) {
-              <span class="badge bg-danger ms-2">{{ notificacionesNoLeidas }}</span>
-            }
-          </div>
-          <i [class]="mostrarNotificaciones ? 'bx bx-chevron-up' : 'bx bx-chevron-down'"></i>
+  <h4 class="mb-3 titulo-pagina">Lista de Despachos</h4>
+
+  <!-- ===== KPI CARDS ===== -->
+  <div class="row g-3 mb-3 kpi-row">
+    <div class="col-12 col-md-4">
+      <div class="kpi-card kpi-pendientes">
+        <div class="kpi-icon"><i class="bx bx-time-five"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Pendientes de Atención</div>
+          <div class="kpi-sub">Total: {{ kpiPendientes }}</div>
         </div>
-        @if (mostrarNotificaciones) {
-          <div class="card-body p-0">
-            @if (notificaciones.length === 0) {
-              <div class="text-center py-3 text-muted">
-                <i class='bx bx-bell-off' style="font-size: 2rem;"></i>
-                <p class="mb-0 mt-2">No tienes notificaciones</p>
-              </div>
-            } @else {
-              <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
-                @for (notificacion of notificaciones; track notificacion.id_notificacion) {
-                  <div class="list-group-item list-group-item-action" 
-                       [class]="!notificacion.leida ? 'bg-light' : ''"
-                       (click)="marcarNotificacionComoLeida(notificacion)">
-                    <div class="d-flex w-100 justify-content-between">
-                      <div class="d-flex align-items-start">
-                        <i [class]="getTipoNotificacionIcon(notificacion.tipo_notificacion)" class="me-2 mt-1"></i>
-                        <div class="flex-grow-1">
-                          <p class="mb-1">{{ notificacion.mensaje }}</p>
-                          <small class="text-muted">
-                            <i class='bx bx-time'></i>
-                            {{ notificacion.fecha_creacion | date:'dd/MM/yyyy HH:mm' }}
-                          </small>
-                        </div>
-                      </div>
-                      @if (!notificacion.leida) {
-                        <span class="badge bg-primary rounded-pill">Nueva</span>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        }
+        <div class="kpi-value">{{ kpiPendientes }}</div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="kpi-card kpi-atendidos">
+        <div class="kpi-icon"><i class="bx bx-check-circle"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Atendidos</div>
+          <div class="kpi-sub">Hoy/Total</div>
+        </div>
+        <div class="kpi-value">{{ kpiAtendidos }}</div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="kpi-card kpi-total">
+        <div class="kpi-icon"><i class="bx bx-list-ul"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Total de Requerimientos</div>
+          <div class="kpi-sub">Todos</div>
+        </div>
+        <div class="kpi-value">{{ kpiTotal }}</div>
       </div>
     </div>
   </div>
-  
-  <!-- FILTRO - Responsive (apilados en móvil) -->
-  <div class="filtros-mobile">
-    <div class="filtro-item">
-      <input type="text" class="form-control form-control-sm" placeholder="Buscar..." [(ngModel)]="filtro" (input)="buscar()">
-    </div>
-    <div class="filtro-item">
-      <p-datepicker name="fechaInicio" [(ngModel)]="fechaInicio" dateFormat="dd/mm/yy" placeholder="Desde"
-        [showIcon]="true" [showClear]="true" (onSelect)="buscar()" (onClear)="limpiarFecha()" styleClass="w-100">
-      </p-datepicker>
-    </div>
-    <div class="filtro-item">
-      <p-datepicker name="fechaFin" [(ngModel)]="fechaFin" dateFormat="dd/mm/yy" placeholder="Hasta" [showIcon]="true"
-        [showClear]="true" (onSelect)="buscar()" (onClear)="limpiarFecha()" styleClass="w-100">
-      </p-datepicker>
-    </div>
-    <div class="filtro-total">
-      <span class="fw-semibold">Total: {{ totalRegistros }}</span>
-    </div>
-  </div>
 
-  <!-- ========== VISTA DESKTOP - TABLA ========== -->
-  <div class="desktop-only">
-    <p-table #dt [value]="requerimientosAprobados" [paginator]="true" [rows]="20"
-      [totalRecords]="requerimientosAprobados.length" [loading]="loading" responsiveLayout="scroll" [pageLinks]="5"
-      [showCurrentPageReport]="true" currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
-      styleClass="p-datatable-sm p-datatable-striped">
+  <!-- ===== TABS ITEMS / COMMODITY ===== -->
+  <ul class="nav nav-tabs despachos-tabs mb-0">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTabDespachos === 'ITEMS'"
+         (click)="activeTabDespachos = 'ITEMS'" style="cursor:pointer;">
+        ITEMS
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTabDespachos === 'COMMODITY'"
+         (click)="activeTabDespachos = 'COMMODITY'" style="cursor:pointer;">
+        COMMODITY
+      </a>.
+    </li>
+  </ul>
 
-      <ng-template pTemplate="header">
-        <tr>
-          <th style="width:50px"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
-          <th style="width:50px">#</th>
-          <th style="min-width:30px">Acciones</th>
-          <th style="min-width:100px" pSortableColumn="fechaAprobacion">Fecha Aprobación</th>
-          <!-- <th style="min-width:100px">Código</th> -->
-          <th style="min-width:100px">RequisicionNumero</th>
-          <th style="min-width:100px">Requerimiento</th>
-          <th style="min-width:80px">Tipo</th>
-          <th style="min-width:120px">Proyecto</th>
-          <th style="min-width:100px">Estado</th>
-        </tr>
-      </ng-template>
+  <div class="card shadow-sm p-3 mb-3 tabla-card">
+    <!-- <div class="fw-semibold mb-2">Reporte de Despachos Realizados</div> -->
 
-      <ng-template pTemplate="body" let-c let-i="rowIndex">
-        <tr>
-          <td><p-tableCheckbox [value]="c"></p-tableCheckbox></td>
-          <td>{{ i + 1 }}</td>
-          <td>
-            <button class="btn btn-primary btn-sm" (click)="verDetalle(c)">Atender</button>
-            <button class="btn btn-success btn-sm ms-2"
-              *ngIf="c.estado === 'ATENCION_PARCIAL' || c.estado === 'ATENCION_COMPLETA'" 
-              (click)="abrirDespachoFinal(c)">Despachar</button>
-          </td>
-          <!-- <td>{{ c.fechaAprobacion | date: 'dd/MM/yyyy HH:mm:ss' }}</td> -->
-          <td>{{ c.fechaAprobacion | date: 'dd/MM/yyyy' }}</td>
-          <!-- <td>{{ c.idrequerimiento }}</td> -->
-          <td>{{ c.RequisicionNumero }}</td>
-          <td>{{ c.glosa }}</td>
-          <td><span class="badge bg-info">{{ c.tipo }}</span></td>
-          <td>
-            <div *ngFor="let proyecto of obtenerProyectosUnicos(c.detalle)">{{ proyecto }}</div>
-          </td>
-          <td><span class="badge bg-success">{{ c.estados }}</span></td>
-        </tr>
-      </ng-template>
-
-      <ng-template pTemplate="emptymessage">
-        <tr><td colspan="10" class="text-center">No hay registros</td></tr>
-      </ng-template>
-    </p-table>
-  </div>
-
-  <!-- ========== VISTA MÓVIL - CARDS ========== -->
-  <div class="mobile-only">
-    <div class="container-card">
-      <!-- Header con título y stats -->
-      <div class="container-header">
-        <span class="container-title">Requerimientos Aprobados</span>
-        <div class="container-stats">
-          <span>Total: <span class="badge bg-primary">{{ totalRegistros }}</span></span>
-        </div>
+    <!-- ===== FILTROS ===== -->
+    <div class="row g-2 mb-2 align-items-center filtros-row">
+      <div class="col-12 col-md-2">
+        <input type="text" class="form-control" placeholder="Filtrar por Requisición"
+               [(ngModel)]="filtroRequisicion" />
       </div>
-      
-      <!-- Cards con scroll interno -->
-      <div class="cards-scroll">
-        <div class="mobile-card" *ngFor="let c of requerimientosAprobados; let i = index">
-          <div class="card-row">
-            <input type="checkbox" class="card-checkbox" [(ngModel)]="c.checked">
-            <div class="card-content">
-              <div class="card-header-row">
-                <span class="badge bg-success">{{ c.estados }}</span>
-                <span class="card-usuario">Usuario: {{ c.nrodocumento || 'N/A' }}</span>
+      <div class="col-12 col-md-3">
+        <p-datepicker name="fechaInicio" [(ngModel)]="fechaInicio" dateFormat="dd/mm/yy"
+                      placeholder="Desde" [showIcon]="true" [showClear]="true"
+                      (onSelect)="buscar()" (onClear)="limpiarFecha()" styleClass="w-100">
+        </p-datepicker>
+      </div>
+      <div class="col-12 col-md-3">
+        <p-datepicker name="fechaFin" [(ngModel)]="fechaFin" dateFormat="dd/mm/yy"
+                      placeholder="Hasta" [showIcon]="true" [showClear]="true"
+                      (onSelect)="buscar()" (onClear)="limpiarFecha()" styleClass="w-100">
+        </p-datepicker>
+      </div>
+      <div class="col-12 col-md-3">
+        <button class="btn btn-primary btn-listar" type="button" (click)="buscar()">Buscar</button>
+        <!-- <button class="btn btn-outline-info btn-limpiar" type="button" (click)="limpiarFiltrosDespacho()">Limpiar</button>
+        <button class="btn btn-success btn-excel" type="button" title="Exportar"
+                (click)="table.exportCSV()"><i class="bx bx-spreadsheet"></i>
+        </button> -->
+      </div>
+    </div>
+
+    <div class="text-muted small mb-2">Total: {{ despachosVisibles.length }} registros</div>
+
+    <!-- ===== TABLA DESKTOP ===== -->
+    <div class="desktop-only">
+      <p-table #dt [value]="despachosVisibles" [paginator]="true" [rows]="15"
+               [totalRecords]="despachosVisibles.length" [loading]="loading"
+               responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+               currentPageReportTemplate="< {first} - {last} de {totalRecords} >"
+               styleClass="p-datatable-sm p-datatable-striped tabla-despachos">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width:50px"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+            <th style="width:50px">#</th>
+            <th style="min-width:120px" pSortableColumn="RequisicionNumero">N° Requisición</th>
+            <th style="min-width:120px" pSortableColumn="fechaAprobacion">Fecha Despacho</th>
+            <th style="min-width:90px">Almacén</th>
+            <th style="min-width:140px">Usuario</th>
+            <th style="min-width:120px">Área</th>
+            <th style="min-width:200px" *ngIf="activeTabDespachos === 'COMMODITY'">Familia</th>
+            <th style="min-width:200px" *ngIf="activeTabDespachos === 'ITEMS'">Producto</th>
+            <th style="min-width:110px">Estado</th>
+            <th style="min-width:150px">Acciones</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-c let-i="rowIndex">
+          <tr>
+            <td><p-tableCheckbox [value]="c"></p-tableCheckbox></td>
+            <td class="fw-semibold">{{ i + 1 }}</td>
+            <td>{{ c.RequisicionNumero || '-' }}</td>
+            <td>{{ c.fechaAprobacion | date: 'dd/MM/yyyy' }}</td>
+            <td>{{ c.idalmacen || '-' }}</td>
+            <td>{{ c.nombreCreador }}</td>
+            <!-- <td class="fw-semibold">{{ obtenerNombreUsuario(c) }}</td> -->
+            <td>{{ obtenerNombreArea(c) }}</td>
+            <td class="text-truncate" style="max-width:240px;" [title]="obtenerFamilia(c)">
+              {{ obtenerFamilia(c) }}
+            </td>
+            <td>
+              <span class="badge estado-chip"
+                    [ngClass]="{
+                      'chip-despachado': (c.estados || '').toString().toUpperCase().includes('DESPACHADO'),
+                      'chip-pendiente': (c.estados === 'APROBADO' || !c.estados),
+                      'chip-parcial': c.estados === 'ATENCION_PARCIAL',
+                      'chip-completa': c.estados === 'ATENCION_COMPLETA'
+                    }">
+                {{ c.estados || 'PENDIENTE' }}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-ver" (click)="verDetalle(c)">
+                  <i class="bx bx-show"></i> Ver
+                </button>
+                <button class="btn btn-sm btn-success"
+                        *ngIf="c.estado === 'ATENCION_PARCIAL' || c.estado === 'ATENCION_COMPLETA'"
+                        (click)="abrirDespachoFinal(c)">
+                  Despachar
+                </button>
               </div>
-              <div class="card-field">
-                <strong>#Requerimiento:</strong> {{ c.idrequerimiento }}
-              </div>
-              <div class="card-field">
-                <strong>Fecha:</strong> {{ c.fechaAprobacion | date: 'dd/MM/yyyy' }} - 
-                <strong>Almacén:</strong> {{ c.idalmacen || 'N/A' }}
-              </div>
-              <div class="card-field">
-                <strong>Glosa:</strong> {{ c.glosa }} - {{ c.tipo }}
-              </div>
-              <div class="card-actions">
-                <button class="btn btn-primary btn-sm" (click)="verDetalle(c)">Atender</button>
-                <button class="btn btn-success btn-sm ms-2"
-                  *ngIf="c.estado === 'ATENCION_PARCIAL' || c.estado === 'ATENCION_COMPLETA'" 
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr><td [attr.colspan]="11" class="text-center py-4">No hay registros</td></tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- ===== VISTA MÓVIL ===== -->
+    <div class="mobile-only">
+      <div class="mobile-card" *ngFor="let c of despachosVisibles; let i = index">
+        <div class="mc-row">
+          <span class="badge estado-chip"
+                [ngClass]="{
+                  'chip-despachado': (c.estados || '').toString().toUpperCase().includes('DESPACHADO'),
+                  'chip-pendiente': (c.estado === 'APROBADO' || !c.estado),
+                  'chip-parcial': c.estado === 'ATENCION_PARCIAL',
+                  'chip-completa': c.estado === 'ATENCION_COMPLETA'
+                }">
+            {{ c.estados || c.estado || 'PENDIENTE' }}
+          </span>
+          <span class="text-muted small">#{{ i + 1 }}</span>
+        </div>
+        <div class="mc-field"><strong>N° NS:</strong> {{ c.NumeroDocumento || '-' }}</div>
+        <div class="mc-field"><strong>Requisición:</strong> {{ c.RequisicionNumero || '-' }}</div>
+        <div class="mc-field"><strong>Fecha:</strong> {{ c.fechaAprobacion | date: 'dd/MM/yyyy' }}</div>
+        <div class="mc-field"><strong>Almacén:</strong> {{ c.idalmacen || '-' }}</div>
+        <div class="mc-field"><strong>Usuario:</strong> {{ obtenerNombreUsuario(c) }}</div>
+        <div class="mc-field"><strong>Área:</strong> {{ obtenerNombreArea(c) }}</div>
+        <div class="mc-field"><strong>{{ activeTabDespachos === 'ITEMS' ? 'Producto' : 'Familia' }}:</strong> {{ obtenerFamilia(c) }}</div>
+        <div class="mc-actions">
+          <button class="btn btn-sm btn-ver" (click)="verDetalle(c)"><i class="bx bx-show"></i> Ver</button>
+          <button class="btn btn-sm btn-success"
+                  *ngIf="c.estado === 'ATENCION_PARCIAL' || c.estado === 'ATENCION_COMPLETA'"
                   (click)="abrirDespachoFinal(c)">Despachar</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div *ngIf="!requerimientosAprobados.length" class="text-center text-muted py-4">
-          No hay registros
         </div>
       </div>
+      <div *ngIf="!despachosVisibles.length" class="text-center text-muted py-4">No hay registros</div>
     </div>
   </div>
 </div>
 
-<!-- =================== MODAL DETALLE ATENCIÓN =================== -->
+<!-- =================== MODAL DETALLE ATENCIÓN (sin cambios funcionales) =================== -->
 <div class="modal-backdrop-custom" *ngIf="modalAtencionVisible">
   <div class="modal-content-custom">
     <div class="modal-header">
@@ -184,7 +198,7 @@
     </div>
 
     <div class="modal-body">
-      <p-table #dt [value]="detalle" [paginator]="true" [rows]="20" [totalRecords]="detalle.length"
+      <p-table [value]="detalle" [paginator]="true" [rows]="20" [totalRecords]="detalle.length"
         [loading]="loading" responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
         currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
         styleClass="p-datatable-sm p-datatable-striped">
@@ -215,11 +229,8 @@
             <td>{{ c.cantidad - (c.atendida || 0) }}</td>
             <td>{{ c.stock || 0 }}</td>
             <td>
-              <input type="number" class="form-control form-control-sm text-center" 
-                [(ngModel)]="c.atender" 
-                [max]="c.stock" 
-                [min]="0" 
-                style="width: 80px;" />
+              <input type="number" class="form-control form-control-sm text-center"
+                [(ngModel)]="c.atender" [max]="c.stock" [min]="0" style="width: 80px;" />
             </td>
             <td>{{ c.compra || 0 }}</td>
             <td>
@@ -235,19 +246,14 @@
         </ng-template>
 
         <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="10" class="text-center">No hay registros</td>
-          </tr>
+          <tr><td colspan="10" class="text-center">No hay registros</td></tr>
         </ng-template>
-
       </p-table>
     </div>
 
     <div class="modal-footer">
       <button class="btn btn-secondary" (click)="cerrarModalAtencion()">Cerrar</button>
-      <button class="btn btn-primary" (click)="registrarAtencion()">
-        Registrar Atención
-      </button>
+      <button class="btn btn-primary" (click)="registrarAtencion()">Registrar Atención</button>
     </div>
   </div>
 </div>

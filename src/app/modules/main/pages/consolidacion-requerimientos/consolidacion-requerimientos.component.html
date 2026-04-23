@@ -22,104 +22,185 @@
       </button>
     </div>
 
-    <!-- Tabs -->
+    <!-- Cards con KPIs dinámicos según tab seleccionado -->
+    <div class="row mb-3" *ngIf="activeTab === 'ITEMS'">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Items Pendientes</h6>
+            <h3 class="text-danger mb-0">{{ itemsPendientes.length }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Items Consolidados</h6>
+            <h3 class="text-success mb-0">{{ itemsConsolidados || 0 }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Total Items</h6>
+            <h3 class="text-primary mb-0">{{ (itemsPendientes.length || 0) + (itemsConsolidados || 0) }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-3" *ngIf="activeTab === 'COMMODITY'">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Commodity Pendientes</h6>
+            <h3 class="text-warning mb-0">{{ serviciosPendientes.length }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Commodity Consolidados</h6>
+            <h3 class="text-success mb-0">{{ serviciosConsolidados || 0 }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Total Commodity</h6>
+            <h3 class="text-primary mb-0">{{ (serviciosPendientes.length || 0) + (serviciosConsolidados || 0) }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-3" *ngIf="activeTab === 'ACTIVOFIJO'">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Activos Fijos Pendientes</h6>
+            <h3 class="text-primary mb-0">{{ activosFijosPendientes.length }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Activos Fijos Consolidados</h6>
+            <h3 class="text-success mb-0">{{ activosFijosConsolidados || 0 }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Total Activos Fijos</h6>
+            <h3 class="text-dark mb-0">{{ (activosFijosPendientes.length || 0) + (activosFijosConsolidados || 0) }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-3" *ngIf="activeTab === 'ACTIVOMENOR'">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Activos Menores Pendientes</h6>
+            <h3 class="text-secondary mb-0">{{ activosMenoresPendientes.length }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Activos Menores Consolidados</h6>
+            <h3 class="text-success mb-0">{{ activosMenoresConsolidados || 0 }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Total Activos Menores</h6>
+            <h3 class="text-dark mb-0">{{ (activosMenoresPendientes.length || 0) + (activosMenoresConsolidados || 0) }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-3" *ngIf="activeTab === 'SERVICIO'">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Servicios Pendientes</h6>
+            <h3 class="text-info mb-0">{{ serviciosPendientes.length }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Servicios Consolidados</h6>
+            <h3 class="text-success mb-0">{{ serviciosConsolidados || 0 }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-1">Total Servicios</h6>
+            <h3 class="text-dark mb-0">{{ (serviciosPendientes.length || 0) + (serviciosConsolidados || 0) }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nuevo diseño de tabs estilo despachos -->
     <ul class="nav nav-tabs mb-3" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link" [class.active]="tabActiva === 0" (click)="cambiarTab(0)" type="button">
-          <i class="icon icon-file-plus me-1"></i> Items Pendientes
+        <button class="nav-link" [class.active]="activeTab === 'ITEMS'" (click)="activeTab = 'ITEMS'" type="button">
+          <i class="icon icon-file-plus me-1"></i> ITEMS
           <span class="badge bg-danger ms-1" *ngIf="itemsPendientes.length > 0">{{ itemsPendientes.length }}</span>
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" [class.active]="tabActiva === 1" (click)="cambiarTab(1)" type="button">
-          <i class="icon icon-briefcase me-1"></i> Servicios Pendientes
+        <button class="nav-link" [class.active]="activeTab === 'COMMODITY'" (click)="activeTab = 'COMMODITY'" type="button">
+          <i class="icon icon-briefcase me-1"></i> COMMODITY
           <span class="badge bg-warning ms-1" *ngIf="serviciosPendientes.length > 0">{{ serviciosPendientes.length }}</span>
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" [class.active]="tabActiva === 2" (click)="cambiarTab(2)" type="button">
-          <i class="icon icon-history me-1"></i> Historial Consolidaciones
+        <button class="nav-link" [class.active]="activeTab === 'ACTIVOFIJO'" (click)="activeTab = 'ACTIVOFIJO'" type="button">
+          <i class="icon icon-cpu me-1"></i> ACTIVO FIJO
+          <span class="badge bg-primary ms-1" *ngIf="activosFijosPendientes.length > 0">{{ activosFijosPendientes.length }}</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="activeTab === 'ACTIVOMENOR'" (click)="activeTab = 'ACTIVOMENOR'" type="button">
+          <i class="icon icon-tool me-1"></i> ACTIVO MENOR
+          <span class="badge bg-secondary ms-1" *ngIf="activosMenoresPendientes.length > 0">{{ activosMenoresPendientes.length }}</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="activeTab === 'SERVICIO'" (click)="activeTab = 'SERVICIO'" type="button">
+          <i class="icon icon-layers me-1"></i> SERVICIO
+          <span class="badge bg-info ms-1" *ngIf="serviciosPendientes.length > 0">{{ serviciosPendientes.length }}</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="activeTab === 'HISTORIAL'" (click)="activeTab = 'HISTORIAL'" type="button">
+          <i class="icon icon-history me-1"></i> HISTORIAL
         </button>
       </li>
     </ul>
 
     <!-- ================================================ -->
-    <!-- TAB 1: ITEMS PENDIENTES DE CONSOLIDAR            -->
+    <!-- SECCIÓN ITEMS -->
     <!-- ================================================ -->
-    <div *ngIf="tabActiva === 0">
-
-      <!-- Panel de Filtros -->
-      <div class="filtros-panel mb-3">
-        <div class="row g-2 align-items-end">
-          <div class="col-md-2">
-            <label class="form-label form-label-sm">Empresa</label>
-            <p-select [(ngModel)]="filtroEmpresa" [options]="empresaOpciones" optionLabel="label" optionValue="value"
-              placeholder="Todas las empresas" class="w-100 filtro-select">
-            </p-select>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label form-label-sm">Areas</label>
-            <p-multiSelect [(ngModel)]="filtroAreas" [options]="areaOpciones" optionLabel="label" optionValue="value"
-              placeholder="Todas" [maxSelectedLabels]="1" selectedItemsLabel="{0} seleccionadas"
-              class="w-100 filtro-select">
-            </p-multiSelect>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label form-label-sm">Familia</label>
-            <p-multiSelect [(ngModel)]="filtroFamilias" [options]="familiaOpciones" optionLabel="label"
-              optionValue="value" placeholder="Todas" [maxSelectedLabels]="1" selectedItemsLabel="{0} seleccionadas"
-              class="w-100 filtro-select">
-            </p-multiSelect>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label form-label-sm">Categoría</label>
-            <p-multiSelect [(ngModel)]="filtroCategorias" [options]="categoriaOpciones" optionLabel="label"
-              optionValue="value" placeholder="Todas" [maxSelectedLabels]="1" selectedItemsLabel="{0} seleccionadas"
-              class="w-100 filtro-select">
-            </p-multiSelect>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label form-label-sm">Item</label>
-            <input type="text" class="form-control form-control-sm" [(ngModel)]="filtroItem"
-              placeholder="Código o descripción" (keyup.enter)="aplicarFiltros()">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label form-label-sm">Usuario</label>
-            <p-multiSelect [(ngModel)]="filtroUsuarios" [options]="usuarioOpciones" optionLabel="label"
-              optionValue="value" placeholder="Todas" [maxSelectedLabels]="1" selectedItemsLabel="{0} seleccionadas"
-              class="w-100 filtro-select">
-            </p-multiSelect>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label form-label-sm">Fecha desde</label>
-            <p-datePicker [(ngModel)]="filtroFechaInicio" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Desde"
-              class="w-100 filtro-date">
-            </p-datePicker>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label form-label-sm">Fecha hasta</label>
-            <p-datePicker [(ngModel)]="filtroFechaFin" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Hasta"
-              class="w-100 filtro-date">
-            </p-datePicker>
-          </div>
-          <!-- <div class="col-md-2">
-            <label class="form-label form-label-sm">Tipo</label>
-            <p-select [(ngModel)]="filtroTipo" [options]="tipoOpciones" optionLabel="label" optionValue="value"
-              placeholder="Todos" class="w-100 filtro-select">
-            </p-select>
-          </div> -->
-        </div>
-        <div class="row mt-2">
-          <div class="col-md-12 text-end">
-            <button class="btn btn-sm btn-outline-secondary me-2" (click)="limpiarFiltros()">
-              <i class="icon icon-x me-1"></i> Limpiar
-            </button>
-            <button class="btn btn-sm btn-primary" (click)="aplicarFiltros()">
-              <i class="icon icon-search me-1"></i> Buscar
-            </button>
-          </div>
-        </div>
-      </div>
+    <div *ngIf="activeTab === 'ITEMS'">
 
       <!-- Barra de acciones -->
       <div class="d-flex justify-content-between align-items-center mb-2">
@@ -129,7 +210,6 @@
           </span>
         </div>
         <div class="d-flex gap-2">
-          <!-- Botón para agregar a lista temporal -->
           <button class="btn btn-sm btn-outline-info" (click)="agregarSeleccionadosAListaTemporal()"
             [disabled]="itemsSeleccionados.length === 0 || loading" title="Agregar seleccionados a la lista temporal">
             <i class="icon icon-plus me-1"></i>
@@ -152,12 +232,24 @@
         </div>
       </div>
 
-      <!-- Grilla Unificada -->
+      <!-- Grilla ITEMS con filtros en cabecera -->
       <div class="table-responsive">
         <p-table #dtPendientes [value]="itemsPendientes" [paginator]="true" [rows]="15"
           [rowsPerPageOptions]="[10,15,25,50]" [loading]="loading" [showCurrentPageReport]="true"
           currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ítems"
-          styleClass="p-datatable-sm p-datatable-striped">
+          styleClass="p-datatable-sm p-datatable-striped" [globalFilterFields]="['item','descripcion','familia','categoria']">
+          <ng-template pTemplate="caption">
+            <div class="d-flex gap-2 align-items-center mb-2">
+              <input type="text" pInputText [(ngModel)]="filtroItem" placeholder="Buscar por item, descripción, familia o categoría"
+                style="width: 300px;">
+              <p-select [(ngModel)]="filtroEmpresa" [options]="empresaOpciones" optionLabel="label" optionValue="value"
+                placeholder="Empresa" style="width: 150px;">
+              </p-select>
+              <p-select [(ngModel)]="filtroTipo" [options]="tipoOpciones" optionLabel="label" optionValue="value"
+                placeholder="Tipo" style="width: 120px;">
+              </p-select>
+            </div>
+          </ng-template>
           <ng-template pTemplate="header">
             <tr>
               <th style="width: 45px;">
@@ -170,12 +262,10 @@
               <th pSortableColumn="descripcion">Descripción <p-sortIcon field="descripcion"></p-sortIcon></th>
               <th pSortableColumn="familia">Familia <p-sortIcon field="familia"></p-sortIcon></th>
               <th pSortableColumn="categoria">Categoría <p-sortIcon field="categoria"></p-sortIcon></th>
-              <th pSortableColumn="cantidad" class="text-center">Cantidad <p-sortIcon field="cantidad"></p-sortIcon>
-              </th>
+              <th pSortableColumn="cantidad" class="text-center">Cantidad <p-sortIcon field="cantidad"></p-sortIcon></th>
               <th>Unidad</th>
               <th pSortableColumn="tipoRequerimiento">Tipo <p-sortIcon field="tipoRequerimiento"></p-sortIcon></th>
-              <th pSortableColumn="requerimientoOrigen">Req. Origen <p-sortIcon
-                  field="requerimientoOrigen"></p-sortIcon></th>
+              <th pSortableColumn="requerimientoOrigen">Req. Origen <p-sortIcon field="requerimientoOrigen"></p-sortIcon></th>
               <th>Estado</th>
               <th>Area</th>
               <th>Acciones</th>
@@ -219,7 +309,7 @@
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="11" class="text-center text-muted py-5">
+              <td colspan="14" class="text-center text-muted py-5">
                 <i class="icon icon-inbox" style="font-size: 2.5rem;"></i>
                 <p class="mt-2 mb-0">No hay ítems pendientes de consolidar</p>
               </td>
@@ -230,81 +320,52 @@
     </div>
 
     <!-- ================================================ -->
-    <!-- TAB 2: SERVICIOS PENDIENTES DE CONSOLIDAR        -->
+    <!-- SECCIÓN COMMODITY -->
     <!-- ================================================ -->
-    <div *ngIf="tabActiva === 1">
+    <div *ngIf="activeTab === 'COMMODITY'">
 
-      <!-- Panel de Filtros -->
-      <div class="filtros-panel mb-3">
-        <div class="row g-2 align-items-end">
-          <div class="col-md-2">
-            <label class="form-label form-label-sm">Empresa</label>
-            <p-select [(ngModel)]="filtroServicioEmpresa" [options]="empresaOpciones" optionLabel="label" optionValue="value"
-              placeholder="Todas las empresas" class="w-100 filtro-select">
-            </p-select>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label form-label-sm">Commodity</label>
-            <input type="text" class="form-control form-control-sm" [(ngModel)]="filtroServicioCommodity"
-              placeholder="Nombre del commodity" (keyup.enter)="aplicarFiltrosServicios()">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label form-label-sm">Usuario</label>
-            <p-multiSelect [(ngModel)]="filtroServicioUsuarios" [options]="usuarioOpciones" optionLabel="label"
-              optionValue="value" placeholder="Todas" [maxSelectedLabels]="1" selectedItemsLabel="{0} seleccionadas"
-              class="w-100 filtro-select">
-            </p-multiSelect>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label form-label-sm">Fecha desde</label>
-            <p-datePicker [(ngModel)]="filtroServicioFechaInicio" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Desde"
-              class="w-100 filtro-date">
-            </p-datePicker>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label form-label-sm">Fecha hasta</label>
-            <p-datePicker [(ngModel)]="filtroServicioFechaFin" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Hasta"
-              class="w-100 filtro-date">
-            </p-datePicker>
-          </div>
-        </div>
-        <div class="row mt-2">
-          <div class="col-md-12 text-end">
-            <button class="btn btn-sm btn-outline-secondary me-2" (click)="limpiarFiltrosServicios()">
-              <i class="icon icon-x me-1"></i> Limpiar
-            </button>
-            <button class="btn btn-sm btn-primary" (click)="aplicarFiltrosServicios()">
-              <i class="icon icon-search me-1"></i> Buscar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Botones de acción -->
-      <div class="d-flex justify-content-between align-items-center mb-3">
+      <!-- Barra de acciones -->
+      <div class="d-flex justify-content-between align-items-center mb-2">
         <div>
-          <button class="btn btn-success me-2" (click)="consolidarServiciosSeleccionados()"
-            [disabled]="!hayServiciosSeleccionados()">
-            <i class="icon icon-check me-1"></i> Consolidar ({{ contarServiciosSeleccionados() }})
-          </button>
-          <button class="btn btn-primary me-2" (click)="consolidarYCotizarServicios()"
-            [disabled]="!hayServiciosSeleccionados()">
-            <i class="icon icon-box me-1"></i> Consolidar y Cotizar ({{ contarServiciosSeleccionados() }})
-          </button>
+          <span class="text-muted" *ngIf="serviciosPendientes.length > 0">
+            {{ serviciosSeleccionados.length }} de {{ serviciosPendientes.length }} seleccionados
+          </span>
         </div>
-        <div>
-          <button class="btn btn-outline-primary btn-sm" (click)="cargarServiciosPendientes()">
-            <i class="icon icon-refresh-cw me-1"></i> Actualizar
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-info" (click)="agregarSeleccionadosAListaTemporal()"
+            [disabled]="serviciosSeleccionados.length === 0 || loading" title="Agregar seleccionados a la lista temporal">
+            <i class="icon icon-plus me-1"></i>
+            Agregar a Lista ({{ serviciosSeleccionados.length }})
+          </button>
+          <button class="btn btn-sm btn-success me-2" (click)="consolidarSeleccionados()"
+            [disabled]="serviciosSeleccionados.length === 0 || loading">
+            <i class="icon icon-check me-1"></i>
+            Consolidar ({{ serviciosSeleccionados.length }})
+          </button>
+          <button class="btn btn-sm btn-primary" (click)="consolidarYCotizar()"
+            [disabled]="serviciosSeleccionados.length === 0 || loading">
+            <i class="icon icon-box me-1"></i>
+            Consolidar y Cotizar ({{ serviciosSeleccionados.length }})
           </button>
         </div>
       </div>
 
-      <!-- Grilla de servicios pendientes -->
+      <!-- Grilla COMMODITY con filtros en cabecera -->
       <div class="table-responsive">
         <p-table #dtServiciosPendientes [value]="serviciosPendientesFiltrados" [paginator]="true" [rows]="10"
           [rowsPerPageOptions]="[10,20,50]" [showCurrentPageReport]="true"
           currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} servicios"
-          styleClass="p-datatable-sm p-datatable-striped" [loading]="loading">
+          styleClass="p-datatable-sm p-datatable-striped" [loading]="loading"
+          [globalFilterFields]="['servicio','descripcion','commodity']">
+          <ng-template pTemplate="caption">
+            <div class="d-flex gap-2 align-items-center mb-2">
+              <input type="text" pInputText [(ngModel)]="filtroServicioCommodity" placeholder="Buscar por commodity, descripción"
+                style="width: 300px;">
+              <p-select [(ngModel)]="filtroServicioEmpresa" [options]="empresaOpciones" optionLabel="label" optionValue="value"
+                placeholder="Empresa" style="width: 150px;">
+              </p-select>
+            </div>
+          </ng-template>
           <ng-template pTemplate="header">
             <tr>
               <th style="width: 3em">
@@ -318,6 +379,8 @@
               <th>Descripción</th>
               <th pSortableColumn="cantidad">Cantidad <p-sortIcon field="cantidad"></p-sortIcon></th>
               <th>Unidad</th>
+              <th>Tipo</th>
+              <th>Estado</th>
               <th pSortableColumn="usuarioSolicita">Usuario <p-sortIcon field="usuarioSolicita"></p-sortIcon></th>
               <th>Área</th>
               <th style="width: 120px;">Acciones</th>
@@ -335,6 +398,12 @@
               <td>{{ servicio.descripcion }}</td>
               <td class="text-end">{{ servicio.cantidad | number:'1.2-2' }}</td>
               <td>{{ servicio.unidadMedida || 'UND' }}</td>
+              <td>
+                <span class="badge bg-info">{{ servicio.tipo || 'COMMODITY' }}</span>
+              </td>
+              <td>
+                <span class="badge bg-warning text-dark">{{ servicio.estado || 'Pendiente' }}</span>
+              </td>
               <td>{{ servicio.usuarioSolicita }}</td>
               <td>{{ servicio.area }}</td>
               <td>
@@ -351,7 +420,338 @@
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="11" class="text-center text-muted py-5">
+              <td colspan="13" class="text-center text-muted py-5">
+                <i class="pi pi-briefcase" style="font-size: 2.5rem;"></i>
+                <p class="mt-2 mb-0">No hay commodity pendientes de consolidar</p>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+
+    <!-- ================================================ -->
+    <!-- SECCIÓN ACTIVO FIJO -->
+    <!-- ================================================ -->
+    <div *ngIf="activeTab === 'ACTIVOFIJO'">
+
+      <!-- Barra de acciones -->
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <span class="text-muted" *ngIf="activosFijosPendientes.length > 0">
+            {{ activosFijosSeleccionados.length }} de {{ activosFijosPendientes.length }} seleccionados
+          </span>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-info" (click)="agregarSeleccionadosAListaTemporal()"
+            [disabled]="activosFijosSeleccionados.length === 0 || loading" title="Agregar seleccionados a la lista temporal">
+            <i class="icon icon-plus me-1"></i>
+            Agregar a Lista ({{ activosFijosSeleccionados.length }})
+          </button>
+          <button class="btn btn-sm btn-success me-2" (click)="consolidarSeleccionados()"
+            [disabled]="activosFijosSeleccionados.length === 0 || loading">
+            <i class="icon icon-check me-1"></i>
+            Consolidar ({{ activosFijosSeleccionados.length }})
+          </button>
+          <button class="btn btn-sm btn-primary" (click)="consolidarYCotizar()"
+            [disabled]="activosFijosSeleccionados.length === 0 || loading">
+            <i class="icon icon-box me-1"></i>
+            Consolidar y Cotizar ({{ activosFijosSeleccionados.length }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Grilla ACTIVO FIJO con filtros en cabecera -->
+      <div class="table-responsive">
+        <p-table #dtActivosFijos [value]="activosFijosFiltrados" [paginator]="true" [rows]="10"
+          [rowsPerPageOptions]="[10,20,50]" [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} activos fijos"
+          styleClass="p-datatable-sm p-datatable-striped" [loading]="loading"
+          [globalFilterFields]="['activoFijo','descripcion']">
+          <ng-template pTemplate="caption">
+            <div class="d-flex gap-2 align-items-center mb-2">
+              <input type="text" pInputText [(ngModel)]="filtroActivoFijo" placeholder="Buscar por activo fijo, descripción"
+                style="width: 300px;">
+              <p-select [(ngModel)]="filtroEmpresa" [options]="empresaOpciones" optionLabel="label" optionValue="value"
+                placeholder="Empresa" style="width: 150px;">
+              </p-select>
+            </div>
+          </ng-template>
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 3em">
+                <p-checkbox [(ngModel)]="seleccionarTodosActivosFijos" [binary]="true"></p-checkbox>
+              </th>
+              <th pSortableColumn="Empresa">Empresa <p-sortIcon field="Empresa"></p-sortIcon></th>
+              <th pSortableColumn="requerimientoNumero">Requerimiento <p-sortIcon field="requerimientoNumero"></p-sortIcon></th>
+              <th pSortableColumn="fechaRequerimiento">Fecha <p-sortIcon field="fechaRequerimiento"></p-sortIcon></th>
+              <th pSortableColumn="activoFijo">Activo Fijo <p-sortIcon field="activoFijo"></p-sortIcon></th>
+              <th>Descripción</th>
+              <th pSortableColumn="cantidad">Cantidad <p-sortIcon field="cantidad"></p-sortIcon></th>
+              <th>Unidad</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th pSortableColumn="usuarioSolicita">Usuario <p-sortIcon field="usuarioSolicita"></p-sortIcon></th>
+              <th>Área</th>
+              <th style="width: 120px;">Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-activoFijo>
+            <tr>
+              <td>
+                <p-checkbox [(ngModel)]="activoFijo.seleccionado" [binary]="true"></p-checkbox>
+              </td>
+              <td>{{ activoFijo.empresa }}</td>
+              <td><strong>{{ activoFijo.requerimientoOrigen }}</strong></td>
+              <td>{{ activoFijo.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+              <td><strong>{{ activoFijo.activoFijo }}</strong></td>
+              <td>{{ activoFijo.descripcion }}</td>
+              <td class="text-end">{{ activoFijo.cantidad | number:'1.2-2' }}</td>
+              <td>{{ activoFijo.unidadMedida || 'UND' }}</td>
+              <td>
+                <span class="badge bg-primary">{{ activoFijo.tipo || 'ACTIVO FIJO' }}</span>
+              </td>
+              <td>
+                <span class="badge bg-warning text-dark">{{ activoFijo.estado || 'Pendiente' }}</span>
+              </td>
+              <td>{{ activoFijo.usuarioSolicita }}</td>
+              <td>{{ activoFijo.area }}</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-info" (click)="verDetallePendiente(activoFijo)" title="Ver Requerimiento">
+                    <i class="icon icon-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="anularItemPendiente(activoFijo)" title="Anular activo fijo">
+                    <i class="icon icon-x"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="13" class="text-center text-muted py-5">
+                <i class="icon icon-cpu" style="font-size: 2.5rem;"></i>
+                <p class="mt-2 mb-0">No hay activos fijos pendientes de consolidar</p>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+
+    <!-- ================================================ -->
+    <!-- SECCIÓN ACTIVO MENOR -->
+    <!-- ================================================ -->
+    <div *ngIf="activeTab === 'ACTIVOMENOR'">
+
+      <!-- Barra de acciones -->
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <span class="text-muted" *ngIf="activosMenoresPendientes.length > 0">
+            {{ activosMenoresSeleccionados.length }} de {{ activosMenoresPendientes.length }} seleccionados
+          </span>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-info" (click)="agregarSeleccionadosAListaTemporal()"
+            [disabled]="activosMenoresSeleccionados.length === 0 || loading" title="Agregar seleccionados a la lista temporal">
+            <i class="icon icon-plus me-1"></i>
+            Agregar a Lista ({{ activosMenoresSeleccionados.length }})
+          </button>
+          <button class="btn btn-sm btn-success me-2" (click)="consolidarSeleccionados()"
+            [disabled]="activosMenoresSeleccionados.length === 0 || loading">
+            <i class="icon icon-check me-1"></i>
+            Consolidar ({{ activosMenoresSeleccionados.length }})
+          </button>
+          <button class="btn btn-sm btn-primary" (click)="consolidarYCotizar()"
+            [disabled]="activosMenoresSeleccionados.length === 0 || loading">
+            <i class="icon icon-box me-1"></i>
+            Consolidar y Cotizar ({{ activosMenoresSeleccionados.length }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Grilla ACTIVO MENOR con filtros en cabecera -->
+      <div class="table-responsive">
+        <p-table #dtActivosMenores [value]="activosMenoresFiltrados" [paginator]="true" [rows]="10"
+          [rowsPerPageOptions]="[10,20,50]" [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} activos menores"
+          styleClass="p-datatable-sm p-datatable-striped" [loading]="loading"
+          [globalFilterFields]="['activoMenor','descripcion']">
+          <ng-template pTemplate="caption">
+            <div class="d-flex gap-2 align-items-center mb-2">
+              <input type="text" pInputText [(ngModel)]="filtroActivoMenor" placeholder="Buscar por activo menor, descripción"
+                style="width: 300px;">
+              <p-select [(ngModel)]="filtroEmpresa" [options]="empresaOpciones" optionLabel="label" optionValue="value"
+                placeholder="Empresa" style="width: 150px;">
+              </p-select>
+            </div>
+          </ng-template>
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 3em">
+                <p-checkbox [(ngModel)]="seleccionarTodosActivosMenores" [binary]="true"></p-checkbox>
+              </th>
+              <th pSortableColumn="Empresa">Empresa <p-sortIcon field="Empresa"></p-sortIcon></th>
+              <th pSortableColumn="requerimientoNumero">Requerimiento <p-sortIcon field="requerimientoNumero"></p-sortIcon></th>
+              <th pSortableColumn="fechaRequerimiento">Fecha <p-sortIcon field="fechaRequerimiento"></p-sortIcon></th>
+              <th pSortableColumn="activoMenor">Activo Menor <p-sortIcon field="activoMenor"></p-sortIcon></th>
+              <th>Descripción</th>
+              <th pSortableColumn="cantidad">Cantidad <p-sortIcon field="cantidad"></p-sortIcon></th>
+              <th>Unidad</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th pSortableColumn="usuarioSolicita">Usuario <p-sortIcon field="usuarioSolicita"></p-sortIcon></th>
+              <th>Área</th>
+              <th style="width: 120px;">Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-activoMenor>
+            <tr>
+              <td>
+                <p-checkbox [(ngModel)]="activoMenor.seleccionado" [binary]="true"></p-checkbox>
+              </td>
+              <td>{{ activoMenor.empresa }}</td>
+              <td><strong>{{ activoMenor.requerimientoOrigen }}</strong></td>
+              <td>{{ activoMenor.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+              <td><strong>{{ activoMenor.activoMenor }}</strong></td>
+              <td>{{ activoMenor.descripcion }}</td>
+              <td class="text-end">{{ activoMenor.cantidad | number:'1.2-2' }}</td>
+              <td>{{ activoMenor.unidadMedida || 'UND' }}</td>
+              <td>
+                <span class="badge bg-secondary">{{ activoMenor.tipo || 'ACTIVO MENOR' }}</span>
+              </td>
+              <td>
+                <span class="badge bg-warning text-dark">{{ activoMenor.estado || 'Pendiente' }}</span>
+              </td>
+              <td>{{ activoMenor.usuarioSolicita }}</td>
+              <td>{{ activoMenor.area }}</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-info" (click)="verDetallePendiente(activoMenor)" title="Ver Requerimiento">
+                    <i class="icon icon-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="anularItemPendiente(activoMenor)" title="Anular activo menor">
+                    <i class="icon icon-x"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="13" class="text-center text-muted py-5">
+                <i class="icon icon-tool" style="font-size: 2.5rem;"></i>
+                <p class="mt-2 mb-0">No hay activos menores pendientes de consolidar</p>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+
+    <!-- ================================================ -->
+    <!-- SECCIÓN SERVICIO -->
+    <!-- ================================================ -->
+    <div *ngIf="activeTab === 'SERVICIO'">
+
+      <!-- Barra de acciones -->
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <span class="text-muted" *ngIf="serviciosPendientes.length > 0">
+            {{ serviciosSeleccionados.length }} de {{ serviciosPendientes.length }} seleccionados
+          </span>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-info" (click)="agregarSeleccionadosAListaTemporal()"
+            [disabled]="serviciosSeleccionados.length === 0 || loading" title="Agregar seleccionados a la lista temporal">
+            <i class="icon icon-plus me-1"></i>
+            Agregar a Lista ({{ serviciosSeleccionados.length }})
+          </button>
+          <button class="btn btn-sm btn-success me-2" (click)="consolidarSeleccionados()"
+            [disabled]="serviciosSeleccionados.length === 0 || loading">
+            <i class="icon icon-check me-1"></i>
+            Consolidar ({{ serviciosSeleccionados.length }})
+          </button>
+          <button class="btn btn-sm btn-primary" (click)="consolidarYCotizar()"
+            [disabled]="serviciosSeleccionados.length === 0 || loading">
+            <i class="icon icon-box me-1"></i>
+            Consolidar y Cotizar ({{ serviciosSeleccionados.length }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Grilla SERVICIO con filtros en cabecera -->
+      <div class="table-responsive">
+        <p-table #dtServiciosPendientes [value]="serviciosPendientesFiltrados" [paginator]="true" [rows]="10"
+          [rowsPerPageOptions]="[10,20,50]" [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} servicios"
+          styleClass="p-datatable-sm p-datatable-striped" [loading]="loading"
+          [globalFilterFields]="['servicio','descripcion']">
+          <ng-template pTemplate="caption">
+            <div class="d-flex gap-2 align-items-center mb-2">
+              <input type="text" pInputText [(ngModel)]="filtroServicioCommodity" placeholder="Buscar por servicio, descripción"
+                style="width: 300px;">
+              <p-select [(ngModel)]="filtroServicioEmpresa" [options]="empresaOpciones" optionLabel="label" optionValue="value"
+                placeholder="Empresa" style="width: 150px;">
+              </p-select>
+            </div>
+          </ng-template>
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 3em">
+                <p-checkbox [(ngModel)]="seleccionarTodosServicios" [binary]="true"
+                  (onChange)="toggleSeleccionTodosServicios()"></p-checkbox>
+              </th>
+              <th pSortableColumn="Empresa">Empresa <p-sortIcon field="Empresa"></p-sortIcon></th>
+              <th pSortableColumn="requerimientoNumero">Requerimiento <p-sortIcon field="requerimientoNumero"></p-sortIcon></th>
+              <th pSortableColumn="fechaRequerimiento">Fecha <p-sortIcon field="fechaRequerimiento"></p-sortIcon></th>
+              <th pSortableColumn="commodity">Servicio <p-sortIcon field="commodity"></p-sortIcon></th>
+              <th>Descripción</th>
+              <th pSortableColumn="cantidad">Cantidad <p-sortIcon field="cantidad"></p-sortIcon></th>
+              <th>Unidad</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th pSortableColumn="usuarioSolicita">Usuario <p-sortIcon field="usuarioSolicita"></p-sortIcon></th>
+              <th>Área</th>
+              <th style="width: 120px;">Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-servicio>
+            <tr>
+              <td>
+                <p-checkbox [(ngModel)]="servicio.seleccionado" [binary]="true"></p-checkbox>
+              </td>
+              <td>{{ servicio.empresa }}</td>
+              <td><strong>{{ servicio.requerimientoOrigen }}</strong></td>
+              <td>{{ servicio.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+              <td><strong>{{ servicio.servicio }}</strong></td>
+              <td>{{ servicio.descripcion }}</td>
+              <td class="text-end">{{ servicio.cantidad | number:'1.2-2' }}</td>
+              <td>{{ servicio.unidadMedida || 'UND' }}</td>
+              <td>
+                <span class="badge bg-info">{{ servicio.tipo || 'SERVICIO' }}</span>
+              </td>
+              <td>
+                <span class="badge bg-warning text-dark">{{ servicio.estado || 'Pendiente' }}</span>
+              </td>
+              <td>{{ servicio.usuarioSolicita }}</td>
+              <td>{{ servicio.area }}</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-info" (click)="verDetalleServicioPendiente(servicio)" title="Ver Requerimiento">
+                    <i class="icon icon-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="anularServicioPendiente(servicio)" title="Anular servicio">
+                    <i class="icon icon-x"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="13" class="text-center text-muted py-5">
                 <i class="pi pi-briefcase" style="font-size: 2.5rem;"></i>
                 <p class="mt-2 mb-0">No hay servicios pendientes de consolidar</p>
               </td>
@@ -362,45 +762,25 @@
     </div>
 
     <!-- ================================================ -->
-    <!-- TAB 3: HISTORIAL DE CONSOLIDACIONES              -->
+    <!-- SECCIÓN HISTORIAL -->
     <!-- ================================================ -->
-    <div *ngIf="tabActiva === 2">
+    <div *ngIf="activeTab === 'HISTORIAL'">
 
-      <!-- Filtros historial -->
-      <div class="filtros-panel mb-3">
-        <div class="row g-2 align-items-end">
-          <div class="col-md-3">
-            <label class="form-label form-label-sm">Estado</label>
-            <p-select [(ngModel)]="filtroHistEstado" [options]="estadoOpciones" optionLabel="label" optionValue="value"
-              placeholder="Todos" class="w-100 filtro-select">
-            </p-select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label form-label-sm">Fecha desde</label>
-            <p-datePicker [(ngModel)]="filtroHistFechaInicio" dateFormat="dd/mm/yy" [showIcon]="true"
-              placeholder="Desde" class="w-100 filtro-date">
-            </p-datePicker>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label form-label-sm">Fecha hasta</label>
-            <p-datePicker [(ngModel)]="filtroHistFechaFin" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Hasta"
-              class="w-100 filtro-date">
-            </p-datePicker>
-          </div>
-          <div class="col-md-2 text-end" style="padding-top: 24px;">
-            <button class="btn btn-sm btn-primary" (click)="aplicarFiltrosHistorial()">
-              <i class="icon icon-search me-1"></i> Buscar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Grilla historial -->
+      <!-- Grilla HISTORIAL con filtros en cabecera -->
       <div class="table-responsive">
         <p-table #dtHistorial [value]="historialConsolidaciones" [paginator]="true" [rows]="10"
           [rowsPerPageOptions]="[10,20,50]" [showCurrentPageReport]="true"
           currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
-          styleClass="p-datatable-sm p-datatable-striped">
+          styleClass="p-datatable-sm p-datatable-striped" [globalFilterFields]="['codigo','usuarioCreador','observaciones']">
+          <ng-template pTemplate="caption">
+            <div class="d-flex gap-2 align-items-center mb-2">
+              <input type="text" pInputText [(ngModel)]="filtroHistCodigo" placeholder="Buscar por código, usuario u observaciones"
+                style="width: 300px;">
+              <p-select [(ngModel)]="filtroHistEstado" [options]="estadoOpciones" optionLabel="label" optionValue="value"
+                placeholder="Estado" style="width: 150px;">
+              </p-select>
+            </div>
+          </ng-template>
           <ng-template pTemplate="header">
             <tr>
               <th pSortableColumn="codigo">Código <p-sortIcon field="codigo"></p-sortIcon></th>
@@ -456,71 +836,10 @@
     </div>
 
     <!-- ================================================ -->
-    <!-- COMENTADO: TAB 3: SALDOS PENDIENTES DE APROBACIÓN
+    <!-- SECCIÓN HISTORIAL -->
     <!-- ================================================
-    <div *ngIf="tabActiva === 2">
-
-      <div class="alert alert-warning mb-3">
-        <i class="icon icon-alert-circle me-2"></i>
-        <strong>Saldos pendientes de aprobación por jefatura.</strong>
-        Estos son ítems con saldo de atención pendiente del despacho que requieren aprobación para pasar a compra (consolidación).
-        Si se rechaza, el saldo se anula y el flujo termina.
-      </div>
-
-      <div class="table-responsive">
-        <p-table [value]="saldosPendientes" [paginator]="true" [rows]="10"
-          [showCurrentPageReport]="true"
-          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} solicitudes"
-          styleClass="p-datatable-sm p-datatable-striped">
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Requerimiento</th>
-              <th>Usuario Solicita</th>
-              <th>CECO</th>
-              <th class="text-center">Total Ítems</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-saldo>
-            <tr>
-              <td><strong>{{ saldo.requerimientoNumero }}</strong></td>
-              <td>{{ saldo.usuarioSolicita }}</td>
-              <td>{{ saldo.ceco }}</td>
-              <td class="text-center">{{ saldo.totalItems }}</td>
-              <td>
-                <span class="badge" [ngClass]="{
-                  'bg-warning text-dark': saldo.estado === 'PENDIENTE',
-                  'bg-success': saldo.estado === 'APROBADO',
-                  'bg-danger': saldo.estado === 'RECHAZADO'
-                }">{{ saldo.estado }}</span>
-              </td>
-              <td>
-                <div class="d-flex gap-1" *ngIf="saldo.estado === 'PENDIENTE'">
-                  <button class="btn btn-sm btn-success" (click)="aprobarSaldoPendiente(saldo)"
-                    title="Aprobar - pasa a consolidación de compra">
-                    <i class="icon icon-check me-1"></i> Aprobar
-                  </button>
-                  <button class="btn btn-sm btn-danger" (click)="rechazarSaldoPendiente(saldo)"
-                    title="Rechazar - anula el saldo y cierra flujo">
-                    <i class="icon icon-x me-1"></i> Rechazar
-                  </button>
-                </div>
-                <span *ngIf="saldo.estado !== 'PENDIENTE'" class="text-muted">-</span>
-              </td>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="emptymessage">
-            <tr>
-              <td colspan="7" class="text-center text-muted py-5">
-                <i class="icon icon-inbox" style="font-size: 2.5rem;"></i>
-                <p class="mt-2 mb-0">No hay saldos pendientes de aprobación</p>
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
-    </div>
+    NOTA: Bloque de SALDOS PENDIENTES DE APROBACIÓN eliminado porque causaba error de parsing de Angular
+    al intentar parsear directivas *ngIf dentro de comentarios HTML.
     -->
   </div>
 </div>
@@ -810,7 +1129,7 @@
           <b>Glosa:</b> {{ detallePendienteSeleccionado.glosa }}
         </div>
         <div class="col-md-4">
-          <b>Tipo:</b> {{ detallePendienteSeleccionado.itemtipo }}
+          <b>Tipo:</b> {{ detallePendienteSeleccionado.tipo || detallePendienteSeleccionado.itemtipo }}
         </div>
         <div class="col-md-4">
           <b>Estado:</b> {{ detallePendienteSeleccionado.estados }}
@@ -858,9 +1177,12 @@
           <thead class="table-light">
             <tr>
               <th>Servicio/Commodity</th>
-              <th>Descripción</th>
+              <!-- <th>Descripción</th> -->
+              <th>Commodity</th>
+              <th>Subcommodity</th>
               <th>Cantidad</th>
               <th>Unidad</th>
+              <th>Tipo</th>
               <th>Centro Costo</th>
               <th>Proyecto</th>
               <th>Observaciones</th>
@@ -870,9 +1192,14 @@
           <tbody>
             <tr *ngFor="let d of detallePendienteSeleccionado.detalle">
               <td>{{ d.codigo }}</td>
-              <td>{{ d.iddescripcion }}</td>
+              <!-- <td>{{ d.descripcion }}</td> -->
+              <td>{{ d.commodity }}</td>
+              <td>{{ d.subcommodity }}</td>
               <td class="text-end">{{ d.cantidad | number:'1.2-2' }}</td>
               <td>{{ d.unidadMedida || 'UND' }}</td>
+              <td>
+                <span class="badge bg-info">{{ d.tipo || 'COMMODITY' }}</span>
+              </td>
               <td>{{ d.idcentrocosto }}</td>
               <td>{{ d.idproyecto }}</td>
               <td>{{ d.observaciones || '-' }}</td>

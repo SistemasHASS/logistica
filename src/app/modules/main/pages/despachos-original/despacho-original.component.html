@@ -1,0 +1,253 @@
+<div class="container-fluid despachos-container">
+
+  <h4 class="mb-2 titulo-pagina">LISTA DE REQUERIMIENTOS APROBADOS</h4>
+  
+  <!-- SECCIÓN DE NOTIFICACIONES -->
+  <div class="row mb-3" *ngIf="usuario && usuario.idrol && usuario.idrol.includes('ALLOGIST')">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer;" (click)="mostrarNotificaciones = !mostrarNotificaciones">
+          <div class="d-flex align-items-center">
+            <i class='bx bx-bell me-2'></i>
+            <h6 class="mb-0">Notificaciones de Almacén</h6>
+            @if (notificacionesNoLeidas > 0) {
+              <span class="badge bg-danger ms-2">{{ notificacionesNoLeidas }}</span>
+            }
+          </div>
+          <i [class]="mostrarNotificaciones ? 'bx bx-chevron-up' : 'bx bx-chevron-down'"></i>
+        </div>
+        @if (mostrarNotificaciones) {
+          <div class="card-body p-0">
+            @if (notificaciones.length === 0) {
+              <div class="text-center py-3 text-muted">
+                <i class='bx bx-bell-off' style="font-size: 2rem;"></i>
+                <p class="mb-0 mt-2">No tienes notificaciones</p>
+              </div>
+            } @else {
+              <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                @for (notificacion of notificaciones; track notificacion.id_notificacion) {
+                  <div class="list-group-item list-group-item-action" 
+                       [class]="!notificacion.leida ? 'bg-light' : ''"
+                       (click)="marcarNotificacionComoLeida(notificacion)">
+                    <div class="d-flex w-100 justify-content-between">
+                      <div class="d-flex align-items-start">
+                        <i [class]="getTipoNotificacionIcon(notificacion.tipo_notificacion)" class="me-2 mt-1"></i>
+                        <div class="flex-grow-1">
+                          <p class="mb-1">{{ notificacion.mensaje }}</p>
+                          <small class="text-muted">
+                            <i class='bx bx-time'></i>
+                            {{ notificacion.fecha_creacion | date:'dd/MM/yyyy HH:mm' }}
+                          </small>
+                        </div>
+                      </div>
+                      @if (!notificacion.leida) {
+                        <span class="badge bg-primary rounded-pill">Nueva</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+  
+  <!-- FILTRO - Responsive (apilados en móvil) -->
+  <div class="filtros-mobile">
+    <div class="filtro-item">
+      <input type="text" class="form-control form-control-sm" placeholder="Buscar..." [(ngModel)]="filtro" (input)="buscar()">
+    </div>
+    <div class="filtro-item">
+      <p-datepicker name="fechaInicio" [(ngModel)]="fechaInicio" dateFormat="dd/mm/yy" placeholder="Desde"
+        [showIcon]="true" [showClear]="true" (onSelect)="buscar()" (onClear)="limpiarFecha()" styleClass="w-100">
+      </p-datepicker>
+    </div>
+    <div class="filtro-item">
+      <p-datepicker name="fechaFin" [(ngModel)]="fechaFin" dateFormat="dd/mm/yy" placeholder="Hasta" [showIcon]="true"
+        [showClear]="true" (onSelect)="buscar()" (onClear)="limpiarFecha()" styleClass="w-100">
+      </p-datepicker>
+    </div>
+    <div class="filtro-total">
+      <span class="fw-semibold">Total: {{ totalRegistros }}</span>
+    </div>
+  </div>
+
+  <!-- ========== VISTA DESKTOP - TABLA ========== -->
+  <div class="desktop-only">
+    <p-table #dt [value]="requerimientosAprobados" [paginator]="true" [rows]="20"
+      [totalRecords]="requerimientosAprobados.length" [loading]="loading" responsiveLayout="scroll" [pageLinks]="5"
+      [showCurrentPageReport]="true" currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+      styleClass="p-datatable-sm p-datatable-striped">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width:50px"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+          <th style="width:50px">#</th>
+          <th style="min-width:30px">Acciones</th>
+          <th style="min-width:100px" pSortableColumn="fechaAprobacion">Fecha Aprobación</th>
+          <!-- <th style="min-width:100px">Código</th> -->
+          <th style="min-width:100px">RequisicionNumero</th>
+          <th style="min-width:100px">Requerimiento</th>
+          <th style="min-width:80px">Tipo</th>
+          <th style="min-width:120px">Proyecto</th>
+          <th style="min-width:100px">Estado</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-c let-i="rowIndex">
+        <tr>
+          <td><p-tableCheckbox [value]="c"></p-tableCheckbox></td>
+          <td>{{ i + 1 }}</td>
+          <td>
+            <button class="btn btn-primary btn-sm" (click)="verDetalle(c)">Atender</button>
+            <button class="btn btn-success btn-sm ms-2"
+              *ngIf="c.estado === 'ATENCION_PARCIAL' || c.estado === 'ATENCION_COMPLETA'" 
+              (click)="abrirDespachoFinal(c)">Despachar</button>
+          </td>
+          <!-- <td>{{ c.fechaAprobacion | date: 'dd/MM/yyyy HH:mm:ss' }}</td> -->
+          <td>{{ c.fechaAprobacion | date: 'dd/MM/yyyy' }}</td>
+          <!-- <td>{{ c.idrequerimiento }}</td> -->
+          <td>{{ c.RequisicionNumero }}</td>
+          <td>{{ c.glosa }}</td>
+          <td><span class="badge bg-info">{{ c.tipo }}</span></td>
+          <td>
+            <div *ngFor="let proyecto of obtenerProyectosUnicos(c.detalle)">{{ proyecto }}</div>
+          </td>
+          <td><span class="badge bg-success">{{ c.estados }}</span></td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="10" class="text-center">No hay registros</td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- ========== VISTA MÓVIL - CARDS ========== -->
+  <div class="mobile-only">
+    <div class="container-card">
+      <!-- Header con título y stats -->
+      <div class="container-header">
+        <span class="container-title">Requerimientos Aprobados</span>
+        <div class="container-stats">
+          <span>Total: <span class="badge bg-primary">{{ totalRegistros }}</span></span>
+        </div>
+      </div>
+      
+      <!-- Cards con scroll interno -->
+      <div class="cards-scroll">
+        <div class="mobile-card" *ngFor="let c of requerimientosAprobados; let i = index">
+          <div class="card-row">
+            <input type="checkbox" class="card-checkbox" [(ngModel)]="c.checked">
+            <div class="card-content">
+              <div class="card-header-row">
+                <span class="badge bg-success">{{ c.estados }}</span>
+                <span class="card-usuario">Usuario: {{ c.nrodocumento || 'N/A' }}</span>
+              </div>
+              <div class="card-field">
+                <strong>#Requerimiento:</strong> {{ c.idrequerimiento }}
+              </div>
+              <div class="card-field">
+                <strong>Fecha:</strong> {{ c.fechaAprobacion | date: 'dd/MM/yyyy' }} - 
+                <strong>Almacén:</strong> {{ c.idalmacen || 'N/A' }}
+              </div>
+              <div class="card-field">
+                <strong>Glosa:</strong> {{ c.glosa }} - {{ c.tipo }}
+              </div>
+              <div class="card-actions">
+                <button class="btn btn-primary btn-sm" (click)="verDetalle(c)">Atender</button>
+                <button class="btn btn-success btn-sm ms-2"
+                  *ngIf="c.estado === 'ATENCION_PARCIAL' || c.estado === 'ATENCION_COMPLETA'" 
+                  (click)="abrirDespachoFinal(c)">Despachar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!requerimientosAprobados.length" class="text-center text-muted py-4">
+          No hay registros
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== MODAL DETALLE ATENCIÓN =================== -->
+<div class="modal-backdrop-custom" *ngIf="modalAtencionVisible">
+  <div class="modal-content-custom">
+    <div class="modal-header">
+      <h5 class="modal-title">Detalle de Atención: <span class="badge bg-primary ms-2">
+          {{ selected?.idrequerimiento }}
+        </span></h5>
+      <button type="button" class="btn-close" (click)="cerrarModalAtencion()"></button>
+    </div>
+
+    <div class="modal-body">
+      <p-table #dt [value]="detalle" [paginator]="true" [rows]="20" [totalRecords]="detalle.length"
+        [loading]="loading" responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+        currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+        styleClass="p-datatable-sm p-datatable-striped">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width:50px">#</th>
+            <th style="min-width:80px">Código</th>
+            <th style="min-width:150px">{{ selected?.tipo === 'ITEM' ? 'Producto' : 'Descripción' }}</th>
+            <th style="min-width:80px">Solicitado</th>
+            <th style="min-width:80px">Atendido</th>
+            <th style="min-width:80px">Pendiente</th>
+            <th style="min-width:80px">Stock</th>
+            <th style="min-width:100px">Atender</th>
+            <th style="min-width:80px">Compra</th>
+            <th style="min-width:100px">Estado</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-c let-i="rowIndex">
+          <tr>
+            <td>{{ i + 1 }}</td>
+            <td>{{ c.codigo }}</td>
+            <td *ngIf="selected?.tipo === 'ITEM'">{{ getDescripcionProducto(c.codigo) }}</td>
+            <td *ngIf="selected?.tipo !== 'ITEM'">{{ getDescripcionSubCommodity(c.codigo) }}</td>
+            <td>{{ c.cantidad }}</td>
+            <td>{{ c.atendida || 0 }}</td>
+            <td>{{ c.cantidad - (c.atendida || 0) }}</td>
+            <td>{{ c.stock || 0 }}</td>
+            <td>
+              <input type="number" class="form-control form-control-sm text-center" 
+                [(ngModel)]="c.atender" 
+                [max]="c.stock" 
+                [min]="0" 
+                style="width: 80px;" />
+            </td>
+            <td>{{ c.compra || 0 }}</td>
+            <td>
+              <span class="badge" [ngClass]="{
+                'bg-success': c.estadoAtencion === 'CON STOCK',
+                'bg-warning text-dark': c.estadoAtencion === 'PARCIAL',
+                'bg-danger': c.estadoAtencion === 'SIN STOCK'
+              }">
+                {{ c.estadoAtencion || 'N/A' }}
+              </span>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="10" class="text-center">No hay registros</td>
+          </tr>
+        </ng-template>
+
+      </p-table>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrarModalAtencion()">Cerrar</button>
+      <button class="btn btn-primary" (click)="registrarAtencion()">
+        Registrar Atención
+      </button>
+    </div>
+  </div>
+</div>

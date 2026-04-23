@@ -1,0 +1,122 @@
+<div class="modal-backdrop" *ngIf="visible">
+  <div class="modal-content modal-detalle-mejorado">
+    <div class="modal-header">
+      <h5 class="modal-title">
+        <i class="bx" [class.bx-edit]="modoEdicion" [class.bx-plus-circle]="!modoEdicion"></i>
+        {{ modoEdicion ? 'Editar Detalle de Activo Menor' : 'Agregar Detalle de Activo Menor' }}
+      </h5>
+      <button type="button" class="btn-close" (click)="cerrar()"></button>
+    </div>
+
+    <div class="modal-body">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h6 class="mb-0"><i class="bx bx-edit me-2"></i>Formulario de Línea</h6>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <!-- Clasificación / Subservicio AFM -->
+            <div class="col-12">
+              <label class="form-label">Clasificación Servicio <span class="text-danger">*</span></label>
+              <app-dropdown
+                [data]="subservicioFiltradosAFMenor"
+                optionLabel="descripcionLocal"
+                valueField="commodity"
+                [(ngModel)]="lineaTempActivoFijoMenor.subservicio"
+                [required]="true"
+                textShow2="una clasificación"
+              ></app-dropdown>
+            </div>
+
+            <!-- Cantidad -->
+            <div class="col-6">
+              <label class="form-label">Cantidad <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" [(ngModel)]="lineaTempActivoFijoMenor.cantidad" min="1" />
+            </div>
+
+            <!-- Turno -->
+            <div class="col-6">
+              <label class="form-label">Turno <span class="text-danger">*</span></label>
+              <app-dropdown
+                [data]="turnos"
+                optionLabel="nombreTurno"
+                valueField="nombreTurno"
+                [(ngModel)]="modalTurnoValue"
+                (ngModelChange)="onTurnoChange()"
+                [editable]="modalTurnoEditable"
+                [required]="true"
+                [disabled]="modalTurnoDisabled"
+              ></app-dropdown>
+            </div>
+
+            <!-- CECO -->
+            <div class="col-6">
+              <label class="form-label">CECO <span class="text-danger">*</span></label>
+              <app-dropdown
+                [data]="modalCecoData"
+                optionLabel="localname"
+                valueField="localname"
+                [(ngModel)]="modalCecoValue"
+                (ngModelChange)="onCecoChange()"
+                [editable]="modalCecoEditable"
+                [required]="true"
+                [disabled]="modalCecoDisabled"
+              ></app-dropdown>
+            </div>
+
+            <!-- Proyecto -->
+            <div class="col-6">
+              <label class="form-label">Proyecto <span class="text-danger">*</span></label>
+              <app-dropdown
+                [data]="modalProyectoData"
+                optionLabel="proyectoio"
+                valueField="proyectoio"
+                [(ngModel)]="modalProyectoValue"
+                [editable]="modalProyectoEditable"
+                [required]="true"
+                [disabled]="modalProyectoDisabled"
+              ></app-dropdown>
+            </div>
+
+            <!-- Labor -->
+            <div class="col-6">
+              <label class="form-label">Labor <span class="text-danger">*</span></label>
+              <app-dropdown
+                [data]="modalLaborData"
+                optionLabel="labor"
+                valueField="labor"
+                [(ngModel)]="modalLaborValue"
+                (ngModelChange)="onLaborChange()"
+                [editable]="modalLaborEditable"
+                [required]="true"
+                [disabled]="modalLaborDisabled"
+              ></app-dropdown>
+            </div>
+
+            <!-- Activo Fijo -->
+            <div class="col-6">
+              <label class="form-label">Activo Fijo</label>
+              <app-dropdown
+                [data]="activosFijosServicioFiltrados"
+                optionLabel="activo_descripcion"
+                valueField="activo"
+                [(ngModel)]="lineaTempActivoFijoMenor.activoFijo"
+                [editable]="true"
+                [required]="false"
+              ></app-dropdown>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-success" (click)="guardar()">
+        <i class="bx bx-check me-2"></i>{{ modoEdicion ? 'Actualizar' : 'Registrar' }}
+      </button>
+      <button class="btn btn-secondary" (click)="cerrar()">
+        <i class="bx bx-x me-2"></i>Cancelar
+      </button>
+    </div>
+  </div>
+</div>

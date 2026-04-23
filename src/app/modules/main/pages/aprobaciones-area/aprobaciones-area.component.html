@@ -4,7 +4,7 @@
     <div class="col-md-3">
       <p-card>
         <div class="text-center">
-          <i class="pi pi-clock text-warning" style="font-size: 2rem;"></i>
+          <i class="bx bx-clock text-warning" style="font-size: 2rem;"></i>
           <h3 class="mt-2">{{ getIndicador('pendientes') }}</h3>
           <p class="text-muted">Pendientes</p>
         </div>
@@ -13,7 +13,7 @@
     <div class="col-md-3">
       <p-card>
         <div class="text-center">
-          <i class="pi pi-check-circle text-success" style="font-size: 2rem;"></i>
+          <i class="bx bx-check-circle text-success" style="font-size: 2rem;"></i>
           <h3 class="mt-2">{{ getIndicador('aprobados_hoy') }}</h3>
           <p class="text-muted">Aprobados Hoy</p>
         </div>
@@ -22,7 +22,7 @@
     <div class="col-md-3">
       <p-card>
         <div class="text-center">
-          <i class="pi pi-times-circle text-danger" style="font-size: 2rem;"></i>
+          <i class="bx bx-x-circle text-danger" style="font-size: 2rem;"></i>
           <h3 class="mt-2">{{ getIndicador('rechazados_hoy') }}</h3>
           <p class="text-muted">Rechazados Hoy</p>
         </div>
@@ -31,7 +31,7 @@
     <div class="col-md-3">
       <p-card>
         <div class="text-center">
-          <i class="pi pi-stopwatch text-info" style="font-size: 2rem;"></i>
+          <i class="bx bx-stopwatch text-info" style="font-size: 2rem;"></i>
           <h3 class="mt-2">{{ getIndicador('tiempo_promedio') }} min</h3>
           <p class="text-muted">Tiempo Promedio</p>
         </div>
@@ -103,16 +103,21 @@
                 </td>
                 <!-- <td>-</td> -->
                 <td>
-                  <button pButton type="button" icon="pi pi-eye" 
+                  <button pButton type="button" icon="bx bx-eye" 
+                          class="p-button-sm p-button-info me-2"
+                          (click)="verDetallePendientes(req)"
+                          label="Ver">
+                  </button>
+                  <!-- <button pButton type="button" icon="bx bx-eye" 
                           class="p-button-sm p-button-info me-2"
                           (click)="verDetalle(req)"
                           label="Ver Detalle">
-                  </button>
-                  <button pButton type="button" icon="pi pi-check" 
+                  </button> -->
+                  <!-- <button pButton type="button" icon="bx bx-check" 
                           class="p-button-sm p-button-success"
                           (click)="abrirModalAprobacion(req)"
                           label="Revisar">
-                  </button>
+                  </button> -->
                 </td>
               </tr>
             </ng-template>
@@ -330,5 +335,144 @@
   <ng-template pTemplate="footer">
     <button pButton type="button" label="Cerrar" icon="pi pi-times" 
             (click)="displayDetalleModal = false"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal de Detalle de Requerimientos Pendientes (con selección) -->
+<p-dialog [(visible)]="displayDetallePendientesModal" [modal]="true"
+          [style]="{width: '95vw', maxWidth: '1000px'}"
+          [breakpoints]="{'960px': '95vw', '640px': '100vw'}"
+          header="Detalle del Requerimiento" (onHide)="cerrarDetallePendientes()"
+          styleClass="modal-detalle-pendientes">
+  <div *ngIf="requerimientoDetallePendientes" class="p-2">
+    <!-- Cabecera -->
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="text-muted small">Número</div>
+        <div class="fw-semibold text-break">{{ requerimientoDetallePendientes.idrequerimiento }}</div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="text-muted small">Requisición</div>
+        <div class="fw-semibold">{{ requerimientoDetallePendientes.RequisicionNumero || 'N/A' }}</div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="text-muted small">Área</div>
+        <div class="fw-semibold">{{ requerimientoDetallePendientes.nombreArea }}</div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="text-muted small">Solicitante</div>
+        <div class="fw-semibold text-break">{{ requerimientoDetallePendientes.nombreSolicitante }}</div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="text-muted small">Fecha</div>
+        <div class="fw-semibold">{{ requerimientoDetallePendientes.fecha || '-' }}</div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="text-muted small">Estado</div>
+        <p-tag severity="warn">{{ requerimientoDetallePendientes.estados || 'PENDIENTE' }}</p-tag>
+      </div>
+      <div class="col-12">
+        <div class="text-muted small">Descripción</div>
+        <div class="fw-semibold text-break">{{ requerimientoDetallePendientes.glosa || '-' }}</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="detallePendientesTab === 'items'"
+           (click)="detallePendientesTab = 'items'" style="cursor:pointer;">
+          <i class="bx bx-list-ul"></i> Ítems
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="detallePendientesTab === 'servicios'"
+           (click)="detallePendientesTab = 'servicios'" style="cursor:pointer;">
+          <i class="bx bx-cog"></i> Servicios
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="detallePendientesTab === 'adjuntos'"
+           (click)="detallePendientesTab = 'adjuntos'" style="cursor:pointer;">
+          <i class="bx bx-paperclip"></i> Adjuntos
+        </a>
+      </li>
+    </ul>
+
+    <!-- Ítems -->
+    <div *ngIf="detallePendientesTab === 'items'" class="table-responsive">
+      <p-table [value]="getDetallesPendientes()" [paginator]="true" [rows]="5"
+               responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width:40px">
+              <p-checkbox [binary]="true"
+                          [ngModel]="isTodosDetallesPendientesSeleccionados()"
+                          (onChange)="toggleSeleccionTodosDetallesPendientes($event.checked)">
+              </p-checkbox>
+            </th>
+            <th>Código</th>
+            <th>{{ esRequerimientoServicio ? 'Servicio' : 'Producto' }}</th>
+            <th>Cantidad</th>
+            <th>Proyecto</th>
+            <th>CECO</th>
+            <th>Labor</th>
+            <th>Área</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-det let-i="rowIndex">
+          <tr>
+            <td>
+              <p-checkbox [binary]="true"
+                          [ngModel]="isDetallePendienteSeleccionado(i)"
+                          (onChange)="toggleSeleccionDetallePendiente(i, $event.checked)">
+              </p-checkbox>
+            </td>
+            <!-- <td>{{ det.codigo }}</td> -->
+            <td>{{ det.idproducto || det.producto || det.codigo }}</td>
+            <td>{{ det.descripcionItem || det.descripcion || 'Sin descripción' }}</td>
+            <td>{{ det.cantidad }}</td>
+            <td>{{ det.idproyecto || det.proyecto }}</td>
+            <td>{{ det.idcentrocosto || det.ceco }}</td>
+            <td>{{ det.idlabor || det.labor }}</td>
+            <td>{{ requerimientoDetallePendientes.nombreArea }}</td>
+            <td>
+              <button pButton type="button" icon="bx bx-check"
+                      class="p-button-sm"
+                      [class.p-button-success]="!detallesPendientesAprobados.has(i)"
+                      [class.p-button-outlined]="detallesPendientesAprobados.has(i)"
+                      (click)="aprobarDetallePendienteIndividual(i)"
+                      [label]="detallesPendientesAprobados.has(i) ? 'Aprobado' : 'Aprobar'">
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="10" class="text-center">No hay ítems</td></tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Servicios -->
+    <div *ngIf="detallePendientesTab === 'servicios'" class="text-center text-muted p-3">
+      Sin servicios asociados
+    </div>
+
+    <!-- Adjuntos -->
+    <div *ngIf="detallePendientesTab === 'adjuntos'" class="text-center text-muted p-3">
+      Sin adjuntos
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="d-flex flex-wrap gap-2 justify-content-end">
+      <button pButton type="button" label="Rechazar" icon="bx bx-x-circle"
+              class="p-button-danger" (click)="rechazarDetallesPendientes()"></button>
+      <button pButton type="button" label="Aprobar" icon="bx bx-check"
+              class="p-button-success" (click)="aprobarDetallesPendientes()"></button>
+      <button pButton type="button" label="Cerrar" icon="pi pi-times"
+              class="p-button-secondary" (click)="cerrarDetallePendientes()"></button>
+    </div>
   </ng-template>
 </p-dialog>

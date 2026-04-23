@@ -9,7 +9,8 @@ const path = require('path');
 const pkgPath = path.resolve('package.json');
 const envPaths = [
   path.resolve('src/environments/environment.ts'),
-  path.resolve('src/environments/environment.prod.ts')
+  path.resolve('src/environments/environment.prod.ts'),
+  path.resolve('src/environments/environment.prod-api.ts')
 ];
 const versionJsonPath = path.resolve('src/assets/version.json');
 

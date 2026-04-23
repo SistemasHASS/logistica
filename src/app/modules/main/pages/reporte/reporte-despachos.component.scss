@@ -2,9 +2,69 @@
     padding: 1rem;
 }
 
+.despachos-container {
+    .titulo-pagina { font-weight: 600; color: #2a2f45; }
+
+    /* KPI cards */
+    .kpi-row .kpi-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        border: 1px solid #eef0f3;
+        min-height: 92px;
+        position: relative;
+        overflow: hidden;
+
+        .kpi-icon {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .kpi-body {
+            flex-grow: 1;
+            .kpi-label { font-weight: 600; color: #2a2f45; font-size: .95rem; }
+            .kpi-sub { color: #6b7280; font-size: .75rem; }
+        }
+        .kpi-value {
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: #2a2f45;
+        }
+        &.kpi-pendientes .kpi-icon { background: #ef4444; }
+        &.kpi-atendidos  .kpi-icon { background: #10b981; }
+        &.kpi-total      .kpi-icon { background: #3b82f6; }
+    }
+}
+
 h5 {
     color: #333;
     font-weight: 600;
+}
+
+/* Tabs Items / Commodity */
+.despachos-tabs {
+  border-bottom: none;
+  padding-left: 0;
+  .nav-link {
+    border: none;
+    border-radius: 8px 8px 0 0;
+    background: #e9ecef;
+    color: #2a2f45;
+    font-weight: 600;
+    padding: 8px 20px;
+    margin-right: 4px;
+    &.active {
+      background: #10b981;
+      color: #fff;
+    }
+  }
 }
 
 .badge {

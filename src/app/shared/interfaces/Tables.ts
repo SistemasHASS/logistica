@@ -650,6 +650,7 @@ export interface MovimientoStock {
 
 export interface SolicitudCompra {
   id?: number;
+  idSolicitud?: number; // ID asignado por el backend al sincronizar
   numeroSolicitud: string;
   fecha: string;
   fechaEnvio?: string;

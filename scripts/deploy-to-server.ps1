@@ -4,13 +4,37 @@
 param(
     [string]$ServerPath = "\\172.16.20.3\C$\logistica",
     # [string]$ServerPath = "\\172.16.20.3\logistica",
-    [string]$LocalBuildPath = "dist\logistica\browser"
+    [string]$LocalBuildPath = "dist\logistica\browser",
+    [string]$DeploymentApiUrl = "https://apilogistica.agroapps.net:7018/api/app-deployments",
+    [string]$AppName = "",
+    [string]$EnvironmentName = "production",
+    [string]$Notes = "Deploy IIS automatizado",
+    [switch]$SkipApiRegister
 )
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  DEPLOY A SERVIDOR DE PRODUCCION" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
+
+if ([string]::IsNullOrWhiteSpace($AppName)) {
+    $packageJsonPath = Join-Path (Get-Location) "package.json"
+    if (Test-Path $packageJsonPath) {
+        try {
+            $packageJson = Get-Content $packageJsonPath -Raw | ConvertFrom-Json
+            if (-not [string]::IsNullOrWhiteSpace($packageJson.name)) {
+                $AppName = $packageJson.name
+            }
+        } catch {
+            Write-Host "ADVERTENCIA: No se pudo leer package.json para inferir AppName" -ForegroundColor Yellow
+        }
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($AppName)) {
+    Write-Host "ERROR: Debes indicar AppName o tener package.json con el campo name" -ForegroundColor Red
+    exit 1
+}
 
 # Verificar que existe el build local
 if (-not (Test-Path $LocalBuildPath)) {
@@ -21,6 +45,7 @@ if (-not (Test-Path $LocalBuildPath)) {
 
 # Verificar version local
 $versionFile = Join-Path $LocalBuildPath "assets\version.json"
+$versionContent = $null
 if (Test-Path $versionFile) {
     $versionContent = Get-Content $versionFile -Raw | ConvertFrom-Json
     Write-Host "Version a desplegar: $($versionContent.version)" -ForegroundColor Green
@@ -31,7 +56,12 @@ if (Test-Path $versionFile) {
 }
 
 # Preguntar confirmacion
+Write-Host "Aplicacion: $AppName" -ForegroundColor Cyan
+Write-Host "Ambiente: $EnvironmentName" -ForegroundColor Cyan
 Write-Host "Servidor destino: $ServerPath" -ForegroundColor Cyan
+if (-not $SkipApiRegister) {
+    Write-Host "Registro API: $DeploymentApiUrl" -ForegroundColor Cyan
+}
 $confirm = Read-Host "Deseas continuar con el deploy? (S/N)"
 if ($confirm -ne "S" -and $confirm -ne "s") {
     Write-Host "Deploy cancelado" -ForegroundColor Yellow
@@ -40,6 +70,8 @@ if ($confirm -ne "S" -and $confirm -ne "s") {
 
 Write-Host ""
 Write-Host "Iniciando deploy..." -ForegroundColor Cyan
+
+$apiRegisterSucceeded = $SkipApiRegister.IsPresent
 
 try {
     # Verificar acceso al servidor
@@ -85,10 +117,43 @@ try {
         Write-Host "Fecha en servidor: $($serverVersion.buildTime)" -ForegroundColor Green
         
         # Comparar versiones
-        if ($versionContent.version -eq $serverVersion.version) {
+        if ($versionContent -and $versionContent.version -eq $serverVersion.version) {
             Write-Host ""
             Write-Host "EXITO: Deploy completado correctamente" -ForegroundColor Green
             Write-Host "La version $($serverVersion.version) esta ahora en produccion" -ForegroundColor Green
+
+            if (-not $SkipApiRegister) {
+                try {
+                    $deploymentPayload = @{
+                        appName = $AppName
+                        environment = $EnvironmentName
+                        version = $serverVersion.version
+                        buildTime = $serverVersion.buildTime
+                        deployedAt = (Get-Date).ToString("o")
+                        deployedBy = $env:USERNAME
+                        serverName = $env:COMPUTERNAME
+                        notes = $Notes
+                        isActive = $true
+                    } | ConvertTo-Json
+
+                    $apiResponse = Invoke-RestMethod `
+                        -Uri $DeploymentApiUrl `
+                        -Method Post `
+                        -Body $deploymentPayload `
+                        -ContentType "application/json" `
+                        -TimeoutSec 20
+
+                    Write-Host "Registro API: OK" -ForegroundColor Green
+                    if ($apiResponse) {
+                        Write-Host "  Respuesta API recibida correctamente" -ForegroundColor Green
+                    }
+                    $apiRegisterSucceeded = $true
+                } catch {
+                    Write-Host "ERROR: El deploy en IIS fue exitoso, pero no se pudo registrar en la API" -ForegroundColor Red
+                    Write-Host "  Endpoint: $DeploymentApiUrl" -ForegroundColor Red
+                    Write-Host "  Detalle: $($_.Exception.Message)" -ForegroundColor Red
+                }
+            }
         } else {
             Write-Host ""
             Write-Host "ADVERTENCIA: Las versiones no coinciden" -ForegroundColor Yellow
@@ -110,6 +175,11 @@ try {
     Write-Host "  3. Accede a la aplicacion" -ForegroundColor White
     Write-Host "  4. Verifica que la version sea correcta" -ForegroundColor White
     Write-Host ""
+
+    if (-not $SkipApiRegister -and -not $apiRegisterSucceeded) {
+        Write-Host "ERROR: El deploy no se considera valido porque la API no guardo la ultima version" -ForegroundColor Red
+        exit 1
+    }
 
 } catch {
     Write-Host ""

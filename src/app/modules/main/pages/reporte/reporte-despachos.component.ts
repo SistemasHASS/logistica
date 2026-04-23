@@ -1,6 +1,7 @@
 import { AlertService } from '@/app/shared/alertas/alerts.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DespachosService } from '@/app/modules/main/services/despachos.service';
+import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -24,14 +25,39 @@ import FileSaver from 'file-saver';
   templateUrl: './reporte-despachos.component.html',
   styleUrls: ['./reporte-despachos.component.scss'],
 })
-export class ReporteDespachosComponent implements OnInit {
+export class ReporteDespachosComponent implements OnInit, OnDestroy {
   despachos: any[] = [];
   despachosFiltrados: any[] = [];
+  requerimientosAprobadosAll: any[] = []; // Requerimientos desde Dexie para conteo de pendientes
   filtroNS: string = '';
   filtroRequisicion: string = '';
   fechaInicio?: Date;
   fechaFin?: Date;
   loading: boolean = false;
+  activeTabDespachos: 'ITEMS' | 'COMMODITY' = 'ITEMS';
+  private intervalId?: any;
+  private despachosAPI: any[] = []; // Cache de despachos atendidos desde API
+
+  /** KPI: requerimientos pendientes de atención (estado APROBADO). */
+  get kpiPendientes(): number {
+    return (this.requerimientosAprobadosAll || []).filter(
+      (r: any) => r?.estados === 'APROBADO' || !r?.estados,
+    ).length;
+  }
+
+  /** KPI: despachos atendidos (parcial o completo o despachado). */
+  get kpiAtendidos(): number {
+    return (this.despachos || []).filter((r: any) =>
+      ['ATENCION_PARCIAL', 'ATENCION_COMPLETA', 'DESPACHADO_COMPLETO'].includes(
+        r?.estado,
+      ) || (r?.estado || '').toString().toUpperCase().includes('DESPACHADO'),
+    ).length;
+  }
+
+  /** KPI: total de despachos (suma de pendientes y atendidos). */
+  get kpiTotal(): number {
+    return this.kpiPendientes + this.kpiAtendidos;
+  }
 
   // Modal detalle
   displayDetalle: boolean = false;
@@ -40,25 +66,107 @@ export class ReporteDespachosComponent implements OnInit {
 
   constructor(
     private despachosService: DespachosService,
+    private dexieService: DexieService,
     private alertService: AlertService,
   ) {}
 
   ngOnInit(): void {
-    this.listarDespachos();
+    this.cargarDespachosAPI(); // Cargar API solo una vez
+    this.cargarRequerimientosDesdeDexie(); // Cargar requerimientos pendientes
+    this.cargarDespachosDesdeDexie(); // Cargar Dexie inicial
+    this.escucharCambiosDespachos(); // Intervalo solo para Dexie
+  }
+
+  ngOnDestroy(): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+    }
+  }
+
+  async cargarDespachosAPI() {
+    try {
+      // Cargar atendidos desde API solo una vez
+      const despachosAPI = await new Promise<any[]>((resolve, reject) => {
+        this.despachosService.listarDespachosRealizados([{}]).subscribe({
+          next: (data: any) => {
+            let result: any[] = [];
+            if (Array.isArray(data)) {
+              result = data;
+            } else if (data?.id) {
+              result = JSON.parse(data.id);
+            }
+            resolve(result);
+          },
+          error: (err) => reject(err),
+        });
+      });
+      this.despachosAPI = despachosAPI;
+    } catch (error) {
+      console.error('Error al cargar despachos desde API:', error);
+    }
+  }
+
+  async cargarRequerimientosDesdeDexie() {
+    try {
+      // Cargar requerimientos desde Dexie para conteo de pendientes
+      const requerimientos = await this.dexieService.showRequerimiento();
+      
+      // Agrupar requerimientos únicos por idrequerimiento
+      const requerimientosUnicos = new Map();
+      for (const req of requerimientos) {
+        if (req.idrequerimiento) {
+          requerimientosUnicos.set(req.idrequerimiento, req);
+        }
+      }
+
+      this.requerimientosAprobadosAll = Array.from(requerimientosUnicos.values());
+      
+      // Ordenar por fecha de aprobación (más reciente primero)
+      this.requerimientosAprobadosAll.sort((a: any, b: any) => {
+        const fechaA = new Date(a.fechaAprobacion || a.fecha || 0).getTime();
+        const fechaB = new Date(b.fechaAprobacion || b.fecha || 0).getTime();
+        return fechaB - fechaA;
+      });
+    } catch (error) {
+      console.error('Error al cargar requerimientos desde Dexie:', error);
+    }
+  }
+
+  async cargarDespachosDesdeDexie() {
+    try {
+      // Cargar pendientes desde Dexie
+      const despachosDexie = await this.dexieService.showDespacho();
+      
+      // Combinar Dexie con cache de API
+      this.despachos = [...despachosDexie, ...this.despachosAPI];
+      
+      this.aplicarFiltro();
+    } catch (error) {
+      console.error('Error al cargar despachos desde Dexie:', error);
+    }
+  }
+
+  async cargarDespachosCombinado() {
+    this.loading = true;
+    await this.cargarDespachosDesdeDexie();
+    await this.cargarRequerimientosDesdeDexie();
+    this.loading = false;
+  }
+
+  escucharCambiosDespachos() {
+    this.intervalId = setInterval(() => {
+      this.cargarDespachosDesdeDexie(); // Recargar despachos Dexie en el intervalo
+      this.cargarRequerimientosDesdeDexie(); // Recargar requerimientos Dexie en el intervalo
+    }, 3000);
   }
 
   listarDespachos() {
     this.loading = true;
     this.despachosService.listarDespachosRealizados([{}]).subscribe({
       next: (data: any) => {
-        // this.despachos = Array.isArray(data) ? data : [];
-        // this.despachos = data?.resultado || [];
-        // this.despachos = data?.id ? JSON.parse(data.id) : [];
         if (Array.isArray(data)) {
-          // Caso A: backend ya devolvió array
           this.despachos = data;
         } else if (data?.id) {
-          // Caso B: viene string JSON desde SQL
           this.despachos = JSON.parse(data.id);
         } else {
           this.despachos = [];
@@ -77,7 +185,12 @@ export class ReporteDespachosComponent implements OnInit {
   }
 
   aplicarFiltro() {
+    const esItem = this.activeTabDespachos === 'ITEMS';
     this.despachosFiltrados = this.despachos.filter((x) => {
+      const tipo = (x?.tipo || '').toString().toUpperCase();
+      const coincideTab = esItem ? tipo === 'ITEM' : tipo !== 'ITEM';
+      if (!coincideTab) return false;
+
       const matchNS =
         !this.filtroNS ||
         (x.numeroNS || '').toLowerCase().includes(this.filtroNS.toLowerCase());

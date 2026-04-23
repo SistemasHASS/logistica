@@ -10,6 +10,9 @@ import { RequerimientosService } from '@/app/modules/main/services/requerimiento
 import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import { CommodityService } from '@/app/modules/main/services/commoditys.service';
 import { DespachosService } from '@/app/modules/main/services/despachos.service';
+import { AprobacionesAreaService } from '@/app/modules/main/services/aprobaciones-area.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { SaldoRequerimientoService } from '@/app/modules/main/services/saldo-requerimiento.service';
 import { ConsolidacionService } from '@/app/services/consolidacion.service';
 import { Usuario, Stock, OrdenCompra, DetalleDespacho, Despacho } from '@/app/shared/interfaces/Tables';
@@ -88,6 +91,170 @@ export class DespachoComponent implements OnInit {
   fechaInicio?: Date;
   fechaFin?: Date;
 
+  // Nuevo diseño: tabs y filtros específicos
+  activeTabDespachos: 'ITEMS' | 'COMMODITY' = 'ITEMS';
+  filtroRequisicion: string = '';
+
+  /** KPI: requerimientos pendientes de atención (estado APROBADO). */
+  get kpiPendientes(): number {
+    return (this.requerimientosAprobadosAll || []).filter(
+      (r: any) => r?.estados === 'APROBADO' || !r?.estados,
+    ).length;
+  }
+
+  /** KPI: requerimientos atendidos (parcial o completo o despachado). */
+  get kpiAtendidos(): number {
+    return (this.requerimientosAprobadosAll || []).filter((r: any) =>
+      ['ATENCION_PARCIAL', 'ATENCION_COMPLETA', 'DESPACHADO_COMPLETO'].includes(
+        r?.estado,
+      ) || (r?.estados || '').toString().toUpperCase().includes('DESPACHADO'),
+    ).length;
+  }
+
+  /** KPI: total de requerimientos cargados. */
+  get kpiTotal(): number {
+    return (this.requerimientosAprobadosAll || []).length;
+  }
+
+  /** Datos visibles en la tabla según tab activo y filtros rápidos Requisición. */
+  get despachosVisibles(): any[] {
+    const base = this.requerimientosAprobados || [];
+    const esItem = this.activeTabDespachos === 'ITEMS';
+    return base.filter((r: any) => {
+      const tipo = (r?.tipo || '').toString().toUpperCase();
+      const coincideTab = esItem ? tipo === 'ITEM' : tipo !== 'ITEM';
+      if (!coincideTab) return false;
+      if (this.filtroRequisicion?.trim()) {
+        const req = (r?.RequisicionNumero || '').toString().toLowerCase();
+        if (!req.includes(this.filtroRequisicion.trim().toLowerCase())) return false;
+      }
+      return true;
+    });
+  }
+
+  /** Limpia todos los filtros del nuevo dashboard. */
+  limpiarFiltrosDespacho() {
+    this.filtroRequisicion = '';
+    this.fechaInicio = undefined;
+    this.fechaFin = undefined;
+    this.filtro = '';
+    this.buscar();
+  }
+
+  /**
+   * Resuelve el nombre del área del **solicitante** del requerimiento.
+   * Prioridades:
+   *  1) `r.nombreArea` si viene del backend.
+   *  2) cache por DNI+RUC (pre-poblado por `precargarAreasSolicitantes`).
+   *  3) maestro `areas` filtrando por ruc e idarea.
+   *  4) fallback: `r.idarea` como texto.
+   */
+  obtenerNombreArea(r: any): string {
+    if (!r) return '-';
+    if (r.nombreArea) return r.nombreArea;
+
+    const dni = r.nrodocumento || r.dniregistra || r.usuarioregistra || '';
+    const ruc = r.ruc || '';
+    const cacheKey = `${ruc}|${dni}`;
+    const cached = this.datosPorDni.get(cacheKey);
+    if (cached?.area) return cached.area;
+
+    const a = (this.areas || []).find(
+      (x: any) => (!ruc || x.ruc == ruc) && x.idarea == r.idarea,
+    );
+    if (a) return a.descripcion ?? a.nombre ?? String(r.idarea);
+
+    return r.idarea != null && r.idarea !== '' ? String(r.idarea) : '-';
+  }
+
+  /**
+   * Resuelve el nombre del **solicitante** del requerimiento.
+   * Prioridades:
+   *  1) `r.nombreSolicitante` si viene del backend.
+   *  2) cache por DNI+RUC (pre-poblado por `precargarAreasSolicitantes`).
+   *  3) fallback: DNI.
+   */
+  obtenerNombreUsuario(r: any): string {
+    if (!r) return '-';
+    if (r.nombreSolicitante) return r.nombreSolicitante;
+
+    const dni = r.nrodocumento || r.dniregistra || r.usuarioregistra || '';
+    const ruc = r.ruc || '';
+    const cacheKey = `${ruc}|${dni}`;
+    const cached = this.datosPorDni.get(cacheKey);
+    if (cached?.nombre) return cached.nombre;
+
+    return dni || '-';
+  }
+
+  /**
+   * Llama a `obtener-area-usuario` por cada combinación única de DNI+RUC
+   * presente en `requerimientosAprobadosAll` y puebla la cache con área y nombre.
+   * Se ejecuta después de cargar los aprobados.
+   */
+  private precargarAreasSolicitantes(): void {
+    const filas = this.requerimientosAprobadosAll || [];
+    const pendientes = new Map<string, { dni: string; ruc: string }>();
+
+    for (const r of filas) {
+      if (r?.nombreArea && r?.nombreSolicitante) continue; // ya viene del backend
+      const dni = r?.nrodocumento || r?.dniregistra || r?.usuarioregistra || '';
+      const ruc = r?.ruc || '';
+      if (!dni) continue;
+      const key = `${ruc}|${dni}`;
+      if (this.datosPorDni.has(key) || pendientes.has(key)) continue;
+      pendientes.set(key, { dni, ruc });
+    }
+
+    if (pendientes.size === 0) {
+      this.hidratarDatosSolicitantes();
+      return;
+    }
+
+    const calls = Array.from(pendientes.entries()).map(([key, { dni, ruc }]) =>
+      this.aprobacionesAreaService
+        .obtenerAreaUsuario({ documentoidentidad: dni, ruc })
+        .pipe(catchError(() => of(null))),
+    );
+    const keys = Array.from(pendientes.keys());
+
+    forkJoin(calls).subscribe((resultados: any[]) => {
+      resultados.forEach((resp: any, idx: number) => {
+        const item = Array.isArray(resp) ? resp[0] : resp;
+        const area = item?.nombreArea || item?.descripcion || item?.nombreArea || '';
+        const nombre = item?.nombre || item?.nombreCompleto || item?.nombres || item?.nombreUsuario || '';
+        if (area || nombre) {
+          this.datosPorDni.set(keys[idx], { area, nombre });
+        }
+      });
+      this.hidratarDatosSolicitantes();
+    });
+  }
+
+  /** Aplica la cache sobre cada fila seteando `r.nombreArea` y `r.nombreSolicitante` si los encontró. */
+  private hidratarDatosSolicitantes(): void {
+    for (const r of this.requerimientosAprobadosAll || []) {
+      if (r.nombreArea && r.nombreSolicitante) continue;
+      const dni = r.nrodocumento || r.dniregistra || r.usuarioregistra || '';
+      const ruc = r.ruc || '';
+      const cached = this.datosPorDni.get(`${ruc}|${dni}`);
+      if (cached) {
+        if (!r.nombreArea && cached.area) r.nombreArea = cached.area;
+        if (!r.nombreSolicitante && cached.nombre) r.nombreSolicitante = cached.nombre;
+      }
+    }
+  }
+
+  /** Devuelve una familia/descripción representativa para la fila (commodity o item). */
+  obtenerFamilia(r: any): string {
+    const det = (r?.detalle || [])[0];
+    if (!det) return '-';
+    if ((r?.tipo || '').toString().toUpperCase() === 'ITEM') {
+      return this.getDescripcionProducto(det?.codigo) || det?.descripcion || '-';
+    }
+    return this.getDescripcionSubCommodity(det?.codigo) || det?.descripcion || '-';
+  }
+
   // Modal detalle despacho
   requerimientoSeleccionado: any = null;
   detalleDespacho: any[] = [];
@@ -120,8 +287,12 @@ export class DespachoComponent implements OnInit {
     private requerimientosService: RequerimientosService,
     private maestrasService: MaestrasService,
     private commodityService: CommodityService,
-    private despachosService: DespachosService
+    private despachosService: DespachosService,
+    private aprobacionesAreaService: AprobacionesAreaService,
   ) { }
+
+  /** Cache: key = `${ruc}|${dni}` -> { area, nombre } del solicitante. */
+  private datosPorDni: Map<string, { area: string; nombre: string }> = new Map();
 
   async ngOnInit() {
     await this.cargarUsuario();
@@ -1355,6 +1526,9 @@ export class DespachoComponent implements OnInit {
     this.totalRegistros = this.requerimientosAprobados.length;
     this.loading = false;
     console.log('Requerimientos aprobados únicos:', this.requerimientosAprobados);
+
+    // Resolver nombre del área del solicitante (consulta obtener-area-usuario por DNI)
+    this.precargarAreasSolicitantes();
   }
 
   obtenerRol() {

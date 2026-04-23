@@ -81,6 +81,9 @@ export class ParametrosComponent implements OnInit {
 
   TipoItemSeleccionado = '';
 
+  // 🎯 TABS MANAGEMENT
+  activeTab: 'compras' | 'consumo' = 'consumo';
+
   fundoSeleccionado = '';
   cultivoSeleccionado = '';
   areaSeleccionada = '';
@@ -153,11 +156,22 @@ export class ParametrosComponent implements OnInit {
     await this.llenarDropdowns(); // Cargar todos los datos base primero
     await this.validarExisteConfiguracion(); // Luego cargar configuración guardada
     
-    // 🔥 ASEGURAR QUE LOS VALORES GUARDADOS SE MUESTREN EN LOS DROPDOWNS
+    // 
     if (this.configuracion) {
-      console.log('🔄 Configuración final cargada:', this.configuracion);
-      // Los dropdowns ya deberían mostrar los valores gracias a [(ngModel)]
-      // pero aseguramos que no se limpien accidentalmente
+      console.log(' Configuración final cargada:', this.configuracion);
+      
+      // 
+      if (this.configuracion.idTipoItem === 'COMPRA') {
+        this.activeTab = 'compras';
+      } else if (this.configuracion.idTipoItem === 'CONSUMO') {
+        this.activeTab = 'consumo';
+      } else {
+        // Si no hay tipo guardado, establecer CONSUMO por defecto
+        this.activeTab = 'consumo';
+        this.configuracion.idTipoItem = 'CONSUMO';
+      }
+      
+      console.log(' Tab inicial establecido:', this.activeTab);
     }
     
     // Oculta todos al inicio
@@ -166,6 +180,23 @@ export class ParametrosComponent implements OnInit {
     this.ocultarCeco = true;
     this.ocultarTurno = true;
     this.ocultarProyecto = true;
+  }
+
+  // 🎯 MÉTODO PARA CAMBIAR ENTRE TABS
+  switchTab(tab: 'compras' | 'consumo') {
+    this.activeTab = tab;
+    
+    // Actualizar automáticamente el tipo de requerimiento según el tab
+    if (tab === 'compras') {
+      this.configuracion.idTipoItem = 'COMPRA';
+      console.log('🛒 Cambiado a tab COMPRAS - Tipo: COMPRA');
+    } else if (tab === 'consumo') {
+      this.configuracion.idTipoItem = 'CONSUMO';
+      console.log('📦 Cambiado a tab CONSUMO - Tipo: CONSUMO');
+    }
+    
+    // Ejecutar la lógica de cambio de tipo
+    this.onTipoItemChange();
   }
 
   async getUsuario() {

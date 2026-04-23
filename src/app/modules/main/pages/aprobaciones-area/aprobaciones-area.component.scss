@@ -159,3 +159,16 @@
     font-size: 0.875rem;
   }
 }
+
+:host ::ng-deep .modal-detalle-pendientes {
+  .p-dialog-content { padding: 1rem 1.25rem; }
+  .text-muted.small { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3px; }
+  .text-break { word-break: break-word; overflow-wrap: anywhere; }
+  .table-responsive { overflow-x: auto; }
+  .nav-tabs .nav-link { font-size: 0.9rem; }
+  @media (max-width: 640px) {
+    .p-dialog-content { padding: 0.75rem; }
+    .nav-tabs .nav-link { font-size: 0.8rem; padding: 0.4rem 0.6rem; }
+  }
+}
+

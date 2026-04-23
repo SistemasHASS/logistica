@@ -1,29 +1,79 @@
-<div class="container-fluid">
-    <h5 class="mb-3">Reporte de Despachos Realizados</h5>
+<div class="container-fluid despachos-container">
+    <h5 class="mb-3 titulo-pagina">Reporte de Despachos Realizados</h5>
+
+    <!-- ===== KPI CARDS ===== -->
+    <div class="row g-3 mb-3 kpi-row">
+        <div class="col-12 col-md-4">
+            <div class="kpi-card kpi-pendientes">
+                <div class="kpi-icon"><i class="bx bx-time-five"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-label">Pendientes de Atención</div>
+                    <div class="kpi-sub">Total: {{ kpiPendientes }}</div>
+                </div>
+                <div class="kpi-value">{{ kpiPendientes }}</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="kpi-card kpi-atendidos">
+                <div class="kpi-icon"><i class="bx bx-check-circle"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-label">Atendidos</div>
+                    <div class="kpi-sub">Hoy/Total</div>
+                </div>
+                <div class="kpi-value">{{ kpiAtendidos }}</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="kpi-card kpi-total">
+                <div class="kpi-icon"><i class="bx bx-list-ul"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-label">Total de Despachos</div>
+                    <div class="kpi-sub">Todos</div>
+                </div>
+                <div class="kpi-value">{{ kpiTotal }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TABS ITEMS / COMMODITY ===== -->
+    <ul class="nav nav-tabs despachos-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTabDespachos === 'ITEMS'"
+               (click)="activeTabDespachos = 'ITEMS'; aplicarFiltro()" style="cursor:pointer;">
+                ITEMS
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTabDespachos === 'COMMODITY'"
+               (click)="activeTabDespachos = 'COMMODITY'; aplicarFiltro()" style="cursor:pointer;">
+                COMMODITY
+            </a>
+        </li>
+    </ul>
 
     <div class="row mb-3">
         <div class="col-md-2">
             <input type="text" [(ngModel)]="filtroNS" class="form-control" 
                 placeholder="Filtrar por N° NS" (input)="aplicarFiltro()">
         </div>
-        <div class="col-md-2">
+        <div class="col-12 col-md-2">
             <input type="text" [(ngModel)]="filtroRequisicion" class="form-control" 
                 placeholder="Filtrar por Requisición" (input)="aplicarFiltro()">
         </div>
-        <div class="col-md-2">
+        <div class="col-6 col-md-2">
             <p-datepicker [(ngModel)]="fechaInicio" dateFormat="dd/mm/yy" placeholder="Desde"
                 [showIcon]="true" [showClear]="true" (onSelect)="aplicarFiltro()" 
-                (onClear)="aplicarFiltro()" styleClass="w-100" icon="pi pi-calendar">
+                (onClear)="aplicarFiltro()" styleClass="w-100" icon="bx bx-calendar">
             </p-datepicker>
         </div>
-        <div class="col-md-2">
+        <div class="col-6 col-md-2">
             <p-datepicker [(ngModel)]="fechaFin" dateFormat="dd/mm/yy" placeholder="Hasta"
                 [showIcon]="true" [showClear]="true" (onSelect)="aplicarFiltro()" 
-                (onClear)="aplicarFiltro()" styleClass="w-100" icon="pi pi-calendar">
+                (onClear)="aplicarFiltro()" styleClass="w-100" icon="bx bx-calendar">
             </p-datepicker>
         </div>
-        <div class="col-md-2">
-            <button class="btn btn-primary me-2" (click)="listarDespachos()">Listar</button>
+        <div class="col-12 col-md-2">
+            <button class="btn btn-primary me-2" (click)="cargarDespachosCombinado()">Listar</button>
             <button class="btn btn-secondary me-2" (click)="limpiarFiltros()">Limpiar</button>
             <button class="btn btn-success" (click)="exportarExcel()" title="Exportar a Excel">
                 <i class="icon icon-file-excel"></i>

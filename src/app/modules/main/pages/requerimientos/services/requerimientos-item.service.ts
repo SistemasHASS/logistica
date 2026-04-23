@@ -1,0 +1,1171 @@
+﻿import { Injectable } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
+import { AlertService } from '@/app/shared/alertas/alerts.service';
+import { UtilsService } from '@/app/shared/utils/utils.service';
+import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
+import { AprobacionesAreaService } from '@/app/modules/main/services/aprobaciones-area.service';
+import { PrioridadRequerimientoService } from '@/app/shared/services/prioridad-requerimiento.service';
+import * as XLSX from 'xlsx';
+import {
+  Requerimiento, DetalleRequerimiento,
+  Ceco, Labor, Proyecto, DetalleExcelPreview,
+} from '@/app/shared/interfaces/Tables';
+import { PrioridadSpring, TipoRequerimiento } from '@/app/shared/interfaces/PrioridadRequerimiento';
+import { RequerimientosMaestrasService } from './requerimientos-maestras.service';
+
+@Injectable({ providedIn: 'root' })
+export class RequerimientosItemService {
+
+  // â”€â”€ Lista y cabecera activa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  requerimientos: Requerimiento[] = [];
+  requerimiento: Requerimiento = this.emptyReq();
+  detalles: DetalleRequerimiento[] = [];
+  lineaTemp: DetalleRequerimiento = this.emptyDetalle();
+
+  // â”€â”€ UI state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  mostrarFormulario = false;
+  modoEdicion = false;
+  editIndex = -1;
+  editingTempIndex = -1;
+  modalAbierto = false;
+  enModoEdicion = false;
+  permitirEditarParametros = false;
+  lineasTemporales: DetalleRequerimiento[] = [];
+
+  // â”€â”€ Contadores â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  sinenviar = 0;
+  enviados = 0;
+  pendientes = 0;
+
+  // â”€â”€ Tipo y prioridad â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  TipoSelecionado: TipoRequerimiento | '' = '';
+  RequerimientoSelecionado = 'I';
+  SeleccionaPrioridadITEM: PrioridadSpring | '' = '';
+  opcionesPrioridadITEM: { value: PrioridadSpring; label: string; descripcion: string }[] = [];
+  SeleccionaTipoGasto = '';
+
+  // â”€â”€ Modal filtros cascada â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  turnoModal = '';
+  cecoModal = '';
+  laborModal = '';
+  proyectoModal = '';
+  filteredCecosModal: any[] = [];
+  filteredLaboresModal: any[] = [];
+  filteredProyectosModal: any[] = [];
+
+  // â”€â”€ Otros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  requerimientosOmitirValidacion: Set<string> = new Set();
+  glosa = '';
+  itemSeleccionado = '';
+  verBotones = false;
+  dataSelected: any[] = [];
+
+  // â”€â”€ Stock validaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  validandoStock = false;
+  itemsStockValidacion: any[] = [];
+  requerimientoValidandoStock: any = null;
+  modalStockAbierto = false;
+
+  constructor(
+    private dexieService: DexieService,
+    private alertService: AlertService,
+    private utilsService: UtilsService,
+    private requerimientosService: RequerimientosService,
+    private aprobacionesAreaService: AprobacionesAreaService,
+    public prioridadService: PrioridadRequerimientoService,
+    private maestras: RequerimientosMaestrasService,
+  ) {}
+
+  private emptyReq(): Requerimiento {
+    return {
+      idrequerimiento: '', fecha: '', almacen: '', glosa: '', tipo: '', itemtipo: '',
+      referenciaGasto: '', prioridad: '', ruc: '', estados: 'PENDIENTE', idfundo: '',
+      idarea: '', idclasificacion: '', nrodocumento: '', idalmacen: '', idalmacendestino: '',
+      idproyecto: '', estado: 0, disabled: false, checked: false, eliminado: 0,
+      despachado: false, detalle: [],
+    };
+  }
+
+  private emptyDetalle(): DetalleRequerimiento {
+    return {
+      idrequerimiento: '', codigo: '', producto: null, descripcion: '', cantidad: 0,
+      unidadMedida: '', proyecto: '', ceco: '', turno: '', labor: '',
+      esActivoFijo: false, activoFijo: '', estado: 0,
+    };
+  }
+
+  // â”€â”€ Carga â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  async cargar() {
+    const todos = await this.dexieService.showRequerimiento();
+    this.requerimientos = todos.filter(
+      (r: any) => r.nrodocumento === this.maestras.usuario?.documentoidentidad,
+    );
+    this.ordenar();
+    this.contarContadores();
+  }
+
+  ordenar() {
+    this.requerimientos.sort((a, b) => {
+      if (a.estado !== b.estado) return a.estado - b.estado;
+      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+    });
+  }
+
+  contarContadores() {
+    this.sinenviar = this.requerimientos.filter((r) => r.estado === 0).length;
+    this.enviados = this.requerimientos.filter((r) => r.estado === 1).length;
+  }
+
+  async cargarPendientes() {
+    const arr = await this.dexieService.requerimientos
+      .filter((r) => (r.estado === 0 || (r as any).modificado === 1) && r.estado !== 1).toArray();
+    this.pendientes = arr.length;
+  }
+
+  // â”€â”€ CRUD cabecera â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  private ordenarLista(lista: any[]): void {
+    lista.sort((a, b) => {
+      if (a.estado !== b.estado) return a.estado - b.estado;
+      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+    });
+  }
+
+  async cargarRequerimientos(nrodocumento: string): Promise<{
+    requerimientos: any[];
+    requerimientosCommodity: any[];
+    requerimientosActivoFijo: any[];
+    requerimientosActivoFijoMenor: any[];
+  }> {
+    const filtrar = (lista: any[]) => lista.filter((r: any) => r.nrodocumento === nrodocumento);
+    const items = filtrar(await this.dexieService.showRequerimiento());
+    this.ordenarLista(items);
+    const commodity = filtrar(await this.dexieService.showRequerimientoCommodity());
+    this.ordenarLista(commodity);
+    const activoFijo = filtrar(await this.dexieService.showRequerimientoActivoFijo());
+    this.ordenarLista(activoFijo);
+    const activoFijoMenor = filtrar(await this.dexieService.showRequerimientoActivoFijoMenor());
+    this.ordenarLista(activoFijoMenor);
+    await this.inferirServicioDesdeDetalle(activoFijo);
+    await this.inferirServicioDesdeDetalle(activoFijoMenor);
+    this.requerimientos = items;
+    return { requerimientos: items, requerimientosCommodity: commodity, requerimientosActivoFijo: activoFijo, requerimientosActivoFijoMenor: activoFijoMenor };
+  }
+
+  private async inferirServicioDesdeDetalle(lista: any[]) {
+    if (!lista?.length) return;
+    const faltan = lista.some((r: any) => !r.servicio && (r.detalle?.length || r.detalles?.length || r.detalleActivoFijo?.length || r.detalleActivoFijoMenor?.length));
+    if (!faltan) return;
+    const subs = await this.dexieService.showMaestroSubCommodity();
+    lista.forEach((r: any) => {
+      if (r.servicio) return;
+      const dets = r.detalle?.length ? r.detalle
+        : r.detalles?.length ? r.detalles
+        : r.detalleActivoFijo?.length ? r.detalleActivoFijo
+        : r.detalleActivoFijoMenor || [];
+      if (!dets.length) return;
+      const match = subs.find((s: any) => s.commodity === dets[0].codigo);
+      if (match) r.servicio = match.commodity01;
+    });
+  }
+
+  async nuevo() {
+    this.detalles = [];
+    this.glosa = await this.maestras.generarGlosaAutomatica();
+    this.modalAbierto = false;
+    this.modoEdicion = false;
+    const cfg = this.maestras.configuracion;
+    if (cfg?.idTipoItem) {
+      this.TipoSelecionado = cfg.idTipoItem as TipoRequerimiento | '';
+      this.requerimiento.itemtipo = cfg.idTipoItem;
+      await this.onTipoChange();
+    } else {
+      this.TipoSelecionado = 'CONSUMO';
+      this.requerimiento.itemtipo = 'CONSUMO';
+      await this.onTipoChange();
+    }
+    if (cfg?.idalmacen) {
+      this.maestras.almacenSeleccionado = cfg.idalmacen;
+      this.requerimiento.idalmacen = cfg.idalmacen;
+    }
+    this.maestras.areaSeleccionada = this.maestras.usuario.idarea || cfg?.idarea || '';
+    this.requerimiento.idarea = this.maestras.areaSeleccionada;
+    this.SeleccionaPrioridadITEM = '1';
+    this.maestras.filtroClasificaciones(this.RequerimientoSelecionado);
+    this.mostrarFormulario = true;
+  }
+
+  editar(index: number) {
+    const req = this.requerimientos[index];
+    if (!req) return;
+    this.requerimiento = { ...req };
+    this.detalles = req.detalle || [];
+    this.modoEdicion = true;
+    this.editIndex = index;
+    this.TipoSelecionado = req.itemtipo as TipoRequerimiento | '';
+    this.maestras.fundoSeleccionado = req.idfundo;
+    this.maestras.areaSeleccionada = req.idarea;
+    this.maestras.almacenSeleccionado = req.idalmacen;
+    this.maestras.clasificacionSeleccionado = req.idclasificacion;
+    this.SeleccionaPrioridadITEM = req.prioridad as PrioridadSpring | '';
+    this.glosa = req.glosa;
+    this.opcionesPrioridadITEM = this.TipoSelecionado
+      ? this.prioridadService.obtenerOpcionesPrioridad(this.TipoSelecionado as any)
+      : [];
+    this.mostrarFormulario = true;
+  }
+
+  async eliminar(index: number) {
+    const confirmacion = await this.alertService.showConfirm('Confirmación', '¿Desea eliminar este requerimiento?', 'warning');
+    if (!confirmacion) return;
+    try {
+      const req = this.requerimientos[index];
+      await this.dexieService.deleteRequerimiento(req.idrequerimiento);
+      this.requerimientos.splice(index, 1);
+      this.contarContadores();
+      this.alertService.showAlert('Éxito', 'Requerimiento eliminado correctamente.', 'success');
+    } catch {
+      this.alertService.showAlert('Error', 'Ocurriá un error al eliminar el requerimiento.', 'error');
+    }
+  }
+
+  cancelar() {
+    const confirmar = confirm('¿Seguro que deseas cancelar los cambios? Se perderan los datos no guardados.');
+    if (!confirmar) return;
+    this.mostrarFormulario = false;
+    this.modoEdicion = false;
+  }
+
+  // â”€â”€ Tipo de requerimiento â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  async onTipoChange() {
+    this.TipoSelecionado = this.requerimiento.itemtipo as TipoRequerimiento | '';
+    const clases = this.maestras.clasificaciones;
+    if (this.TipoSelecionado === 'TRANSFERENCIA') {
+      this.maestras.almacenSeleccionado = '';
+      this.maestras.clasificacionSeleccionado = 'TRA';
+      this.maestras.clasificacionesFiltrados = clases.filter((c) => c.id === 'TRA');
+      this.limpiarCamposCompraConsumo();
+    } else if (this.TipoSelecionado === 'CONSUMO') {
+      this.maestras.almacenOrigen = '';
+      this.maestras.almacenDestino = '';
+      this.maestras.clasificacionSeleccionado = 'STO';
+      this.maestras.clasificacionesFiltrados = clases.filter((c) => c.id === 'STO');
+      this.limpiarCamposCompraEspecificos();
+      await this.cargarDatosParaConsumo();
+    } else if (this.TipoSelecionado === 'COMPRA') {
+      this.maestras.clasificacionSeleccionado = 'CMP';
+      this.maestras.clasificacionesFiltrados = clases.filter((c) => c.id === 'CMP');
+      this.limpiarCamposConsumo();
+      await this.cargarDatosParaCompra();
+      await this.recargarValoresDesdeConfiguracion();
+    }
+    if (this.TipoSelecionado) {
+      this.opcionesPrioridadITEM = this.prioridadService.obtenerOpcionesPrioridad(
+        this.TipoSelecionado as 'COMPRA' | 'CONSUMO' | 'TRANSFERENCIA',
+      );
+      this.SeleccionaPrioridadITEM = '';
+    }
+  }
+
+  limpiarCamposCompraConsumo() {
+    this.maestras.proyectoSeleccionado = null;
+    this.maestras.cecoSeleccionado = null;
+    this.maestras.laborSeleccionado = null;
+    this.maestras.turnoSeleccionado = '';
+  }
+
+  limpiarCamposCompraEspecificos() {
+    if (this.TipoSelecionado !== 'CONSUMO') {
+      this.maestras.proyectoSeleccionado = null;
+      this.maestras.cecoSeleccionado = null;
+      this.maestras.laborSeleccionado = null;
+    }
+  }
+
+  limpiarCamposConsumo() {
+    if (this.TipoSelecionado !== 'CONSUMO') {
+      this.maestras.turnoSeleccionado = '';
+      if (this.modalAbierto && this.lineaTemp) this.lineaTemp.turno = '';
+    }
+  }
+
+  limpiarCamposCompra() {
+    if (this.TipoSelecionado !== 'COMPRA') {
+      this.maestras.proyectoSeleccionado = null;
+      this.maestras.cecoSeleccionado = null;
+      this.maestras.laborSeleccionado = null;
+    }
+  }
+
+  async cargarDatosParaConsumo() {
+    try {
+      const config = await this.dexieService.obtenerPrimeraConfiguracion();
+      if (config) {
+        if (config.idturno) this.maestras.turnoSeleccionado = config.idturno;
+        if (config.idceco) {
+          this.maestras.cecoSeleccionado = (await this.dexieService.getCecoById(config.idceco)) as Ceco | null;
+        }
+        if (config.idlabor) {
+          this.maestras.laborSeleccionado = (await this.dexieService.getLaborById(config.idlabor)) as Labor | null;
+        }
+        if (config.idproyecto) {
+          this.maestras.proyectoSeleccionado = (await this.dexieService.getProyectoByAfe(config.idproyecto)) as Proyecto | null;
+        }
+      }
+      if (!this.maestras.cecos?.length) await this.maestras.ListarCecos();
+      if (!this.maestras.labores?.length) await this.maestras.ListarLabores();
+      if (!this.maestras.proyectos?.length) await this.maestras.ListarProyectos();
+    } catch (error) {
+      console.error('Error al cargar datos para CONSUMO:', error);
+    }
+  }
+
+  async cargarDatosParaCompra() {
+    if (!this.maestras.cecos?.length) await this.maestras.ListarCecos();
+    if (!this.maestras.labores?.length) await this.maestras.ListarLabores();
+    if (!this.maestras.proyectos?.length) await this.maestras.ListarProyectos();
+  }
+
+  async recargarValoresDesdeConfiguracion() {
+    try {
+      if (!this.maestras.cecos?.length) await this.maestras.ListarCecos();
+      if (!this.maestras.labores?.length) await this.maestras.ListarLabores();
+      if (!this.maestras.proyectos?.length) await this.maestras.ListarProyectos();
+      const config = await this.dexieService.obtenerPrimeraConfiguracion();
+      if (config && this.TipoSelecionado === 'COMPRA') {
+        if (config.idceco) {
+          this.maestras.cecoSeleccionado = (await this.dexieService.getCecoById(config.idceco)) as Ceco | null;
+        }
+        if (config.idlabor) {
+          this.maestras.laborSeleccionado = (await this.dexieService.getLaborById(config.idlabor)) as Labor | null;
+        }
+        if (config.idproyecto) {
+          this.maestras.proyectoSeleccionado = (await this.dexieService.getProyectoByAfe(config.idproyecto)) as Proyecto | null;
+        }
+      }
+    } catch (error) {
+      console.error('Error al recargar valores desde configuración:', error);
+    }
+  }
+
+  esCompraConConsumo(): boolean {
+    return this.TipoSelecionado === 'COMPRA' || this.TipoSelecionado === 'CONSUMO';
+  }
+
+  camposParametrosEditables(): boolean { return false; }
+
+  onClasificacionChange(limpiar = false) {
+    if (limpiar) {
+      this.maestras.configuracion.idturno = '';
+      this.maestras.configuracion.idceco = '';
+      this.maestras.configuracion.idlabor = '';
+    }
+    this.maestras.filtroClasificaciones(this.RequerimientoSelecionado);
+  }
+
+  // â”€â”€ Modal de lÃ­neas ITEM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  async abrirModal() {
+    if (this.editIndex === -1) {
+      await this.maestras.cargarConfiguracion();
+      if (this.maestras.configuracion?.idceco) {
+        this.maestras.cecoSeleccionado = (await this.dexieService.getCecoById(this.maestras.configuracion.idceco)) as Ceco | null;
+        if (!this.maestras.cecoSeleccionado) {
+          this.maestras.cecoSeleccionado = this.maestras.cecos.find(
+            (c) => c.localname === this.maestras.configuracion.idceco || c.costcenter === this.maestras.configuracion.idceco,
+          ) || null;
+        }
+      }
+      if (this.maestras.configuracion?.idproyecto) {
+        this.maestras.proyectoSeleccionado = (await this.dexieService.getProyectoByAfe(this.maestras.configuracion.idproyecto)) as Proyecto | null;
+      }
+      if (this.maestras.configuracion?.idlabor) {
+        this.maestras.laborSeleccionado = (await this.dexieService.getLaborById(this.maestras.configuracion.idlabor)) as Labor | null;
+      }
+      if (this.maestras.configuracion?.idturno && this.TipoSelecionado === 'CONSUMO') {
+        this.maestras.turnoSeleccionado = this.maestras.configuracion.idturno;
+      }
+      this.inicializarVariablesModal();
+      this.lineaTemp = {
+        idrequerimiento: '', codigo: '', producto: null, descripcion: '', estado: 0,
+        cantidad: 0, unidadMedida: '',
+        proyecto: this.maestras.proyectoSeleccionado ? String((this.maestras.proyectoSeleccionado as any).proyectoio) : '',
+        ceco: this.maestras.cecoSeleccionado?.localname ?? '',
+        turno: this.TipoSelecionado === 'COMPRA' ? '' : (this.maestras.turnoSeleccionado ?? ''),
+        labor: this.maestras.laborSeleccionado?.labor ?? '',
+        esActivoFijo: false, activoFijo: '',
+      };
+    }
+    this.modalAbierto = true;
+  }
+
+  inicializarVariablesModal() {
+    this.enModoEdicion = false;
+    this.editingTempIndex = -1;
+    this.turnoModal = '';
+    this.cecoModal = '';
+    this.laborModal = '';
+    this.proyectoModal = '';
+    this.filteredCecosModal = [];
+    this.filteredLaboresModal = [];
+    this.filteredProyectosModal = [];
+  }
+
+  cerrarModal() {
+    this.modalAbierto = false;
+    this.editIndex = -1;
+    this.lineasTemporales = [];
+    this.permitirEditarParametros = false;
+  }
+
+  // â”€â”€ Cascada turno â†’ ceco â†’ labor â†’ proyecto en modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  onTurnoChangeModal() {
+    const turnoActual = this.enModoEdicion ? this.lineaTemp?.turno || '' : this.turnoModal;
+    const turnoObj = this.maestras.turnos.find((t) => t.nombreTurno === turnoActual);
+    if (turnoObj && turnoActual) {
+      this.filteredCecosModal = this.maestras.cecos.filter((c) => c.conturno?.includes(turnoObj.conturno || ''));
+    } else {
+      this.filteredCecosModal = [];
+    }
+    if (this.enModoEdicion) {
+      this.lineaTemp.ceco = ''; this.lineaTemp.labor = ''; this.lineaTemp.proyecto = '';
+    } else {
+      this.cecoModal = ''; this.laborModal = ''; this.proyectoModal = '';
+    }
+    this.filteredLaboresModal = [];
+    this.filteredProyectosModal = [];
+    if (this.filteredCecosModal.length === 1) {
+      if (this.enModoEdicion) { this.lineaTemp.ceco = this.filteredCecosModal[0].localname; }
+      else { this.cecoModal = this.filteredCecosModal[0].localname; }
+      this.onCecoChangeModal();
+    }
+  }
+
+  onCecoChangeModal() {
+    const cecoActual = this.enModoEdicion ? this.lineaTemp?.ceco || '' : this.cecoModal;
+    if (!cecoActual) return;
+    const cecoObj = this.maestras.cecos.find((c) => c.localname === cecoActual);
+    this.filteredLaboresModal = this.maestras.labores.filter((l) => l.ceco === (cecoObj?.costcenter || ''));
+    if (this.enModoEdicion) {
+      this.lineaTemp.labor = ''; this.lineaTemp.proyecto = '';
+    } else {
+      this.laborModal = ''; this.proyectoModal = '';
+    }
+    this.filteredProyectosModal = [];
+    if (this.filteredLaboresModal.length === 1) {
+      if (this.enModoEdicion) { this.lineaTemp.labor = this.filteredLaboresModal[0].labor; }
+      else { this.laborModal = this.filteredLaboresModal[0].labor; }
+      this.onLaborChangeModal();
+    }
+  }
+
+  onLaborChangeModal() {
+    const laborActual = this.enModoEdicion ? this.lineaTemp?.labor || '' : this.laborModal;
+    const cecoActual = this.enModoEdicion ? this.lineaTemp?.ceco || '' : this.cecoModal;
+    if (!laborActual || !cecoActual) return;
+    const laborObj = this.maestras.labores.find((l) => l.labor === laborActual);
+    const cecoObj = this.maestras.cecos.find((c) => c.localname === cecoActual);
+    this.filteredProyectosModal = this.maestras.proyectos.filter(
+      (p) =>
+        p.ceco?.trim() === (cecoObj?.costcenter || '')?.trim() &&
+        p.idlabor?.trim() === (laborObj?.idlabor || '')?.trim() &&
+        p.idcultivo?.trim() === this.maestras.cultivoSeleccionado?.trim(),
+    );
+    if (this.filteredProyectosModal.length === 1) {
+      if (this.enModoEdicion) { this.lineaTemp.proyecto = String(this.filteredProyectosModal[0].proyectoio); }
+      else { this.proyectoModal = String(this.filteredProyectosModal[0].proyectoio); }
+    }
+  }
+
+  editarDetalleItem(index: number) {
+    this.editIndex = index;
+    this.enModoEdicion = true;
+    this.lineaTemp = { ...this.detalles[index] };
+    this.modalAbierto = true;
+  }
+
+  async eliminarDetalleItem(index: number) {
+    const detalle = this.detalles[index];
+    if (detalle.id) await this.dexieService.deleteDetalleRequerimiento(detalle.id);
+    this.detalles.splice(index, 1);
+    this.alertService.mostrarInfo('Línea eliminada.');
+  }
+
+  obtenerDescripcionProducto(producto: any): string {
+    if (typeof producto === 'string') {
+      const item = this.maestras.items?.find((i: any) => i.codigo === producto || i.descripcion === producto);
+      return item?.descripcion || producto;
+    }
+    return producto?.descripcion || String(producto || '');
+  }
+
+  actualizarUnidadMedidaDesdeProducto() {
+    const producto = this.lineaTemp?.producto;
+    if (producto) {
+      const unidadMedida = this.maestras.obtenerUnidadMedidaProducto(producto);
+      this.lineaTemp.unidadMedida = unidadMedida;
+      this.maestras.unidadesMedidaFiltradas = [{ label: unidadMedida, value: unidadMedida }];
+    }
+  }
+
+  // â”€â”€ Guardar requerimiento ITEM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  async guardarRequerimiento() {
+    if (!this.maestras.fundoSeleccionado) {
+      this.alertService.showAlert('Atención', 'Debes seleccionar un Fundo antes de guardar.', 'warning');
+      return;
+    }
+    if (!this.requerimiento.glosa && !this.glosa) {
+      this.alertService.showAlert('Atención', 'Debes ingresar una glosa antes de guardar.', 'warning');
+      return;
+    }
+    try {
+      this.alertService.mostrarModalCarga();
+      const almacenObj = this.maestras.almacenes.find((a) => a.idalmacen == this.maestras.almacenSeleccionado);
+      const idAlmacenSync = almacenObj ? almacenObj.idalmacen : '';
+      const idreq = this.modoEdicion ? this.requerimiento.idrequerimiento
+        : this.maestras.usuario.sociedad + this.maestras.usuario.documentoidentidad + this.utilsService.formatoAnioMesDiaHoraMinSec();
+      const req: Requerimiento = {
+        idrequerimiento: idreq,
+        ruc: this.maestras.usuario.ruc,
+        idfundo: this.maestras.fundoSeleccionado,
+        idarea: this.maestras.areaSeleccionada,
+        idclasificacion: this.maestras.clasificacionSeleccionado,
+        prioridad: this.SeleccionaPrioridadITEM ?? '1',
+        nrodocumento: this.maestras.usuario.documentoidentidad,
+        idalmacen: idAlmacenSync,
+        idalmacendestino: this.TipoSelecionado === 'TRANSFERENCIA' ? this.maestras.almacenDestino : '',
+        glosa: this.requerimiento.glosa || this.glosa,
+        referenciaGasto: this.SeleccionaTipoGasto || '',
+        eliminado: 0,
+        tipo: this.requerimiento.tipo,
+        itemtipo: this.TipoSelecionado,
+        estados: 'PENDIENTE',
+        fecha: new Date().toISOString(),
+        almacen: almacenObj?.almacen || '',
+        idproyecto: this.maestras.proyectoSeleccionado?.proyectoio ?? '',
+        estado: 0,
+        disabled: false,
+        checked: false,
+        despachado: false,
+        detalle: [...this.detalles],
+      };
+      if (this.modoEdicion) {
+        await this.dexieService.requerimientos.where('idrequerimiento').equals(req.idrequerimiento).delete();
+        await this.dexieService.requerimientos.put({ ...req, modificado: 1 } as any);
+        const idx = this.requerimientos.findIndex((r) => r.idrequerimiento === req.idrequerimiento);
+        if (idx !== -1) this.requerimientos[idx] = { ...req };
+        this.modoEdicion = false;
+      } else {
+        await this.dexieService.requerimientos.put(req);
+        this.requerimientos.push({ ...req });
+      }
+      try {
+        if (req.idarea) {
+          await this.aprobacionesAreaService.registrarRequerimiento({
+            ruc: req.ruc, idrequerimiento: req.idrequerimiento,
+            idarea: Number(req.idarea), tipoRequerimiento: req.itemtipo || 'ITEM',
+            descripcion: req.glosa, usuarioSolicitud: this.maestras.usuario.documentoidentidad,
+            glosa: req.glosa, monto: 0,
+          }).toPromise();
+          await this.aprobacionesAreaService.asignarAprobadoresRequerimiento({
+            ruc: req.ruc, idrequerimiento: req.idrequerimiento,
+            idarea: Number(req.idarea), tipoRequerimiento: req.itemtipo || 'ITEM',
+            usuarioSolicitud: this.maestras.usuario.documentoidentidad,
+          }).toPromise();
+        }
+      } catch { }
+      this.alertService.cerrarModalCarga();
+      this.ordenar();
+      this.contarContadores();
+      this.alertService.showAlert('Éxito', 'Requerimiento ITEM guardado correctamente.', 'success');
+      this.detalles = [];
+      this.mostrarFormulario = false;
+      this.editIndex = -1;
+    } catch (e) {
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert('Error', 'Hubo un problema al guardar el Requerimiento ITEM.', 'error');
+    }
+  }
+
+  // â”€â”€ SincronizaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  async sincronizarRequerimiento() {
+    if (this.requerimiento.detalle.length === 0) {
+      this.alertService.showAlert('Alerta', 'Debe ingresar al menos un requerimiento', 'warning');
+      return;
+    }
+    const claves = new Set<string>();
+    const existeDuplicado = this.requerimiento.detalle.some((d: any) => {
+      const key = `${d.codigo}-${d.turno || ''}`;
+      if (claves.has(key)) return true;
+      claves.add(key);
+      return false;
+    });
+    if (existeDuplicado) {
+      this.alertService.showAlert('Validación', 'Existen lineas duplicadas con el mismo codigo y turno', 'warning');
+      return;
+    }
+    const confirmacion = await this.alertService.showConfirm('Confirmación', '¿Desea enviar los datos?', 'warning');
+    if (!confirmacion) return;
+    this.maestras.sincronizando = true;
+    this.maestras.progreso = 0;
+    const prioridadFinal: PrioridadSpring = (this.SeleccionaPrioridadITEM || this.requerimiento.prioridad || '1') as PrioridadSpring;
+    const idReq = this.maestras.usuario.sociedad + this.maestras.usuario.documentoidentidad + this.utilsService.formatoAnioMesDiaHoraMinSec();
+    const payload = [{
+      idrequerimiento: idReq, ruc: this.maestras.usuario.ruc, idfundo: this.requerimiento.idfundo,
+      idarea: this.maestras.areaSeleccionada, idclasificacion: this.requerimiento.idclasificacion,
+      prioridad: prioridadFinal, nrodocumento: this.maestras.usuario.documentoidentidad,
+      idalmacen: this.requerimiento.idalmacen,
+      idalmacendestino: this.TipoSelecionado === 'TRANSFERENCIA' ? this.maestras.almacenDestino : '',
+      glosa: this.requerimiento.glosa || '', referenciaGasto: this.SeleccionaTipoGasto || '',
+      eliminado: 0, tipo: this.requerimiento.tipo, itemtipo: this.requerimiento.itemtipo, estados: 'PENDIENTE',
+      detalle: this.requerimiento.detalle.map((d: any) => ({
+        codigo: d.codigo, tipoclasificacion: 'I', cantidad: d.cantidad,
+        idproducto: d.producto || '', iddescripcion: d.descripcion || '',
+        idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
+        idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
+      })),
+    }];
+    this.requerimientosService.registrarRequerimientos(payload).subscribe({
+      next: async (resp) => {
+        if (Array.isArray(resp) && resp[0]?.errorgeneral === 0) {
+          this.alertService.showAlert('Éxito', 'Requerimiento sincronizado correctamente', 'success');
+          await this.dexieService.requerimientos.update(this.requerimiento.id!, { estado: 1 });
+          await this.cargar();
+          this.contarContadores();
+        } else {
+          this.alertService.showAlertError('Error', 'Hubo un problema al sincronizar el requerimiento');
+        }
+        this.maestras.sincronizando = false;
+      },
+      error: () => {
+        this.maestras.sincronizando = false;
+        this.alertService.showAlertError('Error', 'No se pudo conectar con el servidor');
+      },
+    });
+  }
+
+  async sincronizarPendientes() {
+    const pendientes = await this.dexieService.requerimientos
+      .filter((r) => (r.estado === 0 || (r as any).modificado === 1) && r.estado !== 1).toArray();
+    if (pendientes.length === 0) {
+      this.alertService.showAlert('Información', 'No hay requerimientos pendientes por sincronizar', 'info');
+      return;
+    }
+    const confirmar = await this.alertService.showConfirm('Confirmación', `Se sincronizarón ${pendientes.length} requerimientos ¿Desea continuar?`, 'warning');
+    if (!confirmar) return;
+    this.maestras.sincronizando = true;
+    this.maestras.progreso = 0;
+    const payload = pendientes.map((req: any) => ({
+      idrequerimiento: req.idrequerimiento, ruc: this.maestras.usuario.ruc,
+      idfundo: req.idfundo, idarea: req.idarea, idclasificacion: req.idclasificacion,
+      prioridad: req.prioridad || '1', nrodocumento: this.maestras.usuario.documentoidentidad,
+      idalmacen: req.idalmacen, idalmacendestino: req.tipo === 'TRANSFERENCIA' ? req.idalmacendestino : '',
+      glosa: req.glosa || '', referenciaGasto: req.referenciaGasto || '',
+      eliminado: 0, tipo: req.tipo, itemtipo: req.itemtipo, estados: 'PENDIENTE',
+      detalle: (req.detalle || []).map((d: any) => ({
+        codigo: d.codigo, tipoclasificacion: 'I', cantidad: d.cantidad,
+        idproducto: d.producto || '', iddescripcion: d.descripcion || '',
+        idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
+        idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
+      })),
+    }));
+    try {
+      const resp: any = await firstValueFrom(this.requerimientosService.registrarRequerimientos(payload));
+      const resultado = resp?.[0];
+      if (resultado?.errorgeneral === 1) {
+        this.alertService.showAlert('Error', resultado.mensaje, 'error');
+        return;
+      }
+      const idsConError: string[] = (resultado?.detalle || []).map((d: any) => d.id.split('-')[0]);
+      const idsOk = pendientes.map((r) => r.idrequerimiento).filter((id) => !idsConError.includes(id));
+      if (idsOk.length) {
+        await this.dexieService.requerimientos.where('idrequerimiento').anyOf(idsOk).modify({ estado: 1 });
+      }
+      this.alertService.showAlert(
+        idsConError.length ? 'Sincronización parcial' : 'Éxito',
+        idsConError.length ? `Sincronizados ${idsOk.length}, con error ${idsConError.length}` : 'Todos los requerimientos se sincronizaron correctamente',
+        idsConError.length ? 'warning' : 'success',
+      );
+      await this.cargar();
+      this.contarContadores();
+      await this.cargarPendientes();
+      this.requerimientosOmitirValidacion.clear();
+    } catch {
+      this.alertService.showAlertError('Error', 'No se pudo conectar con el servidor');
+    } finally {
+      this.maestras.progreso = 100;
+      this.maestras.sincronizando = false;
+    }
+  }
+
+  editarLinea(index: number): void {
+    this.editIndex = index;
+    const det = this.detalles[index];
+    let producto: any = null;
+    if (det.codigo) producto = this.maestras.items.find((it: any) => it.codigo === det.codigo);
+    if (!producto && det.producto) producto = this.maestras.items.find((it: any) => it.descripcion === det.producto);
+    this.lineaTemp = {
+      ...det,
+      producto: producto ? { ...producto } : null,
+      proyecto: det.proyecto || '',
+      ceco: det.ceco || '',
+      labor: det.labor || '',
+      turno: det.turno || '',
+    };
+    this.cecoModal = det.ceco || '';
+    this.proyectoModal = det.proyecto || '';
+    this.laborModal = det.labor || '';
+    this.turnoModal = det.turno || '';
+    this.filteredCecosModal = this.maestras.cecos.filter((c: any) => c.turno === this.turnoModal);
+    const cecoObj = this.maestras.cecos.find((c: any) => c.localname === this.cecoModal);
+    this.filteredLaboresModal = this.maestras.labores.filter((l: any) => l.ceco === (cecoObj?.costcenter || ''));
+    this.filteredProyectosModal = this.maestras.proyectos;
+    const um = (det as any).unidadMedida || (producto ? this.maestras.obtenerUnidadMedidaProducto(producto) : '');
+    (this.lineaTemp as any).unidadMedida = um;
+    if (um) this.maestras.unidadesMedidaFiltradas = [{ label: um, value: um }];
+    this.modalAbierto = true;
+  }
+
+  guardarEdicionLinea(): void {
+    if (this.editIndex === -1) return;
+    this.detalles[this.editIndex] = { ...this.lineaTemp };
+    this.cerrarModal();
+    this.alertService.showAlert('Éxito', 'Linea actualizada correctamente', 'success');
+  }
+
+  async validarStockRequerimiento(requerimiento: any): Promise<boolean> {
+    if (requerimiento.itemtipo !== 'CONSUMO') return true;
+    if (this.requerimientosOmitirValidacion.has(requerimiento.idrequerimiento)) return true;
+    const idalmacen = requerimiento.idalmacen;
+    const detalles = requerimiento.detalle || [];
+    if (!idalmacen || detalles.length === 0) return true;
+    const itemsParaValidar = detalles.map((d: any) => ({
+      codigo: d.codigo, producto: d.producto || d.idproducto, cantidad: d.cantidad,
+    }));
+    this.validandoStock = true;
+    return new Promise((resolve) => {
+      this.requerimientosService.validarStockItems(idalmacen, itemsParaValidar).subscribe({
+        next: (resp) => {
+          this.validandoStock = false;
+          const resultado = resp || [];
+          const itemsSinStock = resultado.filter(
+            (item: any) => item.estadoStock === 'SIN_STOCK' || item.estadoStock === 'PARCIAL',
+          );
+          if (itemsSinStock.length > 0) {
+            this.itemsStockValidacion = resultado;
+            this.requerimientoValidandoStock = requerimiento;
+            this.modalStockAbierto = true;
+            resolve(false);
+          } else {
+            resolve(true);
+          }
+        },
+        error: (err) => {
+          this.validandoStock = false;
+          console.error('Error al validar stock:', err);
+          resolve(true);
+        },
+      });
+    });
+  }
+
+  cerrarModalStock() {
+    this.modalStockAbierto = false;
+    this.itemsStockValidacion = [];
+    this.requerimientoValidandoStock = null;
+  }
+
+  async confirmarAjusteStock(sincronizarCb: () => Promise<void>, editarCb: (idx: number) => void, cargarPendientesCb: () => Promise<void>) {
+    if (!this.requerimientoValidandoStock) return;
+    const todosConStockCero = this.itemsStockValidacion.every(
+      (item: any) => item.cantidadAjustada === 0 || item.estadoStock === 'SIN_STOCK',
+    );
+    if (todosConStockCero) {
+      let msg = 'Todos los items del requerimiento no tienen stock disponible:<br><br>';
+      msg += '<table style="width:100%; font-size:0.85rem; border-collapse:collapse;">';
+      msg += '<tr style="background:#f8f9fa;"><th style="padding:4px; border:1px solid #dee2e6;">Producto</th><th style="padding:4px; border:1px solid #dee2e6; text-align:center;">Solicitado</th><th style="padding:4px; border:1px solid #dee2e6; text-align:center;">Stock</th></tr>';
+      for (const item of this.itemsStockValidacion) {
+        msg += `<tr><td style="padding:4px; border:1px solid #dee2e6;">${item.producto}</td><td style="padding:4px; border:1px solid #dee2e6; text-align:center;">${item.cantidadSolicitada}</td><td style="padding:4px; border:1px solid #dee2e6; text-align:center; color:red;">${item.stockDisponible}</td></tr>`;
+      }
+      msg += '</table><br>¿Qué desea hacer?';
+      const resultado = await this.alertService.showFourButtons(
+        'Sin Stock Disponible', msg, 'warning',
+        'Continuar con Cantidad Solicitada', 'Editar Productos', 'Eliminar Requerimiento', 'Cancelar',
+      );
+      if (resultado === 'button1') {
+        this.requerimientosOmitirValidacion.add(this.requerimientoValidandoStock.idrequerimiento);
+        this.cerrarModalStock();
+        await sincronizarCb();
+        return;
+      } else if (resultado === 'button2') {
+        const idReqEditar = this.requerimientoValidandoStock.idrequerimiento;
+        this.cerrarModalStock();
+        const idx = this.requerimientos.findIndex((r) => r.idrequerimiento === idReqEditar);
+        if (idx >= 0) {
+          editarCb(idx);
+          setTimeout(() => {
+            if (this.detalles?.length > 0) {
+              this.editIndex = 0;
+              const det = this.detalles[0];
+              const prod = this.maestras.items.find((it: any) => it.descripcion === det.producto);
+              this.lineaTemp = { ...det, producto: prod ? { ...prod } : null };
+              this.modalAbierto = true;
+            } else {
+              this.modalAbierto = true;
+            }
+          }, 500);
+        }
+        return;
+      } else if (resultado === 'button3') {
+        try {
+          const idReq = this.requerimientoValidandoStock.idrequerimiento;
+          if (idReq && idReq.length > 10) {
+            const bodyEliminar = {
+              idrequerimiento: idReq, eliminado: 1,
+              dnielimina: this.maestras.usuario?.documentoidentidad || '',
+            };
+            this.requerimientosService.eliminarRequerimiento(bodyEliminar).subscribe({
+              next: async () => {
+                await this.dexieService.requerimientos.delete(this.requerimientoValidandoStock.id);
+                const idx2 = this.requerimientos.findIndex((r) => r.idrequerimiento === idReq);
+                if (idx2 >= 0) this.requerimientos.splice(idx2, 1);
+                await cargarPendientesCb();
+                this.alertService.mostrarInfo('Requerimiento eliminado por falta de stock.');
+                this.cerrarModalStock();
+              },
+              error: () => {
+                this.alertService.showAlert('Error', 'No se pudo eliminar el requerimiento del servidor', 'error');
+                this.cerrarModalStock();
+              },
+            });
+            return;
+          }
+          await this.dexieService.requerimientos.delete(this.requerimientoValidandoStock.id);
+          const idx3 = this.requerimientos.findIndex(
+            (r) => r.idrequerimiento === this.requerimientoValidandoStock.idrequerimiento,
+          );
+          if (idx3 >= 0) this.requerimientos.splice(idx3, 1);
+          await cargarPendientesCb();
+          this.alertService.mostrarInfo('Requerimiento eliminado por falta de stock.');
+          this.cerrarModalStock();
+          return;
+        } catch (error) {
+          this.alertService.showAlert('Error', 'No se pudo eliminar el requerimiento', 'error');
+          this.cerrarModalStock();
+          return;
+        }
+      } else {
+        this.cerrarModalStock();
+        return;
+      }
+    }
+    const detallesReq = [...(this.requerimientoValidandoStock.detalle || [])];
+    for (const itemStock of this.itemsStockValidacion) {
+      const di = detallesReq.findIndex((d: any) => d.codigo === itemStock.codigo);
+      if (di >= 0) detallesReq[di].cantidad = itemStock.cantidadAjustada;
+    }
+    const detallesFiltrados = detallesReq.filter((d: any) => d.cantidad > 0);
+    if (detallesFiltrados.length === 0) {
+      this.alertService.showAlert('Sin Items', 'No quedan items con stock disponible. El requerimiento no puede continuar.', 'error');
+      this.cerrarModalStock();
+      return;
+    }
+    this.requerimientoValidandoStock.detalle = detallesFiltrados;
+    const idReq = this.requerimientoValidandoStock.idrequerimiento;
+    try {
+      await this.dexieService.requerimientos.update(this.requerimientoValidandoStock.id, { detalle: detallesFiltrados, modificado: 1 });
+      const detallesExistentes = await this.dexieService.detalles.where('idrequerimiento').equals(idReq).toArray();
+      if (detallesExistentes.length > 0) {
+        for (const detExistente of detallesExistentes) {
+          if (!detExistente.id) continue;
+          const detAct = detallesFiltrados.find((df: any) => df.codigo === detExistente.codigo);
+          if (detAct) await this.dexieService.detalles.update(detExistente.id, { cantidad: detAct.cantidad });
+          else await this.dexieService.detalles.delete(detExistente.id);
+        }
+      } else {
+        for (const det of detallesFiltrados) await this.dexieService.detalles.add({ ...det, idrequerimiento: idReq });
+      }
+      const idx4 = this.requerimientos.findIndex((r) => r.idrequerimiento === idReq);
+      if (idx4 >= 0) this.requerimientos[idx4].detalle = detallesFiltrados;
+      const eliminados = detallesReq.length - detallesFiltrados.length;
+      this.alertService.mostrarInfo(
+        eliminados > 0 ? `Cantidades ajustadas. ${eliminados} item(s) eliminado(s) por falta de stock.` : 'Cantidades ajustadas segun stock disponible.',
+      );
+    } catch (error) {
+      this.alertService.showAlert('Error', 'No se pudieron ajustar las cantidades', 'error');
+      this.cerrarModalStock();
+      return;
+    }
+    this.cerrarModalStock();
+    await sincronizarCb();
+  }
+
+  async eliminarDesdeSeleccion(dataSelected: any[], lista: any[], contarCb: () => void): Promise<any[]> {
+    const confirmacion = await this.alertService.showConfirm('Confirmación', '¿Desea eliminar este requerimiento?', 'warning');
+    if (!confirmacion) return lista;
+    for (const item of dataSelected) {
+      try {
+        await this.dexieService.deleteRequerimiento(item.idrequerimiento);
+        const index = lista.findIndex((r) => r.idrequerimiento === item.idrequerimiento);
+        if (index !== -1) lista.splice(index, 1);
+        this.alertService.showAlert('Éxito', 'Requerimiento eliminado correctamente.', 'success');
+        contarCb();
+      } catch (error) {
+        this.alertService.showAlert('Error', 'Ocurrió un error al eliminar el requerimiento.', 'error');
+      }
+    }
+    return lista;
+  }
+
+  validarFila(row: DetalleExcelPreview, lineasPreview: DetalleExcelPreview[], activosFijos: any[]): void {
+    row.errores = [];
+    if (!row.codigo) {
+      row.errores.push({ columna: 'Código', mensaje: 'Requerido' });
+    } else {
+      const item = this.maestras.items.find((i: any) => i.codigo === row.codigo);
+      if (!item) row.errores.push({ columna: 'Código', mensaje: 'No existe en almacén' });
+    }
+    if (!row.cantidad || row.cantidad <= 0) row.errores.push({ columna: 'Cantidad', mensaje: 'Debe ser mayor a 0' });
+    if (!row.turno) row.errores.push({ columna: 'Turno', mensaje: 'Requerido' });
+    if (row.activofijo && row.activofijo.toString().trim() !== '') {
+      const activoExiste = activosFijos.some((af: any) => af.activo === row.activofijo);
+      if (!activoExiste) row.errores.push({ columna: 'ActivoFijo', mensaje: 'No existe el activo fijo' });
+    }
+    row.error = row.errores.length > 0;
+  }
+
+  async cargarExcel(file: File, activosFijos: any[]): Promise<{ lineasPreview: DetalleExcelPreview[]; tieneErrores: boolean; puedeGuardar: boolean }> {
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    const lineasPreview: DetalleExcelPreview[] = [];
+    for (const r of rows) {
+      const fila: DetalleExcelPreview = {
+        codigo: r['Cod. Item'],
+        descripcion: r['Descripcion Item'],
+        cantidad: Number(r['Cantidad']),
+        unidadMedida: r['Unidad Medida'] || 'UND',
+        turno: r['Turno'],
+        activofijo: r['ActivoFijo'],
+        proyecto: (this.maestras.proyectoSeleccionado as any)?.proyectoio ?? '',
+        ceco: (this.maestras.cecoSeleccionado as any)?.localname ?? '',
+        errores: [],
+        error: false,
+      };
+      this.validarFila(fila, lineasPreview, activosFijos);
+      lineasPreview.push(fila);
+    }
+    const tieneErrores = lineasPreview.some((r) => r.errores.length > 0);
+    const puedeGuardar = !lineasPreview.some((l) => l.error);
+    return { lineasPreview, tieneErrores, puedeGuardar };
+  }
+
+  guardarDetalleMasivo(lineasPreview: any[], puedeGuardar: boolean): DetalleRequerimiento[] | null {
+    if (!puedeGuardar) {
+      this.alertService.showAlertError('Error', 'Existen errores, corrijalos antes de guardar');
+      return null;
+    }
+    const nuevos: DetalleRequerimiento[] = lineasPreview.map((l) => ({
+      idrequerimiento: '',
+      codigo: l.codigo,
+      producto: l.descripcion,
+      descripcion: l.descripcion,
+      cantidad: l.cantidad,
+      unidadMedida: l.unidadMedida || 'UND',
+      proyecto: l.proyecto,
+      ceco: l.ceco,
+      turno: l.turno,
+      labor: this.maestras.laborSeleccionado?.labor ?? '',
+      esActivoFijo: false,
+      activoFijo: l.activofijo,
+      estado: 0,
+    }));
+    this.detalles.push(...nuevos);
+    this.alertService.mostrarInfo('Carga masiva guardada correctamente');
+    return nuevos;
+  }
+
+  async guardarLinea() {
+    const prod = this.lineaTemp.producto;
+    if (!prod || !prod.codigo) {
+      this.alertService.showAlert('Campo requerido', 'Debes seleccionar un producto.', 'warning'); return;
+    }
+    if (!this.lineaTemp.cantidad || this.lineaTemp.cantidad <= 0) {
+      this.alertService.showAlert('Campo inválido', 'La cantidad debe ser mayor a 0.', 'warning'); return;
+    }
+    const esCompraConsumo = this.TipoSelecionado === 'COMPRA' || this.TipoSelecionado === 'CONSUMO';
+    if (esCompraConsumo && !this.lineaTemp.proyecto?.trim()) {
+      this.alertService.showAlert('Campo requerido', 'Debes seleccionar un proyecto.', 'warning'); return;
+    }
+    if (esCompraConsumo && !this.lineaTemp.ceco?.trim()) {
+      this.alertService.showAlert('Campo requerido', 'Debes seleccionar un CECO.', 'warning'); return;
+    }
+    if (this.TipoSelecionado === 'CONSUMO' && !this.lineaTemp.turno?.trim()) {
+      this.alertService.showAlert('Campo requerido', 'Debes seleccionar un turno.', 'warning'); return;
+    }
+    if (esCompraConsumo && !this.lineaTemp.labor?.trim()) {
+      this.alertService.showAlert('Campo requerido', 'Debes seleccionar una labor.', 'warning'); return;
+    }
+    if (this.lineaTemp.esActivoFijo && !this.lineaTemp.activoFijo) {
+      this.alertService.showAlert('Advertencia', 'Debe ingresar el codigo de activo fijo.', 'warning'); return;
+    }
+    const productoSeleccionado = this.maestras.items.find((it: any) => it.codigo === prod.codigo);
+    const nuevaLinea: DetalleRequerimiento = {
+      idrequerimiento: '',
+      codigo: prod.codigo,
+      producto: productoSeleccionado?.descripcion ?? prod.descripcion ?? '',
+      descripcion: '',
+      cantidad: this.lineaTemp.cantidad,
+      unidadMedida: this.lineaTemp.unidadMedida,
+      proyecto: this.lineaTemp.proyecto,
+      ceco: this.lineaTemp.ceco,
+      turno: this.TipoSelecionado === 'COMPRA' ? '' : this.lineaTemp.turno,
+      labor: this.lineaTemp.labor,
+      esActivoFijo: this.lineaTemp.esActivoFijo,
+      activoFijo: this.lineaTemp.activoFijo,
+      estado: 0,
+    };
+    if (this.editIndex >= 0) {
+      const idExistente = this.detalles[this.editIndex].id!;
+      await this.dexieService.detalles.put({ id: idExistente, ...nuevaLinea });
+      this.detalles[this.editIndex] = { id: idExistente, ...nuevaLinea };
+    } else {
+      delete (this.lineaTemp as any).id;
+      const idNuevo = await this.dexieService.detalles.add({ ...nuevaLinea });
+      this.detalles.push({ id: idNuevo, ...nuevaLinea });
+    }
+    this.cerrarModal();
+    this.alertService.showAlert('Éxito', 'Linea guardada correctamente.', 'success');
+  }
+
+  insertarLineaEnTabla() {
+    if (!this.lineaTemp.producto || !this.lineaTemp.cantidad || this.lineaTemp.cantidad <= 0) {
+      this.alertService.showAlert('Validación', 'Complete los campos obligatorios: Producto y Cantidad', 'warning');
+      return;
+    }
+    const ceco = this.lineaTemp.ceco || this.maestras.cecoSeleccionado?.localname || '';
+    const proyecto = this.lineaTemp.proyecto || (this.maestras.proyectoSeleccionado ? String((this.maestras.proyectoSeleccionado as any).proyectoio) : '');
+    const labor = this.lineaTemp.labor || this.maestras.laborSeleccionado?.labor || '';
+    const turno = this.TipoSelecionado === 'COMPRA' ? '' : (this.lineaTemp.turno || this.maestras.turnoSeleccionado || '');
+    const descripcion = this.obtenerDescripcionProducto(this.lineaTemp.producto) || '';
+    const codigoProducto = (typeof this.lineaTemp.producto === 'string' ? this.lineaTemp.producto : this.lineaTemp.producto?.codigo) || this.lineaTemp.codigo || '';
+    const nuevaLinea: DetalleRequerimiento = {
+      idrequerimiento: '',
+      codigo: codigoProducto,
+      producto: descripcion,
+      descripcion,
+      cantidad: this.lineaTemp.cantidad,
+      unidadMedida: this.lineaTemp.unidadMedida || '',
+      proyecto, ceco, turno, labor,
+      esActivoFijo: this.lineaTemp.esActivoFijo || false,
+      activoFijo: this.lineaTemp.activoFijo || '',
+      estado: 0,
+    };
+    if (this.editingTempIndex >= 0) {
+      this.lineasTemporales[this.editingTempIndex] = nuevaLinea;
+      this.editingTempIndex = -1;
+    } else {
+      this.lineasTemporales.push(nuevaLinea);
+    }
+    this.inicializarVariablesModal();
+    this.lineaTemp = {
+      ...this.lineaTemp,
+      codigo: '',
+      producto: null,
+      descripcion: '',
+      cantidad: 0,
+      unidadMedida: '',
+      esActivoFijo: false,
+      activoFijo: '',
+    };
+  }
+
+  registrarTodasLasLineas() {
+    if (this.lineasTemporales.length === 0) {
+      this.alertService.showAlert('Validación', 'Debe agregar al menos una linea', 'warning');
+      return;
+    }
+    this.lineasTemporales.forEach((linea) => this.detalles.push(linea));
+    this.alertService.showAlert('Éxito', `${this.lineasTemporales.length} linea(s) agregada(s) correctamente`, 'success');
+    this.cerrarModal();
+  }
+
+  onCheckChange(item: any, checked: boolean) {
+    item.checked = checked;
+    this.dataSelected = this.requerimientos.filter((r) => r.checked);
+    this.verBotones = this.dataSelected.length > 0;
+  }
+
+  editarLineaTemporal(index: number): void {
+    const linea = this.lineasTemporales[index];
+    if (!linea) return;
+    this.editingTempIndex = index;
+    this.enModoEdicion = true;
+    let producto: any = null;
+    if ((linea as any).codigo) producto = this.maestras.items.find((it: any) => it.codigo === (linea as any).codigo);
+    if (!producto && linea.producto) producto = this.maestras.items.find((it: any) => it.descripcion === linea.producto);
+    this.lineaTemp = {
+      ...linea,
+      producto: producto ? { ...producto } : (linea.producto ?? null),
+      proyecto: linea.proyecto || '',
+      ceco: linea.ceco || '',
+      labor: linea.labor || '',
+      turno: linea.turno || '',
+    };
+    this.turnoModal = linea.turno || '';
+    this.cecoModal = linea.ceco || '';
+    this.laborModal = linea.labor || '';
+    this.proyectoModal = linea.proyecto || '';
+    this.filteredCecosModal = this.maestras.cecos.filter((c: any) => c.turno === this.turnoModal);
+    const cecoObj = this.maestras.cecos.find((c: any) => c.localname === this.cecoModal);
+    this.filteredLaboresModal = this.maestras.labores.filter((l: any) => l.ceco === (cecoObj?.costcenter || ''));
+    this.filteredProyectosModal = this.maestras.proyectos;
+    this.modalAbierto = true;
+  }
+
+  eliminarLineaTemporal(index: number): void {
+    if (index < 0 || index >= this.lineasTemporales.length) return;
+    this.lineasTemporales.splice(index, 1);
+  }
+
+  limpiarFormularioModal(): void {
+    this.inicializarVariablesModal();
+  }
+
+  async eliminarLinea(index: number): Promise<void> {
+    const detalle = this.detalles[index];
+    const id = detalle?.id;
+    if (id) await this.dexieService.deleteDetalleRequerimiento(id);
+    this.detalles.splice(index, 1);
+    this.requerimiento.detalle = [...this.detalles];
+    if (this.requerimiento.id) {
+      await this.dexieService.requerimientos.update(this.requerimiento.id, { detalle: this.detalles, modificado: 1 });
+    }
+    const idx = this.requerimientos.findIndex((r) => r.idrequerimiento === this.requerimiento.idrequerimiento);
+    if (idx >= 0) this.requerimientos[idx].detalle = [...this.detalles];
+    this.alertService.mostrarInfo('Línea eliminada.');
+  }
+
+  copiarLinea(index: number): void {
+    const detalleOriginal = this.detalles[index];
+    const producto = this.maestras.items?.find((it: any) => it.descripcion === detalleOriginal.producto);
+    this.lineaTemp = { ...detalleOriginal, id: undefined, producto: producto ? { ...producto } : null };
+    this.editIndex = -1;
+    this.modalAbierto = true;
+    this.alertService.mostrarInfo('Línea copiada. Modifica los campos y guarda.');
+  }
+
+  validarFilaSimple(row: DetalleExcelPreview, lineasPreview: DetalleExcelPreview[], activosFijos: any[]): void {
+    this.validarFila(row, lineasPreview, activosFijos);
+  }
+
+  scrollLeft(): void {
+    const container = document.querySelector('.tab-buttons-container') as HTMLElement;
+    if (container) container.scrollLeft -= 200;
+  }
+
+  scrollRight(): void {
+    const container = document.querySelector('.tab-buttons-container') as HTMLElement;
+    if (container) container.scrollLeft += 200;
+  }
+}

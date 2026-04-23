@@ -1,0 +1,280 @@
+<div class="container mt-3">
+      <h2>Requerimientos Activos Menores</h2>
+
+      <!-- ===================== -->
+      <!-- VISTA: LISTA ACTIVO FIJO MENOR -->
+      <!-- ===================== -->
+
+      <div *ngIf="!mostrarFormularioActivoFijoMenor">
+        <div class="p-0 card">
+          <!-- Resumen de contadores -->
+          <div class="requerimientos-tablas">
+            <div>Total: <span class="azul">{{ requerimientosActivoFijoMenor.length }}</span></div>
+            <div>Sin enviar: <span class="rojo">{{ sienvinarActivoFijoMenor }}</span></div>
+            <div>Enviados: <span class="verde">{{ enviadosActivoFijoMenor }}</span></div>
+          </div>
+
+          <div class="p-0 table-content">
+            <div class="table-responsive tabla-item" style="max-height: 60vh; overflow: auto">
+              <p-table
+                #dt
+                [value]="requerimientosActivoFijoMenor"
+                [paginator]="true"
+                [rows]="20"
+                [totalRecords]="requerimientosActivoFijoMenor.length"
+                [loading]="loading"
+                responsiveLayout="scroll"
+                [pageLinks]="5"
+                [showCurrentPageReport]="true"
+                currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
+                styleClass="p-datatable-sm p-datatable"
+              >
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th style="width: 50px">#</th>
+                    <th style="min-width: 20px">Editar</th>
+                    <th style="min-width: 100px">#Req</th>
+                    <th style="min-width: 100px">Fecha</th>
+                    <th style="min-width: 100px">Servicio</th>
+                    <!-- <th style="min-width: 100px">Fundo</th> -->
+                    <th style="min-width: 120px">Almacén</th>
+                    <th style="min-width: 120px">Área</th>
+                    <th style="min-width: 120px">Glosa</th>
+                    <th style="min-width: 100px">Estado</th>
+                    <th style="min-width: 30px">Acciones</th>
+                  </tr>
+                </ng-template>
+
+                <ng-template pTemplate="body" let-c let-i="rowIndex">
+                  <tr [ngClass]="c.estado === 1 ? 'fila-enviada' : 'fila-sin-enviar'">
+                    <td>{{ i + 1 }}</td>
+                    <td>
+                      <button class="btn btn-sm btn-warning me-2" (click)="editarActivoFijoMenor(i)">
+                        <i class="icon-pencil"></i>
+                      </button>
+                    </td>
+                    <td><span class="p-column-title">#Req</span>{{ obtenerIdReq(c.idrequerimiento) }}</td>
+                    <td>{{ c.fecha | date: "dd/MM/yyyy HH:mm:ss" }}</td>
+                    <td>{{ obtenerDescripcionServicio(c.servicio) }}</td>
+                    <!-- <td>{{ getDescripcionFundo(c.idfundo) }}</td> -->
+                    <td>{{ c.idalmacen }}</td>
+                    <td>{{ getDescripcionArea(c.idarea) }}</td>
+                    <td>{{ c.glosa }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="c.estado === 1 ? 'enviado-badge' : 'sinenviar-badge'">
+                        {{ c.estado === 1 ? "Enviado" : "Sin enviar" }}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="btn btn-sm btn-danger" title="Eliminar requerimiento" (click)="eliminarActivoFijoMenor(i)">
+                        <i class="icon-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </ng-template>
+
+                <ng-template pTemplate="emptymessage">
+                  <tr>
+                    <td colspan="9" class="text-center">No hay registros</td>
+                  </tr>
+                </ng-template>
+              </p-table>
+            </div>
+            <!-- Cards mobile -->
+            <div *ngIf="modoItemPrincipal">
+              @for (afm of requerimientosActivoFijoMenor; track $index) {
+                <div class="card cardFor" [ngClass]="{ cerrado: afm.estado, nocerrado: !afm.estado }">
+                  <input type="checkbox" class="checked" [checked]="afm.checked"
+                    (change)="onCheckChangeActivoFijoMenor($event, afm)" />
+                  <div class="contentCard">
+                    <div class="info">
+                      <p class="item-card">
+                        <span [ngClass]="{ 'is-enviado': afm.estado == 1, 'is-noenviado': afm.estado == 0 }">
+                          [{{ afm.estado == 0 ? 'Sin enviar' : 'Enviado' }}]
+                        </span>
+                        &nbsp;&nbsp;&nbsp;<strong>Usuario: {{ afm.nrodocumento }}</strong>
+                      </p>
+                      <p class="item-card"><strong>#Requerimiento: </strong>{{ obtenerIdReq(afm.idrequerimiento) }}</p>
+                      <p class="item-card"><strong>Servicio: </strong>{{ obtenerDescripcionServicio(afm.servicio) }}</p>
+                      <p class="item-card">
+                        <strong>Fecha: </strong>{{ formatoFecha(afm.fecha) }} - <strong>Almacén:</strong> {{ afm.almacen }}
+                      </p>
+                      <p class="item-card"><strong>Glosa: </strong>{{ afm.glosa }}</p>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones de acción (mobile) -->
+        <div class="card cardbuttons">
+          <i class="icon-arrow-left5" (click)="scrollLeft()"></i>
+          <div class="buttons">
+            <button (click)="nuevoActivoFijoMenor()" class="btn btn-success botonCelular">
+              <i class="icon-file-plus"></i>
+            </button>
+            <button *ngIf="modoItemPrincipal" class="btn btn-warning"
+              (click)="editarActivoFijoMenorSelect(dataSelectedActivoFijoMenor)" [disabled]="!verBotonesActivoFijoMenor">
+              <i class="icon icon-pencil"></i>
+            </button>
+            <button *ngIf="modoItemPrincipal" class="btn btn-primary" (click)="sincronizarActivoFijoMenor()">
+              <i class="icon icon-sync"></i> Sincronizar
+            </button>
+            <button *ngIf="modoItemPrincipal" class="btn btn-danger"
+              (click)="eliminarActivoFijoMenorSelect(dataSelectedActivoFijoMenor)" [disabled]="!verBotonesActivoFijoMenor">
+              <i class="icon icon-trash"></i>
+            </button>
+          </div>
+          <i class="icon-arrow-right5" (click)="scrollRight()"></i>
+        </div>
+
+        <!-- Botones desktop -->
+        <div *ngIf="!mostrarFormularioActivoFijoMenor" class="requerimientos-lista">
+          <div class="botonGuardar mb-4 mt-4 d-flex align-items-center justify-content-center" style="gap: 1em">
+            <button (click)="nuevoActivoFijoMenor()" class="btn btn-success botonCelular">
+              <i class="icon-file-plus"></i> Nuevo
+            </button>
+            <button class="btn btn-primary" (click)="sincronizarActivoFijoMenor()">
+              <i class="icon icon-sync"></i> Sincronizar
+            </button>
+            <div *ngIf="sincronizando">
+              <progress [value]="progreso" max="100"></progress>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Capa oscura -->
+      <div class="overlay-global" *ngIf="mostrarFormularioActivoFijoMenor"></div>
+
+      <!-- ===================== -->
+      <!-- FORMULARIO ACTIVO FIJO MENOR -->
+      <!-- ===================== -->
+
+      <div *ngIf="mostrarFormularioActivoFijoMenor" class="formulario mt-4 p-4 shadow rounded">
+        <h2>{{ modoEdicionActivoFijoMenor ? "Editar" : "Nuevo" }} Requerimiento de Activo Menor - {{ TipoSelecionado }}</h2>
+
+        <div class="requerimientos-form">
+          <div class="row g-3">
+            <!-- Prioridad -->
+            <div class="col-6">
+              <label>Prioridad <span class="text-danger">*</span></label>
+              <select class="form-select" [ngModel]="SeleccionaPrioridadActivoFijoMenor"
+                (ngModelChange)="onPrioridadChange($event)">
+                <option value="">Selecciona prioridad</option>
+                <option *ngFor="let opcion of opcionesPrioridadActivoFijoMenor" [value]="opcion.value">{{ opcion.label }}</option>
+              </select>
+            </div>
+
+            <!-- Servicio AFM -->
+            <div class="col-6">
+              <label>Servicio <span class="text-danger">*</span></label>
+              <app-dropdown
+                [data]="serviciosActivoFijoMenor"
+                optionLabel="descripcionLocal"
+                valueField="commodity01"
+                [(ngModel)]="servicioActivoFijoMenor"
+                (ngModelChange)="onServicioAFMenorChange($event)"
+                [required]="true"
+                textShow2="un servicio"
+              ></app-dropdown>
+            </div>
+
+            <!-- Glosa -->
+            <div class="mb-3 col-12">
+              <label class="form-label fw-semibold">Glosa</label>
+              <textarea class="form-control" rows="3" [ngModel]="glosaActivoFijoMenor"
+                (ngModelChange)="onGlosaChange($event)" placeholder="Escriba aquí la glosa..."></textarea>
+            </div>
+
+            <!-- Botón agregar línea -->
+            <div class="d-flex justify-content-end gap-3">
+              <button class="btn btn-primary" (click)="abrirModalActivoFijoMenor()">
+                <i class="bi bi-plus-circle me-1"></i> Agregar línea detalle
+              </button>
+            </div>
+
+            <!-- Tabla de detalle -->
+            <div class="table-responsive" style="max-height: 25vh; overflow: auto">
+              <table class="table table-bordered table-striped align-middle text-center">
+                <thead class="table-light">
+                  <tr>
+                    <th>Editar</th>
+                    <th>Subservicio</th>
+                    <th>Cantidad</th>
+                    <th>CECO</th>
+                    <th>Turno</th>
+                    <th>Labor</th>
+                    <th>Activo Fijo</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of detallesActivoFijoMenor; let i = index">
+                    <td>
+                      <button class="btn btn-sm btn-warning me-2" (click)="editarLineaActivoFijoMenor(i)">
+                        <i class="icon-pencil"></i>
+                      </button>
+                    </td>
+                    <td>{{ $any(item).descripcion }}</td>
+                    <td>{{ item.cantidad }}</td>
+                    <td>{{ item.ceco }}</td>
+                    <td>{{ item.turno }}</td>
+                    <td>{{ item.labor }}</td>
+                    <td>{{ item.activoFijo || 'N/A' }}</td>
+                    <td>
+                      <button class="btn btn-sm btn-danger" (click)="eliminarLineaActivoFijoMenor(i)">
+                        <i class="icon-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="detallesActivoFijoMenor.length === 0">
+                    <td colspan="8" class="text-muted">No hay detalles agregados</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Botones guardar/cancelar -->
+            <div class="mt-3 text-end">
+              <button class="btn btn-success me-2" (click)="guardarActivoFijoMenor()">
+                {{ modoEdicionActivoFijoMenor ? "Actualizar" : "Registrar" }}
+              </button>
+              <button class="btn btn-danger" (click)="cancelarActivoFijoMenor()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+</div>
+
+<!-- Modal detalle línea ACTIVO FIJO MENOR (componente separado) -->
+<app-modal-detalle-activo-menor
+  [visible]="modalAbiertoActivoFijoMenor"
+  [modoEdicion]="activoMenorSvc.activoFijoMenorEditIndex >= 0"
+  [lineaTempActivoFijoMenor]="lineaTempActivoFijoMenor"
+  [subservicioFiltradosAFMenor]="subservicioFiltradosAFMenor"
+  [turnos]="turnos"
+  [modalCecoData]="modalCecoData"
+  [modalLaborData]="modalLaborData"
+  [modalProyectoData]="modalProyectoData"
+  [activosFijosServicioFiltrados]="activosFijosServicioFiltrados"
+  [modalTurnoValue]="modalTurnoValue"
+  [modalTurnoEditable]="modalTurnoEditable"
+  [modalTurnoDisabled]="modalTurnoDisabled"
+  [modalCecoValue]="modalCecoValue"
+  [modalCecoEditable]="modalCecoEditable"
+  [modalCecoDisabled]="modalCecoDisabled"
+  [modalLaborValue]="modalLaborValue"
+  [modalLaborEditable]="modalLaborEditable"
+  [modalLaborDisabled]="modalLaborDisabled"
+  [modalProyectoValue]="modalProyectoValue"
+  [modalProyectoEditable]="modalProyectoEditable"
+  [modalProyectoDisabled]="modalProyectoDisabled"
+  (cerrarEvt)="cerrarModalActivoFijoMenor()"
+  (guardarEvt)="guardarLineaActivoFijoMenor()"
+  (turnoChangeEvt)="onTurnoChangeAFM()"
+  (cecoChangeEvt)="onCecoChangeAFM()"
+  (laborChangeEvt)="onLaborChangeAFM()"
+></app-modal-detalle-activo-menor>

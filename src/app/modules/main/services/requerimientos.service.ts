@@ -201,4 +201,13 @@ export class RequerimientosService {
       throw new Error(error.error?.message || 'Error al validar stock de items');
     }
   }
+
+  registrarRequerimientoCommodityAprobado(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/registrar-requerimiento-commodity-aprobado`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error al registrar requerimiento commodity aprobado');
+    }
+  }
 }
