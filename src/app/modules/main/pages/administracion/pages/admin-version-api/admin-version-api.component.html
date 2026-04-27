@@ -1,0 +1,120 @@
+<div class="version-api-container">
+  <div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="icon icon-git-merge mr-2"></i>
+        Control de versiones — API
+      </h5>
+      <button class="btn btn-sm btn-outline-secondary" (click)="cargarEstado()" [disabled]="loading">
+        <i class="ti ti-refresh"></i> Refrescar
+      </button>
+    </div>
+
+    <div class="card-body">
+      <p class="text-muted mb-4">
+        Selecciona qué API se usará para consultar y registrar las versiones de despliegue de esta aplicación.
+        El cambio aplica solo en este navegador y se mantiene aunque cierres la pestaña.
+      </p>
+
+      <!-- Selector de API -->
+      <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+          <div class="api-card" [class.active]="activeApi === 'LOGISTICA'" (click)="cambiarApi('LOGISTICA')">
+            <div class="api-card-header">
+              <span class="badge" [class.bg-primary]="activeApi === 'LOGISTICA'" [class.bg-secondary]="activeApi !== 'LOGISTICA'">
+                {{ activeApi === 'LOGISTICA' ? 'ACTIVA' : 'Inactiva' }}
+              </span>
+              <h6 class="mt-2 mb-1">API Logística</h6>
+              <small class="text-muted">api_logistica · GET + SQL inline</small>
+            </div>
+            <div class="api-card-body">
+              <code class="d-block">{{ logisticaUrl }}</code>
+              <ul class="features mt-2">
+                <li>GET /current?appName&amp;environment</li>
+                <li>POST / (registro)</li>
+                <li>Tabla AppDeployments en BD logística</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <div class="api-card" [class.active]="activeApi === 'MAESTRA'" (click)="cambiarApi('MAESTRA')">
+            <div class="api-card-header">
+              <span class="badge" [class.bg-primary]="activeApi === 'MAESTRA'" [class.bg-secondary]="activeApi !== 'MAESTRA'">
+                {{ activeApi === 'MAESTRA' ? 'ACTIVA' : 'Inactiva' }}
+              </span>
+              <h6 class="mt-2 mb-1">API Maestra</h6>
+              <small class="text-muted">api_maestros · POST + Stored Procedures</small>
+            </div>
+            <div class="api-card-body">
+              <code class="d-block">{{ maestraUrl }}</code>
+              <ul class="features mt-2">
+                <li>POST /current, /history, /register</li>
+                <li>SP: MAESTRO_obtenerDespliegueActual, ...</li>
+                <li>Centralizada para múltiples apps</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado actual -->
+      <div class="alert alert-info">
+        <strong>Default del entorno:</strong> {{ defaultApi }}<br>
+        <strong>API activa ahora:</strong> {{ apiLabel(activeApi) }}<br>
+        <small class="text-muted">localStorage["version_control_api"] = {{ activeApi }}</small>
+      </div>
+
+      <!-- Estado de versiones -->
+      <h6 class="mt-4 mb-3">Estado de versiones</h6>
+      <div *ngIf="loading" class="text-center py-3">
+        <i class="ti ti-loader spin"></i> Consultando...
+      </div>
+
+      <div *ngIf="!loading" class="row">
+        <div class="col-md-4 mb-2">
+          <div class="version-box">
+            <small class="text-muted">Versión local (bundle)</small>
+            <div class="version-value">{{ localVersion || '—' }}</div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-2">
+          <div class="version-box">
+            <small class="text-muted">Versión IIS (version.json)</small>
+            <div class="version-value">{{ serverVersion || '—' }}</div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-2">
+          <div class="version-box" [class.warning]="audit?.isServerOutOfSyncWithApi">
+            <small class="text-muted">Versión {{ activeApi === 'MAESTRA' ? 'Maestra' : 'Logística' }}</small>
+            <div class="version-value">{{ audit?.apiVersion || '—' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="audit && !loading" class="mt-3">
+        <div class="alert"
+             [class.alert-success]="audit.isFullyAligned"
+             [class.alert-warning]="!audit.isFullyAligned && !!audit.confirmedUpdateVersion"
+             [class.alert-danger]="audit.isServerOutOfSyncWithApi">
+          <strong>Decisión:</strong> {{ audit.promptDecisionReason }}
+        </div>
+
+        <div *ngIf="currentDeployment" class="card mt-3">
+          <div class="card-header bg-light">
+            <small><strong>Último deployment activo en {{ activeApi }}</strong></small>
+          </div>
+          <div class="card-body" style="font-size: 13px;">
+            <div><strong>Version:</strong> {{ currentDeployment.version }}</div>
+            <div><strong>Build time:</strong> {{ currentDeployment.buildTime }}</div>
+            <div><strong>Deployed at:</strong> {{ currentDeployment.deployedAt }}</div>
+            <div><strong>Deployed by:</strong> {{ currentDeployment.deployedBy }}</div>
+            <div><strong>Server:</strong> {{ currentDeployment.serverName }}</div>
+            <div><strong>Notes:</strong> {{ currentDeployment.notes }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

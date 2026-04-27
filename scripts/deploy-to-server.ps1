@@ -5,12 +5,23 @@ param(
     [string]$ServerPath = "\\172.16.20.3\C$\logistica",
     # [string]$ServerPath = "\\172.16.20.3\logistica",
     [string]$LocalBuildPath = "dist\logistica\browser",
-    [string]$DeploymentApiUrl = "https://apilogistica.agroapps.net:7018/api/app-deployments",
+    [ValidateSet('LOGISTICA','MAESTRA')]
+    [string]$VersionApi = "LOGISTICA",
+    [string]$DeploymentApiUrl = "",
     [string]$AppName = "",
     [string]$EnvironmentName = "production",
     [string]$Notes = "Deploy IIS automatizado",
     [switch]$SkipApiRegister
 )
+
+# Resolver la URL de registro segun la API seleccionada
+if ([string]::IsNullOrWhiteSpace($DeploymentApiUrl)) {
+    if ($VersionApi -eq "MAESTRA") {
+        $DeploymentApiUrl = "https://apimaestra.agroapps.net:7003/api/app-deployments/register"
+    } else {
+        $DeploymentApiUrl = "https://apilogistica.agroapps.net:7018/api/app-deployments"
+    }
+}
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  DEPLOY A SERVIDOR DE PRODUCCION" -ForegroundColor Cyan
@@ -60,6 +71,7 @@ Write-Host "Aplicacion: $AppName" -ForegroundColor Cyan
 Write-Host "Ambiente: $EnvironmentName" -ForegroundColor Cyan
 Write-Host "Servidor destino: $ServerPath" -ForegroundColor Cyan
 if (-not $SkipApiRegister) {
+    Write-Host "API de versionado: $VersionApi" -ForegroundColor Cyan
     Write-Host "Registro API: $DeploymentApiUrl" -ForegroundColor Cyan
 }
 $confirm = Read-Host "Deseas continuar con el deploy? (S/N)"

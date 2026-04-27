@@ -108,6 +108,15 @@
               <span class="hide-menu"> Aprobadores</span>
             </a>
           </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-version-api" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-git-merge'></i>
+              </span>
+              <span class="hide-menu"> API Versionado</span>
+            </a>
+          </li>
           <!-- <li
             *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('OPLOGIST') || adminUser?.idPerfil.includes('APLOGIST')"
             class="nav-small-cap">
