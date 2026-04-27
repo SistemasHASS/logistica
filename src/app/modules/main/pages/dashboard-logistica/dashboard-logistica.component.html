@@ -1,0 +1,644 @@
+<div class="dashboard-logistica-container">
+  <!-- Tabs Padre - Por Empresa -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item" *ngFor="let empresa of empresas">
+          <button class="nav-link" [class.active]="empresaSeleccionada?.id === empresa.id" (click)="seleccionarEmpresa(empresa)">
+            {{ empresa.razonsocial }} ({{ getEmpresaSigla(empresa.id) }})
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Título del Dashboard con empresa seleccionada -->
+  <div class="page-header mb-4">
+    <h3 class="mb-0">Dashboard Logística - {{ empresaSeleccionada?.razonsocial }}</h3>
+    <p class="text-muted mb-0">Resumen general de operaciones logísticas para {{ getEmpresaSigla(empresaSeleccionada?.id) }}</p>
+  </div>
+
+  <!-- Tabs Hijos - Navegación Interna (dentro de cada empresa) -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="activeTab === 0" (click)="activeTab = 0">
+            Inicio
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="activeTab === 1" (click)="onTabChange({ index: 1 })">
+            Órdenes de Compra
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="activeTab === 2" (click)="onTabChange({ index: 2 })">
+            Solicitudes
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="activeTab === 3" (click)="onTabChange({ index: 3 })">
+            Proveedores
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="activeTab === 4" (click)="onTabChange({ index: 4 })">
+            Reportes
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Contenido según tab seleccionado -->
+  <div *ngIf="activeTab === 0">
+    <!-- KPIs Principales -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <i class="bx bx-time text-danger fs-3 mb-2"></i>
+          <h6 class="text-muted mb-1">Pendientes</h6>
+          <h3 class="text-danger mb-0">{{ requerimientosPendientes }}</h3>
+          <small class="text-muted">Requerimientos</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <i class="bx bx-check-circle text-success fs-3 mb-2"></i>
+          <h6 class="text-muted mb-1">Consolidados</h6>
+          <h3 class="text-success mb-0">{{ requerimientosConsolidados }}</h3>
+          <small class="text-muted">Requerimientos</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <i class="bx bx-truck text-primary fs-3 mb-2"></i>
+          <h6 class="text-muted mb-1">Despachados</h6>
+          <h3 class="text-primary mb-0">{{ requerimientosDespachados }}</h3>
+          <small class="text-muted">Requerimientos</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <i class="bx bx-task text-warning fs-3 mb-2"></i>
+          <h6 class="text-muted mb-1">Aprobados</h6>
+          <h3 class="text-warning mb-0">{{ requerimientosAprobados }}</h3>
+          <small class="text-muted">Requerimientos</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botones de Acción Rápida -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Acciones Rápidas</h5>
+          <div class="d-flex gap-2 flex-wrap">
+            <button pButton pRipple type="button" class="p-button-info" (click)="nuevaOrdenCompraDirecta()">
+              <i class="bx bx-shopping-bag me-2"></i> Nueva Orden de Compra
+            </button>
+            <button pButton pRipple type="button" class="p-button-success" (click)="nuevaSolicitudMateriales()">
+              <i class="bx bx-file-plus me-2"></i> Solicitud de Materiales
+            </button>
+            <button pButton pRipple type="button" class="p-button-warning" (click)="nuevaOrdenServicio()">
+              <i class="bx bx-briefcase me-2"></i> Orden de Servicio
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráfica y Seguimiento de Órdenes -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Requerimientos por Mes (COMPRA vs CONSUMO)</h5>
+          <p-chart type="bar" [data]="chartData" [options]="chartOptions"></p-chart>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Seguimiento de Órdenes</h5>
+
+          <h6 class="text-muted mb-2">Órdenes de Compra</h6>
+          <div class="progress mb-3" style="height: 25px;">
+            <div class="progress-bar bg-warning" role="progressbar" [style.width.%]="(ordenesCompra.pendiente / (ordenesCompra.pendiente + ordenesCompra.aprobada + ordenesCompra.enTransito + ordenesCompra.recibida)) * 100">
+              Pendiente: {{ ordenesCompra.pendiente }}
+            </div>
+            <div class="progress-bar bg-success" role="progressbar" [style.width.%]="(ordenesCompra.aprobada / (ordenesCompra.pendiente + ordenesCompra.aprobada + ordenesCompra.enTransito + ordenesCompra.recibida)) * 100">
+              Aprobada: {{ ordenesCompra.aprobada }}
+            </div>
+            <div class="progress-bar bg-info" role="progressbar" [style.width.%]="(ordenesCompra.enTransito / (ordenesCompra.pendiente + ordenesCompra.aprobada + ordenesCompra.enTransito + ordenesCompra.recibida)) * 100">
+              En Tránsito: {{ ordenesCompra.enTransito }}
+            </div>
+            <div class="progress-bar bg-primary" role="progressbar" [style.width.%]="(ordenesCompra.recibida / (ordenesCompra.pendiente + ordenesCompra.aprobada + ordenesCompra.enTransito + ordenesCompra.recibida)) * 100">
+              Recibida: {{ ordenesCompra.recibida }}
+            </div>
+          </div>
+
+          <h6 class="text-muted mb-2">Órdenes de Servicio</h6>
+          <div class="progress" style="height: 25px;">
+            <div class="progress-bar bg-warning" role="progressbar" [style.width.%]="(ordenesServicio.pendiente / (ordenesServicio.pendiente + ordenesServicio.aprobada + ordenesServicio.enTransito + ordenesServicio.recibida)) * 100">
+              Pendiente: {{ ordenesServicio.pendiente }}
+            </div>
+            <div class="progress-bar bg-success" role="progressbar" [style.width.%]="(ordenesServicio.aprobada / (ordenesServicio.pendiente + ordenesServicio.aprobada + ordenesServicio.enTransito + ordenesServicio.recibida)) * 100">
+              Aprobada: {{ ordenesServicio.aprobada }}
+            </div>
+            <div class="progress-bar bg-info" role="progressbar" [style.width.%]="(ordenesServicio.enTransito / (ordenesServicio.pendiente + ordenesServicio.aprobada + ordenesServicio.enTransito + ordenesServicio.recibida)) * 100">
+              En Tránsito: {{ ordenesServicio.enTransito }}
+            </div>
+            <div class="progress-bar bg-primary" role="progressbar" [style.width.%]="(ordenesServicio.recibida / (ordenesServicio.pendiente + ordenesServicio.aprobada + ordenesServicio.enTransito + ordenesServicio.recibida)) * 100">
+              Recibida: {{ ordenesServicio.recibida }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entregas de Hoy y Estado de Almacén -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Entregas de Hoy</h5>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover">
+              <thead>
+                <tr>
+                  <th>Hora</th>
+                  <th>Fecha</th>
+                  <th>Estado</th>
+                  <th>Proveedor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let entrega of entregasHoy">
+                  <td>{{ entrega.hora }}</td>
+                  <td>{{ entrega.fecha }}</td>
+                  <td><span class="badge" [ngClass]="obtenerClaseEstado(entrega.estado)">{{ entrega.estado }}</span></td>
+                  <td>{{ entrega.proveedor }}</td>
+                </tr>
+                <tr *ngIf="entregasHoy.length === 0">
+                  <td colspan="4" class="text-center text-muted">No hay entregas hoy</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Estado de Almacén</h5>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="card border-0 bg-success bg-opacity-10 mb-2">
+                <div class="card-body text-center">
+                  <i class="bx bx-check-circle text-success fs-2 mb-1"></i>
+                  <h4 class="text-success mb-0">{{ estadoAlmacen.stockDisponible }}</h4>
+                  <small class="text-muted">Stock Disponible</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-0 bg-warning bg-opacity-10 mb-2">
+                <div class="card-body text-center">
+                  <i class="bx bx-error text-warning fs-2 mb-1"></i>
+                  <h4 class="text-warning mb-0">{{ estadoAlmacen.stockCritico }}</h4>
+                  <small class="text-muted">Stock Crítico</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-0 bg-danger bg-opacity-10 mb-2">
+                <div class="card-body text-center">
+                  <i class="bx bx-x-circle text-danger fs-2 mb-1"></i>
+                  <h4 class="text-danger mb-0">{{ estadoAlmacen.sinStock }}</h4>
+                  <small class="text-muted">Sin Stock</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resumen de Compras -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Resumen de Compras</h5>
+          <div class="row">
+            <div class="col-md-3">
+              <div class="card border-0 bg-light mb-2">
+                <div class="card-body text-center">
+                  <i class="bx bx-file text-primary fs-2 mb-1"></i>
+                  <h4 class="text-primary mb-0">{{ resumenCompras.ordenesEmitidas }}</h4>
+                  <small class="text-muted">Órdenes Emitidas</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card border-0 bg-light mb-2">
+                <div class="card-body text-center">
+                  <i class="bx bx-package text-success fs-2 mb-1"></i>
+                  <h4 class="text-success mb-0">{{ resumenCompras.recepciones }}</h4>
+                  <small class="text-muted">Recepciones</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card border-0 bg-light mb-2">
+                <div class="card-body text-center">
+                  <i class="bx bx-shopping-bag text-info fs-2 mb-1"></i>
+                  <h4 class="text-info mb-0">{{ resumenCompras.totalCompras }}</h4>
+                  <small class="text-muted">Total Compras</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card border-0 bg-light mb-2">
+                <div class="card-body text-center">
+                  <i class="bx bx-dollar text-warning fs-2 mb-1"></i>
+                  <h4 class="text-warning mb-0">{{ formatearMoneda(resumenCompras.montoTotal) }}</h4>
+                  <small class="text-muted">Monto Total</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3">
+            <h6 class="text-muted mb-2">Gastos Mensuales</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover">
+                <thead>
+                  <tr>
+                    <th>Mes</th>
+                    <th>Monto</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let gasto of gastosMensuales">
+                    <td>{{ gasto.mes }}</td>
+                    <td>{{ formatearMoneda(gasto.monto) }}</td>
+                    <td>
+                      <button pButton pRipple type="button" class="p-button-sm p-button-info" (click)="verDetallesGastos(gasto.mes)">
+                        <i class="bx bx-eye me-1"></i> Ver Detalles
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- Contenido para otros tabs -->
+  <div *ngIf="activeTab === 1">
+    <!-- Órdenes de Compra -->
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title mb-4">Órdenes de Compra - {{ empresaSeleccionada?.razonsocial }}</h5>
+            
+            <div class="row mb-4">
+              <div class="col-md-3">
+                <div class="card bg-light border-0">
+                  <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Pendientes</h6>
+                    <h3 class="text-warning mb-0">{{ ordenesCompra.pendiente }}</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-light border-0">
+                  <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Aprobadas</h6>
+                    <h3 class="text-success mb-0">{{ ordenesCompra.aprobada }}</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-light border-0">
+                  <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">En Tránsito</h6>
+                    <h3 class="text-info mb-0">{{ ordenesCompra.enTransito }}</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-light border-0">
+                  <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Recibidas</h6>
+                    <h3 class="text-primary mb-0">{{ ordenesCompra.recibida }}</h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <p-table [value]="ordenesCompraList" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5,10,20]">
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th>N° OC</th>
+                    <th>Proveedor</th>
+                    <th>Fecha</th>
+                    <th>Monto</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-oc>
+                  <tr>
+                    <td>{{ oc.numero }}</td>
+                    <td>{{ oc.proveedor }}</td>
+                    <td>{{ oc.fecha }}</td>
+                    <td>{{ formatearMoneda(oc.monto) }}</td>
+                    <td><span class="badge" [ngClass]="obtenerClaseEstado(oc.estado)">{{ oc.estado }}</span></td>
+                    <td>
+                      <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm" pTooltip="Ver detalle"></button>
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 2">
+    <!-- Solicitudes de Compra -->
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title mb-4">Solicitudes de Compra - {{ empresaSeleccionada?.razonsocial }}</h5>
+            
+            <div class="row mb-4">
+              <div class="col-md-4">
+                <div class="card bg-light border-0">
+                  <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Pendientes</h6>
+                    <h3 class="text-warning mb-0">{{ requerimientosPendientes }}</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card bg-light border-0">
+                  <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Consolidados</h6>
+                    <h3 class="text-success mb-0">{{ requerimientosConsolidados }}</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card bg-light border-0">
+                  <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Aprobados</h6>
+                    <h3 class="text-primary mb-0">{{ requerimientosAprobados }}</h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <p-table [value]="solicitudesCompraList" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5,10,20]">
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th>N° Solicitud</th>
+                    <th>Solicitante</th>
+                    <th>Fecha</th>
+                    <th>Monto Estimado</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-solicitud>
+                  <tr>
+                    <td>{{ solicitud.numero }}</td>
+                    <td>{{ solicitud.solicitante }}</td>
+                    <td>{{ solicitud.fecha }}</td>
+                    <td>{{ formatearMoneda(solicitud.monto) }}</td>
+                    <td><span class="badge" [ngClass]="obtenerClaseEstado(solicitud.estado)">{{ solicitud.estado }}</span></td>
+                    <td>
+                      <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm" pTooltip="Ver detalle"></button>
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 3">
+    <!-- Proveedores -->
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title mb-4">Proveedores - {{ empresaSeleccionada?.razonsocial }}</h5>
+            
+            <div class="row mb-4">
+              <div class="col-md-3">
+                <div class="card bg-light border-0">
+                  <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Total</h6>
+                    <h3 class="text-primary mb-0">45</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-light border-0">
+                  <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Activos</h6>
+                    <h3 class="text-success mb-0">38</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-light border-0">
+                  <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Inactivos</h6>
+                    <h3 class="text-danger mb-0">7</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-light border-0">
+                  <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Nuevos</h6>
+                    <h3 class="text-info mb-0">5</h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <p-table [value]="proveedoresList" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5,10,20]">
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th>RUC</th>
+                    <th>Razón Social</th>
+                    <th>Categoría</th>
+                    <th>Estado</th>
+                    <th>Calificación</th>
+                    <th>Acciones</th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-proveedor>
+                  <tr>
+                    <td>{{ proveedor.ruc }}</td>
+                    <td>{{ proveedor.razonSocial }}</td>
+                    <td>{{ proveedor.categoria }}</td>
+                    <td><span class="badge" [ngClass]="proveedor.estado === 'Activo' ? 'bg-success' : 'bg-danger'">{{ proveedor.estado }}</span></td>
+                    <td>
+                      <div class="text-warning">
+                        <i *ngFor="let star of [].constructor(proveedor.calificacion)" class="bx bxs-star"></i>
+                      </div>
+                    </td>
+                    <td>
+                      <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm" pTooltip="Ver detalle"></button>
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 4">
+    <!-- Reportes -->
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title mb-4">Reportes Avanzados - {{ empresaSeleccionada?.razonsocial }}</h5>
+            
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body text-center">
+                    <i class="bx bx-bar-chart text-primary fs-2 mb-2"></i>
+                    <h6 class="card-title">Reporte de Compras</h6>
+                    <p class="text-muted small">Análisis de compras por período</p>
+                    <button pButton pRipple type="button" label="Generar" class="p-button-sm"></button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body text-center">
+                    <i class="bx bx-package text-success fs-2 mb-2"></i>
+                    <h6 class="card-title">Reporte de Inventario</h6>
+                    <p class="text-muted small">Estado actual del almacén</p>
+                    <button pButton pRipple type="button" label="Generar" class="p-button-sm"></button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body text-center">
+                    <i class="bx bx-building text-info fs-2 mb-2"></i>
+                    <h6 class="card-title">Reporte de Proveedores</h6>
+                    <p class="text-muted small">Evaluación y rendimiento</p>
+                    <button pButton pRipple type="button" label="Generar" class="p-button-sm"></button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body text-center">
+                    <i class="bx bx-time text-warning fs-2 mb-2"></i>
+                    <h6 class="card-title">Reporte de Tiempos</h6>
+                    <p class="text-muted small">Tiempos de entrega y recepción</p>
+                    <button pButton pRipple type="button" label="Generar" class="p-button-sm"></button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body text-center">
+                    <i class="bx bx-dollar text-danger fs-2 mb-2"></i>
+                    <h6 class="card-title">Reporte de Gastos</h6>
+                    <p class="text-muted small">Análisis de gastos mensuales</p>
+                    <button pButton pRipple type="button" label="Generar" class="p-button-sm"></button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body text-center">
+                    <i class="bx bx-file text-secondary fs-2 mb-2"></i>
+                    <h6 class="card-title">Reporte Consolidado</h6>
+                    <p class="text-muted small">Reporte general de logística</p>
+                    <button pButton pRipple type="button" label="Generar" class="p-button-sm"></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Detalles de Gastos -->
+  <p-dialog [(visible)]="modalGastosAbierto" [modal]="true" [closable]="true" [style]="{ width: '80vw' }" header="Detalles de Gastos Mensuales" (onHide)="cerrarModalGastos()">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover">
+        <thead>
+          <tr>
+            <th>Proveedor</th>
+            <th>OC/OS</th>
+            <th>Fecha</th>
+            <th>Monto</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let detalle of gastosSeleccionados">
+            <td>{{ detalle.proveedor }}</td>
+            <td>{{ detalle.oc }}</td>
+            <td>{{ detalle.fecha }}</td>
+            <td>{{ formatearMoneda(detalle.monto) }}</td>
+            <td><span class="badge" [ngClass]="obtenerClaseEstado(detalle.estado)">{{ detalle.estado }}</span></td>
+          </tr>
+          <tr *ngIf="gastosSeleccionados.length === 0">
+            <td colspan="5" class="text-center text-muted">No hay detalles disponibles</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </p-dialog>
+</div>

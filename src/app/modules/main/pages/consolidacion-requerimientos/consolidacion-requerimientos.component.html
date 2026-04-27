@@ -167,27 +167,27 @@
         </button>
       </li>
       <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="activeTab === 'SERVICIO'" (click)="activeTab = 'SERVICIO'" type="button">
+          <i class="bx bx-layers me-1"></i> SERVICIO
+          <span class="badge bg-info ms-1" *ngIf="serviciosPendientes.length > 0">{{ serviciosPendientes.length }}</span>
+        </button>
+      </li>
+      <!-- <li class="nav-item" role="presentation">
         <button class="nav-link" [class.active]="activeTab === 'COMMODITY'" (click)="activeTab = 'COMMODITY'" type="button">
           <i class="icon icon-briefcase me-1"></i> COMMODITY
           <span class="badge bg-warning ms-1" *ngIf="serviciosPendientes.length > 0">{{ serviciosPendientes.length }}</span>
         </button>
-      </li>
+      </li> -->
       <li class="nav-item" role="presentation">
         <button class="nav-link" [class.active]="activeTab === 'ACTIVOFIJO'" (click)="activeTab = 'ACTIVOFIJO'" type="button">
-          <i class="icon icon-cpu me-1"></i> ACTIVO FIJO
+          <i class="bi bi-cpu me-1"></i> ACTIVO FIJO
           <span class="badge bg-primary ms-1" *ngIf="activosFijosPendientes.length > 0">{{ activosFijosPendientes.length }}</span>
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" [class.active]="activeTab === 'ACTIVOMENOR'" (click)="activeTab = 'ACTIVOMENOR'" type="button">
-          <i class="icon icon-tool me-1"></i> ACTIVO MENOR
+          <i class="bx bx-tools me-1"></i> ACTIVO MENOR
           <span class="badge bg-secondary ms-1" *ngIf="activosMenoresPendientes.length > 0">{{ activosMenoresPendientes.length }}</span>
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" [class.active]="activeTab === 'SERVICIO'" (click)="activeTab = 'SERVICIO'" type="button">
-          <i class="icon icon-layers me-1"></i> SERVICIO
-          <span class="badge bg-info ms-1" *ngIf="serviciosPendientes.length > 0">{{ serviciosPendientes.length }}</span>
         </button>
       </li>
       <li class="nav-item" role="presentation">
@@ -773,13 +773,13 @@
           currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
           styleClass="p-datatable-sm p-datatable-striped" [globalFilterFields]="['codigo','usuarioCreador','observaciones']">
           <ng-template pTemplate="caption">
-            <div class="d-flex gap-2 align-items-center mb-2">
+            <!-- <div class="d-flex gap-2 align-items-center mb-2">
               <input type="text" pInputText [(ngModel)]="filtroHistCodigo" placeholder="Buscar por código, usuario u observaciones"
                 style="width: 300px;">
               <p-select [(ngModel)]="filtroHistEstado" [options]="estadoOpciones" optionLabel="label" optionValue="value"
                 placeholder="Estado" style="width: 150px;">
               </p-select>
-            </div>
+            </div> -->
           </ng-template>
           <ng-template pTemplate="header">
             <tr>

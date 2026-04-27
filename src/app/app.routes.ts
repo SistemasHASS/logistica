@@ -44,6 +44,7 @@ import { EvaluacionProveedoresComponent } from './modules/main/pages/evaluacion-
 import { ConsolidacionRequerimientosComponent } from './modules/main/pages/consolidacion-requerimientos/consolidacion-requerimientos.component';
 import { LogisticoGuard } from './modules/auth/guard/logistico.guard';
 import { SaldoRequerimientoComponent } from './modules/main/pages/saldo-requerimiento/saldo-requerimiento.component';
+import { DashboardLogisticaComponent } from './modules/main/pages/dashboard-logistica/dashboard-logistica.component';
 import { AprobacionesAreaComponent } from './modules/main/pages/aprobaciones-area/aprobaciones-area.component';
 import { ReporteAprobacionesAreaComponent } from './modules/main/pages/reporte-aprobaciones-area/reporte-aprobaciones-area.component';
 import { AprobacionesOCComponent } from './modules/main/pages/aprobaciones-oc/aprobaciones-oc.component';
@@ -102,6 +103,7 @@ export const routes: Routes = [
       { path: 'notificaciones', component: NotificacionesListaComponent, canActivate: [OperativoEmpaqueGuard] },
       { path: 'saldo-requerimiento', component: SaldoRequerimientoComponent, canActivate: [OperativoEmpaqueGuard] },
       { path: 'solicitudes-compra', component: SolicitudesCompraComponent, canActivate: [LogisticoGuard] },
+      { path: 'dashboard-logistica', component: DashboardLogisticaComponent, canActivate: [LogisticoGuard] },
       { path: 'dashboard-compras', component: DashboardComprasComponent, canActivate: [LogisticoGuard] },
       { path: 'cotizaciones', component: CotizacionesComponent, canActivate: [LogisticoGuard] },
       { path: 'ordenes-compra', component: OrdenesCompraComponent, canActivate: [LogisticoGuard] },

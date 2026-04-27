@@ -32,12 +32,13 @@ export class VersionService {
 
   async getServerVersion(): Promise<string | null> {
     try {
-      // Lee la versión actualmente publicada en IIS.
+      // Fuerza bypass del service worker y del cache del navegador.
       const timestamp = new Date().getTime();
-      const url = `${this.versionUrl}?t=${timestamp}`;
+      const url = `${this.versionUrl}?ngsw-bypass=true&t=${timestamp}`;
       const response = await fetch(url, { 
         cache: 'no-store',
         headers: {
+          'ngsw-bypass': 'true',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
           'Expires': '0'

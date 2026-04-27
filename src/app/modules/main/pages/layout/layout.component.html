@@ -300,6 +300,15 @@
           </li>
           <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('LOLOGIST')" class="sidebar-item"
             (click)="toggleSidebar()">
+            <a routerLink="./dashboard-logistica" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class="bx bxs-dashboard"></i>
+              </span>
+              <span class="hide-menu"> Dashboard Logística</span>
+            </a>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('LOLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
             <a routerLink="./dashboard-compras" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class="bx bx-bar-chart"></i>

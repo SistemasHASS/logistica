@@ -22,6 +22,17 @@ export class AppComponent implements OnInit, OnDestroy {
   private readonly CHECK_INTERVAL_MINUTES = 10;
   private lastPromptKey = 'last_update_prompt';
   private isUpdateFlowRunning = false;
+  private readonly onWindowFocus = () => {
+    this.runVersionCheck('focus');
+  };
+  private readonly onWindowOnline = () => {
+    this.runVersionCheck('online');
+  };
+  private readonly onVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      this.runVersionCheck('visibility');
+    }
+  };
 
   constructor(
     private swUpdate: SwUpdate,
@@ -42,7 +53,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
     /** 🔄 AUTOMÁTICO */
     if (mode === 'AUTO') {
-      this.checkVersionFromServer();
+      this.registerVersionCheckListeners();
+      this.runVersionCheck('init');
       this.scheduleVersionChecks();
 
       if (this.swUpdate.isEnabled) {
@@ -70,13 +82,31 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.checkInterval) clearInterval(this.checkInterval);
+    this.removeVersionCheckListeners();
   }
 
   /** 🔄 automático */
   scheduleVersionChecks() {
     this.checkInterval = setInterval(() => {
-      this.checkVersionFromServer();
+      this.runVersionCheck('interval');
     }, this.CHECK_INTERVAL_MINUTES * 60 * 1000);
+  }
+
+  registerVersionCheckListeners() {
+    window.addEventListener('focus', this.onWindowFocus);
+    window.addEventListener('online', this.onWindowOnline);
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
+  }
+
+  removeVersionCheckListeners() {
+    window.removeEventListener('focus', this.onWindowFocus);
+    window.removeEventListener('online', this.onWindowOnline);
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
+  }
+
+  runVersionCheck(reason: string) {
+    console.log(`🔄 Ejecutando verificación de versión por: ${reason}`);
+    void this.checkVersionFromServer();
   }
 
   async checkVersionFromServer() {
