@@ -62,7 +62,7 @@
                                     <input type="checkbox" [(ngModel)]="c.checked" (change)="simpleSelected('ITEM')">
                                 </td>
                                 <td>{{ i + 1 }}</td>
-                                <td>{{ obtenerIdReq(c.idrequerimiento)}}</td>
+                                <td>{{ c.idrequerimiento | numeroRequerimiento : c.RequisicionNumero }}</td>
                                 <td>{{ c.fecha | date : "dd/MM/yyyy HH:mm:ss" }}</td>
                                 <td>{{ c.tipo }}</td>
                                 <td>{{ c.idalmacen }}</td>
@@ -361,7 +361,7 @@
         <div class="modal-body">
             <div class="row mb-3" *ngIf="requerimientoSeleccionado">
                 <div class="col-md-4">
-                    <strong>ID Requerimiento:</strong> {{ requerimientoSeleccionado.idrequerimiento }}
+                    <strong>ID Requerimiento:</strong> {{ requerimientoSeleccionado.idrequerimiento | numeroRequerimiento : requerimientoSeleccionado.RequisicionNumero }}
                 </div>
                 <div class="col-md-4">
                     <strong>Creado por: </strong> <span class="text-primary fw-bold">{{ requerimientoSeleccionado.nombreCreador || requerimientoSeleccionado.nrodocumento }}</span>

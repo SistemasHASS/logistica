@@ -369,7 +369,7 @@
                   [checked]="estaSeleccionado(req)"
                   (change)="toggleSeleccionRequerimiento(req)">
               </td>
-              <td>{{ req.idrequerimiento.slice(-12) }}</td>
+              <td>{{ req.idrequerimiento | numeroRequerimiento : $any(req).RequisicionNumero }}</td>
               <td>{{ formatearFecha(req.fecha) }}</td>
               <td>{{ req.idfundo }}</td>
               <td>{{ getNombreAlmacen(req.almacen) }}</td>
@@ -749,7 +749,7 @@
           <tbody>
             <ng-container *ngFor="let req of requerimientosPorAlmacen">
               <tr *ngFor="let det of getDetallesRequerimiento(req); let i = index">
-                <td>{{ req.idrequerimiento }}</td>
+                <td>{{ req.idrequerimiento | numeroRequerimiento : $any(req).RequisicionNumero }}</td>
                 <td>{{ det.codigo }}</td>
                 <td>{{ det.descripcion }}</td>
                 <td class="text-right">{{ det.cantidad }}</td>
@@ -933,7 +933,7 @@
 <div class="modal-overlay" *ngIf="modalDetalleRequerimientoAbierto" (click)="cerrarModalDetalleRequerimiento()">
   <div class="modal-content large" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Detalle de Requerimiento: {{ requerimientoSeleccionado?.idrequerimiento }}</h3>
+      <h3>Detalle de Requerimiento: {{ requerimientoSeleccionado?.idrequerimiento | numeroRequerimiento : $any(requerimientoSeleccionado).RequisicionNumero }}</h3>
       <button class="btn-close" (click)="cerrarModalDetalleRequerimiento()">
         <i class="icon-x"></i>
       </button>

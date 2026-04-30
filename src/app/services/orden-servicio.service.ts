@@ -57,4 +57,9 @@ export class OrdenServicioService {
     const url = `${this.baseUrl}/api/logistica/orden-servicio/registrar-conformidad`;
     return this.http.post<any>(url, conformidad);
   }
+
+  sincronizarOrdenServicio(orden: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/orden-servicio/sincronizar`;
+    return this.http.post<any>(url, orden);
+  }
 }

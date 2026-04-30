@@ -10,9 +10,11 @@ import { Almacen, Empresa, Fundo, Usuario } from '@/app/shared/interfaces/Tables
 import { LogisticaService } from '../../services/logistica.service';
 import moment from 'moment';
 
+import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
+
 @Component({
   selector: 'app-reporte-requerimientos',
-  imports: [CommonModule, FormsModule, TableModule, PaginatorModule],
+  imports: [CommonModule, FormsModule, TableModule, PaginatorModule, NumeroRequerimientoPipe],
   templateUrl: './reporte-requerimientos.html',
   styleUrl: './reporte-requerimientos.scss'
 })

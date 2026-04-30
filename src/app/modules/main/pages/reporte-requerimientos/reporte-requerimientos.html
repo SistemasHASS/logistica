@@ -101,7 +101,7 @@
 
                       <p class="item-card">
                         <strong>#Requerimiento:</strong>
-                        {{ item.idrequerimiento }}
+                        {{ item.idrequerimiento | numeroRequerimiento : item.RequisicionNumero }}
                       </p>
 
                       <p class="item-card">
@@ -167,7 +167,7 @@
         <div class="col-md-6 colResp">
           <div class="detalle-item">
             <label>ID Requerimiento:</label>
-            <span>{{ requerimientoSeleccionado.idrequerimiento }}</span>
+            <span>{{ requerimientoSeleccionado.idrequerimiento | numeroRequerimiento : requerimientoSeleccionado.RequisicionNumero }}</span>
           </div>
         </div>
         

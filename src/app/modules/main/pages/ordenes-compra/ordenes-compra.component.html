@@ -111,6 +111,49 @@
       </div>
     </div>
 
+    <!-- SOLICITUDES DE COMPRA APROBADAS -->
+    <div class="cotizaciones-section" *ngIf="solicitudesCompra.length > 0">
+      <h3>Solicitudes de Compra Aprobadas (Pendientes de Orden)</h3>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Número Solicitud</th>
+              <th>Proveedor</th>
+              <th>Monto Total</th>
+              <th>Fecha Entrega</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let sol of solicitudesCompra; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td><strong>{{ sol.numeroSolicitud }}</strong></td>
+              <td>
+                <div class="proveedor-info">
+                  <strong>{{ $any(sol).nombreProveedor || '-' }}</strong>
+                  <small>RUC: {{ $any(sol).rucProveedor || '-' }}</small>
+                </div>
+              </td>
+              <td class="text-right">
+                <strong>{{ formatearMoneda($any(sol).totalOrden || sol.montoEstimado || 0, sol.moneda) }}</strong>
+              </td>
+              <td class="text-center">{{ formatearFecha($any(sol).fechaEntregaEstimada || sol.fechaRequerida) }}</td>
+              <td class="actions">
+                <button
+                  class="btn btn-sm btn-primary"
+                  (click)="generarDesdeSolicitud(sol)"
+                  title="Generar Orden de Compra y enviar a SPRING">
+                  <i class="icon-file-plus"></i> Generar OC y Enviar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- FILTROS -->
     <div class="filters-section">
       <div class="filter-group">
@@ -214,8 +257,15 @@
                 class="btn btn-sm btn-primary me-2" 
                 (click)="enviarOrdenCompra(orden)"
                 [disabled]="orden.estado !== 'GENERADA'"
-                title="Enviar">
-                <i class="icon-send"></i>
+                title="Marcar como Enviada">
+                <i class="bx-send"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-warning me-2"
+                (click)="sincronizarConSpring(orden)"
+                [disabled]="orden.estado === 'ENVIADA' || orden.estado === 'RECIBIDA_TOTAL' || orden.estado === 'CANCELADA'"
+                title="Enviar a ERP SPRING">
+                <i class="bx bx-cloud-upload"></i> SPRING
               </button>
               <button 
                 class="btn btn-sm btn-success me-2" 
@@ -228,7 +278,7 @@
                 class="btn btn-sm btn-secondary me-2" 
                 (click)="verSeguimiento(orden)"
                 title="Seguimiento">
-                <i class="icon-activity"></i>
+                <i class="bi-activity"></i>
               </button>
               <button 
                 class="btn btn-sm btn-danger" 
@@ -253,6 +303,22 @@
   <div class="content-section" *ngIf="mostrarFormulario && ordenCompra">
     <div class="form-container">
       <h3>{{ modoEdicion ? 'Editar' : 'Nueva' }} Orden de Compra</h3>
+
+      <!-- TABS INTERNOS -->
+      <div class="tabs-container">
+        <button 
+          class="tab-button" 
+          [class.active]="!mostrarTabDistribucion"
+          (click)="mostrarTabDistribucion = false">
+          <i class="icon-file-text"></i> General & Detalle
+        </button>
+        <button 
+          class="tab-button" 
+          [class.active]="mostrarTabDistribucion"
+          (click)="mostrarTabDistribucion = true">
+          <i class="icon-calculator"></i> Distrib. Contable
+        </button>
+      </div>
 
       <!-- INFORMACIÓN GENERAL -->
       <div class="section-title">Información General</div>
@@ -414,11 +480,11 @@
       </div>
 
       <!-- DETALLE DE ITEMS -->
-      <div class="detalle-section">
+      <div class="detalle-section" *ngIf="!mostrarTabDistribucion">
         <div class="section-header">
           <h4>Detalle de Items</h4>
         </div>
-        
+
         <div class="table-wrapper">
           <table class="table">
             <thead>
@@ -461,6 +527,62 @@
                   <strong class="total-amount">{{ formatearMoneda(ordenCompra.montoTotal, ordenCompra.moneda) }}</strong>
                 </td>
                 <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DISTRIBUCIÓN CONTABLE -->
+      <div class="distribucion-section" *ngIf="mostrarTabDistribucion">
+        <div class="section-header">
+          <h4>Distribución Contable & Pagos</h4>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Cuenta</th>
+                <th>Descripción</th>
+                <th>C. Costos</th>
+                <th>Proyecto</th>
+                <th>Monto</th>
+                <th>Referencia</th>
+                <th>C.C. Destino</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let dist of distribucionContable; let i = index">
+                <td>{{ dist.cuenta }}</td>
+                <td>{{ dist.descripcion }}</td>
+                <td>{{ dist.centroCosto }}</td>
+                <td>{{ dist.proyecto }}</td>
+                <td class="text-right"><strong>{{ formatearMoneda(dist.monto, ordenCompra.moneda) }}</strong></td>
+                <td>
+                  <select class="form-control" [(ngModel)]="dist.referencia">
+                    <option value="">-- Seleccione --</option>
+                    <option *ngFor="let gasto of gastosData" [value]="gasto.codigo">{{ gasto.descripcion }}</option>
+                  </select>
+                </td>
+                <td>
+                  <select class="form-control" [(ngModel)]="dist.ccDestino">
+                    <option value="">-- Seleccione --</option>
+                    <option *ngFor="let labor of laborData" [value]="labor.codigo">{{ labor.descripcion }}</option>
+                  </select>
+                </td>
+              </tr>
+              <tr *ngIf="distribucionContable.length === 0">
+                <td colspan="7" class="text-center">
+                  <p class="no-data">No hay distribución contable generada. Agregue items al detalle para generarla automáticamente.</p>
+                </td>
+              </tr>
+              <tr *ngIf="distribucionContable.length > 0" class="total-row">
+                <td colspan="4" class="text-right"><strong>TOTAL DISTRIBUCIÓN:</strong></td>
+                <td class="text-right">
+                  <strong class="total-amount">{{ formatearMoneda(getTotalDistribucion(), ordenCompra.moneda) }}</strong>
+                </td>
+                <td colspan="2"></td>
               </tr>
             </tbody>
           </table>
@@ -646,6 +768,308 @@
       <button class="btn-secondary" (click)="cerrarModalSeguimiento()">
         Cerrar
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: GENERAR OC DESDE SOLICITUD -->
+<div class="modal-overlay" *ngIf="modalGenerarOCAbierto" (click)="cerrarModalGenerarOC()">
+  <div class="modal-container modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h4>Generar Orden de Compra</h4>
+      <button class="btn-close" (click)="cerrarModalGenerarOC()" aria-label="Cerrar">×</button>
+    </div>
+
+    <div class="modal-body" *ngIf="solicitudSeleccionada">
+      <div class="alert alert-info mb-3">
+        <strong>Solicitud:</strong> {{ solicitudSeleccionada.numeroSolicitud }} |
+        <strong>Almacén:</strong> {{ solicitudSeleccionada.almacen }}
+      </div>
+
+      <div class="section-title">Datos del Proveedor</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Código Proveedor <span class="required">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="datosProveedor.proveedor"
+            placeholder="Ej: 20481121966">
+        </div>
+        <div class="form-group">
+          <label>Nombre Proveedor <span class="required">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="datosProveedor.nombreProveedor"
+            placeholder="Razón social del proveedor">
+        </div>
+        <div class="form-group">
+          <label>RUC Proveedor <span class="required">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="datosProveedor.rucProveedor"
+            placeholder="RUC del proveedor">
+        </div>
+        <div class="form-group">
+          <label>Dirección</label>
+          <input type="text" class="form-control" [(ngModel)]="datosProveedor.direccionProveedor"
+            placeholder="Dirección del proveedor">
+        </div>
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input type="text" class="form-control" [(ngModel)]="datosProveedor.telefonoProveedor"
+            placeholder="Teléfono de contacto">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" class="form-control" [(ngModel)]="datosProveedor.emailProveedor"
+            placeholder="Email del proveedor">
+        </div>
+      </div>
+
+      <div class="section-title mt-3">Condiciones Comerciales</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Moneda</label>
+          <select class="form-control" [(ngModel)]="datosProveedor.moneda">
+            <option value="PEN">PEN - Soles</option>
+            <option value="USD">USD - Dólares</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Cambio</label>
+          <input type="number" step="0.001" class="form-control" [(ngModel)]="datosProveedor.tipoCambio">
+        </div>
+        <div class="form-group">
+          <label>Fecha Entrega Estimada <span class="required">*</span></label>
+          <input type="date" class="form-control" [(ngModel)]="datosProveedor.fechaEntregaEstimada">
+        </div>
+        <div class="form-group">
+          <label>Lugar de Entrega</label>
+          <input type="text" class="form-control" [(ngModel)]="datosProveedor.lugarEntrega"
+            placeholder="Almacén o dirección de entrega">
+        </div>
+        <div class="form-group">
+          <label>Forma de Pago</label>
+          <select class="form-control" [(ngModel)]="datosProveedor.formaPago">
+            <option value="001">Contado</option>
+            <option value="002">Crédito 30 días</option>
+            <option value="003">Crédito 60 días</option>
+            <option value="004">Crédito 90 días</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Condiciones de Pago</label>
+          <input type="text" class="form-control" [(ngModel)]="datosProveedor.condicionesPago"
+            placeholder="Ej: 50% adelanto, 50% contra entrega">
+        </div>
+      </div>
+
+      <div class="form-group mt-3">
+        <label>Observaciones</label>
+        <textarea class="form-control" rows="2" [(ngModel)]="datosProveedor.observaciones"
+          placeholder="Observaciones adicionales"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalGenerarOC()">Cancelar</button>
+      <button class="btn-primary" (click)="confirmarGenerarOC()">
+        <i class="icon-file-plus"></i> Generar OC
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE SEGUIMIENTO DE OC -->
+<div class="modal-overlay" *ngIf="modalSeguimientoAbierto" (click)="cerrarModalSeguimiento()">
+  <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Seguimiento de Orden de Compra</h3>
+      <button class="btn-close" (click)="cerrarModalSeguimiento()">&times;</button>
+    </div>
+
+    <div class="modal-body" *ngIf="ordenSeguimiento">
+      <!-- Header del seguimiento -->
+      <div class="seguimiento-header">
+        <h4>{{ ordenSeguimiento.numeroOrden }}</h4>
+        <p class="text-muted">{{ ordenSeguimiento.nombreProveedor }}</p>
+        <p class="text-muted">Monto: S/ {{ ordenSeguimiento.montoTotal ? ordenSeguimiento.montoTotal.toFixed(2) : 0 }}</p>
+      </div>
+
+      <!-- Progress Section -->
+      <div class="progress-section">
+        <div class="progress-header">
+          <span class="progress-label">Avance Total</span>
+          <span class="progress-value">{{ calcularPorcentajeTotal() }}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill"
+               [ngClass]="{ 'bg-success': calcularPorcentajeTotal() === 100, 'bg-warning': calcularPorcentajeTotal() > 0 && calcularPorcentajeTotal() < 100, 'bg-info': calcularPorcentajeTotal() === 0 }"
+               [style.width.%]="calcularPorcentajeTotal()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline de Estados -->
+      <div class="timeline-section">
+        <h5>Flujo de Estados</h5>
+        <div class="timeline">
+          <div class="timeline-item"
+               *ngFor="let estado of estadosSeguimiento; let i = index"
+               [ngClass]="{
+                 'completed': esEstadoCompletado(estado),
+                 'active': ordenSeguimiento.estado === estado,
+                 'pending': !esEstadoCompletado(estado) && ordenSeguimiento.estado !== estado
+               }">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <span class="timeline-title">{{ obtenerTextoEstado(estado) }}</span>
+              <span class="timeline-date" *ngIf="esEstadoCompletado(estado)">
+                {{ obtenerFechaEstado(estado) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hitos Section -->
+      <div class="hitos-section">
+        <div class="section-header">
+          <h5>Hitos del Seguimiento</h5>
+          <button class="btn btn-sm btn-primary" (click)="abrirModalHito()">
+            <i class="bx bx-plus"></i> Agregar Hito
+          </button>
+        </div>
+
+        <div class="hitos-list" *ngIf="(seguimientoActual?.hitos || []).length > 0">
+          <div class="hito-card"
+               *ngFor="let hito of seguimientoActual?.hitos"
+               [ngClass]="{
+                 'hito-completado': hito.estado === 'COMPLETADO',
+                 'hito-en_ejecucion': hito.estado === 'EN_PROCESO',
+                 'hito-pendiente': hito.estado === 'PENDIENTE'
+               }">
+            <div class="hito-header">
+              <div class="hito-info">
+                <h6>{{ hito.descripcion }}</h6>
+                <span class="hito-estado"
+                      [ngClass]="obtenerClaseEstadoHito(hito.estado)">
+                  {{ obtenerTextoEstadoHito(hito.estado) }}
+                </span>
+              </div>
+              <div class="hito-actions">
+                <button class="btn btn-sm btn-info" (click)="abrirModalHito(hito)" title="Editar">
+                  <i class="bx bx-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="eliminarHito(hito)" title="Eliminar">
+                  <i class="bx bx-trash"></i>
+                </button>
+              </div>
+            </div>
+            <div class="hito-progress">
+              <div class="progress-header">
+                <span>Avance</span>
+                <span>{{ hito.porcentajeAvance }}%</span>
+              </div>
+              <div class="progress-bar-sm">
+                <div class="progress-fill" [style.width.%]="hito.porcentajeAvance"></div>
+              </div>
+            </div>
+            <div class="hito-dates" *ngIf="hito.fechaProgramada || hito.fechaEjecucion">
+              <span *ngIf="hito.fechaProgramada">
+                <i class="bx bx-calendar"></i> Programada: {{ formatearFecha(hito.fechaProgramada) }}
+              </span>
+              <span *ngIf="hito.fechaEjecucion">
+                <i class="bx bx-calendar-check"></i> Ejecución: {{ formatearFecha(hito.fechaEjecucion) }}
+              </span>
+            </div>
+            <div class="hito-obs" *ngIf="hito.responsable">
+              Responsable: {{ hito.responsable }}
+            </div>
+          </div>
+        </div>
+
+        <div class="no-hitos" *ngIf="(seguimientoActual?.hitos || []).length === 0">
+          <i class="bx bx-clipboard"></i>
+          <p>No hay hitos registrados</p>
+          <button class="btn btn-primary" (click)="abrirModalHito()">Agregar Primer Hito</button>
+        </div>
+      </div>
+
+      <!-- Botón Sincronizar Hitos -->
+      <div class="hitos-section" *ngIf="(seguimientoActual?.hitos || []).length > 0">
+        <button class="btn btn-outline-primary w-100" (click)="sincronizarHitos()">
+          <i class="bx bx-sync"></i> Sincronizar Hitos
+        </button>
+      </div>
+
+      <!-- Acciones de Estado -->
+      <div class="seguimiento-actions" *ngIf="!isOrdenFinalizada()">
+        <button class="btn btn-primary btn-block" (click)="avanzarEstado()" [disabled]="!puedeAvanzar()">
+          <i class="bx bx-chevron-right"></i> Avanzar a {{ obtenerTextoSiguienteEstado() }}
+        </button>
+      </div>
+
+      <div class="seguimiento-finalizado" *ngIf="isOrdenFinalizada()">
+        <div class="alert alert-info">
+          <i class="bx bx-check-circle"></i>
+          <span>La orden ha finalizado su seguimiento</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalSeguimiento()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE EDICIÓN DE HITO -->
+<div class="modal-overlay" *ngIf="modalHitoAbierto" (click)="cerrarModalHito()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ hitosEnEdicion?.descripcion ? 'Editar Hito' : 'Nuevo Hito' }}</h3>
+      <button class="btn-close" (click)="cerrarModalHito()">&times;</button>
+    </div>
+
+    <div class="modal-body" *ngIf="hitosEnEdicion">
+      <div class="form-group">
+        <label>Descripción <span class="required">*</span></label>
+        <input type="text" class="form-control" [(ngModel)]="hitosEnEdicion.descripcion"
+               placeholder="Descripción del hito">
+      </div>
+
+      <div class="form-group">
+        <label>Estado</label>
+        <select class="form-control" [(ngModel)]="hitosEnEdicion.estado"
+                (change)="onEstadoHitoChange(hitosEnEdicion.estado)">
+          <option *ngFor="let estado of estadosHito" [value]="estado">
+            {{ obtenerTextoEstadoHito(estado) }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Porcentaje de Avance (%)</label>
+        <input type="number" class="form-control" [(ngModel)]="hitosEnEdicion.porcentajeAvance"
+               min="0" max="100" step="5">
+      </div>
+
+      <div class="form-group">
+        <label>Fecha Programada</label>
+        <input type="date" class="form-control" [(ngModel)]="hitosEnEdicion.fechaProgramada">
+      </div>
+
+      <div class="form-group">
+        <label>Responsable</label>
+        <input type="text" class="form-control" [(ngModel)]="hitosEnEdicion.responsable"
+               placeholder="Nombre del responsable">
+      </div>
+
+      <div class="form-group">
+        <label>Observaciones</label>
+        <textarea class="form-control" rows="2" [(ngModel)]="hitosEnEdicion.observaciones"
+                  placeholder="Observaciones adicionales"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalHito()">Cancelar</button>
+      <button class="btn-primary" (click)="guardarHito()">Guardar</button>
     </div>
   </div>
 </div>

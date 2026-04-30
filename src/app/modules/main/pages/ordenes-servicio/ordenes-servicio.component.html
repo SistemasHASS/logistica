@@ -1,147 +1,283 @@
-<div class="container-fluid">
+<div class="ordenes-servicio-container">
+  <!-- HEADER -->
   <div class="page-header">
-    <h2 class="page-title">
-      Órdenes de Servicio
-    </h2>
-    <p class="page-subtitle">Gestión de órdenes de servicio</p>
-  </div>
-
-  <div class="actions-bar" *ngIf="!mostrarFormulario">
-    <button class="btn btn-primary" (click)="nuevaOrdenServicio()">
-      <i class="bx bx-plus"></i> Nueva Orden de Servicio
-    </button>
-    <div class="filters">
-      <select class="form-control" [(ngModel)]="filtroEstado" (ngModelChange)="cargarOrdenes()">
-        <option value="">Todos los estados</option>
-        <option value="GENERADA">Generadas</option>
-        <option value="APROBADA">Aprobadas</option>
-        <option value="ENVIADA">Enviadas</option>
-        <option value="EN_EJECUCION">En Ejecución</option>
-        <option value="FINALIZADA">Finalizadas</option>
-        <option value="CONFORME">Conformes</option>
-      </select>
+    <h2>Órdenes de Servicio</h2>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="nuevaOrdenServicio()">
+        <i class="bx bx-file-plus"></i> Desde Solicitud
+      </button>
+      <button class="btn-primary" (click)="nuevaOrdenServicioDirecta()">
+        <i class="bx bx-plus"></i> Orden Directa
+      </button>
     </div>
   </div>
 
-  <div class="table-container" *ngIf="!mostrarFormulario">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Número</th>
-          <th>Fecha</th>
-          <th>Tipo Servicio</th>
-          <th>Proveedor</th>
-          <th>Monto Total</th>
-          <th>Plazo</th>
-          <th>Estado</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let orden of ordenesServicio">
-          <td><strong>{{ orden.numeroOrden }}</strong></td>
-          <td>{{ formatearFecha(orden.fecha) }}</td>
-          <td>{{ orden.tipoServicio }}</td>
-          <td>{{ orden.nombreProveedor }}</td>
-          <td class="text-right"><strong>S/ {{ formatearMoneda(orden.montoTotal) }}</strong></td>
-          <td>{{ orden.plazoEjecucion }} días</td>
-          <td><span class="badge" [ngClass]="obtenerClaseEstado(orden.estado)">{{ orden.estado }}</span></td>
-          <td class="actions">
-            <button class="btn btn-sm btn-info" (click)="verDetalleOrden(orden)" title="Ver Detalle">
-              <i class="bx bx-show"></i>
-            </button>
-            <button class="btn btn-sm btn-success" *ngIf="orden.estado === 'FINALIZADA'" 
-                    (click)="abrirModalConformidad(orden)" title="Registrar Conformidad">
-              <i class="bx bx-check-circle"></i>
-            </button>
-          </td>
-        </tr>
-        <tr *ngIf="ordenesServicio.length === 0">
-          <td colspan="8" class="text-center">
-            <p class="no-data">No hay órdenes de servicio registradas.</p>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- TABS -->
+  <div class="tabs-container">
+    <button 
+      class="tab-button" 
+      [class.active]="!mostrarFormulario"
+      (click)="mostrarFormulario = false">
+      <i class="bx bx-list-ul"></i> Listado de Órdenes
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="mostrarFormulario"
+      (click)="mostrarFormulario = true">
+      <i class="bx bx-file"></i> {{ ordenActual ? 'Editar' : 'Nueva' }} Orden
+    </button>
   </div>
 
-  <div class="form-container" *ngIf="mostrarFormulario">
-    <div class="form-header">
-      <h3>Nueva Orden de Servicio</h3>
-      <button class="btn-close" (click)="cancelarFormulario()">
-        <i class="bx bx-x"></i>
+  <!-- CONTADORES -->
+  <div class="stats-cards" *ngIf="!mostrarFormulario">
+    <div class="stat-card info">
+      <div class="stat-icon"><i class="bx bx-file"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalGeneradas }}</span>
+        <span class="stat-label">Generadas</span>
+      </div>
+    </div>
+    <div class="stat-card warning">
+      <div class="stat-icon"><i class="bx bx-send"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalEnviadas }}</span>
+        <span class="stat-label">Enviadas</span>
+      </div>
+    </div>
+    <div class="stat-card primary">
+      <div class="stat-icon"><i class="bx bx-check-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalAceptadas }}</span>
+        <span class="stat-label">Aceptadas</span>
+      </div>
+    </div>
+    <div class="stat-card secondary">
+      <div class="stat-icon"><i class="bx bx-play-circle"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalEnEjecucion }}</span>
+        <span class="stat-label">En Ejecución</span>
+      </div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-icon"><i class="bx bx-flag"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalFinalizadas }}</span>
+        <span class="stat-label">Finalizadas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTADO DE ÓRDENES -->
+  <div class="content-section" *ngIf="!mostrarFormulario">
+    <!-- SOLICITUDES APROBADAS PENDIENTES -->
+    <div class="solicitudes-section" *ngIf="solicitudesAprobadas.length > 0">
+      <h3>Solicitudes de Servicio Aprobadas (Pendientes de Orden)</h3>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Número Solicitud</th>
+              <th>Tipo Servicio</th>
+              <th>Descripción</th>
+              <th>Monto Estimado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let sol of solicitudesAprobadas; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td><strong>{{ sol.numeroSolicitud }}</strong></td>
+              <td>{{ sol.tipoServicio }}</td>
+              <td>{{ sol.descripcion }}</td>
+              <td class="text-right">
+                <strong>S/ {{ formatearMoneda(sol.montoEstimado) }}</strong>
+              </td>
+              <td class="actions">
+                <button 
+                  class="btn btn-sm btn-success" 
+                  (click)="seleccionarSolicitud(sol.id)"
+                  title="Generar Orden de Servicio">
+                  <i class="bx bx-file-plus"></i> Generar OS
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Estado:</label>
+        <select [(ngModel)]="filtroEstado" class="form-control" (ngModelChange)="filtrarOrdenes()">
+          <option value="TODAS">Todas</option>
+          <option value="GENERADA">Generada</option>
+          <option value="ENVIADA">Enviada</option>
+          <option value="ACEPTADA">Aceptada</option>
+          <option value="EN_EJECUCION">En Ejecución</option>
+          <option value="FINALIZADA">Finalizada</option>
+          <option value="RECHAZADA">Rechazada</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Proveedor:</label>
+        <input 
+          type="text" 
+          [(ngModel)]="filtroProveedor" 
+          class="form-control"
+          placeholder="Buscar por nombre o RUC..."
+          (input)="filtrarOrdenes()">
+      </div>
+      <div class="filter-group">
+        <label>Tipo Servicio:</label>
+        <input 
+          type="text" 
+          [(ngModel)]="filtroTipoServicio" 
+          class="form-control"
+          placeholder="Tipo de servicio..."
+          (input)="filtrarOrdenes()">
+      </div>
+      <button class="btn-secondary" (click)="limpiarFiltros()">
+        <i class="bx bx-x"></i> Limpiar
       </button>
     </div>
 
-    <div class="form-body">
-      <div class="form-section" *ngIf="!ordenActual">
-        <h4>Seleccionar Solicitud de Servicio Aprobada</h4>
-        <div class="table-container">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Número</th>
-                <th>Tipo</th>
-                <th>Descripción</th>
-                <th>Monto</th>
-                <th>Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let solicitud of solicitudesAprobadas">
-                <td>{{ solicitud.numeroSolicitud }}</td>
-                <td>{{ solicitud.tipoServicio }}</td>
-                <td>{{ solicitud.descripcion }}</td>
-                <td class="text-right">S/ {{ formatearMoneda(solicitud.montoEstimado) }}</td>
-                <td>
-                  <button class="btn btn-sm btn-primary" (click)="seleccionarSolicitud(solicitud.id)">
-                    <i class="bx bx-check"></i> Seleccionar
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+    <!-- TABLA DE ÓRDENES -->
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Número Orden</th>
+            <th>Fecha</th>
+            <th>Tipo Servicio</th>
+            <th>Proveedor</th>
+            <th>Monto Total</th>
+            <th>Plazo</th>
+            <th>Estado</th>
+            <th>Progreso</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let orden of ordenesFiltradas; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>
+              <strong>{{ orden.numeroOrden }}</strong>
+            </td>
+            <td>{{ orden.fecha ? formatearFecha(orden.fecha) : '-' }}</td>
+            <td>{{ orden.tipoServicio }}</td>
+            <td>
+              <div class="proveedor-info">
+                <strong>{{ orden.nombreProveedor }}</strong>
+                <small>RUC: {{ orden.rucProveedor }}</small>
+              </div>
+            </td>
+            <td class="text-right">
+              <strong>S/ {{ formatearMoneda(orden.montoTotal) }}</strong>
+            </td>
+            <td class="text-center">{{ orden.plazoEjecucion }} días</td>
+            <td>
+              <span class="badge" [ngClass]="obtenerClaseEstado(orden.estado)">
+                {{ orden.estado }}
+              </span>
+            </td>
+            <td>
+              <div class="progress-container">
+                <div class="progress-bar">
+                  <div 
+                    class="progress-fill" 
+                    [style.width.%]="orden.porcentajeCompletado || 0">
+                  </div>
+                </div>
+                <span class="progress-text">{{ (orden.porcentajeCompletado || 0).toFixed(0) }}%</span>
+              </div>
+            </td>
+            <td class="actions">
+              <button 
+                class="btn btn-sm btn-info me-2" 
+                (click)="verDetalleOrden(orden)"
+                title="Ver Detalle">
+                <i class="bx bx-show"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-warning me-2" 
+                (click)="verSeguimiento(orden)"
+                title="Ver Seguimiento">
+                <i class="bx bx-timeline"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-success me-2" 
+                *ngIf="orden.estado === 'FINALIZADA'"
+                (click)="abrirModalConformidad(orden)"
+                title="Registrar Conformidad">
+                <i class="bx bx-check-circle"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-primary me-2"
+                *ngIf="orden.estado === 'GENERADA'"
+                (click)="sincronizarOrdenServicio(orden)"
+                title="Enviar a SPRING">
+                <i class="bx bx-transfer"></i> SPRING
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="ordenesFiltradas.length === 0">
+            <td colspan="10" class="text-center">
+              <p class="no-data">No hay órdenes de servicio registradas.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FORMULARIO DE ORDEN DE SERVICIO -->
+  <div class="content-section" *ngIf="mostrarFormulario">
+    <div class="form-container">
+      <h3>Nueva Orden de Servicio</h3>
+
+      <!-- TABS INTERNOS -->
+      <div class="tabs-container">
+        <button
+          class="tab-button"
+          [class.active]="!mostrarTabDistribucion"
+          (click)="mostrarTabDistribucion = false">
+          <i class="icon-file-text"></i> General
+        </button>
+        <button
+          class="tab-button"
+          [class.active]="mostrarTabDistribucion"
+          (click)="mostrarTabDistribucion = true">
+          <i class="icon-calculator"></i> Distrib. Contable
+        </button>
       </div>
 
-      <div *ngIf="ordenActual">
+      <!-- SELECCIÓN DE SOLICITUD (solo visible en General cuando no hay orden actual) -->
+      <div *ngIf="!mostrarTabDistribucion && !ordenActual && tipoOrden === 'DESDE_SOLICITUD'">
         <div class="form-section">
-          <h4>Información General</h4>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Número de Orden:</label>
-              <input type="text" class="form-control" [(ngModel)]="ordenActual.numeroOrden" readonly>
-            </div>
-            <div class="form-group">
-              <label>Fecha:</label>
-              <input type="date" class="form-control" [(ngModel)]="ordenActual.fecha">
-            </div>
-            <div class="form-group">
-              <label>Tipo de Servicio:</label>
-              <input type="text" class="form-control" [(ngModel)]="ordenActual.tipoServicio" readonly>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section" *ngIf="cotizacionesDisponibles.length > 0">
-          <h4>Seleccionar Cotización</h4>
+          <h4>Seleccionar Solicitud de Servicio Aprobada</h4>
           <div class="table-container">
             <table class="table">
               <thead>
                 <tr>
-                  <th>Proveedor</th>
+                  <th>Número</th>
+                  <th>Tipo</th>
+                  <th>Descripción</th>
                   <th>Monto</th>
-                  <th>Plazo</th>
                   <th>Acción</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let cotizacion of cotizacionesDisponibles">
-                  <td>{{ cotizacion.nombreProveedor }}</td>
-                  <td class="text-right">S/ {{ formatearMoneda(cotizacion.montoTotal) }}</td>
-                  <td>{{ cotizacion.plazoEjecucion }} días</td>
+                <tr *ngFor="let solicitud of solicitudesAprobadas">
+                  <td>{{ solicitud.numeroSolicitud }}</td>
+                  <td>{{ solicitud.tipoServicio }}</td>
+                  <td>{{ solicitud.descripcion }}</td>
+                  <td class="text-right">S/ {{ formatearMoneda(solicitud.montoEstimado) }}</td>
                   <td>
-                    <button class="btn btn-sm btn-success" (click)="seleccionarCotizacion(cotizacion.id)">
+                    <button class="btn btn-sm btn-primary" (click)="seleccionarSolicitud(solicitud.id)">
                       <i class="bx bx-check"></i> Seleccionar
                     </button>
                   </td>
@@ -150,84 +286,188 @@
             </table>
           </div>
         </div>
+      </div>
 
-        <div class="form-section">
-          <h4>Datos del Proveedor</h4>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>RUC Proveedor: *</label>
-              <input type="text" class="form-control" [(ngModel)]="ordenActual.rucProveedor">
-            </div>
-            <div class="form-group">
-              <label>Código Proveedor: *</label>
-              <input type="text" class="form-control" [(ngModel)]="ordenActual.proveedor">
-            </div>
-            <div class="form-group">
-              <label>Nombre Proveedor: *</label>
-              <input type="text" class="form-control" [(ngModel)]="ordenActual.nombreProveedor">
-            </div>
-            <div class="form-group">
-              <label>Contacto:</label>
-              <input type="text" class="form-control" [(ngModel)]="ordenActual.contactoProveedor">
-            </div>
-            <div class="form-group">
-              <label>Teléfono:</label>
-              <input type="text" class="form-control" [(ngModel)]="ordenActual.telefonoProveedor">
-            </div>
-            <div class="form-group">
-              <label>Email:</label>
-              <input type="email" class="form-control" [(ngModel)]="ordenActual.emailProveedor">
+      <!-- FORMULARIO GENERAL (visible cuando hay orden actual) -->
+      <div *ngIf="ordenActual">
+        <div class="section-title">Información General</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Número de Orden:</label>
+            <input type="text" class="form-control" [(ngModel)]="ordenActual.numeroOrden" readonly>
+          </div>
+          <div class="form-group">
+            <label>Fecha:</label>
+            <input type="date" class="form-control" [(ngModel)]="ordenActual.fecha">
+          </div>
+          <div class="form-group">
+            <label>Tipo de Servicio:</label>
+            <input type="text" class="form-control" [(ngModel)]="ordenActual.tipoServicio" [readonly]="tipoOrden === 'DESDE_SOLICITUD'">
+          </div>
+          <div class="form-group" *ngIf="tipoOrden === 'DIRECTA'">
+            <label>Descripción del Servicio:</label>
+            <textarea class="form-control" [(ngModel)]="ordenActual.descripcion" rows="2"></textarea>
+          </div>
+        </div>
+
+        <!-- SELECCIÓN DE COTIZACIÓN (solo visible en General) -->
+        <div *ngIf="cotizacionesDisponibles.length > 0 && !mostrarTabDistribucion">
+          <div class="form-section">
+            <h4>Seleccionar Cotización</h4>
+            <div class="table-container">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Proveedor</th>
+                    <th>Monto</th>
+                    <th>Plazo</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let cotizacion of cotizacionesDisponibles">
+                    <td>{{ cotizacion.nombreProveedor }}</td>
+                    <td class="text-right">S/ {{ formatearMoneda(cotizacion.montoTotal) }}</td>
+                    <td>{{ cotizacion.plazoEjecucion }} días</td>
+                    <td>
+                      <button class="btn btn-sm btn-success" (click)="seleccionarCotizacion(cotizacion.id)">
+                        <i class="bx bx-check"></i> Seleccionar
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
-        <div class="form-section">
-          <h4>Condiciones del Servicio</h4>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Fecha Inicio:</label>
-              <input type="date" class="form-control" [(ngModel)]="ordenActual.fechaInicioServicio">
-            </div>
-            <div class="form-group">
-              <label>Fecha Fin:</label>
-              <input type="date" class="form-control" [(ngModel)]="ordenActual.fechaFinServicio">
-            </div>
-            <div class="form-group">
-              <label>Plazo Ejecución (días):</label>
-              <input type="number" class="form-control" [(ngModel)]="ordenActual.plazoEjecucion">
-            </div>
-            <div class="form-group">
-              <label>Monto Total:</label>
-              <input type="number" class="form-control" [(ngModel)]="ordenActual.montoTotal" step="0.01">
-            </div>
-            <div class="form-group">
-              <label>Forma de Pago: *</label>
-              <input type="text" class="form-control" [(ngModel)]="ordenActual.formaPago">
-            </div>
-            <div class="form-group">
-              <label>Condiciones de Pago:</label>
-              <input type="text" class="form-control" [(ngModel)]="ordenActual.condicionesPago">
-            </div>
+        <div class="section-title">Datos del Proveedor</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>RUC Proveedor: <span class="required">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="ordenActual.rucProveedor">
           </div>
           <div class="form-group">
-            <label>Garantía:</label>
-            <textarea class="form-control" [(ngModel)]="ordenActual.garantia" rows="2"></textarea>
+            <label>Código Proveedor: <span class="required">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="ordenActual.proveedor">
           </div>
           <div class="form-group">
-            <label>Penalidades:</label>
-            <textarea class="form-control" [(ngModel)]="ordenActual.penalidades" rows="2"></textarea>
+            <label>Nombre Proveedor: <span class="required">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="ordenActual.nombreProveedor">
           </div>
+          <div class="form-group">
+            <label>Contacto:</label>
+            <input type="text" class="form-control" [(ngModel)]="ordenActual.contactoProveedor">
+          </div>
+          <div class="form-group">
+            <label>Teléfono:</label>
+            <input type="text" class="form-control" [(ngModel)]="ordenActual.telefonoProveedor">
+          </div>
+          <div class="form-group">
+            <label>Email:</label>
+            <input type="email" class="form-control" [(ngModel)]="ordenActual.emailProveedor">
+          </div>
+        </div>
+
+        <div class="section-title">Condiciones del Servicio</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Fecha Inicio:</label>
+            <input type="date" class="form-control" [(ngModel)]="ordenActual.fechaInicioServicio">
+          </div>
+          <div class="form-group">
+            <label>Fecha Fin:</label>
+            <input type="date" class="form-control" [(ngModel)]="ordenActual.fechaFinServicio">
+          </div>
+          <div class="form-group">
+            <label>Plazo Ejecución (días):</label>
+            <input type="number" class="form-control" [(ngModel)]="ordenActual.plazoEjecucion">
+          </div>
+          <div class="form-group">
+            <label>Monto Total:</label>
+            <input type="number" class="form-control" [(ngModel)]="ordenActual.montoTotal" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Forma de Pago: <span class="required">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="ordenActual.formaPago">
+          </div>
+          <div class="form-group">
+            <label>Condiciones de Pago:</label>
+            <input type="text" class="form-control" [(ngModel)]="ordenActual.condicionesPago">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Garantía:</label>
+          <textarea class="form-control" [(ngModel)]="ordenActual.garantia" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Penalidades:</label>
+          <textarea class="form-control" [(ngModel)]="ordenActual.penalidades" rows="2"></textarea>
         </div>
       </div>
-    </div>
 
-    <div class="form-footer" *ngIf="ordenActual">
-      <button class="btn btn-primary" (click)="guardarOrden()">
-        <i class="bx bx-save"></i> Generar Orden
-      </button>
-      <button class="btn btn-secondary" (click)="cancelarFormulario()">
-        <i class="bx bx-x"></i> Cancelar
-      </button>
+      <!-- DISTRIBUCIÓN CONTABLE (visible solo en tab Distribución) -->
+      <div *ngIf="mostrarTabDistribucion && ordenActual">
+        <div class="section-title">Distribución Contable & Pagos</div>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Cuenta</th>
+                <th>Descripción</th>
+                <th>C. Costos</th>
+                <th>Proyecto</th>
+                <th>Monto</th>
+                <th>Referencia</th>
+                <th>C.C. Destino</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let dist of distribucionContable; let i = index">
+                <td>{{ dist.cuenta }}</td>
+                <td>{{ dist.descripcion }}</td>
+                <td>{{ dist.centroCosto }}</td>
+                <td>{{ dist.proyecto }}</td>
+                <td class="text-right"><strong>{{ formatearMoneda(dist.monto) }}</strong></td>
+                <td>
+                  <select class="form-control" [(ngModel)]="dist.referencia">
+                    <option value="">-- Seleccione --</option>
+                    <option *ngFor="let gasto of gastosData" [value]="gasto.codigo">{{ gasto.descripcion }}</option>
+                  </select>
+                </td>
+                <td>
+                  <select class="form-control" [(ngModel)]="dist.ccDestino">
+                    <option value="">-- Seleccione --</option>
+                    <option *ngFor="let labor of laborData" [value]="labor.codigo">{{ labor.descripcion }}</option>
+                  </select>
+                </td>
+              </tr>
+              <tr *ngIf="distribucionContable.length === 0">
+                <td colspan="7" class="text-center">
+                  <p class="no-data">No hay distribución contable generada. Complete el formulario para generarla automáticamente.</p>
+                </td>
+              </tr>
+              <tr *ngIf="distribucionContable.length > 0" class="total-row">
+                <td colspan="4" class="text-right"><strong>TOTAL DISTRIBUCIÓN:</strong></td>
+                <td class="text-right">
+                  <strong class="total-amount">{{ formatearMoneda(getTotalDistribucion()) }}</strong>
+                </td>
+                <td colspan="2"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BOTONES -->
+      <div class="form-actions" *ngIf="ordenActual">
+        <button class="btn-secondary" (click)="cancelarFormulario()">
+          <i class="icon-x"></i> Cancelar
+        </button>
+        <button class="btn-primary" (click)="guardarOrden()">
+          <i class="icon-save"></i> Guardar
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -293,6 +533,228 @@
         <i class="bx bx-save"></i> Registrar Conformidad
       </button>
       <button class="btn btn-secondary" (click)="cerrarModalConformidad()">
+        Cancelar
+      </button>
+    </div>
+  </div>
+  <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="bx bx-timeline"></i>
+        Seguimiento de Orden de Servicio
+      </h3>
+      <button class="btn-close" (click)="cerrarModalSeguimiento()">
+        <i class="bx bx-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="ordenSeguimiento">
+      <!-- Info General -->
+      <div class="seguimiento-header">
+        <div class="row">
+          <div class="col-md-6">
+            <h4>{{ ordenSeguimiento.numeroOrden }}</h4>
+            <p class="text-muted">{{ ordenSeguimiento.descripcion }}</p>
+          </div>
+          <div class="col-md-6 text-right">
+            <span class="badge badge-lg" [ngClass]="obtenerClaseEstado(ordenSeguimiento.estado)">
+              {{ ordenSeguimiento.estado }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Progress Bar Global -->
+        <div class="progress-section">
+          <div class="progress-header">
+            <span class="progress-label">Avance Total</span>
+            <span class="progress-value">{{ calcularPorcentajeTotal() }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="calcularPorcentajeTotal()"
+                 [ngClass]="{
+                   'bg-success': calcularPorcentajeTotal() === 100,
+                   'bg-warning': calcularPorcentajeTotal() > 0 && calcularPorcentajeTotal() < 100,
+                   'bg-info': calcularPorcentajeTotal() === 0
+                 }">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline de Estados -->
+      <div class="timeline-section">
+        <h5>Flujo de Estados</h5>
+        <div class="timeline">
+          <div class="timeline-item"
+               *ngFor="let estado of estadosSeguimiento; let i = index"
+               [ngClass]="{
+                 'completed': esEstadoCompletado(estado),
+                 'active': ordenSeguimiento.estado === estado,
+                 'pending': !esEstadoCompletado(estado) && ordenSeguimiento.estado !== estado
+               }">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <span class="timeline-title">{{ obtenerTextoEstado(estado) }}</span>
+              <span class="timeline-date" *ngIf="esEstadoCompletado(estado)">
+                {{ obtenerFechaEstado(estado) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hitos -->
+      <div class="hitos-section">
+        <div class="section-header">
+          <h5>Hitos del Servicio</h5>
+          <button class="btn btn-sm btn-primary" (click)="abrirModalHito()" *ngIf="!isOrdenFinalizada()">
+            <i class="bx bx-plus"></i> Agregar Hito
+          </button>
+        </div>
+
+        <!-- Lista de Hitos -->
+        <div class="hitos-list" *ngIf="hitosEdicion.length > 0">
+          <div class="hito-card"
+               *ngFor="let hito of hitosEdicion; let i = index"
+               [ngClass]="'hito-' + hito.estado.toLowerCase()">
+            <div class="hito-header">
+              <div class="hito-info">
+                <h6>{{ hito.descripcion }}</h6>
+                <span class="hito-estado badge" [ngClass]="{
+                  'badge-success': hito.estado === 'COMPLETADO',
+                  'badge-warning': hito.estado === 'EN_EJECUCION',
+                  'badge-secondary': hito.estado === 'PENDIENTE'
+                }">
+                  {{ obtenerTextoEstadoHito(hito.estado) }}
+                </span>
+              </div>
+              <div class="hito-actions" *ngIf="!isOrdenFinalizada()">
+                <button class="btn btn-sm btn-light" (click)="abrirModalHito(i)">
+                  <i class="bx bx-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-light" (click)="eliminarHito(i)">
+                  <i class="bx bx-trash"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="hito-progress" *ngIf="hito.estado !== 'PENDIENTE'">
+              <div class="progress-header">
+                <span>Avance</span>
+                <span>{{ hito.porcentajeAvance }}%</span>
+              </div>
+              <div class="progress-bar-sm">
+                <div class="progress-fill" [style.width.%]="hito.porcentajeAvance"></div>
+              </div>
+            </div>
+
+            <div class="hito-dates" *ngIf="hito.fechaInicio || hito.fechaFin">
+              <span *ngIf="hito.fechaInicio">
+                <i class="bx bx-calendar"></i> Inicio: {{ formatearFecha(hito.fechaInicio) }}
+              </span>
+              <span *ngIf="hito.fechaFin">
+                <i class="bx bx-calendar-check"></i> Fin: {{ formatearFecha(hito.fechaFin) }}
+              </span>
+            </div>
+
+            <div class="hito-obs" *ngIf="hito.observaciones">
+              <small>{{ hito.observaciones }}</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="no-hitos" *ngIf="hitosEdicion.length === 0">
+          <i class="bx bx-list-check"></i>
+          <p>No hay hitos definidos</p>
+          <button class="btn btn-sm btn-primary" (click)="abrirModalHito()" *ngIf="!isOrdenFinalizada()">
+            Agregar primer hito
+          </button>
+        </div>
+      </div>
+
+      <!-- Sección de Acciones -->
+      <div class="seguimiento-actions" *ngIf="!isOrdenFinalizada() && puedeAvanzar()">
+        <button class="btn btn-success btn-block" (click)="avanzarEstado()">
+          <i class="bx bx-right-arrow-alt"></i>
+          Avanzar a: {{ obtenerTextoSiguienteEstado() }}
+        </button>
+      </div>
+
+      <div class="seguimiento-finalizado" *ngIf="isOrdenFinalizada()">
+        <div class="alert alert-success">
+          <i class="bx bx-check-circle"></i>
+          Orden {{ ordenSeguimiento.estado === 'FINALIZADA' ? 'Finalizada' : 'Rechazada' }}
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-primary" (click)="sincronizarHitos()" *ngIf="!isOrdenFinalizada()">
+        <i class="bx bx-sync"></i> Sincronizar Hitos
+      </button>
+      <button class="btn btn-secondary" (click)="cerrarModalSeguimiento()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Edición de Hito -->
+<div class="modal-overlay" *ngIf="mostrarModalHito" (click)="cerrarModalHito()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5>{{ editandoHitoIndex >= 0 ? 'Editar Hito' : 'Nuevo Hito' }}</h5>
+      <button class="btn-close" (click)="cerrarModalHito()">
+        <i class="bx bx-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Descripción: *</label>
+        <input type="text" class="form-control" [(ngModel)]="hitoEditando.descripcion" placeholder="Ej: Instalación de equipos">
+      </div>
+
+      <div class="form-group">
+        <label>Estado:</label>
+        <select class="form-control" [(ngModel)]="hitoEditando.estado" (change)="onEstadoHitoChange(hitoEditando)">
+          <option *ngFor="let est of estadosHito" [value]="est.value">{{ est.label }}</option>
+        </select>
+      </div>
+
+      <div class="form-group" *ngIf="hitoEditando.estado !== 'PENDIENTE'">
+        <label>Porcentaje de Avance: {{ hitoEditando.porcentajeAvance }}%</label>
+        <input type="range" class="form-control-range" min="0" max="100" step="5"
+               [(ngModel)]="hitoEditando.porcentajeAvance">
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 form-group">
+          <label>Fecha Inicio:</label>
+          <input type="date" class="form-control" [(ngModel)]="hitoEditando.fechaInicio">
+        </div>
+        <div class="col-md-6 form-group">
+          <label>Fecha Fin:</label>
+          <input type="date" class="form-control" [(ngModel)]="hitoEditando.fechaFin">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Responsable:</label>
+        <input type="text" class="form-control" [(ngModel)]="hitoEditando.responsable" placeholder="Nombre del responsable">
+      </div>
+
+      <div class="form-group">
+        <label>Observaciones:</label>
+        <textarea class="form-control" [(ngModel)]="hitoEditando.observaciones" rows="2"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-primary" (click)="guardarHito()">
+        <i class="bx bx-save"></i> Guardar Hito
+      </button>
+      <button class="btn btn-secondary" (click)="cerrarModalHito()">
         Cancelar
       </button>
     </div>

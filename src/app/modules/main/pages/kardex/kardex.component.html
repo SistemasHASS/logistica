@@ -99,8 +99,8 @@
               <th>Stock Actual</th>
               <th>Stock Mín</th>
               <th>Stock Máx</th>
-              <th>Costo Prom.</th>
-              <th>Valor Total</th>
+              <th *ngIf="puedeVerPrecios">Costo Prom.</th>
+              <th *ngIf="puedeVerPrecios">Valor Total</th>
               <th>Estado</th>
             </tr>
           </ng-template>
@@ -112,8 +112,8 @@
               <td class="text-end"><strong>{{ formatearNumero(item.stockActual) }}</strong></td>
               <td class="text-end">{{ formatearNumero(item.stockMinimo) }}</td>
               <td class="text-end">{{ formatearNumero(item.stockMaximo) }}</td>
-              <td class="text-end">{{ formatearMoneda(item.costoPromedio) }}</td>
-              <td class="text-end"><strong>{{ formatearMoneda(item.valorTotal) }}</strong></td>
+              <td *ngIf="puedeVerPrecios" class="text-end">{{ formatearMoneda(item.costoPromedio) }}</td>
+              <td *ngIf="puedeVerPrecios" class="text-end"><strong>{{ formatearMoneda(item.valorTotal) }}</strong></td>
               <!-- <td class="text-end"><strong>{{ formatearMoneda(item.valorInventario) }}</strong></td> -->
               <td>
                 <p-tag [value]="getEstadoStock(item)" [severity]="getSeverityStock(getEstadoStock(item))"></p-tag>
@@ -186,8 +186,8 @@
               <th>Entrada</th>
               <th>Salida</th>
               <th>Saldo</th>
-              <th>Costo Unit.</th>
-              <th>Costo Total</th>
+              <th *ngIf="puedeVerPrecios">Costo Unit.</th>
+              <th *ngIf="puedeVerPrecios">Costo Total</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-mov>
@@ -202,8 +202,8 @@
               <td class="text-end text-success"><strong>{{ mov.cantidadEntrada > 0 ? formatearNumero(mov.cantidadEntrada) : '-' }}</strong></td>
               <td class="text-end text-danger"><strong>{{ mov.cantidadSalida > 0 ? formatearNumero(mov.cantidadSalida) : '-' }}</strong></td>
               <td class="text-end"><strong>{{ formatearNumero(mov.saldo) }}</strong></td>
-              <td class="text-end">{{ formatearMoneda(mov.costoUnitario) }}</td>
-              <td class="text-end">{{ formatearMoneda(mov.costoTotal) }}</td>
+              <td *ngIf="puedeVerPrecios" class="text-end">{{ formatearMoneda(mov.costoUnitario) }}</td>
+              <td *ngIf="puedeVerPrecios" class="text-end">{{ formatearMoneda(mov.costoTotal) }}</td>
             </tr>
           </ng-template>
           <ng-template pTemplate="emptymessage">
@@ -273,7 +273,7 @@
               <th>Documento Origen</th>
               <th>Almacén</th>
               <th>Items</th>
-              <th>Valor Total</th>
+              <th *ngIf="puedeVerPrecios">Valor Total</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -286,7 +286,7 @@
               <td>{{ trans.tipoDocumentoOrigen }} - {{ trans.numeroDocumentoOrigen }}</td>
               <td>{{ trans.almacenDestino || trans.almacenOrigen }}</td>
               <td class="text-center">{{ trans.totalItems }}</td>
-              <td class="text-end">{{ formatearMoneda(trans.valorTotal) }}</td>
+              <td *ngIf="puedeVerPrecios" class="text-end">{{ formatearMoneda(trans.valorTotal) }}</td>
               <td>
                 <p-tag [value]="trans.estado" [severity]="getSeverityEstado(trans.estado)"></p-tag>
               </td>
@@ -340,7 +340,7 @@
       </div>
       <div class="col-md-3 mb-3">
         <div class="status-card status-card-info">
-          <div class="status-card-number">{{ formatearMoneda(dashboard.indicadores.valorTotal || 0) }}</div>
+          <div class="status-card-number">{{ puedeVerPrecios ? formatearMoneda(dashboard.indicadores.valorTotal || 0) : '---' }}</div>
           <div class="status-card-label">Valor Total</div>
         </div>
       </div>
@@ -388,7 +388,7 @@
                   <th>Item</th>
                   <th>Almacén</th>
                   <th>Stock</th>
-                  <th>Valor</th>
+                  <th *ngIf="puedeVerPrecios">Valor</th>
                 </tr>
               </thead>
               <tbody>
@@ -396,7 +396,7 @@
                   <td>{{ item.codigoItem }}</td>
                   <td>{{ item.almacen }}</td>
                   <td>{{ formatearNumero(item.stockActual) }}</td>
-                  <td class="text-success"><strong>{{ formatearMoneda(item.valorInventario) }}</strong></td>
+                  <td *ngIf="puedeVerPrecios" class="text-success"><strong>{{ formatearMoneda(item.valorInventario) }}</strong></td>
                   <!-- <td class="text-end"><strong>{{ formatearMoneda(item.valorTotal) }}</strong></td> -->
                 </tr>
               </tbody>
@@ -526,8 +526,8 @@
                   <th width="20%">Item</th>
                   <th width="30%">Descripción</th>
                   <th width="10%">Cantidad</th>
-                  <th width="10%">Costo Unit.</th>
-                  <th width="15%">Total</th>
+                  <th *ngIf="puedeVerPrecios" width="10%">Costo Unit.</th>
+                  <th *ngIf="puedeVerPrecios" width="15%">Total</th>
                   <th width="5%">Acciones</th>
                 </tr>
               </thead>
@@ -563,7 +563,7 @@
                       step="0.01"
                       min="0">
                   </td>
-                  <td>
+                  <td *ngIf="puedeVerPrecios">
                     <input 
                       type="number" 
                       pInputText 
@@ -574,7 +574,7 @@
                       step="0.01"
                       min="0">
                   </td>
-                  <td>
+                  <td *ngIf="puedeVerPrecios">
                     <span class="d-block pt-2 fw-bold">{{ formatearMoneda(det.costoTotal) }}</span>
                   </td>
                   <td>
@@ -592,7 +592,7 @@
             </table>
           </div>
           
-          <div class="row mt-3" *ngIf="nuevaTransaccion.detalles.length > 0">
+          <div class="row mt-3" *ngIf="nuevaTransaccion.detalles.length > 0 && puedeVerPrecios">
             <div class="col-md-4 offset-md-8">
               <div class="card bg-light">
                 <div class="card-body">

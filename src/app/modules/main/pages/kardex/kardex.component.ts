@@ -213,6 +213,10 @@ export class KardexComponent implements OnInit {
     this.usuario = await this.userService.getUsuario();
   }
 
+  get puedeVerPrecios(): boolean {
+    return !this.usuario?.idrol?.includes('ALLOGIST');
+  }
+
   async cargarDatos() {
     this.loading = true;
     try {

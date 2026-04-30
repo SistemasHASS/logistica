@@ -13,6 +13,7 @@ import { ChartModule } from 'primeng/chart';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
+import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
 
 @Component({
   selector: 'app-dashboard-logistica',
@@ -24,7 +25,8 @@ import { ButtonModule } from 'primeng/button';
     ButtonModule,
     CardModule,
     DialogModule,
-    ChartModule
+    ChartModule,
+    NumeroRequerimientoPipe
   ],
   templateUrl: './dashboard-logistica.component.html',
   styleUrls: ['./dashboard-logistica.component.scss']
@@ -109,6 +111,17 @@ export class DashboardLogisticaComponent implements OnInit {
   // Modal de gastos mensuales
   modalGastosAbierto: boolean = false;
   gastosSeleccionados: any[] = [];
+
+  // Modal de requerimientos por estado (al hacer click en KPIs)
+  modalRequerimientosAbierto: boolean = false;
+  requerimientosLista: any[] = [];
+  tituloModalRequerimientos: string = '';
+  estadoSeleccionadoModal: string = '';
+  loadingModalRequerimientos: boolean = false;
+  requerimientoExpandido: number | null = null;
+  // Paginación del modal
+  paginaActualModal: number = 1;
+  itemsPorPaginaModal: number = 10;
 
   // Navegación interna
   activeTab: number = 0;
@@ -708,6 +721,18 @@ export class DashboardLogisticaComponent implements OnInit {
     this.router.navigate(['main', 'ordenes-servicio']);
   }
 
+  irConsolidarRequerimientos() {
+    this.router.navigate(['main', 'consolidacion-requerimientos']);
+  }
+
+  irCotizaciones() {
+    this.router.navigate(['main', 'cotizaciones']);
+  }
+
+  irKardex() {
+    this.router.navigate(['main', 'kardex']);
+  }
+
   // Modal de gastos mensuales
   verDetallesGastos(mes: string) {
     const gastosMes = this.gastosMensuales.find(g => g.mes === mes);
@@ -720,6 +745,108 @@ export class DashboardLogisticaComponent implements OnInit {
   cerrarModalGastos() {
     this.modalGastosAbierto = false;
     this.gastosSeleccionados = [];
+  }
+
+  /**
+   * Abre el modal con la lista de requerimientos filtrados por estado.
+   * Se llama al hacer click en cada tarjeta KPI (Pendientes, Consolidados, Despachados, Aprobados).
+   * @param estado Estado del requerimiento: PENDIENTE | CONSOLIDADO | DESPACHADO | APROBADO
+   */
+  async abrirModalRequerimientos(estado: string) {
+    try {
+      this.estadoSeleccionadoModal = estado;
+      this.tituloModalRequerimientos = `Requerimientos ${this.formatearTituloEstado(estado)}`;
+      this.modalRequerimientosAbierto = true;
+      this.loadingModalRequerimientos = true;
+      this.requerimientosLista = [];
+      this.requerimientoExpandido = null;
+      this.paginaActualModal = 1;
+
+      const idEmpresa = this.empresaSeleccionada?.ruc || this.empresaSeleccionada?.id || '000010';
+      const payload = {
+        idEmpresa: idEmpresa,
+        estado: estado,
+        fechaInicio: this.obtenerFechaInicio(),
+        fechaFin: this.obtenerFechaFin()
+      };
+
+      const response: any = await this.dashboardLogisticaService
+        .obtenerRequerimientosPorEstado(payload)
+        .toPromise();
+
+      // El SP devuelve un array JSON o null. Parsear detalles si vienen como string.
+      const lista = Array.isArray(response) ? response : (response ?? []);
+      this.requerimientosLista = lista.map((r: any) => ({
+        ...r,
+        detalles: typeof r.detalles === 'string' ? JSON.parse(r.detalles) : (r.detalles || [])
+      }));
+    } catch (error) {
+      console.error('Error al obtener requerimientos por estado:', error);
+      this.requerimientosLista = [];
+      this.alertService.showAlert('Error', 'Error al cargar la lista de requerimientos.', 'error');
+    } finally {
+      this.loadingModalRequerimientos = false;
+    }
+  }
+
+  cerrarModalRequerimientos() {
+    this.modalRequerimientosAbierto = false;
+    this.requerimientosLista = [];
+    this.estadoSeleccionadoModal = '';
+    this.tituloModalRequerimientos = '';
+    this.requerimientoExpandido = null;
+    this.paginaActualModal = 1;
+  }
+
+  toggleDetalleRequerimiento(idRequerimiento: number) {
+    this.requerimientoExpandido = this.requerimientoExpandido === idRequerimiento ? null : idRequerimiento;
+  }
+
+  // ===== Paginación del modal de requerimientos =====
+  get totalPaginasModal(): number {
+    return Math.max(1, Math.ceil(this.requerimientosLista.length / this.itemsPorPaginaModal));
+  }
+
+  get requerimientosPaginados(): any[] {
+    const start = (this.paginaActualModal - 1) * this.itemsPorPaginaModal;
+    return this.requerimientosLista.slice(start, start + this.itemsPorPaginaModal);
+  }
+
+  get rangoVisibleModal(): { desde: number; hasta: number } {
+    const total = this.requerimientosLista.length;
+    if (total === 0) return { desde: 0, hasta: 0 };
+    const desde = (this.paginaActualModal - 1) * this.itemsPorPaginaModal + 1;
+    const hasta = Math.min(this.paginaActualModal * this.itemsPorPaginaModal, total);
+    return { desde, hasta };
+  }
+
+  irAPaginaModal(pagina: number) {
+    if (pagina < 1 || pagina > this.totalPaginasModal) return;
+    this.paginaActualModal = pagina;
+    this.requerimientoExpandido = null;
+  }
+
+  /** Devuelve los números de página a mostrar (máx. 5 visibles, con la actual centrada). */
+  get paginasVisiblesModal(): number[] {
+    const total = this.totalPaginasModal;
+    const actual = this.paginaActualModal;
+    const ventana = 5;
+    let start = Math.max(1, actual - Math.floor(ventana / 2));
+    let end = Math.min(total, start + ventana - 1);
+    if (end - start + 1 < ventana) start = Math.max(1, end - ventana + 1);
+    const paginas: number[] = [];
+    for (let i = start; i <= end; i++) paginas.push(i);
+    return paginas;
+  }
+
+  private formatearTituloEstado(estado: string): string {
+    const mapa: { [key: string]: string } = {
+      PENDIENTE: 'Pendientes',
+      CONSOLIDADO: 'Consolidados',
+      DESPACHADO: 'Despachados',
+      APROBADO: 'Aprobados'
+    };
+    return mapa[estado] || estado;
   }
 
   // Navegación interna de tabs hijos
@@ -751,8 +878,25 @@ export class DashboardLogisticaComponent implements OnInit {
       'Recibida': 'badge-primary',
       'stockDisponible': 'badge-success',
       'stockCritico': 'badge-warning',
-      'sinStock': 'badge-danger'
+      'sinStock': 'badge-danger',
+      // Estados de requerimientos
+      'PENDIENTE': 'bg-danger',
+      'CONSOLIDADO': 'bg-success',
+      'DESPACHADO': 'bg-primary',
+      'APROBADO': 'bg-warning text-dark',
+      'RECHAZADO': 'bg-secondary',
+      'ANULADO': 'bg-dark'
     };
     return clases[estado] || 'badge-secondary';
+  }
+
+  /**
+   * Suma total de ítems entre todos los requerimientos del modal.
+   */
+  getTotalItemsRequerimientos(): number {
+    return this.requerimientosLista.reduce(
+      (acc, r) => acc + (Number(r.totalItems) || 0),
+      0
+    );
   }
 }

@@ -26,6 +26,8 @@ import {
   ProcesarAprobacionRequest
 } from "@/app/interfaces/aprobaciones.interface";
 
+import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
+
 @Component({
   selector: 'app-aprobaciones-area',
   standalone: true,
@@ -39,7 +41,8 @@ import {
     CardModule,
     ProgressBarModule,
     CheckboxModule,
-      Checkbox
+    Checkbox,
+    NumeroRequerimientoPipe,
 ],
   templateUrl: './aprobaciones-area.component.html',
   styleUrl: './aprobaciones-area.component.scss',

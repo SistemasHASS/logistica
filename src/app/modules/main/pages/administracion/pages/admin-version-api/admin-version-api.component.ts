@@ -32,10 +32,17 @@ export class AdminVersionApiComponent implements OnInit, OnDestroy {
 
   // Datos de la prueba en vivo
   loading = false;
+  loadingHistory = false;
   localVersion = '';
   serverVersion: string | null = null;
   audit: VersionAuditSnapshot | null = null;
   currentDeployment: DeploymentRecord | null = null;
+
+  // Historial de deployments
+  history: DeploymentRecord[] = [];
+  historyTake = 20;
+  historyTakeOptions = [10, 20, 50, 100, 200];
+  expandedId: number | null = null;
 
   private sub?: Subscription;
 
@@ -89,11 +96,81 @@ export class AdminVersionApiComponent implements OnInit, OnDestroy {
       this.serverVersion = await this.versionSvc.getServerVersion();
       this.currentDeployment = await this.deploymentSvc.getCurrentDeployment();
       this.audit = await this.deploymentSvc.buildVersionAudit(this.localVersion, this.serverVersion);
+      await this.cargarHistorial();
     } catch (err) {
       console.error('Error cargando estado:', err);
     } finally {
       this.loading = false;
     }
+  }
+
+  async cargarHistorial() {
+    this.loadingHistory = true;
+    try {
+      this.history = await this.deploymentSvc.getDeploymentHistory(this.historyTake);
+    } catch (err) {
+      console.error('Error cargando historial:', err);
+      this.history = [];
+    } finally {
+      this.loadingHistory = false;
+    }
+  }
+
+  toggleExpand(id: number | undefined) {
+    if (id == null) return;
+    this.expandedId = this.expandedId === id ? null : id;
+  }
+
+  trackById(_: number, item: DeploymentRecord): any {
+    return item.id ?? item.version;
+  }
+
+  /** Calcula cuanto tiempo ha pasado desde la fecha (ej. "hace 3 dias"). */
+  tiempoTranscurrido(fecha: string | null | undefined): string {
+    if (!fecha) return '-';
+    const d = new Date(fecha);
+    if (isNaN(d.getTime())) return '-';
+    const ms = Date.now() - d.getTime();
+    const seg = Math.floor(ms / 1000);
+    const min = Math.floor(seg / 60);
+    const hor = Math.floor(min / 60);
+    const dia = Math.floor(hor / 24);
+    if (dia > 0) return `hace ${dia} día${dia > 1 ? 's' : ''}`;
+    if (hor > 0) return `hace ${hor} h`;
+    if (min > 0) return `hace ${min} min`;
+    if (seg > 0) return `hace ${seg} s`;
+    return 'ahora mismo';
+  }
+
+  exportarHistorialCSV() {
+    if (!this.history.length) return;
+    const headers = [
+      'Id', 'AppName', 'Environment', 'Version', 'BuildTime',
+      'DeployedAt', 'DeployedBy', 'ServerName', 'Notes', 'IsActive'
+    ];
+    const rows = this.history.map(d => [
+      d.id ?? '',
+      d.appName ?? '',
+      d.environment ?? '',
+      d.version ?? '',
+      d.buildTime ?? '',
+      d.deployedAt ?? '',
+      d.deployedBy ?? '',
+      d.serverName ?? '',
+      (d.notes ?? '').replace(/"/g, '""'),
+      d.isActive ? 'true' : 'false'
+    ]);
+    const csv = [
+      headers.join(','),
+      ...rows.map(r => r.map(c => `"${c}"`).join(','))
+    ].join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `historial-versiones-${this.activeApi}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   apiLabel(api: VersionControlApi): string {

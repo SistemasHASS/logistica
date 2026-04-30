@@ -6,12 +6,13 @@ import { DropdownComponent } from '../../../../components/dropdown/dropdown.comp
 import { ModalDetalleCommodityComponent } from '../modal-detalle-commodity/modal-detalle-commodity.component';
 import { RequerimientosCommodityService } from '../../services/requerimientos-commodity.service';
 import { RequerimientosMaestrasService } from '../../services/requerimientos-maestras.service';
+import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
 
 @Component({
   selector: 'app-tab-commodity',
   standalone: true,
   styleUrls: ['../../requerimientos.component.scss'],
-  imports: [CommonModule, FormsModule, DatePipe, TableModule, DropdownComponent, ModalDetalleCommodityComponent],
+  imports: [CommonModule, FormsModule, DatePipe, TableModule, DropdownComponent, ModalDetalleCommodityComponent, NumeroRequerimientoPipe],
   templateUrl: './tab-commodity.component.html',
 })
 export class TabCommodityComponent {

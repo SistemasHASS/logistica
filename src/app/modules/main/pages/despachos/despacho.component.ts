@@ -21,6 +21,7 @@ import { TableModule } from 'primeng/table';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ViewChild } from '@angular/core';
 import { Table } from 'primeng/table';
+import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
 
 declare var bootstrap: any;
 
@@ -33,7 +34,7 @@ export enum EstadoRequerimiento {
 @Component({
   selector: 'app-despachos',
   standalone: true,
-  imports: [CommonModule, FormsModule, TableModule, DatePickerModule],
+  imports: [CommonModule, FormsModule, TableModule, DatePickerModule, NumeroRequerimientoPipe],
   templateUrl: './despacho.component.html',
   styleUrls: ['despacho.component.scss'],
 })

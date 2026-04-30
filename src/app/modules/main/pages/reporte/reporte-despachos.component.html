@@ -100,7 +100,7 @@
                 <th style="width:50px">#</th>
                 <th style="min-width:120px" pSortableColumn="numeroNS">N° NS</th>
                 <th style="min-width:120px" pSortableColumn="numeroRequisicion">N° Requisición</th>
-                <th style="min-width:120px" pSortableColumn="idrequerimiento">ID Requerimiento</th>
+                <!-- <th style="min-width:120px" pSortableColumn="idrequerimiento">ID Requerimiento</th> -->
                 <th style="min-width:120px" pSortableColumn="fechaDespacho">Fecha Despacho</th>
                 <th style="min-width:100px" pSortableColumn="almacen">Almacén</th>
                 <th style="min-width:150px" pSortableColumn="usuario">Usuario</th>
@@ -114,7 +114,7 @@
                 <td>{{ i + 1 }}</td>
                 <td><strong>{{ c.numeroNS }}</strong></td>
                 <td>{{ c.numeroRequisicion }}</td>
-                <td>{{ c.idrequerimiento }}</td>
+                <!-- <td>{{ c.idrequerimiento | numeroRequerimiento : c.numeroRequisicion }}</td> -->
                 <td>{{ c.fechaDespacho | date: 'dd/MM/yyyy HH:mm' }}</td>
                 <td>{{ c.almacen }}</td>
                 <td>{{ c.usuario }}</td>

@@ -117,4 +117,104 @@
       </div>
     </div>
   </div>
+
+  <!-- Historial completo de deployments -->
+  <div class="card shadow-sm mt-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h6 class="mb-0">
+          <i class="ti ti-history mr-2"></i>
+          Historial de despliegues
+        </h6>
+        <small class="text-muted">Registros almacenados en {{ apiLabel(activeApi) }}</small>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <label class="mb-0 mr-1" style="font-size: 13px;">Mostrar:</label>
+        <select class="form-control form-control-sm" style="width: 80px;"
+                [(ngModel)]="historyTake" (change)="cargarHistorial()">
+          <option *ngFor="let n of historyTakeOptions" [ngValue]="n">{{ n }}</option>
+        </select>
+        <button class="btn btn-sm btn-outline-primary" (click)="cargarHistorial()" [disabled]="loadingHistory">
+          <i class="ti ti-refresh"></i> Refrescar
+        </button>
+        <button class="btn btn-sm btn-outline-success" (click)="exportarHistorialCSV()" [disabled]="!history.length">
+          <i class="ti ti-download"></i> CSV
+        </button>
+      </div>
+    </div>
+
+    <div class="card-body p-0">
+      <div *ngIf="loadingHistory" class="text-center py-4">
+        <i class="ti ti-loader spin"></i> Cargando historial...
+      </div>
+
+      <div *ngIf="!loadingHistory && !history.length" class="text-center py-4 text-muted">
+        <i class="ti ti-inbox"></i> No hay registros en el historial.
+      </div>
+
+      <div *ngIf="!loadingHistory && history.length" class="table-responsive">
+        <table class="table table-hover table-sm mb-0 history-table">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 30px;"></th>
+              <th>Versión</th>
+              <th>Fecha de despliegue</th>
+              <th>Hace</th>
+              <th>Desplegado por</th>
+              <th>Servidor</th>
+              <th>Ambiente</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let d of history; trackBy: trackById">
+              <tr [class.table-success]="d.isActive" (click)="toggleExpand(d.id)" style="cursor: pointer;">
+                <td>
+                  <i class="ti" [class.ti-chevron-right]="expandedId !== d.id" [class.ti-chevron-down]="expandedId === d.id"></i>
+                </td>
+                <td><strong>{{ d.version }}</strong></td>
+                <td>{{ d.deployedAt | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+                <td><small class="text-muted">{{ tiempoTranscurrido(d.deployedAt) }}</small></td>
+                <td>{{ d.deployedBy || '-' }}</td>
+                <td><small>{{ d.serverName || '-' }}</small></td>
+                <td><small>{{ d.environment }}</small></td>
+                <td>
+                  <span *ngIf="d.isActive" class="badge bg-success">ACTIVA</span>
+                  <span *ngIf="!d.isActive" class="badge bg-secondary">Anterior</span>
+                </td>
+              </tr>
+              <tr *ngIf="expandedId === d.id" class="detail-row">
+                <td colspan="8">
+                  <div class="detail-grid">
+                    <div><small class="text-muted">ID</small><div>{{ d.id }}</div></div>
+                    <div><small class="text-muted">App</small><div>{{ d.appName }}</div></div>
+                    <div><small class="text-muted">Ambiente</small><div>{{ d.environment }}</div></div>
+                    <div><small class="text-muted">Versión</small><div><strong>{{ d.version }}</strong></div></div>
+                    <div><small class="text-muted">Build time</small><div>{{ d.buildTime | date:'dd/MM/yyyy HH:mm:ss' }}</div></div>
+                    <div><small class="text-muted">Deployed at</small><div>{{ d.deployedAt | date:'dd/MM/yyyy HH:mm:ss' }}</div></div>
+                    <div><small class="text-muted">Deployed by</small><div>{{ d.deployedBy || '-' }}</div></div>
+                    <div><small class="text-muted">Servidor</small><div>{{ d.serverName || '-' }}</div></div>
+                    <div><small class="text-muted">¿Activa?</small>
+                      <div>
+                        <span *ngIf="d.isActive" class="badge bg-success">SI</span>
+                        <span *ngIf="!d.isActive" class="badge bg-secondary">NO</span>
+                      </div>
+                    </div>
+                    <div class="detail-notes">
+                      <small class="text-muted">Notas</small>
+                      <div>{{ d.notes || '(sin notas)' }}</div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+
+      <div *ngIf="!loadingHistory && history.length" class="card-footer text-muted text-right" style="font-size: 12px;">
+        Total: <strong>{{ history.length }}</strong> registro(s) · Ordenados por fecha descendente
+      </div>
+    </div>
+  </div>
 </div>

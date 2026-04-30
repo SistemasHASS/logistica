@@ -191,7 +191,7 @@
             <tr class="table-row">
               <td class="table-cell">
                 <div class="cell-content">
-                  <span class="req-number">{{ aprobacion['idrequerimiento'] }}</span>
+                  <span class="req-number">{{ aprobacion['idrequerimiento'] | numeroRequerimiento : aprobacion['RequisicionNumero'] }}</span>
                 </div>
               </td>
               <td class="table-cell">
@@ -285,7 +285,7 @@
         <div class="detail-grid">
           <div class="detail-item">
             <label class="detail-label">Número de Requerimiento</label>
-            <div class="detail-value highlight">{{ requerimientoDetalle['idrequerimiento'] || requerimientoDetalle['RequisicionNumero'] }}</div>
+            <div class="detail-value highlight">{{ requerimientoDetalle['idrequerimiento'] | numeroRequerimiento : requerimientoDetalle['RequisicionNumero'] }}</div>
           </div>
           <div class="detail-item">
             <label class="detail-label">Fecha de Registro</label>

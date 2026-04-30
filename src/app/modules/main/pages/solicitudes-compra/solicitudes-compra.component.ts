@@ -25,11 +25,13 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 import { BadgeModule } from 'primeng/badge';
+import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
 
 @Component({
   selector: 'app-solicitudes-compra',
   standalone: true,
   imports: [
+    NumeroRequerimientoPipe,
     CommonModule,
     FormsModule,
     TableModule,

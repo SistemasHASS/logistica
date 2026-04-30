@@ -147,7 +147,7 @@
                 <span class="card-usuario">Usuario: {{ c.nrodocumento || 'N/A' }}</span>
               </div>
               <div class="card-field">
-                <strong>#Requerimiento:</strong> {{ c.idrequerimiento }}
+                <strong>#Requerimiento:</strong> {{ c.idrequerimiento | numeroRequerimiento : c.RequisicionNumero }}
               </div>
               <div class="card-field">
                 <strong>Fecha:</strong> {{ c.fechaAprobacion | date: 'dd/MM/yyyy' }} - 
@@ -178,7 +178,7 @@
   <div class="modal-content-custom">
     <div class="modal-header">
       <h5 class="modal-title">Detalle de Atención: <span class="badge bg-primary ms-2">
-          {{ selected?.idrequerimiento }}
+          {{ selected?.idrequerimiento | numeroRequerimiento : selected?.RequisicionNumero }}
         </span></h5>
       <button type="button" class="btn-close" (click)="cerrarModalAtencion()"></button>
     </div>

@@ -1,11 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { UserService } from '@/app/shared/services/user.service';
 import { UtilsService } from '@/app/shared/utils/utils.service';
 import { OrdenCompraService } from '@/app/services/orden-compra.service';
+import { SolicitudCompraService } from '@/app/services/solicitud-compra.service';
+import { SeguimientoOCService } from '@/app/services/seguimiento-oc.service';
 import {
   OrdenCompra,
   DetalleOrdenCompra,
@@ -13,6 +16,10 @@ import {
   SolicitudCompra,
   Usuario,
   Almacen,
+  SeguimientoOrdenCompra,
+  HitoCompra,
+  EstadoSeguimientoOC,
+  OrdenCompraConSeguimiento
 } from '@/app/shared/interfaces/Tables';
 import { TableModule } from 'primeng/table';
 
@@ -27,6 +34,7 @@ export class OrdenesCompraComponent implements OnInit {
   // Listas principales
   ordenesCompra: OrdenCompra[] = [];
   cotizaciones: Cotizacion[] = [];
+  solicitudesCompra: SolicitudCompra[] = [];
   almacenes: Almacen[] = [];
 
   // Formulario
@@ -78,6 +86,47 @@ export class OrdenesCompraComponent implements OnInit {
   // Modal seguimiento
   modalSeguimientoAbierto = false;
   ordenSeguimiento: OrdenCompra | null = null;
+  seguimientoActual: SeguimientoOrdenCompra | null = null;
+
+  // Distribución contable
+  distribucionContable: any[] = [];
+  mostrarTabDistribucion = false;
+  gastosData: any[] = [];
+  laborData: any[] = [];
+
+  // Estados del timeline de OC
+  estadosSeguimiento: EstadoSeguimientoOC[] = [
+    'GENERADA',
+    'APROBADA',
+    'CONFIRMADA',
+    'EN_PROCESO',
+    'RECIBIDA_PARCIAL',
+    'RECIBIDA_TOTAL'
+  ];
+
+  // Gestión de hitos
+  hitosEnEdicion: HitoCompra | null = null;
+  modalHitoAbierto = false;
+  estadosHito: string[] = ['PENDIENTE', 'EN_PROCESO', 'COMPLETADO'];
+
+  // Modal generar OC desde solicitud
+  modalGenerarOCAbierto = false;
+  solicitudSeleccionada: SolicitudCompra | null = null;
+  datosProveedor = {
+    proveedor: '',
+    nombreProveedor: '',
+    rucProveedor: '',
+    direccionProveedor: '',
+    telefonoProveedor: '',
+    emailProveedor: '',
+    moneda: 'PEN',
+    tipoCambio: 3.0,
+    fechaEntregaEstimada: '',
+    lugarEntrega: '',
+    condicionesPago: '',
+    formaPago: '001',
+    observaciones: ''
+  };
 
   // Sistema Híbrido
   estaConectado = true;
@@ -88,7 +137,9 @@ export class OrdenesCompraComponent implements OnInit {
     private alertService: AlertService,
     private userService: UserService,
     private utilsService: UtilsService,
-    private ordenCompraService: OrdenCompraService
+    private ordenCompraService: OrdenCompraService,
+    private solicitudCompraService: SolicitudCompraService,
+    private seguimientoOCService: SeguimientoOCService
   ) {}
 
   async ngOnInit() {
@@ -96,8 +147,10 @@ export class OrdenesCompraComponent implements OnInit {
     this.ordenCompra = this.nuevaOrdenCompra();
     await this.cargarOrdenesCompra();
     await this.cargarCotizaciones();
+    await this.cargarSolicitudesCompra();
     await this.cargarAlmacenes();
     this.actualizarContadores();
+    await this.cargarCatalogosDistribucion();
   }
 
   async cargarUsuario() {
@@ -122,6 +175,41 @@ export class OrdenesCompraComponent implements OnInit {
     this.almacenes = await this.dexieService.showAlmacenes();
   }
 
+  async cargarSolicitudesCompra() {
+    // Prioridad 1: cargar del backend (solicitudes con idestado = APROBADA)
+    try {
+      const empresa = this.usuario.ruc || '';
+      const backendData = await this.solicitudCompraService.listarSolicitudesProcesadas(empresa);
+      const aprobadas = Array.isArray(backendData)
+        ? backendData.filter((s: any) => s.idestado === 'APROBADA')
+        : [];
+
+      // Mapear al formato local para reutilizar la misma tabla
+      this.solicitudesCompra = aprobadas.map((s: any) => ({
+        id: s.id || 0,
+        idSolicitud: s.idSolicitud || s.idsolicitud,
+        numeroSolicitud: s.serie || s.numeroSolicitud || '',
+        fecha: s.fecha || '',
+        tipo: 'DIRECTA' as const,
+        almacen: s.almacen || '',
+        usuarioSolicita: s.usuariosolicita || '',
+        nombreSolicita: s.nombresolicita || '',
+        estado: 'APROBADA' as const,
+        observaciones: s.observaciones || '',
+        fechaRequerida: s.fechaentrega || s.fechaRequerida || '',
+        moneda: s.moneda || 'PEN',
+        montoEstimado: s.montoTotal || s.montototal || 0,
+        detalle: []
+      }));
+    } catch {
+      // Si el backend no responde, usar Dexie local como fallback
+      const todas = await this.dexieService.solicitudesCompra.toArray();
+      this.solicitudesCompra = todas.filter(
+        (s: SolicitudCompra) => s.estado === 'APROBADA' && s.idSolicitud
+      );
+    }
+  }
+
   actualizarContadores() {
     this.totalGeneradas = this.ordenesCompra.filter((o) => o.estado === 'GENERADA').length;
     this.totalEnviadas = this.ordenesCompra.filter((o) => o.estado === 'ENVIADA').length;
@@ -130,6 +218,73 @@ export class OrdenesCompraComponent implements OnInit {
     this.totalRecibidas = this.ordenesCompra.filter(
       (o) => o.estado === 'RECIBIDA_PARCIAL' || o.estado === 'RECIBIDA_TOTAL'
     ).length;
+  }
+
+  async cargarCatalogosDistribucion() {
+    try {
+      // Cargar gastos
+      const gastos = await this.dexieService.showTipoGastos();
+      this.gastosData = gastos || [];
+
+      // Cargar labor/centros de costo destino (usar almacenes como referencia)
+      const almacenes = await this.dexieService.showAlmacenes();
+      this.laborData = almacenes || [];
+    } catch (error) {
+      console.error('Error al cargar catálogos de distribución:', error);
+    }
+  }
+
+  async generarDistribucionContable() {
+    try {
+      this.distribucionContable = [];
+      const distribucionesMap = new Map<string, any>();
+
+      for (const detalleItem of this.detalleOrden) {
+        // Obtener información del item desde Dexie
+        const itemData = await this.dexieService.items
+          .where('codigo')
+          .equals(detalleItem.codigo || '')
+          .first();
+
+        if (itemData) {
+          const subtotal = this.calcularSubtotalSinIgv(detalleItem);
+          // Usar tipoclasificacion como cuenta para distribución contable
+          const cuentaKey = `${itemData.tipoclasificacion || 'SIN_CLASIFICACION'}`;
+
+          if (distribucionesMap.has(cuentaKey)) {
+            const existing = distribucionesMap.get(cuentaKey);
+            existing.monto += subtotal;
+            existing.descripcion = itemData.descripcionLocal || existing.descripcion;
+          } else {
+            distribucionesMap.set(cuentaKey, {
+              id: `DIST-${cuentaKey}`,
+              cuenta: itemData.tipoclasificacion || 'SIN_CLASIFICACION',
+              descripcion: itemData.descripcionLocal || '',
+              centroCosto: '',
+              proyecto: '',
+              monto: subtotal,
+              referencia: '',
+              ccDestino: ''
+            });
+          }
+        }
+      }
+
+      this.distribucionContable = Array.from(distribucionesMap.values());
+    } catch (error) {
+      console.error('Error al generar distribución contable:', error);
+    }
+  }
+
+  calcularSubtotalSinIgv(detalle: DetalleOrdenCompra): number {
+    const cantidad = detalle.cantidad || 0;
+    const precio = detalle.precioUnitario || 0;
+    const descuento = detalle.descuento || 0;
+    return cantidad * precio * (1 - descuento / 100);
+  }
+
+  getTotalDistribucion(): number {
+    return this.distribucionContable.reduce((sum, item) => sum + (item.monto || 0), 0);
   }
 
   nuevaOrdenCompra(): OrdenCompra {
@@ -165,19 +320,34 @@ export class OrdenesCompraComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
 
-      // Cargar solicitud de compra
-      const solicitud = await this.dexieService.solicitudesCompra.get(
+      // Cargar solicitud de compra: buscar primero por id local Dexie,
+      // luego por idSolicitud del backend (por si fue sincronizada)
+      let solicitud = await this.dexieService.solicitudesCompra.get(
         cotizacion.solicitudCompraId
       );
-
-      if (!solicitud) {
-        this.alertService.cerrarModalCarga();
-        this.alertService.showAlert(
-          'Error',
-          'No se encontró la solicitud de compra asociada.',
-          'error'
+      if (!solicitud && cotizacion.solicitudCompraId) {
+        const todas = await this.dexieService.solicitudesCompra.toArray();
+        solicitud = todas.find(
+          (s: any) =>
+            s.idSolicitud === cotizacion.solicitudCompraId ||
+            s.numeroSolicitud === cotizacion.numeroSolicitud
         );
-        return;
+      }
+      // Si aún no hay solicitud, crear una ficticia para no bloquear el flujo
+      if (!solicitud) {
+        solicitud = {
+          id: cotizacion.solicitudCompraId,
+          idSolicitud: cotizacion.solicitudCompraId,
+          numeroSolicitud: cotizacion.numeroSolicitud || '',
+          fecha: cotizacion.fecha,
+          tipo: 'DIRECTA' as const,
+          almacen: '',
+          usuarioSolicita: '',
+          nombreSolicita: '',
+          estado: 'APROBADA' as const,
+          observaciones: '',
+          detalle: [],
+        } as any;
       }
 
       // Crear orden desde cotización
@@ -185,7 +355,7 @@ export class OrdenesCompraComponent implements OnInit {
         numeroOrden: this.generarNumeroOrden(),
         solicitudCompraId: cotizacion.solicitudCompraId,
         cotizacionId: cotizacion.id,
-        fecha: new Date().toISOString(),
+        fecha: new Date().toISOString().split('T')[0],
         fechaEntrega: this.calcularFechaEntrega(cotizacion.plazoEntrega),
         proveedor: cotizacion.proveedor,
         nombreProveedor: cotizacion.nombreProveedor,
@@ -223,6 +393,9 @@ export class OrdenesCompraComponent implements OnInit {
         estado: 'PENDIENTE',
       }));
 
+      // Generar distribución contable desde el detalle
+      await this.generarDistribucionContable();
+
       this.cotizacionSeleccionada = cotizacion;
       this.mostrarFormulario = true;
       this.modoEdicion = false;
@@ -239,6 +412,180 @@ export class OrdenesCompraComponent implements OnInit {
       this.alertService.showAlert(
         'Error',
         'Ocurrió un error al generar la orden de compra.',
+        'error'
+      );
+    }
+  }
+
+  abrirModalGenerarOC(solicitud: SolicitudCompra) {
+    this.solicitudSeleccionada = solicitud;
+    this.datosProveedor = {
+      proveedor: '',
+      nombreProveedor: '',
+      rucProveedor: '',
+      direccionProveedor: '',
+      telefonoProveedor: '',
+      emailProveedor: '',
+      moneda: solicitud.moneda || 'PEN',
+      tipoCambio: 3.0,
+      fechaEntregaEstimada: solicitud.fechaRequerida || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      lugarEntrega: solicitud.almacen || '',
+      condicionesPago: '',
+      formaPago: '001',
+      observaciones: solicitud.observaciones || ''
+    };
+    this.modalGenerarOCAbierto = true;
+  }
+
+  cerrarModalGenerarOC() {
+    this.modalGenerarOCAbierto = false;
+    this.solicitudSeleccionada = null;
+  }
+
+  generarDesdeSolicitud(solicitud: SolicitudCompra) {
+    this.abrirModalGenerarOC(solicitud);
+  }
+
+  async confirmarGenerarOC() {
+    if (!this.solicitudSeleccionada) return;
+
+    if (!this.datosProveedor.proveedor) {
+      this.alertService.showAlert('Atención', 'Ingrese el código del proveedor.', 'warning');
+      return;
+    }
+    if (!this.datosProveedor.nombreProveedor) {
+      this.alertService.showAlert('Atención', 'Ingrese el nombre del proveedor.', 'warning');
+      return;
+    }
+    if (!this.datosProveedor.rucProveedor) {
+      this.alertService.showAlert('Atención', 'Ingrese el RUC del proveedor.', 'warning');
+      return;
+    }
+    if (!this.datosProveedor.fechaEntregaEstimada) {
+      this.alertService.showAlert('Atención', 'Ingrese la fecha de entrega estimada.', 'warning');
+      return;
+    }
+
+    try {
+      this.cerrarModalGenerarOC();
+      this.alertService.mostrarModalCarga();
+
+      const datos = {
+        idSolicitud: this.solicitudSeleccionada.idSolicitud || this.solicitudSeleccionada.id,
+        ...this.datosProveedor,
+        usuarioRegistra: this.usuario.documentoidentidad || '',
+        nombreUsuarioRegistra: this.usuario.nombre || ''
+      };
+
+      const respuesta = await this.ordenCompraService.generarOrdenDesdeSolicitud(datos);
+
+      if (respuesta && respuesta.mensaje) {
+        this.alertService.cerrarModalCarga();
+        this.alertService.showAlert('Éxito', respuesta.mensaje, 'success');
+        await this.cargarOrdenesCompra();
+        await this.cargarSolicitudesCompra();
+        this.actualizarContadores();
+      } else if (respuesta && respuesta.error) {
+        this.alertService.cerrarModalCarga();
+        this.alertService.showAlert('Error', respuesta.error, 'error');
+      } else {
+        this.alertService.cerrarModalCarga();
+        this.alertService.showAlert('Error', 'No se pudo generar la orden de compra.', 'error');
+      }
+    } catch (error) {
+      console.error('Error al generar OC desde solicitud:', error);
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert('Error', 'Ocurrió un error al generar la orden de compra.', 'error');
+    }
+  }
+
+  async sincronizarConSpring(orden: OrdenCompra) {
+    try {
+      const confirmacion = await this.alertService.showConfirm(
+        'Confirmación',
+        '¿Desea enviar esta orden de compra al ERP SPRING?',
+        'info'
+      );
+
+      if (!confirmacion) return;
+
+      this.alertService.mostrarModalCarga();
+
+      // Preparar datos para sincronización según el formato esperado por el SP
+      const ord: any = orden;
+      const datosSincronizacion = [{
+        idordencompra: orden.numeroOrden || '',
+        ruc: this.usuario.ruc || '',
+        idempresa: this.usuario.idempresa || '',
+        serie: 'WHPO',
+        idproveedor: orden.proveedor || '',
+        idalmacen: ord.almacen || '',
+        fechaprometida: orden.fechaEntrega ? orden.fechaEntrega.split('T')[0] : new Date().toISOString().split('T')[0],
+        idmoneda: orden.moneda || 'PEN',
+        montoigv: ord.montoIgv || 0,
+        montototal: orden.montoTotal || 0,
+        montopendientedepago: orden.montoTotal || 0,
+        plazoentrega: orden.plazoEntrega || 10,
+        idformapago: orden.formaPago || '001',
+        observaciones: orden.observaciones || '',
+        idproyecto: ord.proyecto || '',
+        idactividad: '',
+        idlabor: ord.labor || '',
+        idestado: 'PE',
+        idaprobacion: '',
+        dniusuario: this.usuario.documentoidentidad || '',
+        detalle: (orden.detalle || []).map((det, index) => {
+          const detAny: any = det;
+          return {
+            idordencompradetalle: `${orden.numeroOrden}-${index + 1}`,
+            tipo: detAny.tipo || 'BIEN',
+            codigo: det.codigo || '',
+            unidadmedida: det.unidadMedida || '',
+            descripcion: (det.descripcion || '').substring(0, 60),
+            cantidadpedida: det.cantidad || 0,
+            cantidadrecibida: det.cantidadRecibida || 0,
+            preciounitario: det.precioUnitario || 0,
+            igv: detAny.igv || det.impuesto || 0,
+            descuento: det.descuento || 0,
+            centrocosto: detAny.centrocosto || '',
+            proyecto: detAny.proyecto || '',
+            idestado: 'PE',
+            eliminado: 0
+          };
+        }),
+        adjuntos: []
+      }];
+
+      const respuesta = await this.ordenCompraService.sincronizarOrdenCompra(datosSincronizacion);
+
+      if (respuesta && respuesta.errorgeneral === 0) {
+        // Actualizar estado de la orden localmente
+        orden.estado = 'ENVIADA';
+        await this.dexieService.saveOrdenCompra(orden);
+
+        this.alertService.cerrarModalCarga();
+        this.alertService.showAlert(
+          'Éxito',
+          `Orden de compra enviada a SPRING. Número: ${respuesta.numeroOrden}`,
+          'success'
+        );
+
+        await this.cargarOrdenesCompra();
+        this.actualizarContadores();
+      } else {
+        this.alertService.cerrarModalCarga();
+        this.alertService.showAlert(
+          'Error',
+          respuesta.mensaje || 'Error al sincronizar con SPRING',
+          'error'
+        );
+      }
+    } catch (error) {
+      console.error('Error al sincronizar con SPRING:', error);
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert(
+        'Error',
+        'Ocurrió un error al sincronizar la orden de compra con SPRING.',
         'error'
       );
     }
@@ -329,7 +676,7 @@ export class OrdenesCompraComponent implements OnInit {
         }
       }
 
-      // Si se generó desde cotización, actualizar solicitud
+      // Si se generó desde cotización, actualizar solicitud y cotización
       if (this.ordenCompra.solicitudCompraId) {
         const solicitud = await this.dexieService.solicitudesCompra.get(
           this.ordenCompra.solicitudCompraId
@@ -339,6 +686,15 @@ export class OrdenesCompraComponent implements OnInit {
           await this.dexieService.saveSolicitudCompra(solicitud);
         }
       }
+      // Marcar la cotización como ORDEN_GENERADA para que salga de Pendientes
+      if (this.ordenCompra.cotizacionId) {
+        const cotizacion = await this.dexieService.cotizaciones.get(this.ordenCompra.cotizacionId);
+        if (cotizacion) {
+          cotizacion.estado = 'ORDEN_GENERADA';
+          await this.dexieService.cotizaciones.put(cotizacion);
+        }
+      }
+      await this.cargarCotizaciones();
 
       this.alertService.cerrarModalCarga();
       
@@ -372,7 +728,7 @@ export class OrdenesCompraComponent implements OnInit {
     return `OC-${año}${mes}${dia}-${hora}${min}${seg}`;
   }
 
-  editarOrdenCompra(index: number) {
+  async editarOrdenCompra(index: number) {
     const orden = this.ordenesCompraFiltradas()[index];
     if (!orden) return;
 
@@ -390,6 +746,9 @@ export class OrdenesCompraComponent implements OnInit {
     this.modoEdicion = true;
     this.editIndex = index;
     this.mostrarFormulario = true;
+
+    // Generar distribución contable desde el detalle
+    await this.generarDistribucionContable();
   }
 
   async eliminarOrdenCompra(index: number) {
@@ -565,16 +924,6 @@ export class OrdenesCompraComponent implements OnInit {
     this.ordenDetalle = null;
   }
 
-  verSeguimiento(orden: OrdenCompra) {
-    this.ordenSeguimiento = orden;
-    this.modalSeguimientoAbierto = true;
-  }
-
-  cerrarModalSeguimiento() {
-    this.modalSeguimientoAbierto = false;
-    this.ordenSeguimiento = null;
-  }
-
   cancelarFormulario() {
     const confirmar = confirm(
       '¿Seguro que deseas cancelar? Se perderán los cambios no guardados.'
@@ -661,5 +1010,269 @@ export class OrdenesCompraComponent implements OnInit {
     if (detalle.cantidadRecibida === 0) return 'PENDIENTE';
     if (detalle.cantidadRecibida >= detalle.cantidad) return 'COMPLETO';
     return 'PARCIAL';
+  }
+
+  // ============================================
+  // MÉTODOS DE SEGUIMIENTO DE OC
+  // ============================================
+
+  /**
+   * Crear un hito vacío para edición
+   */
+  nuevoHitoVacio(): HitoCompra {
+    return {
+      descripcion: '',
+      estado: 'PENDIENTE',
+      porcentajeAvance: 0,
+      fechaProgramada: '',
+      responsable: '',
+      observaciones: ''
+    };
+  }
+
+  /**
+   * Ver seguimiento de una orden de compra
+   */
+  async verSeguimiento(orden: OrdenCompra) {
+    this.ordenSeguimiento = orden;
+    this.modalSeguimientoAbierto = true;
+
+    try {
+      const seguimiento = await this.seguimientoOCService.obtenerSeguimiento(orden.id!).toPromise();
+      this.seguimientoActual = seguimiento || null;
+    } catch (error) {
+      console.error('Error al cargar seguimiento:', error);
+      this.seguimientoActual = null;
+    }
+  }
+
+  /**
+   * Cerrar modal de seguimiento
+   */
+  cerrarModalSeguimiento() {
+    this.modalSeguimientoAbierto = false;
+    this.ordenSeguimiento = null;
+    this.seguimientoActual = null;
+  }
+
+  /**
+   * Calcular porcentaje total basado en hitos
+   */
+  calcularPorcentajeTotal(): number {
+    if (!this.seguimientoActual?.hitos || this.seguimientoActual.hitos.length === 0) {
+      return this.seguimientoActual?.porcentajeAvance || 0;
+    }
+    return this.seguimientoOCService.calcularPorcentajeAvance(this.seguimientoActual.hitos);
+  }
+
+  /**
+   * Avanzar al siguiente estado del flujo
+   */
+  async avanzarEstado() {
+    if (!this.seguimientoActual || !this.ordenSeguimiento) return;
+
+    const siguienteEstado = this.seguimientoOCService.obtenerSiguienteEstado(this.seguimientoActual.estado);
+    if (!siguienteEstado) {
+      Swal.fire('Aviso', 'No se puede avanzar más en el flujo', 'warning');
+      return;
+    }
+
+    try {
+      await this.seguimientoOCService.actualizarSeguimiento({
+        idOrden: this.ordenSeguimiento.id!,
+        nuevoEstado: siguienteEstado,
+        usuario: this.usuario.usuario,
+        hitos: this.seguimientoActual.hitos
+      }).toPromise();
+
+      await this.verSeguimiento(this.ordenSeguimiento);
+      await this.cargarOrdenesCompra();
+      Swal.fire('Éxito', `Estado avanzado a ${this.seguimientoOCService.obtenerTextoEstado(siguienteEstado)}`, 'success');
+    } catch (error) {
+      console.error('Error al avanzar estado:', error);
+      Swal.fire('Error', 'Error al avanzar estado', 'error');
+    }
+  }
+
+  /**
+   * Abrir modal para editar hito
+   */
+  abrirModalHito(hito?: HitoCompra) {
+    this.hitosEnEdicion = hito ? { ...hito } : this.nuevoHitoVacio();
+    this.modalHitoAbierto = true;
+  }
+
+  /**
+   * Cerrar modal de hito
+   */
+  cerrarModalHito() {
+    this.modalHitoAbierto = false;
+    this.hitosEnEdicion = null;
+  }
+
+  /**
+   * Guardar hito (crear o actualizar)
+   */
+  guardarHito() {
+    if (!this.hitosEnEdicion || !this.seguimientoActual) return;
+
+    if (!this.hitosEnEdicion.descripcion) {
+      Swal.fire('Aviso', 'La descripción es requerida', 'warning');
+      return;
+    }
+
+    if (!this.seguimientoActual.hitos) {
+      this.seguimientoActual.hitos = [];
+    }
+
+    const index = this.seguimientoActual.hitos.findIndex(h => h.descripcion === this.hitosEnEdicion!.descripcion);
+
+    if (index >= 0) {
+      this.seguimientoActual.hitos[index] = { ...this.hitosEnEdicion };
+    } else {
+      this.seguimientoActual.hitos.push({ ...this.hitosEnEdicion });
+    }
+
+    this.cerrarModalHito();
+    Swal.fire('Éxito', 'Hito guardado', 'success');
+  }
+
+  /**
+   * Eliminar hito
+   */
+  eliminarHito(hito: HitoCompra) {
+    if (!this.seguimientoActual?.hitos) return;
+
+    this.seguimientoActual.hitos = this.seguimientoActual.hitos.filter(h => h !== hito);
+    Swal.fire('Éxito', 'Hito eliminado', 'success');
+  }
+
+  /**
+   * Sincronizar hitos con el backend
+   */
+  async sincronizarHitos() {
+    if (!this.seguimientoActual || !this.ordenSeguimiento) return;
+
+    try {
+      await this.seguimientoOCService.actualizarSeguimiento({
+        idOrden: this.ordenSeguimiento.id!,
+        nuevoEstado: this.seguimientoActual.estado,
+        usuario: this.usuario.usuario,
+        hitos: this.seguimientoActual.hitos
+      }).toPromise();
+
+      Swal.fire('Éxito', 'Hitos sincronizados', 'success');
+    } catch (error) {
+      console.error('Error al sincronizar hitos:', error);
+      Swal.fire('Error', 'Error al sincronizar hitos', 'error');
+    }
+  }
+
+  /**
+   * Verificar si puede avanzar de estado
+   */
+  puedeAvanzar(): boolean {
+    return this.seguimientoActual
+      ? this.seguimientoOCService.puedeAvanzar(this.seguimientoActual.estado)
+      : false;
+  }
+
+  /**
+   * Obtener texto del siguiente estado
+   */
+  obtenerTextoSiguienteEstado(): string {
+    if (!this.seguimientoActual) return '';
+    const siguiente = this.seguimientoOCService.obtenerSiguienteEstado(this.seguimientoActual.estado);
+    return siguiente ? this.seguimientoOCService.obtenerTextoEstado(siguiente) : '';
+  }
+
+  /**
+   * Obtener texto del estado de hito
+   */
+  obtenerTextoEstadoHito(estado: string): string {
+    return this.seguimientoOCService.obtenerTextoEstadoHito(estado);
+  }
+
+  /**
+   * Manejar cambio de estado de hito
+   */
+  onEstadoHitoChange(estado: string) {
+    if (!this.hitosEnEdicion) return;
+
+    this.hitosEnEdicion.estado = estado as 'PENDIENTE' | 'EN_PROCESO' | 'COMPLETADO';
+
+    if (estado === 'COMPLETADO') {
+      this.hitosEnEdicion.porcentajeAvance = 100;
+      this.hitosEnEdicion.fechaEjecucion = new Date().toISOString().split('T')[0];
+    } else if (estado === 'PENDIENTE') {
+      this.hitosEnEdicion.porcentajeAvance = 0;
+    } else if (estado === 'EN_PROCESO') {
+      this.hitosEnEdicion.porcentajeAvance = 50;
+    }
+  }
+
+  /**
+   * Verificar si la orden está finalizada
+   */
+  isOrdenFinalizada(): boolean {
+    return this.seguimientoActual?.estado === 'RECIBIDA_TOTAL' ||
+           this.seguimientoActual?.estado === 'ANULADA';
+  }
+
+  /**
+   * Verificar si un estado del timeline está completado
+   */
+  esEstadoCompletado(estado: EstadoSeguimientoOC): boolean {
+    if (!this.seguimientoActual) return false;
+
+    const ordenEstados: EstadoSeguimientoOC[] = ['GENERADA', 'APROBADA', 'CONFIRMADA', 'EN_PROCESO', 'RECIBIDA_PARCIAL', 'RECIBIDA_TOTAL'];
+    const estadoActualIndex = ordenEstados.indexOf(this.seguimientoActual.estado);
+    const estadoVerificarIndex = ordenEstados.indexOf(estado);
+
+    return estadoVerificarIndex < estadoActualIndex ||
+           (this.seguimientoActual.estado === estado && estado !== 'RECIBIDA_TOTAL');
+  }
+
+  /**
+   * Obtener la fecha de transición para un estado
+   */
+  obtenerFechaEstado(estado: EstadoSeguimientoOC): string {
+    if (!this.seguimientoActual) return '';
+
+    const fecha = this.seguimientoActual &&
+      (this.seguimientoActual as any)[`fecha${this.capitalizarEstado(estado)}`];
+
+    return fecha ? this.formatearFecha(fecha) : '';
+  }
+
+  /**
+   * Capitalizar el nombre del estado para obtener la propiedad de fecha
+   */
+  private capitalizarEstado(estado: string): string {
+    return estado.split('_').map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join('');
+  }
+
+  /**
+   * Obtener el texto descriptivo de un estado (wrapper para el servicio)
+   */
+  obtenerTextoEstado(estado: EstadoSeguimientoOC | string): string {
+    return this.seguimientoOCService.obtenerTextoEstado(estado as EstadoSeguimientoOC);
+  }
+
+  /**
+   * Obtener clase CSS para estado de hito
+   */
+  obtenerClaseEstadoHito(estado: string): string {
+    return this.seguimientoOCService.obtenerClaseEstadoHito(estado);
+  }
+
+  /**
+   * Actualizar obtenerClaseEstado para usar el servicio cuando es estado de seguimiento
+   */
+  obtenerClaseEstadoSeguimiento(estado: string): string {
+    if (Object.values(this.estadosSeguimiento).includes(estado as EstadoSeguimientoOC)) {
+      return this.seguimientoOCService.obtenerColorEstado(estado as EstadoSeguimientoOC);
+    }
+    return 'badge-secondary';
   }
 }

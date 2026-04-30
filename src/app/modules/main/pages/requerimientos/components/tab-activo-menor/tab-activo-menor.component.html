@@ -53,7 +53,7 @@
                         <i class="icon-pencil"></i>
                       </button>
                     </td>
-                    <td><span class="p-column-title">#Req</span>{{ obtenerIdReq(c.idrequerimiento) }}</td>
+                    <td><span class="p-column-title">#Req</span>{{ c.idrequerimiento | numeroRequerimiento : c.RequisicionNumero }}</td>
                     <td>{{ c.fecha | date: "dd/MM/yyyy HH:mm:ss" }}</td>
                     <td>{{ obtenerDescripcionServicio(c.servicio) }}</td>
                     <!-- <td>{{ getDescripcionFundo(c.idfundo) }}</td> -->
@@ -94,7 +94,7 @@
                         </span>
                         &nbsp;&nbsp;&nbsp;<strong>Usuario: {{ afm.nrodocumento }}</strong>
                       </p>
-                      <p class="item-card"><strong>#Requerimiento: </strong>{{ obtenerIdReq(afm.idrequerimiento) }}</p>
+                      <p class="item-card"><strong>#Requerimiento: </strong>{{ afm.idrequerimiento | numeroRequerimiento : afm.RequisicionNumero }}</p>
                       <p class="item-card"><strong>Servicio: </strong>{{ obtenerDescripcionServicio(afm.servicio) }}</p>
                       <p class="item-card">
                         <strong>Fecha: </strong>{{ formatoFecha(afm.fecha) }} - <strong>Almacén:</strong> {{ afm.almacen }}

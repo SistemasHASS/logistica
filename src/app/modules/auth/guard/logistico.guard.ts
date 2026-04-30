@@ -14,7 +14,8 @@ export class LogisticoGuard implements CanActivate {
 
   async canActivate(): Promise<boolean> {
     if (await this.auth.isLogistico()) return true;
-    this.router.navigate(['/main/parametros']);
+    // this.router.navigate(['/main/parametros']);
+    this.router.navigate(['/main/dashboard-logistica']);
     return false;
   }
 }

@@ -101,7 +101,7 @@
             <th style="min-width:90px">Almacén</th>
             <th style="min-width:140px">Usuario</th>
             <th style="min-width:120px">Área</th>
-            <th style="min-width:200px" *ngIf="activeTabDespachos === 'COMMODITY'">Familia</th>
+            <th style="min-width:200px" *ngIf="activeTabDespachos === 'COMMODITY'">Servicio</th>
             <th style="min-width:200px" *ngIf="activeTabDespachos === 'ITEMS'">Producto</th>
             <th style="min-width:110px">Estado</th>
             <th style="min-width:150px">Acciones</th>
@@ -192,7 +192,7 @@
   <div class="modal-content-custom">
     <div class="modal-header">
       <h5 class="modal-title">Detalle de Atención: <span class="badge bg-primary ms-2">
-          {{ selected?.idrequerimiento }}
+          {{ selected?.idrequerimiento | numeroRequerimiento : selected?.RequisicionNumero }}
         </span></h5>
       <button type="button" class="btn-close" (click)="cerrarModalAtencion()"></button>
     </div>

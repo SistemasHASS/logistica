@@ -128,4 +128,18 @@ export class OrdenCompraService {
       return false;
     }
   }
+
+  /**
+   * Sincronizar orden de compra con SPRING
+   */
+  async sincronizarOrdenCompra(ordenCompra: any): Promise<any> {
+    try {
+      const url = `${this.baseUrl}/api/logistica/orden-compra/sincronizar`;
+      const response = await firstValueFrom(this.http.post<any>(url, ordenCompra));
+      return response;
+    } catch (error) {
+      console.error('Error al sincronizar orden de compra con SPRING:', error);
+      throw error;
+    }
+  }
 }

@@ -1,0 +1,600 @@
+// ============================================
+// ESTILOS DEL MODAL DE SEGUIMIENTO DE OC
+// ============================================
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-out;
+  width: 90%;
+  max-width: 600px;
+}
+
+.modal-lg {
+  max-width: 800px;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #e5e7eb;
+    color: #111827;
+  }
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 0 0 12px 12px;
+}
+
+// ============================================
+// HEADER DEL SEGUIMIENTO
+// ============================================
+
+.seguimiento-header {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+}
+
+.seguimiento-header h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.seguimiento-header p {
+  margin: 4px 0;
+  opacity: 0.9;
+  font-size: 0.875rem;
+}
+
+// ============================================
+// PROGRESS SECTION
+// ============================================
+
+.progress-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f3f4f6;
+  border-radius: 8px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.progress-label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.progress-value {
+  font-weight: 700;
+  color: #667eea;
+  font-size: 1.25rem;
+}
+
+.progress-bar {
+  height: 24px;
+  background: #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  transition: width 0.5s ease-out;
+  border-radius: 12px;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    animation: shimmer 2s infinite;
+  }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.bg-success { background: linear-gradient(90deg, #10b981, #059669); }
+.bg-warning { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.bg-info { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+
+// ============================================
+// TIMELINE SECTION
+// ============================================
+
+.timeline-section {
+  margin-bottom: 24px;
+}
+
+.timeline-section h5 {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.timeline {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  padding: 20px 0;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #e5e7eb;
+  transform: translateY(-50%);
+  z-index: 0;
+}
+
+.timeline-item {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  flex: 1;
+}
+
+.timeline-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  margin: 0 auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.timeline-item.completed .timeline-dot {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.timeline-item.active .timeline-dot {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  animation: pulse 2s infinite;
+}
+
+.timeline-item.pending .timeline-dot {
+  background: #e5e7eb;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.timeline-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timeline-title {
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: color 0.3s;
+}
+
+.timeline-item.completed .timeline-title {
+  color: #059669;
+}
+
+.timeline-item.active .timeline-title {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.timeline-date {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+}
+
+// ============================================
+// HITOS SECTION
+// ============================================
+
+.hitos-section {
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-header h5 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.hitos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hito-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.hito-completado {
+  border-left: 4px solid #10b981;
+  background: #f0fdf4;
+}
+
+.hito-en_ejecucion {
+  border-left: 4px solid #f59e0b;
+  background: #fffbeb;
+}
+
+.hito-pendiente {
+  border-left: 4px solid #6b7280;
+  background: #f9fafb;
+}
+
+.hito-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.hito-info {
+  flex: 1;
+}
+
+.hito-info h6 {
+  margin: 0 0 4px 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.hito-estado {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-success { background: #d1fae5; color: #065f46; }
+.badge-warning { background: #fef3c7; color: #92400e; }
+.badge-secondary { background: #e5e7eb; color: #374151; }
+
+.hito-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.hito-progress {
+  margin-bottom: 12px;
+}
+
+.progress-bar-sm {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progress-bar-sm .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 4px;
+}
+
+.hito-dates {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.hito-dates i {
+  margin-right: 4px;
+}
+
+.hito-obs {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.no-hitos {
+  text-align: center;
+  padding: 40px 20px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 2px dashed #e5e7eb;
+}
+
+.no-hitos i {
+  font-size: 2.5rem;
+  color: #d1d5db;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.no-hitos p {
+  margin: 0 0 16px 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+// ============================================
+// ACCIONES DE SEGUIMIENTO
+// ============================================
+
+.seguimiento-actions {
+  margin-top: 24px;
+}
+
+.seguimiento-finalizado {
+  margin-top: 24px;
+}
+
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.alert-info {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.alert-info i {
+  font-size: 1.25rem;
+}
+
+// ============================================
+// FORMULARIO DE HITO
+// ============================================
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+  }
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+}
+
+// ============================================
+// BOTONES
+// ============================================
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #374151;
+
+  &:hover {
+    background: #d1d5db;
+  }
+}
+
+.btn-outline-primary {
+  background: white;
+  border: 2px solid #667eea;
+  color: #667eea;
+
+  &:hover {
+    background: #667eea;
+    color: white;
+  }
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+}
+
+.btn-block {
+  width: 100%;
+  justify-content: center;
+}
+
+.btn-info {
+  background: #3b82f6;
+  color: white;
+
+  &:hover {
+    background: #2563eb;
+  }
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+
+  &:hover {
+    background: #dc2626;
+  }
+}
+
+.w-100 {
+  width: 100%;
+}

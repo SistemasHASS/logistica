@@ -27,10 +27,12 @@ export enum EstadoRequerimiento {
   ATENCION_COMPLETA = 'ATENCION_COMPLETA',
   DESPACHADO_COMPLETO = 'DESPACHADO_COMPLETO',
 }
+import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
+
 @Component({
   selector: 'app-despachos-original',
   standalone: true,
-  imports: [CommonModule, FormsModule, TableModule, DatePickerModule],
+  imports: [CommonModule, FormsModule, TableModule, DatePickerModule, NumeroRequerimientoPipe],
   templateUrl: './despacho-original.component.html',
   styleUrls: ['despacho-original.component.scss'],
 })

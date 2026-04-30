@@ -8,6 +8,7 @@ import { ModalCargaMasivaComponent } from '../modal-carga-masiva/modal-carga-mas
 import { RequerimientosItemService } from '../../services/requerimientos-item.service';
 import { RequerimientosMaestrasService } from '../../services/requerimientos-maestras.service';
 import { UtilsService } from '@/app/shared/utils/utils.service';
+import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
 
 @Component({
   selector: 'app-tab-item',
@@ -21,6 +22,7 @@ import { UtilsService } from '@/app/shared/utils/utils.service';
     DropdownComponent,
     ModalDetalleItemComponent,
     ModalCargaMasivaComponent,
+    NumeroRequerimientoPipe,
   ],
   templateUrl: './tab-item.component.html',
 })
@@ -58,27 +60,43 @@ export class TabItemComponent {
   get lineaTemp() { return this.itemSvc.lineaTemp; }
   get lineasTemporales() { return this.itemSvc.lineasTemporales; }
   @Input() itemsFiltrados: any[] = [];
-  @Input() unidadesMedidaFiltradas: any[] = [];
+  // unidadesMedidaFiltradas viene del maestrasSvc para reflejar cambios al seleccionar producto
+  get unidadesMedidaFiltradas() { return this.maestrasSvc.unidadesMedidaFiltradas; }
   @Input() turnos: any[] = [];
-  @Input() modalCecoData: any[] = [];
-  @Input() modalLaborData: any[] = [];
-  @Input() modalProyectoData: any[] = [];
+  // modalCecoData/LaborData/ProyectoData: en edición usan los filtrados del service; si vacíos, todo
+  get modalCecoData() {
+    if (this.itemSvc.enModoEdicion)
+      return this.itemSvc.filteredCecosModal.length > 0 ? this.itemSvc.filteredCecosModal : this.maestrasSvc.cecos;
+    return this.itemSvc.permitirEditarParametros ? this.itemSvc.filteredCecosModal : this.maestrasSvc.cecos;
+  }
+  get modalLaborData() {
+    if (this.itemSvc.enModoEdicion)
+      return this.itemSvc.filteredLaboresModal.length > 0 ? this.itemSvc.filteredLaboresModal : this.maestrasSvc.labores;
+    return this.itemSvc.permitirEditarParametros
+      ? (this.itemSvc.filteredLaboresModal.length > 0 ? this.itemSvc.filteredLaboresModal : this.maestrasSvc.labores)
+      : this.maestrasSvc.labores;
+  }
+  get modalProyectoData() {
+    if (this.itemSvc.enModoEdicion)
+      return this.itemSvc.filteredProyectosModal.length > 0 ? this.itemSvc.filteredProyectosModal : this.maestrasSvc.proyectos;
+    return this.itemSvc.permitirEditarParametros ? this.itemSvc.filteredProyectosModal : this.maestrasSvc.proyectos;
+  }
   @Input() activosFijosFiltrados: any[] = [];
   @Input() items: any[] = [];
   // Valores del modal leídos desde lineaTemp del servicio
   get modalTurnoValue() { return this.itemSvc.lineaTemp?.turno || ''; }
-  @Input() modalTurnoEditable = false;
-  @Input() modalTurnoDisabled = false;
+  get modalTurnoEditable() { return this.itemSvc.enModoEdicion ? true : this.itemSvc.permitirEditarParametros; }
+  get modalTurnoDisabled() { return this.itemSvc.enModoEdicion ? false : !this.itemSvc.permitirEditarParametros; }
   get modalCecoValue() { return this.itemSvc.lineaTemp?.ceco || ''; }
-  @Input() modalCecoEditable = false;
-  @Input() modalCecoDisabled = false;
+  get modalCecoEditable() { return this.itemSvc.enModoEdicion ? true : this.itemSvc.permitirEditarParametros; }
+  get modalCecoDisabled() { return this.itemSvc.enModoEdicion ? false : !this.itemSvc.permitirEditarParametros; }
   get modalLaborValue() { return this.itemSvc.lineaTemp?.labor || ''; }
-  @Input() modalLaborEditable = false;
-  @Input() modalLaborDisabled = false;
+  get modalLaborEditable() { return this.itemSvc.enModoEdicion ? true : this.itemSvc.permitirEditarParametros; }
+  get modalLaborDisabled() { return this.itemSvc.enModoEdicion ? false : !this.itemSvc.permitirEditarParametros; }
   get modalProyectoValue() { return this.itemSvc.lineaTemp?.proyecto || ''; }
-  @Input() modalProyectoEditable = false;
-  @Input() modalProyectoDisabled = false;
-  @Input() permitirEditarParametros = false;
+  get modalProyectoEditable() { return this.itemSvc.enModoEdicion ? true : this.itemSvc.permitirEditarParametros; }
+  get modalProyectoDisabled() { return this.itemSvc.enModoEdicion ? false : !this.itemSvc.permitirEditarParametros; }
+  get permitirEditarParametros() { return this.itemSvc.permitirEditarParametros; }
   @Input() modalVisible = false;
   @Input() lineasPreview: any[] = [];
   @Input() tieneErroresExcel = false;

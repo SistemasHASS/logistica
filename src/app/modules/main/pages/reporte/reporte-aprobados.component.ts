@@ -8,11 +8,12 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
+import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
 
 @Component({
   selector: 'app-reporte-aprobados',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, TableModule, DialogModule],
+  imports: [CommonModule, RouterModule, FormsModule, TableModule, DialogModule, NumeroRequerimientoPipe],
   templateUrl: './reporte-aprobados.component.html',
   styleUrls: ['./reporte-aprobados.component.scss'],
 })

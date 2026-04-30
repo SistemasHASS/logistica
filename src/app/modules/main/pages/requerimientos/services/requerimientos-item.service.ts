@@ -417,50 +417,40 @@ export class RequerimientosItemService {
     this.permitirEditarParametros = false;
   }
 
-  // â”€â”€ Cascada turno â†’ ceco â†’ labor â†’ proyecto en modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Cascada turno → ceco → labor → proyecto en modal ──────────────────────
   onTurnoChangeModal() {
-    const turnoActual = this.enModoEdicion ? this.lineaTemp?.turno || '' : this.turnoModal;
+    const turnoActual = this.lineaTemp?.turno || '';
     const turnoObj = this.maestras.turnos.find((t) => t.nombreTurno === turnoActual);
     if (turnoObj && turnoActual) {
       this.filteredCecosModal = this.maestras.cecos.filter((c) => c.conturno?.includes(turnoObj.conturno || ''));
     } else {
       this.filteredCecosModal = [];
     }
-    if (this.enModoEdicion) {
-      this.lineaTemp.ceco = ''; this.lineaTemp.labor = ''; this.lineaTemp.proyecto = '';
-    } else {
-      this.cecoModal = ''; this.laborModal = ''; this.proyectoModal = '';
-    }
+    this.lineaTemp.ceco = ''; this.lineaTemp.labor = ''; this.lineaTemp.proyecto = '';
     this.filteredLaboresModal = [];
     this.filteredProyectosModal = [];
     if (this.filteredCecosModal.length === 1) {
-      if (this.enModoEdicion) { this.lineaTemp.ceco = this.filteredCecosModal[0].localname; }
-      else { this.cecoModal = this.filteredCecosModal[0].localname; }
+      this.lineaTemp.ceco = this.filteredCecosModal[0].localname;
       this.onCecoChangeModal();
     }
   }
 
   onCecoChangeModal() {
-    const cecoActual = this.enModoEdicion ? this.lineaTemp?.ceco || '' : this.cecoModal;
+    const cecoActual = this.lineaTemp?.ceco || '';
     if (!cecoActual) return;
     const cecoObj = this.maestras.cecos.find((c) => c.localname === cecoActual);
     this.filteredLaboresModal = this.maestras.labores.filter((l) => l.ceco === (cecoObj?.costcenter || ''));
-    if (this.enModoEdicion) {
-      this.lineaTemp.labor = ''; this.lineaTemp.proyecto = '';
-    } else {
-      this.laborModal = ''; this.proyectoModal = '';
-    }
+    this.lineaTemp.labor = ''; this.lineaTemp.proyecto = '';
     this.filteredProyectosModal = [];
     if (this.filteredLaboresModal.length === 1) {
-      if (this.enModoEdicion) { this.lineaTemp.labor = this.filteredLaboresModal[0].labor; }
-      else { this.laborModal = this.filteredLaboresModal[0].labor; }
+      this.lineaTemp.labor = this.filteredLaboresModal[0].labor;
       this.onLaborChangeModal();
     }
   }
 
   onLaborChangeModal() {
-    const laborActual = this.enModoEdicion ? this.lineaTemp?.labor || '' : this.laborModal;
-    const cecoActual = this.enModoEdicion ? this.lineaTemp?.ceco || '' : this.cecoModal;
+    const laborActual = this.lineaTemp?.labor || '';
+    const cecoActual = this.lineaTemp?.ceco || '';
     if (!laborActual || !cecoActual) return;
     const laborObj = this.maestras.labores.find((l) => l.labor === laborActual);
     const cecoObj = this.maestras.cecos.find((c) => c.localname === cecoActual);
@@ -471,8 +461,7 @@ export class RequerimientosItemService {
         p.idcultivo?.trim() === this.maestras.cultivoSeleccionado?.trim(),
     );
     if (this.filteredProyectosModal.length === 1) {
-      if (this.enModoEdicion) { this.lineaTemp.proyecto = String(this.filteredProyectosModal[0].proyectoio); }
-      else { this.proyectoModal = String(this.filteredProyectosModal[0].proyectoio); }
+      this.lineaTemp.proyecto = String(this.filteredProyectosModal[0].proyectoio);
     }
   }
 
@@ -480,7 +469,43 @@ export class RequerimientosItemService {
     this.editIndex = index;
     this.enModoEdicion = true;
     this.lineaTemp = { ...this.detalles[index] };
+    this._inicializarFiltrosCascadaEdicion();
+    this.actualizarUnidadMedidaDesdeProducto();
     this.modalAbierto = true;
+  }
+
+  private _inicializarFiltrosCascadaEdicion() {
+    const turno = this.lineaTemp?.turno || '';
+    const ceco = this.lineaTemp?.ceco || '';
+    const labor = this.lineaTemp?.labor || '';
+    if (turno) {
+      const turnoObj = this.maestras.turnos.find((t: any) => t.nombreTurno === turno);
+      this.filteredCecosModal = turnoObj
+        ? this.maestras.cecos.filter((c: any) => c.conturno?.includes(turnoObj.conturno || ''))
+        : [...this.maestras.cecos];
+    } else {
+      this.filteredCecosModal = [...this.maestras.cecos];
+    }
+    if (ceco) {
+      const cecoObj = this.maestras.cecos.find((c: any) => c.localname === ceco);
+      this.filteredLaboresModal = cecoObj
+        ? this.maestras.labores.filter((l: any) => l.ceco === (cecoObj.costcenter || ''))
+        : [...this.maestras.labores];
+    } else {
+      this.filteredLaboresModal = [...this.maestras.labores];
+    }
+    if (ceco && labor) {
+      const cecoObj = this.maestras.cecos.find((c: any) => c.localname === ceco);
+      const laborObj = this.maestras.labores.find((l: any) => l.labor === labor);
+      this.filteredProyectosModal = this.maestras.proyectos.filter(
+        (p: any) =>
+          p.ceco?.trim() === (cecoObj?.costcenter || '')?.trim() &&
+          p.idlabor?.trim() === (laborObj?.idlabor || '')?.trim() &&
+          p.idcultivo?.trim() === this.maestras.cultivoSeleccionado?.trim(),
+      );
+    } else {
+      this.filteredProyectosModal = [...this.maestras.proyectos];
+    }
   }
 
   async eliminarDetalleItem(index: number) {

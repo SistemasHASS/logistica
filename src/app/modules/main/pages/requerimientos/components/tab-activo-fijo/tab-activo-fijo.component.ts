@@ -6,12 +6,13 @@ import { DropdownComponent } from '../../../../components/dropdown/dropdown.comp
 import { ModalDetalleActivoFijoComponent } from '../modal-detalle-activo-fijo/modal-detalle-activo-fijo.component';
 import { RequerimientosActivoFijoService } from '../../services/requerimientos-activo-fijo.service';
 import { RequerimientosMaestrasService } from '../../services/requerimientos-maestras.service';
+import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
 
 @Component({
   selector: 'app-tab-activo-fijo',
   standalone: true,
   styleUrls: ['../../requerimientos.component.scss'],
-  imports: [CommonModule, FormsModule, DatePipe, TableModule, DropdownComponent, ModalDetalleActivoFijoComponent],
+  imports: [CommonModule, FormsModule, DatePipe, TableModule, DropdownComponent, ModalDetalleActivoFijoComponent, NumeroRequerimientoPipe],
   templateUrl: './tab-activo-fijo.component.html',
 })
 export class TabActivoFijoComponent {

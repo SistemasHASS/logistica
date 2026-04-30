@@ -88,7 +88,7 @@
             <ng-template pTemplate="body" let-req>
               <tr>
                 <!-- <td>{{ req.numeroRequerimiento }}</td> -->
-                <td>{{ req.RequisicionNumero || req.idrequerimiento }}</td>
+                <td>{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</td>
                 <td>{{ req.fecha }}</td>
                 <td>{{ req.nombreSolicitante }}</td>
                 <td>{{ req.nombreArea }}</td>
@@ -147,7 +147,7 @@
             </ng-template>
             <ng-template pTemplate="body" let-req>
               <tr>
-                <td>{{ req.idrequerimiento }}</td>
+                <td>{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</td>
                 <td>{{ req.nombreArea }}</td>
                 <td>{{ req.fechaRegistro | date: 'dd/MM/yyyy' }}</td>
                 <td>{{ req.tipoRequerimiento }}</td>
@@ -187,7 +187,7 @@
             </ng-template>
             <ng-template pTemplate="body" let-req>
               <tr>
-                <td>{{ req.numeroRequerimiento }}</td>
+                <td>{{ req.idrequerimiento | numeroRequerimiento : req.numeroRequerimiento }}</td>
                 <td>{{ req.nombreSolicitante }}</td>
                 <td>{{ req.areaSolicitante }}</td>
                 <td>{{ req.tipo }}</td>
@@ -220,7 +220,7 @@
           header="Procesar Aprobación">
   <div *ngIf="requerimientoSeleccionado">
     <div class="mb-3">
-      <strong>Requerimiento:</strong> {{ requerimientoSeleccionado.idrequerimiento }}
+      <strong>Requerimiento:</strong> {{ requerimientoSeleccionado.idrequerimiento | numeroRequerimiento : requerimientoSeleccionado.RequisicionNumero }}
     </div>
     <div class="mb-3">
       <strong>Solicitante:</strong> {{ requerimientoSeleccionado.nombreSolicitante || requerimientoSeleccionado.nombreCreador || 'N/A' }}
@@ -267,7 +267,7 @@
   <div *ngIf="requerimientoDetalle">
     <div class="row mb-3">
       <div class="col-md-6">
-        <strong>Número:</strong> {{ requerimientoDetalle.idrequerimiento }}
+        <strong>Número:</strong> {{ requerimientoDetalle.idrequerimiento | numeroRequerimiento : requerimientoDetalle.RequisicionNumero }}
       </div>
       <div class="col-md-6">
         <strong>Requisición:</strong> {{ requerimientoDetalle.RequisicionNumero || 'N/A' }}
@@ -349,7 +349,7 @@
     <div class="row g-3 mb-3">
       <div class="col-12 col-md-6 col-lg-4">
         <div class="text-muted small">Número</div>
-        <div class="fw-semibold text-break">{{ requerimientoDetallePendientes.idrequerimiento }}</div>
+        <div class="fw-semibold text-break">{{ requerimientoDetallePendientes.idrequerimiento | numeroRequerimiento : requerimientoDetallePendientes.RequisicionNumero }}</div>
       </div>
       <div class="col-12 col-md-6 col-lg-4">
         <div class="text-muted small">Requisición</div>

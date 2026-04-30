@@ -751,7 +751,7 @@ export interface Cotizacion {
   garantia?: string;
   observaciones?: string;
   detalle: DetalleCotizacion[];
-  estado: 'RECIBIDA' | 'EN_EVALUACION' | 'SELECCIONADA' | 'RECHAZADA';
+  estado: 'RECIBIDA' | 'EN_EVALUACION' | 'SELECCIONADA' | 'RECHAZADA' | 'ORDEN_GENERADA';
   seleccionada: boolean;
   motivoSeleccion?: string;
   motivoRechazo?: string;
@@ -1174,4 +1174,253 @@ export interface SolicitudServicioAdjunto {
   usuarioCreacion?: string;
   activo?: boolean;
   file?: File; // Para el archivo temporal antes de subir
+}
+
+// =============================================
+// INTERFACES DE SEGUIMIENTO DE ORDENES DE SERVICIO
+// PASO 3: Estructura de datos para tracking
+// =============================================
+
+/**
+ * Representa un hito o tarea dentro de un servicio
+ */
+export interface HitoServicio {
+  id?: number;
+  descripcion: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  estado: 'PENDIENTE' | 'EN_EJECUCION' | 'COMPLETADO';
+  porcentajeAvance: number; // 0-100
+  observaciones?: string;
+  responsable?: string;
+}
+
+/**
+ * Estados posibles del seguimiento de una orden de servicio
+ */
+export type EstadoSeguimientoOS =
+  | 'GENERADA'
+  | 'ENVIADA'
+  | 'ACEPTADA'
+  | 'EN_EJECUCION'
+  | 'FINALIZADA'
+  | 'RECHAZADA';
+
+/**
+ * Seguimiento completo de una orden de servicio
+ */
+export interface SeguimientoOrdenServicio {
+  id?: number;
+  idOrdenServicio: number;
+  numeroOrden: string;
+  
+  // Estados del flujo
+  estado: EstadoSeguimientoOS;
+  
+  // Fechas de transición
+  fechaGenerada?: string;
+  fechaEnviada?: string;
+  fechaAceptada?: string;
+  fechaInicioEjecucion?: string;
+  fechaFinalizacion?: string;
+  
+  // Porcentaje de avance (0-100)
+  porcentajeAvance: number;
+  
+  // Usuarios responsables
+  usuarioGenera: string;
+  usuarioEjecuta?: string;
+  usuarioFinaliza?: string;
+  
+  // Hitos del servicio
+  hitos: HitoServicio[];
+  
+  // Conformidad final
+  conformidadFinal?: 'CONFORME' | 'NO_CONFORME' | 'CONFORME_CON_OBSERVACIONES';
+  calificacion?: number; // 1-5
+  observacionesConformidad?: string;
+  
+  // Control de cambios
+  fechaRegistro?: string;
+  fechaActualizacion?: string;
+  usuarioActualiza?: string;
+  
+  // Datos relacionados de la orden (opcionales, para UI)
+  tipoServicio?: string;
+  descripcionServicio?: string;
+  proveedor?: string;
+  nombreProveedor?: string;
+  montoTotal?: number;
+  moneda?: string;
+}
+
+/**
+ * Orden de Servicio con seguimiento incluido
+ * Extiende la estructura base agregando tracking
+ */
+export interface OrdenServicioConSeguimiento {
+  id?: number;
+  numeroOrden: string;
+  solicitudServicioId?: number;
+  cotizacionServicioId?: number;
+  fecha?: string;
+  estado: EstadoSeguimientoOS;
+  tipoServicio: string;
+  descripcion: string;
+  alcance?: string;
+  entregables?: string;
+  proveedor: string;
+  nombreProveedor: string;
+  rucProveedor?: string;
+  contactoProveedor?: string;
+  telefonoProveedor?: string;
+  emailProveedor?: string;
+  fechaInicioServicio?: string;
+  fechaFinServicio?: string;
+  plazoEjecucion?: number;
+  ubicacionServicio?: string;
+  montoTotal: number;
+  moneda: string;
+  formaPago?: string;
+  condicionesPago?: string;
+  garantia?: string;
+  penalidades?: string;
+  centroCosto?: string;
+  proyecto?: string;
+  observaciones?: string;
+  usuarioGenera: string;
+  nombreUsuarioGenera?: string;
+  fechaGenerada?: string;
+  
+  // Campos de seguimiento
+  hitos?: HitoServicio[];
+  porcentajeCompletado?: number;
+  
+  // Campos de conformidad
+  conformidad?: 'CONFORME' | 'NO_CONFORME' | 'CONFORME_CON_OBSERVACIONES';
+  calificacion?: number;
+  fechaInicioReal?: string;
+  fechaFinReal?: string;
+  observacionesConformidad?: string;
+  entregablesRecibidos?: string;
+  incidencias?: string;
+  recomendaciones?: string;
+  
+  // Detalle de la orden
+  detalle?: any[];
+}
+
+/**
+ * DTO para actualizar seguimiento desde el frontend
+ */
+export interface ActualizarSeguimientoOSDTO {
+  idOrdenServicio: number;
+  nuevoEstado: EstadoSeguimientoOS;
+  hitos?: HitoServicio[];
+  observaciones?: string;
+}
+
+/**
+ * DTO para registrar conformidad final
+ */
+export interface RegistrarConformidadOSDTO {
+  idOrdenServicio: number;
+  conformidad: 'CONFORME' | 'NO_CONFORME' | 'CONFORME_CON_OBSERVACIONES';
+  calificacion: number; // 1-5
+  observaciones: string;
+}
+
+// ============================================
+// INTERFACES DE SEGUIMIENTO DE ORDENES DE COMPRA
+// ============================================
+
+/**
+ * Estados del seguimiento de Órdenes de Compra
+ */
+export type EstadoSeguimientoOC =
+  | 'GENERADA'
+  | 'APROBADA'
+  | 'CONFIRMADA'
+  | 'EN_PROCESO'
+  | 'RECIBIDA_PARCIAL'
+  | 'RECIBIDA_TOTAL'
+  | 'ANULADA';
+
+/**
+ * Hito de seguimiento para Órdenes de Compra
+ */
+export type EstadoHitoCompra = 'PENDIENTE' | 'EN_PROCESO' | 'COMPLETADO';
+
+export interface HitoCompra {
+  descripcion: string;
+  estado: EstadoHitoCompra;
+  porcentajeAvance: number;
+  fechaProgramada?: string;
+  fechaEjecucion?: string;
+  responsable?: string;
+  observaciones?: string;
+}
+
+/**
+ * Seguimiento de Orden de Compra
+ */
+export interface SeguimientoOrdenCompra {
+  id: number;
+  idOrden: number;
+  numeroOrden: string;
+  estado: EstadoSeguimientoOC;
+  fechaGenerada?: string;
+  fechaAprobada?: string;
+  fechaConfirmada?: string;
+  fechaInicioProceso?: string;
+  fechaPrimeraRecepcion?: string;
+  fechaRecepcionTotal?: string;
+  porcentajeAvance: number;
+  usuarioGenera: string;
+  usuarioAprueba?: string;
+  usuarioConfirma?: string;
+  usuarioRecibe?: string;
+  hitos?: HitoCompra[];
+  fechaRegistro: string;
+  fechaActualizacion?: string;
+  usuarioActualiza?: string;
+  proveedor?: string;
+  nombreProveedor?: string;
+  montoTotal?: number;
+  almacen?: string;
+}
+
+export interface OrdenCompraConSeguimiento {
+  id?: number;
+  numeroOrden: string;
+  solicitudCompraId?: number;
+  fecha?: string;
+  estado: EstadoSeguimientoOC;
+  proveedor: string;
+  nombreProveedor: string;
+  rucProveedor?: string;
+  montoTotal: number;
+  moneda: string;
+  fechaEntregaEstimada?: string;
+  usuarioGenera: string;
+
+  // Campos de seguimiento
+  hitos?: HitoCompra[];
+  porcentajeCompletado?: number;
+  fechaGenerada?: string;
+  fechaAprobada?: string;
+  fechaConfirmada?: string;
+  fechaInicioProceso?: string;
+  fechaPrimeraRecepcion?: string;
+  fechaRecepcionTotal?: string;
+}
+
+/**
+ * DTO para actualizar seguimiento de OC
+ */
+export interface ActualizarSeguimientoOCDTO {
+  idOrden: number;
+  nuevoEstado: EstadoSeguimientoOC;
+  usuario: string;
+  hitos?: HitoCompra[];
 }

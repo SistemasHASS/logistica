@@ -82,6 +82,19 @@
               <span class="hide-menu"> Aprobadores</span>
             </a>
           </li>
+          <li *ngIf="usuario?.idrol.includes('OPLOGIST') && !usuario?.idrol.includes('LOLOGIST') && !usuario?.idrol.includes('TI')" class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Mi Dashboard</span>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('OPLOGIST') && !usuario?.idrol.includes('LOLOGIST') && !usuario?.idrol.includes('TI')" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./dashboard-oplogist" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class="bx bx-user-check"></i>
+              </span>
+              <span class="hide-menu"> Mi Dashboard</span>
+            </a>
+          </li>
           <li
             *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('LOLOGIST')"
             class="nav-small-cap">
@@ -369,11 +382,11 @@
               <span class="hide-menu"> Aprobación Órdenes Servicio</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST') || usuario?.idrol.includes('LOLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Kardex</span>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item"
+          <li *ngIf="usuario?.idrol.includes('TI') || usuario?.idrol.includes('ALLOGIST') || usuario?.idrol.includes('LOLOGIST')" class="sidebar-item"
             (click)="toggleSidebar()">
             <a routerLink="./kardex" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>

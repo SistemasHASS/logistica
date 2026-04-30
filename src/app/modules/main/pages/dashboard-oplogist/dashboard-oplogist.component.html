@@ -1,0 +1,259 @@
+<div class="dashboard-oplogist-container">
+
+  <!-- Header -->
+  <div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h3 class="mb-0"><i class="bx bx-user-check me-2 text-primary"></i>Mi Dashboard</h3>
+        <p class="text-muted mb-0">Seguimiento de mis requerimientos — {{ usuario?.nombre || usuario?.usuario }}</p>
+      </div>
+      <button class="btn btn-primary" (click)="irRequerimientos()">
+        <i class="bx bx-plus me-1"></i> Nuevo Requerimiento
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="row mb-4">
+    <div class="col-6 col-md-3 mb-3">
+      <div class="kpi-card kpi-total" [class.active]="filtroEstado === ''" (click)="seleccionarFiltro('')">
+        <div class="kpi-icon"><i class="bx bx-list-ul"></i></div>
+        <div class="kpi-number">{{ resumen.total }}</div>
+        <div class="kpi-label">Total</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+      <div class="kpi-card kpi-pendiente" [class.active]="filtroEstado === 'PENDIENTE'" (click)="seleccionarFiltro('PENDIENTE')">
+        <div class="kpi-icon"><i class="bx bx-time-five"></i></div>
+        <div class="kpi-number">{{ resumen.pendiente }}</div>
+        <div class="kpi-label">Pendientes</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+      <div class="kpi-card kpi-aprobado" [class.active]="filtroEstado === 'APROBADO'" (click)="seleccionarFiltro('APROBADO')">
+        <div class="kpi-icon"><i class="bx bx-check-circle"></i></div>
+        <div class="kpi-number">{{ resumen.aprobado }}</div>
+        <div class="kpi-label">Aprobados</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+      <div class="kpi-card kpi-completado" [class.active]="filtroEstado === 'DESPACHADO_COMPLETO'" (click)="seleccionarFiltro('DESPACHADO_COMPLETO')">
+        <div class="kpi-icon"><i class="bx bx-trophy"></i></div>
+        <div class="kpi-number">{{ resumen.completado }}</div>
+        <div class="kpi-label">Completados</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Segunda fila KPIs -->
+  <div class="row mb-4">
+    <div class="col-6 col-md-3 mb-3">
+      <div class="kpi-card kpi-enviado" [class.active]="filtroEstado === 'ENVIADO'" (click)="seleccionarFiltro('ENVIADO')">
+        <div class="kpi-icon"><i class="bx bx-send"></i></div>
+        <div class="kpi-number">{{ resumen.enviado }}</div>
+        <div class="kpi-label">Enviados</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+      <div class="kpi-card kpi-consolidado" [class.active]="filtroEstado === 'CONSOLIDADO'" (click)="seleccionarFiltro('CONSOLIDADO')">
+        <div class="kpi-icon"><i class="bx bx-layer"></i></div>
+        <div class="kpi-number">{{ resumen.consolidado }}</div>
+        <div class="kpi-label">Consolidados</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+      <div class="kpi-card kpi-despachado" [class.active]="filtroEstado === 'DESPACHADO'" (click)="seleccionarFiltro('DESPACHADO')">
+        <div class="kpi-icon"><i class="bx bx-truck"></i></div>
+        <div class="kpi-number">{{ resumen.despachado }}</div>
+        <div class="kpi-label">Despachados</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+      <div class="kpi-card kpi-rechazado" [class.active]="filtroEstado === 'RECHAZADO'" (click)="seleccionarFiltro('RECHAZADO')">
+        <div class="kpi-icon"><i class="bx bx-x-circle"></i></div>
+        <div class="kpi-number">{{ resumen.rechazado }}</div>
+        <div class="kpi-label">Rechazados</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pipeline visual de flujo -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+      <h6 class="card-title mb-3"><i class="bx bx-git-branch me-1"></i> Flujo de mis Requerimientos</h6>
+      <div class="pipeline">
+        <div class="pipeline-step" [class.has-items]="resumen.pendiente > 0">
+          <div class="pipeline-bubble pendiente">{{ resumen.pendiente }}</div>
+          <div class="pipeline-label">Pendiente</div>
+        </div>
+        <div class="pipeline-arrow"><i class="bx bx-right-arrow-alt"></i></div>
+        <div class="pipeline-step" [class.has-items]="resumen.enviado > 0">
+          <div class="pipeline-bubble enviado">{{ resumen.enviado }}</div>
+          <div class="pipeline-label">Enviado</div>
+        </div>
+        <div class="pipeline-arrow"><i class="bx bx-right-arrow-alt"></i></div>
+        <div class="pipeline-step" [class.has-items]="resumen.aprobado > 0">
+          <div class="pipeline-bubble aprobado">{{ resumen.aprobado }}</div>
+          <div class="pipeline-label">Aprobado</div>
+        </div>
+        <div class="pipeline-arrow"><i class="bx bx-right-arrow-alt"></i></div>
+        <div class="pipeline-step" [class.has-items]="resumen.consolidado > 0">
+          <div class="pipeline-bubble consolidado">{{ resumen.consolidado }}</div>
+          <div class="pipeline-label">Consolidado</div>
+        </div>
+        <div class="pipeline-arrow"><i class="bx bx-right-arrow-alt"></i></div>
+        <div class="pipeline-step" [class.has-items]="resumen.despachado > 0">
+          <div class="pipeline-bubble despachado">{{ resumen.despachado }}</div>
+          <div class="pipeline-label">Despachado</div>
+        </div>
+        <div class="pipeline-arrow"><i class="bx bx-right-arrow-alt"></i></div>
+        <div class="pipeline-step" [class.has-items]="resumen.completado > 0">
+          <div class="pipeline-bubble completado">{{ resumen.completado }}</div>
+          <div class="pipeline-label">Completado</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de requerimientos -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        Mis Requerimientos
+        @if (filtroEstado) {
+          <span class="badge ms-2 bg-secondary">
+            {{ obtenerTextoEstado(filtroEstado) }}
+          </span>
+        }
+      </h5>
+      @if (filtroEstado) {
+        <button class="btn btn-sm btn-outline-secondary" (click)="seleccionarFiltro('')">
+          <i class="bx bx-x me-1"></i> Limpiar filtro
+        </button>
+      }
+    </div>
+    <div class="card-body p-0">
+      <p-table [value]="requerimientosFiltrados" [paginator]="true" [rows]="10"
+               [loading]="loading" styleClass="p-datatable-sm"
+               [rowsPerPageOptions]="[10, 25, 50]" [showCurrentPageReport]="true"
+               currentPageReportTemplate="Mostrando {first} - {last} de {totalRecords}">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width:50px">#</th>
+            <th>N° Req.</th>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Glosa</th>
+            <th>Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-req let-rowIndex="rowIndex">
+          <tr>
+            <td class="text-muted small text-center">{{ rowIndex + 1 }}</td>
+            <td><strong class="text-primary">{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</strong></td>
+            <td>{{ formatearFecha(req.fecha) }}</td>
+            <td>
+              <span class="badge" [class]="req.tipo === 'COMPRA' ? 'bg-info' : 'bg-secondary'">
+                {{ req.tipo }}
+              </span>
+            </td>
+            <td>{{ req.glosa || '-' }}</td>
+            <td>
+              <p-tag [value]="obtenerTextoEstado(req.estados)"
+                     [severity]="obtenerClaseEstado(req.estados)">
+              </p-tag>
+            </td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-primary" (click)="verDetalle(req)"
+                      pTooltip="Ver detalle">
+                <i class="bx bx-show"></i>
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">
+              <i class="bx bx-inbox fs-3 d-block mb-2"></i>
+              @if (filtroEstado) {
+                No hay requerimientos en estado "{{ obtenerTextoEstado(filtroEstado) }}"
+              } @else {
+                No tienes requerimientos registrados
+              }
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalle -->
+<p-dialog [(visible)]="modalDetalleAbierto" [modal]="true" [draggable]="false"
+          header="Detalle del Requerimiento" [style]="{width: '650px'}" (onHide)="cerrarDetalle()">
+  @if (requerimientoSeleccionado) {
+    <div class="detalle-req">
+      <div class="row mb-3">
+        <div class="col-6">
+          <label class="fw-bold text-muted small">N° Requerimiento</label>
+          <p class="mb-0 text-primary fw-bold">{{ requerimientoSeleccionado.idrequerimiento | numeroRequerimiento : requerimientoSeleccionado.RequisicionNumero }}</p>
+        </div>
+        <div class="col-6">
+          <label class="fw-bold text-muted small">Estado</label>
+          <div>
+            <p-tag [value]="obtenerTextoEstado(requerimientoSeleccionado.estados)"
+                   [severity]="obtenerClaseEstado(requerimientoSeleccionado.estados)">
+            </p-tag>
+          </div>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-6">
+          <label class="fw-bold text-muted small">Fecha</label>
+          <p class="mb-0">{{ formatearFecha(requerimientoSeleccionado.fecha) }}</p>
+        </div>
+        <div class="col-6">
+          <label class="fw-bold text-muted small">Tipo</label>
+          <p class="mb-0">{{ requerimientoSeleccionado.tipo }}</p>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="fw-bold text-muted small">Glosa</label>
+        <p class="mb-0">{{ requerimientoSeleccionado.glosa || 'Sin glosa' }}</p>
+      </div>
+      @if (requerimientoSeleccionado.detalle?.length > 0) {
+        <div>
+          <label class="fw-bold text-muted small mb-2 d-block">Items ({{ requerimientoSeleccionado.detalle.length }})</label>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead class="table-light">
+                <tr>
+                  <th>Código</th>
+                  <th>Descripción</th>
+                  <th class="text-end">Cantidad</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (det of requerimientoSeleccionado.detalle; track det.id) {
+                  <tr>
+                    <td>{{ det.codigo }}</td>
+                    <td>{{ det.descripcion }}</td>
+                    <td class="text-end">{{ det.cantidad }}</td>
+                    <td>
+                      <span class="badge bg-secondary small">{{ det.estado || '-' }}</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    </div>
+  }
+  <ng-template pTemplate="footer">
+    <button class="btn btn-secondary" (click)="cerrarDetalle()">Cerrar</button>
+  </ng-template>
+</p-dialog>

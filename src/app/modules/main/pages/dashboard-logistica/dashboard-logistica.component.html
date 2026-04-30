@@ -56,42 +56,42 @@
     <!-- KPIs Principales -->
   <div class="row mb-4">
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm h-100">
+      <div class="card border-0 shadow-sm h-100 kpi-card" (click)="abrirModalRequerimientos('PENDIENTE')" style="cursor: pointer;">
         <div class="card-body text-center">
           <i class="bx bx-time text-danger fs-3 mb-2"></i>
           <h6 class="text-muted mb-1">Pendientes</h6>
           <h3 class="text-danger mb-0">{{ requerimientosPendientes }}</h3>
-          <small class="text-muted">Requerimientos</small>
+          <small class="text-muted">Requerimientos <i class="bx bx-link-external ms-1"></i></small>
         </div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm h-100">
+      <div class="card border-0 shadow-sm h-100 kpi-card" (click)="abrirModalRequerimientos('CONSOLIDADO')" style="cursor: pointer;">
         <div class="card-body text-center">
           <i class="bx bx-check-circle text-success fs-3 mb-2"></i>
           <h6 class="text-muted mb-1">Consolidados</h6>
           <h3 class="text-success mb-0">{{ requerimientosConsolidados }}</h3>
-          <small class="text-muted">Requerimientos</small>
+          <small class="text-muted">Requerimientos <i class="bx bx-link-external ms-1"></i></small>
         </div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm h-100">
+      <div class="card border-0 shadow-sm h-100 kpi-card" (click)="abrirModalRequerimientos('DESPACHADO')" style="cursor: pointer;">
         <div class="card-body text-center">
           <i class="bx bx-truck text-primary fs-3 mb-2"></i>
           <h6 class="text-muted mb-1">Despachados</h6>
           <h3 class="text-primary mb-0">{{ requerimientosDespachados }}</h3>
-          <small class="text-muted">Requerimientos</small>
+          <small class="text-muted">Requerimientos <i class="bx bx-link-external ms-1"></i></small>
         </div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm h-100">
+      <div class="card border-0 shadow-sm h-100 kpi-card" (click)="abrirModalRequerimientos('APROBADO')" style="cursor: pointer;">
         <div class="card-body text-center">
           <i class="bx bx-task text-warning fs-3 mb-2"></i>
           <h6 class="text-muted mb-1">Aprobados</h6>
           <h3 class="text-warning mb-0">{{ requerimientosAprobados }}</h3>
-          <small class="text-muted">Requerimientos</small>
+          <small class="text-muted">Requerimientos <i class="bx bx-link-external ms-1"></i></small>
         </div>
       </div>
     </div>
@@ -112,6 +112,15 @@
             </button>
             <button pButton pRipple type="button" class="p-button-warning" (click)="nuevaOrdenServicio()">
               <i class="bx bx-briefcase me-2"></i> Orden de Servicio
+            </button>
+            <button pButton pRipple type="button" class="p-button-secondary" (click)="irConsolidarRequerimientos()">
+              <i class="bx bx-layer me-2"></i> Consolidar Requerimientos
+            </button>
+            <button pButton pRipple type="button" class="p-button-help" (click)="irCotizaciones()">
+              <i class="bx bx-receipt me-2"></i> Cotizaciones
+            </button>
+            <button pButton pRipple type="button" style="background:#6c757d;border-color:#6c757d;" (click)="irKardex()">
+              <i class="bx bx-database me-2"></i> Kardex
             </button>
           </div>
         </div>
@@ -639,6 +648,173 @@
           </tr>
         </tbody>
       </table>
+    </div>
+  </p-dialog>
+
+  <!-- Modal de Requerimientos por Estado (al hacer click en KPIs) -->
+  <p-dialog
+    [(visible)]="modalRequerimientosAbierto"
+    [modal]="true"
+    [closable]="true"
+    [breakpoints]="{ '991px': '95vw', '575px': '100vw' }"
+    [style]="{ width: '90vw', maxWidth: '1200px' }"
+    [contentStyle]="{ overflow: 'hidden' }"
+    [header]="tituloModalRequerimientos"
+    styleClass="modal-requerimientos"
+    (onHide)="cerrarModalRequerimientos()">
+
+    <!-- Loading -->
+    <div *ngIf="loadingModalRequerimientos" class="text-center py-4">
+      <i class="bx bx-loader-alt bx-spin fs-1 text-primary"></i>
+      <p class="text-muted mt-2">Cargando requerimientos...</p>
+    </div>
+
+    <!-- Sin resultados -->
+    <div *ngIf="!loadingModalRequerimientos && requerimientosLista.length === 0" class="text-center py-4">
+      <i class="bx bx-info-circle fs-1 text-muted"></i>
+      <p class="text-muted mt-2">No hay requerimientos con estado <strong>{{ estadoSeleccionadoModal }}</strong> para la empresa seleccionada.</p>
+    </div>
+
+    <!-- Lista de requerimientos -->
+    <div *ngIf="!loadingModalRequerimientos && requerimientosLista.length > 0" class="modal-reqs-wrapper">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle modal-reqs-table">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 40px;"></th>
+              <th>N° Requerimiento</th>
+              <th class="d-none d-md-table-cell" style="width: 100px;">Fecha</th>
+              <th class="d-none d-lg-table-cell" style="width: 110px;">Tipo</th>
+              <th class="d-none d-lg-table-cell" style="width: 110px;">Solicitante</th>
+              <th class="d-none d-md-table-cell">Glosa</th>
+              <th class="text-center" style="width: 70px;">Items</th>
+              <th class="text-center" style="width: 110px;">Estado</th>
+              <th class="text-center d-none d-md-table-cell" style="width: 120px;">Consolidación</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let req of requerimientosPaginados">
+              <tr (click)="toggleDetalleRequerimiento(req.idrequerimiento)" style="cursor: pointer;">
+                <td class="text-center">
+                  <i class="bx" [ngClass]="requerimientoExpandido === req.idrequerimiento ? 'bx-chevron-down' : 'bx-chevron-right'"></i>
+                </td>
+                <td>
+                  <strong class="text-primary">{{ req.idrequerimiento | numeroRequerimiento : req.numeroRequerimiento }}</strong>
+                  <!-- Info compacta visible solo en mobile -->
+                  <div class="d-md-none small text-muted mt-1">
+                    <span>{{ req.fecha }}</span> ·
+                    <span>{{ req.tipo || '—' }}</span> ·
+                    <span>{{ req.dniregistra }}</span>
+                  </div>
+                  <div class="d-md-none small text-truncate" style="max-width: 220px;">{{ req.glosa }}</div>
+                </td>
+                <td class="d-none d-md-table-cell">{{ req.fecha }}</td>
+                <td class="d-none d-lg-table-cell"><span class="badge bg-light text-dark border">{{ req.tipo || '—' }}</span></td>
+                <td class="d-none d-lg-table-cell">{{ req.dniregistra }}</td>
+                <td class="d-none d-md-table-cell text-truncate" style="max-width: 280px;" [title]="req.glosa">{{ req.glosa }}</td>
+                <td class="text-center"><span class="badge bg-info">{{ req.totalItems }}</span></td>
+                <td class="text-center">
+                  <span class="badge" [ngClass]="obtenerClaseEstado(req.estado)">{{ req.estado }}</span>
+                </td>
+                <td class="text-center d-none d-md-table-cell">
+                  <span class="badge"
+                    [ngClass]="req.estadoConsolidacion === 2 ? 'bg-success' : (req.estadoConsolidacion === 1 ? 'bg-warning text-dark' : 'bg-light text-dark border')">
+                    {{ req.estadoConsolidacion === 2 ? 'TOTAL' : (req.estadoConsolidacion === 1 ? 'PARCIAL' : 'NO') }}
+                  </span>
+                </td>
+              </tr>
+              <!-- Detalle expandido -->
+              <tr *ngIf="requerimientoExpandido === req.idrequerimiento">
+                <td colspan="9" class="bg-light p-2 p-md-3">
+                  <h6 class="mb-3"><i class="bx bx-list-ul me-1"></i>Detalle de Items</h6>
+                  <div *ngIf="req.detalles && req.detalles.length > 0; else sinDetalles" class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0">
+                      <thead class="table-secondary">
+                        <tr>
+                          <th style="width: 90px;">Código</th>
+                          <th>Descripción</th>
+                          <th class="text-end" style="width: 90px;">Cantidad</th>
+                          <th class="d-none d-md-table-cell" style="width: 60px;">U.M.</th>
+                          <th class="text-center d-none d-md-table-cell" style="width: 80px;">Origen</th>
+                          <th class="text-center d-none d-lg-table-cell" style="width: 110px;">Estado</th>
+                          <th class="text-center" style="width: 110px;">Consolidación</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let item of req.detalles">
+                          <td>{{ item.codigo || '—' }}</td>
+                          <td>
+                            {{ item.descripcion || '(sin descripción)' }}
+                            <div class="d-md-none small text-muted">
+                              <span *ngIf="item.unidadMedida">{{ item.unidadMedida }}</span>
+                              <span *ngIf="item.origen === 'COMMODITY'" class="badge bg-info ms-1">SERVICIO</span>
+                            </div>
+                          </td>
+                          <td class="text-end">{{ item.cantidad }}</td>
+                          <td class="d-none d-md-table-cell">{{ item.unidadMedida || '—' }}</td>
+                          <td class="text-center d-none d-md-table-cell">
+                            <span class="badge" [ngClass]="item.origen === 'COMMODITY' ? 'bg-info' : 'bg-light text-dark border'">
+                              {{ item.origen === 'COMMODITY' ? 'SERVICIO' : 'ITEM' }}
+                            </span>
+                          </td>
+                          <td class="text-center d-none d-lg-table-cell">
+                            <span class="badge" [ngClass]="obtenerClaseEstado(item.estadoItem)" *ngIf="item.estadoItem">{{ item.estadoItem }}</span>
+                            <span class="text-muted small" *ngIf="!item.estadoItem">—</span>
+                          </td>
+                          <td class="text-center">
+                            <span class="badge" [ngClass]="item.estadoConsolidacion === 1 ? 'bg-success' : 'bg-light text-dark border'">
+                              {{ item.estadoConsolidacion === 1 ? 'CONSOLIDADO' : 'PENDIENTE' }}
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <ng-template #sinDetalles>
+                    <p class="text-muted mb-0"><i class="bx bx-info-circle me-1"></i>No hay items en el detalle.</p>
+                  </ng-template>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Controles de paginación -->
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 mt-3 px-2">
+        <small class="text-muted text-center text-md-start">
+          Mostrando <strong>{{ rangoVisibleModal.desde }}</strong>–<strong>{{ rangoVisibleModal.hasta }}</strong>
+          de <strong>{{ requerimientosLista.length }}</strong> requerimiento(s) ·
+          <strong>{{ getTotalItemsRequerimientos() }}</strong> ítem(s)
+        </small>
+        <nav *ngIf="totalPaginasModal > 1" aria-label="Paginación de requerimientos">
+          <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
+            <li class="page-item" [class.disabled]="paginaActualModal === 1">
+              <button class="page-link" (click)="irAPaginaModal(1)" aria-label="Primera">
+                <i class="bx bx-chevrons-left"></i>
+              </button>
+            </li>
+            <li class="page-item" [class.disabled]="paginaActualModal === 1">
+              <button class="page-link" (click)="irAPaginaModal(paginaActualModal - 1)" aria-label="Anterior">
+                <i class="bx bx-chevron-left"></i>
+              </button>
+            </li>
+            <li class="page-item" *ngFor="let p of paginasVisiblesModal" [class.active]="p === paginaActualModal">
+              <button class="page-link" (click)="irAPaginaModal(p)">{{ p }}</button>
+            </li>
+            <li class="page-item" [class.disabled]="paginaActualModal === totalPaginasModal">
+              <button class="page-link" (click)="irAPaginaModal(paginaActualModal + 1)" aria-label="Siguiente">
+                <i class="bx bx-chevron-right"></i>
+              </button>
+            </li>
+            <li class="page-item" [class.disabled]="paginaActualModal === totalPaginasModal">
+              <button class="page-link" (click)="irAPaginaModal(totalPaginasModal)" aria-label="Última">
+                <i class="bx bx-chevrons-right"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
     </div>
   </p-dialog>
 </div>

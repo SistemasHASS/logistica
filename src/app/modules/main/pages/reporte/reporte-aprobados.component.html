@@ -52,7 +52,7 @@
             <ng-template pTemplate="body" let-row>
                 <tr>
                     <td>{{ row.fechaAprobacion | date:'dd/MM/yyyy HH:mm:ss' }}</td>
-                    <td>{{ obtenerIdReq(row.idrequerimiento)}}</td>
+                    <td>{{ row.idrequerimiento | numeroRequerimiento : row.RequisicionNumero }}</td>
                     <td><strong>{{ row.RequisicionNumero || '-' }}</strong></td>
                     <td>{{ row.glosa }}</td>
                     <td>{{ row.dniAprobador }}</td>
@@ -95,7 +95,7 @@
             <ng-template pTemplate="body" let-row>
                 <tr>
                     <td>{{ row.fechaAprobacion | date:'dd/MM/yyyy HH:mm:ss' }}</td>
-                    <td>{{ obtenerIdReq(row.idrequerimiento)}}</td>
+                    <td>{{ row.idrequerimiento | numeroRequerimiento : row.RequisicionNumero }}</td>
                     <td><strong>{{ row.RequisicionNumero || '-' }}</strong></td>
                     <td>{{ row.glosa }}</td>
                     <td>{{ row.dniAprobador }}</td>
@@ -123,7 +123,7 @@
     <div class="mb-3" *ngIf="requerimientoSeleccionado">
         <div class="row">
             <div class="col-md-3">
-                <strong>N° Req:</strong> {{ obtenerIdReq(requerimientoSeleccionado.idrequerimiento) }}
+                <strong>N° Req:</strong> {{ requerimientoSeleccionado.idrequerimiento | numeroRequerimiento : requerimientoSeleccionado.RequisicionNumero }}
             </div>
             <div class="col-md-3">
                 <strong>N° Requisición:</strong> {{ requerimientoSeleccionado.RequisicionNumero || '-' }}

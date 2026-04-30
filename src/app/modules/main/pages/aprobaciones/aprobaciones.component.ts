@@ -12,12 +12,13 @@ import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import { Usuario } from '@/app/shared/interfaces/Tables';
 import { TableModule } from 'primeng/table';
 import { async } from 'rxjs';
+import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
 
 declare var bootstrap: any; // Para usar Bootstrap modal
 @Component({
   selector: 'app-aprobaciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, TableModule],
+  imports: [CommonModule, FormsModule, TableModule, NumeroRequerimientoPipe],
   templateUrl: './aprobaciones.component.html',
   styleUrl: './aprobaciones.component.scss',
 })

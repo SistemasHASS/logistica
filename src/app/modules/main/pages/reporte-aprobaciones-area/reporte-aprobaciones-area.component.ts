@@ -10,6 +10,7 @@ import { DialogModule } from 'primeng/dialog';
 import { AprobacionesAreaService } from '@/app/modules/main/services/aprobaciones-area.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import Swal from 'sweetalert2';
+import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
 
 @Component({
   selector: 'app-reporte-aprobaciones-area',
@@ -22,7 +23,8 @@ import Swal from 'sweetalert2';
     TagModule,
     CardModule,
     InputTextModule,
-    DialogModule
+    DialogModule,
+    NumeroRequerimientoPipe
   ],
   templateUrl: './reporte-aprobaciones-area.component.html',
   styleUrl: './reporte-aprobaciones-area.component.scss'

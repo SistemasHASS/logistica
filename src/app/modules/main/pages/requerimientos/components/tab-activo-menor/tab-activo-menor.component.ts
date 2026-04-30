@@ -6,12 +6,13 @@ import { DropdownComponent } from '../../../../components/dropdown/dropdown.comp
 import { ModalDetalleActivoMenorComponent } from '../modal-detalle-activo-menor/modal-detalle-activo-menor.component';
 import { RequerimientosActivoMenorService } from '../../services/requerimientos-activo-menor.service';
 import { RequerimientosMaestrasService } from '../../services/requerimientos-maestras.service';
+import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
 
 @Component({
   selector: 'app-tab-activo-menor',
   standalone: true,
   styleUrls: ['../../requerimientos.component.scss'],
-  imports: [CommonModule, FormsModule, DatePipe, TableModule, DropdownComponent, ModalDetalleActivoMenorComponent],
+  imports: [CommonModule, FormsModule, DatePipe, TableModule, DropdownComponent, ModalDetalleActivoMenorComponent, NumeroRequerimientoPipe],
   templateUrl: './tab-activo-menor.component.html',
 })
 export class TabActivoMenorComponent {

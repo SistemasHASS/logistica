@@ -115,7 +115,8 @@ export class LoginComponent {
         break;
 
       case 'OPLOGIST':
-        this.router.navigate(['/main/parametros']);
+        // this.router.navigate(['/main/parametros']);
+        this.router.navigate(['/main/dashboard-oplogist']);
         break;
         
       case 'EMLOGIST': // 👈 rol empaque
@@ -123,7 +124,8 @@ export class LoginComponent {
         break;
 
       case 'LOLOGIST': // 👈 rol logistico
-        this.router.navigate(['/main/parametros']);
+        // this.router.navigate(['/main/parametros']);
+        this.router.navigate(['/main/dashboard-logistica']);
         break;
 
       default:

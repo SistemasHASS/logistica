@@ -30,6 +30,7 @@ import {
   ItemTemporalConsolidacion,
   TipoRequerimiento,
 } from '@/app/shared/interfaces/Tables';
+import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
 
 @Component({
   selector: 'app-consolidacion-requerimientos-original',
@@ -42,6 +43,7 @@ import {
     CheckboxModule,
     InputTextModule,
     SelectModule,
+    NumeroRequerimientoPipe,
     DatePickerModule,
     MultiSelectModule,
   ],

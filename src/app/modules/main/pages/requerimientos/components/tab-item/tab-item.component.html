@@ -57,7 +57,7 @@
                     </td>
                     <td>
                       <span class="p-column-title">#Req</span>
-                      {{ obtenerIdReq(c.idrequerimiento) }}
+                      {{ c.idrequerimiento | numeroRequerimiento : c.RequisicionNumero }}
                     </td>
                     <td>
                       <span class="p-column-title">Fecha</span>
@@ -124,7 +124,7 @@
                         </span>
                         &nbsp;&nbsp;&nbsp;<strong>Usuario: {{ item.nrodocumento }}</strong>
                       </p>
-                      <p class="item-card"><strong>#Requerimiento: </strong>{{ obtenerIdReq(item.idrequerimiento) }}</p>
+                      <p class="item-card"><strong>#Requerimiento: </strong>{{ item.idrequerimiento | numeroRequerimiento : item.RequisicionNumero }}</p>
                       <p class="item-card">
                         <strong>Fecha: </strong>{{ formatoFecha(item.fecha) }} - <strong>Almacén:</strong> {{ item.almacen }}
                       </p>

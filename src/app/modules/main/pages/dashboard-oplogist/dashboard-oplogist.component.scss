@@ -1,0 +1,97 @@
+.dashboard-oplogist-container {
+  padding: 1.5rem;
+}
+
+.page-header {
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 1rem;
+
+  h3 { font-weight: 700; color: #2d3748; }
+}
+
+// KPI Cards
+.kpi-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+
+  &:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.1); }
+  &.active { border-color: currentColor; transform: translateY(-2px); }
+
+  .kpi-icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
+  .kpi-number { font-size: 2rem; font-weight: 700; line-height: 1; }
+  .kpi-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; color: #6c757d; }
+
+  &.kpi-total    { .kpi-icon, .kpi-number { color: #6366f1; } }
+  &.kpi-pendiente { .kpi-icon, .kpi-number { color: #f59e0b; } }
+  &.kpi-aprobado  { .kpi-icon, .kpi-number { color: #10b981; } }
+  &.kpi-completado { .kpi-icon, .kpi-number { color: #059669; } }
+  &.kpi-enviado    { .kpi-icon, .kpi-number { color: #0ea5e9; } }
+  &.kpi-consolidado { .kpi-icon, .kpi-number { color: #3b82f6; } }
+  &.kpi-despachado { .kpi-icon, .kpi-number { color: #374151; } }
+  &.kpi-rechazado  { .kpi-icon, .kpi-number { color: #ef4444; } }
+}
+
+// Pipeline
+.pipeline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pipeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+
+  &.has-items { opacity: 1; }
+}
+
+.pipeline-bubble {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #fff;
+
+  &.pendiente  { background: #f59e0b; }
+  &.enviado    { background: #0ea5e9; }
+  &.aprobado   { background: #10b981; }
+  &.consolidado { background: #3b82f6; }
+  &.despachado { background: #374151; }
+  &.completado { background: #059669; }
+}
+
+.pipeline-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6c757d;
+  font-weight: 600;
+}
+
+.pipeline-arrow {
+  color: #cbd5e1;
+  font-size: 1.5rem;
+  line-height: 1;
+  margin-bottom: 1.2rem;
+}
+
+// Detalle modal
+.detalle-req {
+  label { display: block; }
+}

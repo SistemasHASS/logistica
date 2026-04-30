@@ -12,6 +12,16 @@
     }
   }
 
+  .kpi-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;
+      background-color: #f8f9fa;
+    }
+  }
+
   .card {
     border-radius: 8px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -223,5 +233,52 @@
 
   .text-info {
     color: #0dcaf0 !important;
+  }
+}
+
+// ===== Modal de Requerimientos por Estado =====
+:host ::ng-deep .modal-requerimientos {
+  .p-dialog-content {
+    padding: 1rem !important;
+
+    @media (max-width: 575.98px) {
+      padding: 0.5rem !important;
+    }
+  }
+
+  .modal-reqs-table {
+    font-size: 0.85rem;
+
+    th, td {
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    td.text-truncate {
+      max-width: 280px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (max-width: 767.98px) {
+      font-size: 0.8rem;
+    }
+  }
+
+  .pagination .page-link {
+    cursor: pointer;
+    border-radius: 4px;
+    margin: 0 1px;
+
+    i {
+      font-size: 1rem;
+      vertical-align: middle;
+    }
+  }
+
+  .pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
   }
 }

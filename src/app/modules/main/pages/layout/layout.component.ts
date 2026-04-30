@@ -366,6 +366,8 @@ export class LayoutComponent {
 
       'gestion-inventario': 'Gestión de Inventario',
 
+      'dashboard-logistica': 'Dashboard de Logistica',
+
       'dashboard-compras': 'Dashboard de Compras',
 
       'devoluciones-proveedores': 'Devoluciones a Proveedores',

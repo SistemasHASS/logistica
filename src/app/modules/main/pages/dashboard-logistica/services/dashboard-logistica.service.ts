@@ -89,4 +89,12 @@ export class DashboardLogisticaService {
       payload
     );
   }
+
+  // Lista de requerimientos por estado (para modal del dashboard)
+  obtenerRequerimientosPorEstado(payload: any) {
+    return this.http.post<any[]>(
+      `${this.baseUrl}/api/logistica/dashboard-logistica/requerimientos-por-estado`,
+      payload
+    );
+  }
 }
