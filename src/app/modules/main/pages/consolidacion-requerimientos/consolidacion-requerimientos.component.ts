@@ -68,23 +68,32 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
   // Servicios pendientes de consolidar
   serviciosPendientes: any[] = [];
   serviciosPendientesFiltrados: any[] = [];
-  serviciosSeleccionados: any[] = [];
   serviciosConsolidados: number = 0;
   seleccionarTodosServicios: boolean = false;
+
+  get serviciosSeleccionados(): any[] {
+    return this.serviciosPendientesFiltrados.filter(s => s.seleccionado);
+  }
 
   // Activos fijos pendientes de consolidar
   activosFijosPendientes: any[] = [];
   activosFijosFiltrados: any[] = [];
-  activosFijosSeleccionados: any[] = [];
   activosFijosConsolidados: number = 0;
   seleccionarTodosActivosFijos: boolean = false;
+
+  get activosFijosSeleccionados(): any[] {
+    return this.activosFijosFiltrados.filter(a => a.seleccionado);
+  }
 
   // Activos menores pendientes de consolidar
   activosMenoresPendientes: any[] = [];
   activosMenoresFiltrados: any[] = [];
-  activosMenoresSeleccionados: any[] = [];
   activosMenoresConsolidados: number = 0;
   seleccionarTodosActivosMenores: boolean = false;
+
+  get activosMenoresSeleccionados(): any[] {
+    return this.activosMenoresFiltrados.filter(a => a.seleccionado);
+  }
 
   // Historial de consolidaciones
   historialConsolidaciones: ConsolidacionCab[] = [];
@@ -224,7 +233,16 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
   }
 
   async agregarSeleccionadosAListaTemporal() {
-    const seleccionados = this.itemsSeleccionados;
+    let seleccionados: any[];
+    if (this.activeTab === 'COMMODITY' || this.activeTab === 'SERVICIO') {
+      seleccionados = this.serviciosSeleccionados;
+    } else if (this.activeTab === 'ACTIVOFIJO') {
+      seleccionados = this.activosFijosSeleccionados;
+    } else if (this.activeTab === 'ACTIVOMENOR') {
+      seleccionados = this.activosMenoresSeleccionados;
+    } else {
+      seleccionados = this.itemsSeleccionados;
+    }
 
     if (seleccionados.length === 0) {
       this.alertService.showAlert(
@@ -473,7 +491,16 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
 
   // Consolidar seleccionados
   async consolidarSeleccionados() {
-    const seleccionados = this.itemsSeleccionados;
+    let seleccionados: any[];
+    if (this.activeTab === 'COMMODITY' || this.activeTab === 'SERVICIO') {
+      seleccionados = this.serviciosSeleccionados;
+    } else if (this.activeTab === 'ACTIVOFIJO') {
+      seleccionados = this.activosFijosSeleccionados;
+    } else if (this.activeTab === 'ACTIVOMENOR') {
+      seleccionados = this.activosMenoresSeleccionados;
+    } else {
+      seleccionados = this.itemsSeleccionados;
+    }
 
     if (seleccionados.length === 0) {
       this.alertService.showAlert(
@@ -502,7 +529,7 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
 
         itemsSeleccionados: seleccionados.map((item) => ({
           idDetalle: item.idDetalle,
-          tipo: item.tipoRequerimiento,
+          tipo: item.tipo || item.tipoRequerimiento,
         })),
       };
 
@@ -718,7 +745,9 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
                   codigoItem: det.codigoItem,
                   descripcionItem: det.descripcionItem,
                   cantidad: det.cantidadTotal,
-                  unidadMedida: det.unidadMedida
+                  unidadMedida: det.unidadMedida,
+                  ceco: det.ceco || det.origenes?.[0]?.ceco || '',
+                  proyecto: det.proyecto || det.origenes?.[0]?.proyecto || ''
                 })) || []
               };
               
@@ -978,7 +1007,9 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
               codigoItem: det.codigoItem,
               descripcionItem: det.descripcionItem,
               cantidad: det.cantidadTotal || det.cantidad,
-              unidadMedida: det.unidadMedida
+              unidadMedida: det.unidadMedida,
+              ceco: det.ceco || det.origenes?.[0]?.ceco || '',
+              proyecto: det.proyecto || det.origenes?.[0]?.proyecto || ''
             })) || []
           };
           
@@ -1085,7 +1116,16 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
   // =============================================
 
   async consolidarYCotizar() {
-    const seleccionados = this.itemsSeleccionados;
+    let seleccionados: any[];
+    if (this.activeTab === 'COMMODITY' || this.activeTab === 'SERVICIO') {
+      seleccionados = this.serviciosSeleccionados;
+    } else if (this.activeTab === 'ACTIVOFIJO') {
+      seleccionados = this.activosFijosSeleccionados;
+    } else if (this.activeTab === 'ACTIVOMENOR') {
+      seleccionados = this.activosMenoresSeleccionados;
+    } else {
+      seleccionados = this.itemsSeleccionados;
+    }
 
     if (seleccionados.length === 0) {
       this.alertService.showAlert(
@@ -1116,7 +1156,7 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
           this.usuario?.documentoidentidad || this.usuario?.usuario || 'SYSTEM',
         itemsSeleccionados: seleccionados.map((item) => ({
           idDetalle: item.idDetalle,
-          tipo: item.tipoRequerimiento,
+          tipo: item.tipo || item.tipoRequerimiento,
         })),
       };
 
@@ -1168,7 +1208,9 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
                   codigoItem: det.codigoItem,
                   descripcionItem: det.descripcionItem,
                   cantidad: det.cantidadTotal,
-                  unidadMedida: det.unidadMedida
+                  unidadMedida: det.unidadMedida,
+                  ceco: det.ceco || det.origenes?.[0]?.ceco || '',
+                  proyecto: det.proyecto || det.origenes?.[0]?.proyecto || ''
                 })) || []
               };
               
@@ -1549,6 +1591,12 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
     this.serviciosPendientesFiltrados.forEach(s => s.seleccionado = this.seleccionarTodosServicios);
   }
 
+  actualizarSeleccionarTodosServicios() {
+    this.seleccionarTodosServicios =
+      this.serviciosPendientesFiltrados.length > 0 &&
+      this.serviciosPendientesFiltrados.every(s => s.seleccionado);
+  }
+
   hayServiciosSeleccionados(): boolean {
     return this.serviciosPendientesFiltrados.some(s => s.seleccionado);
   }
@@ -1681,7 +1729,9 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
                   codigoItem: det.codigoItem,
                   descripcionItem: det.descripcionItem,
                   cantidad: det.cantidadTotal,
-                  unidadMedida: det.unidadMedida
+                  unidadMedida: det.unidadMedida,
+                  ceco: det.ceco || det.origenes?.[0]?.ceco || '',
+                  proyecto: det.proyecto || det.origenes?.[0]?.proyecto || ''
                 })) || []
               };
               
@@ -1790,5 +1840,181 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
 
     // ✅ desbloquear scroll del body SOLO cuando modal se cierra
     document.body.classList.remove('modal-open');
+  }
+
+  // =============================================
+  // ACTIVOS FIJOS PENDIENTES
+  // =============================================
+
+  async cargarActivosFijosPendientes() {
+    try {
+      this.loading = true;
+      const filtros: any = {
+        sociedad: this.usuario?.sociedad || '001',
+        idproyecto: this.usuario?.idProyecto
+      };
+      if (this.filtroActivoFijo?.trim()) {
+        filtros.activoFijo = this.filtroActivoFijo.trim();
+      }
+      if (this.filtroEmpresa) {
+        filtros.empresa = this.filtroEmpresa;
+      }
+      console.log('📤 Enviando filtros al backend (activos fijos):', filtros);
+      const activos = await this.consolidacionService.listarActivosFijosPendientes(filtros);
+      console.log('📥 Activos fijos recibidos del backend:', activos.length, activos);
+      this.activosFijosPendientes = activos.map((a: any) => ({ ...a, seleccionado: false }));
+      this.activosFijosFiltrados = [...this.activosFijosPendientes];
+      this.seleccionarTodosActivosFijos = false;
+    } catch (error) {
+      console.error('❌ Error al cargar activos fijos pendientes:', error);
+      this.alertService.showAlertError('Error', 'No se pudieron cargar los activos fijos pendientes');
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  toggleSeleccionTodosActivosFijos() {
+    this.activosFijosFiltrados.forEach(a => a.seleccionado = this.seleccionarTodosActivosFijos);
+  }
+
+  actualizarSeleccionarTodosActivosFijos() {
+    this.seleccionarTodosActivosFijos =
+      this.activosFijosFiltrados.length > 0 &&
+      this.activosFijosFiltrados.every(a => a.seleccionado);
+  }
+
+  hayActivosFijosSeleccionados(): boolean {
+    return this.activosFijosFiltrados.some(a => a.seleccionado);
+  }
+
+  contarActivosFijosSeleccionados(): number {
+    return this.activosFijosFiltrados.filter(a => a.seleccionado).length;
+  }
+
+  async consolidarActivosFijosSeleccionados() {
+    const seleccionados = this.activosFijosFiltrados.filter(a => a.seleccionado);
+    if (seleccionados.length === 0) {
+      this.alertService.showAlert('Atención', 'Debe seleccionar al menos un activo fijo', 'warning');
+      return;
+    }
+    const confirmacion = await this.alertService.showConfirm(
+      'Confirmar Consolidación',
+      `¿Desea consolidar ${seleccionados.length} activo(s) fijo(s)?`,
+      'question'
+    );
+    if (!confirmacion) return;
+    try {
+      this.loading = true;
+      this.alertService.mostrarModalCarga();
+      const request: CrearConsolidacionRequest = {
+        usuario: this.usuario?.documentoidentidad || this.usuario?.usuario || 'SYSTEM',
+        itemsSeleccionados: seleccionados.map(a => ({
+          idDetalle: a.idDetalle,
+          tipo: a.tipo || a.tipoRequerimiento
+        }))
+      };
+      const resultado = await this.consolidacionService.crearConsolidacion(request);
+      this.alertService.cerrarModalCarga();
+      if (resultado.success) {
+        this.alertService.showAlert('Éxito', `Consolidación creada: ${resultado.codigo}`, 'success');
+        await this.cargarActivosFijosPendientes();
+        await this.cargarHistorial();
+      } else {
+        this.alertService.showAlertError('Error', resultado.mensaje || 'No se pudo consolidar');
+      }
+    } catch (error: any) {
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlertError('Error', error?.message || 'Error al consolidar activos fijos');
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  // =============================================
+  // ACTIVOS MENORES PENDIENTES
+  // =============================================
+
+  async cargarActivosMenoresPendientes() {
+    try {
+      this.loading = true;
+      const filtros: any = {
+        sociedad: this.usuario?.sociedad || '001',
+        idproyecto: this.usuario?.idProyecto
+      };
+      if (this.filtroActivoMenor?.trim()) {
+        filtros.activoMenor = this.filtroActivoMenor.trim();
+      }
+      if (this.filtroEmpresa) {
+        filtros.empresa = this.filtroEmpresa;
+      }
+      console.log('📤 Enviando filtros al backend (activos menores):', filtros);
+      const activos = await this.consolidacionService.listarActivosMenoresPendientes(filtros);
+      console.log('📥 Activos menores recibidos del backend:', activos.length, activos);
+      this.activosMenoresPendientes = activos.map((a: any) => ({ ...a, seleccionado: false }));
+      this.activosMenoresFiltrados = [...this.activosMenoresPendientes];
+      this.seleccionarTodosActivosMenores = false;
+    } catch (error) {
+      console.error('❌ Error al cargar activos menores pendientes:', error);
+      this.alertService.showAlertError('Error', 'No se pudieron cargar los activos menores pendientes');
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  toggleSeleccionTodosActivosMenores() {
+    this.activosMenoresFiltrados.forEach(a => a.seleccionado = this.seleccionarTodosActivosMenores);
+  }
+
+  actualizarSeleccionarTodosActivosMenores() {
+    this.seleccionarTodosActivosMenores =
+      this.activosMenoresFiltrados.length > 0 &&
+      this.activosMenoresFiltrados.every(a => a.seleccionado);
+  }
+
+  hayActivosMenoresSeleccionados(): boolean {
+    return this.activosMenoresFiltrados.some(a => a.seleccionado);
+  }
+
+  contarActivosMenoresSeleccionados(): number {
+    return this.activosMenoresFiltrados.filter(a => a.seleccionado).length;
+  }
+
+  async consolidarActivosMenoresSeleccionados() {
+    const seleccionados = this.activosMenoresFiltrados.filter(a => a.seleccionado);
+    if (seleccionados.length === 0) {
+      this.alertService.showAlert('Atención', 'Debe seleccionar al menos un activo menor', 'warning');
+      return;
+    }
+    const confirmacion = await this.alertService.showConfirm(
+      'Confirmar Consolidación',
+      `¿Desea consolidar ${seleccionados.length} activo(s) menor(es)?`,
+      'question'
+    );
+    if (!confirmacion) return;
+    try {
+      this.loading = true;
+      this.alertService.mostrarModalCarga();
+      const request: CrearConsolidacionRequest = {
+        usuario: this.usuario?.documentoidentidad || this.usuario?.usuario || 'SYSTEM',
+        itemsSeleccionados: seleccionados.map(a => ({
+          idDetalle: a.idDetalle,
+          tipo: a.tipo || a.tipoRequerimiento
+        }))
+      };
+      const resultado = await this.consolidacionService.crearConsolidacion(request);
+      this.alertService.cerrarModalCarga();
+      if (resultado.success) {
+        this.alertService.showAlert('Éxito', `Consolidación creada: ${resultado.codigo}`, 'success');
+        await this.cargarActivosMenoresPendientes();
+        await this.cargarHistorial();
+      } else {
+        this.alertService.showAlertError('Error', resultado.mensaje || 'No se pudo consolidar');
+      }
+    } catch (error: any) {
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlertError('Error', error?.message || 'Error al consolidar activos menores');
+    } finally {
+      this.loading = false;
+    }
   }
 }

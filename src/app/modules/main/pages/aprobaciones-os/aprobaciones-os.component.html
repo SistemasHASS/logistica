@@ -1,89 +1,87 @@
-<div class="aprobaciones-os-container">
-  <div class="header-section">
+<div class="container-fluid">
+  <div class="page-header">
     <h2 class="page-title">
-      <i class="pi pi-check-circle"></i>
+      <i class="bx bx-check-circle"></i>
       Aprobaciones de Órdenes de Servicio
     </h2>
     <p class="page-subtitle">Gestión de aprobaciones de órdenes de servicio</p>
   </div>
 
   <!-- Tarjetas de Contadores -->
-  <div class="contadores-grid">
-    <div class="contador-card pendientes">
-      <div class="contador-icon">
-        <i class="pi pi-clock"></i>
+  <div class="stats-cards">
+    <div class="stat-card warning">
+      <div class="stat-icon">
+        <i class="bx bx-time"></i>
       </div>
-      <div class="contador-info">
-        <span class="contador-label">Pendientes</span>
-        <span class="contador-valor">{{ contadores.totalPendientes }}</span>
-      </div>
-    </div>
-
-    <div class="contador-card aprobadas">
-      <div class="contador-icon">
-        <i class="pi pi-check"></i>
-      </div>
-      <div class="contador-info">
-        <span class="contador-label">Aprobadas</span>
-        <span class="contador-valor">{{ contadores.totalAprobadas }}</span>
+      <div class="stat-content">
+        <span class="stat-value">{{ contadores.totalPendientes }}</span>
+        <span class="stat-label">Pendientes</span>
       </div>
     </div>
 
-    <div class="contador-card rechazadas">
-      <div class="contador-icon">
-        <i class="pi pi-times"></i>
+    <div class="stat-card success">
+      <div class="stat-icon">
+        <i class="bx bx-check"></i>
       </div>
-      <div class="contador-info">
-        <span class="contador-label">Rechazadas</span>
-        <span class="contador-valor">{{ contadores.totalRechazadas }}</span>
+      <div class="stat-content">
+        <span class="stat-value">{{ contadores.totalAprobadas }}</span>
+        <span class="stat-label">Aprobadas</span>
       </div>
     </div>
 
-    <div class="contador-card vencidas">
-      <div class="contador-icon">
-        <i class="pi pi-exclamation-triangle"></i>
+    <div class="stat-card danger">
+      <div class="stat-icon">
+        <i class="bx bx-x"></i>
       </div>
-      <div class="contador-info">
-        <span class="contador-label">Vencidas</span>
-        <span class="contador-valor">{{ contadores.totalVencidas }}</span>
+      <div class="stat-content">
+        <span class="stat-value">{{ contadores.totalRechazadas }}</span>
+        <span class="stat-label">Rechazadas</span>
+      </div>
+    </div>
+
+    <div class="stat-card info">
+      <div class="stat-icon">
+        <i class="bx bx-error-circle"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ contadores.totalVencidas }}</span>
+        <span class="stat-label">Vencidas</span>
       </div>
     </div>
   </div>
 
   <!-- Tabs -->
-  <ul class="nav nav-tabs">
-    <li class="nav-item">
-      <a class="nav-link" [class.active]="tabActiva === 0" data-bs-toggle="tab" href="#tab-pendientes" (click)="tabActiva = 0">
-        <i class="pi pi-clock me-2"></i>Órdenes Pendientes
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" [class.active]="tabActiva === 1" data-bs-toggle="tab" href="#tab-historial" (click)="tabActiva = 1">
-        <i class="pi pi-history me-2"></i>Historial de Aprobaciones
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" [class.active]="tabActiva === 2" data-bs-toggle="tab" href="#tab-usuarios" (click)="tabActiva = 2">
-        <i class="pi pi-users me-2"></i>Usuarios Aprobadores
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" [class.active]="tabActiva === 3" data-bs-toggle="tab" href="#tab-flujos" (click)="tabActiva = 3">
-        <i class="pi pi-sitemap me-2"></i>Flujos de Aprobación
-      </a>
-    </li>
-  </ul>
+  <div class="tabs-container">
+    <div class="tabs-header">
+      <button class="tab-button" [class.active]="tabActiva === 0" (click)="tabActiva = 0">
+        <i class="bx bx-time"></i>
+        <span>Órdenes Pendientes</span>
+      </button>
+      <button class="tab-button" [class.active]="tabActiva === 1" (click)="tabActiva = 1">
+        <i class="bx bx-history"></i>
+        <span>Historial de Aprobaciones</span>
+      </button>
+      <button class="tab-button" [class.active]="tabActiva === 2" (click)="tabActiva = 2">
+        <i class="bx bx-user-check"></i>
+        <span>Usuarios Aprobadores</span>
+      </button>
+      <button class="tab-button" [class.active]="tabActiva === 3" (click)="tabActiva = 3">
+        <i class="bx bx-sitemap"></i>
+        <span>Flujos de Aprobación</span>
+      </button>
+    </div>
 
-  <div class="tab-content mt-3">
+    <div class="tabs-content">
     <!-- Tab 1: Órdenes Pendientes -->
     <div class="tab-pane fade" [class.show]="tabActiva === 0" [class.active]="tabActiva === 0" id="tab-pendientes">
-      <div class="filtros-section">
-        <div class="filtros-grid">
-          <div class="filtro-item">
+      <div class="filters-section">
+        <div class="filters-grid">
+          <div class="filter-group">
             <label>Estado</label>
             <p-select
               [options]="opcionesEstado"
               [(ngModel)]="filtroEstado"
+              name="filtroEstado"
               optionLabel="label"
               optionValue="value"
               (onChange)="aplicarFiltros()"
@@ -91,38 +89,41 @@
             ></p-select>
           </div>
 
-          <div class="filtro-item">
+          <div class="filter-group">
             <label>Proveedor</label>
             <input
               type="text"
               pInputText
               [(ngModel)]="filtroProveedor"
+              name="filtroProveedor"
               (input)="aplicarFiltros()"
               placeholder="Buscar por proveedor"
             />
           </div>
 
-          <div class="filtro-item">
+          <div class="filter-group">
             <label>Fecha Inicio</label>
             <input
               type="date"
               pInputText
               [(ngModel)]="filtroFechaInicio"
+              name="filtroFechaInicio"
               (change)="aplicarFiltros()"
             />
           </div>
 
-          <div class="filtro-item">
+          <div class="filter-group">
             <label>Fecha Fin</label>
             <input
               type="date"
               pInputText
               [(ngModel)]="filtroFechaFin"
+              name="filtroFechaFin"
               (change)="aplicarFiltros()"
             />
           </div>
 
-          <div class="filtro-item filtro-actions">
+          <div class="filter-group filter-actions">
             <button
               pButton
               type="button"
@@ -216,7 +217,7 @@
     </div>
 
     <!-- Tab 2: Historial de Aprobaciones -->
-    <div class="tab-pane fade" [class.show]="tabActiva === 1" [class.active]="tabActiva === 1" id="tab-historial">
+    <div class="tab-pane" [class.show]="tabActiva === 1" [class.active]="tabActiva === 1" id="tab-historial">
       <p-table
         [value]="historialAprobaciones"
         [paginator]="true"
@@ -277,22 +278,19 @@
     </div>
 
     <!-- Tab 3: Usuarios Aprobadores -->
-    <div class="tab-pane fade" [class.show]="tabActiva === 2" [class.active]="tabActiva === 2" id="tab-usuarios">
-      <div class="mb-3">
-        <button
-          pButton
-          type="button"
-          label="Nuevo Usuario Aprobador"
-          icon="pi pi-plus"
-          class="p-button-success"
-          (click)="nuevoUsuarioAprobador()"
-        ></button>
-      </div>
+    <div class="tab-pane" [class.show]="tabActiva === 2" [class.active]="tabActiva === 2" id="tab-usuarios">
+      <div class="config-section">
+        <div class="section-header">
+          <h3>Usuarios Aprobadores</h3>
+          <button class="btn btn-primary" (click)="nuevoUsuarioAprobador()">
+            <i class="bx bx-plus"></i> Nuevo Usuario Aprobador
+          </button>
+        </div>
 
-      <p-table
-        [value]="usuariosAprobadores"
-        styleClass="p-datatable-sm"
-      >
+        <p-table
+          [value]="usuariosAprobadores"
+          styleClass="p-datatable-sm"
+        >
         <ng-template pTemplate="header">
           <tr>
             <th>Documento</th>
@@ -341,25 +339,23 @@
           </tr>
         </ng-template>
       </p-table>
+      </div>
     </div>
 
     <!-- Tab 4: Flujos de Aprobación -->
-    <div class="tab-pane fade" [class.show]="tabActiva === 3" [class.active]="tabActiva === 3" id="tab-flujos">
-      <div class="mb-3">
-        <button
-          pButton
-          type="button"
-          label="Nuevo Flujo"
-          icon="pi pi-plus"
-          class="p-button-success"
-          (click)="nuevoFlujoAprobacion()"
-        ></button>
-      </div>
+    <div class="tab-pane" [class.show]="tabActiva === 3" [class.active]="tabActiva === 3" id="tab-flujos">
+      <div class="config-section">
+        <div class="section-header">
+          <h3>Flujos de Aprobación</h3>
+          <button class="btn btn-primary" (click)="nuevoFlujoAprobacion()">
+            <i class="bx bx-plus"></i> Nuevo Flujo
+          </button>
+        </div>
 
-      <p-table
-        [value]="flujosAprobacion"
-        styleClass="p-datatable-sm"
-      >
+        <p-table
+          [value]="flujosAprobacion"
+          styleClass="p-datatable-sm"
+        >
         <ng-template pTemplate="header">
           <tr>
             <th>Nombre</th>
@@ -408,6 +404,7 @@
           </tr>
         </ng-template>
       </p-table>
+      </div>
     </div>
   </div>
 </div>
@@ -527,6 +524,7 @@
       <label>{{ accionAprobacion === 'APROBAR' ? 'Observaciones (opcional)' : 'Motivo del Rechazo *' }}</label>
       <p-textarea
         [(ngModel)]="observacionesAprobacion"
+        name="observacionesAprobacion"
         rows="4"
         class="w-100"
         placeholder="Ingrese observaciones o motivo del rechazo..."
@@ -571,6 +569,7 @@
           type="text" 
           class="form-control" 
           [(ngModel)]="usuarioAprobadorForm.documentoIdentidad"
+          name="documentoIdentidad"
           placeholder="DNI">
       </div>
 
@@ -580,6 +579,7 @@
           type="text" 
           class="form-control" 
           [(ngModel)]="usuarioAprobadorForm.nombreCompleto"
+          name="nombreCompleto"
           placeholder="Nombre completo">
       </div>
 
@@ -589,12 +589,13 @@
           type="email" 
           class="form-control" 
           [(ngModel)]="usuarioAprobadorForm.email"
+          name="email"
           placeholder="correo@ejemplo.com">
       </div>
 
       <div class="col-md-6 mb-3">
         <label>Rol: *</label>
-        <select class="form-control" [(ngModel)]="usuarioAprobadorForm.rol">
+        <select class="form-control" [(ngModel)]="usuarioAprobadorForm.rol" name="rol">
           <option value="">Seleccione...</option>
           <option value="LOLOGIST">Jefe de Logística</option>
           <option value="FINANZAS">Finanzas</option>
@@ -608,6 +609,7 @@
           type="number" 
           class="form-control" 
           [(ngModel)]="usuarioAprobadorForm.montoMinimo"
+          name="montoMinimo"
           step="0.01">
       </div>
 
@@ -617,6 +619,7 @@
           type="number" 
           class="form-control" 
           [(ngModel)]="usuarioAprobadorForm.montoMaximo"
+          name="montoMaximo"
           step="0.01">
       </div>
 
@@ -626,6 +629,7 @@
           type="number" 
           class="form-control" 
           [(ngModel)]="usuarioAprobadorForm.nivel"
+          name="nivel"
           min="1">
       </div>
 
@@ -635,7 +639,8 @@
             type="checkbox" 
             class="form-check-input"
             id="activoUsuario"
-            [(ngModel)]="usuarioAprobadorForm.activo">
+            [(ngModel)]="usuarioAprobadorForm.activo"
+            name="activo">
           <label class="form-check-label" for="activoUsuario">Activo</label>
         </div>
       </div>
@@ -679,6 +684,7 @@
           type="text" 
           class="form-control" 
           [(ngModel)]="flujoAprobacionForm.nombre"
+          name="nombre"
           placeholder="Nombre del flujo">
       </div>
 
@@ -687,6 +693,7 @@
         <textarea 
           class="form-control" 
           [(ngModel)]="flujoAprobacionForm.descripcion"
+          name="descripcion"
           rows="3"
           placeholder="Descripción del flujo"></textarea>
       </div>
@@ -697,6 +704,7 @@
           type="number" 
           class="form-control" 
           [(ngModel)]="flujoAprobacionForm.montoMinimo"
+          name="montoMinimo"
           step="0.01">
       </div>
 
@@ -706,6 +714,7 @@
           type="number" 
           class="form-control" 
           [(ngModel)]="flujoAprobacionForm.montoMaximo"
+          name="montoMaximo"
           step="0.01">
       </div>
 
@@ -715,6 +724,7 @@
           type="number" 
           class="form-control" 
           [(ngModel)]="flujoAprobacionForm.niveles"
+          name="niveles"
           min="1">
       </div>
 
@@ -724,7 +734,8 @@
             type="checkbox" 
             class="form-check-input"
             id="activoFlujo"
-            [(ngModel)]="flujoAprobacionForm.activo">
+            [(ngModel)]="flujoAprobacionForm.activo"
+            name="activo">
           <label class="form-check-label" for="activoFlujo">Activo</label>
         </div>
       </div>

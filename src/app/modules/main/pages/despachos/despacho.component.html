@@ -4,31 +4,51 @@
 
   <!-- ===== KPI CARDS ===== -->
   <div class="row g-3 mb-3 kpi-row">
-    <div class="col-12 col-md-4">
-      <div class="kpi-card kpi-pendientes">
+    <div class="col-6 col-md">
+      <div class="kpi-card kpi-pendientes kpi-clickable" (click)="abrirModalKpi('APROBADO','Pendientes de Atención')" title="Ver requerimientos pendientes">
         <div class="kpi-icon"><i class="bx bx-time-five"></i></div>
         <div class="kpi-body">
           <div class="kpi-label">Pendientes de Atención</div>
-          <div class="kpi-sub">Total: {{ kpiPendientes }}</div>
+          <div class="kpi-sub">Estado APROBADO</div>
         </div>
         <div class="kpi-value">{{ kpiPendientes }}</div>
       </div>
     </div>
-    <div class="col-12 col-md-4">
-      <div class="kpi-card kpi-atendidos">
-        <div class="kpi-icon"><i class="bx bx-check-circle"></i></div>
+    <div class="col-6 col-md">
+      <div class="kpi-card kpi-parciales kpi-clickable" (click)="abrirModalKpi('ATENCION_PARCIAL','Atención Parcial')" title="Ver requerimientos parciales">
+        <div class="kpi-icon"><i class="bx bx-error-circle"></i></div>
         <div class="kpi-body">
-          <div class="kpi-label">Atendidos</div>
-          <div class="kpi-sub">Hoy/Total</div>
+          <div class="kpi-label">Atención Parcial</div>
+          <div class="kpi-sub">Pendientes de completar</div>
         </div>
-        <div class="kpi-value">{{ kpiAtendidos }}</div>
+        <div class="kpi-value">{{ kpiParciales }}</div>
       </div>
     </div>
-    <div class="col-12 col-md-4">
-      <div class="kpi-card kpi-total">
+    <div class="col-6 col-md">
+      <div class="kpi-card kpi-sin-stock kpi-clickable" (click)="abrirModalKpi('SIN_STOCK','Sin Stock')" title="Ver requerimientos sin stock">
+        <div class="kpi-icon"><i class="bx bx-package"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Sin Stock</div>
+          <div class="kpi-sub">Pendientes por stock</div>
+        </div>
+        <div class="kpi-value">{{ kpiSinStock }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md">
+      <div class="kpi-card kpi-atendidos kpi-clickable" (click)="abrirModalKpi('DESPACHADO','Despachados')" title="Ver requerimientos despachados">
+        <div class="kpi-icon"><i class="bx bx-check-circle"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Despachados</div>
+          <div class="kpi-sub">Completados</div>
+        </div>
+        <div class="kpi-value">{{ kpiDespachados }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md">
+      <div class="kpi-card kpi-total kpi-clickable" (click)="abrirModalKpi('TOTAL','Total Requerimientos')" title="Ver todos los requerimientos">
         <div class="kpi-icon"><i class="bx bx-list-ul"></i></div>
         <div class="kpi-body">
-          <div class="kpi-label">Total de Requerimientos</div>
+          <div class="kpi-label">Total Req.</div>
           <div class="kpi-sub">Todos</div>
         </div>
         <div class="kpi-value">{{ kpiTotal }}</div>
@@ -48,7 +68,7 @@
       <a class="nav-link" [class.active]="activeTabDespachos === 'COMMODITY'"
          (click)="activeTabDespachos = 'COMMODITY'" style="cursor:pointer;">
         COMMODITY
-      </a>.
+      </a>
     </li>
   </ul>
 
@@ -122,25 +142,30 @@
               {{ obtenerFamilia(c) }}
             </td>
             <td>
-              <span class="badge estado-chip"
-                    [ngClass]="{
-                      'chip-despachado': (c.estados || '').toString().toUpperCase().includes('DESPACHADO'),
-                      'chip-pendiente': (c.estados === 'APROBADO' || !c.estados),
-                      'chip-parcial': c.estados === 'ATENCION_PARCIAL',
-                      'chip-completa': c.estados === 'ATENCION_COMPLETA'
-                    }">
-                {{ c.estados || 'PENDIENTE' }}
-              </span>
+              <div class="d-flex flex-column gap-1">
+                <span class="badge estado-chip"
+                      [ngClass]="{
+                        'chip-despachado': (c.estados || '').toString().toUpperCase().includes('DESPACHADO'),
+                        'chip-pendiente': (c.estados === 'APROBADO' || !c.estados),
+                        'chip-parcial': c.estados === 'ATENCION_PARCIAL',
+                        'chip-completa': c.estados === 'ATENCION_COMPLETA',
+                        'chip-sin-stock': c.estados === 'SIN_STOCK'
+                      }">
+                  {{ c.estados === 'ATENCION_PARCIAL' ? 'ATENCIÓN PARCIAL' : c.estados === 'SIN_STOCK' ? 'SIN STOCK' : (c.estados || 'PENDIENTE') }}
+                </span>
+                <small *ngIf="c.estados === 'ATENCION_PARCIAL'" class="text-warning fw-semibold">
+                  Pendiente: {{ calcularPendienteTotal(c) | number:'1.0-2' }} uds.
+                </small>
+                <small *ngIf="c.estados === 'SIN_STOCK'" class="fw-semibold" style="color:#f39c12;">
+                  Atender cuando haya stock
+                </small>
+              </div>
             </td>
             <td>
               <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-ver" (click)="verDetalle(c)">
-                  <i class="bx bx-show"></i> Ver
-                </button>
-                <button class="btn btn-sm btn-success"
-                        *ngIf="c.estado === 'ATENCION_PARCIAL' || c.estado === 'ATENCION_COMPLETA'"
-                        (click)="abrirDespachoFinal(c)">
-                  Despachar
+                <button class="btn btn-sm btn-ver" (click)="verDetalle(c)" title="Ver detalle">
+                  <i class="bx bx-show"></i>
+                  {{ c.estados === 'ATENCION_PARCIAL' ? 'Completar' : 'Ver' }}
                 </button>
               </div>
             </td>
@@ -176,10 +201,9 @@
         <div class="mc-field"><strong>Área:</strong> {{ obtenerNombreArea(c) }}</div>
         <div class="mc-field"><strong>{{ activeTabDespachos === 'ITEMS' ? 'Producto' : 'Familia' }}:</strong> {{ obtenerFamilia(c) }}</div>
         <div class="mc-actions">
-          <button class="btn btn-sm btn-ver" (click)="verDetalle(c)"><i class="bx bx-show"></i> Ver</button>
-          <button class="btn btn-sm btn-success"
-                  *ngIf="c.estado === 'ATENCION_PARCIAL' || c.estado === 'ATENCION_COMPLETA'"
-                  (click)="abrirDespachoFinal(c)">Despachar</button>
+          <button class="btn btn-sm btn-ver" (click)="verDetalle(c)">
+            <i class="bx bx-show"></i> {{ c.estados === 'ATENCION_PARCIAL' ? 'Completar' : 'Ver' }}
+          </button>
         </div>
       </div>
       <div *ngIf="!despachosVisibles.length" class="text-center text-muted py-4">No hay registros</div>
@@ -187,73 +211,161 @@
   </div>
 </div>
 
-<!-- =================== MODAL DETALLE ATENCIÓN (sin cambios funcionales) =================== -->
-<div class="modal-backdrop-custom" *ngIf="modalAtencionVisible">
-  <div class="modal-content-custom">
+<!-- =================== MODAL KPI DETALLE =================== -->
+<div class="modal-backdrop-custom" *ngIf="modalKpiVisible" (click)="cerrarModalKpi()">
+  <div class="modal-content-custom modal-kpi" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h5 class="modal-title">Detalle de Atención: <span class="badge bg-primary ms-2">
+      <h5 class="modal-title">
+        <i class="bx bx-list-check me-2"></i>{{ modalKpiTitulo }}
+        <span class="badge bg-secondary ms-2">{{ modalKpiItems.length }}</span>
+      </h5>
+      <button type="button" class="btn-close" (click)="cerrarModalKpi()"></button>
+    </div>
+    <div class="modal-body p-0">
+      <div *ngIf="!modalKpiItems.length" class="text-center text-muted py-4">
+        No hay requerimientos en este estado
+      </div>
+      <div class="table-responsive" *ngIf="modalKpiItems.length">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>N° Requisición</th>
+              <th>Fecha</th>
+              <th>Usuario</th>
+              <th>Área</th>
+              <th>Almacén</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of modalKpiItems; let i = index">
+              <td class="fw-semibold text-muted">{{ i + 1 }}</td>
+              <td>{{ r.RequisicionNumero || '-' }}</td>
+              <td>{{ r.fechaAprobacion | date:'dd/MM/yyyy' }}</td>
+              <td>{{ r.nombreCreador || '-' }}</td>
+              <td>{{ obtenerNombreArea(r) }}</td>
+              <td>{{ r.idalmacen || '-' }}</td>
+              <td>
+                <span class="badge estado-chip"
+                  [ngClass]="{
+                    'chip-despachado': (r.estados || '').toString().toUpperCase().includes('DESPACHADO'),
+                    'chip-pendiente':  r.estados === 'APROBADO' || !r.estados,
+                    'chip-parcial':    r.estados === 'ATENCION_PARCIAL',
+                    'chip-sin-stock':  r.estados === 'SIN_STOCK'
+                  }">
+                  {{ r.estados === 'ATENCION_PARCIAL' ? 'ATENCIÓN PARCIAL' :
+                     r.estados === 'SIN_STOCK' ? 'SIN STOCK' :
+                     (r.estados || 'PENDIENTE') }}
+                </span>
+              </td>
+              <td>
+                <button *ngIf="r.estados !== 'DESPACHADO_COMPLETO' && !((r.estados || '').toString().toUpperCase().includes('DESPACHADO'))"
+                  class="btn btn-sm btn-ver py-0 px-2"
+                  (click)="abrirDesdeKpi(r)">
+                  {{ r.estados === 'ATENCION_PARCIAL' ? 'Completar' : r.estados === 'SIN_STOCK' ? 'Atender' : 'Ver' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== MODAL DETALLE ATENCIÓN =================== -->
+<div class="despacho-modal-overlay" *ngIf="modalAtencionVisible" style="z-index:2000">
+  <div class="despacho-modal-box">
+
+    <div class="modal-header">
+      <h5 class="modal-title">
+        Detalle de Atención:
+        <span class="badge bg-primary ms-2">
           {{ selected?.idrequerimiento | numeroRequerimiento : selected?.RequisicionNumero }}
-        </span></h5>
-      <button type="button" class="btn-close" (click)="cerrarModalAtencion()"></button>
+        </span>
+      </h5>
+      <button type="button" class="btn-close" (click)="cerrarModalAtencion()" aria-label="Cerrar"></button>
     </div>
 
     <div class="modal-body">
-      <p-table [value]="detalle" [paginator]="true" [rows]="20" [totalRecords]="detalle.length"
-        [loading]="loading" responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
-        currentPageReportTemplate="<{first} - {last} de {totalRecords}>"
-        styleClass="p-datatable-sm p-datatable-striped">
+      <!-- Banner SIN STOCK: cuando estado es SIN_STOCK o todos los ítems sin stock -->
+      <div *ngIf="selected?.estados === 'SIN_STOCK' || detalleTodosSinStock"
+        class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2" role="alert">
+        <i class="bx bx-error-circle fs-5"></i>
+        <div>
+          <strong>Sin Stock Disponible</strong> — Ningún ítem tiene stock en almacén.
+          Al registrar la atención quedará como SIN STOCK hasta que haya disponibilidad.
+        </div>
+      </div>
+      <!-- Banner STOCK PARCIAL -->
+      <div *ngIf="selected?.estados !== 'SIN_STOCK' && detalleAlgunoSinStock && !detalleTodosSinStock"
+        class="alert alert-warning d-flex align-items-center gap-2 mb-3 py-2" role="alert">
+        <i class="bx bx-error fs-5"></i>
+        <div>
+          <strong>Stock Insuficiente en algunos ítems</strong> — Los ítems marcados en rojo/amarillo no tienen stock suficiente.
+        </div>
+      </div>
 
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width:50px">#</th>
-            <th style="min-width:80px">Código</th>
-            <th style="min-width:150px">{{ selected?.tipo === 'ITEM' ? 'Producto' : 'Descripción' }}</th>
-            <th style="min-width:80px">Solicitado</th>
-            <th style="min-width:80px">Atendido</th>
-            <th style="min-width:80px">Pendiente</th>
-            <th style="min-width:80px">Stock</th>
-            <th style="min-width:100px">Atender</th>
-            <th style="min-width:80px">Compra</th>
-            <th style="min-width:100px">Estado</th>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="body" let-c let-i="rowIndex">
-          <tr>
-            <td>{{ i + 1 }}</td>
-            <td>{{ c.codigo }}</td>
-            <td *ngIf="selected?.tipo === 'ITEM'">{{ getDescripcionProducto(c.codigo) }}</td>
-            <td *ngIf="selected?.tipo !== 'ITEM'">{{ getDescripcionSubCommodity(c.codigo) }}</td>
-            <td>{{ c.cantidad }}</td>
-            <td>{{ c.atendida || 0 }}</td>
-            <td>{{ c.cantidad - (c.atendida || 0) }}</td>
-            <td>{{ c.stock || 0 }}</td>
-            <td>
-              <input type="number" class="form-control form-control-sm text-center"
-                [(ngModel)]="c.atender" [max]="c.stock" [min]="0" style="width: 80px;" />
-            </td>
-            <td>{{ c.compra || 0 }}</td>
-            <td>
-              <span class="badge" [ngClass]="{
-                'bg-success': c.estadoAtencion === 'CON STOCK',
-                'bg-warning text-dark': c.estadoAtencion === 'PARCIAL',
-                'bg-danger': c.estadoAtencion === 'SIN STOCK'
-              }">
-                {{ c.estadoAtencion || 'N/A' }}
-              </span>
-            </td>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="emptymessage">
-          <tr><td colspan="10" class="text-center">No hay registros</td></tr>
-        </ng-template>
-      </p-table>
+      <div class="table-responsive">
+        <table class="table table-sm table-striped table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width:40px">#</th>
+              <th>Código</th>
+              <th>Producto</th>
+              <th>Solicitado</th>
+              <th>Atendido</th>
+              <th>Pendiente</th>
+              <th>Stock</th>
+              <th>Atender</th>
+              <th>Pendiente Atención</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of detalle; let i = index"
+              [class.table-warning]="c.estadoAtencion === 'PARCIAL'"
+              [class.table-danger]="c.estadoAtencion === 'SIN STOCK'">
+              <td>{{ i + 1 }}</td>
+              <td>{{ c.codigo }}</td>
+              <td>{{ getDescripcionProducto(c.codigo) || getDescripcionSubCommodity(c.codigo) || c.codigo }}</td>
+              <td>{{ c.cantidad }}</td>
+              <td>{{ c.atendida || 0 }}</td>
+              <td class="fw-semibold">{{ c.pendiente ?? (c.cantidad - (c.atendida || 0)) }}</td>
+              <td>{{ c.stock || 0 }}</td>
+              <td>
+                <input type="number" class="form-control form-control-sm text-center"
+                  [(ngModel)]="c.atender"
+                  [max]="c.stock"
+                  [min]="0"
+                  [disabled]="c.estadoAtencion === 'SIN STOCK'"
+                  style="width: 80px;" />
+              </td>
+              <td>{{ c.compra || 0 }}</td>
+              <td>
+                <span class="badge" [ngClass]="{
+                  'bg-success': c.estadoAtencion === 'CON STOCK',
+                  'bg-warning text-dark': c.estadoAtencion === 'PARCIAL',
+                  'bg-danger': c.estadoAtencion === 'SIN STOCK'
+                }">
+                  {{ c.estadoAtencion || 'N/A' }}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="!detalle.length">
+              <td colspan="10" class="text-center text-muted py-3">Sin items</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="cerrarModalAtencion()">Cerrar</button>
-      <button class="btn btn-primary" (click)="registrarAtencion()">Registrar Atención</button>
+      <button type="button" class="btn btn-secondary" (click)="cerrarModalAtencion()">Cerrar</button>
+      <button type="button" class="btn btn-primary ms-2" (click)="registrarAtencion()">Registrar Atención</button>
     </div>
+
   </div>
 </div>

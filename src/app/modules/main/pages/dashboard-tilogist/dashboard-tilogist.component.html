@@ -1,0 +1,53 @@
+<div class="container-fluid py-4">
+  <div class="dashboard-header d-flex align-items-center gap-3 mb-4">
+    <div>
+      <h4 class="mb-0 fw-bold">Dashboard — Admin Sistema</h4>
+      <small class="text-muted">Bienvenido, {{ usuario?.nombre }}</small>
+    </div>
+  </div>
+
+  <!-- Accesos rápidos -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('maestros/items')">
+        <div class="acceso-icon text-primary"><i class="icon icon-equalizer"></i></div>
+        <div class="fw-semibold">Maestros — Items</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('maestros/comodities')">
+        <div class="acceso-icon text-success"><i class="icon icon-equalizer"></i></div>
+        <div class="fw-semibold">Maestros — Comodities</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('aprobadores')">
+        <div class="acceso-icon text-warning"><i class="icon icon-equalizer"></i></div>
+        <div class="fw-semibold">Aprobadores</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('configuracionaprobaciones')">
+        <div class="acceso-icon text-info"><i class="icon icon-cog6"></i></div>
+        <div class="fw-semibold">Roles de Aprobación</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('parametros')">
+        <div class="acceso-icon text-secondary"><i class="icon icon-equalizer"></i></div>
+        <div class="fw-semibold">Parámetros</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('notificaciones')">
+        <div class="acceso-icon text-danger"><i class="bx bx-bell"></i></div>
+        <div class="fw-semibold">Notificaciones</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-danger border-0 rounded-3">
+    <i class="bx bx-shield-quarter me-2"></i>
+    Como <strong>Admin Sistema (TI)</strong> tienes acceso total: maestros, configuración técnica, roles de aprobación y supervisión general.
+  </div>
+</div>

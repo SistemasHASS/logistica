@@ -690,8 +690,8 @@
         ]" optionLabel="label" optionValue="value" class="w-100"></p-select>
       </div>
       <div class="col-md-3">
-        <label class="form-label">Lugar Entrega</label>
-        <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.lugarEntrega">
+        <label class="form-label">{{ solicitudCotizacionSeleccionada?.tipo === 'SERVICIO' ? 'Lugar de Servicio' : 'Lugar Entrega' }}</label>
+        <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.lugarEntrega" [placeholder]="solicitudCotizacionSeleccionada?.tipo === 'SERVICIO' ? 'Dirección del servicio' : 'Dirección de entrega'">
       </div>
     </div>
 
@@ -1004,8 +1004,8 @@
 
   <div class="row mb-3">
     <div class="col-md-6">
-      <label class="form-label">Lugar Entrega</label>
-      <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.lugarEntrega" placeholder="Dirección de entrega">
+      <label class="form-label">{{ solicitudCotizacionSeleccionada?.tipo === 'SERVICIO' ? 'Lugar de Servicio' : 'Lugar Entrega' }}</label>
+      <input pInputText type="text" class="form-control" [(ngModel)]="cotizacion.lugarEntrega" [placeholder]="solicitudCotizacionSeleccionada?.tipo === 'SERVICIO' ? 'Dirección del servicio' : 'Dirección de entrega'">
     </div>
     <div class="col-md-6">
       <label class="form-label">Observaciones</label>

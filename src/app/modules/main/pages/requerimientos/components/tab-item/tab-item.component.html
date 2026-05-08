@@ -394,7 +394,7 @@
   [puedeGuardar]="puedeGuardar"
   [turnos]="turnosParaCarga"
   [activosFijosFiltrados]="activosFijosFiltrados"
-  (cerrarEvt)="modalVisible = false"
+  (cerrarEvt)="cerrarModalCargaMasiva()"
   (guardarEvt)="guardarDetalleMasivo()"
   (validarFilaEvt)="validarFila($event)"
 ></app-modal-carga-masiva>

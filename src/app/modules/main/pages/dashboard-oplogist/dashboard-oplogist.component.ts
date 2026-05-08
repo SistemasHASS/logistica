@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { RequerimientosService } from '../../services/requerimientos.service';
+import { DashboardLogisticaService } from '../dashboard-logistica/services/dashboard-logistica.service';
 import { firstValueFrom } from 'rxjs';
 import { CardModule } from 'primeng/card';
 import { TableModule } from 'primeng/table';
@@ -43,6 +44,17 @@ export class DashboardOplogistComponent implements OnInit {
   requerimientos: any[] = [];
   requerimientosFiltrados: any[] = [];
   filtroEstado = '';
+  tabTipo: 'CONSUMO' | 'COMPRA' = 'CONSUMO';
+  filtroSubEstado = '';
+
+  // Propiedades computadas para contadores
+  get contadorConsumo(): number {
+    return this.requerimientos.filter((r: any) => r.itemtipo === 'CONSUMO').length;
+  }
+
+  get contadorCompra(): number {
+    return this.requerimientos.filter((r: any) => r.itemtipo === 'COMPRA').length;
+  }
 
   modalDetalleAbierto = false;
   requerimientoSeleccionado: any = null;
@@ -61,6 +73,7 @@ export class DashboardOplogistComponent implements OnInit {
   constructor(
     private dexieService: DexieService,
     private requerimientosService: RequerimientosService,
+    private dashboardLogisticaService: DashboardLogisticaService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -73,37 +86,27 @@ export class DashboardOplogistComponent implements OnInit {
   async cargarDatos() {
     this.loading = true;
     try {
-      const payload = [{ ruc: this.usuario?.ruc, idrol: this.usuario?.idrol }];
+      // NUEVO: Usar endpoint dedicado para dashboard de usuario (todos los estados)
+      const payloadDashboard = [{
+        ruc: this.usuario?.ruc,
+        nrodocumento: this.usuario?.documentoidentidad
+      }];
 
-      // Llamar en paralelo al SP general y al SP de aprobados
-      const [respPendientes, respAprobados] = await Promise.allSettled([
-        firstValueFrom(this.requerimientosService.getRequerimientos(payload)),
-        firstValueFrom(this.requerimientosService.getRequerimientosAprobados(payload)),
-      ]);
-
-      const pendientes: any[] = (respPendientes.status === 'fulfilled' && respPendientes.value?.length)
-        ? respPendientes.value : [];
-      const aprobados: any[] = (respAprobados.status === 'fulfilled' && respAprobados.value?.length)
-        ? respAprobados.value : [];
-
-      // Combinar y deduplicar por idrequerimiento
-      const mapaIds = new Map<string, any>();
-      [...pendientes, ...aprobados].forEach((r: any) => {
-        if (!mapaIds.has(r.idrequerimiento)) mapaIds.set(r.idrequerimiento, r);
-      });
-      let todos: any[] = Array.from(mapaIds.values());
+      // Llamar al nuevo endpoint que trae TODOS los estados del usuario
+      const resp = await firstValueFrom(this.requerimientosService.getRequerimientosUsuarioDashboard(payloadDashboard));
+      let todos: any[] = resp || [];
 
       // Fallback a Dexie si el backend no devuelve nada
       if (!todos.length) {
-        todos = await this.dexieService.showRequerimiento();
+        const dexieData = await this.dexieService.showRequerimiento();
+        todos = dexieData.filter((r: any) => r.nrodocumento === this.usuario?.documentoidentidad);
       }
 
-      this.requerimientos = todos
-        .filter((r: any) => r.nrodocumento === this.usuario?.documentoidentidad)
-        .sort((a: any, b: any) =>
-          new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
-        );
+      this.requerimientos = todos.sort((a: any, b: any) =>
+        new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+      );
 
+      // Calcular todos los KPIs desde el array local (consistente)
       this.calcularResumen();
       this.aplicarFiltro();
     } catch (e) {
@@ -141,15 +144,50 @@ export class DashboardOplogistComponent implements OnInit {
   }
 
   aplicarFiltro() {
-    this.requerimientosFiltrados = this.filtroEstado
-      ? this.requerimientos.filter((r: any) => r.estados === this.filtroEstado)
-      : [...this.requerimientos];
+    let filtrados = this.requerimientos.filter((r: any) => r.itemtipo === this.tabTipo);
+
+    if (this.filtroSubEstado) {
+      filtrados = filtrados.filter((r: any) => r.estados === this.filtroSubEstado);
+    } else if (this.filtroEstado) {
+      filtrados = filtrados.filter((r: any) => r.estados === this.filtroEstado);
+    }
+
+    this.requerimientosFiltrados = filtrados;
     this.cdr.markForCheck();
+  }
+
+  seleccionarTabTipo(tipo: 'CONSUMO' | 'COMPRA') {
+    this.tabTipo = tipo;
+    this.filtroSubEstado = '';
+    this.aplicarFiltro();
+  }
+
+  seleccionarSubEstado(estado: string) {
+    this.filtroSubEstado = this.filtroSubEstado === estado ? '' : estado;
+    this.aplicarFiltro();
   }
 
   seleccionarFiltro(estado: string) {
     this.filtroEstado = this.filtroEstado === estado ? '' : estado;
     this.aplicarFiltro();
+  }
+
+  obtenerSubEstados(): { valor: string; label: string; count: number; severity: string }[] {
+    const porTipo = this.requerimientos.filter((r: any) => r.itemtipo === this.tabTipo);
+    const orden = ['PENDIENTE', 'ENVIADO', 'APROBADO', 'CONSOLIDADO', 'DESPACHADO', 'DESPACHADO_PARCIAL', 'DESPACHADO_COMPLETO', 'RECHAZADO'];
+    const severities: Record<string, string> = {
+      PENDIENTE: 'warn', ENVIADO: 'info', APROBADO: 'success',
+      CONSOLIDADO: 'info', DESPACHADO: 'contrast', DESPACHADO_PARCIAL: 'secondary',
+      DESPACHADO_COMPLETO: 'success', RECHAZADO: 'danger',
+    };
+    const resultado: { valor: string; label: string; count: number; severity: string }[] = [];
+    for (const valor of orden) {
+      const count = porTipo.filter((r: any) => r.estados === valor).length;
+      if (count > 0) {
+        resultado.push({ valor, label: this.obtenerTextoEstado(valor), count, severity: severities[valor] ?? 'secondary' });
+      }
+    }
+    return resultado;
   }
 
   verDetalle(req: any) {

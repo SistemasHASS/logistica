@@ -80,6 +80,8 @@ export interface ConsolidacionDet {
   unidadMedida: string;
   tipo?: string; // 'ITEM' o 'COMMODITY' para identificar si es item o servicio
   origenes?: ConsolidacionOrigen[];
+  ceco?: string;     // Centro de costo del requerimiento origen
+  proyecto?: string; // Proyecto del requerimiento origen
 }
 
 // --- Origen de cada línea consolidada ---

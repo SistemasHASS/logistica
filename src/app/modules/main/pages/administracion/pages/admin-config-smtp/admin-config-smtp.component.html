@@ -1,0 +1,176 @@
+<div class="admin-page">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <h2><i class="icon icon-server"></i> Configuración SMTP</h2>
+      <p class="subtitle">Configure el servidor de correo saliente para el envío de OC y OS por empresa</p>
+    </div>
+    <button class="btn-primary" (click)="openCreate()">
+      <i class="icon icon-plus"></i> Nueva Configuración
+    </button>
+  </div>
+
+  <!-- CARDS DE CONFIGURACIONES -->
+  <div class="configs-grid">
+    <div class="config-card" *ngFor="let c of configs" [class.default-card]="c.esDefault">
+
+      <div class="config-card-header">
+        <div class="config-empresa">
+          <span class="empresa-name">{{ c.empresa }}</span>
+          <span class="badge-default" *ngIf="c.esDefault">Por defecto</span>
+        </div>
+        <span [class]="c.estado === 'ACTIVO' ? 'activo' : 'inactivo'">{{ c.estado }}</span>
+      </div>
+
+      <div class="config-info">
+        <div class="info-row">
+          <span class="info-label">Host</span>
+          <span class="info-value">{{ c.host }}:{{ c.puerto }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Seguridad</span>
+          <span class="info-value">{{ c.seguridad }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Remitente</span>
+          <span class="info-value">{{ c.nombreRemitente }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Email</span>
+          <span class="info-value">{{ c.emailRemitente }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Usuario</span>
+          <span class="info-value">{{ c.usuario }}</span>
+        </div>
+      </div>
+
+      <div class="config-card-footer">
+        <button class="btn btn-sm btn-outline-primary" (click)="setDefaultConfig(c)" *ngIf="!c.esDefault" title="Establecer como predeterminado">
+          <i class="icon-pin"></i> Predeterminar
+        </button>
+        <button class="btn btn-sm btn-warning" (click)="openEdit(c)" title="Editar">
+          <i class="icon-pencil"></i> Editar
+        </button>
+        <button class="btn btn-sm" [class]="c.estado === 'ACTIVO' ? 'btn-danger' : 'btn-success'" (click)="toggleEstado(c)">
+          <i [class]="c.estado === 'ACTIVO' ? 'icon-close' : 'icon-check'"></i>
+          {{ c.estado === 'ACTIVO' ? 'Desactivar' : 'Activar' }}
+        </button>
+      </div>
+
+    </div>
+
+    <div class="empty-card" *ngIf="!configs.length">
+      <i class="icon icon-server"></i>
+      <p>No hay configuraciones SMTP registradas</p>
+      <button class="btn-primary" (click)="openCreate()">Crear primera configuración</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal modal-lg" [class.show]="showModal">
+    <div class="modal-header">
+      <h3><i class="icon icon-server"></i> {{ isEdit ? 'Editar Configuración SMTP' : 'Nueva Configuración SMTP' }}</h3>
+      <button class="close" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="section-title">Empresa</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Empresa <span class="required">*</span></label>
+          <select [(ngModel)]="form.empresa">
+            <option *ngFor="let e of empresas" [value]="e">{{ e }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nombre del Remitente <span class="required">*</span></label>
+          <input type="text" [(ngModel)]="form.nombreRemitente" placeholder="Ej: Logística Hass Perú" />
+        </div>
+        <div class="form-group full-span">
+          <label>Email Remitente <span class="required">*</span></label>
+          <input type="email" [(ngModel)]="form.emailRemitente" placeholder="correo@empresa.com" />
+        </div>
+      </div>
+
+      <div class="section-title mt">Servidor SMTP</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Host <span class="required">*</span></label>
+          <input type="text" [(ngModel)]="form.host" placeholder="smtp.gmail.com / smtp.office365.com" />
+        </div>
+        <div class="form-group">
+          <label>Puerto <span class="required">*</span></label>
+          <div class="port-group">
+            <input type="number" [(ngModel)]="form.puerto" min="1" max="65535" />
+            <div class="port-shortcuts">
+              <button type="button" *ngFor="let p of puertosComunes" class="btn-port" [class.active]="form.puerto === p" (click)="form.puerto = p">{{ p }}</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Seguridad</label>
+          <select [(ngModel)]="form.seguridad">
+            <option *ngFor="let s of seguridadOpciones" [value]="s">{{ s }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select [(ngModel)]="form.estado">
+            <option value="ACTIVO">Activo</option>
+            <option value="INACTIVO">Inactivo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-title mt">Credenciales</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Usuario / Email <span class="required">*</span></label>
+          <input type="text" [(ngModel)]="form.usuario" placeholder="usuario@dominio.com" />
+        </div>
+        <div class="form-group">
+          <label>Contraseña <span class="required">*</span></label>
+          <div class="password-group">
+            <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="form.password" placeholder="Contraseña de aplicación" />
+            <button type="button" class="btn-eye" (click)="toggleShowPassword()" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+              <i [class]="showPassword ? 'icon-eye' : 'icon-eye-blocked'"></i>
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>¿Usar como predeterminado?</label>
+          <label class="toggle-label">
+            <input type="checkbox" [(ngModel)]="form.esDefault" />
+            <span>Sí, usar por defecto para {{ form.empresa }}</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- TEST CONNECTION -->
+      <div class="test-connection-bar">
+        <button type="button" class="btn-test" (click)="probarConexion()" [disabled]="testingConnection">
+          <i [class]="testingConnection ? 'icon-spinner' : 'icon-plug'"></i>
+          {{ testingConnection ? 'Probando conexión...' : 'Probar Conexión' }}
+        </button>
+        <div class="test-result" *ngIf="testResult" [class.success]="testResult.ok" [class.error]="!testResult.ok">
+          <i [class]="testResult.ok ? 'icon-check' : 'icon-close'"></i>
+          {{ testResult.message }}
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="save()">
+        <i class="icon icon-save"></i> Guardar
+      </button>
+    </div>
+  </div>
+</div>

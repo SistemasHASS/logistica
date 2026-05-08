@@ -35,6 +35,8 @@ export class TabActivoFijoComponent {
 
   onPrioridadChange(val: string) { this.prioridadChange.emit(val); }
   onGlosaChange(val: string) { this.glosaChange.emit(val); }
+  get itemTipoSeleccionado() { return this.activoFijoSvc.itemTipoSeleccionado; }
+  onItemTipoChange(val: 'CONSUMO' | 'COMPRA') { this.activoFijoSvc.itemTipoSeleccionado = val; }
 
   // Datos de requerimientos del tab ACTIVO FIJO
   @Input() requerimientosActivoFijo: any[] = [];

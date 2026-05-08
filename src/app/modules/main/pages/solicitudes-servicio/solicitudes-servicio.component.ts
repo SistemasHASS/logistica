@@ -127,11 +127,18 @@ export class SolicitudesServicioComponent implements OnInit {
       if (this.filtroTipoServicio) filtros.tipoServicio = this.filtroTipoServicio;
       filtros.usuarioSolicita = this.usuario.documentoidentidad;
 
-      const solicitudes = await this.solicitudServicioService
+      const rawResponse = await this.solicitudServicioService
         .listarSolicitudesServicio(filtros)
         .toPromise();
 
-      this.solicitudesServicio = solicitudes || [];
+      // El SP usa FOR JSON PATH → backend retorna [ [array] ] o [ {obj} ]
+      // Desenvolver si el primer elemento es un array
+      let solicitudes = rawResponse || [];
+      if (Array.isArray(solicitudes) && solicitudes.length === 1 && Array.isArray(solicitudes[0])) {
+        solicitudes = solicitudes[0];
+      }
+
+      this.solicitudesServicio = solicitudes;
       this.alertService.cerrarModalCarga();
     } catch (error) {
       console.error('Error al cargar solicitudes:', error);
@@ -144,7 +151,8 @@ export class SolicitudesServicioComponent implements OnInit {
     try {
       const todasLasSolicitudes = await this.dexieService.solicitudesServicio.toArray();
       this.solicitudesLocales = todasLasSolicitudes.filter(s => 
-        s.usuarioSolicita === this.usuario.documentoidentidad
+        s.usuarioSolicita === this.usuario.documentoidentidad &&
+        s.numeroSolicitud != null && s.numeroSolicitud !== ''
       );
       console.log('📋 Solicitudes locales cargadas:', this.solicitudesLocales.length);
     } catch (error) {
@@ -226,22 +234,28 @@ export class SolicitudesServicioComponent implements OnInit {
         // Enviar al backend
         const response = await this.solicitudServicioService.guardarSolicitudServicio(solicitudParaEnviar).toPromise();
         
-        if (response && response.success) {
-          // Eliminar de Dexie ya que ahora está en el backend
-          await this.dexieService.solicitudesServicio.delete(solicitud.id);
+        if (response && (response.success || response.status === 'success')) {
+          // Eliminar de Dexie — intentar por id y por numeroSolicitud
+          if (solicitud.id != null) {
+            await this.dexieService.solicitudesServicio.delete(solicitud.id);
+          }
+          if (solicitud.numeroSolicitud) {
+            await this.dexieService.solicitudesServicio
+              .where('numeroSolicitud').equals(solicitud.numeroSolicitud).delete();
+          }
           
+          // Cambiar al tab de solicitudes procesadas ANTES de recargar
+          this.tabActiva = 'BACKEND';
+
+          // Recargar ambas listas
+          await this.cargarSolicitudesLocales();
+          await this.cargarSolicitudes();
+
           this.alertService.showAlert(
             'Éxito', 
             `Solicitud ${solicitud.numeroSolicitud} enviada al sistema correctamente. Ahora aparecerá en "Solicitudes Procesadas".`,
             'success'
           );
-          
-          // Recargar ambas listas
-          await this.cargarSolicitudesLocales();
-          await this.cargarSolicitudes();
-          
-          // Cambiar al tab de solicitudes procesadas
-          this.tabActiva = 'BACKEND';
         } else {
           throw new Error(response?.message || 'Error al enviar la solicitud');
         }

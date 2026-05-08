@@ -46,7 +46,14 @@ export class ModalCargaMasivaComponent {
 
   // Retorna true si la fila tiene error en el campo indicado
   tieneError(row: any, campo: string): boolean {
-    return row.error && Array.isArray(row.errores) && row.errores.includes(campo);
+    return row.error && Array.isArray(row.errores) && row.errores.some((e: any) => e.columna === campo);
+  }
+
+  // Retorna el mensaje de error para la columna indicada
+  getMensajeError(row: any, campo: string): string {
+    if (!Array.isArray(row.errores)) return '';
+    const err = row.errores.find((e: any) => e.columna === campo);
+    return err?.mensaje ?? '';
   }
 
   // Retorna true si la fila tiene algún error

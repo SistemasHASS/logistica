@@ -300,6 +300,7 @@ export interface RequerimientoCommodity {
   almacen: string;
   glosa: string;
   tipo: string;
+  itemtipo: string;
   estados: string;
   estado: number;
   disabled: boolean;
@@ -329,6 +330,7 @@ export interface RequerimientoActivoFijo {
   almacen: string;
   glosa: string;
   tipo: string;
+  itemtipo: string;
   estados: string;
   estado: number;
   disabled: boolean;
@@ -409,6 +411,7 @@ export interface RequerimientoActivoFijoMenor {
   almacen: string;
   glosa: string;
   tipo: string;
+  itemtipo: string;
   estados: string;
   estado: number;
   disabled: boolean;
@@ -779,6 +782,8 @@ export interface DetalleCotizacion {
   especificaciones?: string;
   plazoEntrega?: number;
   observaciones?: string;
+  ceco?: string;                         // Centro de costo del requerimiento origen
+  proyecto?: string;                     // Proyecto del requerimiento origen
 }
 
 export interface ComparativoCotizaciones {
@@ -1125,6 +1130,8 @@ export interface DetalleSolicitudCotizacionLegacy {
   unidadMedida?: string;
   especificaciones?: string;
   estado?: 'ACTIVO' | 'ANULADO';
+  ceco?: string;                         // Centro de costo del requerimiento origen
+  proyecto?: string;                     // Proyecto del requerimiento origen
 }
 
 // =====================================================================
@@ -1423,4 +1430,82 @@ export interface ActualizarSeguimientoOCDTO {
   nuevoEstado: EstadoSeguimientoOC;
   usuario: string;
   hitos?: HitoCompra[];
+}
+
+/**
+ * Configuración de correo electrónico
+ */
+export interface ConfiguracionCorreo {
+  id?: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpSecure: boolean;
+  smtpUser: string;
+  smtpPassword: string;
+  emailFrom: string;
+  emailFromName: string;
+  replyTo: string;
+  activo: boolean;
+  usuarioCrea?: string;
+  fechaCreacion?: Date;
+  usuarioModifica?: string;
+  fechaModificacion?: Date;
+}
+
+/**
+ * Configuración de servidor de correo (admin)
+ */
+export interface ConfiguracionServidorCorreo {
+  id?: string;
+  nombreServidor: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpSecure: boolean;
+  smtpUser: string;
+  smtpPassword: string;
+  emailFrom: string;
+  emailFromName: string;
+  replyTo: string;
+  activo: boolean;
+  limiteDiario: number;
+  usuarioCrea?: string;
+  fechaCreacion?: Date;
+  usuarioModifica?: string;
+  fechaModificacion?: Date;
+}
+
+/**
+ * Destinatario de correo
+ */
+export interface DestinatarioCorreo {
+  id?: string;
+  nombre: string;
+  email: string;
+  tipo: 'PROVEEDOR' | 'INTERNO' | 'ADMINISTRADOR';
+  departamento?: string;
+  activo: boolean;
+  recibeOrdenesCompra: boolean;
+  recibeOrdenesServicio: boolean;
+  recibeNotificaciones: boolean;
+  usuarioCrea?: string;
+  fechaCreacion?: Date;
+  usuarioModifica?: string;
+  fechaModificacion?: Date;
+}
+
+/**
+ * Plantilla de correo
+ */
+export interface PlantillaCorreo {
+  id?: string;
+  nombre: string;
+  tipo: 'ORDEN_COMPRA' | 'ORDEN_SERVICIO' | 'NOTIFICACION' | 'CONFIRMACION';
+  asunto: string;
+  cuerpoHtml: string;
+  variables: string[];
+  activo: boolean;
+  usuarioCrea?: string;
+  fechaCreacion?: Date;
+  usuarioModifica?: string;
+  fechaModificacion?: Date;
 }

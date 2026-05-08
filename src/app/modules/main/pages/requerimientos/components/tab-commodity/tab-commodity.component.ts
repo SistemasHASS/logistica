@@ -36,6 +36,8 @@ export class TabCommodityComponent {
 
   onPrioridadChange(val: string) { this.prioridadChange.emit(val); }
   onGlosaChange(val: string) { this.glosaChange.emit(val); }
+  get itemTipoSeleccionado() { return this.commoditySvc.itemTipoSeleccionado; }
+  onItemTipoChange(val: 'CONSUMO' | 'COMPRA') { this.commoditySvc.itemTipoSeleccionado = val; }
 
   // Datos de requerimientos del tab COMMODITY
   @Input() requerimientosCommodity: any[] = [];

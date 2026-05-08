@@ -159,6 +159,15 @@
 
         <div class="requerimientos-form">
           <div class="row g-3">
+            <!-- Tipo -->
+            <div class="col-6">
+              <label>Tipo <span class="text-danger">*</span></label>
+              <select class="form-select" [ngModel]="itemTipoSeleccionado" (ngModelChange)="onItemTipoChange($event)">
+                <option value="COMPRA">COMPRA</option>
+                <option value="CONSUMO">CONSUMO</option>
+              </select>
+            </div>
+
             <!-- Prioridad -->
             <div class="col-6">
               <label>Prioridad <span class="text-danger">*</span></label>

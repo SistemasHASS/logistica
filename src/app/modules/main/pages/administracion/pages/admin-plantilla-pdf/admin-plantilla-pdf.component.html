@@ -1,0 +1,302 @@
+<div class="admin-page">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <h2><i class="icon icon-file-pdf"></i> Plantillas PDF</h2>
+      <p class="subtitle">Configure el diseño del PDF para OC y OS: logo, colores, firmantes y pie de página por empresa</p>
+    </div>
+    <button class="btn-primary" (click)="openCreate()">
+      <i class="icon icon-plus"></i> Nueva Plantilla PDF
+    </button>
+  </div>
+
+  <!-- LISTADO -->
+  <div class="plantillas-grid">
+    <div class="plantilla-card" *ngFor="let p of plantillas" [class.default-card]="p.esDefault">
+
+      <!-- HEADER CARD -->
+      <div class="card-header-row">
+        <div class="card-meta">
+          <span class="tipo-badge" [class]="p.tipoDocumento === 'OC' ? 'tipo-oc' : 'tipo-os'">{{ p.tipoDocumento }}</span>
+          <span class="empresa-name">{{ p.empresa }}</span>
+          <span class="badge-default" *ngIf="p.esDefault">Por defecto</span>
+        </div>
+        <span [class]="p.estado === 'ACTIVO' ? 'activo' : 'inactivo'">{{ p.estado }}</span>
+      </div>
+
+      <!-- PREVIEW MINI PDF -->
+      <div class="pdf-mini-preview" [style.borderTopColor]="p.colorPrimario">
+        <div class="pdf-header-preview" [style.background]="p.colorPrimario">
+          <div class="pdf-logo-preview">
+            <img *ngIf="p.logoBase64" [src]="p.logoBase64" [alt]="p.empresa" />
+            <span *ngIf="!p.logoBase64" class="no-logo">Sin logo</span>
+          </div>
+          <span class="pdf-titulo-preview">{{ p.tituloDocumento }}</span>
+        </div>
+        <div class="pdf-body-preview">
+          <span class="pdf-encabezado">{{ p.textoEncabezado }}</span>
+        </div>
+        <div class="pdf-firma-preview" *ngIf="p.incluirFirmaAutorizador">
+          <div class="firma-box" *ngIf="p.nombreFirmante1">
+            <div class="firma-linea"></div>
+            <span>{{ p.nombreFirmante1 }}</span>
+            <small>{{ p.cargoFirmante1 }}</small>
+          </div>
+          <div class="firma-box" *ngIf="p.nombreFirmante2">
+            <div class="firma-linea"></div>
+            <span>{{ p.nombreFirmante2 }}</span>
+            <small>{{ p.cargoFirmante2 }}</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLORES -->
+      <div class="card-colors">
+        <div class="color-chip" [style.background]="p.colorPrimario" [title]="'Primario: ' + p.colorPrimario"></div>
+        <div class="color-chip" [style.background]="p.colorSecundario" [title]="'Secundario: ' + p.colorSecundario" style="border: 1px solid #e5e7eb;"></div>
+        <span class="color-label">{{ p.colorPrimario }} / {{ p.colorSecundario }}</span>
+      </div>
+
+      <!-- OPCIONES -->
+      <div class="card-options">
+        <span class="option-tag" *ngIf="p.mostrarCondicionesPago">Condic. Pago</span>
+        <span class="option-tag" *ngIf="p.mostrarDatosProveedor">Datos Prov.</span>
+        <span class="option-tag" *ngIf="p.incluirFirmaAutorizador">Firmas</span>
+        <span class="option-tag" *ngIf="p.incluirSello">Sello</span>
+      </div>
+
+      <!-- ACCIONES -->
+      <div class="card-footer">
+        <button class="btn btn-sm btn-outline-primary" (click)="setDefaultPlantilla(p)" *ngIf="!p.esDefault" title="Predeterminar">
+          <i class="icon-pin"></i> Predeterminar
+        </button>
+        <button class="btn btn-sm btn-warning" (click)="openEdit(p)">
+          <i class="icon-pencil"></i> Editar
+        </button>
+        <button class="btn btn-sm" [class]="p.estado === 'ACTIVO' ? 'btn-danger' : 'btn-success'" (click)="toggleEstado(p)">
+          {{ p.estado === 'ACTIVO' ? 'Desactivar' : 'Activar' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="empty-card" *ngIf="!plantillas.length">
+      <i class="icon icon-file-pdf"></i>
+      <p>No hay plantillas PDF registradas</p>
+      <button class="btn-primary" (click)="openCreate()">Crear primera plantilla</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <h3><i class="icon icon-file-pdf"></i> {{ isEdit ? 'Editar Plantilla PDF' : 'Nueva Plantilla PDF' }}</h3>
+      <button class="close" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-layout">
+
+        <!-- COLUMNA IZQUIERDA -->
+        <div class="form-left">
+
+          <!-- SECCIÓN: EMPRESA -->
+          <div class="form-section">
+            <div class="section-title">Empresa y Documento</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Empresa <span class="required">*</span></label>
+                <select [(ngModel)]="form.empresa">
+                  <option *ngFor="let e of empresas" [value]="e">{{ e }}</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Tipo de Documento <span class="required">*</span></label>
+                <select [(ngModel)]="form.tipoDocumento" (change)="onTipoDocumentoChange()">
+                  <option *ngFor="let t of tiposDocumento" [value]="t.value">{{ t.label }}</option>
+                </select>
+              </div>
+              <div class="form-group full-span">
+                <label>Título del Documento <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="form.tituloDocumento" placeholder="Ej: ORDEN DE COMPRA" />
+              </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN: LOGO Y COLORES -->
+          <div class="form-section">
+            <div class="section-title">Logo y Colores</div>
+            <div class="form-grid">
+              <div class="form-group full-span">
+                <label>Logo de la Empresa</label>
+                <div class="logo-upload-area">
+                  <div class="logo-preview" *ngIf="form.logoBase64">
+                    <img [src]="form.logoBase64" alt="Logo" />
+                    <button type="button" class="btn-remove-logo" (click)="removeLogo()" aria-label="Eliminar logo">×</button>
+                  </div>
+                  <div class="logo-dropzone" *ngIf="!form.logoBase64">
+                    <i class="icon icon-image"></i>
+                    <span>Haga clic para seleccionar el logo</span>
+                    <small>PNG, JPG o SVG — máx. 500KB recomendado</small>
+                    <input type="file" accept="image/*" (change)="onLogoSelected($event)" class="file-input" aria-label="Seleccionar logo" />
+                  </div>
+                  <span class="uploading" *ngIf="uploadingLogo">Cargando...</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Color Primario (encabezado)</label>
+                <div class="color-input-group">
+                  <input type="color" [(ngModel)]="form.colorPrimario" class="color-picker" />
+                  <input type="text" [(ngModel)]="form.colorPrimario" placeholder="#1a4f2a" maxlength="7" class="color-text" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Color Secundario (filas alt.)</label>
+                <div class="color-input-group">
+                  <input type="color" [(ngModel)]="form.colorSecundario" class="color-picker" />
+                  <input type="text" [(ngModel)]="form.colorSecundario" placeholder="#f5f5f5" maxlength="7" class="color-text" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN: TEXTOS -->
+          <div class="form-section">
+            <div class="section-title">Textos del Documento</div>
+            <div class="form-group">
+              <label>Texto de Encabezado</label>
+              <input type="text" [(ngModel)]="form.textoEncabezado" placeholder="Ej: Empresa S.A.C. | RUC: 20123456789 | Dirección" />
+            </div>
+            <div class="form-group">
+              <label>Texto de Pie de Página</label>
+              <textarea [(ngModel)]="form.textoPie" rows="3" placeholder="Ej: Documento generado electrónicamente..."></textarea>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- COLUMNA DERECHA -->
+        <div class="form-right">
+
+          <!-- SECCIÓN: FIRMAS -->
+          <div class="form-section">
+            <div class="section-title">Firmantes</div>
+            <div class="form-group">
+              <label class="toggle-label">
+                <input type="checkbox" [(ngModel)]="form.incluirFirmaAutorizador" />
+                <span>Incluir líneas de firma en el documento</span>
+              </label>
+            </div>
+            <div *ngIf="form.incluirFirmaAutorizador">
+              <div class="firma-row">
+                <div class="firma-num">Firmante 1</div>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>Nombre / Cargo</label>
+                    <input type="text" [(ngModel)]="form.nombreFirmante1" placeholder="Ej: Jefe de Logística" />
+                  </div>
+                  <div class="form-group">
+                    <label>Área / Puesto</label>
+                    <input type="text" [(ngModel)]="form.cargoFirmante1" placeholder="Ej: Jefatura de Logística" />
+                  </div>
+                </div>
+              </div>
+              <div class="firma-row">
+                <div class="firma-num">Firmante 2 <small>(opcional)</small></div>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>Nombre / Cargo</label>
+                    <input type="text" [(ngModel)]="form.nombreFirmante2" placeholder="Ej: Gerente de Operaciones" />
+                  </div>
+                  <div class="form-group">
+                    <label>Área / Puesto</label>
+                    <input type="text" [(ngModel)]="form.cargoFirmante2" placeholder="Ej: Gerencia" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN: OPCIONES -->
+          <div class="form-section">
+            <div class="section-title">Opciones del Documento</div>
+            <div class="options-list">
+              <label class="toggle-label">
+                <input type="checkbox" [(ngModel)]="form.mostrarCondicionesPago" />
+                <span>Mostrar sección de condiciones de pago</span>
+              </label>
+              <label class="toggle-label">
+                <input type="checkbox" [(ngModel)]="form.mostrarDatosProveedor" />
+                <span>Mostrar datos completos del proveedor</span>
+              </label>
+              <label class="toggle-label">
+                <input type="checkbox" [(ngModel)]="form.incluirSello" />
+                <span>Incluir espacio para sello de empresa</span>
+              </label>
+              <label class="toggle-label">
+                <input type="checkbox" [(ngModel)]="form.esDefault" />
+                <span>Usar como plantilla por defecto para {{ form.empresa }} - {{ form.tipoDocumento }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- SECCIÓN: ESTADO -->
+          <div class="form-section">
+            <div class="section-title">Estado</div>
+            <div class="form-group">
+              <select [(ngModel)]="form.estado">
+                <option value="ACTIVO">Activo</option>
+                <option value="INACTIVO">Inactivo</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- MINI PREVIEW EN MODAL -->
+          <div class="form-section">
+            <div class="section-title">Vista Previa</div>
+            <div class="modal-pdf-preview" [style.borderTopColor]="form.colorPrimario">
+              <div class="mpdf-header" [style.background]="form.colorPrimario">
+                <div class="mpdf-logo">
+                  <img *ngIf="form.logoBase64" [src]="form.logoBase64" alt="Logo" />
+                  <span *ngIf="!form.logoBase64">Logo</span>
+                </div>
+                <div class="mpdf-title">{{ form.tituloDocumento || 'ORDEN DE COMPRA' }}</div>
+              </div>
+              <div class="mpdf-body">
+                <div class="mpdf-encabezado">{{ form.textoEncabezado || 'Empresa | RUC | Dirección' }}</div>
+                <div class="mpdf-lines">
+                  <div class="mpdf-line" [style.background]="form.colorSecundario"></div>
+                  <div class="mpdf-line"></div>
+                  <div class="mpdf-line" [style.background]="form.colorSecundario"></div>
+                  <div class="mpdf-line"></div>
+                </div>
+              </div>
+              <div class="mpdf-firmas" *ngIf="form.incluirFirmaAutorizador">
+                <div class="mpdf-firma" *ngIf="form.nombreFirmante1">
+                  <div class="mpdf-firma-linea"></div>
+                  <span>{{ form.nombreFirmante1 }}</span>
+                </div>
+                <div class="mpdf-firma" *ngIf="form.nombreFirmante2">
+                  <div class="mpdf-firma-linea"></div>
+                  <span>{{ form.nombreFirmante2 }}</span>
+                </div>
+              </div>
+              <div class="mpdf-pie">{{ form.textoPie || 'Pie de página del documento...' }}</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="save()">
+        <i class="icon icon-save"></i> Guardar Plantilla
+      </button>
+    </div>
+  </div>
+</div>

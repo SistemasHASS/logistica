@@ -19,6 +19,7 @@ import { Usuario, Stock, OrdenCompra, DetalleDespacho, Despacho } from '@/app/sh
 import { ItemPendienteConsolidacion } from '@/app/models/consolidacion.model';
 import { TableModule } from 'primeng/table';
 import { DatePickerModule } from 'primeng/datepicker';
+import { DialogModule } from 'primeng/dialog';
 import { ViewChild } from '@angular/core';
 import { Table } from 'primeng/table';
 import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
@@ -34,7 +35,7 @@ export enum EstadoRequerimiento {
 @Component({
   selector: 'app-despachos',
   standalone: true,
-  imports: [CommonModule, FormsModule, TableModule, DatePickerModule, NumeroRequerimientoPipe],
+  imports: [CommonModule, FormsModule, TableModule, DatePickerModule, NumeroRequerimientoPipe, DialogModule],
   templateUrl: './despacho.component.html',
   styleUrls: ['despacho.component.scss'],
 })
@@ -96,6 +97,32 @@ export class DespachoComponent implements OnInit {
   activeTabDespachos: 'ITEMS' | 'COMMODITY' = 'ITEMS';
   filtroRequisicion: string = '';
 
+  // Modal KPI detalle
+  modalKpiVisible = false;
+  modalKpiTitulo = '';
+  modalKpiItems: any[] = [];
+
+  abrirModalKpi(estado: string, titulo: string) {
+    this.modalKpiItems = (this.requerimientosAprobadosAll || []).filter((r: any) => {
+      if (estado === 'APROBADO') return r?.estados === 'APROBADO' || !r?.estados;
+      if (estado === 'DESPACHADO') return (r?.estados || '').toString().toUpperCase().includes('DESPACHADO');
+      if (estado === 'TOTAL') return true;
+      return r?.estados === estado;
+    });
+    this.modalKpiTitulo = titulo;
+    this.modalKpiVisible = true;
+  }
+
+  cerrarModalKpi() {
+    this.modalKpiVisible = false;
+    this.modalKpiItems = [];
+  }
+
+  abrirDesdeKpi(req: any) {
+    this.cerrarModalKpi();
+    setTimeout(() => this.verDetalle(req), 150);
+  }
+
   /** KPI: requerimientos pendientes de atención (estado APROBADO). */
   get kpiPendientes(): number {
     return (this.requerimientosAprobadosAll || []).filter(
@@ -103,12 +130,44 @@ export class DespachoComponent implements OnInit {
     ).length;
   }
 
-  /** KPI: requerimientos atendidos (parcial o completo o despachado). */
+  /** KPI: requerimientos con atención parcial pendientes de completar. */
+  get kpiParciales(): number {
+    return (this.requerimientosAprobadosAll || []).filter(
+      (r: any) => r?.estados === 'ATENCION_PARCIAL'
+    ).length;
+  }
+
+  /** KPI: requerimientos sin stock, pendientes de atención cuando haya stock. */
+  get kpiSinStock(): number {
+    return (this.requerimientosAprobadosAll || []).filter(
+      (r: any) => r?.estados === 'SIN_STOCK'
+    ).length;
+  }
+
+  /** Calcula el total de unidades pendientes de despacho en un requerimiento. */
+  calcularPendienteTotal(r: any): number {
+    if (!r?.detalle?.length) return 0;
+    return r.detalle.reduce((acc: number, d: any) => {
+      const solicitado = Number(d.cantidad) || 0;
+      const atendido = Number(d.atendida) || 0;
+      return acc + Math.max(0, solicitado - atendido);
+    }, 0);
+  }
+
+  /** Toggle check de una línea del detalle en el modal. */
+  toggleLineaDespacho(d: any): void {
+    if (d.estadoAtencion === 'SIN STOCK') {
+      d.seleccionado = false; // no se puede marcar si no hay stock
+      return;
+    }
+    d.seleccionado = !d.seleccionado;
+  }
+
+  /** KPI: requerimientos atendidos (despachado completo). */
   get kpiAtendidos(): number {
     return (this.requerimientosAprobadosAll || []).filter((r: any) =>
-      ['ATENCION_PARCIAL', 'ATENCION_COMPLETA', 'DESPACHADO_COMPLETO'].includes(
-        r?.estado,
-      ) || (r?.estados || '').toString().toUpperCase().includes('DESPACHADO'),
+      ['ATENCION_COMPLETA', 'DESPACHADO_COMPLETO'].includes(r?.estados) ||
+      (r?.estados || '').toString().toUpperCase().includes('DESPACHADO')
     ).length;
   }
 
@@ -122,8 +181,11 @@ export class DespachoComponent implements OnInit {
     const base = this.requerimientosAprobados || [];
     const esItem = this.activeTabDespachos === 'ITEMS';
     return base.filter((r: any) => {
-      const tipo = (r?.tipo || '').toString().toUpperCase();
-      const coincideTab = esItem ? tipo === 'ITEM' : tipo !== 'ITEM';
+      // idclasificacion a nivel requerimiento: 'SER'=Servicio, 'ACT'=Activo Fijo, 'ACM'=Activo Menor → COMMODITY
+      // Cualquier otro valor (o vacío) → ITEMS
+      const clas = (r?.idclasificacion || '').toString().toUpperCase();
+      const esCommodity = ['SER', 'ACT', 'ACM'].includes(clas);
+      const coincideTab = esItem ? !esCommodity : esCommodity;
       if (!coincideTab) return false;
       if (this.filtroRequisicion?.trim()) {
         const req = (r?.RequisicionNumero || '').toString().toLowerCase();
@@ -263,6 +325,9 @@ export class DespachoComponent implements OnInit {
   selected: any = null;
   modalAtencionVisible = false;
   displayDetalle = false;
+  detalleTodosSinStock = false;
+  detalleAlgunoSinStock = false;
+  kpiDespachados = 0;
   // Usuario
   usuario: Usuario = {
     id: '',
@@ -508,81 +573,135 @@ export class DespachoComponent implements OnInit {
     return [...new Set(detalle.map(d => d.proyecto))];
   }
 
-  async verDetalle(r: any) {
-    try {
-      this.alertService.mostrarModalCarga();
-      this.selected = r;
-      this.detalle = r.detalle || [];
+  verDetalle(r: any) {
+    this.selected = r;
+    this.detalle  = r.detalle || [];
+    this.modalAtencionVisible = true;
+    this.displayDetalle = true;
 
-      // Cargar saldos de stock desde la API
-      await this.cargarSaldosStock(this.detalle, r.idalmacen);
+    // Calcular stock con datos en memoria (sincrónico)
+    this.detalle.forEach((d: any) => {
+      const solicitada = Number(d.cantidad) || 0;
+      const atendida   = Number(d.atendida) || 0;
+      const pendiente  = Math.max(0, solicitada - atendida);
+      const stock      = this.obtenerStock(d.codigo, r.idalmacen);
+      const atender    = Math.min(pendiente, stock);
+      d.stock          = stock;
+      d.pendiente      = pendiente;
+      d.atender        = atender;
+      d.compra         = Math.max(0, pendiente - stock);
+      d.estadoAtencion = stock === 0 ? 'SIN STOCK' : stock < pendiente ? 'PARCIAL' : 'CON STOCK';
+      d.seleccionado   = atender > 0;
+    });
 
-      // Calcular atención real para cada línea
-      if (this.detalle && this.detalle.length > 0) {
-        this.detalle.forEach((d: any) => {
-          const solicitada = Number(d.cantidad) || 0;
-          const atendida = Number(d.atendida) || 0;
-          const pendiente = Math.max(0, solicitada - atendida);
+    // Calcular flags para template (no usar arrow functions en template)
+    this.detalleTodosSinStock = this.detalle.length > 0 && this.detalle.every((d: any) => d.stock === 0);
+    this.detalleAlgunoSinStock = this.detalle.some((d: any) => d.estadoAtencion !== 'CON STOCK');
 
-          const stock = this.obtenerStock(d.codigo, this.selected.idalmacen);
-          const atender = Math.min(pendiente, stock);
-
-          d.stock = stock;
-          d.atender = atender;
-          d.compra = Math.max(0, pendiente - stock);
-
-          d.estadoAtencion =
-            stock === 0
-              ? 'SIN STOCK'
-              : stock < pendiente
-              ? 'PARCIAL'
-              : 'CON STOCK';
-        });
-
-        // Verificar si todos los items están SIN STOCK
-        const todosSinStock = this.detalle.every((d: any) => d.estadoAtencion === 'SIN STOCK');
-        console.log('🔍 Verificando SIN STOCK:', { 
-          todosSinStock, 
-          cantidadItems: this.detalle.length,
-          selected: this.selected,
-          selectedNumero: this.selected?.numero,
-          selectedId: this.selected?.idrequerimiento
-        });
-        
-        if (todosSinStock && this.detalle.length > 0) {
-          console.log('📢 Mostrando notificaciones de SIN STOCK');
-          
-          // Notificación flotante
-          this.notificationService.warning(
-            'Sin Stock Disponible',
-            `Todos los ítems del requerimiento ${this.selected?.numero || this.selected?.idrequerimiento || 'N/A'} están sin stock. Los ítems quedarán en saldo pendiente.`,
-            10000
-          );
-          
-          // Alerta más visible con SweetAlert2
-          setTimeout(() => {
-            console.log('📢 Mostrando alerta SweetAlert2');
-            this.alertService.showAlert(
-              'Sin Stock Disponible',
-              `Todos los ítems del requerimiento ${this.selected?.numero || this.selected?.idrequerimiento || 'N/A'} están sin stock.\n\nLos ítems han sido movidos a saldo pendiente para su consolidación.`,
-              'warning'
-            );
-          }, 500);
-        }
-      }
-
-      this.alertService.cerrarModalCarga();
-      this.modalAtencionVisible = true;
-      this.displayDetalle = true;
-    } catch (error) {
-      console.error('Error al cargar detalle:', error);
-      this.alertService.cerrarModalCarga();
-      this.alertService.showAlert('Error', 'No se pudo cargar el detalle', 'error');
+    // Notificación toast en esquina superior derecha
+    const numReq = r.RequisicionNumero || r.idrequerimiento || 'N/A';
+    if (this.detalleTodosSinStock) {
+      this.notificationService.warning(
+        'Sin Stock Disponible',
+        `El requerimiento ${numReq} no tiene stock para ningún ítem.`,
+        7000
+      );
+    } else if (this.detalleAlgunoSinStock) {
+      this.notificationService.warning(
+        'Stock Insuficiente',
+        `Algunos ítems del requerimiento ${numReq} no tienen stock suficiente.`,
+        5000
+      );
     }
   }
 
   cerrarModalAtencion() {
     this.modalAtencionVisible = false;
+  }
+
+  /**
+   * Registra el requerimiento como SIN_STOCK:
+   * 1. Cierra el modal
+   * 2. Muestra alerta informativa
+   * 3. Actualiza Dexie y BD
+   * 4. Recarga la lista y los KPIs en tiempo real
+   */
+  async registrarComoSinStock(itemsDetalle?: any[]) {
+    if (!this.selected) return;
+
+    const yaEraSinStock = this.selected.estados === 'SIN_STOCK';
+    const items = itemsDetalle || this.detalle || [];
+    const numReq = this.selected?.RequisicionNumero || this.selected?.idrequerimiento || 'N/A';
+
+    if (yaEraSinStock) {
+      // Requerimiento ya en SIN_STOCK: NO cerrar modal, solo toast informativo
+      // El almacenero puede ver los ítems con stock=0 en la tabla del modal
+      this.notificationService.info(
+        'Sin Stock registrado',
+        `Requerimiento ${numReq} ya está en estado SIN STOCK. Los ítems se muestran sin stock disponible.`,
+        6000
+      );
+      return;
+    }
+
+    // 1️⃣ Cerrar modal (solo cuando es la primera vez que se registra como SIN_STOCK)
+    this.cerrarModalAtencion();
+
+    // 2️⃣ Actualizar Dexie inmediatamente → KPI reactivo
+    const reqDexie = await this.dexieService.requerimientos
+      .where('idrequerimiento').equals(this.selected.idrequerimiento).first();
+    if (reqDexie) {
+      reqDexie.estados = 'SIN_STOCK';
+      await this.dexieService.requerimientos.put(reqDexie);
+    }
+
+    // 3️⃣ Recargar lista → KPI SIN_STOCK +1 en tiempo real, tabla actualiza badge
+    await this.cargarRequerimientosAprobados();
+
+    // 4️⃣ Alerta informativa (modal ya cerrado)
+    const mensajeItems = items.length
+      ? items.map((item: any) =>
+          `• ${item.codigo || item.producto}: Solicitado ${item.cantidadSolicitada ?? item.cantidad ?? '-'}, Disponible ${item.stockDisponible ?? item.stock ?? 0}`
+        ).join('\n')
+      : 'Sin detalles disponibles';
+
+    this.alertService.showAlert(
+      'Sin Stock — Requerimiento Registrado',
+      `El requerimiento ${numReq} quedó registrado como SIN STOCK.\n\n${mensajeItems}\n\nSe notificó al solicitante y al almacenero.`,
+      'warning'
+    );
+
+    // 5️⃣ Guardar estado en BD
+    this.despachosService.actualizarEstadoRequerimiento([{
+      idrequerimiento: this.selected.idrequerimiento,
+      estados: 'SIN_STOCK',
+      usuario: this.usuario.documentoidentidad
+    }]).subscribe({
+      next: () => console.log('✅ SIN_STOCK guardado en BD'),
+      error: err => console.error('Error guardando SIN_STOCK en BD:', err)
+    });
+
+    // 6️⃣ Notificar al solicitante (una vez por item)
+    for (const item of items) {
+      await this.notificacionApi.insertarNotificacionStock({
+        iditem: item.codigo || item.producto,
+        itemDescripcion: item.producto || item.codigo,
+        mensaje: `Tu requerimiento ${numReq} no pudo ser atendido por falta de stock. Ítem: ${item.codigo} - Solicitado: ${item.cantidadSolicitada ?? item.cantidad ?? '-'}, Disponible: ${item.stockDisponible ?? item.stock ?? 0}. Será atendido cuando haya stock.`,
+        idrequerimiento: this.selected?.idrequerimiento || 0,
+        tipo_notificacion: 'SIN_STOCK'
+      }).catch(() => {});
+    }
+
+    // 7️⃣ Notificar al operador de almacén
+    for (const item of items) {
+      await this.notificacionApi.registrarNotificacionAlmacen({
+        iditem: item.codigo || item.producto,
+        id_dreq: String(this.selected?.idrequerimiento || ''),
+        itemDescripcion: item.producto || item.codigo,
+        mensaje: `⚠️ SIN STOCK - Requerimiento ${numReq} pendiente. Ítem: ${item.codigo} - Solicitado: ${item.cantidadSolicitada ?? item.cantidad ?? '-'}, Disponible: ${item.stockDisponible ?? item.stock ?? 0}.`,
+        tipo_notificacion: 'SIN_STOCK'
+      }).catch(() => {});
+    }
   }
 
   buscar() {
@@ -594,7 +713,11 @@ export class DespachoComponent implements OnInit {
   }
 
   aplicarFiltros() {
-    let data = [...this.requerimientosAprobadosAll];
+    // La tabla solo muestra pendientes; los despachados van al KPI modal
+    let data = (this.requerimientosAprobadosAll || []).filter((r: any) => {
+      const est = (r?.estados || '').toString().toUpperCase();
+      return !est.includes('DESPACHADO') && r?.estados !== 'ATENCION_COMPLETA';
+    });
 
     if (this.filtro.trim().length > 0) {
       const f = this.filtro.toLowerCase();
@@ -611,6 +734,16 @@ export class DespachoComponent implements OnInit {
             d.proyecto?.toLowerCase().includes(f))
       );
     }
+
+    // Separar: primero ATENCION_PARCIAL, luego SIN_STOCK, luego APROBADO
+    data.sort((a: any, b: any) => {
+      const orden: Record<string, number> = { 'ATENCION_PARCIAL': 0, 'SIN_STOCK': 1, 'APROBADO': 2 };
+      const oa = orden[a.estados] ?? 3;
+      const ob = orden[b.estados] ?? 3;
+      if (oa !== ob) return oa - ob;
+      // Secundario: fecha descendente
+      return new Date(b.fechaAprobacion || 0).getTime() - new Date(a.fechaAprobacion || 0).getTime();
+    });
 
     /* 📅 FILTRO POR RANGO DE FECHAS */
     if (this.fechaInicio || this.fechaFin) {
@@ -820,10 +953,61 @@ export class DespachoComponent implements OnInit {
       return;
     }
 
-    // 🔹 Filtrar SOLO lo que realmente se va a atender
+    // 🔹 Filtrar SOLO las líneas marcadas con check Y con cantidad > 0
     const detalleAtendido = this.detalle.filter(
-      (d: any) => (d.atender || 0) > 0
+      (d: any) => d.seleccionado && (d.atender || 0) > 0
     );
+
+    // Si no hay ítems con stock (atender > 0), registrar como SIN_STOCK directamente
+    const todosItemsSinStock = this.detalle.every((d: any) => (d.atender || 0) === 0);
+    if (!detalleAtendido.length && todosItemsSinStock) {
+      await this.registrarComoSinStock(this.detalle);
+      return;
+    }
+
+    if (!detalleAtendido.length) {
+      this.alertService.showAlert(
+        'Aviso',
+        'No hay ítems seleccionados para despachar. Marque al menos una línea con stock disponible.',
+        'warning'
+      );
+      return;
+    }
+
+    // 🔹 Validar stock usando LOGISTICA_ValidarStockItems antes de enviar al SP
+    const idalmacen = this.selected?.idalmacen || 'H001';
+    const itemsParaValidar = detalleAtendido.map((d: any) => ({
+      codigo: d.codigo.substring(0, 6), // Normalizar a primeros 6 caracteres (000078)
+      producto: d.descripcion || d.producto || d.codigo,
+      cantidad: d.atender
+    }));
+
+    console.log('📦 Validando stock antes de registrar atención:', { idalmacen, items: itemsParaValidar });
+
+    try {
+      const resultadoValidacion = await this.despachosService.validarStockItems(idalmacen, itemsParaValidar).toPromise();
+      console.log('📦 Resultado validación stock (completo):', JSON.stringify(resultadoValidacion, null, 2));
+      console.log('📦 Items sin stock filtrados:', (resultadoValidacion || []).filter(
+        (item: any) => item.estadoStock === 'SIN_STOCK' || item.estadoStock === 'PARCIAL'
+      ));
+
+      const itemsSinStock = (resultadoValidacion || []).filter(
+        (item: any) => item.estadoStock === 'SIN_STOCK' || item.estadoStock === 'PARCIAL'
+      );
+
+      if (itemsSinStock.length > 0) {
+        await this.registrarComoSinStock(itemsSinStock);
+        return;
+      }
+    } catch (error) {
+      console.error('Error al validar stock:', error);
+      this.alertService.showAlert(
+        'Error',
+        'Error al validar stock antes de registrar atención',
+        'error'
+      );
+      return;
+    }
 
     // 🔹 Obtener AFE del proyecto (buscar por nombre del proyecto en maestras)
     const primerDetalle = detalleAtendido[0];
@@ -881,7 +1065,7 @@ export class DespachoComponent implements OnInit {
 
           detalle: detalleAtendido.map((d: any, index: number) => ({
             Secuencia: index + 1,
-            Item: d.codigo,
+            Item: d.codigo.substring(0, 6), // Normalizar a primeros 6 caracteres para SPRING
             Condicion: d.condicion || '0',
             UnidadCodigo: d.unidadMedida || d.unidad || 'UND',
             Cantidad: d.atender,
@@ -986,9 +1170,25 @@ export class DespachoComponent implements OnInit {
             .first();
 
           if (requerimiento) {
-            requerimiento.estados = 'DESPACHADO';
+            // Calcular estado real: DESPACHADO solo si TODOS los items están atendidos en su totalidad
+            const todosAtendidos = this.detalle.every((d: any) => {
+              const totalAtendidoNuevo = (Number(d.atendida) || 0) +
+                (detalleAtendido.find((x: any) => x.codigo === d.codigo)?.atender || 0);
+              return totalAtendidoNuevo >= (Number(d.cantidad) || 0);
+            });
+            requerimiento.estados = todosAtendidos ? 'DESPACHADO' : 'ATENCION_PARCIAL';
             await this.dexieService.requerimientos.put(requerimiento);
           }
+
+          /* -----------------------------------------------------
+           * CALCULAR ESTADO FINAL (para Dexie, BD y SP)
+           * ----------------------------------------------------- */
+          const todosAtendidos = this.detalle.every((d: any) => {
+            const totalAtendidoNuevo = (Number(d.atendida) || 0) +
+              (detalleAtendido.find((x: any) => x.codigo === d.codigo)?.atender || 0);
+            return totalAtendidoNuevo >= (Number(d.cantidad) || 0);
+          });
+          const estadoFinal = todosAtendidos ? 'DESPACHADO' : 'ATENCION_PARCIAL';
 
           /* -----------------------------------------------------
            * BD LOGISTICA - Registrar Despacho
@@ -998,15 +1198,17 @@ export class DespachoComponent implements OnInit {
             usuario: this.usuario.documentoidentidad,
             observacion: `Despacho generado - NS: ${resultado.NumeroDocumento}`,
             numeroNS: resultado.NumeroDocumento,
+            estado: estadoFinal,
             detalle: detalleAtendido.map(d => ({
               codigo: d.codigo,
               solicitado: d.cantidad,
-              despachado: d.atender
+              despachado: d.atender,
+              pendiente: Math.max(0, (Number(d.cantidad) || 0) - (Number(d.atendida) || 0) - (d.atender || 0))
             }))
           };
 
           this.despachosService.registrarDespacho(bodyDespacho).subscribe({
-            next: () => console.log('Despacho registrado en BD local'),
+            next: () => console.log('✅ Despacho registrado en BD local con estado:', estadoFinal),
             error: err => console.error('Error registrando despacho:', err)
           });
 
@@ -1033,7 +1235,7 @@ export class DespachoComponent implements OnInit {
             }
           }
 
-          // Notificar al solicitante sobre despacho parcial
+          // Notificar al solicitante sobre despacho parcial y guardar saldo en BD
           if (itemsParciales.length > 0) {
             console.log('📝 Detectando stock parcial, notificando al solicitante...');
             
@@ -1046,12 +1248,28 @@ export class DespachoComponent implements OnInit {
                 tipo_notificacion: 'DESPACHO_PARCIAL'
               });
             }
+
+            // Guardar saldo pendiente en BD para que aparezca cuando haya stock
+            try {
+              const itemsFaltantesParaSaldo = itemsParciales.map(item => ({
+                codigo: item.codigo,
+                descripcion: item.descripcion || item.producto,
+                cantidad: item.cantidad,
+                atendida: item.totalAtendido + item.despachadoAhora,
+                faltante: item.pendiente,
+                unidadMedida: item.unidadMedida || 'UND'
+              }));
+              await this.crearSaldosPendientes(itemsFaltantesParaSaldo, estadoFinal);
+              console.log('✅ Saldo pendiente parcial registrado en BD:', itemsFaltantesParaSaldo.length, 'items');
+            } catch (errSaldo) {
+              console.error('⚠️ No se pudo registrar saldo pendiente parcial:', errSaldo);
+            }
             
             // Mostrar mensaje al operador sobre notificaciones enviadas
             this.notificationService.info(
               'Despacho Parcial',
-              `Se ha notificado al solicitante sobre el despacho parcial de ${itemsParciales.length} item(s).`,
-              5000
+              `Se ha notificado al solicitante sobre el despacho parcial de ${itemsParciales.length} item(s). El saldo pendiente quedó registrado para atención cuando haya stock.`,
+              6000
             );
           }
 
@@ -1061,7 +1279,7 @@ export class DespachoComponent implements OnInit {
           const bodyEstado = [
             {
               idrequerimiento: this.selected.idrequerimiento,
-              estados: 'DESPACHADO',
+              estados: estadoFinal,
               usuario: this.usuario.documentoidentidad
             }
           ];
@@ -1075,13 +1293,17 @@ export class DespachoComponent implements OnInit {
           /* -----------------------------------------------------
            * UI - Mostrar mensaje por 3 segundos
            * ----------------------------------------------------- */
+          const mensajeEstado = todosAtendidos
+            ? `Salida NS generada correctamente: ${resultado.NumeroDocumento}. Requerimiento DESPACHADO.`
+            : `Salida NS generada: ${resultado.NumeroDocumento}. El requerimiento queda en ATENCIÓN PARCIAL con ítems pendientes.`;
+
           this.alertService.showAlert(
-            'Éxito',
-            `Salida NS generada correctamente: ${resultado.NumeroDocumento}`,
-            'success'
+            todosAtendidos ? 'Despacho Completo' : 'Atención Parcial',
+            mensajeEstado,
+            todosAtendidos ? 'success' : 'warning'
           );
 
-          this.modalAtencionVisible = false;
+          this.cerrarModalAtencion();
           this.detalle = [];
           this.selected = null;
 
@@ -1393,7 +1615,7 @@ export class DespachoComponent implements OnInit {
    */
   async cargarStockDisponible() {
     try {
-      this.requerimientosService.obtenerReporteSaldos([]).subscribe(async (resp: any) => {
+      this.requerimientosService.obtenerReporteSaldos([{ idempresa: this.usuario.idempresa }]).subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
           await this.dexieService.saveStocks(resp);
           this.stockDisponible = await this.dexieService.showStock();
@@ -1501,10 +1723,12 @@ export class DespachoComponent implements OnInit {
     const requerimientosUnicos = new Map();
     
     (requerimientos || []).forEach((req: any) => {
-      if (req.estados === 'APROBADO') {
+      // Mostrar todos los estados relevantes para el dashboard
+      const estadosVisibles = ['APROBADO', 'ATENCION_PARCIAL', 'SIN_STOCK', 'ATENCION_COMPLETA', 'DESPACHADO_COMPLETO', 'DESPACHADO'];
+      const esVisible = estadosVisibles.includes(req.estados) || (req.estados || '').toString().toUpperCase().includes('DESPACHADO');
+      if (esVisible || !req.estados) {
         const key = req.idrequerimiento;
         if (!requerimientosUnicos.has(key)) {
-          // Guardar el requerimiento completo con sus detalles
           requerimientosUnicos.set(key, {
             ...req,
             detalle: req.detalle || []
@@ -1530,6 +1754,20 @@ export class DespachoComponent implements OnInit {
 
     // Resolver nombre del área del solicitante (consulta obtener-area-usuario por DNI)
     this.precargarAreasSolicitantes();
+
+    // Contar despachados desde el backend (no están en Dexie)
+    this.cargarKpiDespachados();
+  }
+
+  private cargarKpiDespachados() {
+    this.despachosService.listarDespachosRealizados({ ruc: this.usuario?.ruc })
+      .subscribe({
+        next: (resp: any) => {
+          const lista = Array.isArray(resp) ? resp : (resp?.data || []);
+          this.kpiDespachados = lista.length;
+        },
+        error: () => { this.kpiDespachados = 0; }
+      });
   }
 
   obtenerRol() {
@@ -1557,17 +1795,42 @@ export class DespachoComponent implements OnInit {
 
         if (!!resp && resp.length) {
 
-          // Limpiar Stores para evitar duplicados
-          await this.dexieService.requerimientos.clear();
-          await this.dexieService.detalles.clear();
+          // Obtener IDs que ya están en Dexie con estados especiales para preservarlos
+          const todosEnDexie = await this.dexieService.requerimientos.toArray();
+          const idsEspeciales = new Set(
+            todosEnDexie
+              .filter((r: any) => ['SIN_STOCK', 'ATENCION_PARCIAL'].includes(r.estados))
+              .map((r: any) => r.idrequerimiento)
+          );
 
-          // Preparar requerimientos sin el campo 'id' del backend (Dexie genera su propio ++id)
+          // Los que vienen del backend (ya incluye SIN_STOCK y ATENCION_PARCIAL con el SP corregido)
+          const idsBackend = new Set(resp.map((r: any) => r.idrequerimiento));
+
+          // Solo limpiar los APROBADOS que el backend no devuelve (ya no existen)
+          const aEliminar = todosEnDexie.filter((r: any) =>
+            r.estados === 'APROBADO' && !idsBackend.has(r.idrequerimiento)
+          );
+          if (aEliminar.length) {
+            const keysEliminar = aEliminar.map((r: any) => r.idrequerimiento);
+            await this.dexieService.requerimientos
+              .where('idrequerimiento').anyOf(keysEliminar).delete();
+          }
+
+          // Preparar requerimientos del backend — preservar estado local si ya existe como especial
           const requerimientosSinId = resp.map((req: any) => {
             const { id, ...sinId } = req;
+            // Si ya está en Dexie con estado especial y el backend lo trae como APROBADO,
+            // respetar el estado de Dexie (puede que el backend aún no haya actualizado)
+            const localExistente = todosEnDexie.find(
+              (r: any) => r.idrequerimiento === sinId.idrequerimiento
+            );
+            if (localExistente && idsEspeciales.has(sinId.idrequerimiento) && sinId.estados === 'APROBADO') {
+              return { ...sinId, estados: localExistente.estados };
+            }
             return sinId;
           });
 
-          // Guardar requerimientos usando bulkPut para evitar errores de duplicados
+          // Guardar requerimientos usando bulkPut (merge, no borra todo)
           await this.dexieService.requerimientos.bulkPut(requerimientosSinId);
 
           // No guardar detalles separados ya que vienen embebidos en el requerimiento

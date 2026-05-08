@@ -7,6 +7,8 @@ import { SeguimientoOSService } from '@/app/services/seguimiento-os.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { UserService } from '@/app/shared/services/user.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
+import { MaestrasService } from '@/app/modules/main/services/maestras.service';
+import { lastValueFrom } from 'rxjs';
 import {
   Usuario,
   HitoServicio,
@@ -61,6 +63,22 @@ export class OrdenesServicioComponent implements OnInit {
   mostrarTabDistribucion = false;
   gastosData: any[] = [];
   laborData: any[] = [];
+
+  // Modal distribución contable
+  mostrarModalDistribucion = false;
+  distribucionEditIndex: number | null = null;
+  distribucionForm: any = {
+    cuenta: '',
+    descripcion: '',
+    centrocosto: '',
+    proyecto: '',
+    monto: 0,
+    fondo: '',
+    referencia: '',
+    ccdestino: '',
+    turno: '',
+    cultivo: ''
+  };
 
   // Hitos del seguimiento
   hitosEdicion: HitoServicio[] = [];
@@ -129,13 +147,14 @@ export class OrdenesServicioComponent implements OnInit {
     private seguimientoOSService: SeguimientoOSService,
     private alertService: AlertService,
     private userService: UserService,
-    private dexieService: DexieService
+    private dexieService: DexieService,
+    private maestrasService: MaestrasService
   ) {}
 
   async ngOnInit() {
     await this.cargarUsuario();
     await this.cargarOrdenes();
-    await this.cargarCatalogosDistribucion();
+    await this.cargarCatalogosDistribucion(); // usuario ya cargado, ruc disponible
   }
 
   async cargarUsuario() {
@@ -203,13 +222,31 @@ export class OrdenesServicioComponent implements OnInit {
 
   async cargarCatalogosDistribucion() {
     try {
-      // Cargar gastos
-      const gastos = await this.dexieService.showTipoGastos();
+      // Cargar gastos: desde Dexie o API si está vacío
+      let gastos = await this.dexieService.showTipoGastos();
+      if (!gastos || gastos.length === 0) {
+        try {
+          const resp = await lastValueFrom(this.maestrasService.getTipoGastos([{}]));
+          if (resp && resp.length) {
+            await this.dexieService.saveTipoGastos(resp);
+            gastos = await this.dexieService.showTipoGastos();
+          }
+        } catch { /* sin conexión, continuar */ }
+      }
       this.gastosData = gastos || [];
 
-      // Cargar labor/centros de costo destino (usar almacenes como referencia)
-      const almacenes = await this.dexieService.showAlmacenes();
-      this.laborData = almacenes || [];
+      // Cargar labores: desde Dexie o API si está vacío
+      let labores = await this.dexieService.showLabores();
+      if (!labores || labores.length === 0) {
+        try {
+          const resp = await this.maestrasService.getLabores([{ aplicacion: 'LOGISTICA', esadmin: 0 }]);
+          if (resp && resp.length) {
+            await this.dexieService.saveLabores(resp);
+            labores = await this.dexieService.showLabores();
+          }
+        } catch { /* sin conexión, continuar */ }
+      }
+      this.laborData = labores || [];
     } catch (error) {
       console.error('Error al cargar catálogos de distribución:', error);
     }
@@ -241,6 +278,60 @@ export class OrdenesServicioComponent implements OnInit {
     } catch (error) {
       console.error('Error al generar distribución contable:', error);
     }
+  }
+
+  // ============================================
+  // MÉTODOS DE MODAL DISTRIBUCIÓN CONTABLE
+  // ============================================
+  abrirModalDistribucion() {
+    this.distribucionEditIndex = null;
+    this.distribucionForm = {
+      cuenta: '',
+      descripcion: '',
+      centrocosto: '',
+      proyecto: '',
+      monto: 0,
+      fondo: '',
+      referencia: '',
+      ccdestino: '',
+      turno: '',
+      cultivo: ''
+    };
+    this.mostrarModalDistribucion = true;
+  }
+
+  editarDistribucion(index: number) {
+    this.distribucionEditIndex = index;
+    const item = this.distribucionContable[index];
+    this.distribucionForm = { ...item };
+    this.mostrarModalDistribucion = true;
+  }
+
+  guardarDistribucion() {
+    if (!this.distribucionForm.cuenta || !this.distribucionForm.monto) {
+      return;
+    }
+    const item = {
+      ...this.distribucionForm,
+      id: this.distribucionEditIndex !== null
+        ? this.distribucionContable[this.distribucionEditIndex].id
+        : `DIST-${Date.now()}`
+    };
+    if (this.distribucionEditIndex !== null) {
+      this.distribucionContable[this.distribucionEditIndex] = item;
+    } else {
+      this.distribucionContable = [...this.distribucionContable, item];
+    }
+    this.cerrarModalDistribucion();
+  }
+
+  eliminarDistribucion(index: number) {
+    this.distribucionContable = this.distribucionContable.filter((_, i) => i !== index);
+  }
+
+  cerrarModalDistribucion() {
+    this.mostrarModalDistribucion = false;
+    this.distribucionEditIndex = null;
   }
 
   getTotalDistribucion(): number {

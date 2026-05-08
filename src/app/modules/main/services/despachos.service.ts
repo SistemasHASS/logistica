@@ -61,4 +61,15 @@ export class DespachosService {
   }): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/logistica/registrar-despacho`, body);
   }
+
+  /**
+   * Valida el stock de items usando el SP LOGISTICA_ValidarStockItems
+   * @param idalmacen Código del almacén
+   * @param items Array de objetos con { codigo, producto, cantidad }
+   * @returns Observable con resultado de validación de stock
+   */
+  validarStockItems(idalmacen: string, items: any[]): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/validar-stock-items`;
+    return this.http.post<any>(url, { idalmacen, items });
+  }
 }

@@ -6,37 +6,64 @@
   .kpi-row .kpi-card {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
     background: #fff;
     border-radius: 12px;
-    padding: 16px 20px;
+    padding: 14px 12px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     border: 1px solid #eef0f3;
-    min-height: 92px;
+    min-height: 88px;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 
     .kpi-icon {
-      width: 44px; height: 44px;
+      width: 38px; height: 38px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
+      font-size: 18px;
       color: #fff;
       flex-shrink: 0;
     }
     .kpi-body {
       flex-grow: 1;
-      .kpi-label { font-weight: 600; color: #2a2f45; font-size: .95rem; }
-      .kpi-sub { color: #6b7280; font-size: .75rem; }
+      min-width: 0;
+      .kpi-label { font-weight: 600; color: #2a2f45; font-size: .82rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .kpi-sub { color: #6b7280; font-size: .70rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     }
     .kpi-value {
-      font-size: 1.9rem;
+      font-size: 1.7rem;
       font-weight: 700;
       color: #2a2f45;
+      text-align: right;
+      flex-shrink: 0;
     }
-    &.kpi-pendientes .kpi-icon { background: #ef4444; }
-    &.kpi-atendidos  .kpi-icon { background: #10b981; }
-    &.kpi-total      .kpi-icon { background: #3b82f6; }
+    &.kpi-pendientes  .kpi-icon { background: #ef4444; }
+    &.kpi-parciales   .kpi-icon { background: #f59e0b; }
+    &.kpi-sin-stock   .kpi-icon { background: #f39c12; }
+    &.kpi-atendidos   .kpi-icon { background: #10b981; }
+    &.kpi-total       .kpi-icon { background: #3b82f6; }
+  }
+
+  /* KPI clickable */
+  .kpi-clickable {
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    &:active { transform: translateY(0); }
+  }
+
+  /* En desktop las 5 cards en una sola fila sin salto */
+  @media (min-width: 768px) {
+    .kpi-row {
+      flex-wrap: nowrap;
+    }
+    .kpi-row .col-md {
+      min-width: 0;
+      flex: 1 1 0;
+    }
   }
 
   /* Tabs */
@@ -101,18 +128,7 @@
     &:hover { background: #7c3aed; border-color: #7c3aed; color: #fff; }
   }
 
-  /* Estado chips */
-  .estado-chip {
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-weight: 600;
-    font-size: .75rem;
-    letter-spacing: .3px;
-    &.chip-despachado { background: #10b981; color: #fff; }
-    &.chip-pendiente  { background: #fbbf24; color: #1f2937; }
-    &.chip-parcial    { background: #60a5fa; color: #fff; }
-    &.chip-completa   { background: #34d399; color: #fff; }
-  }
+  /* Estado chips — definición local (duplicada abajo para scope global) */
 
   /* Desktop/Mobile switch */
   .desktop-only { display: block; }
@@ -120,7 +136,29 @@
   @media (max-width: 768px) {
     .desktop-only { display: none; }
     .mobile-only  { display: block; }
-    .kpi-row .kpi-card .kpi-value { font-size: 1.5rem; }
+
+    .kpi-row .kpi-card {
+      padding: 12px 14px;
+      min-height: 80px;
+      gap: 10px;
+
+      .kpi-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 18px;
+      }
+
+      .kpi-body {
+        .kpi-label { font-size: .85rem; }
+        .kpi-sub { font-size: .7rem; }
+      }
+
+      .kpi-value {
+        font-size: 1.5rem;
+        min-width: 40px;
+      }
+    }
+
     .filtros-row > div { margin-bottom: 8px; }
   }
 
@@ -178,6 +216,79 @@
       gap: 8px;
       padding: 12px 20px;
       border-top: 1px solid #e5e7eb;
+    }
+  }
+
+  &.modal-kpi .modal-content-custom,
+  .modal-content-custom.modal-kpi {
+    max-width: 960px;
+    max-height: 82vh;
+  }
+}
+
+/* =========== Global: chips de estado (usados en tabla y modales) =========== */
+.estado-chip {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: .73rem;
+  letter-spacing: .3px;
+  white-space: nowrap;
+  &.chip-despachado { background: #10b981 !important; color: #fff !important; }
+  &.chip-pendiente  { background: #fbbf24 !important; color: #1f2937 !important; }
+  &.chip-parcial    { background: #60a5fa !important; color: #fff !important; }
+  &.chip-completa   { background: #34d399 !important; color: #fff !important; }
+  &.chip-sin-stock  { background: #f39c12 !important; color: #fff !important; }
+}
+
+/* =========== Global: btn-ver (usado en tabla y modal KPI) =========== */
+.btn-ver {
+  background: #8b5cf6;
+  border-color: #8b5cf6;
+  color: #fff;
+  &:hover { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+}
+
+/* ===== Modal overlay despacho (mismo patrón que requerimientos) ===== */
+.despacho-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px 10px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  .despacho-modal-box {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    width: 95vw;
+    max-width: 1100px;
+    margin: auto;
+    overflow: hidden;
+
+    .modal-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .modal-body {
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+    }
+
+    .modal-footer {
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid #dee2e6;
+      display: flex;
+      justify-content: flex-end;
     }
   }
 }

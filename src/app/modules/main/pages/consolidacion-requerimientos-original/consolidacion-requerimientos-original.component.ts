@@ -698,7 +698,9 @@ export class ConsolidacionRequerimientosOriginalComponent implements OnInit {
                   codigoItem: det.codigoItem,
                   descripcionItem: det.descripcionItem,
                   cantidad: det.cantidadTotal,
-                  unidadMedida: det.unidadMedida
+                  unidadMedida: det.unidadMedida,
+                  ceco: det.ceco || det.origenes?.[0]?.ceco || '',
+                  proyecto: det.proyecto || det.origenes?.[0]?.proyecto || ''
                 })) || []
               };
               
@@ -1148,7 +1150,9 @@ export class ConsolidacionRequerimientosOriginalComponent implements OnInit {
                   codigoItem: det.codigoItem,
                   descripcionItem: det.descripcionItem,
                   cantidad: det.cantidadTotal,
-                  unidadMedida: det.unidadMedida
+                  unidadMedida: det.unidadMedida,
+                  ceco: det.ceco || det.origenes?.[0]?.ceco || '',
+                  proyecto: det.proyecto || det.origenes?.[0]?.proyecto || ''
                 })) || []
               };
               
@@ -1658,7 +1662,9 @@ export class ConsolidacionRequerimientosOriginalComponent implements OnInit {
                   codigoItem: det.codigoItem,
                   descripcionItem: det.descripcionItem,
                   cantidad: det.cantidadTotal,
-                  unidadMedida: det.unidadMedida
+                  unidadMedida: det.unidadMedida,
+                  ceco: det.ceco || det.origenes?.[0]?.ceco || '',
+                  proyecto: det.proyecto || det.origenes?.[0]?.proyecto || ''
                 })) || []
               };
               

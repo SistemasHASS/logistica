@@ -91,6 +91,37 @@
   margin-bottom: 1.2rem;
 }
 
+// Pipeline porcentajes
+.pipeline-pct-card {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  border: 1px solid #e9ecef;
+
+  .pipeline-pct-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .pipeline-pct-value {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .pipeline-pct-sub {
+    font-size: 0.72rem;
+    color: #9ca3af;
+    margin-top: 0.3rem;
+    text-align: right;
+  }
+
+  .progress {
+    border-radius: 4px;
+    background: #e9ecef;
+  }
+}
+
 // Detalle modal
 .detalle-req {
   label { display: block; }

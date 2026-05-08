@@ -46,10 +46,12 @@ export class RequerimientosActivoMenorService {
     private maestras: RequerimientosMaestrasService,
   ) {}
 
+  itemTipoSeleccionado: 'CONSUMO' | 'COMPRA' = 'COMPRA';
+
   private emptyReq(): RequerimientoActivoFijoMenor {
     return {
       idrequerimiento: '', ruc: '', fecha: '', servicio: '', descripcion: '',
-      almacen: '', glosa: '', tipo: '', estados: 'PENDIENTE', idfundo: '',
+      almacen: '', glosa: '', tipo: '', itemtipo: '', estados: 'PENDIENTE', idfundo: '',
       idarea: '', idclasificacion: '', prioridad: '', nrodocumento: '', idalmacen: '',
       idalmacendestino: '', idproyecto: '', estado: 0, disabled: false, checked: false,
       eliminado: 0, detalleActivoFijoMenor: [],
@@ -105,6 +107,8 @@ export class RequerimientosActivoMenorService {
     this.modoEdicionActivoFijoMenor = false;
     this.opcionesPrioridadACTIVOFIJOMENOR = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
     this.SeleccionaPrioridadACTIVOFIJOMENOR = '1';
+    this.itemTipoSeleccionado = 'COMPRA';
+    this.maestras.clasificacionSeleccionado = 'ATM';
     if (this.maestras.configuracion?.idalmacen) {
       this.maestras.almacenSeleccionado = this.maestras.configuracion.idalmacen;
     }
@@ -122,6 +126,7 @@ export class RequerimientosActivoMenorService {
     this.maestras.fundoSeleccionado = req.idfundo;
     this.maestras.areaSeleccionada = req.idarea;
     this.maestras.almacenSeleccionado = req.idalmacen;
+    this.itemTipoSeleccionado = (req.itemtipo as 'CONSUMO' | 'COMPRA') || 'COMPRA';
     this.maestras.clasificacionSeleccionado = req.idclasificacion;
     this.SeleccionaPrioridadACTIVOFIJOMENOR = req.prioridad as PrioridadSpring | '';
     const proyectoObj = this.maestras.proyectos.find((p) => p.id === req.idproyecto);
@@ -200,11 +205,12 @@ export class RequerimientosActivoMenorService {
         almacen: almacenObj?.almacen || '',
         glosa: this.glosaActivoFijoMenor,
         tipo: 'ACTIVOFIJOMENOR',
+        itemtipo: this.itemTipoSeleccionado,
         estados: 'PENDIENTE',
         prioridad: this.SeleccionaPrioridadACTIVOFIJOMENOR ?? '1',
         idfundo: this.maestras.fundoSeleccionado,
         idarea: this.maestras.areaSeleccionada,
-        idclasificacion: this.maestras.clasificacionSeleccionado || 'ACM',
+        idclasificacion: this.maestras.clasificacionSeleccionado || 'ATM',
         nrodocumento: this.maestras.usuario.documentoidentidad,
         idalmacen: idAlmacenSync,
         idalmacendestino: '',
@@ -233,13 +239,13 @@ export class RequerimientosActivoMenorService {
         if (reqAF.idarea) {
           await this.aprobacionesAreaService.registrarRequerimiento({
             ruc: reqAF.ruc, idrequerimiento: reqAF.idrequerimiento,
-            idarea: Number(reqAF.idarea), tipoRequerimiento: 'ACTIVO_MENOR',
+            idarea: Number(reqAF.idarea), tipoRequerimiento: this.itemTipoSeleccionado,
             descripcion: reqAF.glosa, usuarioSolicitud: this.maestras.usuario.documentoidentidad,
             glosa: reqAF.glosa, monto: 0,
           }).toPromise();
           await this.aprobacionesAreaService.asignarAprobadoresRequerimiento({
             ruc: reqAF.ruc, idrequerimiento: reqAF.idrequerimiento,
-            idarea: Number(reqAF.idarea), tipoRequerimiento: 'ACTIVO_MENOR',
+            idarea: Number(reqAF.idarea), tipoRequerimiento: this.itemTipoSeleccionado,
             usuarioSolicitud: this.maestras.usuario.documentoidentidad,
           }).toPromise();
         }
@@ -276,7 +282,7 @@ export class RequerimientosActivoMenorService {
     this.maestras.progreso = 0;
     const payload = pendientes.map((req: any) => ({
       idrequerimiento: req.idrequerimiento, ruc: this.maestras.usuario.ruc, idfundo: req.idfundo,
-      idarea: req.idarea, idclasificacion: req.idclasificacion || 'ACM', prioridad: req.prioridad || '1',
+      idarea: req.idarea, idclasificacion: req.idclasificacion || 'ATM', prioridad: req.prioridad || '1',
       nrodocumento: this.maestras.usuario.documentoidentidad, idalmacen: req.idalmacen,
       idalmacendestino: '', glosa: req.glosa || '', referenciaGasto: '', eliminado: 0,
       tipo: req.tipo, itemtipo: req.itemtipo, estados: 'PENDIENTE',

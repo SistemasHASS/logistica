@@ -30,37 +30,53 @@
               <td>{{ i + 1 }}</td>
 
               <td>
-                <input *ngIf="tieneError(row, 'Código')"
+                <input
                   class="form-control form-control-sm"
+                  [class.is-invalid]="tieneError(row, 'Código')"
                   [(ngModel)]="row.codigo"
-                  (input)="onValidarFila(row)" />
-                <span *ngIf="!tieneError(row, 'Código')">{{ row.codigo }}</span>
+                  (input)="onValidarFila(row)"
+                  placeholder="Cod. Item" />
+                <div *ngIf="tieneError(row, 'Código')" class="invalid-feedback d-block">
+                  {{ getMensajeError(row, 'Código') }}
+                </div>
               </td>
 
-              <td>{{ row.descripcion }}</td>
+              <td>
+                <input
+                  class="form-control form-control-sm"
+                  [(ngModel)]="row.descripcion"
+                  placeholder="Descripción" />
+              </td>
 
               <td>
-                <input *ngIf="tieneError(row, 'Cantidad')"
+                <input
                   type="number"
                   class="form-control form-control-sm"
+                  [class.is-invalid]="tieneError(row, 'Cantidad')"
                   [(ngModel)]="row.cantidad"
-                  (input)="onValidarFila(row)" />
-                <span *ngIf="!tieneError(row, 'Cantidad')">{{ row.cantidad }}</span>
+                  (input)="onValidarFila(row)"
+                  min="0.01" />
+                <div *ngIf="tieneError(row, 'Cantidad')" class="invalid-feedback d-block">
+                  {{ getMensajeError(row, 'Cantidad') }}
+                </div>
               </td>
 
               <td>
-                <select *ngIf="tieneError(row, 'Turno')"
+                <select
                   class="form-select form-select-sm"
+                  [class.is-invalid]="tieneError(row, 'Turno')"
                   [(ngModel)]="row.turno"
                   (change)="onValidarFila(row)">
                   <option value="">--</option>
                   <option *ngFor="let t of turnos" [value]="t">{{ t }}</option>
                 </select>
-                <span *ngIf="!tieneError(row, 'Turno')">{{ row.turno }}</span>
+                <div *ngIf="tieneError(row, 'Turno')" class="invalid-feedback d-block">
+                  {{ getMensajeError(row, 'Turno') }}
+                </div>
               </td>
 
               <td>
-                <app-dropdown *ngIf="tieneError(row, 'Activo Fijo')"
+                <app-dropdown
                   class="w-100"
                   [data]="activosFijosFiltrados"
                   optionLabel="activo_descripcion"
@@ -70,7 +86,9 @@
                   [editable]="true"
                   [required]="false">
                 </app-dropdown>
-                <span *ngIf="!tieneError(row, 'Activo Fijo')">{{ row.activofijo }}</span>
+                <div *ngIf="tieneError(row, 'ActivoFijo')" class="text-danger small">
+                  {{ getMensajeError(row, 'ActivoFijo') }}
+                </div>
               </td>
 
               <td>

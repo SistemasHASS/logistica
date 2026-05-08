@@ -72,6 +72,52 @@
 
     </section>
 
+    <div class="section-label">Correos y Documentos</div>
+
+    <section class="dashboard-cards">
+
+        <div class="card">
+            <div class="card-icon card-icon-email">
+                <i class="icon icon-mail"></i>
+            </div>
+            <h3>Correos Proveedores</h3>
+            <div class="card-total">{{ totals.proveedoresEmail }}</div>
+            <p>Gestión de correos destino para OC y OS</p>
+            <button type="button" (click)="goTo('admin-proveedores-email')">Ingresar</button>
+        </div>
+
+        <div class="card">
+            <div class="card-icon card-icon-smtp">
+                <i class="icon icon-server"></i>
+            </div>
+            <h3>Config. SMTP</h3>
+            <div class="card-total">{{ totals.configSmtp }}</div>
+            <p>Servidor de correo saliente por empresa</p>
+            <button type="button" (click)="goTo('admin-config-smtp')">Ingresar</button>
+        </div>
+
+        <div class="card">
+            <div class="card-icon card-icon-template">
+                <i class="icon icon-envelope"></i>
+            </div>
+            <h3>Plantilla Correo</h3>
+            <div class="card-total">{{ totals.plantillasCorreo }}</div>
+            <p>Diseño del cuerpo del correo enviado</p>
+            <button type="button" (click)="goTo('admin-plantilla-correo')">Ingresar</button>
+        </div>
+
+        <div class="card">
+            <div class="card-icon card-icon-pdf">
+                <i class="icon icon-file-pdf"></i>
+            </div>
+            <h3>Plantilla PDF</h3>
+            <div class="card-total">{{ totals.plantillasPdf }}</div>
+            <p>Logo, colores y firmas del documento PDF</p>
+            <button type="button" (click)="goTo('admin-plantilla-pdf')">Ingresar</button>
+        </div>
+
+    </section>
+
     <footer class="dashboard-footer">
         Sistema Logístico 2026
     </footer>

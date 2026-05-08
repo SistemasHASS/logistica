@@ -408,7 +408,12 @@
 
       <!-- DISTRIBUCIÓN CONTABLE (visible solo en tab Distribución) -->
       <div *ngIf="mostrarTabDistribucion && ordenActual">
-        <div class="section-title">Distribución Contable & Pagos</div>
+        <div class="section-title">Distribución Contable</div>
+        <div class="table-actions">
+          <button class="btn-primary" type="button" (click)="abrirModalDistribucion()">
+            <i class="bx bx-plus"></i> Agregar
+          </button>
+        </div>
         <div class="table-container">
           <table class="table">
             <thead>
@@ -418,41 +423,44 @@
                 <th>C. Costos</th>
                 <th>Proyecto</th>
                 <th>Monto</th>
+                <th>Fondo</th>
                 <th>Referencia</th>
                 <th>C.C. Destino</th>
+                <th>Turno</th>
+                <th>Cultivo</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let dist of distribucionContable; let i = index">
                 <td>{{ dist.cuenta }}</td>
                 <td>{{ dist.descripcion }}</td>
-                <td>{{ dist.centroCosto }}</td>
+                <td>{{ dist.centrocosto }}</td>
                 <td>{{ dist.proyecto }}</td>
-                <td class="text-right"><strong>{{ formatearMoneda(dist.monto) }}</strong></td>
+                <td class="text-right">{{ formatearMoneda(dist.monto) }}</td>
+                <td>{{ dist.fondo }}</td>
+                <td>{{ dist.referencia }}</td>
+                <td>{{ dist.ccdestino }}</td>
+                <td>{{ dist.turno }}</td>
+                <td>{{ dist.cultivo }}</td>
                 <td>
-                  <select class="form-control" [(ngModel)]="dist.referencia">
-                    <option value="">-- Seleccione --</option>
-                    <option *ngFor="let gasto of gastosData" [value]="gasto.codigo">{{ gasto.descripcion }}</option>
-                  </select>
-                </td>
-                <td>
-                  <select class="form-control" [(ngModel)]="dist.ccDestino">
-                    <option value="">-- Seleccione --</option>
-                    <option *ngFor="let labor of laborData" [value]="labor.codigo">{{ labor.descripcion }}</option>
-                  </select>
+                  <button class="btn btn-sm btn-warning" (click)="editarDistribucion(i)" title="Editar">
+                    <i class="bx bx-edit"></i>
+                  </button>
+                  <button class="btn btn-sm btn-danger" (click)="eliminarDistribucion(i)" title="Eliminar">
+                    <i class="bx bx-trash"></i>
+                  </button>
                 </td>
               </tr>
               <tr *ngIf="distribucionContable.length === 0">
-                <td colspan="7" class="text-center">
-                  <p class="no-data">No hay distribución contable generada. Complete el formulario para generarla automáticamente.</p>
+                <td colspan="11" class="text-center">
+                  <p class="no-data">No hay distribuciones registradas. Use "Agregar" para añadir una distribución contable.</p>
                 </td>
               </tr>
               <tr *ngIf="distribucionContable.length > 0" class="total-row">
-                <td colspan="4" class="text-right"><strong>TOTAL DISTRIBUCIÓN:</strong></td>
-                <td class="text-right">
-                  <strong class="total-amount">{{ formatearMoneda(getTotalDistribucion()) }}</strong>
-                </td>
-                <td colspan="2"></td>
+                <td colspan="4" class="text-right"><strong>TOTAL:</strong></td>
+                <td class="text-right"><strong>{{ formatearMoneda(getTotalDistribucion()) }}</strong></td>
+                <td colspan="6"></td>
               </tr>
             </tbody>
           </table>
@@ -468,6 +476,79 @@
           <i class="icon-save"></i> Guardar
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DISTRIBUCIÓN CONTABLE -->
+<div class="modal" *ngIf="mostrarModalDistribucion" (click)="cerrarModalDistribucion()">
+  <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="bx bx-calculator"></i>
+        {{ distribucionEditIndex !== null ? 'Editar Distribución' : 'Agregar Distribución' }}
+      </h3>
+      <button class="btn-close" (click)="cerrarModalDistribucion()">
+        <i class="bx bx-x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Cuenta <span class="required">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="distribucionForm.cuenta" placeholder="Ej. 60100">
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <input type="text" class="form-control" [(ngModel)]="distribucionForm.descripcion" placeholder="Descripción de la cuenta">
+        </div>
+        <div class="form-group">
+          <label>Centro de Costos</label>
+          <input type="text" class="form-control" [(ngModel)]="distribucionForm.centrocosto" placeholder="Ej. CC001">
+        </div>
+        <div class="form-group">
+          <label>Proyecto</label>
+          <input type="text" class="form-control" [(ngModel)]="distribucionForm.proyecto" placeholder="Ej. PROY-001">
+        </div>
+        <div class="form-group">
+          <label>Monto <span class="required">*</span></label>
+          <input type="number" class="form-control" [(ngModel)]="distribucionForm.monto" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>Fondo</label>
+          <input type="text" class="form-control" [(ngModel)]="distribucionForm.fondo" placeholder="Fondo">
+        </div>
+        <div class="form-group">
+          <label>Referencia (Gasto)</label>
+          <select class="form-control" [(ngModel)]="distribucionForm.referencia">
+            <option value="">-- Seleccione gasto --</option>
+            <option *ngFor="let gasto of gastosData" [value]="gasto.codigo">{{ gasto.descripcion }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>C.C. Destino (Labor)</label>
+          <select class="form-control" [(ngModel)]="distribucionForm.ccdestino">
+            <option value="">-- Seleccione labor --</option>
+            <option *ngFor="let labor of laborData" [value]="labor.idlabor">{{ labor.labor }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Turno</label>
+          <input type="text" class="form-control" [(ngModel)]="distribucionForm.turno" placeholder="Turno">
+        </div>
+        <div class="form-group">
+          <label>Cultivo</label>
+          <input type="text" class="form-control" [(ngModel)]="distribucionForm.cultivo" placeholder="Cultivo">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrarModalDistribucion()">
+        <i class="bx bx-x"></i> Cancelar
+      </button>
+      <button class="btn btn-primary" (click)="guardarDistribucion()">
+        <i class="bx bx-save"></i> Guardar
+      </button>
     </div>
   </div>
 </div>

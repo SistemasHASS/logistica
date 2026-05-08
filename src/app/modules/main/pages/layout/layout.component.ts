@@ -71,6 +71,32 @@ export class LayoutComponent {
     });
     this.fechaHoy = this.getDate();
     this.usuario = await this.dexieService.showUsuario();
+
+    // Redirigir al dashboard del rol si estamos en la raíz /main
+    if (this.router.url === '/main' || this.router.url === '/main/') {
+      this.redirigirAlDashboard(this.usuario?.idrol);
+    }
+  }
+
+  redirigirAlDashboard(idrol: string) {
+    if (!idrol) return;
+    if (idrol.includes('TILOGIST')) {
+      this.router.navigate(['main', 'dashboard-tilogist']);
+    } else if (idrol.includes('ADLOGIST')) {
+      this.router.navigate(['main', 'dashboard-adlogist']);
+    } else if (idrol.includes('JLOLOGIST')) {
+      this.router.navigate(['main', 'dashboard-jlologist']);
+    } else if (idrol.includes('JEMLOGIST')) {
+      this.router.navigate(['main', 'dashboard-jemlogist']);
+    } else if (idrol.includes('OPLOGIST')) {
+      this.router.navigate(['main', 'dashboard-oplogist']);
+    } else if (idrol.includes('LOLOGIST') || idrol.includes('EMLOGIST')) {
+      this.router.navigate(['main', 'dashboard-logistica']);
+    } else if (idrol.includes('ALLOGIST')) {
+      this.router.navigate(['main', 'despachos']);
+    } else if (idrol.includes('APLOGIST')) {
+      this.router.navigate(['main', 'aprobaciones-area']);
+    }
   }
 
   async logout() {
@@ -369,6 +395,14 @@ export class LayoutComponent {
       'dashboard-logistica': 'Dashboard de Logistica',
 
       'dashboard-compras': 'Dashboard de Compras',
+
+      'dashboard-jlologist': 'Dashboard Jefatura de Logística',
+
+      'dashboard-jemlogist': 'Dashboard Jefatura de Empaque',
+
+      'dashboard-adlogist': 'Dashboard Admin Logística',
+
+      'dashboard-tilogist': 'Dashboard Admin Sistema',
 
       'devoluciones-proveedores': 'Devoluciones a Proveedores',
 

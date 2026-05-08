@@ -11,6 +11,10 @@ import { AdminPerfilesComponent } from './pages/admin-perfiles/admin-perfiles.co
 import { AdminFlujosComponent } from './pages/admin-flujos/admin-flujos.component';
 import { AdminAprobadoresComponent } from './pages/admin-aprobadores/admin-aprobadores.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { AdminProveedoresEmailComponent } from './pages/admin-proveedores-email/admin-proveedores-email.component';
+import { AdminConfigSmtpComponent } from './pages/admin-config-smtp/admin-config-smtp.component';
+import { AdminPlantillaCorreoComponent } from './pages/admin-plantilla-correo/admin-plantilla-correo.component';
+import { AdminPlantillaPdfComponent } from './pages/admin-plantilla-pdf/admin-plantilla-pdf.component';
 
 @NgModule({
   imports: [
@@ -23,6 +27,10 @@ import { DashboardComponent } from './pages/dashboard/dashboard.component';
     AdminPerfilesComponent,
     AdminFlujosComponent,
     AdminAprobadoresComponent,
+    AdminProveedoresEmailComponent,
+    AdminConfigSmtpComponent,
+    AdminPlantillaCorreoComponent,
+    AdminPlantillaPdfComponent,
     RouterModule,       // ✅ OBLIGATORIO PARA routerLink
 
   ]

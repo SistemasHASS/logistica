@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -97,11 +97,14 @@ export class TabItemComponent {
   get modalProyectoEditable() { return this.itemSvc.enModoEdicion ? true : this.itemSvc.permitirEditarParametros; }
   get modalProyectoDisabled() { return this.itemSvc.enModoEdicion ? false : !this.itemSvc.permitirEditarParametros; }
   get permitirEditarParametros() { return this.itemSvc.permitirEditarParametros; }
-  @Input() modalVisible = false;
-  @Input() lineasPreview: any[] = [];
-  @Input() tieneErroresExcel = false;
-  @Input() puedeGuardar = false;
+  @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
   @Input() turnosParaCarga: any[] = [];
+
+  // ─── Bulk-load state (managed entirely in this component) ────────────────
+  modalVisible = false;
+  lineasPreview: any[] = [];
+  tieneErroresExcel = false;
+  puedeGuardar = false;
 
   // ─── @Output: acciones que necesitan sincronizar estado en el padre ─────
   @Output() tipoChange = new EventEmitter<string>();
@@ -115,7 +118,7 @@ export class TabItemComponent {
   @Output() cancelarEvt = new EventEmitter<void>();
   @Output() nuevoEvt = new EventEmitter<void>();
   @Output() tipoChangeEvt = new EventEmitter<void>();
-  @Output() excelUploadEvt = new EventEmitter<Event>();
+  @Output() cargaMasivaGuardadaEvt = new EventEmitter<void>();
   @Output() editarEvt = new EventEmitter<number>();
   @Output() copiarEvt = new EventEmitter<number>();
   @Output() eliminarEvt = new EventEmitter<number>();
@@ -131,7 +134,18 @@ export class TabItemComponent {
   cancelar() { this.itemSvc.mostrarFormulario = false; this.cancelarEvt.emit(); }
   nuevoRequerimiento() { this.itemSvc.mostrarFormulario = true; this.nuevoEvt.emit(); }
   onTipoChange() { this.tipoChangeEvt.emit(); }
-  onExcelUpload(event: any) { this.excelUploadEvt.emit(event); }
+  resetFileInput() { if (this.fileInputRef?.nativeElement) this.fileInputRef.nativeElement.value = ''; }
+
+  async onExcelUpload(event: any) {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+    this.resetFileInput();
+    const result = await this.itemSvc.cargarExcel(file, this.activosFijosFiltrados);
+    this.lineasPreview = result.lineasPreview;
+    this.tieneErroresExcel = result.tieneErrores;
+    this.puedeGuardar = result.puedeGuardar;
+    this.modalVisible = true;
+  }
   editarRequerimiento(i: number) { this.editarEvt.emit(i); }
   copiarRequerimiento(i: number) { this.copiarEvt.emit(i); }
   eliminarRequerimiento(i: number) { this.eliminarEvt.emit(i); }
@@ -157,8 +171,27 @@ export class TabItemComponent {
   editarLinea(i: number) { this.itemSvc.editarLinea(i); }
   copiarLinea(i: number) { this.itemSvc.copiarLinea(i); }
   eliminarLinea(i: number) { this.itemSvc.eliminarLinea(i); }
-  guardarDetalleMasivo() { this.itemSvc.guardarDetalleMasivo(this.lineasPreview, this.puedeGuardar); }
-  validarFila(row: any) { this.itemSvc.validarFilaSimple(row, this.lineasPreview, this.activosFijosFiltrados); }
+  guardarDetalleMasivo() {
+    const result = this.itemSvc.guardarDetalleMasivo(this.lineasPreview, this.puedeGuardar);
+    if (result !== null) {
+      this.modalVisible = false;
+      this.lineasPreview = [];
+      this.resetFileInput();
+      this.cargaMasivaGuardadaEvt.emit();
+    }
+  }
+  validarFila(row: any) {
+    this.itemSvc.validarFilaSimple(row, this.lineasPreview, this.activosFijosFiltrados);
+    this.tieneErroresExcel = this.lineasPreview.some((r: any) => r.errores.length > 0);
+    this.puedeGuardar = !this.lineasPreview.some((r: any) => r.error);
+  }
+  cerrarModalCargaMasiva() {
+    this.modalVisible = false;
+    this.lineasPreview = [];
+    this.tieneErroresExcel = false;
+    this.puedeGuardar = false;
+    this.resetFileInput();
+  }
   scrollLeft() { this.itemSvc.scrollLeft?.(); }
   scrollRight() { this.itemSvc.scrollRight?.(); }
 

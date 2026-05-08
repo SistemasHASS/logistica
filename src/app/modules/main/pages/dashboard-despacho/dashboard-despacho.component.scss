@@ -1,0 +1,150 @@
+.dashboard-despacho-container {
+  padding: 1.5rem;
+}
+
+.dashboard-header {
+  .dashboard-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+
+    i {
+      color: var(--primary-color);
+    }
+  }
+
+  .dashboard-subtitle {
+    color: var(--text-color-secondary);
+    font-size: 1rem;
+    margin-bottom: 0;
+  }
+}
+
+.kpi-card {
+  ::ng-deep .p-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+    border-radius: 12px;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .p-card-body {
+      padding: 1.25rem;
+    }
+  }
+
+  .kpi-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .kpi-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-color);
+  }
+
+  .kpi-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    i {
+      font-size: 1.75rem;
+    }
+  }
+
+  &.cursor-pointer {
+    cursor: pointer;
+  }
+}
+
+.quick-actions {
+  button {
+    justify-content: flex-start;
+    padding: 0.75rem 1rem;
+
+    i {
+      font-size: 1.25rem;
+      margin-right: 0.75rem;
+    }
+  }
+}
+
+.badge {
+  padding: 0.5em 0.75em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.bg-primary-subtle {
+  background-color: rgba(13, 110, 253, 0.1);
+}
+
+.bg-success-subtle {
+  background-color: rgba(25, 135, 84, 0.1);
+}
+
+.bg-warning-subtle {
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+.bg-danger-subtle {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.text-primary {
+  color: #0d6efd !important;
+}
+
+.text-success {
+  color: #198754 !important;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .dashboard-despacho-container {
+    padding: 1rem;
+  }
+
+  .dashboard-header {
+    .dashboard-title {
+      font-size: 1.5rem;
+    }
+  }
+
+  .kpi-card {
+    .kpi-value {
+      font-size: 1.5rem;
+    }
+
+    .kpi-icon-wrapper {
+      width: 48px;
+      height: 48px;
+
+      i {
+        font-size: 1.5rem;
+      }
+    }
+  }
+}

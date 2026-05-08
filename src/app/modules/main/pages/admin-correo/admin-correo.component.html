@@ -1,0 +1,561 @@
+<div class="admin-correo-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2>Administración de Correo Electrónico</h2>
+    <div class="header-actions">
+      <div class="stats-summary">
+        <div class="stat-item">
+          <span class="stat-value">{{ stats.totalServidores }}</span>
+          <span class="stat-label">Servidores</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ stats.totalDestinatarios }}</span>
+          <span class="stat-label">Destinatarios</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ stats.totalPlantillas }}</span>
+          <span class="stat-label">Plantillas</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ stats.correosEnviadosHoy }}</span>
+          <span class="stat-label">Enviados Hoy</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERVIDOR ACTIVO -->
+  <div class="servidor-activo-card" *ngIf="servidorActivo">
+    <div class="card-header">
+      <h3><i class="icon-server"></i> Servidor Activo</h3>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-3">
+          <p><strong>Nombre:</strong> {{ servidorActivo.nombreServidor }}</p>
+          <p><strong>Host:</strong> {{ servidorActivo.smtpHost }}</p>
+        </div>
+        <div class="col-md-3">
+          <p><strong>Puerto:</strong> {{ servidorActivo.smtpPort }}</p>
+          <p><strong>Seguro:</strong> {{ servidorActivo.smtpSecure ? 'Sí' : 'No' }}</p>
+        </div>
+        <div class="col-md-3">
+          <p><strong>Email:</strong> {{ servidorActivo.emailFrom }}</p>
+          <p><strong>Límite:</strong> {{ servidorActivo.limiteDiario }}/día</p>
+        </div>
+        <div class="col-md-3">
+          <p><strong>Usuario:</strong> {{ servidorActivo.smtpUser }}</p>
+          <p><strong>Estado:</strong> <span class="badge badge-success">Activo</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-container">
+    <button class="tab-button" [class.active]="tabActiva === 'servidor'" (click)="cambiarTab('servidor')">
+      <i class="icon-server"></i> Servidores Correo
+    </button>
+    <button class="tab-button" [class.active]="tabActiva === 'destinatarios'" (click)="cambiarTab('destinatarios')">
+      <i class="icon-users"></i> Destinatarios
+    </button>
+    <button class="tab-button" [class.active]="tabActiva === 'plantillas'" (click)="cambiarTab('plantillas')">
+      <i class="icon-file-text"></i> Plantillas
+    </button>
+  </div>
+
+  <!-- TAB SERVIDORES -->
+  <div class="tab-content" *ngIf="tabActiva === 'servidor'">
+    <div class="content-header">
+      <h3>Configuración de Servidores</h3>
+      <button class="btn-primary" (click)="nuevoServidor()">
+        <i class="icon-plus"></i> Nuevo Servidor
+      </button>
+    </div>
+
+    <div class="form-card" *ngIf="servidorForm">
+      <div class="card-header">
+        <h3>{{ modoEdicionServidor ? 'Editar' : 'Nuevo' }} Servidor</h3>
+        <button class="btn-close" (click)="cancelarEdicionServidor()" *ngIf="modoEdicionServidor">
+          <i class="icon-x"></i>
+        </button>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="servidorForm" (ngSubmit)="guardarServidor()">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Nombre del Servidor *</label>
+                <input type="text" class="form-control" formControlName="nombreServidor" 
+                       placeholder="ej: Gmail Corporativo">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Host SMTP *</label>
+                <input type="text" class="form-control" formControlName="smtpHost" 
+                       placeholder="smtp.gmail.com">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Puerto SMTP *</label>
+                <input type="number" class="form-control" formControlName="smtpPort" placeholder="587">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Conexión Segura</label>
+                <div class="checkbox-wrapper">
+                  <input type="checkbox" formControlName="smtpSecure" id="smtpSecure">
+                  <label for="smtpSecure">Usar SSL/TLS</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Límite Diario *</label>
+                <input type="number" class="form-control" formControlName="limiteDiario" placeholder="100">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Estado</label>
+                <div class="checkbox-wrapper">
+                  <input type="checkbox" formControlName="activo" id="activoServidor">
+                  <label for="activoServidor">Servidor activo</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Usuario SMTP *</label>
+                <input type="email" class="form-control" formControlName="smtpUser" 
+                       placeholder="correo@empresa.com">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Contraseña SMTP *</label>
+                <div class="password-wrapper">
+                  <input [type]="mostrarPasswordServidor ? 'text' : 'password'" 
+                         class="form-control" formControlName="smtpPassword" 
+                         placeholder="Contraseña">
+                  <button type="button" class="btn-toggle-password" (click)="togglePassword()">
+                    <i class="icon-eye" *ngIf="!mostrarPasswordServidor"></i>
+                    <i class="icon-eye-off" *ngIf="mostrarPasswordServidor"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Email Remitente *</label>
+                <input type="email" class="form-control" formControlName="emailFrom" 
+                       placeholder="ordenes@empresa.com">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Nombre Remitente *</label>
+                <input type="text" class="form-control" formControlName="emailFromName" 
+                       placeholder="Empresa S.A.C.">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label>Email Respuesta</label>
+                <input type="email" class="form-control" formControlName="replyTo" 
+                       placeholder="respuestas@empresa.com">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="probarConexionServidor()" 
+                    [disabled]="probandoConexion">
+              <i class="icon-wifi" *ngIf="!probandoConexion"></i>
+              <i class="icon-loader animate-spin" *ngIf="probandoConexion"></i>
+              {{ probandoConexion ? 'Probando...' : 'Probar Conexión' }}
+            </button>
+            <button type="submit" class="btn-primary">
+              <i class="icon-save"></i>
+              {{ modoEdicionServidor ? 'Actualizar' : 'Guardar' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Lista de Servidores -->
+    <div class="list-card">
+      <div class="card-header">
+        <h3>Servidores Configurados</h3>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive" *ngIf="servidores.length > 0">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Host:Puerto</th>
+                <th>Email Remitente</th>
+                <th>Límite Diario</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let servidor of servidores; let i = index" 
+                  [class.active]="servidor.activo">
+                <td>{{ servidor.nombreServidor }}</td>
+                <td>{{ servidor.smtpHost }}:{{ servidor.smtpPort }}</td>
+                <td>{{ servidor.emailFrom }}</td>
+                <td>{{ servidor.limiteDiario }}</td>
+                <td>
+                  <span class="badge" 
+                        [class.badge-success]="servidor.activo" 
+                        [class.badge-secondary]="!servidor.activo">
+                    {{ servidor.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button class="btn-sm btn-info" (click)="editarServidor(servidor, i)" title="Editar">
+                      <i class="icon-edit"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="no-data" *ngIf="servidores.length === 0">
+          <i class="icon-server"></i>
+          <p>No hay servidores configurados</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB DESTINATARIOS -->
+  <div class="tab-content" *ngIf="tabActiva === 'destinatarios'">
+    <div class="content-header">
+      <h3>Gestión de Destinatarios</h3>
+      <div class="header-controls">
+        <select class="form-control" [(ngModel)]="filtroTipoDestinatario" style="width: 200px;">
+          <option value="TODOS">Todos los tipos</option>
+          <option value="PROVEEDOR">Proveedores</option>
+          <option value="INTERNO">Internos</option>
+          <option value="ADMINISTRADOR">Administradores</option>
+        </select>
+        <button class="btn-primary" (click)="nuevoDestinatario()">
+          <i class="icon-plus"></i> Nuevo Destinatario
+        </button>
+      </div>
+    </div>
+
+    <div class="form-card" *ngIf="destinatarioForm">
+      <div class="card-header">
+        <h3>{{ modoEdicionDestinatario ? 'Editar' : 'Nuevo' }} Destinatario</h3>
+        <button class="btn-close" (click)="cancelarEdicionDestinatario()" *ngIf="modoEdicionDestinatario">
+          <i class="icon-x"></i>
+        </button>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="destinatarioForm" (ngSubmit)="guardarDestinatario()">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Nombre Completo *</label>
+                <input type="text" class="form-control" formControlName="nombre" 
+                       placeholder="Juan Pérez">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Email *</label>
+                <input type="email" class="form-control" formControlName="email" 
+                       placeholder="juan@empresa.com">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Tipo *</label>
+                <select class="form-control" formControlName="tipo">
+                  <option value="PROVEEDOR">Proveedor</option>
+                  <option value="INTERNO">Interno</option>
+                  <option value="ADMINISTRADOR">Administrador</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Departamento</label>
+                <input type="text" class="form-control" formControlName="departamento" 
+                       placeholder="Logística">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group">
+                <label>Estado</label>
+                <div class="checkbox-wrapper">
+                  <input type="checkbox" formControlName="activo" id="activoDestinatario">
+                  <label for="activoDestinatario">Activo</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Suscripciones</label>
+                <div class="checkbox-group">
+                  <div class="checkbox-wrapper">
+                    <input type="checkbox" formControlName="recibeOrdenesCompra" id="recibeOC">
+                    <label for="recibeOC">Órdenes de Compra</label>
+                  </div>
+                  <div class="checkbox-wrapper">
+                    <input type="checkbox" formControlName="recibeOrdenesServicio" id="recibeOS">
+                    <label for="recibeOS">Órdenes de Servicio</label>
+                  </div>
+                  <div class="checkbox-wrapper">
+                    <input type="checkbox" formControlName="recibeNotificaciones" id="recibeNotif">
+                    <label for="recibeNotif">Notificaciones</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">
+              <i class="icon-save"></i>
+              {{ modoEdicionDestinatario ? 'Actualizar' : 'Guardar' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Lista de Destinatarios -->
+    <div class="list-card">
+      <div class="card-header">
+        <h3>Destinatarios Registrados ({{ getDestinatariosFiltrados().length }})</h3>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive" *ngIf="getDestinatariosFiltrados().length > 0">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Tipo</th>
+                <th>Departamento</th>
+                <th>Suscripciones</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let destinatario of getDestinatariosFiltrados(); let i = index">
+                <td>{{ destinatario.nombre }}</td>
+                <td>{{ destinatario.email }}</td>
+                <td>
+                  <span class="badge" [ngClass]="'badge-' + destinatario.tipo.toLowerCase()">
+                    {{ destinatario.tipo }}
+                  </span>
+                </td>
+                <td>{{ destinatario.departamento || '-' }}</td>
+                <td>
+                  <div class="subscription-badges">
+                    <span class="mini-badge" *ngIf="destinatario.recibeOrdenesCompra">OC</span>
+                    <span class="mini-badge" *ngIf="destinatario.recibeOrdenesServicio">OS</span>
+                    <span class="mini-badge" *ngIf="destinatario.recibeNotificaciones">Notif</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge" 
+                        [class.badge-success]="destinatario.activo" 
+                        [class.badge-secondary]="!destinatario.activo">
+                    {{ destinatario.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button class="btn-sm btn-info" (click)="editarDestinatario(destinatario, i)" title="Editar">
+                      <i class="icon-edit"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="no-data" *ngIf="getDestinatariosFiltrados().length === 0">
+          <i class="icon-users"></i>
+          <p>No hay destinatarios registrados</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB PLANTILLAS -->
+  <div class="tab-content" *ngIf="tabActiva === 'plantillas'">
+    <div class="content-header">
+      <h3>Plantillas de Correo</h3>
+      <button class="btn-primary" (click)="nuevaPlantilla()">
+        <i class="icon-plus"></i> Nueva Plantilla
+      </button>
+    </div>
+
+    <div class="form-card" *ngIf="plantillaForm">
+      <div class="card-header">
+        <h3>{{ modoEdicionPlantilla ? 'Editar' : 'Nueva' }} Plantilla</h3>
+        <button class="btn-close" (click)="cancelarEdicionPlantilla()" *ngIf="modoEdicionPlantilla">
+          <i class="icon-x"></i>
+        </button>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="plantillaForm" (ngSubmit)="guardarPlantilla()">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Nombre Plantilla *</label>
+                <input type="text" class="form-control" formControlName="nombre" 
+                       placeholder="Orden de Compra Estándar">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Tipo *</label>
+                <select class="form-control" formControlName="tipo">
+                  <option value="ORDEN_COMPRA">Orden de Compra</option>
+                  <option value="ORDEN_SERVICIO">Orden de Servicio</option>
+                  <option value="NOTIFICACION">Notificación</option>
+                  <option value="CONFIRMACION">Confirmación</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Estado</label>
+                <div class="checkbox-wrapper">
+                  <input type="checkbox" formControlName="activo" id="activoPlantilla">
+                  <label for="activoPlantilla">Plantilla activa</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label>Asunto *</label>
+                <input type="text" class="form-control" formControlName="asunto" 
+                       placeholder="Orden de Compra #{NUMERO_ORDEN} - {NOMBRE_PROVEEDOR}">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <div class="d-flex justify-content-between align-items-center">
+                  <label>Contenido HTML *</label>
+                  <button type="button" class="btn-sm btn-secondary" (click)="toggleEdicionPlantilla()">
+                    <i class="icon-code"></i>
+                    {{ editandoPlantillaContenido ? 'Vista Previa' : 'Editar HTML' }}
+                  </button>
+                </div>
+                <textarea class="form-control" formControlName="cuerpoHtml" rows="10" 
+                          placeholder="<html>...</html>"
+                          *ngIf="editandoPlantillaContenido"></textarea>
+                <div class="html-preview" *ngIf="!editandoPlantillaContenido" 
+                     [innerHTML]="plantillaForm.get('cuerpoHtml')?.value || 'Sin contenido'"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">
+              <i class="icon-save"></i>
+              {{ modoEdicionPlantilla ? 'Actualizar' : 'Guardar' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Lista de Plantillas -->
+    <div class="list-card">
+      <div class="card-header">
+        <h3>Plantillas Configuradas</h3>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive" *ngIf="plantillas.length > 0">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Asunto</th>
+                <th>Variables</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let plantilla of plantillas; let i = index">
+                <td>{{ plantilla.nombre }}</td>
+                <td>
+                  <span class="badge badge-info">{{ plantilla.tipo }}</span>
+                </td>
+                <td>{{ plantilla.asunto }}</td>
+                <td>
+                  <span class="mini-badge" *ngFor="let variable of plantilla.variables">
+                    {{ variable }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" 
+                        [class.badge-success]="plantilla.activo" 
+                        [class.badge-secondary]="!plantilla.activo">
+                    {{ plantilla.activo ? 'Activa' : 'Inactiva' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button class="btn-sm btn-info" (click)="editarPlantilla(plantilla, i)" title="Editar">
+                      <i class="icon-edit"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="no-data" *ngIf="plantillas.length === 0">
+          <i class="icon-file-text"></i>
+          <p>No hay plantillas configuradas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

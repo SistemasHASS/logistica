@@ -15,28 +15,42 @@
 
   <!-- KPI Cards -->
   <div class="row mb-4">
-    <div class="col-6 col-md-3 mb-3">
+    <div class="col-6 col-md-2 mb-3">
       <div class="kpi-card kpi-total" [class.active]="filtroEstado === ''" (click)="seleccionarFiltro('')">
         <div class="kpi-icon"><i class="bx bx-list-ul"></i></div>
         <div class="kpi-number">{{ resumen.total }}</div>
         <div class="kpi-label">Total</div>
       </div>
     </div>
-    <div class="col-6 col-md-3 mb-3">
+    <div class="col-6 col-md-2 mb-3">
       <div class="kpi-card kpi-pendiente" [class.active]="filtroEstado === 'PENDIENTE'" (click)="seleccionarFiltro('PENDIENTE')">
         <div class="kpi-icon"><i class="bx bx-time-five"></i></div>
         <div class="kpi-number">{{ resumen.pendiente }}</div>
         <div class="kpi-label">Pendientes</div>
       </div>
     </div>
-    <div class="col-6 col-md-3 mb-3">
+    <div class="col-6 col-md-2 mb-3">
       <div class="kpi-card kpi-aprobado" [class.active]="filtroEstado === 'APROBADO'" (click)="seleccionarFiltro('APROBADO')">
         <div class="kpi-icon"><i class="bx bx-check-circle"></i></div>
         <div class="kpi-number">{{ resumen.aprobado }}</div>
         <div class="kpi-label">Aprobados</div>
       </div>
     </div>
-    <div class="col-6 col-md-3 mb-3">
+    <div class="col-6 col-md-2 mb-3">
+      <div class="kpi-card kpi-despachado" [class.active]="filtroEstado === 'DESPACHADO'" (click)="seleccionarFiltro('DESPACHADO')">
+        <div class="kpi-icon"><i class="bx bx-truck"></i></div>
+        <div class="kpi-number">{{ resumen.despachado }}</div>
+        <div class="kpi-label">Despachados</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2 mb-3">
+      <div class="kpi-card kpi-rechazado" [class.active]="filtroEstado === 'RECHAZADO'" (click)="seleccionarFiltro('RECHAZADO')">
+        <div class="kpi-icon"><i class="bx bx-x-circle"></i></div>
+        <div class="kpi-number">{{ resumen.rechazado }}</div>
+        <div class="kpi-label">Rechazados</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2 mb-3">
       <div class="kpi-card kpi-completado" [class.active]="filtroEstado === 'DESPACHADO_COMPLETO'" (click)="seleccionarFiltro('DESPACHADO_COMPLETO')">
         <div class="kpi-icon"><i class="bx bx-trophy"></i></div>
         <div class="kpi-number">{{ resumen.completado }}</div>
@@ -45,92 +59,118 @@
     </div>
   </div>
 
-  <!-- Segunda fila KPIs -->
-  <div class="row mb-4">
-    <div class="col-6 col-md-3 mb-3">
-      <div class="kpi-card kpi-enviado" [class.active]="filtroEstado === 'ENVIADO'" (click)="seleccionarFiltro('ENVIADO')">
-        <div class="kpi-icon"><i class="bx bx-send"></i></div>
-        <div class="kpi-number">{{ resumen.enviado }}</div>
-        <div class="kpi-label">Enviados</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3 mb-3">
-      <div class="kpi-card kpi-consolidado" [class.active]="filtroEstado === 'CONSOLIDADO'" (click)="seleccionarFiltro('CONSOLIDADO')">
-        <div class="kpi-icon"><i class="bx bx-layer"></i></div>
-        <div class="kpi-number">{{ resumen.consolidado }}</div>
-        <div class="kpi-label">Consolidados</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3 mb-3">
-      <div class="kpi-card kpi-despachado" [class.active]="filtroEstado === 'DESPACHADO'" (click)="seleccionarFiltro('DESPACHADO')">
-        <div class="kpi-icon"><i class="bx bx-truck"></i></div>
-        <div class="kpi-number">{{ resumen.despachado }}</div>
-        <div class="kpi-label">Despachados</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3 mb-3">
-      <div class="kpi-card kpi-rechazado" [class.active]="filtroEstado === 'RECHAZADO'" (click)="seleccionarFiltro('RECHAZADO')">
-        <div class="kpi-icon"><i class="bx bx-x-circle"></i></div>
-        <div class="kpi-number">{{ resumen.rechazado }}</div>
-        <div class="kpi-label">Rechazados</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Pipeline visual de flujo -->
+  <!-- Pipeline visual de flujo con porcentajes -->
   <div class="card border-0 shadow-sm mb-4">
     <div class="card-body py-3">
       <h6 class="card-title mb-3"><i class="bx bx-git-branch me-1"></i> Flujo de mis Requerimientos</h6>
-      <div class="pipeline">
-        <div class="pipeline-step" [class.has-items]="resumen.pendiente > 0">
-          <div class="pipeline-bubble pendiente">{{ resumen.pendiente }}</div>
-          <div class="pipeline-label">Pendiente</div>
+      <div class="row g-3">
+        <div class="col-6 col-md-3">
+          <div class="pipeline-pct-card">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="pipeline-pct-label"><i class="bx bx-time-five me-1 text-warning"></i>Pendientes</span>
+              <span class="pipeline-pct-value text-warning">{{ resumen.total > 0 ? ((resumen.pendiente / resumen.total) * 100 | number:'1.0-0') : 0 }}%</span>
+            </div>
+            <div class="progress" style="height:8px">
+              <div class="progress-bar bg-warning" [style.width]="(resumen.total > 0 ? (resumen.pendiente / resumen.total) * 100 : 0) + '%'"></div>
+            </div>
+            <div class="pipeline-pct-sub">{{ resumen.pendiente }} de {{ resumen.total }}</div>
+          </div>
         </div>
-        <div class="pipeline-arrow"><i class="bx bx-right-arrow-alt"></i></div>
-        <div class="pipeline-step" [class.has-items]="resumen.enviado > 0">
-          <div class="pipeline-bubble enviado">{{ resumen.enviado }}</div>
-          <div class="pipeline-label">Enviado</div>
+        <div class="col-6 col-md-3">
+          <div class="pipeline-pct-card">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="pipeline-pct-label"><i class="bx bx-check-circle me-1 text-success"></i>Aprobados</span>
+              <span class="pipeline-pct-value text-success">{{ resumen.total > 0 ? ((resumen.aprobado / resumen.total) * 100 | number:'1.0-0') : 0 }}%</span>
+            </div>
+            <div class="progress" style="height:8px">
+              <div class="progress-bar bg-success" [style.width]="(resumen.total > 0 ? (resumen.aprobado / resumen.total) * 100 : 0) + '%'"></div>
+            </div>
+            <div class="pipeline-pct-sub">{{ resumen.aprobado }} de {{ resumen.total }}</div>
+          </div>
         </div>
-        <div class="pipeline-arrow"><i class="bx bx-right-arrow-alt"></i></div>
-        <div class="pipeline-step" [class.has-items]="resumen.aprobado > 0">
-          <div class="pipeline-bubble aprobado">{{ resumen.aprobado }}</div>
-          <div class="pipeline-label">Aprobado</div>
+        <div class="col-6 col-md-3">
+          <div class="pipeline-pct-card">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="pipeline-pct-label"><i class="bx bx-truck me-1 text-primary"></i>Despachados</span>
+              <span class="pipeline-pct-value text-primary">{{ resumen.total > 0 ? ((resumen.despachado / resumen.total) * 100 | number:'1.0-0') : 0 }}%</span>
+            </div>
+            <div class="progress" style="height:8px">
+              <div class="progress-bar bg-primary" [style.width]="(resumen.total > 0 ? (resumen.despachado / resumen.total) * 100 : 0) + '%'"></div>
+            </div>
+            <div class="pipeline-pct-sub">{{ resumen.despachado }} de {{ resumen.total }}</div>
+          </div>
         </div>
-        <div class="pipeline-arrow"><i class="bx bx-right-arrow-alt"></i></div>
-        <div class="pipeline-step" [class.has-items]="resumen.consolidado > 0">
-          <div class="pipeline-bubble consolidado">{{ resumen.consolidado }}</div>
-          <div class="pipeline-label">Consolidado</div>
-        </div>
-        <div class="pipeline-arrow"><i class="bx bx-right-arrow-alt"></i></div>
-        <div class="pipeline-step" [class.has-items]="resumen.despachado > 0">
-          <div class="pipeline-bubble despachado">{{ resumen.despachado }}</div>
-          <div class="pipeline-label">Despachado</div>
-        </div>
-        <div class="pipeline-arrow"><i class="bx bx-right-arrow-alt"></i></div>
-        <div class="pipeline-step" [class.has-items]="resumen.completado > 0">
-          <div class="pipeline-bubble completado">{{ resumen.completado }}</div>
-          <div class="pipeline-label">Completado</div>
+        <div class="col-6 col-md-3">
+          <div class="pipeline-pct-card">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="pipeline-pct-label"><i class="bx bx-trophy me-1 text-info"></i>Completados</span>
+              <span class="pipeline-pct-value text-info">{{ resumen.total > 0 ? ((resumen.completado / resumen.total) * 100 | number:'1.0-0') : 0 }}%</span>
+            </div>
+            <div class="progress" style="height:8px">
+              <div class="progress-bar bg-info" [style.width]="(resumen.total > 0 ? (resumen.completado / resumen.total) * 100 : 0) + '%'"></div>
+            </div>
+            <div class="pipeline-pct-sub">{{ resumen.completado }} de {{ resumen.total }}</div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Tabla de requerimientos -->
+  <!-- Tabla de requerimientos con tabs integrados -->
   <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">
-        Mis Requerimientos
-        @if (filtroEstado) {
-          <span class="badge ms-2 bg-secondary">
-            {{ obtenerTextoEstado(filtroEstado) }}
-          </span>
-        }
-      </h5>
-      @if (filtroEstado) {
-        <button class="btn btn-sm btn-outline-secondary" (click)="seleccionarFiltro('')">
-          <i class="bx bx-x me-1"></i> Limpiar filtro
+
+    <!-- Título -->
+    <div class="card-header bg-white pb-0 pt-3 px-3 border-bottom-0">
+      <h5 class="mb-2"><i class="bx bx-list-check me-2 text-primary"></i>Mis Requerimientos</h5>
+    </div>
+
+    <!-- Tabs principales: CONSUMO / COMPRA -->
+    <div class="card-header bg-white pb-0 pt-0 px-3">
+      <ul class="nav nav-tabs border-0">
+        <li class="nav-item">
+          <button class="nav-link fw-semibold px-4" [class.active]="tabTipo === 'CONSUMO'" (click)="seleccionarTabTipo('CONSUMO')">
+            <i class="bx bx-package me-1"></i>
+            Consumo
+            <span class="badge ms-1" [class.bg-warning]="tabTipo === 'CONSUMO'" [class.bg-secondary]="tabTipo !== 'CONSUMO'">{{ contadorConsumo }}</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link fw-semibold px-4" [class.active]="tabTipo === 'COMPRA'" (click)="seleccionarTabTipo('COMPRA')">
+            <i class="bx bx-cart me-1"></i>
+            Compra
+            <span class="badge ms-1" [class.bg-info]="tabTipo === 'COMPRA'" [class.bg-secondary]="tabTipo !== 'COMPRA'">{{ contadorCompra }}</span>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Sub-tabs de estado (dinámicos, solo los que tienen registros) -->
+    <div class="card-header bg-light border-top-0 py-2 px-3">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <button class="btn btn-sm" [class.btn-secondary]="filtroSubEstado === ''" [class.btn-outline-secondary]="filtroSubEstado !== ''" (click)="seleccionarSubEstado('')">
+          Todos
+          <span class="badge bg-white text-dark ms-1">{{ tabTipo === 'CONSUMO' ? contadorConsumo : contadorCompra }}</span>
         </button>
-      }
+        @for (sub of obtenerSubEstados(); track sub.valor) {
+          <button class="btn btn-sm"
+            [class.btn-warning]="sub.severity === 'warn' && filtroSubEstado === sub.valor"
+            [class.btn-outline-warning]="sub.severity === 'warn' && filtroSubEstado !== sub.valor"
+            [class.btn-success]="sub.severity === 'success' && filtroSubEstado === sub.valor"
+            [class.btn-outline-success]="sub.severity === 'success' && filtroSubEstado !== sub.valor"
+            [class.btn-info]="sub.severity === 'info' && filtroSubEstado === sub.valor"
+            [class.btn-outline-info]="sub.severity === 'info' && filtroSubEstado !== sub.valor"
+            [class.btn-danger]="sub.severity === 'danger' && filtroSubEstado === sub.valor"
+            [class.btn-outline-danger]="sub.severity === 'danger' && filtroSubEstado !== sub.valor"
+            [class.btn-dark]="sub.severity === 'contrast' && filtroSubEstado === sub.valor"
+            [class.btn-outline-dark]="sub.severity === 'contrast' && filtroSubEstado !== sub.valor"
+            [class.btn-secondary]="sub.severity === 'secondary' && filtroSubEstado === sub.valor"
+            [class.btn-outline-secondary]="sub.severity === 'secondary' && filtroSubEstado !== sub.valor"
+            (click)="seleccionarSubEstado(sub.valor)">
+            {{ sub.label }}
+            <span class="badge bg-white text-dark ms-1">{{ sub.count }}</span>
+          </button>
+        }
+      </div>
     </div>
     <div class="card-body p-0">
       <p-table [value]="requerimientosFiltrados" [paginator]="true" [rows]="10"
@@ -154,8 +194,8 @@
             <td><strong class="text-primary">{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</strong></td>
             <td>{{ formatearFecha(req.fecha) }}</td>
             <td>
-              <span class="badge" [class]="req.tipo === 'COMPRA' ? 'bg-info' : 'bg-secondary'">
-                {{ req.tipo }}
+              <span class="badge" [class]="req.itemtipo === 'COMPRA' ? 'bg-info' : 'bg-secondary'">
+                {{ req.itemtipo }}
               </span>
             </td>
             <td>{{ req.glosa || '-' }}</td>

@@ -1,0 +1,421 @@
+.admin-page {
+  padding: 24px;
+  background-color: #f5f7fb;
+  min-height: calc(100vh - 60px);
+  border-radius: 12px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+
+  h2 { margin: 0 0 4px 0; font-size: 20px; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 8px; }
+  .subtitle { margin: 0; font-size: 13px; color: #6b7280; }
+  @media (max-width: 768px) { flex-direction: column; gap: 12px; }
+}
+
+.btn-primary {
+  background-color: #3f51b5; color: #fff; border: none; padding: 9px 18px;
+  border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  transition: all 0.2s;
+  &:hover { background-color: #303f9f; }
+}
+
+.btn-secondary {
+  background-color: #e5e7eb; color: #333; border: none; padding: 8px 16px;
+  border-radius: 6px; font-size: 14px; cursor: pointer;
+  &:hover { background-color: #d1d5db; }
+}
+
+/* GRID DE PLANTILLAS */
+.plantillas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.plantilla-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  &:hover { box-shadow: 0 6px 24px rgba(63,81,181,0.1); }
+  &.default-card { border-color: #3f51b5; }
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  .empresa-name { font-size: 14px; font-weight: 600; color: #1f2937; }
+  .badge-default { background: #3f51b5; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
+}
+
+.tipo-badge {
+  padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 700;
+  &.tipo-oc { background: #dbeafe; color: #1d4ed8; }
+  &.tipo-os { background: #fef3c7; color: #d97706; }
+}
+
+.activo { color: #16a34a; font-weight: 600; font-size: 13px; }
+.inactivo { color: #dc2626; font-weight: 600; font-size: 13px; }
+
+/* MINI PREVIEW PDF */
+.pdf-mini-preview {
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-top-width: 3px;
+  font-size: 11px;
+}
+
+.pdf-header-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  color: #fff;
+
+  .pdf-logo-preview {
+    img { height: 24px; max-width: 80px; object-fit: contain; }
+    .no-logo { font-size: 10px; opacity: 0.7; }
+  }
+
+  .pdf-titulo-preview { font-weight: 700; font-size: 12px; }
+}
+
+.pdf-body-preview {
+  padding: 6px 10px;
+  background: #fafafa;
+  .pdf-encabezado { color: #374151; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+
+.pdf-firma-preview {
+  display: flex;
+  gap: 10px;
+  padding: 6px 10px;
+  border-top: 1px dashed #e5e7eb;
+
+  .firma-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+    color: #374151;
+
+    .firma-linea { width: 100%; height: 1px; background: #374151; margin-bottom: 2px; }
+    span { font-weight: 600; }
+    small { color: #9ca3af; }
+  }
+}
+
+.card-colors {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .color-chip {
+    width: 20px; height: 20px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .color-label { font-size: 12px; color: #9ca3af; }
+}
+
+.card-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  .option-tag {
+    background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0;
+    padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;
+  }
+}
+
+.card-footer {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+}
+
+.empty-card {
+  grid-column: 1 / -1; text-align: center; padding: 48px 24px;
+  background: #fff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  color: #9ca3af;
+  i { font-size: 48px; display: block; margin-bottom: 12px; }
+  p { margin-bottom: 16px; }
+}
+
+/* MODAL */
+.modal-backdrop {
+  position: fixed; inset: 0; background-color: rgba(0,0,0,0.5);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 1050; overflow: auto; padding: 20px;
+  pointer-events: auto;
+}
+
+.modal-backdrop > .modal {
+  pointer-events: auto;
+}
+
+.modal {
+  background: #fff; border-radius: 12px; max-width: 95%;
+  padding: 24px 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  z-index: 1051;
+  max-height: 90vh;
+  min-height: 400px;
+  overflow-y: auto;
+  position: relative;
+  display: block;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+  h3 { margin: 0; font-size: 18px; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 8px; }
+  .close { background: none; border: none; font-size: 28px; color: #6b7280; cursor: pointer; &:hover { color: #1f2937; } }
+}
+
+.form-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  @media (max-width: 768px) { grid-template-columns: 1fr; }
+}
+
+.form-left, .form-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-section {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #3f51b5;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #eef2ff;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  @media (max-width: 500px) { grid-template-columns: 1fr; }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &.full-span { grid-column: 1 / -1; }
+
+  label { font-size: 13px; font-weight: 500; color: #374151; }
+  .required { color: #ef4444; }
+
+  input[type="text"], input[type="email"], select, textarea {
+    padding: 8px 10px; border-radius: 6px; border: 1px solid #d1d5db; font-size: 14px;
+    &:focus { outline: none; border-color: #3f51b5; }
+  }
+
+  textarea { resize: vertical; font-size: 13px; }
+
+  .toggle-label {
+    display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-weight: normal;
+    color: #4b5563; margin-top: 4px;
+    input[type="checkbox"] { width: 16px; height: 16px; accent-color: #3f51b5; flex-shrink: 0; margin-top: 2px; }
+    span { flex: 1; line-height: 1.4; }
+  }
+}
+
+/* Options list for checkboxes */
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .toggle-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #4b5563;
+    line-height: 1.4;
+
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #3f51b5;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    span {
+      flex: 1;
+    }
+  }
+}
+
+.color-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  .color-picker { width: 40px; height: 38px; border: 1px solid #d1d5db; border-radius: 6px; padding: 2px; cursor: pointer; }
+  .color-text { flex: 1; }
+}
+
+.logo-upload-area {
+  position: relative;
+  min-height: 80px;
+
+  .logo-preview {
+    position: relative;
+    display: inline-block;
+    img { height: 60px; max-width: 200px; object-fit: contain; border-radius: 6px; border: 1px solid #e5e7eb; }
+
+    .btn-remove-logo {
+      position: absolute; top: -6px; right: -6px;
+      background: #ef4444; color: #fff; border: none; border-radius: 50%;
+      width: 20px; height: 20px; font-size: 14px; line-height: 1;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      &:hover { background: #dc2626; }
+    }
+  }
+
+  .logo-dropzone {
+    border: 2px dashed #d1d5db; border-radius: 8px; padding: 20px;
+    text-align: center; cursor: pointer; position: relative;
+    transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    color: #6b7280;
+
+    &:hover { border-color: #3f51b5; background: #f8f9ff; }
+
+    i { font-size: 24px; color: #9ca3af; }
+    span { font-size: 13px; font-weight: 500; }
+    small { font-size: 12px; color: #9ca3af; }
+
+    .file-input {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+  }
+
+  .uploading { font-size: 13px; color: #3f51b5; }
+}
+
+.firma-row {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed #e5e7eb;
+
+  .firma-num {
+    font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 8px;
+    small { font-weight: normal; color: #9ca3af; margin-left: 4px; }
+  }
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* MINI PREVIEW EN MODAL */
+.modal-pdf-preview {
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-top-width: 4px;
+  font-size: 11px;
+  background: #fff;
+}
+
+.mpdf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  color: #fff;
+
+  .mpdf-logo {
+    img { height: 24px; max-width: 80px; object-fit: contain; }
+    span { font-size: 10px; opacity: 0.7; }
+  }
+
+  .mpdf-title { font-weight: 700; font-size: 11px; }
+}
+
+.mpdf-body {
+  padding: 8px 10px;
+  background: #fafafa;
+
+  .mpdf-encabezado { font-size: 10px; color: #6b7280; display: block; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .mpdf-lines { display: flex; flex-direction: column; gap: 3px; }
+  .mpdf-line { height: 6px; border-radius: 2px; background: #e5e7eb; }
+}
+
+.mpdf-firmas {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px dashed #e5e7eb;
+
+  .mpdf-firma {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    font-size: 9px; color: #374151;
+
+    .mpdf-firma-linea { width: 100%; height: 1px; background: #374151; margin-bottom: 3px; }
+    span { font-weight: 600; }
+  }
+}
+
+.mpdf-pie {
+  padding: 6px 10px;
+  font-size: 9px;
+  color: #9ca3af;
+  border-top: 1px solid #f1f5f9;
+  background: #f9fafb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modal-footer {
+  display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;
+}

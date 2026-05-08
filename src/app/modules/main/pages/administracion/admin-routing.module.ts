@@ -10,6 +10,10 @@ import { AdminAprobadoresComponent } from './pages/admin-aprobadores/admin-aprob
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { UsuariosPorAreaComponent } from './pages/usuarios-por-area/usuarios-por-area.component';
 import { AdminVersionApiComponent } from './pages/admin-version-api/admin-version-api.component';
+import { AdminProveedoresEmailComponent } from './pages/admin-proveedores-email/admin-proveedores-email.component';
+import { AdminConfigSmtpComponent } from './pages/admin-config-smtp/admin-config-smtp.component';
+import { AdminPlantillaCorreoComponent } from './pages/admin-plantilla-correo/admin-plantilla-correo.component';
+import { AdminPlantillaPdfComponent } from './pages/admin-plantilla-pdf/admin-plantilla-pdf.component';
 
 const routes: Routes = [
   {
@@ -25,6 +29,10 @@ const routes: Routes = [
       { path: 'admin-aprobadores', component: AdminAprobadoresComponent },
       { path: 'usuarios-por-area', component: UsuariosPorAreaComponent },
       { path: 'admin-version-api', component: AdminVersionApiComponent },
+      { path: 'admin-proveedores-email', component: AdminProveedoresEmailComponent },
+      { path: 'admin-config-smtp', component: AdminConfigSmtpComponent },
+      { path: 'admin-plantilla-correo', component: AdminPlantillaCorreoComponent },
+      { path: 'admin-plantilla-pdf', component: AdminPlantillaPdfComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

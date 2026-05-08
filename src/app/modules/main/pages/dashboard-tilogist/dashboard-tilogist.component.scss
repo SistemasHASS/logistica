@@ -1,0 +1,5 @@
+.dashboard-header { margin-bottom: 1.5rem; }
+.acceso-card { cursor: pointer; transition: transform .15s, box-shadow .15s; border-radius: 12px; }
+.acceso-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+.acceso-icon { font-size: 2rem; margin-bottom: .5rem; }
+.stat-number { font-size: 2rem; font-weight: 700; }

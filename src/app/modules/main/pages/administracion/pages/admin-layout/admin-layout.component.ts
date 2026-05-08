@@ -124,6 +124,10 @@ export class AdminLayoutComponent implements OnInit {
       'admin-flujos': 'Gestión de Flujos de Aprobación',
       'usuarios-por-area': 'Usuarios por Área',
       'reportes': 'Lista de requerimientos',
+      'admin-proveedores-email': 'Correos de Proveedores',
+      'admin-config-smtp': 'Configuración SMTP',
+      'admin-plantilla-correo': 'Plantillas de Correo',
+      'admin-plantilla-pdf': 'Plantillas PDF',
     };
 
     this.currentPath = pathMap[currentUrl[currentUrl.length - 1]] || '';

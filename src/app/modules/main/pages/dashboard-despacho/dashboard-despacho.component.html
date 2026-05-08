@@ -1,0 +1,231 @@
+<div class="dashboard-despacho-container">
+  <!-- Header -->
+  <div class="dashboard-header mb-4">
+    <h2 class="dashboard-title">
+      <i class="bx bxs-dashboard me-2"></i>
+      Dashboard de Despachos - Almacén
+    </h2>
+    <p class="dashboard-subtitle" *ngIf="usuario">
+      Bienvenido, {{ usuario.nombre }}
+    </p>
+  </div>
+
+  <!-- KPIs Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3" *ngFor="let kpi of kpis">
+      <p-card class="kpi-card" (click)="abrirModalKpi(kpi)" styleClass="cursor-pointer">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="kpi-content">
+            <h6 class="kpi-label text-muted mb-1">{{ kpi.label }}</h6>
+            <h3 class="kpi-value mb-0">{{ kpi.value }}</h3>
+          </div>
+          <div class="kpi-icon-wrapper" [class]="'bg-' + kpi.color + '-subtle'">
+            <i [class]="kpi.icon + ' text-' + kpi.color"></i>
+          </div>
+        </div>
+      </p-card>
+    </div>
+  </div>
+
+  <!-- Gráfico y Últimos Despachos -->
+  <div class="row g-4">
+    <!-- Gráfico de Despachos -->
+    <div class="col-12 col-lg-8">
+      <p-card header="Tendencia de Despachos">
+        <p-chart
+          type="line"
+          [data]="chartData"
+          [options]="chartOptions"
+          height="300px">
+        </p-chart>
+      </p-card>
+    </div>
+
+    <!-- Accesos Rápidos -->
+    <div class="col-12 col-lg-4">
+      <p-card header="Accesos Rápidos">
+        <div class="quick-actions d-flex flex-column gap-2">
+          <button
+            pButton
+            type="button"
+            label="Gestionar Despachos"
+            icon="bx bx-package"
+            class="p-button-primary w-100"
+            (click)="router.navigate(['/main/despachos'])">
+          </button>
+          <button
+            pButton
+            type="button"
+            label="Reporte de Despachos"
+            icon="bx bx-chart"
+            class="p-button-secondary w-100"
+            (click)="router.navigate(['/main/reporte-despachos'])">
+          </button>
+          <button
+            pButton
+            type="button"
+            label="Kardex"
+            icon="bx bx-list-ul"
+            class="p-button-info w-100"
+            (click)="router.navigate(['/main/kardex'])">
+          </button>
+          <button
+            pButton
+            type="button"
+            label="Devoluciones"
+            icon="bx bx-undo"
+            class="p-button-warning w-100"
+            (click)="router.navigate(['/main/devoluciones-consumo'])">
+          </button>
+          <button
+            pButton
+            type="button"
+            label="Gestión de Inventario"
+            icon="bx bx-box"
+            class="p-button-success w-100"
+            (click)="router.navigate(['/main/gestion-inventario'])">
+          </button>
+        </div>
+      </p-card>
+    </div>
+  </div>
+
+  <!-- Últimos Despachos -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <p-card header="Últimos Despachos">
+        <p-table
+          [value]="ultimosDespachos"
+          [loading]="loadingDespachos"
+          [paginator]="true"
+          [rows]="5"
+          [showCurrentPageReport]="true"
+          styleClass="p-datatable-sm p-datatable-striped">
+
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Requerimiento</th>
+              <th>Área</th>
+              <th>Fundo</th>
+              <th>Fecha</th>
+              <th>Items</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-despacho>
+            <tr>
+              <td>{{ despacho.numeroRequerimiento }}</td>
+              <td>{{ despacho.area }}</td>
+              <td>{{ despacho.fundo }}</td>
+              <td>{{ despacho.fechaDespacho | date:'dd/MM/yyyy' }}</td>
+              <td>{{ despacho.cantidadItems }}</td>
+              <td>
+                <span [class]="getEstadoClass(despacho.estado)">
+                  {{ despacho.estado }}
+                </span>
+              </td>
+              <td>
+                <button
+                  pButton
+                  type="button"
+                  icon="bx bx-eye"
+                  class="p-button-text p-button-sm"
+                  (click)="verDetalleDespacho(despacho)"
+                  pTooltip="Ver detalle">
+                </button>
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">
+                <i class="bx bx-inbox fs-2 d-block mb-2"></i>
+                No hay despachos registrados
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-card>
+    </div>
+  </div>
+
+  <!-- Modal de KPI -->
+  <p-dialog
+    [(visible)]="modalKpiVisible"
+    [header]="modalKpiTitulo"
+    [modal]="true"
+    [style]="{ width: '90vw', maxWidth: '900px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="cerrarModalKpi()">
+
+    <p-table
+      [value]="modalKpiData"
+      [loading]="loadingModalKpi"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      styleClass="p-datatable-sm p-datatable-striped">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Requerimiento</th>
+          <th>Área</th>
+          <th>Fundo</th>
+          <th>Fecha</th>
+          <th>Items</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-despacho>
+        <tr>
+          <td>{{ despacho.numeroRequerimiento }}</td>
+          <td>{{ despacho.area }}</td>
+          <td>{{ despacho.fundo }}</td>
+          <td>{{ despacho.fechaDespacho | date:'dd/MM/yyyy' }}</td>
+          <td>{{ despacho.cantidadItems }}</td>
+          <td>
+            <span [class]="getEstadoClass(despacho.estado)">
+              {{ despacho.estado }}
+            </span>
+          </td>
+          <td>
+            <button
+              pButton
+              type="button"
+              icon="bx bx-eye"
+              class="p-button-text p-button-sm"
+              (click)="verDetalleDespacho(despacho)"
+              pTooltip="Ver detalle">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">
+            <i class="bx bx-inbox fs-2 d-block mb-2"></i>
+            No hay datos disponibles
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <ng-template pTemplate="footer">
+      <button
+        pButton
+        type="button"
+        label="Cerrar"
+        icon="bx bx-x"
+        class="p-button-secondary"
+        (click)="cerrarModalKpi()">
+      </button>
+    </ng-template>
+  </p-dialog>
+</div>

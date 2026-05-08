@@ -242,8 +242,8 @@ export class RequerimientosItemService {
     const clases = this.maestras.clasificaciones;
     if (this.TipoSelecionado === 'TRANSFERENCIA') {
       this.maestras.almacenSeleccionado = '';
-      this.maestras.clasificacionSeleccionado = 'TRA';
-      this.maestras.clasificacionesFiltrados = clases.filter((c) => c.id === 'TRA');
+      this.maestras.clasificacionSeleccionado = 'STO';
+      this.maestras.clasificacionesFiltrados = clases.filter((c) => c.id === 'STO');
       this.limpiarCamposCompraConsumo();
     } else if (this.TipoSelecionado === 'CONSUMO') {
       this.maestras.almacenOrigen = '';
@@ -553,7 +553,8 @@ export class RequerimientosItemService {
         ruc: this.maestras.usuario.ruc,
         idfundo: this.maestras.fundoSeleccionado,
         idarea: this.maestras.areaSeleccionada,
-        idclasificacion: this.maestras.clasificacionSeleccionado,
+        idclasificacion: this.maestras.clasificacionSeleccionado
+          || (this.TipoSelecionado === 'COMPRA' ? 'CMP' : 'STO'),
         prioridad: this.SeleccionaPrioridadITEM ?? '1',
         nrodocumento: this.maestras.usuario.documentoidentidad,
         idalmacen: idAlmacenSync,
@@ -561,8 +562,8 @@ export class RequerimientosItemService {
         glosa: this.requerimiento.glosa || this.glosa,
         referenciaGasto: this.SeleccionaTipoGasto || '',
         eliminado: 0,
-        tipo: this.requerimiento.tipo,
-        itemtipo: this.TipoSelecionado,
+        tipo: 'ITEM',
+        itemtipo: this.TipoSelecionado || this.requerimiento.itemtipo || 'CONSUMO',
         estados: 'PENDIENTE',
         fecha: new Date().toISOString(),
         almacen: almacenObj?.almacen || '',
@@ -585,15 +586,19 @@ export class RequerimientosItemService {
       }
       try {
         if (req.idarea) {
+          const tipoAprobacion = req.itemtipo === 'CONSUMO' ? 'CONSUMO'
+            : req.itemtipo === 'COMPRA' ? 'COMPRA'
+            : req.itemtipo === 'TRANSFERENCIA' ? 'TRANSFERENCIA'
+            : 'ITEM';
           await this.aprobacionesAreaService.registrarRequerimiento({
             ruc: req.ruc, idrequerimiento: req.idrequerimiento,
-            idarea: Number(req.idarea), tipoRequerimiento: req.itemtipo || 'ITEM',
+            idarea: Number(req.idarea), tipoRequerimiento: tipoAprobacion,
             descripcion: req.glosa, usuarioSolicitud: this.maestras.usuario.documentoidentidad,
             glosa: req.glosa, monto: 0,
           }).toPromise();
           await this.aprobacionesAreaService.asignarAprobadoresRequerimiento({
             ruc: req.ruc, idrequerimiento: req.idrequerimiento,
-            idarea: Number(req.idarea), tipoRequerimiento: req.itemtipo || 'ITEM',
+            idarea: Number(req.idarea), tipoRequerimiento: tipoAprobacion,
             usuarioSolicitud: this.maestras.usuario.documentoidentidad,
           }).toPromise();
         }
@@ -946,8 +951,15 @@ export class RequerimientosItemService {
     if (!row.codigo) {
       row.errores.push({ columna: 'Código', mensaje: 'Requerido' });
     } else {
-      const item = this.maestras.items.find((i: any) => i.codigo === row.codigo);
-      if (!item) row.errores.push({ columna: 'Código', mensaje: 'No existe en almacén' });
+      const codigoPadded = String(row.codigo).padStart(6, '0');
+      row.codigo = codigoPadded;
+      const item = this.maestras.items.find((i: any) => i.codigo === codigoPadded);
+      if (!item) {
+        row.errores.push({ columna: 'Código', mensaje: 'No existe en almacén' });
+      } else {
+        row.descripcion = item.descripcion;
+        row.unidadMedida = item.um || row.unidadMedida;
+      }
     }
     if (!row.cantidad || row.cantidad <= 0) row.errores.push({ columna: 'Cantidad', mensaje: 'Debe ser mayor a 0' });
     if (!row.turno) row.errores.push({ columna: 'Turno', mensaje: 'Requerido' });
@@ -965,11 +977,18 @@ export class RequerimientosItemService {
     const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
     const lineasPreview: DetalleExcelPreview[] = [];
     for (const r of rows) {
+      const rawCodigo = r['Cod. Item'];
+      const codigoPadded = rawCodigo !== undefined && rawCodigo !== ''
+        ? String(rawCodigo).padStart(6, '0')
+        : '';
+      const itemEncontrado = codigoPadded
+        ? this.maestras.items.find((i: any) => i.codigo === codigoPadded)
+        : undefined;
       const fila: DetalleExcelPreview = {
-        codigo: r['Cod. Item'],
-        descripcion: r['Descripcion Item'],
+        codigo: codigoPadded,
+        descripcion: itemEncontrado?.descripcion ?? r['Descripcion Item'] ?? '',
         cantidad: Number(r['Cantidad']),
-        unidadMedida: r['Unidad Medida'] || 'UND',
+        unidadMedida: itemEncontrado?.um || r['Unidad Medida'] || 'UND',
         turno: r['Turno'],
         activofijo: r['ActivoFijo'],
         proyecto: (this.maestras.proyectoSeleccionado as any)?.proyectoio ?? '',

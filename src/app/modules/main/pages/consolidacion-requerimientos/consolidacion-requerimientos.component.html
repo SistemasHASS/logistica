@@ -167,7 +167,7 @@
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" [class.active]="activeTab === 'SERVICIO'" (click)="activeTab = 'SERVICIO'" type="button">
+        <button class="nav-link" [class.active]="activeTab === 'SERVICIO'" (click)="activeTab = 'SERVICIO'; cargarServiciosPendientes()" type="button">
           <i class="bx bx-layers me-1"></i> SERVICIO
           <span class="badge bg-info ms-1" *ngIf="serviciosPendientes.length > 0">{{ serviciosPendientes.length }}</span>
         </button>
@@ -179,13 +179,13 @@
         </button>
       </li> -->
       <li class="nav-item" role="presentation">
-        <button class="nav-link" [class.active]="activeTab === 'ACTIVOFIJO'" (click)="activeTab = 'ACTIVOFIJO'" type="button">
+        <button class="nav-link" [class.active]="activeTab === 'ACTIVOFIJO'" (click)="activeTab = 'ACTIVOFIJO'; cargarActivosFijosPendientes()" type="button">
           <i class="bi bi-cpu me-1"></i> ACTIVO FIJO
           <span class="badge bg-primary ms-1" *ngIf="activosFijosPendientes.length > 0">{{ activosFijosPendientes.length }}</span>
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" [class.active]="activeTab === 'ACTIVOMENOR'" (click)="activeTab = 'ACTIVOMENOR'" type="button">
+        <button class="nav-link" [class.active]="activeTab === 'ACTIVOMENOR'" (click)="activeTab = 'ACTIVOMENOR'; cargarActivosMenoresPendientes()" type="button">
           <i class="bx bx-tools me-1"></i> ACTIVO MENOR
           <span class="badge bg-secondary ms-1" *ngIf="activosMenoresPendientes.length > 0">{{ activosMenoresPendientes.length }}</span>
         </button>
@@ -267,6 +267,7 @@
               <th pSortableColumn="tipoRequerimiento">Tipo <p-sortIcon field="tipoRequerimiento"></p-sortIcon></th>
               <th pSortableColumn="requerimientoOrigen">Req. Origen <p-sortIcon field="requerimientoOrigen"></p-sortIcon></th>
               <th>Estado</th>
+              <th pSortableColumn="nombreSolicitante">Usuario <p-sortIcon field="nombreSolicitante"></p-sortIcon></th>
               <th>Area</th>
               <th>Acciones</th>
             </tr>
@@ -278,7 +279,8 @@
                   [class.row-in-temp-list]="item.seleccionado" (change)="actualizarSeleccionarTodos()">
               </td>
               <td>{{ item.empresa }}</td>
-              <td>{{ item.fechaCreacion | date:'dd/MM/yyyy hh:mm:ss a' }}</td>
+              <!-- <td>{{ item.fechaCreacion | date:'dd/MM/yyyy hh:mm:ss a' }}</td> -->
+              <td>{{ item.fechaAprobacion | date:'dd/MM/yyyy' }}</td>
               <td><strong>{{ item.item }}</strong></td>
               <td>{{ item.descripcion }}</td>
               <td>{{ item.familia || '-' }}</td>
@@ -294,6 +296,7 @@
               <td>
                 <span class="badge bg-warning text-dark">{{ item.estadoDetalleConsolidacion }}</span>
               </td>
+              <td>{{ item.nombreSolicitante }}</td>
               <td>{{ item.area }}</td>
               <td>
                 <div class="d-flex gap-1">
@@ -381,7 +384,7 @@
               <th>Unidad</th>
               <th>Tipo</th>
               <th>Estado</th>
-              <th pSortableColumn="usuarioSolicita">Usuario <p-sortIcon field="usuarioSolicita"></p-sortIcon></th>
+              <th pSortableColumn="nombreSolicitante">Usuario <p-sortIcon field="nombreSolicitante"></p-sortIcon></th>
               <th>Área</th>
               <th style="width: 120px;">Acciones</th>
             </tr>
@@ -389,11 +392,12 @@
           <ng-template pTemplate="body" let-servicio>
             <tr>
               <td>
-                <p-checkbox [(ngModel)]="servicio.seleccionado" [binary]="true"></p-checkbox>
+                <p-checkbox [(ngModel)]="servicio.seleccionado" [binary]="true" (onChange)="actualizarSeleccionarTodosServicios()"></p-checkbox>
               </td>
               <td>{{ servicio.empresa }}</td>
               <td><strong>{{ servicio.requerimientoOrigen }}</strong></td>
-              <td>{{ servicio.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+              <!-- <td>{{ servicio.fechaCreacion | date:'dd/MM/yyyy' }}</td> -->
+              <td>{{ servicio.fechaAprobacion | date:'dd/MM/yyyy' }}</td>
               <td><strong>{{ servicio.servicio }}</strong></td>
               <td>{{ servicio.descripcion }}</td>
               <td class="text-end">{{ servicio.cantidad | number:'1.2-2' }}</td>
@@ -404,7 +408,7 @@
               <td>
                 <span class="badge bg-warning text-dark">{{ servicio.estado || 'Pendiente' }}</span>
               </td>
-              <td>{{ servicio.usuarioSolicita }}</td>
+              <td>{{ servicio.nombreSolicitante }}</td>
               <td>{{ servicio.area }}</td>
               <td>
                 <div class="d-flex gap-1">
@@ -491,7 +495,7 @@
               <th>Unidad</th>
               <th>Tipo</th>
               <th>Estado</th>
-              <th pSortableColumn="usuarioSolicita">Usuario <p-sortIcon field="usuarioSolicita"></p-sortIcon></th>
+              <th pSortableColumn="nombreSolicitante">Usuario <p-sortIcon field="nombreSolicitante"></p-sortIcon></th>
               <th>Área</th>
               <th style="width: 120px;">Acciones</th>
             </tr>
@@ -499,11 +503,12 @@
           <ng-template pTemplate="body" let-activoFijo>
             <tr>
               <td>
-                <p-checkbox [(ngModel)]="activoFijo.seleccionado" [binary]="true"></p-checkbox>
+                <p-checkbox [(ngModel)]="activoFijo.seleccionado" [binary]="true" (onChange)="actualizarSeleccionarTodosActivosFijos()"></p-checkbox>
               </td>
               <td>{{ activoFijo.empresa }}</td>
               <td><strong>{{ activoFijo.requerimientoOrigen }}</strong></td>
-              <td>{{ activoFijo.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+              <!-- <td>{{ activoFijo.fechaCreacion | date:'dd/MM/yyyy' }}</td> -->
+               <td>{{ activoFijo.fechaAprobacion | date:'dd/MM/yyyy' }}</td>
               <td><strong>{{ activoFijo.activoFijo }}</strong></td>
               <td>{{ activoFijo.descripcion }}</td>
               <td class="text-end">{{ activoFijo.cantidad | number:'1.2-2' }}</td>
@@ -514,7 +519,7 @@
               <td>
                 <span class="badge bg-warning text-dark">{{ activoFijo.estado || 'Pendiente' }}</span>
               </td>
-              <td>{{ activoFijo.usuarioSolicita }}</td>
+              <td>{{ activoFijo.nombreSolicitante }}</td>
               <td>{{ activoFijo.area }}</td>
               <td>
                 <div class="d-flex gap-1">
@@ -601,7 +606,7 @@
               <th>Unidad</th>
               <th>Tipo</th>
               <th>Estado</th>
-              <th pSortableColumn="usuarioSolicita">Usuario <p-sortIcon field="usuarioSolicita"></p-sortIcon></th>
+              <th pSortableColumn="nombreSolicitante">Usuario <p-sortIcon field="nombreSolicitante"></p-sortIcon></th>
               <th>Área</th>
               <th style="width: 120px;">Acciones</th>
             </tr>
@@ -609,11 +614,12 @@
           <ng-template pTemplate="body" let-activoMenor>
             <tr>
               <td>
-                <p-checkbox [(ngModel)]="activoMenor.seleccionado" [binary]="true"></p-checkbox>
+                <p-checkbox [(ngModel)]="activoMenor.seleccionado" [binary]="true" (onChange)="actualizarSeleccionarTodosActivosMenores()"></p-checkbox>
               </td>
               <td>{{ activoMenor.empresa }}</td>
               <td><strong>{{ activoMenor.requerimientoOrigen }}</strong></td>
-              <td>{{ activoMenor.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+              <!-- <td>{{ activoMenor.fechaCreacion | date:'dd/MM/yyyy' }}</td> -->
+               <td>{{ activoMenor.fechaAprobacion | date:'dd/MM/yyyy' }}</td>
               <td><strong>{{ activoMenor.activoMenor }}</strong></td>
               <td>{{ activoMenor.descripcion }}</td>
               <td class="text-end">{{ activoMenor.cantidad | number:'1.2-2' }}</td>
@@ -624,7 +630,7 @@
               <td>
                 <span class="badge bg-warning text-dark">{{ activoMenor.estado || 'Pendiente' }}</span>
               </td>
-              <td>{{ activoMenor.usuarioSolicita }}</td>
+              <td>{{ activoMenor.nombreSolicitante }}</td>
               <td>{{ activoMenor.area }}</td>
               <td>
                 <div class="d-flex gap-1">
@@ -712,7 +718,7 @@
               <th>Unidad</th>
               <th>Tipo</th>
               <th>Estado</th>
-              <th pSortableColumn="usuarioSolicita">Usuario <p-sortIcon field="usuarioSolicita"></p-sortIcon></th>
+              <th pSortableColumn="nombreSolicitante">Usuario <p-sortIcon field="nombreSolicitante"></p-sortIcon></th>
               <th>Área</th>
               <th style="width: 120px;">Acciones</th>
             </tr>
@@ -720,11 +726,12 @@
           <ng-template pTemplate="body" let-servicio>
             <tr>
               <td>
-                <p-checkbox [(ngModel)]="servicio.seleccionado" [binary]="true"></p-checkbox>
+                <p-checkbox [(ngModel)]="servicio.seleccionado" [binary]="true" (onChange)="actualizarSeleccionarTodosServicios()"></p-checkbox>
               </td>
               <td>{{ servicio.empresa }}</td>
               <td><strong>{{ servicio.requerimientoOrigen }}</strong></td>
-              <td>{{ servicio.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+              <!-- <td>{{ servicio.fechaCreacion | date:'dd/MM/yyyy' }}</td> -->
+              <td>{{ servicio.fechaAprobacion | date:'dd/MM/yyyy' }}</td>
               <td><strong>{{ servicio.servicio }}</strong></td>
               <td>{{ servicio.descripcion }}</td>
               <td class="text-end">{{ servicio.cantidad | number:'1.2-2' }}</td>
@@ -735,7 +742,7 @@
               <td>
                 <span class="badge bg-warning text-dark">{{ servicio.estado || 'Pendiente' }}</span>
               </td>
-              <td>{{ servicio.usuarioSolicita }}</td>
+              <td>{{ servicio.nombreSolicitante }}</td>
               <td>{{ servicio.area }}</td>
               <td>
                 <div class="d-flex gap-1">

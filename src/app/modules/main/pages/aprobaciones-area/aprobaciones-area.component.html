@@ -89,7 +89,7 @@
               <tr>
                 <!-- <td>{{ req.numeroRequerimiento }}</td> -->
                 <td>{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</td>
-                <td>{{ req.fecha }}</td>
+                <td>{{ req.fecha | date: 'dd/MM/yyyy' }}</td>
                 <td>{{ req.nombreSolicitante }}</td>
                 <td>{{ req.nombreArea }}</td>
                 <td>{{ req.tipoRequerimiento }}</td>

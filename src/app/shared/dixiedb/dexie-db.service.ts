@@ -28,6 +28,10 @@ import {
   RequerimientoCommodity,
   RequerimientoActivoFijo,
   RequerimientoActivoFijoMenor,
+  ConfiguracionCorreo,
+  ConfiguracionServidorCorreo,
+  DestinatarioCorreo,
+  PlantillaCorreo,
   DetalleRequerimientoActivoFijoMenor,
   MaestroItem,
   MaestroCommodity,
@@ -90,6 +94,10 @@ export class DexieService extends Dexie {
   public comodities!: Dexie.Table<Comodity, string>;
   public subClasificaciones!: Dexie.Table<SubClasificacion, string>;
   public proveedores!: Dexie.Table<Proveedor, number>;
+  public configuracionesCorreo!: Dexie.Table<ConfiguracionCorreo, string>;
+  public configuracionServidorCorreo!: Dexie.Table<ConfiguracionServidorCorreo, string>;
+  public destinatariosCorreo!: Dexie.Table<DestinatarioCorreo, string>;
+  public plantillasCorreo!: Dexie.Table<PlantillaCorreo, string>;
   public tipoGastos!: Dexie.Table<TipoGasto, string>;
   public commoditys!: Dexie.Table<Comodity, string>;
   public activosFijos!: Dexie.Table<ActivoFijo, string>;
@@ -135,7 +143,7 @@ export class DexieService extends Dexie {
   public detalleSolicitudCotizacion!: Dexie.Table<DetalleSolicitudCotizacionLegacy, number>;
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 36; // Simplified solicitudesCotizacion table structure
+  private static readonly DB_VERSION = 37; // Added email configuration tables
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -217,6 +225,11 @@ export class DexieService extends Dexie {
         itemsTemporales: `++id,idDetalle,item,familia,categoria,tipoRequerimiento,fechaSeleccion,estado`,
         solicitudesCotizacion: `++id`,
         detalleSolicitudCotizacion: `++id,idSolicitudCotizacion`,
+        // ✅ TABLAS PARA CONFIGURACIÓN DE CORREOS
+        configuracionesCorreo: `id,tipo,asunto,activo`,
+        configuracionServidorCorreo: `id,servidor,puerto,usuario,activo`,
+        destinatariosCorreo: `id,email,tipo,activo`,
+        plantillasCorreo: `id,tipo,activo`,
       });
 
       this.usuario = this.table('usuario');
@@ -240,6 +253,10 @@ export class DexieService extends Dexie {
       this.comodities = this.table('comodities');
       this.subClasificaciones = this.table('subClasificaciones');
       this.proveedores = this.table('proveedores');
+      this.configuracionesCorreo = this.table('configuracionesCorreo');
+      this.configuracionServidorCorreo = this.table('configuracionServidorCorreo');
+      this.destinatariosCorreo = this.table('destinatariosCorreo');
+      this.plantillasCorreo = this.table('plantillasCorreo');
       this.tipoGastos = this.table('tipoGastos');
       this.commoditys = this.table('commoditys');
       this.activosFijos = this.table('activosFijos');
@@ -537,6 +554,82 @@ export class DexieService extends Dexie {
   }
   async clearProveedores() {
     await this.proveedores.clear();
+  }
+  //Configuraciones de Correo
+  async saveConfiguracionCorreo(configuracion: ConfiguracionCorreo) {
+    if (!configuracion.id) {
+      configuracion.id = Date.now().toString();
+    }
+    await this.configuracionesCorreo.put(configuracion);
+  }
+  async saveConfiguracionesCorreo(configuraciones: ConfiguracionCorreo[]) {
+    const configuracionesConId = configuraciones.map(config => {
+      if (!config.id) {
+        config.id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      }
+      return config;
+    });
+    await this.configuracionesCorreo.bulkPut(configuracionesConId);
+  }
+  async showConfiguracionesCorreo() {
+    return await this.configuracionesCorreo.toArray();
+  }
+  async getConfiguracionCorreoActiva() {
+    return await this.configuracionesCorreo.filter(c => c.activo).first();
+  }
+  async clearConfiguracionesCorreo() {
+    await this.configuracionesCorreo.clear();
+  }
+  //Configuración Servidor Correo
+  async saveConfiguracionServidorCorreo(configuraciones: ConfiguracionServidorCorreo[]) {
+    const configuracionesConId = configuraciones.map(config => {
+      if (!config.id) {
+        config.id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      }
+      return config;
+    });
+    await this.configuracionServidorCorreo.bulkPut(configuracionesConId);
+  }
+  async getConfiguracionServidorCorreo() {
+    return await this.configuracionServidorCorreo.toArray();
+  }
+  async getConfiguracionServidorCorreoActiva() {
+    return await this.configuracionServidorCorreo.filter(c => c.activo).first();
+  }
+  //Destinatarios Correo
+  async saveDestinatariosCorreo(destinatarios: DestinatarioCorreo[]) {
+    const destinatariosConId = destinatarios.map(dest => {
+      if (!dest.id) {
+        dest.id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      }
+      return dest;
+    });
+    await this.destinatariosCorreo.bulkPut(destinatariosConId);
+  }
+  async getDestinatariosCorreo() {
+    return await this.destinatariosCorreo.toArray();
+  }
+  async getDestinatariosCorreoPorTipo(tipo: string) {
+    return await this.destinatariosCorreo.where('tipo').equals(tipo).toArray();
+  }
+  async getDestinatariosCorreoActivos() {
+    return await this.destinatariosCorreo.filter(d => d.activo).toArray();
+  }
+  //Plantillas Correo
+  async savePlantillasCorreo(plantillas: PlantillaCorreo[]) {
+    const plantillasConId = plantillas.map(plantilla => {
+      if (!plantilla.id) {
+        plantilla.id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      }
+      return plantilla;
+    });
+    await this.plantillasCorreo.bulkPut(plantillasConId);
+  }
+  async getPlantillasCorreo() {
+    return await this.plantillasCorreo.toArray();
+  }
+  async getPlantillaCorreoPorTipo(tipo: string) {
+    return await this.plantillasCorreo.filter(p => p.tipo === tipo && p.activo).first();
   }
   //Tipo Gastos
   async saveTipoGasto(tipoGasto: TipoGasto) {

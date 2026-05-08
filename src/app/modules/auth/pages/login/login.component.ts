@@ -81,7 +81,7 @@ export class LoginComponent {
     //   this.router.navigate(['/main/aprobaciones']);
     // }
     // else if (rol.includes('ALLOGIST')) {
-    //   this.router.navigate(['/main/despachos']);
+    //   this.router.navigate(['/main/dashboard-despacho']);
     // }
     // else if (rol.includes('OPLOGIST')) {
     //   this.router.navigate(['/main/parametros']);
@@ -111,7 +111,7 @@ export class LoginComponent {
         break;
 
       case 'ALLOGIST':
-        this.router.navigate(['/main/despachos']);
+        this.router.navigate(['/main/dashboard-despacho']);
         break;
 
       case 'OPLOGIST':

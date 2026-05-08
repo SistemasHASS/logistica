@@ -1,0 +1,171 @@
+<div class="admin-page">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <h2><i class="icon icon-envelope"></i> Plantillas de Correo</h2>
+      <p class="subtitle">Diseña el contenido del correo que recibirán los proveedores con OC y OS adjuntos</p>
+    </div>
+    <button class="btn-primary" (click)="openCreate()">
+      <i class="icon icon-plus"></i> Nueva Plantilla
+    </button>
+  </div>
+
+  <!-- LISTADO DE PLANTILLAS -->
+  <div class="plantillas-grid">
+    <div class="plantilla-card" *ngFor="let p of plantillas">
+      <div class="plantilla-header">
+        <div class="plantilla-meta">
+          <span class="tipo-badge" [class]="p.tipoDocumento === 'OC' ? 'tipo-oc' : p.tipoDocumento === 'OS' ? 'tipo-os' : 'tipo-ambos'">
+            {{ p.tipoDocumento }}
+          </span>
+          <span class="empresa">{{ p.empresa }}</span>
+          <span class="badge-default" *ngIf="p.esDefault">Por defecto</span>
+        </div>
+        <span [class]="p.estado === 'ACTIVO' ? 'activo' : 'inactivo'">{{ p.estado }}</span>
+      </div>
+
+      <div class="plantilla-asunto">
+        <span class="asunto-label">Asunto:</span>
+        <span class="asunto-valor">{{ p.asunto }}</span>
+      </div>
+
+      <div class="plantilla-preview" [innerHTML]="p.cuerpoHtml"></div>
+
+      <div class="plantilla-footer">
+        <span class="firma-indicator" *ngIf="p.incluirFirma">
+          <i class="icon-pen-angled"></i> Incluye firma
+        </span>
+        <div class="actions">
+          <button class="btn btn-sm btn-outline-primary" (click)="openEdit(p)">
+            <i class="icon-pencil"></i> Editar
+          </button>
+          <button class="btn btn-sm" [class]="p.estado === 'ACTIVO' ? 'btn-danger' : 'btn-success'" (click)="toggleEstado(p)">
+            {{ p.estado === 'ACTIVO' ? 'Desactivar' : 'Activar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-card" *ngIf="!plantillas.length">
+      <i class="icon icon-envelope"></i>
+      <p>No hay plantillas de correo registradas</p>
+      <button class="btn-primary" (click)="openCreate()">Crear primera plantilla</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL EDITOR -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <h3><i class="icon icon-envelope"></i> {{ isEdit ? 'Editar Plantilla' : 'Nueva Plantilla de Correo' }}</h3>
+      <button class="close" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="editor-layout">
+
+        <!-- LEFT: FORM -->
+        <div class="editor-form">
+          <div class="form-group">
+            <label>Empresa <span class="required">*</span></label>
+            <select [(ngModel)]="form.empresa">
+              <option *ngFor="let e of empresas" [value]="e">{{ e }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Tipo de Documento <span class="required">*</span></label>
+            <select [(ngModel)]="form.tipoDocumento">
+              <option *ngFor="let t of tiposDocumento" [value]="t.value">{{ t.label }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Asunto del Correo <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="form.asunto" placeholder="Ej: Orden de Compra N° {{ '{{numeroOC}}' }} - {{ '{{empresa}}' }}" />
+          </div>
+
+          <!-- TABS CUERPO / FIRMA -->
+          <div class="editor-tabs">
+            <button class="tab-btn" [class.active]="activeTab === 'cuerpo'" (click)="activeTab = 'cuerpo'">
+              Cuerpo del Correo
+            </button>
+            <button class="tab-btn" [class.active]="activeTab === 'firma'" (click)="activeTab = 'firma'"
+              [disabled]="!form.incluirFirma">
+              Firma
+            </button>
+            <label class="firma-toggle">
+              <input type="checkbox" [(ngModel)]="form.incluirFirma" />
+              Incluir firma
+            </label>
+          </div>
+
+          <div class="form-group" *ngIf="activeTab === 'cuerpo'">
+            <label>Contenido HTML <span class="required">*</span></label>
+            <textarea [(ngModel)]="form.cuerpoHtml" rows="10" placeholder="Escriba el cuerpo del correo en HTML..."></textarea>
+          </div>
+
+          <div class="form-group" *ngIf="activeTab === 'firma' && form.incluirFirma">
+            <label>Firma HTML</label>
+            <textarea [(ngModel)]="form.firmaHtml" rows="6" placeholder="Escriba la firma en HTML..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" [(ngModel)]="form.esDefault" />
+              <span>Usar como plantilla por defecto para {{ form.tipoDocumento }}</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>Estado</label>
+            <select [(ngModel)]="form.estado">
+              <option value="ACTIVO">Activo</option>
+              <option value="INACTIVO">Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- RIGHT: VARIABLES + PREVIEW -->
+        <div class="editor-sidebar">
+          <div class="sidebar-section">
+            <h4>Variables disponibles</h4>
+            <p class="sidebar-hint">Haz clic para insertar en el editor activo</p>
+            <div class="variable-list">
+              <button class="variable-item" *ngFor="let v of variablesDisponibles" (click)="insertVariable(v.variable)" title="{{ v.descripcion }}">
+                <code>{{ v.variable }}</code>
+                <span>{{ v.descripcion }}</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="preview-header">
+              <h4>Vista Previa</h4>
+              <button class="btn-toggle-preview" (click)="togglePreview()">
+                {{ showPreview ? 'Ocultar' : 'Mostrar' }}
+              </button>
+            </div>
+            <div class="email-preview" *ngIf="showPreview">
+              <div class="email-asunto">
+                <strong>Asunto:</strong> {{ form.asunto }}
+              </div>
+              <div class="email-body" [innerHTML]="getPreviewHtml()"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="save()">
+        <i class="icon icon-save"></i> Guardar Plantilla
+      </button>
+    </div>
+  </div>
+</div>

@@ -1314,7 +1314,9 @@ export class CotizacionesComponent implements OnInit {
         subtotal: 0,
         impuesto: 0,
         porcentajeImpuesto: 18,
-        total: 0
+        total: 0,
+        ceco: (det as any).ceco || '',
+        proyecto: (det as any).proyecto || ''
       }));
     }
     

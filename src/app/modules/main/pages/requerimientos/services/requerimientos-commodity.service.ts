@@ -35,6 +35,7 @@ export class RequerimientosCommodityService {
 
   verBotones = false;
   dataSelectedCommodity: any[] = [];
+  itemTipoSeleccionado: 'CONSUMO' | 'COMPRA' = 'COMPRA';
 
   constructor(
     private dexieService: DexieService,
@@ -49,7 +50,7 @@ export class RequerimientosCommodityService {
   private emptyReq(): RequerimientoCommodity {
     return {
       idrequerimiento: '', fecha: '', proveedor: '', servicio: '', descripcion: '',
-      almacen: '', glosa: '', tipo: '', ruc: '', estados: 'PENDIENTE', idfundo: '',
+      almacen: '', glosa: '', tipo: '', itemtipo: '', ruc: '', estados: 'PENDIENTE', idfundo: '',
       idarea: '', idclasificacion: '', prioridad: '', nrodocumento: '', idalmacen: '',
       idalmacendestino: '', idproyecto: '', estado: 0, disabled: false, checked: false,
       eliminado: 0, detalleCommodity: [],
@@ -92,6 +93,8 @@ export class RequerimientosCommodityService {
     this.modoEdicionCommodity = false;
     this.opcionesPrioridadCOMMODITY = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
     this.SeleccionaPrioridadCOMMODITY = '1';
+    this.itemTipoSeleccionado = 'COMPRA';
+    this.maestras.clasificacionSeleccionado = 'SER';
     if (this.maestras.configuracion?.idalmacen) {
       this.maestras.almacenSeleccionado = this.maestras.configuracion.idalmacen;
     }
@@ -109,6 +112,7 @@ export class RequerimientosCommodityService {
     this.maestras.fundoSeleccionado = req.idfundo;
     this.maestras.areaSeleccionada = req.idarea;
     this.maestras.almacenSeleccionado = req.idalmacen;
+    this.itemTipoSeleccionado = (req.itemtipo as 'CONSUMO' | 'COMPRA') || 'COMPRA';
     this.maestras.clasificacionSeleccionado = req.idclasificacion;
     this.SeleccionaPrioridadCOMMODITY = req.prioridad as PrioridadSpring | '';
     const proyectoObj = this.maestras.proyectos.find((p) => p.idproyecto === req.idproyecto);
@@ -154,7 +158,8 @@ export class RequerimientosCommodityService {
         ruc: this.maestras.usuario.ruc,
         idfundo: this.maestras.fundoSeleccionado,
         idarea: this.maestras.areaSeleccionada,
-        idclasificacion: this.maestras.clasificacionSeleccionado,
+        itemtipo: this.itemTipoSeleccionado,
+        idclasificacion: 'SER',
         prioridad: this.SeleccionaPrioridadCOMMODITY ?? '1',
         nrodocumento: this.maestras.usuario.documentoidentidad,
         idalmacen: idAlmacenSync,
@@ -239,7 +244,7 @@ export class RequerimientosCommodityService {
       idrequerimiento: req.idrequerimiento, ruc: req.ruc, idfundo: req.idfundo,
       idarea: req.idarea, idclasificacion: 'SER', servicio: req.servicio,
       nrodocumento: req.nrodocumento, idalmacen: req.idalmacen, idalmacendestino: req.idalmacendestino || '',
-      glosa: req.glosa || '', eliminado: 0, tipo: req.tipo, estados: 'PENDIENTE',
+      glosa: req.glosa || '', eliminado: 0, tipo: req.tipo, itemtipo: req.itemtipo || 'COMPRA', estados: 'PENDIENTE',
       prioridad: req.prioridad || '1',
       detalle: req.detalleCommodity?.map((d: any) => ({
         codigo: d.codigo, tipoclasificacion: 'C', cantidad: d.cantidad,
@@ -425,7 +430,7 @@ export class RequerimientosCommodityService {
       idarea: req.idarea, idclasificacion: 'SER', servicio: req.servicio,
       nrodocumento: req.nrodocumento, idalmacen: req.idalmacen,
       idalmacendestino: req.idalmacendestino || '', glosa: req.glosa || '',
-      eliminado: 0, tipo: req.tipo, estados: 'PENDIENTE', prioridad: req.prioridad || '1',
+      eliminado: 0, tipo: req.tipo, itemtipo: req.itemtipo || 'COMPRA', estados: 'PENDIENTE', prioridad: req.prioridad || '1',
       detalle: req.detalleCommodity?.map((d: any) => ({
         codigo: d.codigo, tipoclasificacion: 'C', cantidad: d.cantidad,
         iddescripcion: d.descripcion, idproyecto: d.proyecto || '',

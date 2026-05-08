@@ -29,7 +29,7 @@
         </div>
       </div>
       <!-- Sidebar navigation-->
-      <nav class="sidebar-nav scroll-sidebar" data-simplebar="">
+      <nav class="sidebar-nav scroll-sidebar scroll-navbar" data-simplebar="">
         <ul>
           <li *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('APLOGIST')"
             class="nav-small-cap">
@@ -117,16 +117,57 @@
               <span class="hide-menu"> API Versionado</span>
             </a>
           </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Correos y Documentos</span>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-proveedores-email" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='bx bx-envelope'></i>
+              </span>
+              <span class="hide-menu"> Correos Proveedores</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-config-smtp" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-server'></i>
+              </span>
+              <span class="hide-menu"> Config. SMTP</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-plantilla-correo" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='bx bx-mail-open'></i>
+              </span>
+              <span class="hide-menu"> Plantilla Correo</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-plantilla-pdf" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='icon icon-file-pdf'></i>
+              </span>
+              <span class="hide-menu"> Plantilla PDF</span>
+            </a>
+          </li>
           <!-- <li
             *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('OPLOGIST') || adminUser?.idPerfil.includes('APLOGIST')"
             class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Reporte</span>
           </li> -->
-        </ul>
-        <div class="unlimited-access hide-menu position-relative mb-7 text-center ">
+          </ul>
+        <div class="unlimited-access hide-menu position-relative mb-7 text-center">
           <a *ngIf="isOnline" (click)="logout()" class="btn btn-danger">
-            <span class="d-md-block hide-menu"><i class="icon icon-exit3 mr-2"></i> Cerrar sesion</span></a>
+            <span class="d-md-block hide-menu"><i class="bx bx-log-out mr-2"></i> Cerrar sesión</span></a>
           <p *ngIf="!isOnline" class="text-danger">Modo offline..</p>
         </div>
       </nav>

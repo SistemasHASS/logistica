@@ -1,0 +1,65 @@
+<div class="container-fluid py-4">
+  <div class="dashboard-header d-flex align-items-center gap-3 mb-4">
+    <div>
+      <h4 class="mb-0 fw-bold">Dashboard — Jefatura de Logística</h4>
+      <small class="text-muted">Bienvenido, {{ usuario?.nombre }}</small>
+    </div>
+  </div>
+
+  <!-- Accesos rápidos -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('aprobaciones-oc')">
+        <div class="acceso-icon text-primary"><i class="bx bx-check-circle"></i></div>
+        <div class="fw-semibold">Aprobaciones OC</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('aprobaciones-os')">
+        <div class="acceso-icon text-success"><i class="bx bx-check-shield"></i></div>
+        <div class="fw-semibold">Aprobaciones OS</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('ordenes-compra')">
+        <div class="acceso-icon text-warning"><i class="icon icon-file-text"></i></div>
+        <div class="fw-semibold">Órdenes de Compra</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('ordenes-servicio')">
+        <div class="acceso-icon text-info"><i class="bx bx-file-blank"></i></div>
+        <div class="fw-semibold">Órdenes de Servicio</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('solicitudes-compra')">
+        <div class="acceso-icon text-secondary"><i class="bx bx-shopping-bag"></i></div>
+        <div class="fw-semibold">Solicitudes de Compra</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('cotizaciones')">
+        <div class="acceso-icon text-danger"><i class="icon icon-calculator"></i></div>
+        <div class="fw-semibold">Cotizaciones</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('consolidacion-requerimientos')">
+        <div class="acceso-icon text-dark"><i class="icon icon-circle"></i></div>
+        <div class="fw-semibold">Consolidación</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('dashboard-logistica')">
+        <div class="acceso-icon text-primary"><i class="bx bxs-dashboard"></i></div>
+        <div class="fw-semibold">Dashboard Logística</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-info border-0 rounded-3">
+    <i class="bx bx-info-circle me-2"></i>
+    Como <strong>Jefatura de Logística</strong> puedes aprobar OC y OS, gestionar órdenes y consolidaciones.
+  </div>
+</div>

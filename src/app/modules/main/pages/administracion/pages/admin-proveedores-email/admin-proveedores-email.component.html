@@ -1,0 +1,126 @@
+<div class="admin-page">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <h2><i class="icon icon-mail"></i> Correos de Proveedores</h2>
+      <p class="subtitle">Gestión de correos destino para envío de Órdenes de Compra y Órdenes de Servicio</p>
+    </div>
+    <button class="btn-primary" (click)="openCreate()">
+      <i class="icon icon-plus"></i> Nuevo Proveedor
+    </button>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filter-bar">
+    <div class="search-box">
+      <i class="icon icon-search"></i>
+      <input type="text" placeholder="Buscar por proveedor, RUC, email..." [(ngModel)]="searchText" (input)="filtrar()" />
+    </div>
+    <span class="count-badge">{{ filteredProveedores.length }} registros</span>
+  </div>
+
+  <!-- TABLA -->
+  <div class="table-wrapper">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Empresa</th>
+          <th>RUC</th>
+          <th>Proveedor</th>
+          <th>Email Principal</th>
+          <th>Email Copia</th>
+          <th>Tipo Doc.</th>
+          <th>Estado</th>
+          <th style="width: 100px">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of filteredProveedores; index as i">
+          <td>{{ i + 1 }}</td>
+          <td>{{ p.empresa }}</td>
+          <td>{{ p.ruc }}</td>
+          <td>{{ p.nombreProveedor }}</td>
+          <td><a [href]="'mailto:' + p.email">{{ p.email }}</a></td>
+          <td>{{ p.emailCopia || '—' }}</td>
+          <td>
+            <span class="badge-tipo">{{ p.tipoDocumento }}</span>
+          </td>
+          <td>
+            <span [class]="p.estado === 'ACTIVO' ? 'activo' : 'inactivo'">{{ p.estado }}</span>
+          </td>
+          <td class="actions">
+            <button class="btn btn-sm btn-warning me-1" title="Editar" (click)="openEdit(p)">
+              <i class="icon-pencil"></i>
+            </button>
+            <button class="btn btn-sm" [class]="p.estado === 'ACTIVO' ? 'btn-danger' : 'btn-success'" title="Cambiar estado" (click)="toggleEstado(p)">
+              <i [class]="p.estado === 'ACTIVO' ? 'icon-close' : 'icon-check'"></i>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="!filteredProveedores.length">
+          <td colspan="9" class="empty">No hay proveedores registrados</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal modal-lg" [class.show]="showModal">
+    <div class="modal-header">
+      <h3><i class="icon icon-mail"></i> {{ isEdit ? 'Editar Proveedor Email' : 'Nuevo Proveedor Email' }}</h3>
+      <button class="close" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Empresa <span class="required">*</span></label>
+          <select [(ngModel)]="form.empresa">
+            <option *ngFor="let e of empresas" [value]="e">{{ e }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Documento <span class="required">*</span></label>
+          <select [(ngModel)]="form.tipoDocumento">
+            <option *ngFor="let t of tiposDocumento" [value]="t.value">{{ t.label }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>RUC <span class="required">*</span></label>
+          <input type="text" [(ngModel)]="form.ruc" placeholder="Ej: 20123456789" maxlength="11" />
+        </div>
+        <div class="form-group">
+          <label>Nombre del Proveedor <span class="required">*</span></label>
+          <input type="text" [(ngModel)]="form.nombreProveedor" placeholder="Razón social del proveedor" />
+        </div>
+        <div class="form-group">
+          <label>Email Principal <span class="required">*</span></label>
+          <input type="email" [(ngModel)]="form.email" placeholder="correo@proveedor.com" />
+        </div>
+        <div class="form-group">
+          <label>Email Copia (CC)</label>
+          <input type="email" [(ngModel)]="form.emailCopia" placeholder="copia@proveedor.com (opcional)" />
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select [(ngModel)]="form.estado">
+            <option value="ACTIVO">Activo</option>
+            <option value="INACTIVO">Inactivo</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="save()">
+        <i class="icon icon-save"></i> Guardar
+      </button>
+    </div>
+  </div>
+</div>

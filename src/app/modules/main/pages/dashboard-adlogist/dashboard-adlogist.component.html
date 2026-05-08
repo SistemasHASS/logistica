@@ -1,0 +1,65 @@
+<div class="container-fluid py-4">
+  <div class="dashboard-header d-flex align-items-center gap-3 mb-4">
+    <div>
+      <h4 class="mb-0 fw-bold">Dashboard — Admin Logística</h4>
+      <small class="text-muted">Bienvenido, {{ usuario?.nombre }}</small>
+    </div>
+  </div>
+
+  <!-- Accesos rápidos -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('despachos')">
+        <div class="acceso-icon text-primary"><i class="icon icon-stack"></i></div>
+        <div class="fw-semibold">Despachos</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('kardex')">
+        <div class="acceso-icon text-success"><i class="bx bx-container"></i></div>
+        <div class="fw-semibold">Kardex e Inventario</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('gestion-inventario')">
+        <div class="acceso-icon text-warning"><i class="icon icon-package"></i></div>
+        <div class="fw-semibold">Gestión de Inventario</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('consolidacion-requerimientos')">
+        <div class="acceso-icon text-info"><i class="icon icon-circle"></i></div>
+        <div class="fw-semibold">Consolidación</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('ordenes-compra')">
+        <div class="acceso-icon text-secondary"><i class="icon icon-file-text"></i></div>
+        <div class="fw-semibold">Órdenes de Compra</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('devoluciones-consumo')">
+        <div class="acceso-icon text-danger"><i class="bx bx-rotate-left"></i></div>
+        <div class="fw-semibold">Devoluciones</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('recepcion-mercaderia')">
+        <div class="acceso-icon text-dark"><i class="icon icon-package"></i></div>
+        <div class="fw-semibold">Recepción Mercadería</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('reporte-saldos')">
+        <div class="acceso-icon text-primary"><i class="icon icon-file-check"></i></div>
+        <div class="fw-semibold">Reporte de Saldos</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-warning border-0 rounded-3">
+    <i class="bx bx-info-circle me-2"></i>
+    Como <strong>Admin Logística</strong> tienes acceso completo al módulo operativo: almacén, despachos, inventario, compras y reportes.
+  </div>
+</div>

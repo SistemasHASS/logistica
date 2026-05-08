@@ -46,6 +46,11 @@ import { LogisticoGuard } from './modules/auth/guard/logistico.guard';
 import { SaldoRequerimientoComponent } from './modules/main/pages/saldo-requerimiento/saldo-requerimiento.component';
 import { DashboardLogisticaComponent } from './modules/main/pages/dashboard-logistica/dashboard-logistica.component';
 import { DashboardOplogistComponent } from './modules/main/pages/dashboard-oplogist/dashboard-oplogist.component';
+import { DashboardJlologistComponent } from './modules/main/pages/dashboard-jlologist/dashboard-jlologist.component';
+import { DashboardJemlogistComponent } from './modules/main/pages/dashboard-jemlogist/dashboard-jemlogist.component';
+import { DashboardAdlogistComponent } from './modules/main/pages/dashboard-adlogist/dashboard-adlogist.component';
+import { DashboardTilogistComponent } from './modules/main/pages/dashboard-tilogist/dashboard-tilogist.component';
+import { DashboardDespachoComponent } from './modules/main/pages/dashboard-despacho/dashboard-despacho.component';
 import { AprobacionesAreaComponent } from './modules/main/pages/aprobaciones-area/aprobaciones-area.component';
 import { ReporteAprobacionesAreaComponent } from './modules/main/pages/reporte-aprobaciones-area/reporte-aprobaciones-area.component';
 import { AprobacionesOCComponent } from './modules/main/pages/aprobaciones-oc/aprobaciones-oc.component';
@@ -107,6 +112,11 @@ export const routes: Routes = [
       { path: 'dashboard-logistica', component: DashboardLogisticaComponent, canActivate: [LogisticoGuard] },
       { path: 'dashboard-oplogist', component: DashboardOplogistComponent, canActivate: [OperativoGuard] },
       { path: 'dashboard-compras', component: DashboardComprasComponent, canActivate: [LogisticoGuard] },
+      { path: 'dashboard-jlologist', component: DashboardJlologistComponent, canActivate: [LogisticoGuard] },
+      { path: 'dashboard-jemlogist', component: DashboardJemlogistComponent, canActivate: [LogisticoGuard] },
+      { path: 'dashboard-adlogist', component: DashboardAdlogistComponent, canActivate: [AdministradorGuard] },
+      { path: 'dashboard-tilogist', component: DashboardTilogistComponent, canActivate: [AdministradorGuard] },
+      { path: 'dashboard-despacho', component: DashboardDespachoComponent, canActivate: [AlmacenGuard] },
       { path: 'cotizaciones', component: CotizacionesComponent, canActivate: [LogisticoGuard] },
       { path: 'ordenes-compra', component: OrdenesCompraComponent, canActivate: [LogisticoGuard] },
       { path: 'recepcion-mercaderia', component: RecepcionMercaderiaComponent, canActivate: [AlmacenGuard] },

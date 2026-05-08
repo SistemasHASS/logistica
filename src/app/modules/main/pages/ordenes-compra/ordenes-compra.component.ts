@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
@@ -9,6 +9,12 @@ import { UtilsService } from '@/app/shared/utils/utils.service';
 import { OrdenCompraService } from '@/app/services/orden-compra.service';
 import { SolicitudCompraService } from '@/app/services/solicitud-compra.service';
 import { SeguimientoOCService } from '@/app/services/seguimiento-oc.service';
+import { ConsolidacionService } from '@/app/services/consolidacion.service';
+import { MaestrasService } from '@/app/modules/main/services/maestras.service';
+import { ItemService } from '@/app/modules/main/services/items.service';
+import { OrdenCompraPdfService } from './orden-compra-pdf.service';
+import { EmailService } from '@/app/modules/main/services/email.service';
+import { lastValueFrom } from 'rxjs';
 import {
   OrdenCompra,
   DetalleOrdenCompra,
@@ -19,14 +25,15 @@ import {
   SeguimientoOrdenCompra,
   HitoCompra,
   EstadoSeguimientoOC,
-  OrdenCompraConSeguimiento
+  OrdenCompraConSeguimiento,
+  Proveedor
 } from '@/app/shared/interfaces/Tables';
 import { TableModule } from 'primeng/table';
 
 @Component({
   selector: 'app-ordenes-compra',
   standalone: true,
-  imports: [CommonModule, FormsModule, TableModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, TableModule],
   templateUrl: './ordenes-compra.component.html',
   styleUrls: ['./ordenes-compra.component.scss'],
 })
@@ -94,6 +101,10 @@ export class OrdenesCompraComponent implements OnInit {
   gastosData: any[] = [];
   laborData: any[] = [];
 
+  // FormControl maps para dropdowns inline de distribución (igual que module-compras)
+  private ccDestinoControls = new Map<string, FormControl>();
+  private referenciaControls = new Map<string, FormControl>();
+
   // Estados del timeline de OC
   estadosSeguimiento: EstadoSeguimientoOC[] = [
     'GENERADA',
@@ -137,9 +148,14 @@ export class OrdenesCompraComponent implements OnInit {
     private alertService: AlertService,
     private userService: UserService,
     private utilsService: UtilsService,
+    private consolidacionService: ConsolidacionService,
     private ordenCompraService: OrdenCompraService,
     private solicitudCompraService: SolicitudCompraService,
-    private seguimientoOCService: SeguimientoOCService
+    private seguimientoOCService: SeguimientoOCService,
+    private maestrasService: MaestrasService,
+    private itemService: ItemService,
+    private pdfService: OrdenCompraPdfService,
+    private emailService: EmailService
   ) {}
 
   async ngOnInit() {
@@ -222,51 +238,158 @@ export class OrdenesCompraComponent implements OnInit {
 
   async cargarCatalogosDistribucion() {
     try {
-      // Cargar gastos
-      const gastos = await this.dexieService.showTipoGastos();
+      // Cargar gastos: desde Dexie o API si está vacío
+      let gastos = await this.dexieService.showTipoGastos();
+      if (!gastos || gastos.length === 0) {
+        try {
+          const resp = await lastValueFrom(this.maestrasService.getTipoGastos([{}]));
+          if (resp && resp.length) {
+            await this.dexieService.saveTipoGastos(resp);
+            gastos = await this.dexieService.showTipoGastos();
+          }
+        } catch { /* sin conexión, continuar */ }
+      }
       this.gastosData = gastos || [];
 
-      // Cargar labor/centros de costo destino (usar almacenes como referencia)
-      const almacenes = await this.dexieService.showAlmacenes();
-      this.laborData = almacenes || [];
+      // Cargar labores: desde Dexie o API si está vacío
+      let labores = await this.dexieService.showLabores();
+      if (!labores || labores.length === 0) {
+        try {
+          const resp = await this.maestrasService.getLabores([{ aplicacion: 'LOGISTICA', esadmin: 0 }]);
+          if (resp && resp.length) {
+            await this.dexieService.saveLabores(resp);
+            labores = await this.dexieService.showLabores();
+          }
+        } catch { /* sin conexión, continuar */ }
+      }
+      this.laborData = labores || [];
     } catch (error) {
       console.error('Error al cargar catálogos de distribución:', error);
+    }
+  }
+
+  async asegurarMaestroItems(): Promise<void> {
+    const count = await this.dexieService.maestroItems.count();
+    if (count === 0) {
+      try {
+        const resp = await lastValueFrom(this.itemService.getItem([]));
+        if (resp && resp.length) {
+          await this.dexieService.saveMaestroItems(resp);
+        }
+      } catch { /* sin conexión */ }
     }
   }
 
   async generarDistribucionContable() {
     try {
       this.distribucionContable = [];
+      this.ccDestinoControls.clear();
+      this.referenciaControls.clear();
+
+      // Asegurar que maestroItems esté cargado en Dexie
+      await this.asegurarMaestroItems();
+
+      // Obtener ceco y proyecto desde la cotización origen (que ya los tiene del requerimiento)
+      const cotizacionId = this.ordenCompra?.cotizacionId || 0;
+      let detallesCotizacion: any[] = [];
+      if (cotizacionId) {
+        const cotizacion = await this.dexieService.cotizaciones.get(cotizacionId);
+        detallesCotizacion = cotizacion?.detalle || [];
+      }
+
+      // Buscar la solicitud de cotización para obtener idConsolidacion
+      const idSolicitudCotizacion = this.cotizacionSeleccionada?.idSolicitudCotizacion || 0;
+      let detallesSolicitudCot: any[] = [];
+      if (idSolicitudCotizacion && detallesCotizacion.every((d: any) => !d.ceco)) {
+        detallesSolicitudCot = await this.dexieService.detalleSolicitudCotizacion
+          .where('idSolicitudCotizacion')
+          .equals(idSolicitudCotizacion)
+          .toArray();
+      }
+
+      // Fallback final: ir al SP del backend si Dexie no tiene ceco/proyecto (datos anteriores al fix)
+      let detallesConsolidacion: any[] = [];
+      const sinCeco = detallesCotizacion.every((d: any) => !d.ceco) && detallesSolicitudCot.every((d: any) => !d.ceco);
+      if (sinCeco) {
+        try {
+          // Obtener idConsolidacion desde la solicitud en Dexie
+          const solicitudCot = idSolicitudCotizacion
+            ? await this.dexieService.solicitudesCotizacion.get(idSolicitudCotizacion)
+            : null;
+          const idConsolidacion = solicitudCot?.idConsolidacion || 0;
+          if (idConsolidacion) {
+            const consolidacion = await this.consolidacionService.obtenerConsolidacion(idConsolidacion);
+            detallesConsolidacion = consolidacion?.detalles || [];
+          }
+        } catch (e) {
+          console.warn('[DIST] No se pudo obtener consolidación del backend:', e);
+        }
+      }
+
       const distribucionesMap = new Map<string, any>();
 
       for (const detalleItem of this.detalleOrden) {
-        // Obtener información del item desde Dexie
-        const itemData = await this.dexieService.items
-          .where('codigo')
+        const det = detalleItem as any;
+        const subtotal = this.calcularSubtotalSinIgv(detalleItem);
+
+        // Buscar ceco y proyecto: cotización Dexie → solicitud Dexie → consolidación backend (SP)
+        const detCot = detallesCotizacion.find(
+          (d: any) => d.codigo === detalleItem.codigo
+        );
+        const detSolCot = detallesSolicitudCot.find(
+          (d: any) => d.codigoItem === detalleItem.codigo
+        );
+        const detConsolidacion = detallesConsolidacion.find(
+          (d: any) => d.codigoItem === detalleItem.codigo
+        );
+        const centrocosto = det.centrocosto
+          || detCot?.ceco
+          || detSolCot?.ceco
+          || detConsolidacion?.ceco
+          || '';
+        const proyecto = det.proyecto
+          || detCot?.proyecto
+          || detSolCot?.proyecto
+          || detConsolidacion?.proyecto
+          || '';
+
+        let cuenta = '';
+        let descripcion = detalleItem.descripcion || '';
+
+        // Buscar por 'item' que coincide con codigo del detalle
+        let itemData = await this.dexieService.maestroItems
+          .where('item')
           .equals(detalleItem.codigo || '')
           .first();
 
-        if (itemData) {
-          const subtotal = this.calcularSubtotalSinIgv(detalleItem);
-          // Usar tipoclasificacion como cuenta para distribución contable
-          const cuentaKey = `${itemData.tipoclasificacion || 'SIN_CLASIFICACION'}`;
+        // Fallback: buscar por descripcionLocal si no coincidió por código
+        if (!itemData && detalleItem.descripcion) {
+          const desc = detalleItem.descripcion.trim();
+          itemData = await this.dexieService.maestroItems
+            .filter(m => m.descripcionLocal?.trim() === desc || m.descripcionCompleta?.trim() === desc)
+            .first();
+        }
 
-          if (distribucionesMap.has(cuentaKey)) {
-            const existing = distribucionesMap.get(cuentaKey);
-            existing.monto += subtotal;
-            existing.descripcion = itemData.descripcionLocal || existing.descripcion;
-          } else {
-            distribucionesMap.set(cuentaKey, {
-              id: `DIST-${cuentaKey}`,
-              cuenta: itemData.tipoclasificacion || 'SIN_CLASIFICACION',
-              descripcion: itemData.descripcionLocal || '',
-              centroCosto: '',
-              proyecto: '',
-              monto: subtotal,
-              referencia: '',
-              ccDestino: ''
-            });
-          }
+        if (itemData) {
+          cuenta = itemData.cuentaInventario || itemData.cuentaGasto || '';
+          descripcion = itemData.subFamilia || itemData.familia || itemData.descripcionLocal || descripcion;
+        }
+
+        const cuentaKey = `${cuenta || detalleItem.codigo}-${centrocosto}-${proyecto}`;
+
+        if (distribucionesMap.has(cuentaKey)) {
+          distribucionesMap.get(cuentaKey).monto += subtotal;
+        } else {
+          distribucionesMap.set(cuentaKey, {
+            id: `DIST-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+            cuenta,
+            descripcion,
+            centrocosto,
+            proyecto,
+            monto: subtotal,
+            referencia: '',
+            ccdestino: ''
+          });
         }
       }
 
@@ -274,6 +397,42 @@ export class OrdenesCompraComponent implements OnInit {
     } catch (error) {
       console.error('Error al generar distribución contable:', error);
     }
+  }
+
+  getCCDestinoControl(item: any): FormControl {
+    if (!this.ccDestinoControls.has(item.id)) {
+      const control = new FormControl(item.ccdestino || '');
+      control.valueChanges.subscribe(newValue => {
+        this.distribucionContable = this.distribucionContable.map(dist =>
+          dist.id === item.id ? { ...dist, ccdestino: newValue } : dist
+        );
+      });
+      this.ccDestinoControls.set(item.id, control);
+    } else {
+      const control = this.ccDestinoControls.get(item.id)!;
+      if (control.value !== item.ccdestino) {
+        control.setValue(item.ccdestino || '', { emitEvent: false });
+      }
+    }
+    return this.ccDestinoControls.get(item.id)!;
+  }
+
+  getReferenciaControl(item: any): FormControl {
+    if (!this.referenciaControls.has(item.id)) {
+      const control = new FormControl(item.referencia || '');
+      control.valueChanges.subscribe(newValue => {
+        this.distribucionContable = this.distribucionContable.map(dist =>
+          dist.id === item.id ? { ...dist, referencia: newValue } : dist
+        );
+      });
+      this.referenciaControls.set(item.id, control);
+    } else {
+      const control = this.referenciaControls.get(item.id)!;
+      if (control.value !== item.referencia) {
+        control.setValue(item.referencia || '', { emitEvent: false });
+      }
+    }
+    return this.referenciaControls.get(item.id)!;
   }
 
   calcularSubtotalSinIgv(detalle: DetalleOrdenCompra): number {
@@ -553,6 +712,15 @@ export class OrdenesCompraComponent implements OnInit {
             eliminado: 0
           };
         }),
+        distribucion: (this.distribucionContable || []).map((dist: any) => ({
+          cuenta: dist.cuenta || '',
+          descripcion: dist.descripcion || '',
+          centrocosto: dist.centrocosto || '',
+          proyecto: dist.proyecto || '',
+          monto: dist.monto || 0,
+          referencia: dist.referencia || '',
+          ccdestino: dist.ccdestino || ''
+        })),
         adjuntos: []
       }];
 
@@ -914,6 +1082,82 @@ export class OrdenesCompraComponent implements OnInit {
     }
   }
 
+  async generarPdfOrdenCompra(orden: OrdenCompra) {
+    try {
+      // Obtener datos del proveedor
+      let proveedor: Proveedor = {
+        id: 0,
+        TipoPersona: 'JURIDICA',
+        documento: orden.rucProveedor || '',
+        ruc: orden.rucProveedor || '',
+        Estado: 'ACTIVO',
+        TipoPago: orden.formaPago || 'CONTADO',
+        MonedaPago: orden.moneda || 'PEN',
+        detraccion: '',
+        TipoServicio: 'BIENES'
+      };
+
+      // Generar y descargar PDF
+      this.pdfService.descargarPdf(orden, proveedor);
+
+      this.alertService.showAlert(
+        'Éxito',
+        'PDF de orden de compra generado correctamente.',
+        'success'
+      );
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+      this.alertService.showAlert(
+        'Error',
+        'Ocurrió un error al generar el PDF.',
+        'error'
+      );
+    }
+  }
+
+  async enviarOrdenCompraPorEmail(orden: OrdenCompra) {
+    try {
+      // Generar PDF en base64
+      let proveedor: Proveedor = {
+        id: 0,
+        TipoPersona: 'JURIDICA',
+        documento: orden.rucProveedor || '',
+        ruc: orden.rucProveedor || '',
+        Estado: 'ACTIVO',
+        TipoPago: orden.formaPago || 'CONTADO',
+        MonedaPago: orden.moneda || 'PEN',
+        detraccion: '',
+        TipoServicio: 'BIENES'
+      };
+
+      // Generar PDF
+      const pdfDoc = this.pdfService.generarPdfOrdenCompra(orden, proveedor);
+      const pdfBase64 = pdfDoc.output('datauristring').split(',')[1];
+
+      // Enviar por email
+      const resultado = await this.emailService.enviarOrdenCompraPorEmail(
+        orden, 
+        pdfBase64, 
+        orden.correoProveedor
+      );
+
+      if (resultado) {
+        this.alertService.showAlert(
+          'Éxito',
+          'Orden de compra enviada por email correctamente.',
+          'success'
+        );
+      }
+    } catch (error) {
+      console.error('Error al enviar orden de compra por email:', error);
+      this.alertService.showAlert(
+        'Error',
+        'Ocurrió un error al enviar el email.',
+        'error'
+      );
+    }
+  }
+
   verDetalle(orden: OrdenCompra) {
     this.ordenDetalle = orden;
     this.modalDetalleOrdenAbierto = true;
@@ -1039,10 +1283,40 @@ export class OrdenesCompraComponent implements OnInit {
 
     try {
       const seguimiento = await this.seguimientoOCService.obtenerSeguimiento(orden.id!).toPromise();
-      this.seguimientoActual = seguimiento || null;
+      if (seguimiento) {
+        this.seguimientoActual = seguimiento;
+      } else {
+        // Sin registro en backend: construir seguimiento local desde la orden
+        this.seguimientoActual = {
+          id: orden.id ?? 0,
+          idOrden: orden.id ?? 0,
+          numeroOrden: orden.numeroOrden,
+          estado: orden.estado as any,
+          proveedor: orden.proveedor,
+          nombreProveedor: orden.nombreProveedor,
+          montoTotal: orden.montoTotal,
+          usuarioGenera: '',
+          porcentajeAvance: this.calcularPorcentajePorEstado(orden.estado as string),
+          fechaRegistro: new Date().toISOString(),
+          hitos: []
+        };
+      }
     } catch (error) {
       console.error('Error al cargar seguimiento:', error);
-      this.seguimientoActual = null;
+      // Igual construir desde la orden para mostrar el estado correcto
+      this.seguimientoActual = {
+        id: orden.id ?? 0,
+        idOrden: orden.id ?? 0,
+        numeroOrden: orden.numeroOrden,
+        estado: orden.estado as any,
+        proveedor: orden.proveedor,
+        nombreProveedor: orden.nombreProveedor,
+        montoTotal: orden.montoTotal,
+        usuarioGenera: '',
+        porcentajeAvance: this.calcularPorcentajePorEstado(orden.estado as string),
+        fechaRegistro: new Date().toISOString(),
+        hitos: []
+      };
     }
   }
 
@@ -1056,13 +1330,34 @@ export class OrdenesCompraComponent implements OnInit {
   }
 
   /**
-   * Calcular porcentaje total basado en hitos
+   * Calcular porcentaje total basado en hitos o en estado del flujo
    */
   calcularPorcentajeTotal(): number {
-    if (!this.seguimientoActual?.hitos || this.seguimientoActual.hitos.length === 0) {
-      return this.seguimientoActual?.porcentajeAvance || 0;
+    // Si hay hitos, calcular desde ellos
+    if (this.seguimientoActual?.hitos && this.seguimientoActual.hitos.length > 0) {
+      return this.seguimientoOCService.calcularPorcentajeAvance(this.seguimientoActual.hitos);
     }
-    return this.seguimientoOCService.calcularPorcentajeAvance(this.seguimientoActual.hitos);
+    // Sin hitos: calcular según el estado del flujo
+    const estado = this.seguimientoActual?.estado || this.ordenSeguimiento?.estado;
+    return this.calcularPorcentajePorEstado(estado as string);
+  }
+
+  /**
+   * Devuelve el % fijo que corresponde a cada estado del flujo
+   */
+  calcularPorcentajePorEstado(estado: string): number {
+    const mapa: Record<string, number> = {
+      'GENERADA':          0,
+      'ENVIADA':          10,
+      'APROBADA':         20,
+      'CONFIRMADA':       40,
+      'EN_PROCESO':       60,
+      'RECIBIDA_PARCIAL': 80,
+      'RECIBIDA_TOTAL':  100,
+      'CANCELADA':         0,
+      'ANULADA':           0
+    };
+    return mapa[estado] ?? 0;
   }
 
   /**

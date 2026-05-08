@@ -1,0 +1,210 @@
+<div class="configuracion-correo-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h2>Configuración de Correo Electrónico</h2>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="nuevaConfiguracion()">
+        <i class="icon-plus"></i> Nueva Configuración
+      </button>
+    </div>
+  </div>
+
+  <!-- CONFIGURACIÓN ACTIVA -->
+  <div class="configuracion-activa-card" *ngIf="getConfiguracionActiva()">
+    <div class="card-header">
+      <h3><i class="icon-check-circle"></i> Configuración Activa</h3>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <p><strong>Email:</strong> {{ getConfiguracionActiva()?.emailFrom }}</p>
+          <p><strong>Nombre:</strong> {{ getConfiguracionActiva()?.emailFromName }}</p>
+          <p><strong>SMTP:</strong> {{ getConfiguracionActiva()?.smtpHost }}:{{ getConfiguracionActiva()?.smtpPort }}</p>
+        </div>
+        <div class="col-md-6">
+          <p><strong>Usuario:</strong> {{ getConfiguracionActiva()?.smtpUser }}</p>
+          <p><strong>Seguro:</strong> {{ getConfiguracionActiva()?.smtpSecure ? 'Sí' : 'No' }}</p>
+          <p><strong>Reply-To:</strong> {{ getConfiguracionActiva()?.replyTo || 'No configurado' }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMULARIO -->
+  <div class="form-card" *ngIf="configuracionForm">
+    <div class="card-header">
+      <h3>{{ modoEdicion ? 'Editar' : 'Nueva' }} Configuración</h3>
+      <button class="btn-close" (click)="cancelarEdicion()" *ngIf="modoEdicion">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="configuracionForm" (ngSubmit)="guardarConfiguracion()">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Host SMTP *</label>
+              <input type="text" class="form-control" formControlName="smtpHost" 
+                     placeholder="ej: smtp.gmail.com">
+              <div class="error-message" *ngIf="configuracionForm.get('smtpHost')?.invalid && configuracionForm.get('smtpHost')?.touched">
+                El host SMTP es requerido
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label>Puerto SMTP *</label>
+              <input type="number" class="form-control" formControlName="smtpPort" 
+                     placeholder="587">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label>Conexión Segura</label>
+              <div class="checkbox-wrapper">
+                <input type="checkbox" formControlName="smtpSecure" id="smtpSecure">
+                <label for="smtpSecure">Usar SSL/TLS</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Usuario SMTP *</label>
+              <input type="email" class="form-control" formControlName="smtpUser" 
+                     placeholder="correo@empresa.com">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Contraseña SMTP *</label>
+              <div class="password-wrapper">
+                <input [type]="mostrarPassword ? 'text' : 'password'" 
+                       class="form-control" formControlName="smtpPassword" 
+                       placeholder="Contraseña">
+                <button type="button" class="btn-toggle-password" (click)="togglePassword()">
+                  <i class="icon-eye" *ngIf="!mostrarPassword"></i>
+                  <i class="icon-eye-off" *ngIf="mostrarPassword"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Email Remitente *</label>
+              <input type="email" class="form-control" formControlName="emailFrom" 
+                     placeholder="ordenes@empresa.com">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Nombre Remitente *</label>
+              <input type="text" class="form-control" formControlName="emailFromName" 
+                     placeholder="Empresa S.A.C.">
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Email Respuesta</label>
+              <input type="email" class="form-control" formControlName="replyTo" 
+                     placeholder="respuestas@empresa.com">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Estado</label>
+              <div class="checkbox-wrapper">
+                <input type="checkbox" formControlName="activo" id="activo">
+                <label for="activo">Configuración activa</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="probarConexion()" 
+                  [disabled]="probandoConexion">
+            <i class="icon-wifi" *ngIf="!probandoConexion"></i>
+            <i class="icon-loader animate-spin" *ngIf="probandoConexion"></i>
+            {{ probandoConexion ? 'Probando...' : 'Probar Conexión' }}
+          </button>
+          <button type="submit" class="btn-primary">
+            <i class="icon-save"></i>
+            {{ modoEdicion ? 'Actualizar' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- LISTA DE CONFIGURACIONES -->
+  <div class="configuraciones-list">
+    <div class="card-header">
+      <h3>Configuraciones Guardadas</h3>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive" *ngIf="configuraciones.length > 0">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Email Remitente</th>
+              <th>Nombre</th>
+              <th>SMTP</th>
+              <th>Estado</th>
+              <th>Fecha Creación</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let config of configuraciones; let i = index" 
+                [class.active]="config.activo">
+              <td>{{ config.emailFrom }}</td>
+              <td>{{ config.emailFromName }}</td>
+              <td>{{ config.smtpHost }}:{{ config.smtpPort }}</td>
+              <td>
+                <span class="badge" 
+                      [class.badge-success]="config.activo" 
+                      [class.badge-secondary]="!config.activo">
+                  {{ config.activo ? 'Activa' : 'Inactiva' }}
+                </span>
+              </td>
+              <td>{{ config.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-sm btn-info" (click)="editarConfiguracion(config, i)" 
+                          title="Editar">
+                    <i class="icon-edit"></i>
+                  </button>
+                  <button class="btn-sm btn-success" (click)="activarConfiguracion(i)" 
+                          [disabled]="config.activo" title="Activar">
+                    <i class="icon-check"></i>
+                  </button>
+                  <button class="btn-sm btn-danger" (click)="eliminarConfiguracion(i)" 
+                          title="Eliminar">
+                    <i class="icon-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="no-data" *ngIf="configuraciones.length === 0">
+        <i class="icon-mail"></i>
+        <p>No hay configuraciones de correo guardadas</p>
+        <button class="btn-primary" (click)="nuevaConfiguracion()">
+          <i class="icon-plus"></i> Crear Primera Configuración
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

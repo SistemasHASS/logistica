@@ -16,7 +16,11 @@ export class DashboardComponent implements OnInit {
     roles: 3,
     perfiles: 3,
     flujos: 3,
-    aprobadores: 3
+    aprobadores: 3,
+    proveedoresEmail: 0,
+    configSmtp: 0,
+    plantillasCorreo: 0,
+    plantillasPdf: 0
   };
 
   constructor(private router: Router) { }

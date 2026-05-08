@@ -276,9 +276,35 @@
               </button>
               <button 
                 class="btn btn-sm btn-secondary me-2" 
+                (click)="iniciarProcesoOrden(orden)"
+                [disabled]="orden.estado !== 'CONFIRMADA'"
+                title="Iniciar Proceso">
+                <i class="bx bx-play-circle"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-danger me-2" 
+                (click)="cancelarOrdenCompra(orden)"
+                [disabled]="orden.estado === 'CANCELADA' || orden.estado === 'RECIBIDA_TOTAL'"
+                title="Cancelar">
+                <i class="bx bx-x-circle"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-info me-2" 
+                (click)="generarPdfOrdenCompra(orden)"
+                title="Generar PDF">
+                <i class="bx bx-file"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-success me-2" 
+                (click)="enviarOrdenCompraPorEmail(orden)"
+                title="Enviar por Email">
+                <i class="bx bx-envelope"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-secondary me-2" 
                 (click)="verSeguimiento(orden)"
                 title="Seguimiento">
-                <i class="bi-activity"></i>
+                <i class="bx bx-browser-activity"></i>
               </button>
               <button 
                 class="btn btn-sm btn-danger" 
@@ -543,44 +569,44 @@
           <table class="table">
             <thead>
               <tr>
-                <th>Cuenta</th>
-                <th>Descripción</th>
-                <th>C. Costos</th>
-                <th>Proyecto</th>
-                <th>Monto</th>
-                <th>Referencia</th>
-                <th>C.C. Destino</th>
+                <th>CUENTA</th>
+                <th>DESCRIPCIÓN</th>
+                <th>C.COSTOS</th>
+                <th>PROYECTO</th>
+                <th class="text-right">MONTO</th>
+                <th>REFERENCIA</th>
+                <th>C.C.DESTINO</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let dist of distribucionContable; let i = index">
                 <td>{{ dist.cuenta }}</td>
                 <td>{{ dist.descripcion }}</td>
-                <td>{{ dist.centroCosto }}</td>
+                <td>{{ dist.centrocosto }}</td>
                 <td>{{ dist.proyecto }}</td>
-                <td class="text-right"><strong>{{ formatearMoneda(dist.monto, ordenCompra.moneda) }}</strong></td>
+                <td class="text-right">{{ formatearMoneda(dist.monto, ordenCompra.moneda) }}</td>
                 <td>
-                  <select class="form-control" [(ngModel)]="dist.referencia">
-                    <option value="">-- Seleccione --</option>
+                  <select class="form-control form-control-sm" [formControl]="getReferenciaControl(dist)">
+                    <option value="">Seleccione un gasto</option>
                     <option *ngFor="let gasto of gastosData" [value]="gasto.codigo">{{ gasto.descripcion }}</option>
                   </select>
                 </td>
                 <td>
-                  <select class="form-control" [(ngModel)]="dist.ccDestino">
-                    <option value="">-- Seleccione --</option>
-                    <option *ngFor="let labor of laborData" [value]="labor.codigo">{{ labor.descripcion }}</option>
+                  <select class="form-control form-control-sm" [formControl]="getCCDestinoControl(dist)">
+                    <option value="">Seleccione una labor</option>
+                    <option *ngFor="let labor of laborData" [value]="labor.idlabor">{{ labor.labor }}</option>
                   </select>
                 </td>
               </tr>
               <tr *ngIf="distribucionContable.length === 0">
-                <td colspan="7" class="text-center">
-                  <p class="no-data">No hay distribución contable generada. Agregue items al detalle para generarla automáticamente.</p>
+                <td colspan="7" class="text-center py-4">
+                  <p class="no-data">No hay distribuciones. Agregue items en el detalle para generar las distribuciones contables automáticamente.</p>
                 </td>
               </tr>
               <tr *ngIf="distribucionContable.length > 0" class="total-row">
-                <td colspan="4" class="text-right"><strong>TOTAL DISTRIBUCIÓN:</strong></td>
+                <td colspan="4" class="text-right"><strong>Total:</strong></td>
                 <td class="text-right">
-                  <strong class="total-amount">{{ formatearMoneda(getTotalDistribucion(), ordenCompra.moneda) }}</strong>
+                  <strong>{{ formatearMoneda(getTotalDistribucion(), ordenCompra.moneda) }}</strong>
                 </td>
                 <td colspan="2"></td>
               </tr>

@@ -210,4 +210,14 @@ export class RequerimientosService {
       throw new Error(error.error?.message || 'Error al registrar requerimiento commodity aprobado');
     }
   }
+
+  // NUEVO: Dashboard Usuario - Listar todos los requerimientos del usuario (todos los estados)
+  getRequerimientosUsuarioDashboard(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/listar-requerimientos-usuario-dashboard`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error al obtener requerimientos del usuario');
+    }
+  }
 }

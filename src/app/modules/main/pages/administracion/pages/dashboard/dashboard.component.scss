@@ -118,6 +118,22 @@
   color: #777;
 }
 
+.section-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #3f51b5;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 28px 0 14px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e0e7ff;
+}
+
+.card-icon-email { color: #0ea5e9 !important; opacity: 0.7; }
+.card-icon-smtp  { color: #10b981 !important; opacity: 0.7; }
+.card-icon-template { color: #f59e0b !important; opacity: 0.7; }
+.card-icon-pdf   { color: #ef4444 !important; opacity: 0.7; }
+
 .card p {
   display: -webkit-box;
   -webkit-line-clamp: 3; // cambia a 3 si deseas

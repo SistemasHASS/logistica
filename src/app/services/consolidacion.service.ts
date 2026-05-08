@@ -48,6 +48,20 @@ export class ConsolidacionService {
     return Array.isArray(resp) ? resp : [];
   }
 
+  // POST api/consolidacion/listar-activos-fijos-pendientes-consolidacion
+  async listarActivosFijosPendientes(filtros: any = {}): Promise<any[]> {
+    const url = `${this.baseUrl}/api/consolidacion/listar-activos-fijos-pendientes-consolidacion`;
+    const resp = await firstValueFrom(this.http.post<any>(url, filtros));
+    return Array.isArray(resp) ? resp : [];
+  }
+
+  // POST api/consolidacion/listar-activos-menores-pendientes-consolidacion
+  async listarActivosMenoresPendientes(filtros: any = {}): Promise<any[]> {
+    const url = `${this.baseUrl}/api/consolidacion/listar-activos-menores-pendientes-consolidacion`;
+    const resp = await firstValueFrom(this.http.post<any>(url, filtros));
+    return Array.isArray(resp) ? resp : [];
+  }
+
   // POST api/consolidacion/crear-consolidacion
   async crearConsolidacion(request: CrearConsolidacionRequest): Promise<CrearConsolidacionResponse> {
     const url = `${this.baseUrl}/api/consolidacion/crear-consolidacion`;

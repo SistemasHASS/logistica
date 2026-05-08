@@ -45,10 +45,12 @@ export class RequerimientosActivoFijoService {
     private maestras: RequerimientosMaestrasService,
   ) {}
 
+  itemTipoSeleccionado: 'CONSUMO' | 'COMPRA' = 'COMPRA';
+
   private emptyReq(): RequerimientoActivoFijo {
     return {
       idrequerimiento: '', fecha: '', proveedor: '', servicio: '', descripcion: '',
-      almacen: '', glosa: '', tipo: '', ruc: '', estados: 'PENDIENTE', idfundo: '',
+      almacen: '', glosa: '', tipo: '', itemtipo: '', ruc: '', estados: 'PENDIENTE', idfundo: '',
       idarea: '', idclasificacion: '', prioridad: '', nrodocumento: '', idalmacen: '',
       idalmacendestino: '', idproyecto: '', estado: 0, disabled: false, checked: false,
       eliminado: 0, detalleActivoFijo: [],
@@ -105,6 +107,8 @@ export class RequerimientosActivoFijoService {
     this.modoEdicionActivoFijo = false;
     this.opcionesPrioridadACTIVOFIJO = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
     this.SeleccionaPrioridadACTIVOFIJO = '1';
+    this.itemTipoSeleccionado = 'COMPRA';
+    this.maestras.clasificacionSeleccionado = 'ACT';
     if (this.maestras.configuracion?.idalmacen) {
       this.maestras.almacenSeleccionado = this.maestras.configuracion.idalmacen;
     }
@@ -122,6 +126,7 @@ export class RequerimientosActivoFijoService {
     this.maestras.fundoSeleccionado = req.idfundo;
     this.maestras.areaSeleccionada = req.idarea;
     this.maestras.almacenSeleccionado = req.idalmacen;
+    this.itemTipoSeleccionado = (req.itemtipo as 'CONSUMO' | 'COMPRA') || 'COMPRA';
     this.maestras.clasificacionSeleccionado = req.idclasificacion;
     this.SeleccionaPrioridadACTIVOFIJO = req.prioridad as PrioridadSpring | '';
     const proyectoObj = this.maestras.proyectos.find((p) => p.id === req.idproyecto);
@@ -198,6 +203,7 @@ export class RequerimientosActivoFijoService {
         almacen: almacenObj?.almacen || '',
         glosa: this.glosaActivoFijo,
         tipo: 'ACTIVOFIJO',
+        itemtipo: this.itemTipoSeleccionado,
         ruc: this.maestras.usuario.ruc,
         estados: 'PENDIENTE',
         prioridad: this.SeleccionaPrioridadACTIVOFIJO ?? '1',
@@ -232,13 +238,13 @@ export class RequerimientosActivoFijoService {
         if (reqAF.idarea) {
           await this.aprobacionesAreaService.registrarRequerimiento({
             ruc: reqAF.ruc, idrequerimiento: reqAF.idrequerimiento,
-            idarea: Number(reqAF.idarea), tipoRequerimiento: 'ACTIVO_FIJO',
+            idarea: Number(reqAF.idarea), tipoRequerimiento: this.itemTipoSeleccionado,
             descripcion: reqAF.glosa, usuarioSolicitud: this.maestras.usuario.documentoidentidad,
             glosa: reqAF.glosa, monto: 0,
           }).toPromise();
           await this.aprobacionesAreaService.asignarAprobadoresRequerimiento({
             ruc: reqAF.ruc, idrequerimiento: reqAF.idrequerimiento,
-            idarea: Number(reqAF.idarea), tipoRequerimiento: 'ACTIVO_FIJO',
+            idarea: Number(reqAF.idarea), tipoRequerimiento: this.itemTipoSeleccionado,
             usuarioSolicitud: this.maestras.usuario.documentoidentidad,
           }).toPromise();
         }

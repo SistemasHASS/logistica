@@ -35,6 +35,8 @@ export class TabActivoMenorComponent {
 
   onPrioridadChange(val: string) { this.prioridadChange.emit(val); }
   onGlosaChange(val: string) { this.glosaChange.emit(val); }
+  get itemTipoSeleccionado() { return this.activoMenorSvc.itemTipoSeleccionado; }
+  onItemTipoChange(val: 'CONSUMO' | 'COMPRA') { this.activoMenorSvc.itemTipoSeleccionado = val; }
 
   // Datos de requerimientos del tab ACTIVO FIJO MENOR
   @Input() requerimientosActivoFijoMenor: any[] = [];
