@@ -1,0 +1,780 @@
+<div class="consolidacion-container">
+  <div class="container container-card py-4">
+
+    <!-- HEADER -->
+    <div class="page-header mb-3">
+      <h2><i class="bx bx-cart me-2"></i>Consolidación de Compras</h2>
+      <p class="texto-descriptivo">Consolidar requerimientos de compra y emitir Órdenes de Compra</p>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="stats-cards">
+      <div class="stat-card warning">
+        <div class="stat-icon">
+          <i class="bx bx-time-five"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{{ itemsPendientes() }}</span>
+          <span class="stat-label">Pendientes de consolidar</span>
+        </div>
+      </div>
+      <div class="stat-card info">
+        <div class="stat-icon">
+          <i class="bx bx-list-ul"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{{ totalItems() }}</span>
+          <span class="stat-label">Total de ítems</span>
+        </div>
+      </div>
+      <div class="stat-card success">
+        <div class="stat-icon">
+          <i class="bx bx-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{{ itemsConsolidados() }}</span>
+          <span class="stat-label">Consolidados</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS NAV -->
+    <ul class="nav nav-tabs mb-3 custom-tabs">
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="tabActiva() === 0" (click)="tabActiva.set(0)" type="button">
+          <i class="bx bx-file me-2"></i>Requerimientos
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="tabActiva() === 1" (click)="tabActiva.set(1)" type="button">
+          <i class="bx bx-list-ul me-2"></i>Ítems de Compra
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="tabActiva() === 2" (click)="tabActiva.set(2)" type="button">
+          <i class="bx bx-package me-2"></i>Consolidar por Ítem
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="tabActiva() === 3" (click)="tabActiva.set(3)" type="button">
+          <i class="bx bx-file me-2"></i>Órdenes de Compra
+        </button>
+      </li>
+    </ul>
+
+    <div>
+
+    <!-- TAB 0: REQUERIMIENTOS COMPLETOS -->
+    @if (tabActiva() === 0) {
+      <div class="tab-panel">
+        <!-- Toolbar -->
+        <div class="d-flex gap-2 mb-3 align-items-center flex-wrap">
+          <input type="text" class="form-control" style="max-width:300px"
+                 placeholder="Buscar por Nro.Req., área o usuario..."
+                 [(ngModel)]="busqueda" (ngModelChange)="cargarRequerimientosCompletos()">
+          <button class="btn btn-outline-secondary btn-sm" (click)="cargarRequerimientosCompletos()">
+            <i class="bx bx-refresh"></i> Actualizar
+          </button>
+        </div>
+
+        <p-table [value]="requerimientosCompletos()"
+                 [paginator]="true" [rows]="20"
+                 [totalRecords]="requerimientosCompletos().length"
+                 [loading]="cargandoReqsCompletos()"
+                 responsiveLayout="scroll"
+                 [pageLinks]="5"
+                 [showCurrentPageReport]="true"
+                 [rowsPerPageOptions]="[10,20,50]"
+                 currentPageReportTemplate="{first} - {last} de {totalRecords}"
+                 styleClass="p-datatable-sm p-datatable-striped">
+
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="min-width:140px">Nro. Requerimiento</th>
+              <th style="min-width:130px">Área</th>
+              <th style="min-width:140px">Fecha Requerimiento</th>
+              <th style="min-width:140px">Fecha Aprobación</th>
+              <th style="min-width:140px">Usuario Creador</th>
+              <th style="min-width:80px" class="text-end">Total Ítems</th>
+              <th style="min-width:100px" class="text-end">Cantidad Total</th>
+              <th style="min-width:130px">Consolidación</th>
+              <th style="width:80px">Acciones</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-req let-i="rowIndex">
+            <tr>
+              <td><strong>{{ recortarNumeroReq(req.numeroRequerimiento) }}</strong></td>
+              <td><small>{{ req.area }}</small></td>
+              <td><small>{{ req.fechaRequerimiento | date:'dd/MM/yyyy' }}</small></td>
+              <td><small>{{ req.fechaAprobacion | date:'dd/MM/yyyy' }}</small></td>
+              <td><small>{{ req.usuarioCreador }}</small></td>
+              <td class="text-end fw-bold">{{ req.totalItems }}</td>
+              <td class="text-end fw-bold">{{ req.cantidadTotal | number:'1.2-2' }}</td>
+              <td>
+                @if (req.codigoConsolidacion) {
+                  <span class="badge bg-success">{{ req.codigoConsolidacion }}</span>
+                } @else {
+                  <span class="badge bg-secondary">Sin consolidar</span>
+                }
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary" (click)="verDetalleRequerimiento(req)" title="Ver detalles">
+                  <i class="bx bx-show"></i>
+                </button>
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="9" class="text-center py-3 text-muted">No hay requerimientos completos.</td>
+            </tr>
+          </ng-template>
+
+        </p-table>
+      </div>
+    }
+
+    <!-- TAB 1: ÍTEMS DE COMPRA -->
+    @if (tabActiva() === 1) {
+      <div class="tab-panel">
+        <!-- Toolbar ARRIBA -->
+        <div class="d-flex gap-2 mb-3 align-items-center flex-wrap">
+          <input type="text" class="form-control" style="max-width:300px"
+                 placeholder="Buscar por código, descripción o Nro.Req..."
+                 [(ngModel)]="busqueda" (ngModelChange)="cargarRequerimientos()">
+          <button class="btn btn-outline-secondary btn-sm" (click)="cargarRequerimientos()">
+            <i class="bx bx-refresh"></i> Actualizar
+          </button>
+          <span class="text-muted small ms-2">{{ itemsSeleccionados().length }} seleccionado(s)</span>
+          <button class="btn btn-primary btn-sm ms-auto"
+                  [disabled]="itemsSeleccionados().length === 0"
+                  (click)="irAConsolidar()">
+            <i class="bx bx-right-arrow-alt me-1"></i> Pasar a Consolidar
+          </button>
+        </div>
+
+        <p-table [value]="requerimientos()"
+                 [paginator]="true" [rows]="20"
+                 [totalRecords]="requerimientos().length"
+                 [loading]="cargandoReqs()"
+                 responsiveLayout="scroll"
+                 [pageLinks]="5"
+                 [showCurrentPageReport]="true"
+                 [rowsPerPageOptions]="[10,20,50]"
+                 currentPageReportTemplate="{first} - {last} de {totalRecords}"
+                 styleClass="p-datatable-sm p-datatable-striped">
+
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width:42px">
+                <input type="checkbox" (change)="seleccionarTodos($event)">
+              </th>
+              <th style="width:50px">#</th>
+              <th style="min-width:130px">Nro. Req.</th>
+              <th style="min-width:110px">Item</th>
+              <th style="min-width:220px">Descripción</th>
+              <th style="min-width:120px" class="text-end">Cant. Pendiente</th>
+              <th style="min-width:70px">UM</th>
+              <th style="min-width:130px">Área</th>
+              <th style="min-width:100px">CECO</th>
+              <th style="min-width:130px">Consolidación</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-req let-i="rowIndex">
+            <tr [class.table-warning]="estaSeleccionado(req.idDetalle)">
+              <td>
+                <input type="checkbox"
+                       [checked]="estaSeleccionado(req.idDetalle)"
+                       (change)="toggleSeleccion(req)">
+              </td>
+              <td>{{ i + 1 }}</td>
+              <td><small>{{ recortarNumeroReq(req.numeroRequerimiento) }}</small></td>
+              <td><code>{{ req.codigo }}</code></td>
+              <td>{{ req.descripcion }}</td>
+              <td class="fw-bold text-end">{{ req.cantidadPendiente | number:'1.2-2' }}</td>
+              <td>{{ req.unidadMedida }}</td>
+              <td><small>{{ req.area }}</small></td>
+              <td><small>{{ req.ceco }}</small></td>
+              <td>
+                @if (req.codigoConsolidacion) {
+                  <span class="badge bg-success">{{ req.codigoConsolidacion }}</span>
+                } @else {
+                  <span class="badge bg-secondary">Sin consolidar</span>
+                }
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="10" class="text-center py-3 text-muted">No hay requerimientos de compra pendientes.</td>
+            </tr>
+          </ng-template>
+
+        </p-table>
+      </div>
+    }
+
+    <!-- TAB 2: CONSOLIDAR POR ITEM -->
+    @if (tabActiva() === 2) {
+      <div class="tab-panel">
+        @if (itemsSeleccionados().length === 0) {
+          <div class="alert alert-warning">
+            <i class="bx bx-info-circle me-2"></i>
+            Selecciona ítems en la pestaña "Ítems de Compra" y haz clic en "Pasar a Consolidar".
+          </div>
+        } @else {
+          <div class="alert alert-info mb-3">
+            <strong>{{ gruposConsolidados().length }}</strong> grupo(s) de ítems para consolidar.
+            Los ítems con el mismo código se agrupan automáticamente.
+          </div>
+
+          @for (grupo of gruposConsolidados(); track grupo.codigo) {
+            <div class="card mb-3 border-primary">
+              <div class="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
+                <div>
+                  <strong><code>{{ grupo.codigo }}</code></strong> — {{ grupo.descripcion }}
+                  <span class="badge bg-primary ms-2">{{ grupo.items.length }} requerimiento(s)</span>
+                </div>
+                <div>
+                  <span class="fw-bold text-primary">Total: {{ grupo.cantidadTotal | number:'1.2-2' }} {{ grupo.unidadMedida }}</span>
+                </div>
+              </div>
+              <div class="card-body p-2">
+                <table class="table table-sm mb-0">
+                  <thead><tr><th>Nro. Req.</th><th>Área</th><th>CECO</th><th>Cantidad</th></tr></thead>
+                  <tbody>
+                    @for (item of grupo.items; track item.idDetalle) {
+                      <tr>
+                        <td><small>{{ recortarNumeroReq(item.numeroRequerimiento) }}</small></td>
+                        <td><small>{{ item.area }}</small></td>
+                        <td><small>{{ item.ceco }}</small></td>
+                        <td>{{ item.cantidadPendiente | number:'1.2-2' }} {{ item.unidadMedida }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+
+          <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-success" (click)="abrirModalEmitirOC()">
+              <i class="bx bx-file-blank me-1"></i> Emitir Orden de Compra
+            </button>
+            <button class="btn btn-outline-secondary" (click)="limpiarSeleccion()">
+              <i class="bx bx-x"></i> Limpiar selección
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- TAB 3: ÓRDENES DE COMPRA -->
+    @if (tabActiva() === 3) {
+      <div class="tab-panel">
+        <div class="d-flex gap-2 mb-3 align-items-center">
+          <select class="form-select form-select-sm" style="max-width:200px" [(ngModel)]="filtroEstadoOC" (ngModelChange)="cargarOrdenesCompra()">
+            <option value="">Todos los estados</option>
+            <option value="PENDIENTE">Borrador (PENDIENTE)</option>
+            <option value="PENDIENTE_APROBACION">En Aprobación</option>
+            <option value="APROBADA">Aprobada</option>
+            <option value="ENVIADA">Enviada al proveedor</option>
+            <option value="ANULADA">Anulada</option>
+          </select>
+          <button class="btn btn-outline-secondary btn-sm" (click)="cargarOrdenesCompra()">
+            <i class="bx bx-refresh"></i>
+          </button>
+          <button class="btn btn-outline-success btn-sm ms-auto" (click)="exportarExcelOC()"
+                  [disabled]="ordenesCompra().length === 0" title="Exportar a Excel">
+            <i class="bx bx-download me-1"></i>Exportar Excel
+          </button>
+        </div>
+
+        @if (cargandoOCs()) {
+          <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+        } @else if (ordenesCompra().length === 0) {
+          <div class="alert alert-info">No hay órdenes de compra.</div>
+        } @else {
+          @for (oc of ordenesCompra(); track oc.idOrden) {
+            <div class="card mb-2" [class.border-warning]="oc.estado==='PENDIENTE'"
+                 [class.border-info]="oc.estado==='PENDIENTE_APROBACION'"
+                 [class.border-success]="oc.estado==='APROBADA'"
+                 [class.border-primary]="oc.estado==='ENVIADA'">
+              <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                  <div>
+                    <h6 class="mb-1 fw-bold">{{ oc.numeroOrden }}</h6>
+                    <div class="text-muted small">{{ oc.nombreProveedor }} | RUC: {{ oc.rucProveedor }}</div>
+                    <div class="small">
+                      <span class="me-3">{{ oc.moneda }} {{ oc.totalOrden | number:'1.2-2' }}</span>
+                      <!-- <span class="me-3"><i class="bx bx-dollar"></i> {{ oc.moneda }} {{ oc.totalOrden | number:'1.2-2' }}</span> -->
+                      <span><i class="bx bx-calendar"></i> {{ oc.fechaCreacion }}</span>
+                    </div>
+                  </div>
+                  <div class="d-flex gap-1 flex-wrap align-items-center">
+                    <span class="badge" [class]="badgeEstadoOC(oc.estado)">{{ oc.estado }}</span>
+                    <button class="btn btn-sm btn-outline-secondary" (click)="abrirAdjuntos(oc, 'OC')" title="Ver adjuntos">
+                      <i class="bx bx-paperclip"></i> {{ oc.cantAdjuntos ?? 0 }}
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" (click)="verDetalleOC(oc)">
+                      <i class="bx bx-show"></i>
+                    </button>
+                    @if (oc.estado === 'PENDIENTE') {
+                      <button class="btn btn-sm btn-outline-secondary" (click)="abrirAdjuntos(oc, 'OC')">
+                        <i class="bx bx-paperclip"></i> Adjuntar
+                      </button>
+                      <button class="btn btn-sm btn-warning"
+                              [disabled]="!ocsConPdfYExcel().has(oc.idOrden)"
+                              (click)="enviarOCAprobacion(oc)"
+                              [title]="!ocsConPdfYExcel().has(oc.idOrden) ? 'Debe adjuntar un PDF y un Excel' : 'Enviar a aprobación'">
+                        <i class="bx bx-send"></i> Enviar Aprobación
+                      </button>
+                    }
+                    <button class="btn btn-sm btn-outline-info" title="Ver / Imprimir PDF" (click)="verPdfOC(oc)">
+                      <i class="bx bx-file-pdf"></i> PDF
+                    </button>
+                    @if (oc.estado === 'APROBADA' && !oc.correoEnviado) {
+                      <button class="btn btn-sm btn-success" (click)="confirmarEnvioOC(oc)">
+                        <i class="bx bx-envelope"></i> Confirmar y Enviar
+                      </button>
+                    }
+                    @if (oc.correoEnviado) {
+                      <span class="badge bg-success"><i class="bx bx-check-double"></i> Correo enviado</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    }
+    </div><!-- /tabs-content -->
+  </div><!-- /container-card -->
+</div><!-- /consolidacion-container -->
+
+<!-- MODAL EMITIR OC -->
+@if (modalOCAbierto()) {
+  <div class="modal-overlay" (click)="cerrarModalOC()">
+    <div class="modal-box modal-xl" (click)="$event.stopPropagation()">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bx bx-file-blank me-2"></i>Emitir Orden de Compra</h5>
+        <button class="btn-close btn-close-white" (click)="cerrarModalOC()"></button>
+      </div>
+      <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+        <!-- Datos proveedor -->
+        <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Datos del Proveedor</h6>
+
+        <!-- Buscador de proveedores -->
+        <div class="row g-2 mb-3">
+          <div class="col-md-12 position-relative">
+            <label class="form-label small fw-bold">Buscar Proveedor (RUC o Nombre)</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text"><i class="bx bx-search"></i></span>
+              <input type="text" class="form-control" [(ngModel)]="busquedaProveedor"
+                     (input)="buscarProveedores()"
+                     (blur)="cerrarSugerenciasProveedor()"
+                     placeholder="Escribe al menos 3 caracteres para buscar...">
+              @if (cargandoProveedores()) {
+                <span class="input-group-text">
+                  <div class="spinner-border spinner-border-sm" role="status"></div>
+                </span>
+              }
+              @if (proveedorSeleccionado()) {
+                <button class="btn btn-outline-danger" type="button" (click)="limpiarProveedor()">
+                  <i class="bx bx-x"></i> Limpiar
+                </button>
+              }
+            </div>
+
+            <!-- Dropdown de sugerencias -->
+            @if (mostrarSugerenciasProveedor() && proveedoresSugeridos().length > 0) {
+              <div class="dropdown-menu show w-100 position-absolute" style="z-index: 1050; max-height: 300px; overflow-y: auto;">
+                @for (prov of proveedoresSugeridos(); track prov.ruc || prov.documento || prov.id) {
+                  <a class="dropdown-item" href="javascript:void(0)" (click)="seleccionarProveedor(prov)">
+                    <div class="d-flex flex-column">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong class="text-primary">
+                            {{ prov.proveedor || 'Sin nombre' }}
+                          </strong>
+                          <div class="small text-muted">
+                            RUC: {{ prov.ruc || prov.documento || 'Sin RUC' }}
+                          </div>
+                        </div>
+                        <span class="badge bg-success">Seleccionar</span>
+                      </div>
+                    </div>
+                  </a>
+                }
+              </div>
+            }
+
+            @if (proveedorSeleccionado()) {
+              <div class="alert alert-success mt-2 py-2">
+                <i class="bx bx-check-circle me-1"></i>
+                <strong>Proveedor seleccionado:</strong> {{ proveedorSeleccionado().proveedor }}
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">RUC Proveedor *</label>
+            <input class="form-control form-control-sm" [(ngModel)]="ocForm.rucProveedor" placeholder="20123456789" [readonly]="proveedorSeleccionado()">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label small fw-bold">Nombre / Razón Social *</label>
+            <input class="form-control form-control-sm" [(ngModel)]="ocForm.nombreProveedor" placeholder="Proveedor SAC" [readonly]="proveedorSeleccionado()">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Email Proveedor *</label>
+            <input class="form-control form-control-sm" type="email" [(ngModel)]="ocForm.emailProveedor" placeholder="ventas@proveedor.com">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Teléfono</label>
+            <input class="form-control form-control-sm" [(ngModel)]="ocForm.telefonoProveedor">
+          </div>
+          <div class="col-md-8">
+            <label class="form-label small fw-bold">Dirección</label>
+            <input class="form-control form-control-sm" [(ngModel)]="ocForm.direccionProveedor">
+          </div>
+        </div>
+
+        <!-- Condiciones OC -->
+        <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Condiciones de la Orden</h6>
+        <div class="row g-2 mb-3">
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Moneda *</label>
+            <select class="form-select form-select-sm" [(ngModel)]="ocForm.moneda">
+              <option value="PEN">PEN - Soles</option>
+              <option value="USD">USD - Dólares</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Tipo de Cambio</label>
+            <input class="form-control form-control-sm" type="number" [(ngModel)]="ocForm.tipoCambio" step="0.01">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Tiempo de Entrega *</label>
+            <input class="form-control form-control-sm" type="date" [(ngModel)]="ocForm.fechaEntregaEstimada">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Condiciones de Pago</label>
+            <select class="form-select form-select-sm" [(ngModel)]="ocForm.condicionesPago">
+              <option value="Contado">Contado</option>
+              <option value="30 días">30 días</option>
+              <option value="60 días">60 días</option>
+              <option value="90 días">90 días</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Forma de Pago</label>
+            <select class="form-select form-select-sm" [(ngModel)]="ocForm.formaPago">
+              <option value="Transferencia">Transferencia</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Cheque">Cheque</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Almacén *</label>
+            <input class="form-control form-control-sm" [(ngModel)]="ocForm.almacen" placeholder="ALM001">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Lugar de Entrega *</label>
+            <input class="form-control form-control-sm" [(ngModel)]="ocForm.lugarEntrega" placeholder="Almacén central / Fundo X">
+          </div>
+          <div class="col-md-12">
+            <label class="form-label small fw-bold">Observaciones</label>
+            <textarea class="form-control form-control-sm" rows="2" [(ngModel)]="ocForm.observaciones"></textarea>
+          </div>
+        </div>
+
+        <!-- Tabla de items con precio editable -->
+        <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Ítems de la Orden</h6>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th class="text-end">Cantidad</th>
+                <th>UM</th>
+                <th class="text-end" style="min-width:120px">Precio Unit. *</th>
+                <th class="text-end">Descuento</th>
+                <th class="text-end">Subtotal</th>
+                <th>CECO</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of ocForm.items; track $index) {
+                <tr>
+                  <td><code>{{ item.codigo }}</code></td>
+                  <td><small>{{ item.descripcion }}</small></td>
+                  <td class="text-end">{{ item.cantidad | number:'1.2-2' }}</td>
+                  <td>{{ item.unidadMedida }}</td>
+                  <td>
+                    <input type="number" class="form-control form-control-sm text-end"
+                           [(ngModel)]="item.precioUnitario" min="0" step="0.01"
+                           style="min-width:100px"
+                           (ngModelChange)="calcularTotalesOC()">
+                  </td>
+                  <td>
+                    <input type="number" class="form-control form-control-sm text-end"
+                           [(ngModel)]="item.descuento" min="0" step="0.01"
+                           (ngModelChange)="calcularTotalesOC()">
+                  </td>
+                  <td class="text-end fw-bold">{{ subtotalItem(item) | number:'1.2-2' }}</td>
+                  <td><small>{{ item.ceco }}</small></td>
+                </tr>
+              }
+            </tbody>
+            <tfoot class="table-light">
+              <tr>
+                <td colspan="6" class="text-end fw-bold">Subtotal:</td>
+                <td class="text-end fw-bold">{{ ocForm.subtotal | number:'1.2-2' }}</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td colspan="6" class="text-end fw-bold">IGV (18%):</td>
+                <td class="text-end fw-bold">{{ ocForm.igv | number:'1.2-2' }}</td>
+                <td></td>
+              </tr>
+              <tr class="table-primary">
+                <td colspan="6" class="text-end fw-bold fs-6">TOTAL {{ ocForm.moneda }}:</td>
+                <td class="text-end fw-bold fs-6">{{ ocForm.totalOrden | number:'1.2-2' }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Distribucion contable -->
+        <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Distribución Contable</h6>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered">
+            <thead class="table-light">
+              <tr><th>Área</th><th>CECO</th><th>Proyecto</th><th class="text-end">% Distribución</th></tr>
+            </thead>
+            <tbody>
+              @for (dist of distribucionContable(); track $index) {
+                <tr>
+                  <td><small>{{ dist.area }}</small></td>
+                  <td><small>{{ dist.ceco }}</small></td>
+                  <td><small>{{ dist.proyecto }}</small></td>
+                  <td class="text-end">{{ dist.porcentaje | number:'1.2-2' }}%</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" (click)="cerrarModalOC()">Cancelar</button>
+        <button class="btn btn-primary" (click)="crearOCBorrador()" [disabled]="guardandoOC()">
+          @if (guardandoOC()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+          <i class="bx bx-save me-1"></i> Crear OC (Borrador)
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- MODAL ADJUNTOS -->
+@if (modalAdjuntosAbierto()) {
+  <div class="modal-overlay" (click)="cerrarModalAdjuntos()">
+    <div class="modal-box modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h5 class="mb-0"><i class="bx bx-paperclip me-2"></i>Adjuntos — {{ ordenActual()?.numeroOrden }}</h5>
+        <button class="btn-close" (click)="cerrarModalAdjuntos()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3 p-3 border rounded bg-light">
+          <label class="form-label fw-bold">Subir nuevo archivo</label>
+          <div class="d-flex gap-2 align-items-center flex-wrap">
+            <input type="file" class="form-control form-control-sm" #fileInput
+                   (change)="onFileSelected($event)" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png">
+            <input class="form-control form-control-sm" style="max-width:200px"
+                   [(ngModel)]="adjuntoDescripcion" placeholder="Descripción (opcional)">
+            <button class="btn btn-sm btn-primary" (click)="subirAdjunto()" [disabled]="!archivoSeleccionado || subiendoAdjunto()">
+              @if (subiendoAdjunto()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+              <i class="bx bx-upload"></i> Subir
+            </button>
+          </div>
+        </div>
+        @if (adjuntos().length === 0) {
+          <div class="alert alert-warning">No hay adjuntos. Debe adjuntar al menos un documento para enviar a aprobación.</div>
+        } @else {
+          <table class="table table-sm">
+            <thead><tr><th>Archivo</th><th>Descripción</th><th>Fecha</th><th>Tamaño</th></tr></thead>
+            <tbody>
+              @for (adj of adjuntos(); track adj.id) {
+                <tr>
+                  <td><i class="bx bx-file me-1 text-primary"></i>{{ adj.nombreArchivo }}</td>
+                  <td><small>{{ adj.descripcion }}</small></td>
+                  <td><small>{{ adj.fechaSubida }}</small></td>
+                  <td><small>{{ (adj.tamano / 1024) | number:'1.0-0' }} KB</small></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarModalAdjuntos()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- MODAL DETALLE REQUERIMIENTO -->
+@if (modalDetalleReqAbierto()) {
+  <div class="modal-overlay" (click)="cerrarModalDetalleReq()">
+    <div class="modal-box modal-xl" (click)="$event.stopPropagation()">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bx bx-file me-2"></i>Detalle del Requerimiento {{ requerimientoDetalleActual()?.numeroRequerimiento }}</h5>
+        <button class="btn-close btn-close-white" (click)="cerrarModalDetalleReq()"></button>
+      </div>
+      <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+        @if (requerimientoDetalleActual()) {
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <strong>Nro. Requerimiento:</strong> {{ requerimientoDetalleActual().numeroRequerimiento }}
+            </div>
+            <div class="col-md-6">
+              <strong>Área:</strong> {{ requerimientoDetalleActual().area }}
+            </div>
+            <div class="col-md-6">
+              <strong>Fecha Requerimiento:</strong> {{ requerimientoDetalleActual().fechaRequerimiento | date:'dd/MM/yyyy' }}
+            </div>
+            <div class="col-md-6">
+              <strong>Fecha Aprobación:</strong> {{ requerimientoDetalleActual().fechaAprobacion | date:'dd/MM/yyyy' }}
+            </div>
+            <div class="col-md-6">
+              <strong>Usuario Creador:</strong> {{ requerimientoDetalleActual().usuarioCreador }}
+            </div>
+            <div class="col-md-6">
+              <strong>Estado:</strong> {{ requerimientoDetalleActual().estado }}
+            </div>
+          </div>
+
+          <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Ítems del Requerimiento</h6>
+          @if (requerimientoDetalleActual().items && requerimientoDetalleActual().items.length > 0) {
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Código</th>
+                    <th>Descripción</th>
+                    <th class="text-end">Cantidad</th>
+                    <th>UM</th>
+                    <th>CECO</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of requerimientoDetalleActual().items; track item.idDetalle) {
+                    <tr>
+                      <td><code>{{ item.codigo }}</code></td>
+                      <td><small>{{ item.descripcion }}</small></td>
+                      <td class="text-end">{{ item.cantidadPendiente | number:'1.2-2' }}</td>
+                      <td>{{ item.unidadMedida }}</td>
+                      <td><small>{{ item.ceco }}</small></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="alert alert-warning">No hay ítems para mostrar.</div>
+          }
+        }
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarModalDetalleReq()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- MODAL DETALLE OC -->
+@if (modalDetalleOCAbierto()) {
+  <div class="modal-overlay" (click)="cerrarModalDetalleOC()">
+    <div class="modal-box modal-xl" (click)="$event.stopPropagation()">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bx bx-file-blank me-2"></i>Detalle de Orden de Compra</h5>
+        <button class="btn-close btn-close-white" (click)="cerrarModalDetalleOC()"></button>
+      </div>
+      <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+        @if (ordenActual()) {
+          <div class="row">
+            <div class="col-md-6">
+              <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Información General</h6>
+              <table class="table table-sm">
+                <tr><td class="fw-bold" style="width:40%">Número de Orden:</td><td>{{ ordenActual().numeroOrden }}</td></tr>
+                <tr><td class="fw-bold">Proveedor:</td><td>{{ ordenActual().nombreProveedor }}</td></tr>
+                <tr><td class="fw-bold">RUC:</td><td>{{ ordenActual().rucProveedor }}</td></tr>
+                <tr><td class="fw-bold">Fecha de Creación:</td><td>{{ ordenActual().fechaCreacion }}</td></tr>
+                <tr><td class="fw-bold">Moneda:</td><td>{{ ordenActual().moneda }}</td></tr>
+                <tr><td class="fw-bold">Total:</td><td class="fw-bold text-primary">{{ ordenActual().totalOrden | number:'1.2-2' }}</td></tr>
+                <tr><td class="fw-bold">Estado:</td><td><span class="badge" [class]="badgeEstadoOC(ordenActual().estado)">{{ ordenActual().estado }}</span></td></tr>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Archivos Adjuntos</h6>
+              <div class="alert alert-info mb-3">
+                <small><i class="bx bx-info-circle me-1"></i>Debe adjuntar un archivo PDF y un archivo Excel para poder enviar a aprobación.</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Adjuntar Archivo</label>
+                <input type="file" class="form-control form-control-sm" (change)="onFileSelected($event)" accept=".pdf,.xlsx,.xls">
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Descripción</label>
+                <input type="text" class="form-control form-control-sm" [(ngModel)]="adjuntoDescripcion" placeholder="Descripción del archivo">
+              </div>
+              <button class="btn btn-primary btn-sm mb-3" (click)="subirAdjunto()" [disabled]="!archivoSeleccionado || subiendoAdjunto()">
+                @if (subiendoAdjunto()) {
+                  <span class="spinner-border spinner-border-sm me-1"></span> Subiendo...
+                } @else {
+                  <i class="bx bx-upload me-1"></i> Subir Archivo
+                }
+              </button>
+              <div class="list-group">
+                @for (adj of adjuntos(); track adj.idAdjunto) {
+                  <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                      <i class="bx bx-file me-2"></i>
+                      <span class="small">{{ adj.descripcion || adj.nombreArchivo }}</span>
+                      @if (adj.tipoArchivo) {
+                        <span class="badge bg-secondary ms-2">{{ adj.tipoArchivo }}</span>
+                      }
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" (click)="eliminarAdjunto(adj.idAdjunto)">
+                      <i class="bx bx-trash"></i>
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarModalDetalleOC()">Cerrar</button>
+        @if (ordenActual() && ordenActual().estado === 'PENDIENTE') {
+          <button class="btn btn-warning"
+                  [disabled]="!tienePdfYExcel()"
+                  (click)="enviarOCAprobacion(ordenActual())"
+                  [title]="!tienePdfYExcel() ? 'Debe adjuntar un PDF y un Excel' : 'Enviar a aprobación'">
+            <i class="bx bx-send me-1"></i> Enviar Aprobación
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

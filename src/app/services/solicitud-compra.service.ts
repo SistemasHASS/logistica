@@ -133,4 +133,27 @@ export class SolicitudCompraService {
       throw error;
     }
   }
+
+  async listarRequerimientosCompraAprobados(ruc: string, nrodocumento?: string): Promise<any> {
+    try {
+      const url = `${this.baseUrl}/api/logistica/listar-requerimientos-compra-aprobados`;
+      const response = await firstValueFrom(this.http.post<any>(url, { ruc, nrodocumento }));
+      return response;
+    } catch (error) {
+      console.error('Error al listar requerimientos compra aprobados:', error);
+      throw error;
+    }
+  }
+
+  async actualizarEstadoRequerimiento(idrequerimiento: string, estados: string, usuario: string): Promise<any> {
+    try {
+      const url = `${this.baseUrl}/api/logistica/actualizar-estado-requerimiento`;
+      const body = [{ idrequerimiento, estados, usuario }];
+      const response = await firstValueFrom(this.http.post<any>(url, body));
+      return response;
+    } catch (error) {
+      console.error('Error al actualizar estado del requerimiento:', error);
+      throw error;
+    }
+  }
 }

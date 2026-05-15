@@ -3,7 +3,7 @@
   <div class="page-header">
     <h2>Gestión de Inventario</h2>
     <div class="header-actions">
-      <button class="btn-primary" (click)="abrirFormMovimiento()">
+      <button class="btn-accion-primaria" (click)="abrirFormMovimiento()">
         <i class="icon-plus"></i> Nuevo Movimiento
       </button>
     </div>
@@ -90,7 +90,7 @@
           Solo stock bajo
         </label>
       </div>
-      <button class="btn-secondary" (click)="limpiarFiltrosStock()">
+      <button class="btn-accion-secundaria" (click)="limpiarFiltrosStock()">
         <i class="icon-x"></i> Limpiar
       </button>
     </div>
@@ -125,14 +125,14 @@
             </td>
             <td>{{ item.unidadMedida }}</td>
             <td>
-              <span class="badge" [ngClass]="esStockBajo(item.cantidad) ? 'badge-danger' : 'badge-success'">
+              <span class="badge" [ngClass]="esStockBajo(item.cantidad) ? 'badge-peligro' : 'badge-exito'">
                 {{ esStockBajo(item.cantidad) ? 'BAJO' : 'OK' }}
               </span>
             </td>
             <td>{{ formatearFecha(item.ultimaActualizacion) }}</td>
             <td class="actions">
               <button 
-                class="btn btn-sm btn-info" 
+                class="btn btn-sm btn-accion-info" 
                 (click)="verDetalleStock(item)"
                 title="Ver Detalle">
                 <i class="icon-eye"></i>
@@ -180,10 +180,10 @@
         <label>Fecha Fin:</label>
         <input type="date" [(ngModel)]="kardexFechaFin" class="form-control">
       </div>
-      <button class="btn-primary" (click)="buscarKardex()">
+      <button class="btn-accion-primaria" (click)="buscarKardex()">
         <i class="icon-search"></i> Buscar
       </button>
-      <button class="btn-secondary" (click)="limpiarKardex()">
+      <button class="btn-accion-secundaria" (click)="limpiarKardex()">
         <i class="icon-x"></i> Limpiar
       </button>
     </div>
@@ -373,10 +373,10 @@
     </div>
 
     <div class="modal-footer">
-      <button class="btn-secondary" (click)="cancelarMovimiento()">
+      <button class="btn-accion-secundaria" (click)="cancelarMovimiento()">
         Cancelar
       </button>
-      <button class="btn-primary" (click)="guardarMovimiento()">
+      <button class="btn-accion-primaria" (click)="guardarMovimiento()">
         <i class="icon-save"></i> Guardar Movimiento
       </button>
     </div>
@@ -428,7 +428,7 @@
         <div class="progress-bar">
           <div class="progress-fill" 
                [style.width.%]="calcularPorcentajeStock(stockDetalle.cantidad)"
-               [ngClass]="esStockBajo(stockDetalle.cantidad) ? 'danger' : 'success'">
+               [ngClass]="esStockBajo(stockDetalle.cantidad) ? 'relleno-peligro' : 'relleno-exito'">
           </div>
         </div>
         <span class="progress-text">{{ calcularPorcentajeStock(stockDetalle.cantidad).toFixed(0) }}%</span>
@@ -436,7 +436,7 @@
     </div>
 
     <div class="modal-footer">
-      <button class="btn-secondary" (click)="cerrarModalDetalleStock()">
+      <button class="btn-accion-secundaria" (click)="cerrarModalDetalleStock()">
         Cerrar
       </button>
     </div>

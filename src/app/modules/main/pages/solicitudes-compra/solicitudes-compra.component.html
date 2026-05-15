@@ -349,8 +349,8 @@
               <th>
                 <input 
                   type="checkbox" 
-                  [(ngModel)]="allSelected"
-                  (change)="toggleSeleccionarTodos()">
+                  [checked]="allSelected"
+                  (click)="toggleSeleccionarTodos()">
               </th>
               <th>#Req</th>
               <th>Fecha</th>
@@ -948,11 +948,11 @@
         </div>
         <div class="info-item">
           <label>Fundo:</label>
-          <span>{{ requerimientoSeleccionado?.idfundo }}</span>
+          <span>{{ getNombreFundo(requerimientoSeleccionado?.idfundo) }}</span>
         </div>
         <div class="info-item">
           <label>Almacén:</label>
-          <span>{{ requerimientoSeleccionado?.almacen }}</span>
+          <span>{{ getNombreAlmacen(requerimientoSeleccionado?.almacen) }}</span>
         </div>
         <div class="info-item">
           <label>Área:</label>

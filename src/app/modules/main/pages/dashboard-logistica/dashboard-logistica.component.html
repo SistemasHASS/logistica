@@ -15,7 +15,7 @@
   <!-- Título del Dashboard con empresa seleccionada -->
   <div class="page-header mb-4">
     <h3 class="mb-0">Dashboard Logística - {{ empresaSeleccionada?.razonsocial }}</h3>
-    <p class="text-muted mb-0">Resumen general de operaciones logísticas para {{ getEmpresaSigla(empresaSeleccionada?.id) }}</p>
+    <p class="texto-descriptivo mb-0">Resumen general de operaciones logísticas para {{ getEmpresaSigla(empresaSeleccionada?.id) }}</p>
   </div>
 
   <!-- Tabs Hijos - Navegación Interna (dentro de cada empresa) -->
@@ -58,40 +58,40 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm h-100 kpi-card" (click)="abrirModalRequerimientos('PENDIENTE')" style="cursor: pointer;">
         <div class="card-body text-center">
-          <i class="bx bx-time text-danger fs-3 mb-2"></i>
-          <h6 class="text-muted mb-1">Pendientes</h6>
-          <h3 class="text-danger mb-0">{{ requerimientosPendientes }}</h3>
-          <small class="text-muted">Requerimientos <i class="bx bx-link-external ms-1"></i></small>
+          <i class="bx bx-time texto-error fs-3 mb-2"></i>
+          <h6 class="texto-descriptivo mb-1">Pendientes</h6>
+          <h3 class="texto-error mb-0">{{ requerimientosPendientes }}</h3>
+          <small class="texto-descriptivo">Requerimientos <i class="bx bx-link-external ms-1"></i></small>
         </div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm h-100 kpi-card" (click)="abrirModalRequerimientos('CONSOLIDADO')" style="cursor: pointer;">
         <div class="card-body text-center">
-          <i class="bx bx-check-circle text-success fs-3 mb-2"></i>
-          <h6 class="text-muted mb-1">Consolidados</h6>
-          <h3 class="text-success mb-0">{{ requerimientosConsolidados }}</h3>
-          <small class="text-muted">Requerimientos <i class="bx bx-link-external ms-1"></i></small>
+          <i class="bx bx-check-circle texto-confirmacion fs-3 mb-2"></i>
+          <h6 class="texto-descriptivo mb-1">Consolidados</h6>
+          <h3 class="texto-confirmacion mb-0">{{ requerimientosConsolidados }}</h3>
+          <small class="texto-descriptivo">Requerimientos <i class="bx bx-link-external ms-1"></i></small>
         </div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm h-100 kpi-card" (click)="abrirModalRequerimientos('DESPACHADO')" style="cursor: pointer;">
         <div class="card-body text-center">
-          <i class="bx bx-truck text-primary fs-3 mb-2"></i>
-          <h6 class="text-muted mb-1">Despachados</h6>
-          <h3 class="text-primary mb-0">{{ requerimientosDespachados }}</h3>
-          <small class="text-muted">Requerimientos <i class="bx bx-link-external ms-1"></i></small>
+          <i class="bx bx-truck texto-primario fs-3 mb-2"></i>
+          <h6 class="texto-descriptivo mb-1">Despachados</h6>
+          <h3 class="texto-primario mb-0">{{ requerimientosDespachados }}</h3>
+          <small class="texto-descriptivo">Requerimientos <i class="bx bx-link-external ms-1"></i></small>
         </div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm h-100 kpi-card" (click)="abrirModalRequerimientos('APROBADO')" style="cursor: pointer;">
         <div class="card-body text-center">
-          <i class="bx bx-task text-warning fs-3 mb-2"></i>
-          <h6 class="text-muted mb-1">Aprobados</h6>
-          <h3 class="text-warning mb-0">{{ requerimientosAprobados }}</h3>
-          <small class="text-muted">Requerimientos <i class="bx bx-link-external ms-1"></i></small>
+          <i class="bx bx-task texto-advertencia fs-3 mb-2"></i>
+          <h6 class="texto-descriptivo mb-1">Aprobados</h6>
+          <h3 class="texto-advertencia mb-0">{{ requerimientosAprobados }}</h3>
+          <small class="texto-descriptivo">Requerimientos <i class="bx bx-link-external ms-1"></i></small>
         </div>
       </div>
     </div>
@@ -105,10 +105,10 @@
           <h5 class="card-title mb-3">Acciones Rápidas</h5>
           <div class="d-flex gap-2 flex-wrap">
             <button pButton pRipple type="button" class="p-button-info" (click)="nuevaOrdenCompraDirecta()">
-              <i class="bx bx-shopping-bag me-2"></i> Nueva Orden de Compra
+              <i class="bx bx-shopping-bag me-2"></i> Orden de Compra
             </button>
             <button pButton pRipple type="button" class="p-button-success" (click)="nuevaSolicitudMateriales()">
-              <i class="bx bx-file-plus me-2"></i> Solicitud de Materiales
+              <i class="bx bx-file-plus me-2"></i> Nuevo Requerimiento
             </button>
             <button pButton pRipple type="button" class="p-button-warning" (click)="nuevaOrdenServicio()">
               <i class="bx bx-briefcase me-2"></i> Orden de Servicio
@@ -143,34 +143,34 @@
         <div class="card-body">
           <h5 class="card-title mb-3">Seguimiento de Órdenes</h5>
 
-          <h6 class="text-muted mb-2">Órdenes de Compra</h6>
+          <h6 class="texto-descriptivo mb-2">Órdenes de Compra</h6>
           <div class="progress mb-3" style="height: 25px;">
-            <div class="progress-bar bg-warning" role="progressbar" [style.width.%]="(ordenesCompra.pendiente / (ordenesCompra.pendiente + ordenesCompra.aprobada + ordenesCompra.enTransito + ordenesCompra.recibida)) * 100">
+            <div class="progress-bar barra-advertencia" role="progressbar" [style.width.%]="(ordenesCompra.pendiente / (ordenesCompra.pendiente + ordenesCompra.aprobada + ordenesCompra.enTransito + ordenesCompra.recibida)) * 100">
               Pendiente: {{ ordenesCompra.pendiente }}
             </div>
-            <div class="progress-bar bg-success" role="progressbar" [style.width.%]="(ordenesCompra.aprobada / (ordenesCompra.pendiente + ordenesCompra.aprobada + ordenesCompra.enTransito + ordenesCompra.recibida)) * 100">
+            <div class="progress-bar barra-exito" role="progressbar" [style.width.%]="(ordenesCompra.aprobada / (ordenesCompra.pendiente + ordenesCompra.aprobada + ordenesCompra.enTransito + ordenesCompra.recibida)) * 100">
               Aprobada: {{ ordenesCompra.aprobada }}
             </div>
-            <div class="progress-bar bg-info" role="progressbar" [style.width.%]="(ordenesCompra.enTransito / (ordenesCompra.pendiente + ordenesCompra.aprobada + ordenesCompra.enTransito + ordenesCompra.recibida)) * 100">
+            <div class="progress-bar barra-informativa" role="progressbar" [style.width.%]="(ordenesCompra.enTransito / (ordenesCompra.pendiente + ordenesCompra.aprobada + ordenesCompra.enTransito + ordenesCompra.recibida)) * 100">
               En Tránsito: {{ ordenesCompra.enTransito }}
             </div>
-            <div class="progress-bar bg-primary" role="progressbar" [style.width.%]="(ordenesCompra.recibida / (ordenesCompra.pendiente + ordenesCompra.aprobada + ordenesCompra.enTransito + ordenesCompra.recibida)) * 100">
+            <div class="progress-bar barra-primaria" role="progressbar" [style.width.%]="(ordenesCompra.recibida / (ordenesCompra.pendiente + ordenesCompra.aprobada + ordenesCompra.enTransito + ordenesCompra.recibida)) * 100">
               Recibida: {{ ordenesCompra.recibida }}
             </div>
           </div>
 
-          <h6 class="text-muted mb-2">Órdenes de Servicio</h6>
+          <h6 class="texto-descriptivo mb-2">Órdenes de Servicio</h6>
           <div class="progress" style="height: 25px;">
-            <div class="progress-bar bg-warning" role="progressbar" [style.width.%]="(ordenesServicio.pendiente / (ordenesServicio.pendiente + ordenesServicio.aprobada + ordenesServicio.enTransito + ordenesServicio.recibida)) * 100">
+            <div class="progress-bar barra-advertencia" role="progressbar" [style.width.%]="(ordenesServicio.pendiente / (ordenesServicio.pendiente + ordenesServicio.aprobada + ordenesServicio.enTransito + ordenesServicio.recibida)) * 100">
               Pendiente: {{ ordenesServicio.pendiente }}
             </div>
-            <div class="progress-bar bg-success" role="progressbar" [style.width.%]="(ordenesServicio.aprobada / (ordenesServicio.pendiente + ordenesServicio.aprobada + ordenesServicio.enTransito + ordenesServicio.recibida)) * 100">
+            <div class="progress-bar barra-exito" role="progressbar" [style.width.%]="(ordenesServicio.aprobada / (ordenesServicio.pendiente + ordenesServicio.aprobada + ordenesServicio.enTransito + ordenesServicio.recibida)) * 100">
               Aprobada: {{ ordenesServicio.aprobada }}
             </div>
-            <div class="progress-bar bg-info" role="progressbar" [style.width.%]="(ordenesServicio.enTransito / (ordenesServicio.pendiente + ordenesServicio.aprobada + ordenesServicio.enTransito + ordenesServicio.recibida)) * 100">
+            <div class="progress-bar barra-informativa" role="progressbar" [style.width.%]="(ordenesServicio.enTransito / (ordenesServicio.pendiente + ordenesServicio.aprobada + ordenesServicio.enTransito + ordenesServicio.recibida)) * 100">
               En Tránsito: {{ ordenesServicio.enTransito }}
             </div>
-            <div class="progress-bar bg-primary" role="progressbar" [style.width.%]="(ordenesServicio.recibida / (ordenesServicio.pendiente + ordenesServicio.aprobada + ordenesServicio.enTransito + ordenesServicio.recibida)) * 100">
+            <div class="progress-bar barra-primaria" role="progressbar" [style.width.%]="(ordenesServicio.recibida / (ordenesServicio.pendiente + ordenesServicio.aprobada + ordenesServicio.enTransito + ordenesServicio.recibida)) * 100">
               Recibida: {{ ordenesServicio.recibida }}
             </div>
           </div>
@@ -203,7 +203,7 @@
                   <td>{{ entrega.proveedor }}</td>
                 </tr>
                 <tr *ngIf="entregasHoy.length === 0">
-                  <td colspan="4" class="text-center text-muted">No hay entregas hoy</td>
+                  <td colspan="4" class="text-center texto-descriptivo">No hay entregas hoy</td>
                 </tr>
               </tbody>
             </table>
@@ -217,29 +217,29 @@
           <h5 class="card-title mb-3">Estado de Almacén</h5>
           <div class="row">
             <div class="col-md-4">
-              <div class="card border-0 bg-success bg-opacity-10 mb-2">
+              <div class="card border-0 badge-exito bg-opacity-10 mb-2">
                 <div class="card-body text-center">
-                  <i class="bx bx-check-circle text-success fs-2 mb-1"></i>
-                  <h4 class="text-success mb-0">{{ estadoAlmacen.stockDisponible }}</h4>
-                  <small class="text-muted">Stock Disponible</small>
+                  <i class="bx bx-check-circle texto-confirmacion fs-2 mb-1"></i>
+                  <h4 class="texto-confirmacion mb-0">{{ estadoAlmacen.stockDisponible }}</h4>
+                  <small class="texto-descriptivo">Stock Disponible</small>
                 </div>
               </div>
             </div>
             <div class="col-md-4">
-              <div class="card border-0 bg-warning bg-opacity-10 mb-2">
+              <div class="card border-0 badge-advertencia bg-opacity-10 mb-2">
                 <div class="card-body text-center">
-                  <i class="bx bx-error text-warning fs-2 mb-1"></i>
-                  <h4 class="text-warning mb-0">{{ estadoAlmacen.stockCritico }}</h4>
-                  <small class="text-muted">Stock Crítico</small>
+                  <i class="bx bx-error texto-advertencia fs-2 mb-1"></i>
+                  <h4 class="texto-advertencia mb-0">{{ estadoAlmacen.stockCritico }}</h4>
+                  <small class="texto-descriptivo">Stock Crítico</small>
                 </div>
               </div>
             </div>
             <div class="col-md-4">
-              <div class="card border-0 bg-danger bg-opacity-10 mb-2">
+              <div class="card border-0 badge-peligro bg-opacity-10 mb-2">
                 <div class="card-body text-center">
-                  <i class="bx bx-x-circle text-danger fs-2 mb-1"></i>
-                  <h4 class="text-danger mb-0">{{ estadoAlmacen.sinStock }}</h4>
-                  <small class="text-muted">Sin Stock</small>
+                  <i class="bx bx-x-circle texto-error fs-2 mb-1"></i>
+                  <h4 class="texto-error mb-0">{{ estadoAlmacen.sinStock }}</h4>
+                  <small class="texto-descriptivo">Sin Stock</small>
                 </div>
               </div>
             </div>
@@ -257,44 +257,44 @@
           <h5 class="card-title mb-3">Resumen de Compras</h5>
           <div class="row">
             <div class="col-md-3">
-              <div class="card border-0 bg-light mb-2">
+              <div class="card border-0 fondo-suave mb-2">
                 <div class="card-body text-center">
-                  <i class="bx bx-file text-primary fs-2 mb-1"></i>
-                  <h4 class="text-primary mb-0">{{ resumenCompras.ordenesEmitidas }}</h4>
-                  <small class="text-muted">Órdenes Emitidas</small>
+                  <i class="bx bx-file texto-primario fs-2 mb-1"></i>
+                  <h4 class="texto-primario mb-0">{{ resumenCompras.ordenesEmitidas }}</h4>
+                  <small class="texto-descriptivo">Órdenes Emitidas</small>
                 </div>
               </div>
             </div>
             <div class="col-md-3">
-              <div class="card border-0 bg-light mb-2">
+              <div class="card border-0 fondo-suave mb-2">
                 <div class="card-body text-center">
-                  <i class="bx bx-package text-success fs-2 mb-1"></i>
-                  <h4 class="text-success mb-0">{{ resumenCompras.recepciones }}</h4>
-                  <small class="text-muted">Recepciones</small>
+                  <i class="bx bx-package texto-confirmacion fs-2 mb-1"></i>
+                  <h4 class="texto-confirmacion mb-0">{{ resumenCompras.recepciones }}</h4>
+                  <small class="texto-descriptivo">Recepciones</small>
                 </div>
               </div>
             </div>
             <div class="col-md-3">
-              <div class="card border-0 bg-light mb-2">
+              <div class="card border-0 fondo-suave mb-2">
                 <div class="card-body text-center">
-                  <i class="bx bx-shopping-bag text-info fs-2 mb-1"></i>
-                  <h4 class="text-info mb-0">{{ resumenCompras.totalCompras }}</h4>
-                  <small class="text-muted">Total Compras</small>
+                  <i class="bx bx-shopping-bag texto-informativo fs-2 mb-1"></i>
+                  <h4 class="texto-informativo mb-0">{{ resumenCompras.totalCompras }}</h4>
+                  <small class="texto-descriptivo">Total Compras</small>
                 </div>
               </div>
             </div>
             <div class="col-md-3">
-              <div class="card border-0 bg-light mb-2">
+              <div class="card border-0 fondo-suave mb-2">
                 <div class="card-body text-center">
-                  <i class="bx bx-dollar text-warning fs-2 mb-1"></i>
-                  <h4 class="text-warning mb-0">{{ formatearMoneda(resumenCompras.montoTotal) }}</h4>
-                  <small class="text-muted">Monto Total</small>
+                  <i class="bx bx-dollar texto-advertencia fs-2 mb-1"></i>
+                  <h4 class="texto-advertencia mb-0">{{ formatearMoneda(resumenCompras.montoTotal) }}</h4>
+                  <small class="texto-descriptivo">Monto Total</small>
                 </div>
               </div>
             </div>
           </div>
           <div class="mt-3">
-            <h6 class="text-muted mb-2">Gastos Mensuales</h6>
+            <h6 class="texto-descriptivo mb-2">Gastos Mensuales</h6>
             <div class="table-responsive">
               <table class="table table-sm table-hover">
                 <thead>
@@ -335,34 +335,34 @@
             
             <div class="row mb-4">
               <div class="col-md-3">
-                <div class="card bg-light border-0">
+                <div class="card fondo-suave border-0">
                   <div class="card-body text-center">
-                    <h6 class="text-muted mb-1">Pendientes</h6>
-                    <h3 class="text-warning mb-0">{{ ordenesCompra.pendiente }}</h3>
+                    <h6 class="texto-descriptivo mb-1">Pendientes</h6>
+                    <h3 class="texto-advertencia mb-0">{{ ordenesCompra.pendiente }}</h3>
                   </div>
                 </div>
               </div>
               <div class="col-md-3">
-                <div class="card bg-light border-0">
+                <div class="card fondo-suave border-0">
                   <div class="card-body text-center">
-                    <h6 class="text-muted mb-1">Aprobadas</h6>
-                    <h3 class="text-success mb-0">{{ ordenesCompra.aprobada }}</h3>
+                    <h6 class="texto-descriptivo mb-1">Aprobadas</h6>
+                    <h3 class="texto-confirmacion mb-0">{{ ordenesCompra.aprobada }}</h3>
                   </div>
                 </div>
               </div>
               <div class="col-md-3">
-                <div class="card bg-light border-0">
+                <div class="card fondo-suave border-0">
                   <div class="card-body text-center">
-                    <h6 class="text-muted mb-1">En Tránsito</h6>
-                    <h3 class="text-info mb-0">{{ ordenesCompra.enTransito }}</h3>
+                    <h6 class="texto-descriptivo mb-1">En Tránsito</h6>
+                    <h3 class="texto-informativo mb-0">{{ ordenesCompra.enTransito }}</h3>
                   </div>
                 </div>
               </div>
               <div class="col-md-3">
-                <div class="card bg-light border-0">
+                <div class="card fondo-suave border-0">
                   <div class="card-body text-center">
-                    <h6 class="text-muted mb-1">Recibidas</h6>
-                    <h3 class="text-primary mb-0">{{ ordenesCompra.recibida }}</h3>
+                    <h6 class="texto-descriptivo mb-1">Recibidas</h6>
+                    <h3 class="texto-primario mb-0">{{ ordenesCompra.recibida }}</h3>
                   </div>
                 </div>
               </div>
@@ -410,26 +410,26 @@
             
             <div class="row mb-4">
               <div class="col-md-4">
-                <div class="card bg-light border-0">
+                <div class="card fondo-suave border-0">
                   <div class="card-body text-center">
-                    <h6 class="text-muted mb-1">Pendientes</h6>
-                    <h3 class="text-warning mb-0">{{ requerimientosPendientes }}</h3>
+                    <h6 class="texto-descriptivo mb-1">Pendientes</h6>
+                    <h3 class="texto-advertencia mb-0">{{ requerimientosPendientes }}</h3>
                   </div>
                 </div>
               </div>
               <div class="col-md-4">
-                <div class="card bg-light border-0">
+                <div class="card fondo-suave border-0">
                   <div class="card-body text-center">
-                    <h6 class="text-muted mb-1">Consolidados</h6>
-                    <h3 class="text-success mb-0">{{ requerimientosConsolidados }}</h3>
+                    <h6 class="texto-descriptivo mb-1">Consolidados</h6>
+                    <h3 class="texto-confirmacion mb-0">{{ requerimientosConsolidados }}</h3>
                   </div>
                 </div>
               </div>
               <div class="col-md-4">
-                <div class="card bg-light border-0">
+                <div class="card fondo-suave border-0">
                   <div class="card-body text-center">
-                    <h6 class="text-muted mb-1">Aprobados</h6>
-                    <h3 class="text-primary mb-0">{{ requerimientosAprobados }}</h3>
+                    <h6 class="texto-descriptivo mb-1">Aprobados</h6>
+                    <h3 class="texto-primario mb-0">{{ requerimientosAprobados }}</h3>
                   </div>
                 </div>
               </div>
@@ -477,34 +477,34 @@
             
             <div class="row mb-4">
               <div class="col-md-3">
-                <div class="card bg-light border-0">
+                <div class="card fondo-suave border-0">
                   <div class="card-body text-center">
-                    <h6 class="text-muted mb-1">Total</h6>
-                    <h3 class="text-primary mb-0">45</h3>
+                    <h6 class="texto-descriptivo mb-1">Total</h6>
+                    <h3 class="texto-primario mb-0">45</h3>
                   </div>
                 </div>
               </div>
               <div class="col-md-3">
-                <div class="card bg-light border-0">
+                <div class="card fondo-suave border-0">
                   <div class="card-body text-center">
-                    <h6 class="text-muted mb-1">Activos</h6>
-                    <h3 class="text-success mb-0">38</h3>
+                    <h6 class="texto-descriptivo mb-1">Activos</h6>
+                    <h3 class="texto-confirmacion mb-0">38</h3>
                   </div>
                 </div>
               </div>
               <div class="col-md-3">
-                <div class="card bg-light border-0">
+                <div class="card fondo-suave border-0">
                   <div class="card-body text-center">
-                    <h6 class="text-muted mb-1">Inactivos</h6>
-                    <h3 class="text-danger mb-0">7</h3>
+                    <h6 class="texto-descriptivo mb-1">Inactivos</h6>
+                    <h3 class="texto-error mb-0">7</h3>
                   </div>
                 </div>
               </div>
               <div class="col-md-3">
-                <div class="card bg-light border-0">
+                <div class="card fondo-suave border-0">
                   <div class="card-body text-center">
-                    <h6 class="text-muted mb-1">Nuevos</h6>
-                    <h3 class="text-info mb-0">5</h3>
+                    <h6 class="texto-descriptivo mb-1">Nuevos</h6>
+                    <h3 class="texto-informativo mb-0">5</h3>
                   </div>
                 </div>
               </div>
@@ -527,9 +527,9 @@
                     <td>{{ proveedor.ruc }}</td>
                     <td>{{ proveedor.razonSocial }}</td>
                     <td>{{ proveedor.categoria }}</td>
-                    <td><span class="badge" [ngClass]="proveedor.estado === 'Activo' ? 'bg-success' : 'bg-danger'">{{ proveedor.estado }}</span></td>
+                    <td><span class="badge" [ngClass]="proveedor.estado === 'Activo' ? 'badge-exito' : 'badge-peligro'">{{ proveedor.estado }}</span></td>
                     <td>
-                      <div class="text-warning">
+                      <div class="texto-advertencia">
                         <i *ngFor="let star of [].constructor(proveedor.calificacion)" class="bx bxs-star"></i>
                       </div>
                     </td>
@@ -558,60 +558,60 @@
               <div class="col-md-4 mb-3">
                 <div class="card border-0 shadow-sm h-100">
                   <div class="card-body text-center">
-                    <i class="bx bx-bar-chart text-primary fs-2 mb-2"></i>
+                    <i class="bx bx-bar-chart texto-primario fs-2 mb-2"></i>
                     <h6 class="card-title">Reporte de Compras</h6>
-                    <p class="text-muted small">Análisis de compras por período</p>
-                    <button pButton pRipple type="button" label="Generar" class="p-button-sm"></button>
+                    <p class="texto-descriptivo small">Análisis de compras por período</p>
+                    <button pButton pRipple type="button" label="Generar" class="p-button-sm" (click)="abrirReporteCompras()"></button>
                   </div>
                 </div>
               </div>
               <div class="col-md-4 mb-3">
                 <div class="card border-0 shadow-sm h-100">
                   <div class="card-body text-center">
-                    <i class="bx bx-package text-success fs-2 mb-2"></i>
+                    <i class="bx bx-package texto-confirmacion fs-2 mb-2"></i>
                     <h6 class="card-title">Reporte de Inventario</h6>
-                    <p class="text-muted small">Estado actual del almacén</p>
-                    <button pButton pRipple type="button" label="Generar" class="p-button-sm"></button>
+                    <p class="texto-descriptivo small">Estado actual del almacén</p>
+                    <button pButton pRipple type="button" label="Generar" class="p-button-sm" (click)="abrirReporteInventario()"></button>
                   </div>
                 </div>
               </div>
               <div class="col-md-4 mb-3">
                 <div class="card border-0 shadow-sm h-100">
                   <div class="card-body text-center">
-                    <i class="bx bx-building text-info fs-2 mb-2"></i>
+                    <i class="bx bx-building texto-informativo fs-2 mb-2"></i>
                     <h6 class="card-title">Reporte de Proveedores</h6>
-                    <p class="text-muted small">Evaluación y rendimiento</p>
-                    <button pButton pRipple type="button" label="Generar" class="p-button-sm"></button>
+                    <p class="texto-descriptivo small">Evaluación y rendimiento</p>
+                    <button pButton pRipple type="button" label="Generar" class="p-button-sm" (click)="abrirReporteProveedores()"></button>
                   </div>
                 </div>
               </div>
               <div class="col-md-4 mb-3">
                 <div class="card border-0 shadow-sm h-100">
                   <div class="card-body text-center">
-                    <i class="bx bx-time text-warning fs-2 mb-2"></i>
+                    <i class="bx bx-time texto-advertencia fs-2 mb-2"></i>
                     <h6 class="card-title">Reporte de Tiempos</h6>
-                    <p class="text-muted small">Tiempos de entrega y recepción</p>
-                    <button pButton pRipple type="button" label="Generar" class="p-button-sm"></button>
+                    <p class="texto-descriptivo small">Tiempos de entrega y recepción</p>
+                    <button pButton pRipple type="button" label="Generar" class="p-button-sm" (click)="abrirReporteTiempos()"></button>
                   </div>
                 </div>
               </div>
               <div class="col-md-4 mb-3">
                 <div class="card border-0 shadow-sm h-100">
                   <div class="card-body text-center">
-                    <i class="bx bx-dollar text-danger fs-2 mb-2"></i>
+                    <i class="bx bx-dollar texto-error fs-2 mb-2"></i>
                     <h6 class="card-title">Reporte de Gastos</h6>
-                    <p class="text-muted small">Análisis de gastos mensuales</p>
-                    <button pButton pRipple type="button" label="Generar" class="p-button-sm"></button>
+                    <p class="texto-descriptivo small">Análisis de gastos mensuales</p>
+                    <button pButton pRipple type="button" label="Generar" class="p-button-sm" (click)="abrirReporteGastos()"></button>
                   </div>
                 </div>
               </div>
               <div class="col-md-4 mb-3">
                 <div class="card border-0 shadow-sm h-100">
                   <div class="card-body text-center">
-                    <i class="bx bx-file text-secondary fs-2 mb-2"></i>
+                    <i class="bx bx-file texto-secundario fs-2 mb-2"></i>
                     <h6 class="card-title">Reporte Consolidado</h6>
-                    <p class="text-muted small">Reporte general de logística</p>
-                    <button pButton pRipple type="button" label="Generar" class="p-button-sm"></button>
+                    <p class="texto-descriptivo small">Reporte general de logística</p>
+                    <button pButton pRipple type="button" label="Generar" class="p-button-sm" (click)="abrirReporteConsolidado()"></button>
                   </div>
                 </div>
               </div>
@@ -644,7 +644,7 @@
             <td><span class="badge" [ngClass]="obtenerClaseEstado(detalle.estado)">{{ detalle.estado }}</span></td>
           </tr>
           <tr *ngIf="gastosSeleccionados.length === 0">
-            <td colspan="5" class="text-center text-muted">No hay detalles disponibles</td>
+            <td colspan="5" class="text-center texto-descriptivo">No hay detalles disponibles</td>
           </tr>
         </tbody>
       </table>
@@ -665,14 +665,14 @@
 
     <!-- Loading -->
     <div *ngIf="loadingModalRequerimientos" class="text-center py-4">
-      <i class="bx bx-loader-alt bx-spin fs-1 text-primary"></i>
-      <p class="text-muted mt-2">Cargando requerimientos...</p>
+      <i class="bx bx-loader-alt bx-spin fs-1 texto-primario"></i>
+      <p class="texto-descriptivo mt-2">Cargando requerimientos...</p>
     </div>
 
     <!-- Sin resultados -->
     <div *ngIf="!loadingModalRequerimientos && requerimientosLista.length === 0" class="text-center py-4">
-      <i class="bx bx-info-circle fs-1 text-muted"></i>
-      <p class="text-muted mt-2">No hay requerimientos con estado <strong>{{ estadoSeleccionadoModal }}</strong> para la empresa seleccionada.</p>
+      <i class="bx bx-info-circle fs-1 texto-descriptivo"></i>
+      <p class="texto-descriptivo mt-2">No hay requerimientos con estado <strong>{{ estadoSeleccionadoModal }}</strong> para la empresa seleccionada.</p>
     </div>
 
     <!-- Lista de requerimientos -->
@@ -699,9 +699,9 @@
                   <i class="bx" [ngClass]="requerimientoExpandido === req.idrequerimiento ? 'bx-chevron-down' : 'bx-chevron-right'"></i>
                 </td>
                 <td>
-                  <strong class="text-primary">{{ req.idrequerimiento | numeroRequerimiento : req.numeroRequerimiento }}</strong>
+                  <strong class="texto-primario">{{ req.idrequerimiento | numeroRequerimiento : req.numeroRequerimiento }}</strong>
                   <!-- Info compacta visible solo en mobile -->
-                  <div class="d-md-none small text-muted mt-1">
+                  <div class="d-md-none small texto-descriptivo mt-1">
                     <span>{{ req.fecha }}</span> ·
                     <span>{{ req.tipo || '—' }}</span> ·
                     <span>{{ req.dniregistra }}</span>
@@ -709,23 +709,23 @@
                   <div class="d-md-none small text-truncate" style="max-width: 220px;">{{ req.glosa }}</div>
                 </td>
                 <td class="d-none d-md-table-cell">{{ req.fecha }}</td>
-                <td class="d-none d-lg-table-cell"><span class="badge bg-light text-dark border">{{ req.tipo || '—' }}</span></td>
+                <td class="d-none d-lg-table-cell"><span class="badge fondo-suave texto-oscuro border">{{ req.tipo || '—' }}</span></td>
                 <td class="d-none d-lg-table-cell">{{ req.dniregistra }}</td>
                 <td class="d-none d-md-table-cell text-truncate" style="max-width: 280px;" [title]="req.glosa">{{ req.glosa }}</td>
-                <td class="text-center"><span class="badge bg-info">{{ req.totalItems }}</span></td>
+                <td class="text-center"><span class="badge badge-informativo">{{ req.totalItems }}</span></td>
                 <td class="text-center">
                   <span class="badge" [ngClass]="obtenerClaseEstado(req.estado)">{{ req.estado }}</span>
                 </td>
                 <td class="text-center d-none d-md-table-cell">
                   <span class="badge"
-                    [ngClass]="req.estadoConsolidacion === 2 ? 'bg-success' : (req.estadoConsolidacion === 1 ? 'bg-warning text-dark' : 'bg-light text-dark border')">
+                    [ngClass]="req.estadoConsolidacion === 2 ? 'badge-exito' : (req.estadoConsolidacion === 1 ? 'badge-advertencia texto-oscuro' : 'fondo-suave texto-oscuro border')">
                     {{ req.estadoConsolidacion === 2 ? 'TOTAL' : (req.estadoConsolidacion === 1 ? 'PARCIAL' : 'NO') }}
                   </span>
                 </td>
               </tr>
               <!-- Detalle expandido -->
               <tr *ngIf="requerimientoExpandido === req.idrequerimiento">
-                <td colspan="9" class="bg-light p-2 p-md-3">
+                <td colspan="9" class="fondo-suave p-2 p-md-3">
                   <h6 class="mb-3"><i class="bx bx-list-ul me-1"></i>Detalle de Items</h6>
                   <div *ngIf="req.detalles && req.detalles.length > 0; else sinDetalles" class="table-responsive">
                     <table class="table table-sm table-bordered mb-0">
@@ -745,24 +745,24 @@
                           <td>{{ item.codigo || '—' }}</td>
                           <td>
                             {{ item.descripcion || '(sin descripción)' }}
-                            <div class="d-md-none small text-muted">
+                            <div class="d-md-none small texto-descriptivo">
                               <span *ngIf="item.unidadMedida">{{ item.unidadMedida }}</span>
-                              <span *ngIf="item.origen === 'COMMODITY'" class="badge bg-info ms-1">SERVICIO</span>
+                              <span *ngIf="item.origen === 'COMMODITY'" class="badge badge-informativo ms-1">SERVICIO</span>
                             </div>
                           </td>
                           <td class="text-end">{{ item.cantidad }}</td>
                           <td class="d-none d-md-table-cell">{{ item.unidadMedida || '—' }}</td>
                           <td class="text-center d-none d-md-table-cell">
-                            <span class="badge" [ngClass]="item.origen === 'COMMODITY' ? 'bg-info' : 'bg-light text-dark border'">
+                            <span class="badge" [ngClass]="item.origen === 'COMMODITY' ? 'badge-informativo' : 'fondo-suave texto-oscuro border'">
                               {{ item.origen === 'COMMODITY' ? 'SERVICIO' : 'ITEM' }}
                             </span>
                           </td>
                           <td class="text-center d-none d-lg-table-cell">
                             <span class="badge" [ngClass]="obtenerClaseEstado(item.estadoItem)" *ngIf="item.estadoItem">{{ item.estadoItem }}</span>
-                            <span class="text-muted small" *ngIf="!item.estadoItem">—</span>
+                            <span class="texto-descriptivo small" *ngIf="!item.estadoItem">—</span>
                           </td>
                           <td class="text-center">
-                            <span class="badge" [ngClass]="item.estadoConsolidacion === 1 ? 'bg-success' : 'bg-light text-dark border'">
+                            <span class="badge" [ngClass]="item.estadoConsolidacion === 1 ? 'badge-exito' : 'fondo-suave texto-oscuro border'">
                               {{ item.estadoConsolidacion === 1 ? 'CONSOLIDADO' : 'PENDIENTE' }}
                             </span>
                           </td>
@@ -771,7 +771,7 @@
                     </table>
                   </div>
                   <ng-template #sinDetalles>
-                    <p class="text-muted mb-0"><i class="bx bx-info-circle me-1"></i>No hay items en el detalle.</p>
+                    <p class="texto-descriptivo mb-0"><i class="bx bx-info-circle me-1"></i>No hay items en el detalle.</p>
                   </ng-template>
                 </td>
               </tr>
@@ -782,7 +782,7 @@
 
       <!-- Controles de paginación -->
       <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 mt-3 px-2">
-        <small class="text-muted text-center text-md-start">
+        <small class="texto-descriptivo text-center text-md-start">
           Mostrando <strong>{{ rangoVisibleModal.desde }}</strong>–<strong>{{ rangoVisibleModal.hasta }}</strong>
           de <strong>{{ requerimientosLista.length }}</strong> requerimiento(s) ·
           <strong>{{ getTotalItemsRequerimientos() }}</strong> ítem(s)
@@ -814,6 +814,346 @@
             </li>
           </ul>
         </nav>
+      </div>
+    </div>
+  </p-dialog>
+
+  <!-- ==================== MODALES DE REPORTES ==================== -->
+
+  <!-- Modal Reporte de Compras -->
+  <p-dialog [(visible)]="modalReporteComprasAbierto" [modal]="true" [closable]="true" [style]="{ width: '90vw', maxWidth: '1200px' }" header="Reporte de Compras" (onHide)="cerrarReporteCompras()">
+    <div *ngIf="loadingReporte" class="text-center py-4">
+      <i class="bx bx-loader-alt bx-spin fs-1 texto-primario"></i>
+      <p class="texto-descriptivo mt-2">Cargando reporte...</p>
+    </div>
+    <div *ngIf="!loadingReporte && reporteComprasData">
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="card border-0 fondo-suave text-center">
+            <div class="card-body">
+              <h6 class="texto-descriptivo">Total Órdenes</h6>
+              <h3 class="texto-primario">{{ reporteComprasData[0]?.totalOrdenes || 0 }}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card border-0 fondo-suave text-center">
+            <div class="card-body">
+              <h6 class="texto-descriptivo">Monto Total</h6>
+              <h3 class="texto-advertencia">{{ formatearMoneda(reporteComprasData[0]?.montoTotal || 0) }}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card border-0 fondo-suave text-center">
+            <div class="card-body">
+              <h6 class="texto-descriptivo">Proveedores</h6>
+              <h3 class="texto-confirmacion">{{ reporteComprasData[0]?.totalProveedores || 0 }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover">
+          <thead>
+            <tr>
+              <th>N° OC</th>
+              <th>Proveedor</th>
+              <th>Fecha</th>
+              <th>Monto</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let oc of reporteComprasData[2]">
+              <td>{{ oc.numero }}</td>
+              <td>{{ oc.proveedor }}</td>
+              <td>{{ oc.fecha }}</td>
+              <td>{{ formatearMoneda(oc.monto) }}</td>
+              <td><span class="badge" [ngClass]="obtenerClaseEstado(oc.estado)">{{ oc.estado }}</span></td>
+            </tr>
+            <tr *ngIf="!reporteComprasData[2] || reporteComprasData[2].length === 0">
+              <td colspan="5" class="text-center texto-descriptivo">No hay datos</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </p-dialog>
+
+  <!-- Modal Reporte de Inventario -->
+  <p-dialog [(visible)]="modalReporteInventarioAbierto" [modal]="true" [closable]="true" [style]="{ width: '90vw', maxWidth: '1200px' }" header="Reporte de Inventario" (onHide)="cerrarReporteInventario()">
+    <div *ngIf="loadingReporte" class="text-center py-4">
+      <i class="bx bx-loader-alt bx-spin fs-1 texto-primario"></i>
+      <p class="texto-descriptivo mt-2">Cargando reporte...</p>
+    </div>
+    <div *ngIf="!loadingReporte && reporteInventarioData">
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card border-0 fondo-suave text-center">
+            <div class="card-body">
+              <h6 class="texto-descriptivo">Stock Disponible</h6>
+              <h3 class="texto-confirmacion">{{ reporteInventarioData[0]?.stockDisponible || 0 }}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 fondo-suave text-center">
+            <div class="card-body">
+              <h6 class="texto-descriptivo">Stock Crítico</h6>
+              <h3 class="texto-advertencia">{{ reporteInventarioData[0]?.stockCritico || 0 }}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 fondo-suave text-center">
+            <div class="card-body">
+              <h6 class="texto-descriptivo">Sin Stock</h6>
+              <h3 class="texto-error">{{ reporteInventarioData[0]?.sinStock || 0 }}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 fondo-suave text-center">
+            <div class="card-body">
+              <h6 class="texto-descriptivo">Valor Total</h6>
+              <h3 class="texto-primario">{{ formatearMoneda(reporteInventarioData[0]?.valorTotalInventario || 0) }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h6 class="mb-3">Ítems con Stock Crítico</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Almacén</th>
+              <th>Stock Actual</th>
+              <th>Stock Mínimo</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of reporteInventarioData[1]">
+              <td>{{ item.codigoItem }}</td>
+              <td>{{ item.descripcionItem }}</td>
+              <td>{{ item.almacen }}</td>
+              <td>{{ item.stockActual }}</td>
+              <td>{{ item.stockMinimo }}</td>
+              <td><span class="badge" [ngClass]="obtenerClaseEstado(item.estadoStock)">{{ item.estadoStock }}</span></td>
+            </tr>
+            <tr *ngIf="!reporteInventarioData[1] || reporteInventarioData[1].length === 0">
+              <td colspan="6" class="text-center texto-descriptivo">No hay ítems en estado crítico</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </p-dialog>
+
+  <!-- Modal Reporte de Proveedores -->
+  <p-dialog [(visible)]="modalReporteProveedoresAbierto" [modal]="true" [closable]="true" [style]="{ width: '90vw', maxWidth: '1200px' }" header="Reporte de Proveedores" (onHide)="cerrarReporteProveedores()">
+    <div *ngIf="loadingReporte" class="text-center py-4">
+      <i class="bx bx-loader-alt bx-spin fs-1 texto-primario"></i>
+      <p class="texto-descriptivo mt-2">Cargando reporte...</p>
+    </div>
+    <div *ngIf="!loadingReporte">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover">
+          <thead>
+            <tr>
+              <th>RUC</th>
+              <th>Razón Social</th>
+              <th>Total Órdenes</th>
+              <th>Monto Total</th>
+              <th>Promedio</th>
+              <th>Última Orden</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let prov of reporteProveedoresData">
+              <td>{{ prov.ruc }}</td>
+              <td>{{ prov.razonSocial }}</td>
+              <td>{{ prov.totalOrdenes }}</td>
+              <td>{{ formatearMoneda(prov.montoTotal) }}</td>
+              <td>{{ formatearMoneda(prov.promedioOrden) }}</td>
+              <td>{{ prov.ultimaOrden | date:'dd/MM/yyyy' }}</td>
+            </tr>
+            <tr *ngIf="reporteProveedoresData.length === 0">
+              <td colspan="6" class="text-center texto-descriptivo">No hay datos</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </p-dialog>
+
+  <!-- Modal Reporte de Tiempos -->
+  <p-dialog [(visible)]="modalReporteTiemposAbierto" [modal]="true" [closable]="true" [style]="{ width: '90vw', maxWidth: '1200px' }" header="Reporte de Tiempos de Entrega" (onHide)="cerrarReporteTiempos()">
+    <div *ngIf="loadingReporte" class="text-center py-4">
+      <i class="bx bx-loader-alt bx-spin fs-1 texto-primario"></i>
+      <p class="texto-descriptivo mt-2">Cargando reporte...</p>
+    </div>
+    <div *ngIf="!loadingReporte && reporteTiemposData">
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="card border-0 fondo-suave text-center">
+            <div class="card-body">
+              <h6 class="texto-descriptivo">Promedio Días Entrega</h6>
+              <h3 class="texto-primario">{{ (reporteTiemposData[0]?.promedioDiasEntrega || 0) | number:'1.1-1' }} días</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card border-0 fondo-suave text-center">
+            <div class="card-body">
+              <h6 class="texto-descriptivo">Total Recepciones</h6>
+              <h3 class="texto-confirmacion">{{ reporteTiemposData[0]?.totalRecepciones || 0 }}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card border-0 fondo-suave text-center">
+            <div class="card-body">
+              <h6 class="texto-descriptivo">Órdenes Completadas</h6>
+              <h3 class="texto-advertencia">{{ reporteTiemposData[0]?.ordenesCompletadas || 0 }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h6 class="mb-3">Tiempos por Proveedor</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Proveedor</th>
+              <th>Total Entregas</th>
+              <th>Promedio Días</th>
+              <th>Mínimo</th>
+              <th>Máximo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of reporteTiemposData[1]">
+              <td>{{ t.proveedor }}</td>
+              <td>{{ t.totalEntregas }}</td>
+              <td>{{ t.promedioDias | number:'1.1-1' }}</td>
+              <td>{{ t.minDias }}</td>
+              <td>{{ t.maxDias }}</td>
+            </tr>
+            <tr *ngIf="!reporteTiemposData[1] || reporteTiemposData[1].length === 0">
+              <td colspan="5" class="text-center texto-descriptivo">No hay datos</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </p-dialog>
+
+  <!-- Modal Reporte de Gastos -->
+  <p-dialog [(visible)]="modalReporteGastosAbierto" [modal]="true" [closable]="true" [style]="{ width: '90vw', maxWidth: '1200px' }" header="Reporte de Gastos" (onHide)="cerrarReporteGastos()">
+    <div *ngIf="loadingReporte" class="text-center py-4">
+      <i class="bx bx-loader-alt bx-spin fs-1 texto-primario"></i>
+      <p class="texto-descriptivo mt-2">Cargando reporte...</p>
+    </div>
+    <div *ngIf="!loadingReporte">
+      <h6 class="mb-3">Gastos por Mes</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Mes</th>
+              <th>Órdenes Compra</th>
+              <th>Órdenes Servicio</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let g of reporteGastosData">
+              <td>{{ g.mes }}</td>
+              <td>{{ formatearMoneda(g.montoOrdenesCompra) }}</td>
+              <td>{{ formatearMoneda(g.montoOrdenesServicio) }}</td>
+              <td><strong>{{ formatearMoneda(g.montoTotal) }}</strong></td>
+            </tr>
+            <tr *ngIf="reporteGastosData.length === 0">
+              <td colspan="4" class="text-center texto-descriptivo">No hay datos</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </p-dialog>
+
+  <!-- Modal Reporte Consolidado -->
+  <p-dialog [(visible)]="modalReporteConsolidadoAbierto" [modal]="true" [closable]="true" [style]="{ width: '90vw', maxWidth: '1200px' }" header="Reporte Consolidado" (onHide)="cerrarReporteConsolidado()">
+    <div *ngIf="loadingReporte" class="text-center py-4">
+      <i class="bx bx-loader-alt bx-spin fs-1 texto-primario"></i>
+      <p class="texto-descriptivo mt-2">Cargando reporte...</p>
+    </div>
+    <div *ngIf="!loadingReporte && reporteConsolidadoData">
+      <div class="row mb-4" *ngIf="reporteConsolidadoData[0]">
+        <div class="col-md-3">
+          <div class="card border-0 fondo-suave text-center">
+            <div class="card-body">
+              <h6 class="texto-descriptivo">Total Requerimientos</h6>
+              <h3 class="texto-primario">{{ reporteConsolidadoData[0]?.totalRequerimientos || 0 }}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 fondo-suave text-center">
+            <div class="card-body">
+              <h6 class="texto-descriptivo">Órdenes Compra</h6>
+              <h3 class="texto-confirmacion">{{ reporteConsolidadoData[0]?.totalOC || 0 }}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 fondo-suave text-center">
+            <div class="card-body">
+              <h6 class="texto-descriptivo">Monto Total OC</h6>
+              <h3 class="texto-advertencia">{{ formatearMoneda(reporteConsolidadoData[0]?.montoTotalOC || 0) }}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 fondo-suave text-center">
+            <div class="card-body">
+              <h6 class="texto-descriptivo">Valor Inventario</h6>
+              <h3 class="texto-informativo">{{ formatearMoneda(reporteConsolidadoData[0]?.valorInventario || 0) }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h6 class="mb-3">Acciones Recientes</h6>
+      <div class="table-responsive" *ngIf="reporteConsolidadoData[2]">
+        <table class="table table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Número</th>
+              <th>Entidad</th>
+              <th>Fecha</th>
+              <th>Monto</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of reporteConsolidadoData[2]">
+              <td>{{ a.tipo }}</td>
+              <td>{{ a.numero }}</td>
+              <td>{{ a.entidad }}</td>
+              <td>{{ a.fecha }}</td>
+              <td>{{ formatearMoneda(a.monto) }}</td>
+              <td><span class="badge" [ngClass]="obtenerClaseEstado(a.estado)">{{ a.estado }}</span></td>
+            </tr>
+            <tr *ngIf="!reporteConsolidadoData[2] || reporteConsolidadoData[2].length === 0">
+              <td colspan="6" class="text-center texto-descriptivo">No hay datos</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </p-dialog>

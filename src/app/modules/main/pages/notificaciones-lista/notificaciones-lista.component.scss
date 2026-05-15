@@ -3,21 +3,19 @@
   border: none;
 }
 
-.badge {
+.badge-estado {
   font-size: 0.75rem;
+  padding: 0.35em 0.65em;
+  border-radius: 0.25rem;
 }
 
-.bg-light {
-  background-color: #f8f9fa !important;
-  border-left: 4px solid #007bff;
+.fondo-informativo {
+  background-color: var(--app-light) !important;
+  border-left: 4px solid var(--app-primary);
 }
 
 :host ::ng-deep .p-paginator {
   background: transparent;
   border: none;
   padding: 1rem 0 0 0;
-}
-
-.text-success {
-  color: #28a745 !important;
 }

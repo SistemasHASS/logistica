@@ -128,6 +128,10 @@ export class LoginComponent {
         this.router.navigate(['/main/dashboard-logistica']);
         break;
 
+      case 'FINANZAS': // 👈 rol finanzas
+        this.router.navigate(['/main/dashboard-finanzas']);
+        break;      
+
       default:
         this.router.navigate(['/main/reporte_logistico']);
         break;

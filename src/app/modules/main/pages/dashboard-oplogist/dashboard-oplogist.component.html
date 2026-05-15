@@ -7,7 +7,7 @@
         <h3 class="mb-0"><i class="bx bx-user-check me-2 text-primary"></i>Mi Dashboard</h3>
         <p class="text-muted mb-0">Seguimiento de mis requerimientos — {{ usuario?.nombre || usuario?.usuario }}</p>
       </div>
-      <button class="btn btn-primary" (click)="irRequerimientos()">
+      <button class="btn btn-accion-primaria" (click)="irRequerimientos()">
         <i class="bx bx-plus me-1"></i> Nuevo Requerimiento
       </button>
     </div>
@@ -71,7 +71,7 @@
               <span class="pipeline-pct-value text-warning">{{ resumen.total > 0 ? ((resumen.pendiente / resumen.total) * 100 | number:'1.0-0') : 0 }}%</span>
             </div>
             <div class="progress" style="height:8px">
-              <div class="progress-bar bg-warning" [style.width]="(resumen.total > 0 ? (resumen.pendiente / resumen.total) * 100 : 0) + '%'"></div>
+              <div class="progress-bar barra-advertencia" [style.width]="(resumen.total > 0 ? (resumen.pendiente / resumen.total) * 100 : 0) + '%'"></div>
             </div>
             <div class="pipeline-pct-sub">{{ resumen.pendiente }} de {{ resumen.total }}</div>
           </div>
@@ -83,7 +83,7 @@
               <span class="pipeline-pct-value text-success">{{ resumen.total > 0 ? ((resumen.aprobado / resumen.total) * 100 | number:'1.0-0') : 0 }}%</span>
             </div>
             <div class="progress" style="height:8px">
-              <div class="progress-bar bg-success" [style.width]="(resumen.total > 0 ? (resumen.aprobado / resumen.total) * 100 : 0) + '%'"></div>
+              <div class="progress-bar barra-exito" [style.width]="(resumen.total > 0 ? (resumen.aprobado / resumen.total) * 100 : 0) + '%'"></div>
             </div>
             <div class="pipeline-pct-sub">{{ resumen.aprobado }} de {{ resumen.total }}</div>
           </div>
@@ -95,7 +95,7 @@
               <span class="pipeline-pct-value text-primary">{{ resumen.total > 0 ? ((resumen.despachado / resumen.total) * 100 | number:'1.0-0') : 0 }}%</span>
             </div>
             <div class="progress" style="height:8px">
-              <div class="progress-bar bg-primary" [style.width]="(resumen.total > 0 ? (resumen.despachado / resumen.total) * 100 : 0) + '%'"></div>
+              <div class="progress-bar barra-primaria" [style.width]="(resumen.total > 0 ? (resumen.despachado / resumen.total) * 100 : 0) + '%'"></div>
             </div>
             <div class="pipeline-pct-sub">{{ resumen.despachado }} de {{ resumen.total }}</div>
           </div>
@@ -107,7 +107,7 @@
               <span class="pipeline-pct-value text-info">{{ resumen.total > 0 ? ((resumen.completado / resumen.total) * 100 | number:'1.0-0') : 0 }}%</span>
             </div>
             <div class="progress" style="height:8px">
-              <div class="progress-bar bg-info" [style.width]="(resumen.total > 0 ? (resumen.completado / resumen.total) * 100 : 0) + '%'"></div>
+              <div class="progress-bar barra-informativa" [style.width]="(resumen.total > 0 ? (resumen.completado / resumen.total) * 100 : 0) + '%'"></div>
             </div>
             <div class="pipeline-pct-sub">{{ resumen.completado }} de {{ resumen.total }}</div>
           </div>
@@ -131,21 +131,21 @@
           <button class="nav-link fw-semibold px-4" [class.active]="tabTipo === 'CONSUMO'" (click)="seleccionarTabTipo('CONSUMO')">
             <i class="bx bx-package me-1"></i>
             Consumo
-            <span class="badge ms-1" [class.bg-warning]="tabTipo === 'CONSUMO'" [class.bg-secondary]="tabTipo !== 'CONSUMO'">{{ contadorConsumo }}</span>
+            <span class="badge ms-1" [class.badge-advertencia]="tabTipo === 'CONSUMO'" [class.badge-inactivo]="tabTipo !== 'CONSUMO'">{{ contadorConsumo }}</span>
           </button>
         </li>
         <li class="nav-item">
           <button class="nav-link fw-semibold px-4" [class.active]="tabTipo === 'COMPRA'" (click)="seleccionarTabTipo('COMPRA')">
             <i class="bx bx-cart me-1"></i>
             Compra
-            <span class="badge ms-1" [class.bg-info]="tabTipo === 'COMPRA'" [class.bg-secondary]="tabTipo !== 'COMPRA'">{{ contadorCompra }}</span>
+            <span class="badge ms-1" [class.badge-informativo]="tabTipo === 'COMPRA'" [class.badge-inactivo]="tabTipo !== 'COMPRA'">{{ contadorCompra }}</span>
           </button>
         </li>
       </ul>
     </div>
 
     <!-- Sub-tabs de estado (dinámicos, solo los que tienen registros) -->
-    <div class="card-header bg-light border-top-0 py-2 px-3">
+    <div class="card-header fondo-suave border-top-0 py-2 px-3">
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <button class="btn btn-sm" [class.btn-secondary]="filtroSubEstado === ''" [class.btn-outline-secondary]="filtroSubEstado !== ''" (click)="seleccionarSubEstado('')">
           Todos
@@ -194,7 +194,7 @@
             <td><strong class="text-primary">{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</strong></td>
             <td>{{ formatearFecha(req.fecha) }}</td>
             <td>
-              <span class="badge" [class]="req.itemtipo === 'COMPRA' ? 'bg-info' : 'bg-secondary'">
+              <span class="badge" [class]="req.itemtipo === 'COMPRA' ? 'badge-informativo' : 'badge-inactivo'">
                 {{ req.itemtipo }}
               </span>
             </td>

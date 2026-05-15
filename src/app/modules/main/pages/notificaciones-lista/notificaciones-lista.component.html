@@ -5,7 +5,7 @@
         <h5 class="mb-0">
           <i class="fas fa-bell me-2"></i>
           Mis Notificaciones
-          <span class="badge bg-danger ms-2" *ngIf="totalNoLeidas > 0">{{ totalNoLeidas }}</span>
+          <span class="badge-alerta ms-2" *ngIf="totalNoLeidas > 0">{{ totalNoLeidas }}</span>
         </h5>
         <div>
           <button pButton type="button" class="p-button-outlined p-button-sm me-2" 
@@ -36,23 +36,20 @@
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-notificacion>
-          <tr [class.bg-light]="!notificacion.leida">
+          <tr [class.fondo-informativo]="!notificacion.leida">
             <td>
               @if (notificacion.leida) {
-                <span class="badge bg-secondary">
+                <span class="badge-inactivo">
                   <i class='bx bx-check me-1'></i>Leída
                 </span>
               } @else {
-                <span class="badge bg-primary">
+                <span class="badge-primario">
                   <i class='bx bx-envelope me-1'></i>No leída
                 </span>
               }
             </td>
             <td>
-              <span class="badge" 
-                    [class.bg-success]="notificacion.tipo_notificacion === 'STOCK_DISPONIBLE'"
-                    [class.bg-warning]="notificacion.tipo_notificacion === 'SALDO_PENDIENTE'"
-                    [class.bg-info]="true">
+              <span [class]="'badge-estado ' + getClaseTipoNotificacion(notificacion.tipo_notificacion)">
                 {{ getTipoNotificacionLabel(notificacion.tipo_notificacion) }}
               </span>
             </td>
@@ -60,13 +57,13 @@
               <div [class]="{'fw-bold': !notificacion.leida}">
                 <strong>{{ notificacion.iditem }}</strong> - {{ notificacion.itemDescripcion }}
                 <br>
-                <small class="text-muted">{{ notificacion.mensaje }}</small>
+                <small class="texto-descriptivo">{{ notificacion.mensaje }}</small>
               </div>
             </td>
             <td>
               <small>{{ notificacion.fecha_creacion | date:'dd/MM/yyyy HH:mm' }}</small>
               <br>
-              <small *ngIf="notificacion.fecha_lectura" class="text-success">
+              <small *ngIf="notificacion.fecha_lectura" class="texto-confirmacion">
                 Leída: {{ notificacion.fecha_lectura | date:'dd/MM/yyyy HH:mm' }}
               </small>
             </td>

@@ -1,7 +1,7 @@
 <div class="container-fluid">
   <div class="page-header">
     <h2 class="page-title">
-      <i class="bx bx-check-circle"></i>
+      <!-- <i class="bx bx-check-circle"></i> -->
       Aprobaciones de Órdenes de Servicio
     </h2>
     <p class="page-subtitle">Gestión de aprobaciones de órdenes de servicio</p>
@@ -201,6 +201,15 @@
                   pTooltip="Rechazar"
                   (click)="abrirModalAprobacion(os, 'RECHAZAR')"
                   [disabled]="os.estado !== 'PENDIENTE'"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-ban"
+                  class="p-button-rounded p-button-warning p-button-sm"
+                  pTooltip="Anular (libera consolidación)"
+                  (click)="anularOS(os)"
+                  [disabled]="os.estado === 'ANULADA'"
                 ></button>
               </div>
             </td>
@@ -761,3 +770,50 @@
     ></button>
   </ng-template>
 </p-dialog>
+
+<!-- MODAL: MOTIVO ANULACION OS -->
+@if (modalMotivoAbierto) {
+<div class="modal-overlay" (click)="cerrarModalMotivo()">
+  <div class="modal-container" style="max-width:520px" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="pi pi-ban"></i> Anular Orden de Servicio</h3>
+      <button class="btn-close" (click)="cerrarModalMotivo()"></button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-warning" style="margin-bottom:1rem">
+        <i class="pi pi-info-circle"></i>
+        La OS será <strong>ANULADA</strong> y la consolidación será <strong>LIBERADA</strong>.
+        Los ítems volverán a estado pendiente en Consolidación de Requerimientos.
+      </div>
+      <div class="form-group">
+        <label><strong>Motivo <span style="color:red">*</span></strong></label>
+        <textarea
+          class="form-control"
+          rows="4"
+          [(ngModel)]="motivoTexto"
+          placeholder="Ingrese el motivo de anulación (obligatorio)..."
+          style="resize:vertical">
+        </textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button
+        pButton
+        type="button"
+        label="Confirmar Anulación"
+        icon="pi pi-ban"
+        class="p-button-warning"
+        (click)="confirmarAnulacionOS()">
+      </button>
+      <button
+        pButton
+        type="button"
+        label="Cancelar"
+        icon="pi pi-times"
+        class="p-button-text"
+        (click)="cerrarModalMotivo()">
+      </button>
+    </div>
+  </div>
+</div>
+}

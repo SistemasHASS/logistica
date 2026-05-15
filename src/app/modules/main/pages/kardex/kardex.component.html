@@ -1,7 +1,7 @@
 <div class="kardex-container">
   <div class="page-header">
     <h2><i class="bi bi-database"></i> Kardex e Inventario</h2>
-    <p class="text-muted">Gestión completa de inventario, kardex y transacciones</p>
+    <p class="texto-descriptivo">Gestión completa de inventario, kardex y transacciones</p>
     <!-- Botones de prueba y sincronización -->
     <div class="mt-3">
       <div class="btn-group me-2" role="group">
@@ -82,7 +82,7 @@
           </div>
           <div class="col-md-2">
             <label>&nbsp;</label>
-            <button class="btn btn-secondary w-100" (click)="limpiarFiltrosStock()">
+            <button class="btn btn-accion-secundaria w-100" (click)="limpiarFiltrosStock()">
               <i class="bi bi-x-circle"></i> Limpiar
             </button>
           </div>
@@ -140,7 +140,7 @@
         <!-- Filtros -->
         <div class="row mb-3">
           <div class="col-md-2">
-            <label>Código Item <span class="text-danger">*</span></label>
+            <label>Código Item <span class="texto-error">*</span></label>
             <input type="text" class="form-control" [(ngModel)]="filtroKardex.codigoItem" 
                    placeholder="Ej: ITEM-001">
           </div>
@@ -163,10 +163,10 @@
           <div class="col-md-2">
             <label>&nbsp;</label>
             <div class="d-grid gap-1">
-              <button class="btn btn-primary" (click)="buscarKardex()">
+              <button class="btn btn-accion-primaria" (click)="buscarKardex()">
                 <i class="bi bi-search"></i> Buscar
               </button>
-              <button class="btn btn-secondary" (click)="limpiarKardex()">
+              <button class="btn btn-accion-secundaria" (click)="limpiarKardex()">
                 <i class="bi bi-x-circle"></i> Limpiar
               </button>
             </div>
@@ -199,8 +199,8 @@
               <td>{{ mov.tipoDocumento }} - {{ mov.numeroDocumento }}</td>
               <td>{{ mov.almacenOrigen || '-' }}</td>
               <td>{{ mov.almacenDestino || '-' }}</td>
-              <td class="text-end text-success"><strong>{{ mov.cantidadEntrada > 0 ? formatearNumero(mov.cantidadEntrada) : '-' }}</strong></td>
-              <td class="text-end text-danger"><strong>{{ mov.cantidadSalida > 0 ? formatearNumero(mov.cantidadSalida) : '-' }}</strong></td>
+              <td class="text-end texto-confirmacion"><strong>{{ mov.cantidadEntrada > 0 ? formatearNumero(mov.cantidadEntrada) : '-' }}</strong></td>
+              <td class="text-end texto-error"><strong>{{ mov.cantidadSalida > 0 ? formatearNumero(mov.cantidadSalida) : '-' }}</strong></td>
               <td class="text-end"><strong>{{ formatearNumero(mov.saldo) }}</strong></td>
               <td *ngIf="puedeVerPrecios" class="text-end">{{ formatearMoneda(mov.costoUnitario) }}</td>
               <td *ngIf="puedeVerPrecios" class="text-end">{{ formatearMoneda(mov.costoTotal) }}</td>
@@ -221,7 +221,7 @@
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5><i class="bi bi-arrow-left-right"></i> Transacciones de Inventario</h5>
-        <button class="btn btn-primary" (click)="abrirModalNuevaTransaccion()">
+        <button class="btn btn-accion-primaria" (click)="abrirModalNuevaTransaccion()">
           <i class="bi bi-plus-circle"></i> Nueva Transacción
         </button>
       </div>
@@ -256,7 +256,7 @@
           </div>
           <div class="col-md-2">
             <label>&nbsp;</label>
-            <button class="btn btn-secondary w-100" (click)="limpiarFiltrosTransacciones()">
+            <button class="btn btn-accion-secundaria w-100" (click)="limpiarFiltrosTransacciones()">
               <i class="bi bi-x-circle"></i> Limpiar
             </button>
           </div>
@@ -291,15 +291,15 @@
                 <p-tag [value]="trans.estado" [severity]="getSeverityEstado(trans.estado)"></p-tag>
               </td>
               <td>
-                <button class="btn btn-sm btn-info me-1" (click)="verDetalleTransaccion(trans)" 
+                <button class="btn btn-sm btn-accion-info me-1" (click)="verDetalleTransaccion(trans)" 
                         pTooltip="Ver detalle">
                   <i class="bi bi-eye"></i>
                 </button>
-                <button *ngIf="trans.estado === 'PENDIENTE'" class="btn btn-sm btn-success me-1" 
+                <button *ngIf="trans.estado === 'PENDIENTE'" class="btn btn-sm btn-accion-exito me-1" 
                         (click)="procesarTransaccion(trans.idTransaccion)" pTooltip="Procesar">
                   <i class="bi bi-check-circle"></i>
                 </button>
-                <button *ngIf="trans.estado === 'PENDIENTE'" class="btn btn-sm btn-danger" 
+                <button *ngIf="trans.estado === 'PENDIENTE'" class="btn btn-sm btn-accion-peligro" 
                         (click)="anularTransaccion(trans)" pTooltip="Anular">
                   <i class="bi bi-x-circle"></i>
                 </button>
@@ -367,7 +367,7 @@
                 <tr *ngFor="let item of dashboard.itemsBajoStock">
                   <td>{{ item.codigoItem }}</td>
                   <td>{{ item.almacen }}</td>
-                  <td class="text-danger"><strong>{{ formatearNumero(item.stockActual) }}</strong></td>
+                  <td class="texto-error"><strong>{{ formatearNumero(item.stockActual) }}</strong></td>
                   <td>{{ formatearNumero(item.stockMinimo) }}</td>
                 </tr>
               </tbody>
@@ -396,7 +396,7 @@
                   <td>{{ item.codigoItem }}</td>
                   <td>{{ item.almacen }}</td>
                   <td>{{ formatearNumero(item.stockActual) }}</td>
-                  <td *ngIf="puedeVerPrecios" class="text-success"><strong>{{ formatearMoneda(item.valorInventario) }}</strong></td>
+                  <td *ngIf="puedeVerPrecios" class="texto-confirmacion"><strong>{{ formatearMoneda(item.valorInventario) }}</strong></td>
                   <!-- <td class="text-end"><strong>{{ formatearMoneda(item.valorTotal) }}</strong></td> -->
                 </tr>
               </tbody>
@@ -512,9 +512,9 @@
 
       <!-- Detalles de la transacción -->
       <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center bg-light">
+        <div class="card-header d-flex justify-content-between align-items-center fondo-suave">
           <h6 class="mb-0"><i class="bi bi-list-ul"></i> Detalles de la Transacción</h6>
-          <button type="button" class="btn btn-sm btn-success" (click)="agregarDetalleTransaccion()">
+          <button type="button" class="btn btn-sm btn-accion-exito" (click)="agregarDetalleTransaccion()">
             <i class="bi bi-plus"></i> Agregar Item
           </button>
         </div>
@@ -578,13 +578,13 @@
                     <span class="d-block pt-2 fw-bold">{{ formatearMoneda(det.costoTotal) }}</span>
                   </td>
                   <td>
-                    <button type="button" class="btn btn-sm btn-danger" (click)="eliminarDetalleTransaccion(i)">
+                    <button type="button" class="btn btn-sm btn-accion-peligro" (click)="eliminarDetalleTransaccion(i)">
                       <i class="icon-trash"></i>
                     </button>
                   </td>
                 </tr>
                 <tr *ngIf="nuevaTransaccion.detalles.length === 0">
-                  <td colspan="6" class="text-center text-muted py-3">
+                  <td colspan="6" class="text-center texto-descriptivo py-3">
                     <i class="bi bi-inbox"></i> No hay detalles agregados
                   </td>
                 </tr>
@@ -598,7 +598,7 @@
                 <div class="card-body">
                   <div class="d-flex justify-content-between">
                     <span class="fs-5 fw-bold">Total:</span>
-                    <span class="fs-5 fw-bold text-primary">{{ formatearMoneda(calcularTotalTransaccion()) }}</span>
+                    <span class="fs-5 fw-bold texto-primario">{{ formatearMoneda(calcularTotalTransaccion()) }}</span>
                   </div>
                 </div>
               </div>

@@ -65,6 +65,7 @@ export interface ConsolidacionCab {
   totalItems: number;
   estadoProceso?: string;
   totalLineas?: number;
+  tipoConsolidacion?: 'ITEM' | 'SERVICIO'; // 'ITEM' → mostrar OC, 'SERVICIO' → mostrar OS
   detalles?: ConsolidacionDet[];
 }
 

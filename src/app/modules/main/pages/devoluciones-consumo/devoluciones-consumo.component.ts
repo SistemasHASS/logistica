@@ -433,11 +433,11 @@ export class DevolucionesConsumoComponent implements OnInit {
 
   obtenerClaseEstado(estado: string): string {
     const clases: { [key: string]: string } = {
-      'PENDIENTE': 'badge bg-warning',
-      'APROBADA': 'badge bg-success',
-      'RECHAZADA': 'badge bg-danger',
-      'ANULADA': 'badge bg-secondary'
+      'PENDIENTE': 'badge-estado estado-pendiente',
+      'APROBADA': 'badge-estado estado-confirmado',
+      'RECHAZADA': 'badge-estado estado-rechazado',
+      'ANULADA': 'badge-estado estado-inactivo'
     };
-    return clases[estado] || 'badge bg-secondary';
+    return clases[estado] || 'badge-estado estado-inactivo';
   }
 }

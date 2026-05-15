@@ -11,7 +11,7 @@
   >div {
     // overflow: auto;
     width: 100%;
-    border-left: 5px solid #57b596;
+    border-left: 5px solid var(--app-success);
     padding-left: 5px;
 
     p {
@@ -35,8 +35,8 @@
             cursor: pointer;
             
             &:checked {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
+            background-color: var(--app-primary);
+            border-color: var(--app-primary);
             }
         }
       
@@ -143,8 +143,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 24px;
-    border-bottom: 1px solid #e0e0e0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-bottom: 1px solid var(--app-gray-300);
+    background: linear-gradient(135deg, var(--app-primary) 0%, var(--app-info) 100%);
     border-radius: 12px 12px 0 0;
 
     h4 {
@@ -186,22 +186,22 @@
 }
 
 .detalle-item {
-    background: #f8f9fa;
+    background: var(--app-light);
     padding: 12px 16px;
     border-radius: 8px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid var(--app-primary);
     transition: all 0.3s ease;
 
     &:hover {
-        background: #e9ecef;
-        border-left-color: #764ba2;
+        background: var(--app-gray-200);
+        border-left-color: var(--app-info);
         transform: translateX(4px);
     }
 
     label {
         display: block;
         font-weight: 600;
-        color: #495057;
+        color: var(--app-gray-700);
         margin-bottom: 4px;
         font-size: 0.875rem;
         text-transform: uppercase;
@@ -210,7 +210,7 @@
 
     span {
         display: block;
-        color: #212529;
+        color: var(--app-dark);
         font-size: 1rem;
         word-wrap: break-word;
     }
@@ -224,11 +224,11 @@
 
 .modal-footer-custom {
     padding: 16px 24px;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--app-gray-300);
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    background: #f8f9fa;
+    background: var(--app-light);
     border-radius: 0 0 12px 12px;
 
     .btn {

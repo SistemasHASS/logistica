@@ -397,11 +397,11 @@ export class ReingresosComponent implements OnInit {
 
   obtenerClaseEstado(estado: string): string {
     const clases: { [key: string]: string } = {
-      'PENDIENTE': 'badge bg-warning',
-      'APROBADO': 'badge bg-success',
-      'RECHAZADO': 'badge bg-danger',
-      'ANULADO': 'badge bg-secondary'
+      'PENDIENTE': 'badge-estado estado-pendiente',
+      'APROBADO': 'badge-estado estado-confirmado',
+      'RECHAZADO': 'badge-estado estado-rechazado',
+      'ANULADO': 'badge-estado estado-inactivo'
     };
-    return clases[estado] || 'badge bg-secondary';
+    return clases[estado] || 'badge-estado estado-inactivo';
   }
 }

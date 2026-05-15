@@ -6,7 +6,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   text-align: center;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--app-gray-200);
 
   &:hover {
     transform: translateY(-2px);
@@ -23,34 +23,16 @@
   .status-card-label {
     font-size: 0.875rem;
     font-weight: 500;
-    color: #6c757d;
+    color: var(--app-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
 
-  &.status-card-primary {
-    .status-card-number {
-      color: #0052cc;
-    }
-  }
-
-  &.status-card-warning {
-    .status-card-number {
-      color: #ff991f;
-    }
-  }
-
-  &.status-card-success {
-    .status-card-number {
-      color: #36b37e;
-    }
-  }
-
-  &.status-card-danger {
-    .status-card-number {
-      color: #de350b;
-    }
-  }
+  // Colores semánticos para tarjetas de estado
+  &.status-card-primary .status-card-number { color: var(--app-primary); }
+  &.status-card-warning .status-card-number { color: var(--app-warning); }
+  &.status-card-success .status-card-number { color: var(--app-success); }
+  &.status-card-danger .status-card-number { color: var(--app-danger); }
 }
 
 .card {
@@ -59,8 +41,8 @@
 }
 
 .card-header {
-  background-color: #f8f9fa;
-  border-bottom: 2px solid #dee2e6;
+  background-color: var(--app-light);
+  border-bottom: 2px solid var(--app-gray-300);
 }
 
 .badge {
@@ -90,6 +72,4 @@
   font-size: 0.875rem;
 }
 
-.text-danger {
-  font-weight: bold;
-}
+// Usar clase semántica global: .texto-alerta

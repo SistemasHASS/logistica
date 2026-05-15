@@ -2,11 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AprobacionOSService } from '../../../../services/aprobacion-os.service';
+import { AprobacionOrdenService } from '@/app/services/aprobacion-orden.service';
 import { AlertService } from '../../../../shared/alertas/alerts.service';
 import { UserService } from '../../../../shared/services/user.service';
 import { DexieService } from '../../../../shared/dixiedb/dexie-db.service';
 import { Usuario } from '../../../../shared/interfaces/Tables';
 import { TableModule } from 'primeng/table';
+import { lastValueFrom } from 'rxjs';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -92,6 +94,11 @@ export class AprobacionesOSComponent implements OnInit {
   observacionesAprobacion = '';
   osSeleccionada: any = null;
 
+  // Modal motivo anulacion OS
+  modalMotivoAbierto = false;
+  motivoTexto = '';
+  osAccionPendiente: any = null;
+
   // Filtros
   filtroEstado = 'TODAS';
   filtroProveedor = '';
@@ -108,6 +115,7 @@ export class AprobacionesOSComponent implements OnInit {
 
   constructor(
     private aprobacionOSService: AprobacionOSService,
+    private aprobacionOrdenService: AprobacionOrdenService,
     private alertService: AlertService,
     private userService: UserService,
     private dexieService: DexieService
@@ -142,16 +150,32 @@ export class AprobacionesOSComponent implements OnInit {
 
   async cargarOSPendientes() {
     try {
-      const response = await this.aprobacionOSService
-        .listarOSPendientes(this.usuario.documentoidentidad)
-        .toPromise();
+      this.alertService.mostrarModalCarga();
 
-      if (response) {
-        this.osPendientes = response;
-        this.aplicarFiltros();
+      // Intentar nuevo endpoint con datos completos primero
+      let pendientes: any[] = [];
+      try {
+        const respDetallado = await lastValueFrom(
+          this.aprobacionOrdenService.listarPendientesDetallado(this.usuario.idrol, 'OS')
+        );
+        if (Array.isArray(respDetallado)) {
+          pendientes = respDetallado;
+        }
+      } catch {
+        // fallback al endpoint anterior
+        const response = await this.aprobacionOSService
+          .listarOSPendientes(this.usuario.documentoidentidad)
+          .toPromise();
+        pendientes = response || [];
       }
+
+      this.osPendientes = pendientes;
+      this.contadores.totalPendientes = pendientes.length;
+      this.aplicarFiltros();
+      this.alertService.cerrarModalCarga();
     } catch (error) {
       console.error('Error al cargar OS pendientes:', error);
+      this.alertService.cerrarModalCarga();
       this.alertService.showAlert('Error', 'No se pudieron cargar las órdenes de servicio pendientes', 'error');
     }
   }
@@ -182,7 +206,8 @@ export class AprobacionesOSComponent implements OnInit {
       if (this.filtroProveedor) {
         cumpleFiltro =
           cumpleFiltro &&
-          os.nombreProveedor?.toLowerCase().includes(this.filtroProveedor.toLowerCase());
+          (os.nombreProveedor || os.osNombreProveedor || '')
+            ?.toLowerCase().includes(this.filtroProveedor.toLowerCase());
       }
 
       if (this.filtroFechaInicio) {
@@ -208,19 +233,40 @@ export class AprobacionesOSComponent implements OnInit {
   }
 
   async verDetalleOS(os: any) {
-    this.osDetalle = os;
-    this.modalDetalleOS = true;
-
     try {
+      this.alertService.mostrarModalCarga();
+
+      // Intentar cargar OS completa con ítems reales
+      if (os.IdAprobacion || os.idAprobacion || os.CodigoOrden || os.codigoOrden) {
+        try {
+          const detalle = await lastValueFrom(
+            this.aprobacionOrdenService.obtenerOSDesdeConsolidacion({
+              idAprobacion: os.IdAprobacion || os.idAprobacion,
+              codigoOrden: os.CodigoOrden || os.codigoOrden,
+            })
+          );
+          if (detalle) {
+            this.osDetalle = { ...os, ...detalle };
+            this.historialOS = detalle.nivelesAprobacion || [];
+            this.alertService.cerrarModalCarga();
+            this.modalDetalleOS = true;
+            return;
+          }
+        } catch {
+          // fallback al historial anterior
+        }
+      }
+
+      this.osDetalle = os;
       const historial = await this.aprobacionOSService
         .obtenerHistorialOS(os.ordenServicioId)
         .toPromise();
-
-      if (historial) {
-        this.historialOS = historial;
-      }
+      this.historialOS = historial || [];
+      this.alertService.cerrarModalCarga();
+      this.modalDetalleOS = true;
     } catch (error) {
       console.error('Error al cargar historial de OS:', error);
+      this.alertService.cerrarModalCarga();
     }
   }
 
@@ -273,6 +319,55 @@ export class AprobacionesOSComponent implements OnInit {
     } catch (error) {
       console.error('Error al aprobar/rechazar OS:', error);
       this.alertService.showAlert('Error', 'Ocurrió un error al procesar la aprobación', 'error');
+    }
+  }
+
+  anularOS(os: any) {
+    this.osAccionPendiente = os;
+    this.motivoTexto = '';
+    this.modalMotivoAbierto = true;
+  }
+
+  cerrarModalMotivo() {
+    this.modalMotivoAbierto = false;
+    this.osAccionPendiente = null;
+    this.motivoTexto = '';
+  }
+
+  async confirmarAnulacionOS() {
+    if (!this.motivoTexto || this.motivoTexto.trim() === '') {
+      this.alertService.showAlert('Atención', 'El motivo de anulación es obligatorio.', 'warning');
+      return;
+    }
+
+    const os = this.osAccionPendiente;
+    this.modalMotivoAbierto = false;
+
+    try {
+      this.alertService.mostrarModalCarga();
+      const respuesta = await lastValueFrom(
+        this.aprobacionOrdenService.anular({
+          idAprobacion: os.idAprobacion,
+          dniAprobador: this.usuario.documentoidentidad,
+          nombreAprobador: this.usuario.nombre,
+          motivo: this.motivoTexto.trim(),
+        })
+      );
+      this.alertService.cerrarModalCarga();
+      if (respuesta?.success) {
+        this.alertService.showAlert(
+          'OS Anulada',
+          'La OS fue anulada y la consolidación fue liberada. Los ítems volvieron a estado pendiente.',
+          'success'
+        );
+        await this.cargarOSPendientes();
+        await this.cargarContadores();
+      } else {
+        this.alertService.showAlert('Error', respuesta?.mensaje || 'Error al anular.', 'error');
+      }
+    } catch (err: any) {
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert('Error', err?.message || 'Error inesperado.', 'error');
     }
   }
 

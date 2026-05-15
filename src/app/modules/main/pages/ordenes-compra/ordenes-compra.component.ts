@@ -35,14 +35,42 @@ import { TableModule } from 'primeng/table';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, TableModule],
   templateUrl: './ordenes-compra.component.html',
-  styleUrls: ['./ordenes-compra.component.scss'],
+  styleUrls: ['./ordenes-compra.component.scss', './ordenes-compra-seguimiento.scss'],
 })
 export class OrdenesCompraComponent implements OnInit {
   // Listas principales
   ordenesCompra: OrdenCompra[] = [];
   cotizaciones: Cotizacion[] = [];
-  solicitudesCompra: SolicitudCompra[] = [];
+  solicitudesCompra: SolicitudCompra[] = [];         // SC APROBADAS (con cotización)
+  solicitudesEnviadas: SolicitudCompra[] = [];       // SC ENVIADAS sin cotización (flujo directo)
   almacenes: Almacen[] = [];
+
+  // Paginación tabla Solicitudes Enviadas - Flujo Directo
+  paginaEnviadas = 1;
+  tamanioPaginaEnviadas = 5;
+
+  get solicitudesEnviadasPaginadas(): SolicitudCompra[] {
+    const inicio = (this.paginaEnviadas - 1) * this.tamanioPaginaEnviadas;
+    return this.solicitudesEnviadas.slice(inicio, inicio + this.tamanioPaginaEnviadas);
+  }
+
+  get totalPaginasEnviadas(): number {
+    return Math.ceil(this.solicitudesEnviadas.length / this.tamanioPaginaEnviadas);
+  }
+
+  get paginasEnviadas(): number[] {
+    return Array.from({ length: this.totalPaginasEnviadas }, (_, i) => i + 1);
+  }
+
+  get finPaginaEnviadas(): number {
+    return Math.min(this.paginaEnviadas * this.tamanioPaginaEnviadas, this.solicitudesEnviadas.length);
+  }
+
+  irPaginaEnviadas(pagina: number) {
+    if (pagina >= 1 && pagina <= this.totalPaginasEnviadas) {
+      this.paginaEnviadas = pagina;
+    }
+  }
 
   // Formulario
   mostrarFormulario = false;
@@ -120,9 +148,18 @@ export class OrdenesCompraComponent implements OnInit {
   modalHitoAbierto = false;
   estadosHito: string[] = ['PENDIENTE', 'EN_PROCESO', 'COMPLETADO'];
 
-  // Modal generar OC desde solicitud
+  // Modal generar OC desde solicitud (flujo legacy - mantener para posible uso)
   modalGenerarOCAbierto = false;
   solicitudSeleccionada: SolicitudCompra | null = null;
+
+  // Modal buscador de proveedor (flujo directo SC ENVIADAS)
+  modalBuscarProveedorAbierto = false;
+  busquedaProveedor = '';
+  proveedoresFiltrados: Proveedor[] = [];
+  proveedoresTodos: Proveedor[] = [];
+  proveedorSeleccionado: Proveedor | null = null;
+  solicitudPendienteOC: SolicitudCompra | null = null; // SC que espera proveedor para generar OC
+  esFlujoDirecto = false; // indica que el detalle tiene precios editables
   datosProveedor = {
     proveedor: '',
     nombreProveedor: '',
@@ -192,36 +229,70 @@ export class OrdenesCompraComponent implements OnInit {
   }
 
   async cargarSolicitudesCompra() {
-    // Prioridad 1: cargar del backend (solicitudes con idestado = APROBADA)
+    // Obtener números de OC ya generadas para excluir solicitudes ya procesadas
+    const ordenesExistentes = this.ordenesCompra;
+    const solicitudIdsConOC = new Set(
+      ordenesExistentes
+        .filter((o) => o.solicitudCompraId)
+        .map((o) => String(o.solicitudCompraId))
+    );
+
+    // Prioridad 1: cargar del backend
     try {
       const empresa = this.usuario.ruc || '';
       const backendData = await this.solicitudCompraService.listarSolicitudesProcesadas(empresa);
-      const aprobadas = Array.isArray(backendData)
-        ? backendData.filter((s: any) => s.idestado === 'APROBADA')
-        : [];
+      const todas = Array.isArray(backendData) ? backendData : [];
 
-      // Mapear al formato local para reutilizar la misma tabla
-      this.solicitudesCompra = aprobadas.map((s: any) => ({
+      const parsearDetalle = (raw: any): any[] => {
+        if (Array.isArray(raw)) return raw;
+        if (typeof raw === 'string' && raw.startsWith('[')) {
+          try { return JSON.parse(raw); } catch { return []; }
+        }
+        return [];
+      };
+
+      const mapearSolicitud = (s: any, estado: SolicitudCompra['estado']) => ({
         id: s.id || 0,
         idSolicitud: s.idSolicitud || s.idsolicitud,
         numeroSolicitud: s.serie || s.numeroSolicitud || '',
-        fecha: s.fecha || '',
+        fecha: s.fecharegistro || s.fechaCreacion || s.fecha || '',
         tipo: 'DIRECTA' as const,
-        almacen: s.almacen || '',
-        usuarioSolicita: s.usuariosolicita || '',
-        nombreSolicita: s.nombresolicita || '',
-        estado: 'APROBADA' as const,
+        almacen: s.idalmacen || s.almacen || '',
+        usuarioSolicita: s.dniusuario || s.usuariosolicita || '',
+        nombreSolicita: s.nombresolicita || s.dniusuario || '',
+        estado,
         observaciones: s.observaciones || '',
-        fechaRequerida: s.fechaentrega || s.fechaRequerida || '',
-        moneda: s.moneda || 'PEN',
-        montoEstimado: s.montoTotal || s.montototal || 0,
-        detalle: []
-      }));
+        fechaRequerida: s.fechaprometida || s.fechaentrega || s.fechaRequerida || '',
+        moneda: s.idmoneda || s.moneda || 'LO',
+        montoEstimado: s.montototal || s.montoTotal || 0,
+        detalle: parsearDetalle(s.detalle)  // conservar detalle del SP para precargar OC
+      } as SolicitudCompra);
+
+      // Sección 1: SC APROBADAS (con cotización) → flujo estándar
+      this.solicitudesCompra = todas
+        .filter((s: any) => s.idestado === 'APROBADA')
+        .filter((s: any) => !solicitudIdsConOC.has(String(s.idSolicitud || s.idsolicitud)))
+        .map((s: any) => mapearSolicitud(s, 'APROBADA'));
+
+      // Sección 2: SC ENVIADAS (flujo directo desde requerimientos aprobados, sin cotización)
+      this.solicitudesEnviadas = todas
+        .filter((s: any) => s.idestado === 'ENVIADA')
+        .filter((s: any) => !solicitudIdsConOC.has(String(s.idSolicitud || s.idsolicitud)))
+        .map((s: any) => mapearSolicitud(s, 'ENVIADA'));
+
     } catch {
-      // Si el backend no responde, usar Dexie local como fallback
+      // Fallback Dexie local
       const todas = await this.dexieService.solicitudesCompra.toArray();
       this.solicitudesCompra = todas.filter(
-        (s: SolicitudCompra) => s.estado === 'APROBADA' && s.idSolicitud
+        (s: SolicitudCompra) =>
+          s.estado === 'APROBADA' &&
+          s.idSolicitud &&
+          !solicitudIdsConOC.has(String(s.idSolicitud))
+      );
+      this.solicitudesEnviadas = todas.filter(
+        (s: SolicitudCompra) =>
+          s.estado === 'ENVIADA' &&
+          !solicitudIdsConOC.has(String(s.id))
       );
     }
   }
@@ -576,6 +647,14 @@ export class OrdenesCompraComponent implements OnInit {
     }
   }
 
+  /** Convierte moneda al código que espera el SP: LO (soles) o EX (dólares) */
+  private normalizarMonedaParaSP(moneda: string): string {
+    if (!moneda) return 'LO';
+    const m = moneda.toUpperCase();
+    if (m === 'LO' || m === 'EX') return m;
+    return (m === 'PEN') ? 'LO' : 'EX'; // USD, EUR, etc. → EX
+  }
+
   abrirModalGenerarOC(solicitud: SolicitudCompra) {
     this.solicitudSeleccionada = solicitud;
     this.datosProveedor = {
@@ -585,7 +664,7 @@ export class OrdenesCompraComponent implements OnInit {
       direccionProveedor: '',
       telefonoProveedor: '',
       emailProveedor: '',
-      moneda: solicitud.moneda || 'PEN',
+      moneda: this.normalizarMonedaParaSP(solicitud.moneda || 'LO'),
       tipoCambio: 3.0,
       fechaEntregaEstimada: solicitud.fechaRequerida || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       lugarEntrega: solicitud.almacen || '',
@@ -601,8 +680,162 @@ export class OrdenesCompraComponent implements OnInit {
     this.solicitudSeleccionada = null;
   }
 
-  generarDesdeSolicitud(solicitud: SolicitudCompra) {
-    this.abrirModalGenerarOC(solicitud);
+  /** PASO 1: abre el modal buscador de proveedor antes de ir al formulario de OC */
+  async generarDesdeSolicitud(solicitud: SolicitudCompra) {
+    this.solicitudPendienteOC = solicitud;
+    this.busquedaProveedor = '';
+    this.proveedorSeleccionado = null;
+
+    // Cargar proveedores desde Dexie
+    this.proveedoresTodos = await this.dexieService.showProveedores();
+    this.proveedoresFiltrados = [...this.proveedoresTodos];
+
+    // Si Dexie está vacío, intentar desde la API
+    if (this.proveedoresTodos.length === 0) {
+      try {
+        const resp = await lastValueFrom(
+          this.maestrasService.getProveedores({ empresa: this.usuario.ruc || '' })
+        );
+        if (Array.isArray(resp) && resp.length) {
+          await this.dexieService.saveProveedores(resp);
+          this.proveedoresTodos = resp;
+          this.proveedoresFiltrados = [...resp];
+        }
+      } catch { /* sin conexión: continuar con lista vacía */ }
+    }
+
+    this.modalBuscarProveedorAbierto = true;
+  }
+
+  filtrarProveedores() {
+    const q = this.busquedaProveedor.toLowerCase().trim();
+    if (!q) {
+      this.proveedoresFiltrados = [...this.proveedoresTodos];
+      return;
+    }
+    this.proveedoresFiltrados = this.proveedoresTodos.filter(
+      (p: any) =>
+        (p.ruc || '').includes(q) ||
+        (p.documento || '').includes(q) ||
+        (p.proveedor || p.nombreProveedor || p.nombre || '').toLowerCase().includes(q)
+    );
+  }
+
+  seleccionarProveedor(p: Proveedor) {
+    this.proveedorSeleccionado = p;
+  }
+
+  cerrarModalBuscarProveedor() {
+    this.modalBuscarProveedorAbierto = false;
+    this.solicitudPendienteOC = null;
+    this.proveedorSeleccionado = null;
+  }
+
+  /** PASO 2: con proveedor elegido, precargar formulario OC completo */
+  async confirmarProveedorYGenerarOC() {
+    if (!this.proveedorSeleccionado || !this.solicitudPendienteOC) return;
+
+    const solicitud = this.solicitudPendienteOC;
+    const prov = this.proveedorSeleccionado as any;
+    this.modalBuscarProveedorAbierto = false;
+
+    try {
+      this.alertService.mostrarModalCarga();
+
+      // Obtener detalle: objeto mapeado → Dexie fallback
+      let detalleSC: any[] = Array.isArray((solicitud as any).detalle) ? (solicitud as any).detalle : [];
+      if (detalleSC.length === 0 && solicitud.idSolicitud) {
+        const todasLocal = await this.dexieService.solicitudesCompra.toArray();
+        const local = todasLocal.find(
+          (s: any) => s.idSolicitud === solicitud.idSolicitud || s.id === solicitud.id
+        );
+        detalleSC = Array.isArray(local?.detalle) ? local!.detalle : [];
+      }
+
+      // Precargar cabecera de OC con datos del proveedor seleccionado
+      this.ordenCompra = {
+        numeroOrden: this.generarNumeroOrden(),
+        solicitudCompraId: solicitud.idSolicitud || solicitud.id || 0,
+        fecha: new Date().toISOString().split('T')[0],
+        fechaEntrega: solicitud.fechaRequerida || this.calcularFechaEntrega(7),
+        proveedor: prov.documento || prov.ruc || '',
+        nombreProveedor: prov.proveedor || prov.nombreProveedor || prov.nombre || '',
+        rucProveedor: prov.ruc || prov.documento || '',
+        direccionEntrega: prov.direccion || solicitud.almacen || '',
+        contactoProveedor: prov.contacto || '',
+        telefonoProveedor: prov.telefono || '',
+        correoProveedor: prov.correo || prov.email || '',
+        montoTotal: 0,
+        moneda: this.normalizarMonedaParaSP(solicitud.moneda || 'LO'),
+        formaPago: 'CONTADO',
+        condicionesPago: '',
+        plazoEntrega: 7,
+        observaciones: solicitud.observaciones || '',
+        detalle: [],
+        estado: 'GENERADA',
+        usuarioGenera: this.usuario.documentoidentidad || '',
+      };
+
+      // Convertir detalle SC → detalle OC con precios editables (precioUnitario puede ser 0)
+      this.detalleOrden = detalleSC.map((det: any) => {
+        const precio = det.preciounitario || det.precioUnitario || 0;
+        const cant = det.cantidadpedida || det.cantidad || det.cantidadAprobada || 0;
+        const desc = det.descuento || 0;
+        const subtotal = +(cant * precio * (1 - desc / 100)).toFixed(2);
+        const igv = +(subtotal * 0.18).toFixed(2);
+        return {
+          ordenCompraId: 0,
+          codigo: det.codigo || det.idproducto || '',
+          descripcion: det.descripcion || det.producto || det.iddescripcion || '',
+          cantidad: cant,
+          cantidadRecibida: 0,
+          cantidadPendiente: cant,
+          unidadMedida: det.unidadmedida || det.unidadMedida || det.unidad || 'UND',
+          precioUnitario: precio,
+          descuento: desc,
+          subtotal,
+          impuesto: igv,
+          total: +(subtotal + igv).toFixed(2),
+          marca: det.marca || '',
+          modelo: det.modelo || '',
+          especificaciones: det.especificaciones || '',
+          estado: 'PENDIENTE',
+          // campos para distribución contable — vienen del SP
+          centrocosto: det.centrocosto || det.ceco || det.idcentrocosto || '',
+          proyecto: det.proyecto || det.idproyecto || '',
+        };
+      });
+
+      // Recalcular total de cabecera
+      this.ordenCompra.montoTotal = +this.detalleOrden
+        .reduce((s, d) => s + d.total, 0).toFixed(2);
+
+      this.esFlujoDirecto = true;
+      this.cotizacionSeleccionada = null;
+      await this.generarDistribucionContable();
+      this.mostrarFormulario = true;
+      this.modoEdicion = false;
+      this.solicitudPendienteOC = null;
+
+      this.alertService.cerrarModalCarga();
+    } catch (error) {
+      console.error('Error al preparar OC desde solicitud:', error);
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert('Error', 'No se pudo preparar la orden de compra.', 'error');
+    }
+  }
+
+  /** Recalcula subtotal, IGV y total de un ítem al editar precio/descuento */
+  recalcularItemOC(det: DetalleOrdenCompra) {
+    const precio = det.precioUnitario || 0;
+    const cant = det.cantidad || 0;
+    const desc = det.descuento || 0;
+    det.subtotal = +(cant * precio * (1 - desc / 100)).toFixed(2);
+    det.impuesto = +(det.subtotal * 0.18).toFixed(2);
+    det.total = +(det.subtotal + det.impuesto).toFixed(2);
+    // Actualizar total de cabecera
+    this.ordenCompra!.montoTotal = +this.detalleOrden
+      .reduce((s, d) => s + d.total, 0).toFixed(2);
   }
 
   async confirmarGenerarOC() {
@@ -632,6 +865,7 @@ export class OrdenesCompraComponent implements OnInit {
       const datos = {
         idSolicitud: this.solicitudSeleccionada.idSolicitud || this.solicitudSeleccionada.id,
         ...this.datosProveedor,
+        moneda: this.normalizarMonedaParaSP(this.datosProveedor.moneda), // siempre LO o EX
         usuarioRegistra: this.usuario.documentoidentidad || '',
         nombreUsuarioRegistra: this.usuario.nombre || ''
       };
@@ -642,7 +876,7 @@ export class OrdenesCompraComponent implements OnInit {
         this.alertService.cerrarModalCarga();
         this.alertService.showAlert('Éxito', respuesta.mensaje, 'success');
         await this.cargarOrdenesCompra();
-        await this.cargarSolicitudesCompra();
+        await this.cargarSolicitudesCompra(); // recarga ambas listas (aprobadas + enviadas)
         this.actualizarContadores();
       } else if (respuesta && respuesta.error) {
         this.alertService.cerrarModalCarga();
@@ -873,6 +1107,7 @@ export class OrdenesCompraComponent implements OnInit {
       this.alertService.showAlert('Éxito', mensajeExito, 'success');
 
       this.mostrarFormulario = false;
+      this.esFlujoDirecto = false;
       await this.cargarOrdenesCompra();
     } catch (error) {
       console.error('Error al guardar orden de compra:', error);
@@ -1174,6 +1409,7 @@ export class OrdenesCompraComponent implements OnInit {
     );
     if (!confirmar) return;
     this.mostrarFormulario = false;
+    this.esFlujoDirecto = false;
   }
 
   // Filtros
@@ -1236,8 +1472,9 @@ export class OrdenesCompraComponent implements OnInit {
     });
   }
 
-  formatearMoneda(monto: number, moneda: string = 'PEN'): string {
-    const simbolo = moneda === 'PEN' ? 'S/' : '$';
+  formatearMoneda(monto: number, moneda: string = 'LO'): string {
+    // LO = Local = Soles (S/), EX = Extranjera = Dólares ($), PEN también es soles
+    const simbolo = (moneda === 'LO' || moneda === 'PEN') ? 'S/' : '$';
     return `${simbolo} ${monto.toFixed(2)}`;
   }
 

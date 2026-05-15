@@ -12,6 +12,8 @@ import { ConsolidacionService } from '../../../../services/consolidacion.service
 import { AlertService } from '../../../../shared/alertas/alerts.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { LogisticaService } from '../../services/logistica.service';
+import { AprobacionOrdenService } from '@/app/services/aprobacion-orden.service';
+import { lastValueFrom } from 'rxjs';
 import {
   ItemPendienteConsolidacion,
   FiltroConsolidacion,
@@ -157,11 +159,63 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
   modalDetallePendienteAbierto: boolean = false;
   detallePendienteSeleccionado: any = null;
 
+  // =============================================
+  // MODAL CREAR OC DESDE CONSOLIDACION
+  // =============================================
+  modalCrearOCAbierto = false;
+  consolidacionParaOC: ConsolidacionCab | null = null;
+  formOC: any = {
+    proveedor: '',
+    nombreProveedor: '',
+    rucProveedor: '',
+    direccionProveedor: '',
+    telefonoProveedor: '',
+    emailProveedor: '',
+    moneda: 'PEN',
+    tipoCambio: 1,
+    almacen: '',
+    lugarEntrega: '',
+    fechaEntregaEstimada: '',
+    condicionesPago: '',
+    formaPago: 'Transferencia',
+    observaciones: '',
+    items: [] as any[]
+  };
+
+  // =============================================
+  // MODAL CREAR OS DESDE CONSOLIDACION
+  // =============================================
+  modalCrearOSAbierto = false;
+  consolidacionParaOS: ConsolidacionCab | null = null;
+  formOS: any = {
+    proveedor: '',
+    nombreProveedor: '',
+    rucProveedor: '',
+    contactoProveedor: '',
+    telefonoProveedor: '',
+    emailProveedor: '',
+    tipoServicio: '',
+    descripcion: '',
+    alcance: '',
+    fechaInicioServicio: '',
+    fechaFinServicio: '',
+    plazoEjecucion: 30,
+    ubicacionServicio: '',
+    moneda: 'PEN',
+    condicionesPago: '',
+    formaPago: 'Transferencia',
+    centroCosto: '',
+    proyecto: '',
+    observaciones: '',
+    items: [] as any[]
+  };
+
   constructor(
     private consolidacionService: ConsolidacionService,
     private alertService: AlertService,
     private dexieService: DexieService,
     private logisticaService: LogisticaService,
+    private aprobacionOrdenService: AprobacionOrdenService,
   ) {
     const usuarioStr = localStorage.getItem('usuario');
     this.usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
@@ -889,11 +943,15 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
         await this.consolidacionService.obtenerConsolidacion(
           consolidacion.idConsolidacion,
         );
-      console.log('📦 Consolidación seleccionada:', this.consolidacionSeleccionada);
-      console.log('📋 Detalles:', this.consolidacionSeleccionada.detalles);
-      if (this.consolidacionSeleccionada.detalles && this.consolidacionSeleccionada.detalles.length > 0) {
-        console.log('🔍 Primer detalle tipo:', this.consolidacionSeleccionada.detalles[0].tipo);
-        console.log('🔍 Primer detalle completo:', this.consolidacionSeleccionada.detalles[0]);
+      // Si el SP de detalle no retorna tipoConsolidacion, preservar el de la cabecera del historial
+      if (!this.consolidacionSeleccionada.tipoConsolidacion) {
+        if (consolidacion.tipoConsolidacion) {
+          this.consolidacionSeleccionada.tipoConsolidacion = consolidacion.tipoConsolidacion;
+        } else if (this.consolidacionSeleccionada.detalles && this.consolidacionSeleccionada.detalles.length > 0) {
+          // Inferir desde el tipo del primer detalle
+          this.consolidacionSeleccionada.tipoConsolidacion =
+            this.consolidacionSeleccionada.detalles[0].tipo === 'COMMODITY' ? 'SERVICIO' : 'ITEM';
+        }
       }
       this.alertService.cerrarModalCarga();
       this.modalDetalleAbierto = true;
@@ -1112,6 +1170,214 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
   }
 
   // =============================================
+  // GENERAR OC DESDE HISTORIAL DE CONSOLIDACION (NUEVO FLUJO)
+  // Abre modal con formulario para capturar datos reales de la OC
+  // =============================================
+
+  async generarOCDesdeConsolidacion(cons: ConsolidacionCab) {
+    this.consolidacionParaOC = cons;
+    this.formOC = {
+      proveedor: '',
+      nombreProveedor: '',
+      rucProveedor: '',
+      direccionProveedor: '',
+      telefonoProveedor: '',
+      emailProveedor: '',
+      moneda: 'PEN',
+      tipoCambio: 1,
+      almacen: '',
+      lugarEntrega: '',
+      fechaEntregaEstimada: '',
+      condicionesPago: '',
+      formaPago: 'Transferencia',
+      observaciones: '',
+      items: this.construirItemsDesdeConsolidacion(cons)
+    };
+    this.modalCrearOCAbierto = true;
+  }
+
+  cerrarModalCrearOC() {
+    this.modalCrearOCAbierto = false;
+    this.consolidacionParaOC = null;
+  }
+
+  async confirmarCrearOC() {
+    if (!this.consolidacionParaOC) return;
+
+    if (!this.formOC.proveedor?.trim()) {
+      this.alertService.showAlert('Atención', 'Debe ingresar el código del proveedor.', 'warning');
+      return;
+    }
+    if (!this.formOC.nombreProveedor?.trim()) {
+      this.alertService.showAlert('Atención', 'Debe ingresar el nombre del proveedor.', 'warning');
+      return;
+    }
+    const itemsSinPrecio = this.formOC.items.filter((i: any) => !i.precioUnitario || i.precioUnitario <= 0);
+    if (itemsSinPrecio.length > 0) {
+      this.alertService.showAlert('Atención', `${itemsSinPrecio.length} ítem(s) no tienen precio unitario.`, 'warning');
+      return;
+    }
+
+    try {
+      this.alertService.mostrarModalCarga();
+      const respuesta = await lastValueFrom(
+        this.aprobacionOrdenService.crearOCDesdeConsolidacion({
+          idConsolidacion: this.consolidacionParaOC.idConsolidacion,
+          ...this.formOC,
+          usuarioGenera: this.usuario?.documentoidentidad || 'SYSTEM',
+        })
+      );
+      this.alertService.cerrarModalCarga();
+
+      if (respuesta?.success) {
+        this.alertService.showAlert(
+          'OC Creada y Enviada a Aprobación',
+          `Número OC: <strong>${respuesta.numeroOC}</strong><br>` +
+          `Total: <strong>${respuesta.totalOrden?.toFixed(2)} ${this.formOC.moneda}</strong><br>` +
+          `Niveles de aprobación requeridos: <strong>${respuesta.nivelRequerido}</strong><br>` +
+          `Los aprobadores ya pueden revisarla en Aprobaciones OC.`,
+          'success',
+        );
+        this.cerrarModalCrearOC();
+        await this.cargarHistorial();
+      } else {
+        this.alertService.showAlert('Error', respuesta?.mensaje || 'No se pudo crear la OC.', 'error');
+      }
+    } catch (err: any) {
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert('Error', err?.error?.mensaje || err?.message || 'Error inesperado al crear OC.', 'error');
+    }
+  }
+
+  // =============================================
+  // GENERAR OS DESDE HISTORIAL DE CONSOLIDACION (NUEVO FLUJO)
+  // =============================================
+
+  async generarOSDesdeConsolidacion(cons: ConsolidacionCab) {
+    this.consolidacionParaOS = cons;
+    this.formOS = {
+      proveedor: '',
+      nombreProveedor: '',
+      rucProveedor: '',
+      contactoProveedor: '',
+      telefonoProveedor: '',
+      emailProveedor: '',
+      tipoServicio: '',
+      descripcion: '',
+      alcance: '',
+      fechaInicioServicio: '',
+      fechaFinServicio: '',
+      plazoEjecucion: 30,
+      ubicacionServicio: '',
+      moneda: 'PEN',
+      condicionesPago: '',
+      formaPago: 'Transferencia',
+      centroCosto: '',
+      proyecto: '',
+      observaciones: '',
+      items: this.construirItemsOSDesdeConsolidacion(cons)
+    };
+    this.modalCrearOSAbierto = true;
+  }
+
+  cerrarModalCrearOS() {
+    this.modalCrearOSAbierto = false;
+    this.consolidacionParaOS = null;
+  }
+
+  async confirmarCrearOS() {
+    if (!this.consolidacionParaOS) return;
+
+    if (!this.formOS.proveedor?.trim()) {
+      this.alertService.showAlert('Atención', 'Debe ingresar el código del proveedor.', 'warning');
+      return;
+    }
+    if (!this.formOS.nombreProveedor?.trim()) {
+      this.alertService.showAlert('Atención', 'Debe ingresar el nombre del proveedor.', 'warning');
+      return;
+    }
+    const itemsSinPrecio = this.formOS.items.filter((i: any) => !i.precioUnitario || i.precioUnitario <= 0);
+    if (itemsSinPrecio.length > 0) {
+      this.alertService.showAlert('Atención', `${itemsSinPrecio.length} ítem(s) no tienen precio unitario.`, 'warning');
+      return;
+    }
+
+    try {
+      this.alertService.mostrarModalCarga();
+      const respuesta = await lastValueFrom(
+        this.aprobacionOrdenService.crearOSDesdeConsolidacion({
+          idConsolidacion: this.consolidacionParaOS.idConsolidacion,
+          ...this.formOS,
+          usuarioGenera: this.usuario?.documentoidentidad || 'SYSTEM',
+        })
+      );
+      this.alertService.cerrarModalCarga();
+
+      if (respuesta?.success) {
+        this.alertService.showAlert(
+          'OS Creada y Enviada a Aprobación',
+          `Número OS: <strong>${respuesta.numeroOS}</strong><br>` +
+          `Total: <strong>${respuesta.montoTotal?.toFixed(2)} ${this.formOS.moneda}</strong><br>` +
+          `Niveles de aprobación requeridos: <strong>${respuesta.nivelRequerido}</strong><br>` +
+          `Los aprobadores ya pueden revisarla en Aprobaciones OS.`,
+          'success',
+        );
+        this.cerrarModalCrearOS();
+        await this.cargarHistorial();
+      } else {
+        this.alertService.showAlert('Error', respuesta?.mensaje || 'No se pudo crear la OS.', 'error');
+      }
+    } catch (err: any) {
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert('Error', err?.error?.mensaje || err?.message || 'Error inesperado al crear OS.', 'error');
+    }
+  }
+
+  // =============================================
+  // HELPERS: construir items desde consolidacion
+  // =============================================
+
+  private construirItemsDesdeConsolidacion(cons: ConsolidacionCab): any[] {
+    const detalles = (cons as any).detalles || [];
+    return detalles.map((d: any) => ({
+      codigo: d.codigoItem || d.codigo || '',
+      descripcion: d.descripcionItem || d.descripcion || '',
+      cantidad: d.cantidadTotal || d.cantidad || 0,
+      unidadMedida: d.unidadMedida || 'UN',
+      precioUnitario: 0,
+      descuento: 0,
+      proyecto: d.proyecto || d.origenes?.[0]?.proyecto || '',
+      ceco: d.ceco || d.origenes?.[0]?.ceco || '',
+      observaciones: '',
+    }));
+  }
+
+  private construirItemsOSDesdeConsolidacion(cons: ConsolidacionCab): any[] {
+    const detalles = (cons as any).detalles || [];
+    return detalles.map((d: any) => ({
+      descripcionServicio: d.descripcionItem || d.descripcion || '',
+      especificaciones: '',
+      unidadMedida: d.unidadMedida || 'SVC',
+      cantidad: d.cantidadTotal || d.cantidad || 1,
+      precioUnitario: 0,
+      observaciones: '',
+    }));
+  }
+
+  calcularTotalOC(): number {
+    return this.formOC.items.reduce((sum: number, i: any) => {
+      const sub = (i.cantidad || 0) * (i.precioUnitario || 0) - (i.descuento || 0);
+      return sum + (sub * 1.18);
+    }, 0);
+  }
+
+  calcularTotalOS(): number {
+    return this.formOS.items.reduce((sum: number, i: any) => {
+      return sum + (i.cantidad || 0) * (i.precioUnitario || 0);
+    }, 0);
+  }
+
+  // =============================================
   // CONSOLIDAR CON OPCIÓN DE COTIZACIÓN
   // =============================================
 
@@ -1293,6 +1559,13 @@ export class ConsolidacionRequerimientosComponent implements OnInit {
     return tipo === 'COMPRA'
       ? 'badge bg-primary'
       : 'badge bg-warning text-dark';
+  }
+
+  formatearCodigoRequerimiento(codigo: string | number): string {
+    if (!codigo) return '';
+    const codigoStr = String(codigo).trim();
+    // Rellenar con ceros a la izquierda hasta 10 dígitos, o recortar si es más largo
+    return codigoStr.padStart(10, '0').slice(-10);
   }
 
   getEstadoProcesoBadgeClass(estado: string): string {

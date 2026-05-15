@@ -8,6 +8,7 @@ import { NotificacionesListaComponent } from './modules/main/pages/notificacione
 import { AprobadorGuard } from './modules/auth/guard/aprobador.guard';
 import { AlmacenGuard } from './modules/auth/guard/almacen.guard';
 import { OperativoGuard } from './modules/auth/guard/operativo.guard';
+import { OperativoLogisticoGuard } from './modules/auth/guard/operativo-logistico.guard';
 import { EmpaqueGuard } from './modules/auth/guard/empaque.guard';
 import { OperativoEmpaqueGuard } from './modules/auth/guard/operativo-empaque.guard';
 import { AdministradorGuard } from './modules/auth/guard/administrador.guard';
@@ -51,13 +52,18 @@ import { DashboardJemlogistComponent } from './modules/main/pages/dashboard-jeml
 import { DashboardAdlogistComponent } from './modules/main/pages/dashboard-adlogist/dashboard-adlogist.component';
 import { DashboardTilogistComponent } from './modules/main/pages/dashboard-tilogist/dashboard-tilogist.component';
 import { DashboardDespachoComponent } from './modules/main/pages/dashboard-despacho/dashboard-despacho.component';
+import { DashboardFinanzasComponent } from './modules/main/pages/dashboard-finanzas/dashboard-finanzas.component';
 import { AprobacionesAreaComponent } from './modules/main/pages/aprobaciones-area/aprobaciones-area.component';
+import { DashboardAprobacionesAreaComponent } from './modules/main/pages/dashboard-aprobaciones-area/dashboard-aprobaciones-area.component';
 import { ReporteAprobacionesAreaComponent } from './modules/main/pages/reporte-aprobaciones-area/reporte-aprobaciones-area.component';
 import { AprobacionesOCComponent } from './modules/main/pages/aprobaciones-oc/aprobaciones-oc.component';
 import { AprobacionesOSComponent } from './modules/main/pages/aprobaciones-os/aprobaciones-os.component';
 import { SolicitudesServicioComponent } from './modules/main/pages/solicitudes-servicio/solicitudes-servicio.component';
 import { OrdenesServicioComponent } from './modules/main/pages/ordenes-servicio/ordenes-servicio.component';
 import { DevolucionConsumoGuard, ReingresoGuard } from './modules/main/guards/role.guard';
+import { AprobadorOCGuard } from './modules/auth/guard/aprobador-oc.guard';
+import { ConsolidacionComprasComponent } from './modules/main/pages/consolidacion-compras/consolidacion-compras.component';
+import { ConsolidacionServiciosComponent } from './modules/main/pages/consolidacion-servicios/consolidacion-servicios.component';
 
 
 export const routes: Routes = [
@@ -110,13 +116,15 @@ export const routes: Routes = [
       { path: 'saldo-requerimiento', component: SaldoRequerimientoComponent, canActivate: [OperativoEmpaqueGuard] },
       { path: 'solicitudes-compra', component: SolicitudesCompraComponent, canActivate: [LogisticoGuard] },
       { path: 'dashboard-logistica', component: DashboardLogisticaComponent, canActivate: [LogisticoGuard] },
-      { path: 'dashboard-oplogist', component: DashboardOplogistComponent, canActivate: [OperativoGuard] },
+      { path: 'dashboard-oplogist', component: DashboardOplogistComponent, canActivate: [OperativoLogisticoGuard] },
       { path: 'dashboard-compras', component: DashboardComprasComponent, canActivate: [LogisticoGuard] },
       { path: 'dashboard-jlologist', component: DashboardJlologistComponent, canActivate: [LogisticoGuard] },
       { path: 'dashboard-jemlogist', component: DashboardJemlogistComponent, canActivate: [LogisticoGuard] },
       { path: 'dashboard-adlogist', component: DashboardAdlogistComponent, canActivate: [AdministradorGuard] },
       { path: 'dashboard-tilogist', component: DashboardTilogistComponent, canActivate: [AdministradorGuard] },
       { path: 'dashboard-despacho', component: DashboardDespachoComponent, canActivate: [AlmacenGuard] },
+      { path: 'dashboard-finanzas', component: DashboardFinanzasComponent, canActivate: [AprobadorOCGuard] },
+      { path: 'dashboard-aprobaciones-area', component: DashboardAprobacionesAreaComponent, canActivate: [AprobadorGuard] },
       { path: 'cotizaciones', component: CotizacionesComponent, canActivate: [LogisticoGuard] },
       { path: 'ordenes-compra', component: OrdenesCompraComponent, canActivate: [LogisticoGuard] },
       { path: 'recepcion-mercaderia', component: RecepcionMercaderiaComponent, canActivate: [AlmacenGuard] },
@@ -127,8 +135,8 @@ export const routes: Routes = [
       { path: 'gestion-inventario', component: GestionInventarioComponent, canActivate: [AlmacenGuard] },
       { path: 'kardex', component: KardexComponent, canActivate: [AlmacenGuard] },
       { path: 'aprobaciones', component: AprobacionesComponent, canActivate: [AprobadorGuard] },
-      { path: 'aprobaciones-oc', component: AprobacionesOCComponent, canActivate: [LogisticoGuard] },
-      { path: 'aprobaciones-os', component: AprobacionesOSComponent, canActivate: [LogisticoGuard] },
+      { path: 'aprobaciones-oc', component: AprobacionesOCComponent, canActivate: [AprobadorOCGuard] },
+      { path: 'aprobaciones-os', component: AprobacionesOSComponent, canActivate: [AprobadorOCGuard] },
       { path: 'solicitudes-servicio', component: SolicitudesServicioComponent, canActivate: [LogisticoGuard] },
       { path: 'ordenes-servicio', component: OrdenesServicioComponent, canActivate: [LogisticoGuard] },
       { path: 'aprobaciones-area', component: AprobacionesAreaComponent, canActivate: [AprobadorGuard] },
@@ -142,6 +150,8 @@ export const routes: Routes = [
       { path: 'reporte-despachos', component: ReporteDespachosComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte-requerimientos', component: ReporteRequerimientos },
       { path: 'consolidacion-requerimientos', component: ConsolidacionRequerimientosComponent, canActivate: [LogisticoGuard] },
+      { path: 'consolidacion-compras', component: ConsolidacionComprasComponent, canActivate: [LogisticoGuard] },
+      { path: 'consolidacion-servicios', component: ConsolidacionServiciosComponent, canActivate: [LogisticoGuard] },
       { path: '**', redirectTo: 'auth/login' }
     ],
     canActivate: [AuthGuard]

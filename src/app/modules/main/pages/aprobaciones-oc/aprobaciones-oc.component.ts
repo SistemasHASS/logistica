@@ -2,11 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AprobacionOCService } from '@/app/services/aprobacion-oc.service';
+import { AprobacionOrdenService } from '@/app/services/aprobacion-orden.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { UserService } from '@/app/shared/services/user.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { Usuario } from '@/app/shared/interfaces/Tables';
 import { TableModule } from 'primeng/table';
+import { lastValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-aprobaciones-oc',
@@ -48,6 +50,10 @@ export class AprobacionesOCComponent implements OnInit {
   ocPendientes: any[] = [];
   ocPendientesFiltradas: any[] = [];
 
+  // OC Aprobadas / Rechazadas (historial del aprobador)
+  ocAprobadas: any[] = [];
+  tabVistaActiva: 'PENDIENTES' | 'APROBADAS' | 'RECHAZADAS' = 'PENDIENTES';
+
   // Historial
   historialAprobaciones: any[] = [];
 
@@ -72,8 +78,15 @@ export class AprobacionesOCComponent implements OnInit {
   filtroFechaInicio = '';
   filtroFechaFin = '';
 
+  // Modal motivo rechazo/anulacion
+  modalMotivoAbierto = false;
+  accionMotivo: 'RECHAZAR' | 'ANULAR' = 'RECHAZAR';
+  motivoTexto = '';
+  ocAccionPendiente: any = null;
+
   constructor(
     private aprobacionOCService: AprobacionOCService,
+    private aprobacionOrdenService: AprobacionOrdenService,
     private alertService: AlertService,
     private userService: UserService,
     private dexieService: DexieService
@@ -83,6 +96,57 @@ export class AprobacionesOCComponent implements OnInit {
     await this.cargarUsuario();
     await this.cargarContadores();
     await this.cargarOCPendientes();
+  }
+
+  async cambiarVista(tab: 'PENDIENTES' | 'APROBADAS' | 'RECHAZADAS') {
+    this.tabVistaActiva = tab;
+    if (tab === 'APROBADAS') {
+      await this.cargarOCAprobadas('APROBADA');
+    } else if (tab === 'RECHAZADAS') {
+      await this.cargarOCAprobadas('RECHAZADA');
+    }
+  }
+
+  async cargarOCAprobadas(estado: string) {
+    try {
+      this.alertService.mostrarModalCarga();
+      const resp = await lastValueFrom(
+        this.aprobacionOrdenService.listarAprobacionesPorRol(this.usuario.idrol, 'OC', estado)
+      );
+      this.ocAprobadas = Array.isArray(resp) ? resp : [];
+      this.alertService.cerrarModalCarga();
+    } catch (error) {
+      this.alertService.cerrarModalCarga();
+      this.ocAprobadas = [];
+    }
+  }
+
+  async reintentarSyncSpring(oc: any) {
+    const ok = await this.alertService.showConfirm(
+      'Reintentar sincronización',
+      `¿Reintentar el envío de la OC ${oc.numeroOrden} a SPRING?`,
+      'question'
+    );
+    if (!ok) return;
+    try {
+      this.alertService.mostrarModalCarga();
+      const resp: any = await lastValueFrom(
+        this.aprobacionOrdenService.reintentarSyncSpring(oc.idOrden)
+      );
+      this.alertService.cerrarModalCarga();
+      if (resp?.fallidas === 0) {
+        this.alertService.showAlert('Éxito', `OC ${oc.numeroOrden} sincronizada con SPRING correctamente.`, 'success');
+        oc.estadoSpring = 'SINCRONIZADO';
+      } else {
+        const detalle = resp?.detalle ? JSON.parse(resp.detalle) : [];
+        const msg = detalle[0]?.mensaje || 'Error desconocido en SPRING';
+        this.alertService.showAlert('Error SPRING', msg, 'error');
+        oc.estadoSpring = 'ERROR_SYNC';
+      }
+    } catch (e: any) {
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert('Error', e?.message || 'Error al conectar con el servidor.', 'error');
+    }
   }
 
   async cargarUsuario() {
@@ -110,11 +174,24 @@ export class AprobacionesOCComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
 
-      const pendientes = await this.aprobacionOCService
-        .listarPendientes(this.usuario.documentoidentidad, this.usuario.idrol)
-        .toPromise();
+      // Intentar nuevo endpoint con datos completos primero
+      let pendientes: any[] = [];
+      try {
+        const respDetallado = await lastValueFrom(
+          this.aprobacionOrdenService.listarPendientesDetallado(this.usuario.idrol, 'OC')
+        );
+        if (Array.isArray(respDetallado)) {
+          pendientes = respDetallado;
+        }
+      } catch {
+        // fallback al endpoint anterior
+        pendientes = await this.aprobacionOCService
+          .listarPendientes(this.usuario.documentoidentidad, this.usuario.idrol)
+          .toPromise() || [];
+      }
 
-      this.ocPendientes = pendientes || [];
+      this.ocPendientes = pendientes;
+      this.contadores.totalPendientes = pendientes.length;
       this.aplicarFiltros();
 
       this.alertService.cerrarModalCarga();
@@ -135,10 +212,11 @@ export class AprobacionesOCComponent implements OnInit {
     if (this.filtroProveedor) {
       filtradas = filtradas.filter(
         (oc) =>
-          oc.nombreProveedor
+          (oc.nombreProveedor || oc.ocNombreProveedor || '')
             ?.toLowerCase()
             .includes(this.filtroProveedor.toLowerCase()) ||
-          oc.proveedor?.toLowerCase().includes(this.filtroProveedor.toLowerCase())
+          (oc.proveedor || oc.CodigoOrden || '')
+            ?.toLowerCase().includes(this.filtroProveedor.toLowerCase())
       );
     }
 
@@ -166,17 +244,42 @@ export class AprobacionesOCComponent implements OnInit {
 
   async verDetalleOC(oc: any) {
     try {
-      this.ocDetalle = oc;
+      this.alertService.mostrarModalCarga();
 
-      // Cargar historial de aprobaciones
+      // Intentar cargar OC completa con ítems reales
+      if (oc.idAprobacion || oc.CodigoOrden) {
+        try {
+          const detalle = await lastValueFrom(
+            this.aprobacionOrdenService.obtenerOCDesdeConsolidacion({
+              idAprobacion: oc.idAprobacion || oc.IdAprobacion,
+              codigoOrden: oc.CodigoOrden || oc.codigoOrden,
+            })
+          );
+          if (detalle) {
+            this.ocDetalle = { ...oc, ...detalle };
+            this.historialOC = detalle.nivelesAprobacion || [];
+            console.log('Detalle cargado:', this.ocDetalle);
+            console.log('Historial:', this.historialOC);
+            this.alertService.cerrarModalCarga();
+            this.modalDetalleOC = true;
+            return;
+          }
+        } catch (error) {
+          console.error('Error al cargar detalle desde consolidación:', error);
+          // fallback al historial anterior
+        }
+      }
+
+      this.ocDetalle = oc;
       const historial = await this.aprobacionOCService
         .obtenerHistorial(oc.idOrdenCompra)
         .toPromise();
-
       this.historialOC = historial || [];
+      this.alertService.cerrarModalCarga();
       this.modalDetalleOC = true;
     } catch (error) {
       console.error('Error al cargar detalle:', error);
+      this.alertService.cerrarModalCarga();
       this.alertService.showAlert(
         'Error',
         'Error al cargar detalle de la orden',
@@ -186,6 +289,7 @@ export class AprobacionesOCComponent implements OnInit {
   }
 
   cerrarModalDetalleOC() {
+    console.log('Cerrando modal detalle OC');
     this.modalDetalleOC = false;
     this.ocDetalle = null;
     this.historialOC = [];
@@ -200,9 +304,6 @@ export class AprobacionesOCComponent implements OnInit {
 
     if (!confirmacion) return;
 
-    // Solicitar observaciones (opcional)
-    const observaciones = await this.solicitarObservaciones('Aprobación');
-
     try {
       this.alertService.mostrarModalCarga();
 
@@ -212,7 +313,7 @@ export class AprobacionesOCComponent implements OnInit {
           'APROBAR',
           this.usuario.documentoidentidad,
           this.usuario.nombre,
-          observaciones
+          ''
         )
         .toPromise();
 
@@ -250,69 +351,79 @@ export class AprobacionesOCComponent implements OnInit {
   }
 
   async rechazarOC(oc: any) {
-    const confirmacion = await this.alertService.showConfirm(
-      'Confirmar Rechazo',
-      `¿Está seguro de rechazar la Orden de Compra ${oc.numeroOrden}?`,
-      'warning'
-    );
+    this.ocAccionPendiente = oc;
+    this.accionMotivo = 'RECHAZAR';
+    this.motivoTexto = '';
+    this.modalMotivoAbierto = true;
+  }
 
-    if (!confirmacion) return;
+  async anularOC(oc: any) {
+    this.ocAccionPendiente = oc;
+    this.accionMotivo = 'ANULAR';
+    this.motivoTexto = '';
+    this.modalMotivoAbierto = true;
+  }
 
-    // Solicitar motivo de rechazo (obligatorio)
-    const motivo = await this.solicitarObservaciones('Rechazo', true);
+  cerrarModalMotivo() {
+    this.modalMotivoAbierto = false;
+    this.ocAccionPendiente = null;
+    this.motivoTexto = '';
+  }
 
-    if (!motivo) {
-      this.alertService.showAlert(
-        'Atención',
-        'Debe ingresar un motivo de rechazo',
-        'warning'
-      );
+  async confirmarAccionMotivo() {
+    if (!this.motivoTexto || this.motivoTexto.trim() === '') {
+      this.alertService.showAlert('Atención', 'El motivo es obligatorio.', 'warning');
       return;
     }
+
+    const oc = this.ocAccionPendiente;
+    this.modalMotivoAbierto = false;
 
     try {
       this.alertService.mostrarModalCarga();
 
-      const respuesta = await this.aprobacionOCService
-        .aprobarRechazar(
-          oc.idAprobacion,
-          'RECHAZAR',
-          this.usuario.documentoidentidad,
-          this.usuario.nombre,
-          motivo
-        )
-        .toPromise();
-
-      this.alertService.cerrarModalCarga();
-
-      if (respuesta?.status === 'success') {
-        this.alertService.showAlert(
-          'Éxito',
-          respuesta.mensaje || 'Orden de compra rechazada',
-          'success'
+      if (this.accionMotivo === 'RECHAZAR') {
+        const respuesta = await lastValueFrom(
+          this.aprobacionOrdenService.rechazar({
+            idAprobacion: oc.idAprobacion,
+            dniAprobador: this.usuario.documentoidentidad,
+            nombreAprobador: this.usuario.nombre,
+            motivo: this.motivoTexto.trim(),
+          })
         );
-
-        // Recargar datos
-        await this.cargarContadores();
-        await this.cargarOCPendientes();
-
-        if (this.modalDetalleOC) {
-          this.cerrarModalDetalleOC();
+        this.alertService.cerrarModalCarga();
+        if (respuesta?.success) {
+          this.alertService.showAlert('Éxito', 'Orden de compra rechazada. Puede generarse una nueva OC desde el historial de consolidación.', 'success');
+        } else {
+          this.alertService.showAlert('Error', respuesta?.mensaje || 'Error al rechazar.', 'error');
         }
       } else {
-        this.alertService.showAlert(
-          'Error',
-          respuesta?.mensaje || 'Error al rechazar la orden de compra',
-          'error'
+        const respuesta = await lastValueFrom(
+          this.aprobacionOrdenService.anular({
+            idAprobacion: oc.idAprobacion,
+            dniAprobador: this.usuario.documentoidentidad,
+            nombreAprobador: this.usuario.nombre,
+            motivo: this.motivoTexto.trim(),
+          })
         );
+        this.alertService.cerrarModalCarga();
+        if (respuesta?.success) {
+          this.alertService.showAlert(
+            'Orden Anulada',
+            `La consolidación fue liberada. Los ítems volvieron a estado pendiente en Consolidación de Requerimientos.`,
+            'success'
+          );
+        } else {
+          this.alertService.showAlert('Error', respuesta?.mensaje || 'Error al anular.', 'error');
+        }
       }
+
+      await this.cargarContadores();
+      await this.cargarOCPendientes();
+      if (this.modalDetalleOC) this.cerrarModalDetalleOC();
     } catch (error: any) {
       this.alertService.cerrarModalCarga();
-      this.alertService.showAlert(
-        'Error',
-        error.message || 'Error al rechazar la orden de compra',
-        'error'
-      );
+      this.alertService.showAlert('Error', error.message || 'Error inesperado.', 'error');
     }
   }
 
@@ -324,10 +435,20 @@ export class AprobacionesOCComponent implements OnInit {
       const mensaje = obligatorio
         ? `Ingrese el motivo de ${tipo.toLowerCase()} (obligatorio):`
         : `Ingrese observaciones de ${tipo.toLowerCase()} (opcional):`;
-
       const observaciones = prompt(mensaje);
       resolve(observaciones || '');
     });
+  }
+
+  tituloModalMotivo(): string {
+    return this.accionMotivo === 'RECHAZAR' ? 'Motivo de Rechazo' : 'Motivo de Anulación';
+  }
+
+  descripcionModalMotivo(): string {
+    if (this.accionMotivo === 'RECHAZAR') {
+      return 'La OC quedará en estado RECHAZADA. Podrá generarse una nueva OC desde el historial de consolidación.';
+    }
+    return 'La OC será ANULADA y la consolidación será LIBERADA. Los ítems volverán a estado pendiente en Consolidación de Requerimientos.';
   }
 
   // =============================================

@@ -95,7 +95,9 @@ export class LayoutComponent {
     } else if (idrol.includes('ALLOGIST')) {
       this.router.navigate(['main', 'despachos']);
     } else if (idrol.includes('APLOGIST')) {
-      this.router.navigate(['main', 'aprobaciones-area']);
+      this.router.navigate(['main', 'dashboard-aprobaciones-area']);
+    } else if (idrol.includes('FINANZA')) {
+      this.router.navigate(['main', 'dashboard-finanzas']);
     }
   }
 
@@ -391,6 +393,9 @@ export class LayoutComponent {
       'evaluacion-proveedores': 'Evaluación de Proveedores',
 
       'gestion-inventario': 'Gestión de Inventario',
+
+      'dashboard-finanzas': 'Dashboard Finanzas',
+      'dashboard-aprobaciones-area': 'Dashboard Aprobaciones por Área',
 
       'dashboard-logistica': 'Dashboard de Logistica',
 

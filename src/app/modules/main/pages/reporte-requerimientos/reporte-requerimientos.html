@@ -21,7 +21,7 @@
         <label for="fhasta">Hasta: </label>
         <input [(ngModel)]="fhasta" type="date" class="form-control mb-2 mb-sm-0" />
       </div>
-      <button (click)="listarReporte()" class="btn totalAncho bg-primary" style="color: white;margin-top: 21px;">
+      <button (click)="listarReporte()" class="btn totalAncho fondo-primario" style="color: white;margin-top: 21px;">
         Listar <i class="icon icon-eye"></i>
       </button>
     </div>
@@ -52,7 +52,7 @@
             responsiveLayout="scroll"
           >
             <ng-template pTemplate="header">
-              <tr class="bg-primary text-white text-center">
+              <tr class="fondo-primario text-white text-center">
                 <th *ngFor="let col of columnas">
                   {{ getHeaderLabel(col) }}
                 </th>
@@ -189,7 +189,7 @@
           <div class="detalle-item">
             <label>Estado:</label>
             <span class="badge" 
-              [ngClass]="requerimientoSeleccionado.estados === 'APROBADO' ? 'bg-success' : 'bg-warning'">
+              [ngClass]="requerimientoSeleccionado.estados === 'APROBADO' ? 'badge-estado estado-confirmado' : 'badge-estado estado-pendiente'">
               {{ requerimientoSeleccionado.estados || 'PENDIENTE' }}
             </span>
           </div>
@@ -319,7 +319,7 @@
                   <td>{{ item.turno || '-' }}</td>
                   <td>{{ item.labor || '-' }}</td>
                   <td class="text-center">
-                    <span class="badge" [ngClass]="item.estado === 1 ? 'bg-success' : 'bg-danger'">
+                    <span class="badge" [ngClass]="item.estado === 1 ? 'badge-estado estado-confirmado' : 'badge-estado estado-rechazado'">
                       {{ item.estado === 1 ? 'Activo' : 'Inactivo' }}
                     </span>
                   </td>

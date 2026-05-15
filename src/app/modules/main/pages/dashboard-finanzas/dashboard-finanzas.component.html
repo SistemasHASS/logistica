@@ -1,0 +1,182 @@
+<div class="container-fluid">
+  <div class="page-header">
+    <h2 class="page-title">
+      <i class="bx bx-line-chart"></i>
+      Dashboard Finanzas
+    </h2>
+    <p class="page-subtitle">Panel de control para aprobaciones de órdenes</p>
+  </div>
+
+  <!-- Spinner de carga -->
+  @if (cargando) {
+    <div class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-2 text-muted">Cargando estadísticas...</p>
+    </div>
+  }
+
+  <!-- Resumen General - Usando clases semánticas del estándar HASS -->
+  <div class="row mb-4">
+    <!-- OC Pendientes: estado-pendiente (amarillo) -->
+    <div class="col-md-3 mb-3">
+      <div class="card stats-card estado-pendiente">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-uppercase mb-1">Pendientes OC</h6>
+              <h3 class="mb-0">{{contadoresOC.pendientes || 0}}</h3>
+            </div>
+            <i class="bx bx-time bx-lg opacity-75"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- OS Pendientes: estado-pendiente (amarillo) -->
+    <div class="col-md-3 mb-3">
+      <div class="card stats-card estado-pendiente">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-uppercase mb-1">Pendientes OS</h6>
+              <h3 class="mb-0">{{contadoresOS.pendientes || 0}}</h3>
+            </div>
+            <i class="bx bx-time bx-lg opacity-75"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- OC Aprobadas: estado-aprobado (verde) -->
+    <div class="col-md-3 mb-3">
+      <div class="card stats-card estado-aprobado">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-uppercase mb-1">Aprobadas OC</h6>
+              <h3 class="mb-0">{{contadoresOC.aprobadas || 0}}</h3>
+            </div>
+            <i class="bx bx-check-circle bx-lg opacity-75"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- OS Aprobadas: dato-secundario (púrpura) para diferenciar -->
+    <div class="col-md-3 mb-3">
+      <div class="card stats-card dato-secundario">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-uppercase mb-1">Aprobadas OS</h6>
+              <h3 class="mb-0">{{contadoresOS.aprobadas || 0}}</h3>
+            </div>
+            <i class="bx bx-check-circle bx-lg opacity-75"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Totales -->
+  <div class="row mb-4">
+    <!-- Total Pendientes: dato-alerta -->
+    <div class="col-md-6 mb-3">
+      <div class="card dato-alerta">
+        <div class="card-body text-center">
+          <h5 class="mb-2">Total Pendientes</h5>
+          <h2 class="mb-0 display-5">{{totalPendientes}}</h2>
+          <p class="mb-0 opacity-75">OC + OS por aprobar</p>
+        </div>
+      </div>
+    </div>
+    <!-- Total Aprobadas: estado-aprobado -->
+    <div class="col-md-6 mb-3">
+      <div class="card estado-aprobado">
+        <div class="card-body text-center">
+          <h5 class="mb-2">Total Aprobadas</h5>
+          <h2 class="mb-0 display-5">{{totalAprobadas}}</h2>
+          <p class="mb-0 opacity-75">OC + OS aprobadas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acceso Rápido -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h5 class="mb-3">
+        <i class="bx bx-fast-forward-circle me-2"></i>
+        Acceso Rápido
+      </h5>
+    </div>
+    <div class="col-md-6 mb-3">
+      <div class="card h-100 border-primary hover-shadow">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="avatar avatar-lg icono-primario rounded-circle">
+                <i class="bx bx-cart fs-2"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h5 class="card-title mb-1">Aprobaciones OC</h5>
+              <p class="card-text text-muted mb-2">Gestión de órdenes de compra</p>
+              <a routerLink="/main/aprobaciones-oc" class="btn btn-primary btn-sm">
+                <i class="bx bx-check-circle me-1"></i>
+                Ir a Aprobaciones OC
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <div class="card h-100 border-warning hover-shadow">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="avatar avatar-lg icono-advertencia rounded-circle">
+                <i class="bx bx-wrench fs-2"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h5 class="card-title mb-1">Aprobaciones OS</h5>
+              <p class="card-text text-muted mb-2">Gestión de órdenes de servicio</p>
+              <a routerLink="/main/aprobaciones-os" class="btn btn-accion-advertencia btn-sm">
+                <i class="bx bx-check-circle me-1"></i>
+                Ir a Aprobaciones OS
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Información del Usuario -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header fondo-suave">
+          <h5 class="mb-0">
+            <i class="bx bx-user-circle me-2"></i>
+            Información del Aprobador
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Nombre:</strong> {{usuario?.nombre || 'No disponible'}}</p>
+              <p><strong>Rol:</strong> <span class="badge-informativo">FINANZAS</span></p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Empresa:</strong> {{usuario?.razonSocial || 'No disponible'}}</p>
+              <p><strong>Acceso:</strong> Aprobación de Órdenes de Compra y Servicio</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

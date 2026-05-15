@@ -1,0 +1,410 @@
+<div class="dashboard-aprobaciones-container">
+  <!-- Header -->
+  <div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="mb-1">
+        <i class="ti ti-clipboard-check me-2 texto-primario"></i>
+        Dashboard de Aprobaciones por Área
+      </h3>
+      <p class="texto-descriptivo mb-0">
+        Resumen de requerimientos pendientes y aprobados para tu área
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-accion-primaria" (click)="refresh()" [disabled]="loading">
+        <i class="ti ti-refresh" [class.spin]="loading"></i>
+        Actualizar
+      </button>
+      <button class="btn btn-accion-exito" (click)="irAAprobaciones()">
+        <i class="ti ti-clipboard-check"></i>
+        Ir a Aprobaciones
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros rápidos -->
+  <div class="filtros-rapidos mb-4">
+    <div class="btn-group" role="group">
+      <button
+        class="btn"
+        [class.btn-activo]="filtroTipo === 'TODOS'"
+        [class.btn-inactivo]="filtroTipo !== 'TODOS'"
+        (click)="setFiltroTipo('TODOS')">
+        <i class="ti ti-list me-1"></i> Todos
+      </button>
+      <button
+        class="btn"
+        [class.btn-activo]="filtroTipo === 'CONSUMO'"
+        [class.btn-inactivo]="filtroTipo !== 'CONSUMO'"
+        (click)="setFiltroTipo('CONSUMO')">
+        <i class="ti ti-package me-1"></i> Consumo
+      </button>
+      <button
+        class="btn"
+        [class.btn-activo]="filtroTipo === 'COMPRA'"
+        [class.btn-inactivo]="filtroTipo !== 'COMPRA'"
+        (click)="setFiltroTipo('COMPRA')">
+        <i class="ti ti-shopping-cart me-1"></i> Compra
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards - Sección Pendientes -->
+  <div class="seccion-titulo mb-3">
+    <h5 class="texto-primario">
+      <i class="ti ti-clock-hour-4 me-2"></i>
+      Requerimientos Pendientes de Aprobación
+    </h5>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <!-- Total Pendientes -->
+    <div class="col-md-3">
+      <div class="kpi-card kpi-pendiente-total" (click)="setFiltroEstado('PENDIENTE')">
+        <div class="kpi-icon">
+          <i class="ti ti-clock"></i>
+        </div>
+        <div class="kpi-number">{{ resumen.totalPendientes }}</div>
+        <div class="kpi-label">Total Pendientes</div>
+        <div class="kpi-subtipo" *ngIf="filtroTipo === 'TODOS'">
+          <span class="badge badge-advertencia">{{ resumen.pendientesConsumo }} Consumo</span>
+          <span class="badge badge-primario ms-1">{{ resumen.pendientesCompra }} Compra</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pendientes Consumo -->
+    <div class="col-md-3" *ngIf="filtroTipo === 'TODOS' || filtroTipo === 'CONSUMO'">
+      <div class="kpi-card kpi-consumo" (click)="setFiltroTipo('CONSUMO'); setFiltroEstado('PENDIENTE')">
+        <div class="kpi-icon">
+          <i class="ti ti-package"></i>
+        </div>
+        <div class="kpi-number">{{ resumen.pendientesConsumo }}</div>
+        <div class="kpi-label">Pendientes Consumo</div>
+        <div class="progress-bar-container mt-2" *ngIf="resumen.totalPendientes > 0">
+          <p-progressBar
+            [value]="porcentajePendientesConsumo"
+            [style]="{'height': '6px'}"
+            styleClass="barra-advertencia">
+          </p-progressBar>
+          <small class="texto-descriptivo">{{ porcentajePendientesConsumo }}%</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pendientes Compra -->
+    <div class="col-md-3" *ngIf="filtroTipo === 'TODOS' || filtroTipo === 'COMPRA'">
+      <div class="kpi-card kpi-compra" (click)="setFiltroTipo('COMPRA'); setFiltroEstado('PENDIENTE')">
+        <div class="kpi-icon">
+          <i class="ti ti-shopping-cart"></i>
+        </div>
+        <div class="kpi-number">{{ resumen.pendientesCompra }}</div>
+        <div class="kpi-label">Pendientes Compra</div>
+        <div class="progress-bar-container mt-2" *ngIf="resumen.totalPendientes > 0">
+          <p-progressBar
+            [value]="porcentajePendientesCompra"
+            [style]="{'height': '6px'}"
+            styleClass="barra-primaria">
+          </p-progressBar>
+          <small class="texto-descriptivo">{{ porcentajePendientesCompra }}%</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Espacio vacío o card adicional -->
+    <div class="col-md-3" *ngIf="filtroTipo !== 'TODOS'">
+      <div class="kpi-card kpi-urgente" (click)="irAAprobaciones()">
+        <div class="kpi-icon">
+          <i class="ti ti-alert-circle"></i>
+        </div>
+        <div class="kpi-number">
+          <i class="ti ti-arrow-right"></i>
+        </div>
+        <div class="kpi-label">Ir a Aprobar</div>
+        <div class="text-center mt-2">
+          <span class="texto-descriptivo">Haz clic para aprobar requerimientos</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards - Sección Aprobados -->
+  <div class="seccion-titulo mb-3">
+    <h5 class="texto-confirmacion">
+      <i class="ti ti-checkbox me-2"></i>
+      Requerimientos Aprobados
+    </h5>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <!-- Total Aprobados -->
+    <div class="col-md-3">
+      <div class="kpi-card kpi-aprobado-total" (click)="setFiltroEstado('APROBADO')">
+        <div class="kpi-icon">
+          <i class="ti ti-checkbox"></i>
+        </div>
+        <div class="kpi-number">{{ resumen.totalAprobados }}</div>
+        <div class="kpi-label">Total Aprobados</div>
+        <div class="kpi-subtipo" *ngIf="filtroTipo === 'TODOS'">
+          <span class="badge badge-exito">{{ resumen.aprobadosConsumo }} Consumo</span>
+          <span class="badge badge-exito ms-1">{{ resumen.aprobadosCompra }} Compra</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aprobados Consumo -->
+    <div class="col-md-3" *ngIf="filtroTipo === 'TODOS' || filtroTipo === 'CONSUMO'">
+      <div class="kpi-card kpi-aprobado-consumo" (click)="setFiltroTipo('CONSUMO'); setFiltroEstado('APROBADO')">
+        <div class="kpi-icon">
+          <i class="ti ti-package"></i>
+        </div>
+        <div class="kpi-number">{{ resumen.aprobadosConsumo }}</div>
+        <div class="kpi-label">Aprobados Consumo</div>
+        <div class="progress-bar-container mt-2" *ngIf="resumen.totalAprobados > 0">
+          <p-progressBar
+            [value]="porcentajeAprobadosConsumo"
+            [style]="{'height': '6px'}"
+            styleClass="barra-exito">
+          </p-progressBar>
+          <small class="texto-descriptivo">{{ porcentajeAprobadosConsumo }}%</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aprobados Compra -->
+    <div class="col-md-3" *ngIf="filtroTipo === 'TODOS' || filtroTipo === 'COMPRA'">
+      <div class="kpi-card kpi-aprobado-compra" (click)="setFiltroTipo('COMPRA'); setFiltroEstado('APROBADO')">
+        <div class="kpi-icon">
+          <i class="ti ti-shopping-cart"></i>
+        </div>
+        <div class="kpi-number">{{ resumen.aprobadosCompra }}</div>
+        <div class="kpi-label">Aprobados Compra</div>
+        <div class="progress-bar-container mt-2" *ngIf="resumen.totalAprobados > 0">
+          <p-progressBar
+            [value]="porcentajeAprobadosCompra"
+            [style]="{'height': '6px'}"
+            styleClass="barra-exito">
+          </p-progressBar>
+          <small class="texto-descriptivo">{{ porcentajeAprobadosCompra }}%</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Rechazados -->
+    <div class="col-md-3">
+      <div class="kpi-card kpi-rechazado" (click)="setFiltroEstado('RECHAZADO')">
+        <div class="kpi-icon">
+          <i class="ti ti-x"></i>
+        </div>
+        <div class="kpi-number">{{ resumen.totalRechazados }}</div>
+        <div class="kpi-label">Total Rechazados</div>
+        <div class="kpi-subtipo" *ngIf="filtroTipo === 'TODOS' && resumen.totalRechazados > 0">
+          <span class="badge badge-peligro">{{ resumen.rechazadosConsumo }} Consumo</span>
+          <span class="badge badge-peligro ms-1">{{ resumen.rechazadosCompra }} Compra</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Requerimientos Pendientes -->
+  <div class="card mb-4" *ngIf="requerimientosFiltrados.length > 0">
+    <div class="card-header d-flex justify-content-between align-items-center fondo-suave">
+      <h6 class="mb-0 texto-primario">
+        <i class="ti ti-list me-2"></i>
+        Requerimientos Pendientes - {{ filtroTipo === 'TODOS' ? 'Todos' : filtroTipo }}
+      </h6>
+      <span class="badge badge-advertencia">{{ requerimientosFiltrados.length }} pendientes</span>
+    </div>
+    <div class="card-body p-0">
+      <p-table
+        [value]="requerimientosFiltrados"
+        [paginator]="true"
+        [rows]="5"
+        [rowsPerPageOptions]="[5, 10, 20]"
+        styleClass="p-datatable-sm p-datatable-striped"
+        [responsiveLayout]="'scroll'">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Requerimiento</th>
+            <th>Tipo</th>
+            <th>Solicitante</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-req>
+          <tr>
+            <td>
+              <strong>{{ req.idrequerimiento | numeroRequerimiento }}</strong>
+              <div class="texto-descriptivo small">{{ req.descripcion || 'Sin descripción' }}</div>
+            </td>
+            <td>
+              <p-tag
+                [value]="req.tipo || 'CONSUMO'"
+                [severity]="req.tipo === 'COMPRA' ? 'info' : 'warn'"
+                styleClass="text-uppercase">
+              </p-tag>
+            </td>
+            <td>{{ req.solicitante || 'N/A' }}</td>
+            <td>{{ req.fechasolicitud | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <span class="badge badge-advertencia">{{ req.estado }}</span>
+            </td>
+            <td class="text-center">
+              <button
+                pButton
+                pTooltip="Ver detalle"
+                tooltipPosition="top"
+                icon="ti ti-eye"
+                class="p-button-rounded p-button-text p-button-sm"
+                (click)="verDetalle(req)">
+              </button>
+              <button
+                pButton
+                pTooltip="Ir a aprobar"
+                tooltipPosition="top"
+                icon="ti ti-checkbox"
+                class="p-button-rounded p-button-success p-button-sm ms-1"
+                (click)="irAAprobaciones()">
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Estado vacío -->
+  <div class="card mb-4" *ngIf="requerimientosFiltrados.length === 0 && !loading">
+    <div class="card-body text-center py-5">
+      <i class="ti ti-checkbox fs-1 texto-confirmacion mb-3"></i>
+      <h5 class="texto-primario">¡Excelente!</h5>
+      <p class="texto-descriptivo">
+        No hay requerimientos {{ filtroTipo === 'TODOS' ? '' : 'de ' + filtroTipo }} pendientes de aprobación para tu área.
+      </p>
+      <button class="btn btn-accion-primaria mt-3" (click)="setFiltroEstado('APROBADO')">
+        <i class="ti ti-history me-1"></i>
+        Ver historial de aprobaciones
+      </button>
+    </div>
+  </div>
+
+  <!-- Mis Aprobaciones Recientes -->
+  <div class="card" *ngIf="misAprobacionesFiltradas.length > 0">
+    <div class="card-header d-flex justify-content-between align-items-center fondo-exito">
+      <h6 class="mb-0 texto-contraste">
+        <i class="ti ti-history me-2"></i>
+        Mis Aprobaciones Recientes - {{ filtroEstado === 'TODOS' ? 'Todas' : filtroEstado }}
+      </h6>
+      <div class="btn-group btn-group-sm">
+        <button
+          class="btn btn-light"
+          [class.active]="filtroEstado === 'TODOS'"
+          (click)="setFiltroEstado('TODOS')">Todas</button>
+        <button
+          class="btn btn-light"
+          [class.active]="filtroEstado === 'APROBADO'"
+          (click)="setFiltroEstado('APROBADO')">Aprobadas</button>
+        <button
+          class="btn btn-light"
+          [class.active]="filtroEstado === 'RECHAZADO'"
+          (click)="setFiltroEstado('RECHAZADO')">Rechazadas</button>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <p-table
+        [value]="misAprobacionesFiltradas"
+        [paginator]="true"
+        [rows]="5"
+        styleClass="p-datatable-sm p-datatable-striped">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Requerimiento</th>
+            <th>Tipo</th>
+            <th>Estado Aprobación</th>
+            <th>Fecha Aprobación</th>
+            <th>Observaciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-apro>
+          <tr>
+            <td>
+              <strong>{{ apro.idrequerimiento | numeroRequerimiento }}</strong>
+            </td>
+            <td>
+              <p-tag
+                [value]="apro.tipo || 'CONSUMO'"
+                [severity]="apro.tipo === 'COMPRA' ? 'info' : 'warn'"
+                styleClass="text-uppercase">
+              </p-tag>
+            </td>
+            <td>
+              <span class="badge"
+                [class.badge-exito]="apro.estadoAprobacion === 'APROBADO'"
+                [class.badge-peligro]="apro.estadoAprobacion === 'RECHAZADO'">
+                {{ apro.estadoAprobacion }}
+              </span>
+            </td>
+            <td>{{ apro.fechaAprobacion | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ apro.observaciones || 'Sin observaciones' }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Modal de Detalle -->
+  <p-dialog
+    [(visible)]="modalDetalleAbierto"
+    [modal]="true"
+    [style]="{width: '600px'}"
+    [header]="'Detalle del Requerimiento'"
+    [draggable]="false"
+    [resizable]="false">
+    <div class="detalle-req" *ngIf="requerimientoSeleccionado">
+      <div class="row mb-3">
+        <div class="col-6">
+          <label class="texto-descriptivo small">Número</label>
+          <p class="fw-bold">{{ requerimientoSeleccionado.idrequerimiento | numeroRequerimiento }}</p>
+        </div>
+        <div class="col-6">
+          <label class="texto-descriptivo small">Tipo</label>
+          <p>
+            <p-tag
+              [value]="requerimientoSeleccionado.tipo || 'CONSUMO'"
+              [severity]="requerimientoSeleccionado.tipo === 'COMPRA' ? 'info' : 'warn'">
+            </p-tag>
+          </p>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-6">
+          <label class="texto-descriptivo small">Solicitante</label>
+          <p>{{ requerimientoSeleccionado.solicitante || 'N/A' }}</p>
+        </div>
+        <div class="col-6">
+          <label class="texto-descriptivo small">Fecha Solicitud</label>
+          <p>{{ requerimientoSeleccionado.fechasolicitud | date:'dd/MM/yyyy' }}</p>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="texto-descriptivo small">Descripción</label>
+        <p>{{ requerimientoSeleccionado.descripcion || 'Sin descripción' }}</p>
+      </div>
+      <div class="mb-3">
+        <label class="texto-descriptivo small">Estado</label>
+        <p>
+          <span class="badge badge-advertencia">{{ requerimientoSeleccionado.estado }}</span>
+        </p>
+      </div>
+    </div>
+    <ng-template pTemplate="footer">
+      <button class="btn btn-accion-secundaria" (click)="cerrarModal()">Cerrar</button>
+      <button class="btn btn-accion-exito" (click)="irAAprobaciones(); cerrarModal()">
+        <i class="ti ti-checkbox me-1"></i>
+        Ir a Aprobar
+      </button>
+    </ng-template>
+  </p-dialog>
+</div>

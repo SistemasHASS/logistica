@@ -53,7 +53,7 @@
   <div *ngIf="tabActiva === 'saldos'" class="card">
     <div class="card-header">
       <h5 class="mb-0">Saldos Pendientes para Reingreso</h5>
-      <p class="text-muted mb-0 small">Items de requerimientos que no fueron despachados completamente</p>
+      <p class="texto-descriptivo mb-0 small">Items de requerimientos que no fueron despachados completamente</p>
     </div>
     <div class="card-body">
       <p-table [value]="saldosPendientes" [paginator]="true" [rows]="10" [loading]="loading"
@@ -81,10 +81,10 @@
             <td>{{ saldo.descripcion }}</td>
             <td class="text-center">{{ saldo.cantidadSolicitada }}</td>
             <td class="text-center">{{ saldo.cantidadDespachada }}</td>
-            <td class="text-center"><strong class="text-danger">{{ saldo.cantidadPendiente }}</strong></td>
+            <td class="text-center"><strong class="texto-alerta">{{ saldo.cantidadPendiente }}</strong></td>
             <td>{{ saldo.unidadMedida }}</td>
             <td>
-              <button class="btn btn-sm btn-primary" (click)="generarReingresoDesdeSaldo(saldo)"
+              <button class="btn btn-sm btn-accion-primaria" (click)="generarReingresoDesdeSaldo(saldo)"
                       pTooltip="Generar Reingreso">
                 <i class="bi bi-arrow-repeat"></i> Generar
               </button>
@@ -127,7 +127,7 @@
           <input type="date" class="form-control" [(ngModel)]="filtroFechaFin">
         </div>
         <div class="col-md-3 d-flex align-items-end">
-          <button class="btn btn-secondary" (click)="limpiarFiltros()">
+          <button class="btn btn-accion-secundaria" (click)="limpiarFiltros()">
             <i class="bi bi-x-circle me-2"></i>Limpiar
           </button>
         </div>
@@ -161,31 +161,31 @@
               </span>
             </td>
             <td>
-              <span *ngIf="reingreso.numeroRequerimientoGenerado" class="badge bg-info">
+              <span *ngIf="reingreso.numeroRequerimientoGenerado" class="badge-informativo">
                 {{ reingreso.numeroRequerimientoGenerado }}
               </span>
-              <span *ngIf="!reingreso.numeroRequerimientoGenerado" class="text-muted">-</span>
+              <span *ngIf="!reingreso.numeroRequerimientoGenerado" class="texto-descriptivo">-</span>
             </td>
             <td class="text-center">{{ reingreso.detalle?.length || 0 }}</td>
             <td>
-              <button class="btn btn-sm btn-info me-1" (click)="verDetalle(reingreso)"
+              <button class="btn btn-sm btn-accion-info me-1" (click)="verDetalle(reingreso)"
                       pTooltip="Ver Detalle">
                 <i class="icon icon-eye"></i>
               </button>
               <button *ngIf="reingreso.estado === 'PENDIENTE'" 
-                      class="btn btn-sm btn-success me-1" 
+                      class="btn btn-sm btn-accion-exito me-1" 
                       (click)="aprobarReingreso(reingreso)"
                       pTooltip="Aprobar y Generar Requerimiento">
                 <i class="bx bx-check-circle"></i>
               </button>
               <button *ngIf="reingreso.estado === 'PENDIENTE'" 
-                      class="btn btn-sm btn-danger me-1" 
+                      class="btn btn-sm btn-accion-peligro me-1" 
                       (click)="rechazarReingreso(reingreso)"
                       pTooltip="Rechazar">
                 <i class="bx bx-x-circle"></i>
               </button>
               <button *ngIf="reingreso.estado !== 'APROBADO'" 
-                      class="btn btn-sm btn-secondary" 
+                      class="btn btn-sm btn-accion-secundaria" 
                       (click)="anularReingreso(reingreso)"
                       pTooltip="Anular">
                 <i class="bx bx-x"></i>
@@ -233,7 +233,7 @@
 
     <div class="row mb-3" *ngIf="reingresoDetalle.numeroRequerimientoGenerado">
       <div class="col-12">
-        <div class="alert alert-info">
+        <div class="alerta-informativa">
           <strong>Requerimiento Generado:</strong> {{ reingresoDetalle.numeroRequerimientoGenerado }}
         </div>
       </div>
@@ -253,7 +253,7 @@
 
     <div class="row mb-3" *ngIf="reingresoDetalle.motivoRechazo">
       <div class="col-12">
-        <div class="alert alert-danger">
+        <div class="alerta-peligro">
           <strong>Motivo de Rechazo/Anulación:</strong> {{ reingresoDetalle.motivoRechazo }}
         </div>
       </div>
@@ -289,13 +289,13 @@
 
     <div class="row mt-3">
       <div class="col-md-6">
-        <small class="text-muted">
+        <small class="texto-descriptivo">
           <strong>Registrado por:</strong> {{ reingresoDetalle.usuarioRegistra }} 
           el {{ formatearFecha(reingresoDetalle.fechaRegistro || '') }}
         </small>
       </div>
       <div class="col-md-6" *ngIf="reingresoDetalle.usuarioAprueba">
-        <small class="text-muted">
+        <small class="texto-descriptivo">
           <strong>Aprobado/Rechazado por:</strong> {{ reingresoDetalle.usuarioAprueba }} 
           el {{ formatearFecha(reingresoDetalle.fechaAprobacion || '') }}
         </small>

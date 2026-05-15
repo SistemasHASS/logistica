@@ -5,15 +5,15 @@
 // Filtros panel
 // =============================================
 .filtros-panel {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background: var(--app-light);
+  border: 1px solid var(--app-gray-200);
   border-radius: 8px;
   padding: 16px;
 
   .form-label-sm {
     font-size: 0.78rem;
     font-weight: 600;
-    color: #495057;
+    color: var(--app-gray-700);
     margin-bottom: 6px;
     display: block;
   }
@@ -34,7 +34,7 @@
 // =============================================
 .form-label {
   font-weight: 600;
-  color: #495057;
+  color: var(--app-gray-700);
   margin-bottom: 0.5rem;
   display: block;
 }
@@ -106,35 +106,100 @@
 }
 
 .item {
-  background-color: #1873cf;
+  background-color: var(--app-primary);
 }
 
-// Badge styles
+// Badge semánticos
 .badge {
-  &.badge-info {
-    background-color: #17a2b8;
+  &.badge-informativo {
+    background-color: var(--app-info);
     color: white;
   }
   
-  &.badge-warning {
-    background-color: #ffc107;
-    color: #212529;
+  &.badge-advertencia {
+    background-color: var(--app-warning);
+    color: var(--app-dark);
   }
   
-  &.badge-success {
-    background-color: #28a745;
+  &.badge-exito {
+    background-color: var(--app-success);
     color: white;
   }
   
-  &.badge-danger {
-    background-color: #dc3545;
+  &.badge-peligro {
+    background-color: var(--app-danger);
     color: white;
   }
   
-  &.badge-secondary {
-    background-color: #6c757d;
+  &.badge-inactivo {
+    background-color: var(--app-secondary);
     color: white;
   }
+  
+  &.badge-primario {
+    background-color: var(--app-primary);
+    color: white;
+  }
+}
+
+// Clases de texto semánticas
+.texto-descriptivo {
+  color: var(--app-secondary);
+}
+
+.texto-confirmacion {
+  color: var(--app-success);
+}
+
+.texto-advertencia {
+  color: var(--app-warning);
+}
+
+.texto-error {
+  color: var(--app-danger);
+}
+
+.texto-primario {
+  color: var(--app-primary);
+}
+
+.texto-informativo {
+  color: var(--app-info);
+}
+
+.texto-pendiente {
+  color: var(--app-warning);
+}
+
+.texto-exito {
+  color: var(--app-success);
+}
+
+// Filas semánticas
+.fila-confirmada {
+  background-color: rgba(var(--app-success-rgb), 0.1) !important;
+}
+
+.fila-informativa {
+  background-color: rgba(var(--app-info-rgb), 0.1) !important;
+}
+
+// Fondos
+.fondo-suave {
+  background-color: var(--app-light) !important;
+}
+
+// Bordes de cards
+.border-pendiente {
+  border-color: var(--app-warning) !important;
+}
+
+.border-informativo {
+  border-color: var(--app-info) !important;
+}
+
+.border-exito {
+  border-color: var(--app-success) !important;
 }
 
 // Responsive adjustments

@@ -1355,12 +1355,12 @@ export class CotizacionesComponent implements OnInit {
   
   obtenerClaseEstadoSolicitud(estado: string): string {
     const clases: { [key: string]: string } = {
-      PENDIENTE: 'bg-warning',
-      GENERADA: 'bg-primary',
-      EN_REVISION: 'bg-info',
-      CERRADA: 'bg-success',
+      PENDIENTE: 'badge-estado estado-pendiente',
+      GENERADA: 'badge-estado estado-informativo',
+      EN_REVISION: 'badge-estado estado-enprogreso',
+      CERRADA: 'badge-estado estado-confirmado',
     };
-    return clases[estado] || 'bg-secondary';
+    return clases[estado] || 'badge-estado estado-inactivo';
   }
   
   eliminarItemCotizacion(index: number) {

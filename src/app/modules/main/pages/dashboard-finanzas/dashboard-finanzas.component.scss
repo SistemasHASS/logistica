@@ -1,0 +1,173 @@
+.page-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--app-gray-200);
+
+  .page-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--app-dark);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    i {
+      color: var(--app-primary);
+    }
+  }
+
+  .page-subtitle {
+    color: var(--app-secondary);
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+
+  &.avatar-lg {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+.card {
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 2px solid transparent;
+  border-left: 4px solid transparent;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+
+  // Total - Primario
+  &.border-primary, &.card-total {
+    border-left-color: var(--app-primary);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(41, 82, 255, 0.05) 100%);
+  }
+
+  // Pendiente - Advertencia
+  &.border-warning, &.card-pendiente {
+    border-left-color: var(--app-warning);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(242, 209, 90, 0.08) 100%);
+  }
+
+  // Éxito/Aprobado
+  &.card-exito, &.card-aprobado {
+    border-left-color: var(--app-success);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(133, 212, 112, 0.08) 100%);
+  }
+
+  // Peligro/Rechazado
+  &.card-peligro, &.card-rechazado {
+    border-left-color: var(--app-danger);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(242, 90, 90, 0.08) 100%);
+  }
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+// Estilos para tarjetas de estadísticas - Estándar HASS
+.stats-card {
+  border: none;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 2px solid transparent;
+  border-left: 4px solid transparent;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  }
+
+  .card-body {
+    padding: 1.25rem;
+  }
+
+  h6 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  h3 {
+    font-size: 2rem;
+    font-weight: 700;
+  }
+
+  i {
+    font-size: 2.5rem;
+  }
+
+  // Total - Primario
+  &.stats-total {
+    border-left-color: var(--app-primary);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(41, 82, 255, 0.05) 100%);
+    h3, i { color: var(--app-primary); }
+  }
+
+  // Pendiente - Advertencia
+  &.stats-pendiente {
+    border-left-color: var(--app-warning);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(242, 209, 90, 0.08) 100%);
+    h3, i { color: var(--app-warning); }
+  }
+
+  // Éxito/Aprobado
+  &.stats-exito, &.stats-aprobado {
+    border-left-color: var(--app-success);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(133, 212, 112, 0.08) 100%);
+    h3, i { color: var(--app-success); }
+  }
+
+  // Proceso/Info
+  &.stats-proceso, &.stats-info {
+    border-left-color: var(--app-info);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(116, 90, 242, 0.05) 100%);
+    h3, i { color: var(--app-info); }
+  }
+
+  // Peligro/Rechazado
+  &.stats-peligro, &.stats-rechazado {
+    border-left-color: var(--app-danger);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(242, 90, 90, 0.08) 100%);
+    h3, i { color: var(--app-danger); }
+  }
+}
+
+// Gradientes para totales
+// Usar clases semánticas globales: .dato-positivo, .dato-negativo
+
+// Efecto hover para accesos rápidos
+.hover-shadow {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important;
+  }
+}
+
+// Display para números grandes
+.display-5 {
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+// Opacidad para íconos
+.opacity-75 {
+  opacity: 0.75;
+}

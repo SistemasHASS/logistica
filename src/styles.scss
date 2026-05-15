@@ -89,4 +89,147 @@ table tr button{
 }
 .modal-open{
     overflow: hidden;
-}   
+}
+
+/* ============================================
+   SISTEMA DE COLORES SEMÁNTICOS - ESTÁNDAR HASS
+   ============================================ */
+
+/* 
+ * REGLA DE ORO: Usar clases semánticas, NO colores directos
+ * 
+ * ✅ CORRECTO: class="estado-aprobado"
+ * ❌ INCORRECTO: class="bg-success" o style="color: green"
+ */
+
+/* Estados de Aprobación */
+.estado-aprobado {
+    background-color: var(--app-success, #85d446) !important;
+    color: white !important;
+}
+
+.estado-pendiente {
+    background-color: var(--app-warning, #f2d15a) !important;
+    color: #333 !important;
+}
+
+.estado-rechazado {
+    background-color: var(--app-danger, #f25a5a) !important;
+    color: white !important;
+}
+
+.estado-anulado {
+    background-color: #707a82 !important;
+    color: white !important;
+}
+
+/* Acciones */
+.accion-primaria {
+    background-color: var(--app-primary, #2952ff) !important;
+    color: white !important;
+}
+
+.accion-secundaria {
+    background-color: var(--app-secondary, #74dbf7) !important;
+    color: #333 !important;
+}
+
+.accion-peligro {
+    background-color: var(--app-danger, #f25a5a) !important;
+    color: white !important;
+}
+
+/* Datos/Estadísticas */
+.dato-principal {
+    background-color: var(--app-primary, #2952ff) !important;
+    color: white !important;
+}
+
+.dato-secundario {
+    background-color: var(--app-info, #745af2) !important;
+    color: white !important;
+}
+
+.dato-alerta {
+    background-color: var(--app-warning, #f2d15a) !important;
+    color: #333 !important;
+}
+
+/* Badges Semánticos */
+.badge-aprobado {
+    background-color: var(--app-success, #85d446);
+    color: white;
+    padding: 0.35em 0.65em;
+    border-radius: 4px;
+    font-size: 0.875em;
+    font-weight: 500;
+}
+
+.badge-pendiente {
+    background-color: var(--app-warning, #f2d15a);
+    color: #333;
+    padding: 0.35em 0.65em;
+    border-radius: 4px;
+    font-size: 0.875em;
+    font-weight: 500;
+}
+
+.badge-rechazado {
+    background-color: var(--app-danger, #f25a5a);
+    color: white;
+    padding: 0.35em 0.65em;
+    border-radius: 4px;
+    font-size: 0.875em;
+    font-weight: 500;
+}
+
+.badge-anulado {
+    background-color: #707a82;
+    color: white;
+    padding: 0.35em 0.65em;
+    border-radius: 4px;
+    font-size: 0.875em;
+    font-weight: 500;
+}
+
+/* Bordes Semánticos */
+.border-aprobado {
+    border-left: 4px solid var(--app-success, #85d446) !important;
+}
+
+.border-pendiente {
+    border-left: 4px solid var(--app-warning, #f2d15a) !important;
+}
+
+.border-rechazado {
+    border-left: 4px solid var(--app-danger, #f25a5a) !important;
+}
+
+.border-anulado {
+    border-left: 4px solid #707a82 !important;
+}
+
+/* 
+ * MAPEO DE COLORES POR MÓDULO:
+ * 
+ * Dashboard Finanzas:
+ *   - OC Pendiente: estado-pendiente (amarillo)
+ *   - OS Pendiente: estado-pendiente (amarillo)
+ *   - OC Aprobada: estado-aprobado (verde)
+ *   - OS Aprobada: dato-secundario (púrpura)
+ * 
+ * Aprobaciones:
+ *   - Botón Aprobar: accion-primaria
+ *   - Botón Rechazar: accion-peligro
+ *   - Botón Anular: estado-anulado
+ * 
+ * Requerimientos:
+ *   - Disponible: estado-aprobado
+ *   - Sin Stock: dato-alerta
+ *   - Urgente: estado-rechazado
+ * 
+ * Despachos:
+ *   - Entregado: estado-aprobado
+ *   - En Tránsito: estado-pendiente
+ *   - Devuelto: estado-rechazado
+ */

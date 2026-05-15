@@ -460,6 +460,8 @@ export interface Item {
   unidadEmbalaje: string;
   estado: string;
   tipoclasificacion: string;
+  precioEstimado?: number;
+  moneda?: string;
 }
 
 export interface Comodity {

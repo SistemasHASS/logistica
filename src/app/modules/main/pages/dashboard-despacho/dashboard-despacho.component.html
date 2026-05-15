@@ -16,11 +16,11 @@
       <p-card class="kpi-card" (click)="abrirModalKpi(kpi)" styleClass="cursor-pointer">
         <div class="d-flex align-items-center justify-content-between">
           <div class="kpi-content">
-            <h6 class="kpi-label text-muted mb-1">{{ kpi.label }}</h6>
+            <h6 class="kpi-label texto-descriptivo mb-1">{{ kpi.label }}</h6>
             <h3 class="kpi-value mb-0">{{ kpi.value }}</h3>
           </div>
-          <div class="kpi-icon-wrapper" [class]="'bg-' + kpi.color + '-subtle'">
-            <i [class]="kpi.icon + ' text-' + kpi.color"></i>
+          <div class="kpi-icon-wrapper" [class]="'icono-fondo-' + kpi.color">
+            <i [class]="kpi.icon + ' icono-' + kpi.color"></i>
           </div>
         </div>
       </p-card>
@@ -141,7 +141,7 @@
 
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="7" class="text-center text-muted py-4">
+              <td colspan="7" class="text-center texto-descriptivo py-4">
                 <i class="bx bx-inbox fs-2 d-block mb-2"></i>
                 No hay despachos registrados
               </td>
@@ -209,7 +209,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="7" class="text-center text-muted py-4">
+          <td colspan="7" class="text-center texto-descriptivo py-4">
             <i class="bx bx-inbox fs-2 d-block mb-2"></i>
             No hay datos disponibles
           </td>

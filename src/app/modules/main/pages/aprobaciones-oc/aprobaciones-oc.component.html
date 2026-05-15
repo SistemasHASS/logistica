@@ -67,7 +67,94 @@
 
     <!-- TAB 1: OC PENDIENTES -->
     <div class="tab-content" *ngIf="tabActiva === 0">
-      <!-- FILTROS -->
+
+      <!-- MINI TABS: PENDIENTES / APROBADAS / RECHAZADAS -->
+      <div class="vista-tabs" style="display:flex;gap:8px;margin-bottom:16px;">
+        <button
+          class="btn"
+          [class.btn-warning]="tabVistaActiva === 'PENDIENTES'"
+          [class.btn-outline-secondary]="tabVistaActiva !== 'PENDIENTES'"
+          (click)="cambiarVista('PENDIENTES')">
+          <i class="bx bx-time"></i> Pendientes
+        </button>
+        <button
+          class="btn"
+          [class.btn-success]="tabVistaActiva === 'APROBADAS'"
+          [class.btn-outline-secondary]="tabVistaActiva !== 'APROBADAS'"
+          (click)="cambiarVista('APROBADAS')">
+          <i class="bx bx-check-circle"></i> Aprobadas
+        </button>
+        <button
+          class="btn"
+          [class.btn-danger]="tabVistaActiva === 'RECHAZADAS'"
+          [class.btn-outline-secondary]="tabVistaActiva !== 'RECHAZADAS'"
+          (click)="cambiarVista('RECHAZADAS')">
+          <i class="bx bx-x-circle"></i> Rechazadas
+        </button>
+      </div>
+
+      <!-- TABLA APROBADAS / RECHAZADAS -->
+      @if (tabVistaActiva !== 'PENDIENTES') {
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nro. Orden</th>
+                <th>Fecha</th>
+                <th>Proveedor</th>
+                <th>Monto Total</th>
+                <th>Estado</th>
+                <th>SPRING</th>
+                <th>Fecha Acción</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let oc of ocAprobadas">
+                <td><strong>{{ oc.numeroOrden }}</strong></td>
+                <td>{{ formatearFecha(oc.fechaOrden) }}</td>
+                <td>{{ oc.nombreProveedor }}</td>
+                <td class="text-right">
+                  <strong>S/ {{ formatearMoneda(oc.montoTotal) }}</strong>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="obtenerClaseEstado(oc.estado)">
+                    {{ oc.estado }}
+                  </span>
+                </td>
+                <td>
+                  @if (oc.estadoSpring === 'SINCRONIZADO') {
+                    <span class="badge bg-success" title="Sincronizado con SPRING"><i class="bx bx-check"></i> SPRING</span>
+                  } @else if (oc.estadoSpring === 'PENDIENTE_SYNC' || oc.estadoSpring === 'ERROR_SYNC') {
+                    <span class="badge bg-warning text-dark" title="Pendiente de sincronizar con SPRING"><i class="bx bx-time"></i> Pendiente</span>
+                  } @else {
+                    <span class="badge bg-secondary">-</span>
+                  }
+                </td>
+                <td>{{ oc.FechaAccion ? formatearFecha(oc.FechaAccion) : '-' }}</td>
+                <td style="display:flex;gap:4px;">
+                  <button class="btn btn-sm btn-info" (click)="verDetalleOC(oc)" title="Ver Detalle">
+                    <i class="bx bx-show"></i>
+                  </button>
+                  @if (tabVistaActiva === 'APROBADAS' && (oc.estadoSpring === 'PENDIENTE_SYNC' || oc.estadoSpring === 'ERROR_SYNC')) {
+                    <button class="btn btn-sm btn-warning" (click)="reintentarSyncSpring(oc)" title="Reintentar sincronización con SPRING">
+                      <i class="bx bx-refresh"></i>
+                    </button>
+                  }
+                </td>
+              </tr>
+              <tr *ngIf="ocAprobadas.length === 0">
+                <td colspan="8" class="text-center">
+                  <p class="no-data">No hay órdenes {{ tabVistaActiva === 'APROBADAS' ? 'aprobadas' : 'rechazadas' }}.</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <!-- FILTROS (solo para pendientes) -->
+      @if (tabVistaActiva === 'PENDIENTES') {
       <div class="filters-section">
         <div class="filters-grid">
           <div class="filter-group">
@@ -164,6 +251,12 @@
                   title="Rechazar">
                   <i class="bx bx-x"></i>
                 </button>
+                <button 
+                  class="btn btn-sm btn-warning" 
+                  (click)="anularOC(oc)"
+                  title="Anular (libera consolidación)">
+                  <i class="bx bx-block"></i>
+                </button>
               </td>
             </tr>
             <tr *ngIf="ocPendientesFiltradas.length === 0">
@@ -174,6 +267,7 @@
           </tbody>
         </table>
       </div>
+      } <!-- fin @if tabVistaActiva === 'PENDIENTES' -->
     </div>
 
     <!-- TAB 2: CONFIGURACIÓN -->
@@ -303,8 +397,8 @@
 </div>
 
 <!-- MODAL DETALLE OC -->
-<div class="modal" *ngIf="modalDetalleOC" (click)="cerrarModalDetalleOC()">
-  <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
+<div class="modal-overlay" *ngIf="modalDetalleOC">
+  <div class="modal-content modal-lg">
     <div class="modal-header">
       <h3>Detalle de Orden de Compra</h3>
       <button class="btn-close" (click)="cerrarModalDetalleOC()">
@@ -351,40 +445,84 @@
         </div>
       </div>
 
+      <!-- Items de la OC -->
+      <div class="items-section">
+        <h4>Items de la Orden de Compra</h4>
+        <div class="table-container" *ngIf="ocDetalle.items && ocDetalle.items.length > 0">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>Unidad</th>
+                <th>Precio Unitario</th>
+                <th>Descuento</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of ocDetalle.items">
+                <td>{{ item.codigo }}</td>
+                <td>{{ item.codigo }}</td>
+                <td>{{ item.descripcion }}</td>
+                <td class="text-right">{{ item.cantidad }}</td>
+                <td>{{ item.unidadMedida }}</td>
+                <td class="text-right">S/ {{ formatearMoneda(item.precioUnitario) }}</td>
+                <td class="text-right">S/ {{ formatearMoneda(item.descuento || 0) }}</td>
+                <td class="text-right"><strong>S/ {{ formatearMoneda(item.total || (item.cantidad * item.precioUnitario - (item.descuento || 0))) }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="no-data" *ngIf="!ocDetalle.items || ocDetalle.items.length === 0">
+          <p>No hay items disponibles.</p>
+        </div>
+      </div>
+
       <!-- Historial de Aprobaciones -->
       <div class="historial-section">
         <h4>Historial de Aprobaciones</h4>
-        <div class="timeline">
+        <div class="timeline" *ngIf="historialOC && historialOC.length > 0">
           <div class="timeline-item" *ngFor="let item of historialOC">
             <div class="timeline-marker" [ngClass]="obtenerClaseEstado(item.estado)"></div>
             <div class="timeline-content">
               <div class="timeline-header">
-                <strong>Nivel {{ item.nivel }} - {{ item.nombreAprobador }}</strong>
-                <span class="timeline-date">{{ formatearFecha(item.fechaAprobacion || item.fechaAsignacion) }}</span>
+                <strong>Nivel {{ item.nivel }} - {{ item.nombreAprobador || item.RolAprobador }}</strong>
+                <span class="timeline-date">{{ formatearFecha(item.FechaAccion || item.fechaAprobacion || item.fechaAsignacion) }}</span>
               </div>
               <div class="timeline-body">
-                <p><strong>Rol:</strong> {{ item.rolAprobador }}</p>
+                <p><strong>Rol:</strong> {{ item.rolAprobador || item.RolAprobador }}</p>
                 <p><strong>Estado:</strong> 
-                  <span class="badge" [ngClass]="obtenerClaseEstado(item.estado)">
-                    {{ item.estado }}
+                  <span class="badge" [ngClass]="obtenerClaseEstado(item.estado || item.Estado)">
+                    {{ item.estado || item.Estado }}
                   </span>
                 </p>
-                <p *ngIf="item.observaciones"><strong>Observaciones:</strong> {{ item.observaciones }}</p>
+                <p *ngIf="item.observaciones || item.Observacion"><strong>Observaciones:</strong> {{ item.observaciones || item.Observacion }}</p>
                 <p *ngIf="item.motivoRechazo"><strong>Motivo Rechazo:</strong> {{ item.motivoRechazo }}</p>
               </div>
             </div>
           </div>
         </div>
+        <div class="no-data" *ngIf="!historialOC || historialOC.length === 0">
+          <p>No hay historial de aprobaciones disponible.</p>
+        </div>
       </div>
     </div>
 
     <div class="modal-footer">
-      <button class="btn btn-success" (click)="aprobarOC(ocDetalle)">
-        <i class="bx bx-check"></i> Aprobar
-      </button>
-      <button class="btn btn-danger" (click)="rechazarOC(ocDetalle)">
-        <i class="bx bx-x"></i> Rechazar
-      </button>
+      @if (ocDetalle?.estado === 'PENDIENTE_APROBACION') {
+        <button class="btn btn-success" (click)="aprobarOC(ocDetalle)">
+          <i class="bx bx-check"></i> Aprobar
+        </button>
+        <button class="btn btn-danger" (click)="rechazarOC(ocDetalle)">
+          <i class="bx bx-x"></i> Rechazar
+        </button>
+        <button class="btn btn-warning" (click)="anularOC(ocDetalle)" title="Anular (libera consolidación)">
+          <i class="bx bx-block"></i> Anular
+        </button>
+      }
       <button class="btn btn-secondary" (click)="cerrarModalDetalleOC()">
         Cerrar
       </button>
@@ -568,3 +706,49 @@
     </div>
   </div>
 </div>
+
+<!-- MODAL: MOTIVO RECHAZO / ANULACION -->
+@if (modalMotivoAbierto) {
+<div class="modal-overlay" (click)="cerrarModalMotivo()">
+  <div class="modal-container" style="max-width:520px" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="bx" [class.bx-x-circle]="accionMotivo === 'RECHAZAR'" [class.bx-block]="accionMotivo === 'ANULAR'"></i>
+        {{ tituloModalMotivo() }}
+      </h3>
+      <button class="btn-close" (click)="cerrarModalMotivo()"><i class="bx bx-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="alert"
+        [class.alert-danger]="accionMotivo === 'RECHAZAR'"
+        [class.alert-warning]="accionMotivo === 'ANULAR'"
+        style="margin-bottom:1rem">
+        <i class="bx bx-info-circle"></i> {{ descripcionModalMotivo() }}
+      </div>
+      <div class="form-group">
+        <label><strong>Motivo <span class="text-danger">*</span></strong></label>
+        <textarea
+          class="form-control"
+          rows="4"
+          [(ngModel)]="motivoTexto"
+          placeholder="Ingrese el motivo (obligatorio)..."
+          style="resize:vertical">
+        </textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button
+        class="btn"
+        [class.btn-danger]="accionMotivo === 'RECHAZAR'"
+        [class.btn-warning]="accionMotivo === 'ANULAR'"
+        (click)="confirmarAccionMotivo()">
+        <i class="bx" [class.bx-x]="accionMotivo === 'RECHAZAR'" [class.bx-block]="accionMotivo === 'ANULAR'"></i>
+        {{ accionMotivo === 'RECHAZAR' ? 'Confirmar Rechazo' : 'Confirmar Anulación' }}
+      </button>
+      <button class="btn btn-secondary" (click)="cerrarModalMotivo()">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+}

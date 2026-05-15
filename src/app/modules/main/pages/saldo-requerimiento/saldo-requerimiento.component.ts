@@ -73,6 +73,8 @@ export class SaldoRequerimientoComponent implements OnInit {
     rol: '',
   };
 
+  private maestrasItems: any[] = [];
+
   constructor(
     private saldoService: SaldoRequerimientoService,
     private dexieService: DexieService,
@@ -93,6 +95,7 @@ export class SaldoRequerimientoComponent implements OnInit {
     await this.cargarUsuario();
     await this.cargarSaldos();
     await this.cargarItemsTemporales();
+    await this.cargarMaestrasItems();
     
     // Verificar si viene por notificación de stock disponible
     const referrer = document.referrer;
@@ -144,6 +147,16 @@ export class SaldoRequerimientoComponent implements OnInit {
       }
     } catch (error) {
       console.error('❌ Error al cargar usuario:', error);
+    }
+  }
+
+  async cargarMaestrasItems() {
+    try {
+      this.maestrasItems = await this.dexieService.showItemComoditys();
+      console.log('Ítems del maestro cargados:', this.maestrasItems.length);
+    } catch (error) {
+      console.error('Error al cargar ítems del maestro:', error);
+      this.maestrasItems = [];
     }
   }
 
@@ -417,6 +430,11 @@ export class SaldoRequerimientoComponent implements OnInit {
       const detallesSolicitud: any[] = [];
       
       for (const grupo of this.listaConsolidada) {
+        // Buscar precio en maestro de ítems
+        const itemEnMaestro = this.maestrasItems.find((it: any) => it.codigo === grupo.item);
+        const precioEstimado = itemEnMaestro?.precioEstimado || 0;
+        const moneda = itemEnMaestro?.moneda || 'PEN';
+        
         const detalle = {
           // Don't set id - let Dexie auto-increment
           solicitudCompraId: 0, // Will be updated after saving the solicitud
@@ -426,6 +444,9 @@ export class SaldoRequerimientoComponent implements OnInit {
           cantidadAprobada: grupo.cantidad,
           cantidadAtendida: 0,
           unidadMedida: 'UNIDAD',
+          precioReferencial: precioEstimado,
+          monedaReferencial: moneda,
+          montoReferencial: precioEstimado * grupo.cantidad,
           estado: 'PENDIENTE',
           familia: grupo.familia,
           requerimientosOrigen: grupo.detalles.map(d => d.requerimientoOrigen).join(', ')

@@ -158,6 +158,20 @@
               <span class="hide-menu"> Plantilla PDF</span>
             </a>
           </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Configuración Visual</span>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./configuracion-colores" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='bx bx-palette'></i>
+              </span>
+              <span class="hide-menu"> Colores del Sistema</span>
+            </a>
+          </li>
           <!-- <li
             *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('OPLOGIST') || adminUser?.idPerfil.includes('APLOGIST')"
             class="nav-small-cap">

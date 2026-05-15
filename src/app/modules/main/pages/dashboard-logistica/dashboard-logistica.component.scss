@@ -4,7 +4,7 @@
   .page-header {
     h3 {
       font-weight: 600;
-      color: #333;
+      color: var(--app-dark);
     }
 
     p {
@@ -12,13 +12,59 @@
     }
   }
 
+  // KPI Cards - Estándar HASS con diferenciación por estado
   .kpi-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    border: 2px solid transparent;
+    border-left: 4px solid transparent;
+    border-radius: 12px;
 
     &:hover {
       transform: translateY(-3px);
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;
-      background-color: #f8f9fa;
+      background-color: var(--app-light);
+    }
+
+    // Total - Primario (Azul)
+    &.kpi-total {
+      border-left-color: var(--app-primary);
+      background: linear-gradient(135deg, var(--app-white) 0%, rgba(41, 82, 255, 0.05) 100%);
+      .kpi-icon, .kpi-value { color: var(--app-primary); }
+    }
+
+    // Pendiente - Advertencia (Amarillo/Naranja)
+    &.kpi-pendiente {
+      border-left-color: var(--app-warning);
+      background: linear-gradient(135deg, var(--app-white) 0%, rgba(242, 209, 90, 0.08) 100%);
+      .kpi-icon, .kpi-value { color: var(--app-warning); }
+    }
+
+    // Aprobado - Éxito (Verde)
+    &.kpi-aprobado {
+      border-left-color: var(--app-success);
+      background: linear-gradient(135deg, var(--app-white) 0%, rgba(133, 212, 112, 0.08) 100%);
+      .kpi-icon, .kpi-value { color: var(--app-success); }
+    }
+
+    // Proceso/Enviado - Info (Celeste)
+    &.kpi-enviado, &.kpi-proceso {
+      border-left-color: var(--app-info);
+      background: linear-gradient(135deg, var(--app-white) 0%, rgba(116, 90, 242, 0.05) 100%);
+      .kpi-icon, .kpi-value { color: var(--app-info); }
+    }
+
+    // Rechazado - Peligro (Rojo)
+    &.kpi-rechazado {
+      border-left-color: var(--app-danger);
+      background: linear-gradient(135deg, var(--app-white) 0%, rgba(242, 90, 90, 0.08) 100%);
+      .kpi-icon, .kpi-value { color: var(--app-danger); }
+    }
+
+    // Despachado - Gris oscuro
+    &.kpi-despachado {
+      border-left-color: var(--app-gray-700);
+      background: linear-gradient(135deg, var(--app-white) 0%, rgba(55, 65, 81, 0.05) 100%);
+      .kpi-icon, .kpi-value { color: var(--app-gray-700); }
     }
   }
 
@@ -42,7 +88,7 @@
 
       h6 {
         font-weight: 500;
-        color: #666;
+        color: var(--app-secondary);
         margin-bottom: 0.5rem;
       }
 
@@ -82,10 +128,10 @@
 
     thead {
       th {
-        background-color: #f8f9fa;
+        background-color: var(--app-light);
         font-weight: 600;
         color: #333;
-        border-bottom: 2px solid #dee2e6;
+        border-bottom: 2px solid var(--app-gray-300);
         font-size: 13px;
       }
     }
@@ -97,7 +143,7 @@
       }
 
       tr:hover {
-        background-color: #f8f9fa;
+        background-color: var(--app-light);
       }
     }
   }
@@ -141,34 +187,34 @@
 
   p-tabView {
     .p-tabview-nav {
-      background-color: #f8f9fa;
-      border-bottom: 2px solid #dee2e6;
+      background-color: var(--app-light);
+      border-bottom: 2px solid var(--app-gray-300);
     }
 
     .p-tabview-nav-link {
       font-weight: 500;
-      color: #666;
+      color: var(--app-secondary);
       padding: 0.75rem 1.25rem;
       border: none;
       border-bottom: 2px solid transparent;
       transition: all 0.2s ease;
 
       &:hover {
-        background-color: #e9ecef;
+        background-color: var(--app-gray-200);
       }
 
       &.p-tabview-selected {
-        color: #0d6efd;
-        border-bottom-color: #0d6efd;
-        background-color: white;
+        color: var(--app-primary);
+        border-bottom-color: var(--app-primary);
+        background-color: var(--app-white);
       }
     }
   }
 
   p-dialog {
     .p-dialog-header {
-      background-color: #f8f9fa;
-      border-bottom: 1px solid #dee2e6;
+      background-color: var(--app-light);
+      border-bottom: 1px solid var(--app-gray-300);
       padding: 1rem 1.5rem;
     }
 
@@ -177,8 +223,8 @@
     }
 
     .p-dialog-footer {
-      background-color: #f8f9fa;
-      border-top: 1px solid #dee2e6;
+      background-color: var(--app-light);
+      border-top: 1px solid var(--app-gray-300);
       padding: 1rem 1.5rem;
     }
   }
@@ -278,7 +324,7 @@
   }
 
   .pagination .page-item.active .page-link {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
+    background-color: var(--app-primary);
+    border-color: var(--app-primary);
   }
 }

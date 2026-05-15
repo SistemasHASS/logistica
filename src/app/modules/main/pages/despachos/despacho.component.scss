@@ -1,17 +1,17 @@
 /* =========== Despachos - Nuevo diseño (Reporte) =========== */
 .despachos-container {
-  .titulo-pagina { font-weight: 600; color: #2a2f45; }
+  .titulo-pagina { font-weight: 600; color: var(--app-dark); }
 
   /* KPI cards */
   .kpi-row .kpi-card {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #fff;
+    background: var(--app-white);
     border-radius: 12px;
     padding: 14px 12px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    border: 1px solid #eef0f3;
+    border: 1px solid var(--app-gray-200);
     min-height: 88px;
     position: relative;
     overflow: visible;
@@ -27,8 +27,8 @@
     .kpi-body {
       flex-grow: 1;
       min-width: 0;
-      .kpi-label { font-weight: 600; color: #2a2f45; font-size: .82rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .kpi-sub { color: #6b7280; font-size: .70rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .kpi-label { font-weight: 600; color: var(--app-dark); font-size: .82rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .kpi-sub { color: var(--app-secondary); font-size: .70rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     }
     .kpi-value {
       font-size: 1.7rem;
@@ -37,11 +37,11 @@
       text-align: right;
       flex-shrink: 0;
     }
-    &.kpi-pendientes  .kpi-icon { background: #ef4444; }
-    &.kpi-parciales   .kpi-icon { background: #f59e0b; }
-    &.kpi-sin-stock   .kpi-icon { background: #f39c12; }
-    &.kpi-atendidos   .kpi-icon { background: #10b981; }
-    &.kpi-total       .kpi-icon { background: #3b82f6; }
+    &.kpi-pendientes  .kpi-icon { background: var(--app-danger); }
+    &.kpi-parciales   .kpi-icon { background: var(--app-warning); }
+    &.kpi-sin-stock   .kpi-icon { background: var(--app-warning); }
+    &.kpi-atendidos   .kpi-icon { background: var(--app-success); }
+    &.kpi-total       .kpi-icon { background: var(--app-primary); }
   }
 
   /* KPI clickable */

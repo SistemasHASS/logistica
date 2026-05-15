@@ -543,6 +543,10 @@
 
 }
 
+.modal-body{
+  background-color: #fff !important;
+}
+
 // MODAL (fuera del contenedor para que position:fixed no quede relativizado)
 .modal-overlay {
     position: fixed;
@@ -601,6 +605,7 @@
 
       .modal-body {
         padding: 24px;
+        background-color: white !important;
 
         .info-grid {
           display: grid;
@@ -785,5 +790,130 @@
       grid-template-columns: 1fr;
     }
 
+  }
+}
+
+// Input precio editable en tabla detalle (flujo directo)
+.input-precio {
+  width: 90px;
+  padding: 2px 6px;
+  font-size: 0.82rem;
+  height: 28px;
+  text-align: right;
+  display: inline-block;
+}
+
+// Modal buscador de proveedor
+.modal-proveedor {
+  width: 600px;
+  max-width: 96vw;
+
+  .modal-subtitle {
+    font-size: 0.88rem;
+    color: #6b7280;
+    margin-bottom: 12px;
+  }
+
+  .buscador-proveedor {
+    margin-bottom: 12px;
+
+    input {
+      width: 100%;
+    }
+  }
+
+  .lista-proveedores {
+    max-height: 320px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+
+    .no-data {
+      padding: 20px;
+      text-align: center;
+      color: #9ca3af;
+      font-size: 0.85rem;
+    }
+
+    .proveedor-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #f3f4f6;
+      transition: background 0.12s;
+
+      &:last-child { border-bottom: none; }
+
+      &:hover { background: #f9fafb; }
+
+      &.selected {
+        background: #eff6ff;
+        border-left: 3px solid #2563eb;
+      }
+
+      .proveedor-nombre {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #111827;
+      }
+
+      .proveedor-meta {
+        display: flex;
+        gap: 12px;
+        font-size: 0.78rem;
+        color: #6b7280;
+        margin-top: 2px;
+      }
+    }
+  }
+}
+
+// Paginador Solicitudes Enviadas
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 4px 4px;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  .pagination-info {
+    font-size: 0.82rem;
+    color: #6b7280;
+  }
+
+  .pagination-controls {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+
+    .btn-pag {
+      min-width: 32px;
+      height: 32px;
+      padding: 0 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #fff;
+      color: #374151;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+
+      &:hover:not(.disabled):not(.active) {
+        background: #f3f4f6;
+      }
+
+      &.active {
+        background: #2563eb;
+        color: #fff;
+        border-color: #2563eb;
+        font-weight: 600;
+      }
+
+      &.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+    }
   }
 }

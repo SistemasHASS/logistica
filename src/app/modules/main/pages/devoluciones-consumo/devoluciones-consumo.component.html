@@ -79,7 +79,7 @@
             <td class="text-center">{{ despacho.totalItems }}</td>
             <td class="text-center">{{ despacho.cantidadTotal }}</td>
             <td>
-              <button class="btn btn-sm btn-warning" (click)="generarDevolucionDesdeDespacho(despacho)"
+              <button class="btn btn-sm btn-accion-advertencia" (click)="generarDevolucionDesdeDespacho(despacho)"
                       pTooltip="Generar Devolución">
                 <i class="bi bi-arrow-return-left"></i> Devolver
               </button>
@@ -122,7 +122,7 @@
           <input type="date" class="form-control" [(ngModel)]="filtroFechaFin">
         </div>
         <div class="col-md-3 d-flex align-items-end">
-          <button class="btn btn-secondary" (click)="limpiarFiltros()">
+          <button class="btn btn-accion-secundaria" (click)="limpiarFiltros()">
             <i class="bi bi-x-circle me-2"></i>Limpiar
           </button>
         </div>
@@ -156,24 +156,24 @@
             </td>
             <td class="text-center">{{ devolucion.detalle?.length || 0 }}</td>
             <td>
-              <button class="btn btn-sm btn-info me-1" (click)="verDetalle(devolucion)"
+              <button class="btn btn-sm btn-accion-info me-1" (click)="verDetalle(devolucion)"
                       pTooltip="Ver Detalle">
                 <i class="bi bi-eye"></i>
               </button>
               <button *ngIf="devolucion.estado === 'PENDIENTE'" 
-                      class="btn btn-sm btn-success me-1" 
+                      class="btn btn-sm btn-accion-exito me-1" 
                       (click)="aprobarDevolucion(devolucion)"
                       pTooltip="Aprobar">
                 <i class="bi bi-check-circle"></i>
               </button>
               <button *ngIf="devolucion.estado === 'PENDIENTE'" 
-                      class="btn btn-sm btn-danger me-1" 
+                      class="btn btn-sm btn-accion-peligro me-1" 
                       (click)="rechazarDevolucion(devolucion)"
                       pTooltip="Rechazar">
                 <i class="bi bi-x-circle"></i>
               </button>
               <button *ngIf="devolucion.estado !== 'APROBADA'" 
-                      class="btn btn-sm btn-secondary" 
+                      class="btn btn-sm btn-accion-secundaria" 
                       (click)="anularDevolucion(devolucion)"
                       pTooltip="Anular">
                 <i class="bi bi-trash"></i>
@@ -234,7 +234,7 @@
   <div class="mb-3">
     <div class="d-flex justify-content-between align-items-center mb-2">
       <h5>Detalle de Items</h5>
-      <button class="btn btn-sm btn-primary" (click)="agregarDetalle()">
+      <button class="btn btn-sm btn-accion-primaria" (click)="agregarDetalle()">
         <i class="bi bi-plus-circle me-2"></i>Agregar Item
       </button>
     </div>
@@ -272,7 +272,7 @@
             <input type="text" class="form-control form-control-sm" [(ngModel)]="detalle.motivoDetalle">
           </td>
           <td class="text-center">
-            <button class="btn btn-sm btn-danger" (click)="eliminarDetalle(i)">
+            <button class="btn btn-sm btn-accion-peligro" (click)="eliminarDetalle(i)">
               <i class="bi bi-trash"></i>
             </button>
           </td>
@@ -285,10 +285,10 @@
   </div>
 
   <ng-template pTemplate="footer">
-    <button class="btn btn-secondary me-2" (click)="cancelarFormulario()">
+    <button class="btn btn-accion-secundaria me-2" (click)="cancelarFormulario()">
       <i class="bi bi-x-circle me-2"></i>Cancelar
     </button>
-    <button class="btn btn-primary" (click)="guardarDevolucion()">
+    <button class="btn btn-accion-primaria" (click)="guardarDevolucion()">
       <i class="bi bi-save me-2"></i>Guardar Devolución
     </button>
   </ng-template>
@@ -358,7 +358,7 @@
   </div>
 
   <ng-template pTemplate="footer">
-    <button class="btn btn-secondary" (click)="cerrarModal()">
+    <button class="btn btn-accion-secundaria" (click)="cerrarModal()">
       <i class="bi bi-x-circle me-2"></i>Cerrar
     </button>
   </ng-template>

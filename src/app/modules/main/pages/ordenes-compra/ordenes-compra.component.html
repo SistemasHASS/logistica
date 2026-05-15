@@ -111,7 +111,7 @@
       </div>
     </div>
 
-    <!-- SOLICITUDES DE COMPRA APROBADAS -->
+    <!-- SOLICITUDES DE COMPRA APROBADAS (flujo con cotización) -->
     <div class="cotizaciones-section" *ngIf="solicitudesCompra.length > 0">
       <h3>Solicitudes de Compra Aprobadas (Pendientes de Orden)</h3>
       <div class="table-wrapper">
@@ -151,6 +151,68 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- SOLICITUDES ENVIADAS - FLUJO DIRECTO (sin cotización, desde requerimientos aprobados) -->
+    <div class="cotizaciones-section" *ngIf="solicitudesEnviadas.length > 0">
+      <h3>
+        Solicitudes Enviadas - Flujo Directo
+        <span class="badge badge-warning" style="font-size:0.75rem; margin-left:8px; vertical-align:middle;">Sin Cotización</span>
+      </h3>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Número Solicitud</th>
+              <th>Fecha</th>
+              <th>Solicitante</th>
+              <th>Monto Estimado</th>
+              <th>Moneda</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let sol of solicitudesEnviadasPaginadas; let i = index">
+              <td>{{ (paginaEnviadas - 1) * tamanioPaginaEnviadas + i + 1 }}</td>
+              <td><strong>{{ sol.numeroSolicitud }}</strong></td>
+              <td class="text-center">{{ formatearFecha(sol.fecha) }}</td>
+              <td>{{ sol.nombreSolicita || sol.usuarioSolicita || '-' }}</td>
+              <td class="text-right">
+                <strong>{{ formatearMoneda(sol.montoEstimado || 0, sol.moneda) }}</strong>
+              </td>
+              <td class="text-center">{{ (sol.moneda === 'LO' || sol.moneda === 'PEN') ? 'S/ Soles' : '$ Dólares' }}</td>
+              <td class="actions">
+                <button
+                  class="btn btn-sm btn-success"
+                  (click)="generarDesdeSolicitud(sol)"
+                  title="Generar Orden de Compra directa">
+                  <i class="icon-file-plus"></i> Generar OC
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Paginador -->
+      <div class="pagination-container" *ngIf="totalPaginasEnviadas > 1">
+        <div class="pagination-info">
+          Mostrando {{ (paginaEnviadas - 1) * tamanioPaginaEnviadas + 1 }}–{{ finPaginaEnviadas }} de {{ solicitudesEnviadas.length }} registros
+        </div>
+        <div class="pagination-controls">
+          <button class="btn-pag" [class.disabled]="paginaEnviadas === 1" (click)="irPaginaEnviadas(1)" title="Primera">«</button>
+          <button class="btn-pag" [class.disabled]="paginaEnviadas === 1" (click)="irPaginaEnviadas(paginaEnviadas - 1)" title="Anterior">‹</button>
+          <button
+            *ngFor="let p of paginasEnviadas"
+            class="btn-pag"
+            [class.active]="p === paginaEnviadas"
+            (click)="irPaginaEnviadas(p)">
+            {{ p }}
+          </button>
+          <button class="btn-pag" [class.disabled]="paginaEnviadas === totalPaginasEnviadas" (click)="irPaginaEnviadas(paginaEnviadas + 1)" title="Siguiente">›</button>
+          <button class="btn-pag" [class.disabled]="paginaEnviadas === totalPaginasEnviadas" (click)="irPaginaEnviadas(totalPaginasEnviadas)" title="Última">»</button>
+        </div>
       </div>
     </div>
 
@@ -263,7 +325,7 @@
               <button 
                 class="btn btn-sm btn-warning me-2"
                 (click)="sincronizarConSpring(orden)"
-                [disabled]="orden.estado === 'ENVIADA' || orden.estado === 'RECIBIDA_TOTAL' || orden.estado === 'CANCELADA'"
+                [disabled]="orden.estado === 'RECIBIDA_TOTAL' || orden.estado === 'CANCELADA'"
                 title="Enviar a ERP SPRING">
                 <i class="bx bx-cloud-upload"></i> SPRING
               </button>
@@ -533,8 +595,24 @@
                 <td>{{ det.codigo }}</td>
                 <td>{{ det.descripcion }}</td>
                 <td class="text-right">{{ det.cantidad }}</td>
-                <td class="text-right">{{ formatearMoneda(det.precioUnitario, ordenCompra.moneda) }}</td>
-                <td class="text-right">{{ formatearMoneda(det.descuento, ordenCompra.moneda) }}</td>
+                <td class="text-right">
+                  @if (esFlujoDirecto) {
+                    <input type="number" class="form-control input-precio" min="0" step="0.01"
+                      [(ngModel)]="det.precioUnitario"
+                      (ngModelChange)="recalcularItemOC(det)">
+                  } @else {
+                    {{ formatearMoneda(det.precioUnitario, ordenCompra.moneda) }}
+                  }
+                </td>
+                <td class="text-right">
+                  @if (esFlujoDirecto) {
+                    <input type="number" class="form-control input-precio" min="0" max="100" step="0.1"
+                      [(ngModel)]="det.descuento"
+                      (ngModelChange)="recalcularItemOC(det)">
+                  } @else {
+                    {{ formatearMoneda(det.descuento, ordenCompra.moneda) }}
+                  }
+                </td>
                 <td class="text-right">{{ formatearMoneda(det.subtotal, ordenCompra.moneda) }}</td>
                 <td class="text-right">{{ formatearMoneda(det.impuesto, ordenCompra.moneda) }}</td>
                 <td class="text-right"><strong>{{ formatearMoneda(det.total, ordenCompra.moneda) }}</strong></td>
@@ -851,8 +929,8 @@
         <div class="form-group">
           <label>Moneda</label>
           <select class="form-control" [(ngModel)]="datosProveedor.moneda">
-            <option value="PEN">PEN - Soles</option>
-            <option value="USD">USD - Dólares</option>
+            <option value="LO">LO - Soles (S/)</option>
+            <option value="EX">EX - Dólares ($)</option>
           </select>
         </div>
         <div class="form-group">
@@ -1097,5 +1175,63 @@
       <button class="btn-secondary" (click)="cerrarModalHito()">Cancelar</button>
       <button class="btn-primary" (click)="guardarHito()">Guardar</button>
     </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     MODAL BUSCADOR DE PROVEEDOR — Flujo Directo SC ENVIADAS
+     ================================================================ -->
+<div class="modal-overlay" *ngIf="modalBuscarProveedorAbierto" (click)="cerrarModalBuscarProveedor()">
+  <div class="modal-container modal-proveedor" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h3><i class="icon-search"></i> Seleccionar Proveedor</h3>
+      <button class="btn-close" (click)="cerrarModalBuscarProveedor()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <p class="modal-subtitle">
+        Solicitud: <strong>{{ solicitudPendienteOC?.numeroSolicitud }}</strong>
+      </p>
+
+      <div class="buscador-proveedor">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Buscar por RUC o nombre del proveedor..."
+          [(ngModel)]="busquedaProveedor"
+          (ngModelChange)="filtrarProveedores()">
+      </div>
+
+      <div class="lista-proveedores">
+        @if (proveedoresFiltrados.length === 0) {
+          <div class="no-data">No se encontraron proveedores. Verifique la conexión o sincronice maestros.</div>
+        }
+        @for (p of proveedoresFiltrados; track p.id) {
+          <div
+            class="proveedor-item"
+            [class.selected]="proveedorSeleccionado?.id === p.id"
+            (click)="seleccionarProveedor(p)">
+            <div class="proveedor-nombre">{{ $any(p).proveedor || $any(p).nombreProveedor || $any(p).nombre || p.ruc }}</div>
+            <div class="proveedor-meta">
+              <span>RUC: {{ p.ruc || p.documento }}</span>
+              @if ($any(p).telefono) { <span>Tel: {{ $any(p).telefono }}</span> }
+              @if (p.TipoPago) { <span>Pago: {{ p.TipoPago }}</span> }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalBuscarProveedor()">Cancelar</button>
+      <button
+        class="btn-primary"
+        [attr.disabled]="!proveedorSeleccionado ? true : null"
+        (click)="confirmarProveedorYGenerarOC()">
+        <i class="icon-arrow-right"></i> Continuar con este proveedor
+      </button>
+    </div>
+
   </div>
 </div>

@@ -3,21 +3,22 @@
 }
 
 .page-header {
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 2px solid var(--app-gray-300);
   padding-bottom: 1rem;
 
-  h3 { font-weight: 700; color: #2d3748; }
+  h3 { font-weight: 700; color: var(--app-dark); }
 }
 
-// KPI Cards
+// KPI Cards - Estándar HASS con diferenciación por estado
 .kpi-card {
-  background: #fff;
+  background: var(--app-white);
   border-radius: 12px;
   padding: 1.25rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
   border: 2px solid transparent;
+  border-left: 4px solid transparent;
   box-shadow: 0 2px 8px rgba(0,0,0,.06);
 
   &:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.1); }
@@ -25,16 +26,63 @@
 
   .kpi-icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
   .kpi-number { font-size: 2rem; font-weight: 700; line-height: 1; }
-  .kpi-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; color: #6c757d; }
+  .kpi-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; color: var(--app-secondary); }
 
-  &.kpi-total    { .kpi-icon, .kpi-number { color: #6366f1; } }
-  &.kpi-pendiente { .kpi-icon, .kpi-number { color: #f59e0b; } }
-  &.kpi-aprobado  { .kpi-icon, .kpi-number { color: #10b981; } }
-  &.kpi-completado { .kpi-icon, .kpi-number { color: #059669; } }
-  &.kpi-enviado    { .kpi-icon, .kpi-number { color: #0ea5e9; } }
-  &.kpi-consolidado { .kpi-icon, .kpi-number { color: #3b82f6; } }
-  &.kpi-despachado { .kpi-icon, .kpi-number { color: #374151; } }
-  &.kpi-rechazado  { .kpi-icon, .kpi-number { color: #ef4444; } }
+  // Total - Primario (Azul)
+  &.kpi-total {
+    border-left-color: var(--app-primary);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(41, 82, 255, 0.05) 100%);
+    .kpi-icon, .kpi-number { color: var(--app-primary); }
+  }
+
+  // Pendiente - Advertencia (Amarillo/Naranja)
+  &.kpi-pendiente {
+    border-left-color: var(--app-warning);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(242, 209, 90, 0.08) 100%);
+    .kpi-icon, .kpi-number { color: var(--app-warning); }
+  }
+
+  // Aprobado - Éxito (Verde)
+  &.kpi-aprobado {
+    border-left-color: var(--app-success);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(133, 212, 112, 0.08) 100%);
+    .kpi-icon, .kpi-number { color: var(--app-success); }
+  }
+
+  // Completado - Verde oscuro
+  &.kpi-completado {
+    border-left-color: #059669;
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(5, 150, 105, 0.08) 100%);
+    .kpi-icon, .kpi-number { color: #059669; }
+  }
+
+  // Enviado - Info (Celeste)
+  &.kpi-enviado {
+    border-left-color: var(--app-info);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(116, 90, 242, 0.05) 100%);
+    .kpi-icon, .kpi-number { color: var(--app-info); }
+  }
+
+  // Consolidado - Azul medio
+  &.kpi-consolidado {
+    border-left-color: #3b82f6;
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(59, 130, 246, 0.05) 100%);
+    .kpi-icon, .kpi-number { color: #3b82f6; }
+  }
+
+  // Despachado - Gris oscuro/Secundario
+  &.kpi-despachado {
+    border-left-color: var(--app-gray-700);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(55, 65, 81, 0.05) 100%);
+    .kpi-icon, .kpi-number { color: var(--app-gray-700); }
+  }
+
+  // Rechazado - Peligro (Rojo)
+  &.kpi-rechazado {
+    border-left-color: var(--app-danger);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(242, 90, 90, 0.08) 100%);
+    .kpi-icon, .kpi-number { color: var(--app-danger); }
+  }
 }
 
 // Pipeline
@@ -85,7 +133,7 @@
 }
 
 .pipeline-arrow {
-  color: #cbd5e1;
+  color: var(--app-gray-400);
   font-size: 1.5rem;
   line-height: 1;
   margin-bottom: 1.2rem;
@@ -93,15 +141,15 @@
 
 // Pipeline porcentajes
 .pipeline-pct-card {
-  background: #f8fafc;
+  background: var(--app-light);
   border-radius: 10px;
   padding: 0.9rem 1rem;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--app-gray-300);
 
   .pipeline-pct-label {
     font-size: 0.8rem;
     font-weight: 600;
-    color: #374151;
+    color: var(--app-dark);
   }
 
   .pipeline-pct-value {
@@ -111,14 +159,14 @@
 
   .pipeline-pct-sub {
     font-size: 0.72rem;
-    color: #9ca3af;
+    color: var(--app-gray-500);
     margin-top: 0.3rem;
     text-align: right;
   }
 
   .progress {
     border-radius: 4px;
-    background: #e9ecef;
+    background: var(--app-gray-300);
   }
 }
 

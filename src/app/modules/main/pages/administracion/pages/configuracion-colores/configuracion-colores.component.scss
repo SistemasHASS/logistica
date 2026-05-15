@@ -1,0 +1,806 @@
+.page-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--app-gray-300);
+
+  .page-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--app-dark);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    i {
+      color: var(--app-primary);
+    }
+  }
+
+  .page-subtitle {
+    color: var(--app-secondary);
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+.text-small {
+  font-size: 0.75rem;
+}
+
+// ============================================
+// SELECTOR DE DASHBOARD - MEJORADO
+// ============================================
+.dashboard-preview-selector {
+  padding: 1rem;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  margin-bottom: 0.5rem;
+
+  &:hover {
+    border-color: var(--app-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+  }
+
+  &.active {
+    border-color: var(--app-primary);
+    background: linear-gradient(135deg, rgba(155, 35, 53, 0.05) 0%, rgba(155, 35, 53, 0.02) 100%);
+    box-shadow: 0 4px 12px rgba(155, 35, 53, 0.15);
+  }
+
+  .dashboard-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+
+    i {
+      font-size: 1.5rem;
+    }
+  }
+
+  &:hover .dashboard-icon-wrapper {
+    background: linear-gradient(135deg, rgba(155, 35, 53, 0.1) 0%, rgba(155, 35, 53, 0.05) 100%);
+  }
+
+  &.active .dashboard-icon-wrapper {
+    background: linear-gradient(135deg, rgba(155, 35, 53, 0.15) 0%, rgba(155, 35, 53, 0.08) 100%);
+  }
+
+  h6 {
+    font-size: 0.95rem;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+  }
+
+  small {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: #6c757d;
+  }
+
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.4em 0.8em;
+    border-radius: 6px;
+  }
+}
+
+// Estilos para inputs de color
+.form-control-color {
+  width: 50px;
+  height: 38px;
+  padding: 0.25rem;
+  cursor: pointer;
+}
+
+// Card header styling
+.card-header {
+  background: linear-gradient(135deg, var(--app-light) 0%, var(--app-gray-200) 100%);
+  border-bottom: 1px solid var(--app-gray-300);
+
+  h5 {
+    font-weight: 600;
+    color: var(--app-dark);
+  }
+
+  &.bg-dark {
+    background: var(--app-dark) !important;
+  }
+}
+
+// Botones
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+// ============================================
+// VISTA PREVIA DE COLORES - NUEVO DISEÑO
+// ============================================
+.color-preview-container {
+  border: none;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+
+  .card-header {
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+
+    h5 {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+  }
+}
+
+.color-tile {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  .color-tile-header {
+    height: 70px;
+    display: flex;
+    align-items: flex-end;
+    padding: 12px;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.15) 100%);
+    }
+
+    .color-value {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #333;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+  }
+
+  .color-tile-body {
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    .color-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    .color-usage {
+      font-size: 0.75rem;
+      color: #6c757d;
+      line-height: 1.4;
+      margin-bottom: 12px;
+      flex: 1;
+    }
+
+    .color-indicator {
+      display: flex;
+      justify-content: center;
+      padding-top: 8px;
+      border-top: 1px solid #f1f3f4;
+
+      .color-dot-large {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        border: 3px solid #fff;
+      }
+    }
+  }
+}
+
+// ============================================
+// PREVIEW DEL MENÚ POR ROL
+// ============================================
+.menu-preview {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+
+  .list-group-item {
+    background: white;
+    border: 1px solid #e9ecef;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f8f9fa;
+      transform: translateX(4px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    i:first-child {
+      font-size: 1.3rem;
+      width: 24px;
+      text-align: center;
+    }
+  }
+}
+
+// ============================================
+// FORMULARIO MÓDULOS DEL MENÚ
+// ============================================
+.modulo-menu-form {
+  .form-check {
+    padding: 0.75rem;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f8f9fa;
+      border-color: var(--app-primary);
+    }
+
+    .form-check-input:checked + .form-check-label {
+      color: var(--app-primary);
+      font-weight: 600;
+    }
+  }
+}
+
+// ============================================
+// TABLA DE MÓDULOS - HOVER
+// ============================================
+.module-row-hover {
+  transition: background-color 0.2s ease, transform 0.1s ease;
+
+  &:hover {
+    background-color: var(--app-primary) !important;
+    color: white;
+
+    strong, small, i, .text-muted {
+      color: white !important;
+    }
+
+    .badge {
+      background-color: rgba(255,255,255,0.2) !important;
+      color: white !important;
+    }
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+}
+
+// ============================================
+// PREVIEWS DE MÓDULOS - MINIATURAS
+// ============================================
+.module-preview-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 2px solid transparent;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-color: var(--app-primary);
+  }
+
+  .card-header {
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  .card-body {
+    font-size: 0.75rem;
+  }
+
+  // KPI Cards miniatura
+  .kpi-mini {
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+
+    .kpi-value {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .kpi-label {
+      font-size: 0.65rem;
+      opacity: 0.8;
+    }
+  }
+
+  // Tabla miniatura
+  .table-mini {
+    font-size: 0.7rem;
+
+    th {
+      font-weight: 600;
+      padding: 0.25rem;
+    }
+
+    td {
+      padding: 0.25rem;
+    }
+  }
+
+  // Formulario miniatura
+  .form-mini {
+    .form-control-sm {
+      font-size: 0.7rem;
+      padding: 0.25rem 0.5rem;
+    }
+  }
+
+  // Kanban miniatura
+  .kanban-column {
+    border-radius: 0.25rem;
+
+    .kanban-header {
+      font-weight: 600;
+      font-size: 0.65rem;
+      padding: 0.25rem 0.5rem;
+      color: white;
+      border-radius: 0.25rem 0.25rem 0 0;
+    }
+
+    .kanban-card {
+      background: white;
+      border-radius: 0.2rem;
+      padding: 0.4rem;
+      margin-bottom: 0.3rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+  }
+
+  // Gráfico miniatura
+  .chart-bar {
+    border-radius: 0.15rem 0.15rem 0 0;
+    transition: height 0.3s ease;
+  }
+}
+
+// Leyenda de diseño
+.design-legend {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+
+  .legend-title {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--app-dark);
+    margin-bottom: 0.75rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 0.25rem;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .legend-label {
+      color: var(--app-secondary);
+    }
+  }
+}
+
+// ============================================
+// ESTÁNDAR DE DISEÑO - ESTILOS ADICIONALES
+// ============================================
+
+// Preview boxes para botones y elementos
+.design-preview-box {
+  padding: 1rem;
+  border: 1px dashed var(--app-gray-300);
+  border-radius: 0.5rem;
+  background: var(--app-light);
+  text-align: center;
+}
+
+// ============================================
+// 2. MODALES
+// ============================================
+.modal-preview {
+  border: 1px solid var(--app-gray-300);
+  border-radius: 0.375rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+  .modal-header {
+    padding: 0.75rem 1rem;
+    color: var(--app-white);
+    font-weight: 600;
+
+    h6 {
+      margin: 0;
+      font-size: 0.875rem;
+    }
+  }
+
+  .modal-body {
+    padding: 1rem;
+    background: var(--app-white);
+    min-height: 60px;
+  }
+
+  .modal-footer {
+    padding: 0.75rem 1rem;
+    background: var(--app-light);
+    border-top: 1px solid var(--app-gray-300);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  &.modal-success .modal-header {
+    background: var(--app-success, #85d446);
+  }
+
+  &.modal-danger .modal-header {
+    background: var(--app-danger, #f25a5a);
+  }
+
+  &.modal-warning .modal-header {
+    background: var(--app-warning);
+    color: var(--app-dark);
+  }
+
+  &.modal-info .modal-header {
+    background: var(--app-info, #745af2);
+  }
+}
+
+// ============================================
+// 3. TABS
+// ============================================
+.tab-preview {
+  padding: 1rem;
+  background: var(--app-light);
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+
+  .nav-tabs {
+    border-bottom: 1px solid #dee2e6;
+
+    .nav-link {
+      color: #6c757d;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 0.5rem 1rem;
+
+      &:hover {
+        color: var(--app-primary, #2952ff);
+        border-bottom-color: #e9ecef;
+      }
+
+      &.active {
+        color: var(--app-primary, #2952ff);
+        border-bottom-color: var(--app-primary, #2952ff);
+        background: transparent;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .nav-pills {
+    .nav-link {
+      color: #6c757d;
+      border-radius: 50rem;
+      padding: 0.5rem 1rem;
+
+      &:hover {
+        background: #e9ecef;
+      }
+
+      &.active {
+        background: var(--app-primary, #2952ff);
+        color: white;
+      }
+    }
+  }
+}
+
+// ============================================
+// 4. TABLAS
+// ============================================
+.table-responsive {
+  .table {
+    font-size: 0.875rem;
+
+    thead {
+      th {
+        font-weight: 600;
+        border-bottom-width: 2px;
+      }
+    }
+
+    tbody {
+      tr {
+        &:hover {
+          background-color: rgba(0,0,0,0.02);
+        }
+      }
+    }
+  }
+}
+
+// Colores de filas semánticos
+.table-success { background-color: rgba(133, 212, 70, 0.1) !important; }
+.table-warning { background-color: rgba(242, 209, 90, 0.1) !important; }
+.table-danger { background-color: rgba(242, 90, 90, 0.1) !important; }
+.table-info { background-color: rgba(116, 90, 242, 0.1) !important; }
+
+// ============================================
+// 5. CARDS
+// ============================================
+.stats-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+}
+
+// ============================================
+// 7. ALERTAS Y TOASTS
+// ============================================
+.toast-notification {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+  color: white;
+  font-weight: 500;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+  i {
+    font-size: 1.25rem;
+  }
+
+  &.toast-success {
+    background: var(--app-success, #85d446);
+  }
+
+  &.toast-error {
+    background: var(--app-danger, #f25a5a);
+  }
+
+  &.toast-warning {
+    background: var(--app-warning, #f2d15a);
+    color: #333;
+  }
+
+  &.toast-info {
+    background: var(--app-info, #745af2);
+  }
+}
+
+// ============================================
+// UTILIDADES
+// ============================================
+.bx-lg {
+  font-size: 2rem;
+}
+
+// Iconos con colores semánticos
+.text-success { color: var(--app-success, #85d446) !important; }
+.text-danger { color: var(--app-danger, #f25a5a) !important; }
+.text-warning { color: #e5a800 !important; }
+.text-info { color: var(--app-info, #745af2) !important; }
+.text-primary { color: var(--app-primary, #2952ff) !important; }
+.text-secondary { color: #6c757d !important; }
+
+// Validación de forms
+.is-valid {
+  border-color: var(--app-success, #85d446) !important;
+}
+
+.is-invalid {
+  border-color: var(--app-danger, #f25a5a) !important;
+}
+
+.valid-feedback {
+  color: var(--app-success, #85d446);
+  font-size: 0.875rem;
+}
+
+.invalid-feedback {
+  color: var(--app-danger, #f25a5a);
+  font-size: 0.875rem;
+}
+
+// ============================================
+// ESTÁNDAR SEMÁNTICO HASS - REFERENCIA COMPLETA
+// ============================================
+
+// BADGES SEMÁNTICOS
+.badge-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.badge-exito, .estado-confirmado { background: rgba(133, 212, 70, 0.15); color: var(--app-success); }
+.badge-peligro, .estado-rechazado { background: rgba(242, 90, 90, 0.15); color: var(--app-danger); }
+.badge-advertencia, .estado-pendiente { background: rgba(242, 209, 90, 0.15); color: var(--app-warning); }
+.badge-informativo, .estado-informativo { background: rgba(116, 90, 242, 0.15); color: var(--app-info); }
+.badge-primario, .estado-primario { background: rgba(41, 82, 255, 0.15); color: var(--app-primary); }
+.badge-inactivo { background: rgba(116, 219, 247, 0.15); color: var(--app-secondary); }
+
+// TEXTOS SEMÁNTICOS
+.texto-primario { color: var(--app-primary) !important; }
+.texto-secundario { color: var(--app-secondary) !important; }
+.texto-confirmacion { color: var(--app-success) !important; }
+.texto-error { color: var(--app-danger) !important; }
+.texto-advertencia { color: var(--app-warning) !important; }
+.texto-informativo { color: var(--app-info) !important; }
+.texto-descriptivo { color: var(--app-gray-600) !important; }
+.texto-contraste { color: var(--app-white) !important; }
+.texto-dark { color: var(--app-dark) !important; }
+
+// BOTONES SEMÁNTICOS
+.btn-accion-primaria {
+  background: var(--app-primary);
+  color: var(--app-white);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  &:hover { background: var(--app-primary-dark); }
+}
+
+.btn-accion-secundaria {
+  background: var(--app-secondary);
+  color: var(--app-white);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  &:hover { background: var(--app-gray-600); }
+}
+
+.btn-accion-exito {
+  background: var(--app-success);
+  color: var(--app-white);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-accion-peligro {
+  background: var(--app-danger);
+  color: var(--app-white);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-accion-advertencia {
+  background: var(--app-warning);
+  color: var(--app-dark);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-accion-info {
+  background: var(--app-info);
+  color: var(--app-white);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+// FONDOS SEMÁNTICOS
+.fondo-suave { background-color: var(--app-light) !important; }
+.fondo-primario { background-color: var(--app-primary) !important; }
+.fondo-exito { background-color: var(--app-success) !important; }
+.fondo-peligro { background-color: var(--app-danger) !important; }
+.fondo-advertencia { background-color: var(--app-warning) !important; }
+.fondo-informativo { background-color: var(--app-info) !important; }
+.fondo-secundario { background-color: var(--app-secondary) !important; }
+
+// BARRAS DE PROGRESO
+.barra-exito { background-color: var(--app-success) !important; }
+.barra-peligro { background-color: var(--app-danger) !important; }
+.barra-advertencia { background-color: var(--app-warning) !important; }
+.barra-primaria { background-color: var(--app-primary) !important; }
+.barra-informativa { background-color: var(--app-info) !important; }
+.barra-secundaria { background-color: var(--app-secondary) !important; }
+
+// RELLENOS DE PROGRESO
+.relleno-exito { background: linear-gradient(90deg, var(--app-success), #2ecc71) !important; }
+.relleno-peligro { background: linear-gradient(90deg, var(--app-danger), #c0392b) !important; }
+.relleno-advertencia { background: linear-gradient(90deg, var(--app-warning), #e67e22) !important; }
+.relleno-primario { background: linear-gradient(90deg, var(--app-primary), #2980b9) !important; }
+.relleno-informativo { background: linear-gradient(90deg, var(--app-info), #8e44ad) !important; }

@@ -80,11 +80,22 @@ export class NotificacionesListaComponent implements OnInit {
   getTipoNotificacionIcon(tipo: string): string {
     switch (tipo) {
       case 'STOCK_DISPONIBLE':
-        return 'bx bx-check-circle text-success';
+        return 'bx bx-check-circle icono-exito';
       case 'SALDO_PENDIENTE':
-        return 'bx bx-error text-warning';
+        return 'bx bx-error icono-advertencia';
       default:
-        return 'bx bx-info-circle text-info';
+        return 'bx bx-info-circle icono-informativo';
+    }
+  }
+
+  getClaseTipoNotificacion(tipo: string): string {
+    switch (tipo) {
+      case 'STOCK_DISPONIBLE':
+        return 'estado-confirmado';
+      case 'SALDO_PENDIENTE':
+        return 'estado-pendiente';
+      default:
+        return 'estado-informativo';
     }
   }
 

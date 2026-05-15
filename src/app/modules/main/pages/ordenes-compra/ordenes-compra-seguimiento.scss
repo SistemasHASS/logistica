@@ -106,7 +106,7 @@
 .seguimiento-header {
   margin-bottom: 24px;
   padding: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
   border-radius: 12px;
   color: white;
 }
@@ -148,7 +148,7 @@
 
 .progress-value {
   font-weight: 700;
-  color: #667eea;
+  color: #16a34a;
   font-size: 1.25rem;
 }
 
@@ -188,9 +188,9 @@
   100% { transform: translateX(100%); }
 }
 
-.bg-success { background: linear-gradient(90deg, #10b981, #059669); }
-.bg-warning { background: linear-gradient(90deg, #f59e0b, #d97706); }
-.bg-info { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+.bg-success { background: linear-gradient(90deg, #16a34a, #15803d); }
+.bg-warning { background: linear-gradient(90deg, #16a34a, #15803d); }
+.bg-info    { background: linear-gradient(90deg, #16a34a, #15803d); }
 
 // ============================================
 // TIMELINE SECTION
@@ -252,7 +252,7 @@
 }
 
 .timeline-item.active .timeline-dot {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   animation: pulse 2s infinite;
 }
 
@@ -283,7 +283,7 @@
 }
 
 .timeline-item.active .timeline-title {
-  color: #667eea;
+  color: #d97706;
   font-weight: 700;
 }
 
@@ -398,7 +398,7 @@
 
 .progress-bar-sm .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, #16a34a, #15803d);
   border-radius: 4px;
 }
 
@@ -500,8 +500,8 @@
 
   &:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
   }
 
   &::placeholder {
@@ -532,12 +532,12 @@ textarea.form-control {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
   color: white;
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
   }
 
   &:disabled {
@@ -558,11 +558,11 @@ textarea.form-control {
 
 .btn-outline-primary {
   background: white;
-  border: 2px solid #667eea;
-  color: #667eea;
+  border: 2px solid #16a34a;
+  color: #16a34a;
 
   &:hover {
-    background: #667eea;
+    background: #16a34a;
     color: white;
   }
 }

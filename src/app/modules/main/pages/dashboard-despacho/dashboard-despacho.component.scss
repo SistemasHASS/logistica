@@ -23,11 +23,13 @@
   }
 }
 
+// KPI Cards - Estándar HASS con diferenciación por estado
 .kpi-card {
   ::ng-deep .p-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: none;
     border-radius: 12px;
+    border-left: 4px solid transparent;
 
     &:hover {
       transform: translateY(-2px);
@@ -68,6 +70,36 @@
   &.cursor-pointer {
     cursor: pointer;
   }
+
+  // Total - Primario
+  &.kpi-total ::ng-deep .p-card {
+    border-left-color: var(--app-primary);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(41, 82, 255, 0.05) 100%);
+    .kpi-icon-wrapper { background: rgba(41, 82, 255, 0.1); i { color: var(--app-primary); } }
+  }
+
+  // Pendiente - Advertencia
+  &.kpi-pendiente ::ng-deep .p-card {
+    border-left-color: var(--app-warning);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(242, 209, 90, 0.08) 100%);
+    .kpi-icon-wrapper { background: rgba(242, 209, 90, 0.1); i { color: var(--app-warning); } }
+  }
+
+  // Enviado/Proceso - Info
+  &.kpi-enviado, &.kpi-proceso {
+    ::ng-deep .p-card {
+      border-left-color: var(--app-info);
+      background: linear-gradient(135deg, var(--app-white) 0%, rgba(116, 90, 242, 0.05) 100%);
+    }
+    .kpi-icon-wrapper { background: rgba(116, 90, 242, 0.1); i { color: var(--app-info); } }
+  }
+
+  // Completado - Éxito
+  &.kpi-completado ::ng-deep .p-card {
+    border-left-color: var(--app-success);
+    background: linear-gradient(135deg, var(--app-white) 0%, rgba(133, 212, 112, 0.08) 100%);
+    .kpi-icon-wrapper { background: rgba(133, 212, 112, 0.1); i { color: var(--app-success); } }
+  }
 }
 
 .quick-actions {
@@ -89,37 +121,19 @@
   border-radius: 6px;
 }
 
-.bg-primary-subtle {
-  background-color: rgba(13, 110, 253, 0.1);
-}
+// Iconos con fondo sutil - usando variables CSS
+.icono-fondo-primary { background-color: rgba(var(--app-primary-rgb), 0.1); }
+.icono-fondo-success { background-color: rgba(var(--app-success-rgb), 0.1); }
+.icono-fondo-warning { background-color: rgba(var(--app-warning-rgb), 0.1); }
+.icono-fondo-danger { background-color: rgba(var(--app-danger-rgb), 0.1); }
+.icono-fondo-info { background-color: rgba(var(--app-info-rgb), 0.1); }
 
-.bg-success-subtle {
-  background-color: rgba(25, 135, 84, 0.1);
-}
-
-.bg-warning-subtle {
-  background-color: rgba(255, 193, 7, 0.1);
-}
-
-.bg-danger-subtle {
-  background-color: rgba(220, 53, 69, 0.1);
-}
-
-.text-primary {
-  color: #0d6efd !important;
-}
-
-.text-success {
-  color: #198754 !important;
-}
-
-.text-warning {
-  color: #ffc107 !important;
-}
-
-.text-danger {
-  color: #dc3545 !important;
-}
+// Colores de iconos
+.icono-primary { color: var(--app-primary) !important; }
+.icono-success { color: var(--app-success) !important; }
+.icono-warning { color: var(--app-warning) !important; }
+.icono-danger { color: var(--app-danger) !important; }
+.icono-info { color: var(--app-info) !important; }
 
 // Responsive
 @media (max-width: 768px) {

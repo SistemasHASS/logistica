@@ -94,7 +94,7 @@
         </p-datepicker>
       </div>
       <div class="col-12 col-md-3">
-        <button class="btn btn-primary btn-listar" type="button" (click)="buscar()">Buscar</button>
+        <button class="btn btn-accion-primaria btn-listar" type="button" (click)="buscar()">Buscar</button>
         <!-- <button class="btn btn-outline-info btn-limpiar" type="button" (click)="limpiarFiltrosDespacho()">Limpiar</button>
         <button class="btn btn-success btn-excel" type="button" title="Exportar"
                 (click)="table.exportCSV()"><i class="bx bx-spreadsheet"></i>
@@ -102,7 +102,7 @@
       </div>
     </div>
 
-    <div class="text-muted small mb-2">Total: {{ despachosVisibles.length }} registros</div>
+    <div class="texto-descriptivo small mb-2">Total: {{ despachosVisibles.length }} registros</div>
 
     <!-- ===== TABLA DESKTOP ===== -->
     <div class="desktop-only">
@@ -153,7 +153,7 @@
                       }">
                   {{ c.estados === 'ATENCION_PARCIAL' ? 'ATENCIÓN PARCIAL' : c.estados === 'SIN_STOCK' ? 'SIN STOCK' : (c.estados || 'PENDIENTE') }}
                 </span>
-                <small *ngIf="c.estados === 'ATENCION_PARCIAL'" class="text-warning fw-semibold">
+                <small *ngIf="c.estados === 'ATENCION_PARCIAL'" class="texto-advertencia fw-semibold">
                   Pendiente: {{ calcularPendienteTotal(c) | number:'1.0-2' }} uds.
                 </small>
                 <small *ngIf="c.estados === 'SIN_STOCK'" class="fw-semibold" style="color:#f39c12;">
@@ -191,7 +191,7 @@
                 }">
             {{ c.estados || c.estado || 'PENDIENTE' }}
           </span>
-          <span class="text-muted small">#{{ i + 1 }}</span>
+          <span class="texto-descriptivo small">#{{ i + 1 }}</span>
         </div>
         <div class="mc-field"><strong>N° NS:</strong> {{ c.NumeroDocumento || '-' }}</div>
         <div class="mc-field"><strong>Requisición:</strong> {{ c.RequisicionNumero || '-' }}</div>
@@ -206,7 +206,7 @@
           </button>
         </div>
       </div>
-      <div *ngIf="!despachosVisibles.length" class="text-center text-muted py-4">No hay registros</div>
+      <div *ngIf="!despachosVisibles.length" class="text-center texto-descriptivo py-4">No hay registros</div>
     </div>
   </div>
 </div>
@@ -217,12 +217,12 @@
     <div class="modal-header">
       <h5 class="modal-title">
         <i class="bx bx-list-check me-2"></i>{{ modalKpiTitulo }}
-        <span class="badge bg-secondary ms-2">{{ modalKpiItems.length }}</span>
+        <span class="badge badge-inactivo ms-2">{{ modalKpiItems.length }}</span>
       </h5>
       <button type="button" class="btn-close" (click)="cerrarModalKpi()"></button>
     </div>
     <div class="modal-body p-0">
-      <div *ngIf="!modalKpiItems.length" class="text-center text-muted py-4">
+      <div *ngIf="!modalKpiItems.length" class="text-center texto-descriptivo py-4">
         No hay requerimientos en este estado
       </div>
       <div class="table-responsive" *ngIf="modalKpiItems.length">
@@ -241,7 +241,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let r of modalKpiItems; let i = index">
-              <td class="fw-semibold text-muted">{{ i + 1 }}</td>
+              <td class="fw-semibold texto-descriptivo">{{ i + 1 }}</td>
               <td>{{ r.RequisicionNumero || '-' }}</td>
               <td>{{ r.fechaAprobacion | date:'dd/MM/yyyy' }}</td>
               <td>{{ r.nombreCreador || '-' }}</td>
@@ -282,7 +282,7 @@
     <div class="modal-header">
       <h5 class="modal-title">
         Detalle de Atención:
-        <span class="badge bg-primary ms-2">
+        <span class="badge badge-primario ms-2">
           {{ selected?.idrequerimiento | numeroRequerimiento : selected?.RequisicionNumero }}
         </span>
       </h5>
@@ -346,16 +346,16 @@
               <td>{{ c.compra || 0 }}</td>
               <td>
                 <span class="badge" [ngClass]="{
-                  'bg-success': c.estadoAtencion === 'CON STOCK',
-                  'bg-warning text-dark': c.estadoAtencion === 'PARCIAL',
-                  'bg-danger': c.estadoAtencion === 'SIN STOCK'
+                  'badge-exito': c.estadoAtencion === 'CON STOCK',
+                  'badge-advertencia': c.estadoAtencion === 'PARCIAL',
+                  'badge-peligro': c.estadoAtencion === 'SIN STOCK'
                 }">
                   {{ c.estadoAtencion || 'N/A' }}
                 </span>
               </td>
             </tr>
             <tr *ngIf="!detalle.length">
-              <td colspan="10" class="text-center text-muted py-3">Sin items</td>
+              <td colspan="10" class="text-center texto-descriptivo py-3">Sin items</td>
             </tr>
           </tbody>
         </table>
@@ -363,8 +363,8 @@
     </div>
 
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" (click)="cerrarModalAtencion()">Cerrar</button>
-      <button type="button" class="btn btn-primary ms-2" (click)="registrarAtencion()">Registrar Atención</button>
+      <button type="button" class="btn btn-accion-secundaria" (click)="cerrarModalAtencion()">Cerrar</button>
+      <button type="button" class="btn btn-accion-primaria ms-2" (click)="registrarAtencion()">Registrar Atención</button>
     </div>
 
   </div>

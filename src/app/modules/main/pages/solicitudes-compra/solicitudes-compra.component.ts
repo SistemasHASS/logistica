@@ -15,6 +15,7 @@ import {
   Requerimiento,
   DetalleRequerimiento,
   Almacen,
+  Fundo,
   ItemComodity,
 } from '@/app/shared/interfaces/Tables';
 import { AdjuntosModalComponent } from '@/app/shared/components/adjuntos-modal/adjuntos-modal.component';
@@ -52,6 +53,7 @@ export class SolicitudesCompraComponent implements OnInit {
   solicitudesProcesadas: any[] = []; // Tab 2: Solicitudes procesadas (Backend)
   requerimientosAprobados: Requerimiento[] = [];
   almacenes: Almacen[] = [];
+  fundos: Fundo[] = [];
   items: ItemComodity[] = [];
   
   // Datos maestros para conversión de códigos a nombres
@@ -162,12 +164,14 @@ export class SolicitudesCompraComponent implements OnInit {
     await this.cargarUsuario();
     await this.cargarMaestras();
     await this.cargarSolicitudesLocales();
-    await this.cargarRequerimientosAprobados();
     this.actualizarContadoresLocales();
-    
-    // Verificar conexión y sincronizar con backend
+
+    // Verificar conexión primero para que cargarRequerimientosAprobados pueda sincronizar
     await this.verificarConexionYSincronizar();
-    
+
+    // Cargar requerimientos COMPRA aprobados (con sincronización backend si hay conexión)
+    await this.cargarRequerimientosAprobados();
+
     // Cargar solicitudes procesadas si hay conexión
     if (this.tieneConexion) {
       await this.cargarSolicitudesProcesadas();
@@ -183,6 +187,7 @@ export class SolicitudesCompraComponent implements OnInit {
 
   async cargarMaestras() {
     this.almacenes = await this.dexieService.showAlmacenes();
+    this.fundos = await this.dexieService.showFundos();
     this.items = await this.dexieService.showItemComoditys();
     this.proyectos = await this.dexieService.showProyectos();
     this.labores = await this.dexieService.showLabores();
@@ -212,6 +217,16 @@ export class SolicitudesCompraComponent implements OnInit {
     if (!codigo) return '';
     const almacen = this.almacenes.find(a => a.idalmacen == codigo);
     return almacen ? almacen.almacen : codigo;
+  }
+
+  // Método para obtener el nombre del fundo a partir del código
+  getNombreFundo(codigo: string | number): string {
+    if (codigo === null || codigo === undefined || codigo === '') return '';
+    const codigoStr = String(codigo);
+    const fundo = this.fundos.find(
+      f => String(f.fundo) === codigoStr || String(f.id) === codigoStr
+    );
+    return fundo ? fundo.nombreFundo : codigoStr;
   }
 
   // Método para obtener el nombre de la moneda
@@ -319,50 +334,50 @@ export class SolicitudesCompraComponent implements OnInit {
   }
 
   async cargarRequerimientosAprobados() {
-    console.log('🔍 Cargando requerimientos aprobados...');
-    const todosRequerimientos = await this.dexieService.showRequerimiento();
-    console.log('✅ Total requerimientos cargados:', todosRequerimientos.length);
-    
-    // Si no hay requerimientos, mostrar mensaje informativo
-    if (todosRequerimientos.length === 0) {
-      console.log('⚠️ No hay requerimientos en IndexedDB');
-      console.log('💡 Nota: Los requerimientos deben sincronizarse desde otro módulo de la aplicación');
-      this.alertService.showAlert(
-        'Información',
-        'No hay requerimientos disponibles. Asegúrese de sincronizar los datos desde el módulo correspondiente.',
-        'info'
-      );
-    } else {
-      // Mostrar los primeros 5 requerimientos para depurar
-      console.log('📋 Muestra de requerimientos:', todosRequerimientos.slice(0, 5).map(r => ({
-        id: r.idrequerimiento,
-        estado: r.estado,
-        despachado: r.despachado,
-        glosa: r.glosa
-      })));
-      
-      // Filtrar solo requerimientos aprobados y no despachados
-      this.requerimientosAprobados = todosRequerimientos.filter(
-        (r: Requerimiento) => r.estado === 1 && !r.despachado
-      );
-      
-      console.log('✅ Requerimientos aprobados filtrados:', this.requerimientosAprobados.length);
-      
-      // Si no hay aprobados, mostrar cuántos hay por cada estado
-      if (this.requerimientosAprobados.length === 0) {
-        const porEstado = todosRequerimientos.reduce((acc: any, r) => {
-          acc[r.estado] = (acc[r.estado] || 0) + 1;
-          return acc;
-        }, {});
-        console.log('📊 Requerimientos por estado:', porEstado);
-        
-        // Mostrar mensaje si no hay aprobados
-        this.alertService.showAlert(
-          'Información',
-          'No hay requerimientos aprobados disponibles para generar solicitudes de compra.',
-          'info'
+    console.log('🔍 Cargando requerimientos compra aprobados...');
+
+    // Si hay conexión, sincronizar desde el backend primero
+    if (this.tieneConexion && this.usuario.ruc) {
+      try {
+        const remoto = await this.solicitudCompraService.listarRequerimientosCompraAprobados(
+          this.usuario.ruc,
+          this.usuario.documentoidentidad
         );
+        const lista: any[] = Array.isArray(remoto) ? remoto : [];
+        if (lista.length > 0) {
+          const reqs: Requerimiento[] = lista.map((r: any) => ({
+            ...r,
+            estado: 1,
+            despachado: r.despachado ?? false,
+            disabled: false,
+            checked: false,
+            eliminado: 0,
+            detalle: typeof r.detalle === 'string' ? JSON.parse(r.detalle || '[]') : (r.detalle || [])
+          }));
+          await this.dexieService.saveRequerimientos(reqs);
+          console.log('✅ Requerimientos COMPRA aprobados sincronizados desde backend:', reqs.length);
+        }
+      } catch (err) {
+        console.warn('⚠️ No se pudo sincronizar del backend, usando IndexedDB local:', err);
       }
+    }
+
+    const todosRequerimientos = await this.dexieService.showRequerimiento();
+    console.log('📦 Total en IndexedDB:', todosRequerimientos.length);
+
+    // Filtrar requerimientos de COMPRA aprobados (estados = 'APROBADO')
+    this.requerimientosAprobados = todosRequerimientos.filter(
+      (r: Requerimiento) => (r as any).estados === 'APROBADO' && !r.despachado
+    );
+
+    console.log('✅ Requerimientos COMPRA aprobados disponibles:', this.requerimientosAprobados.length);
+
+    if (this.requerimientosAprobados.length === 0 && todosRequerimientos.length > 0) {
+      const porEstado = todosRequerimientos.reduce((acc: any, r: any) => {
+        acc[r.estados || r.estado] = (acc[r.estados || r.estado] || 0) + 1;
+        return acc;
+      }, {});
+      console.log('📊 Requerimientos por estados:', porEstado);
     }
   }
 
@@ -488,10 +503,11 @@ export class SolicitudesCompraComponent implements OnInit {
       for (const req of this.requerimientosSeleccionados) {
         idsRequerimientos.push(req.idrequerimiento);
 
-        // Obtener detalles del requerimiento
-        const detalles = await this.dexieService.showDetallesByRequerimiento(
-          req.idrequerimiento
-        );
+        // Obtener detalles: primero del campo embebido, luego fallback a Dexie
+        const detalleEmbebido: any[] = Array.isArray((req as any).detalle) ? (req as any).detalle : [];
+        const detalles: any[] = detalleEmbebido.length > 0
+          ? detalleEmbebido
+          : await this.dexieService.showDetallesByRequerimiento(req.idrequerimiento);
 
         for (const det of detalles) {
           // Buscar si ya existe el mismo código en la consolidación
@@ -515,16 +531,16 @@ export class SolicitudesCompraComponent implements OnInit {
             detallesConsolidados.push({
               id: 0,
               solicitudCompraId: 0,
-              codigo: det.codigo,
-              descripcion: det.producto,
-              cantidad: det.cantidad,
-              cantidadAprobada: det.cantidad,
+              codigo: detAny.codigo || detAny.idproducto || '',
+              descripcion: detAny.producto || detAny.iddescripcion || detAny.descripcion || detAny.codigo || '',
+              cantidad: detAny.cantidad ?? 0,
+              cantidadAprobada: detAny.cantidad ?? 0,
               cantidadAtendida: 0,
-              unidadMedida: um || 'UND',
-              proyecto: detAny.proyecto || reqAny.proyecto || '',
-              ceco: detAny.ceco || reqAny.ceco || '',
-              turno: detAny.turno || reqAny.turno || '',
-              labor: detAny.labor || reqAny.labor || '',
+              unidadMedida: um || detAny.unidadMedida || detAny.unidad || detAny.idunidad || 'UND',
+              proyecto: detAny.proyecto || detAny.idproyecto || reqAny.proyecto || '',
+              ceco: detAny.ceco || detAny.idcentrocosto || reqAny.ceco || '',
+              turno: detAny.turno || detAny.idturno || reqAny.turno || '',
+              labor: detAny.labor || detAny.idlabor || reqAny.labor || '',
               requerimientosOrigen: req.idrequerimiento,
               estado: 'PENDIENTE',
             });
@@ -589,6 +605,32 @@ export class SolicitudesCompraComponent implements OnInit {
           moneda: solicitudGuardada.moneda
         });
       }
+
+      // ✅ Actualizar estado de cada requerimiento a CONSOLIDADO
+      const reqsParaConsolidar = [...this.requerimientosSeleccionados];
+      for (const req of reqsParaConsolidar) {
+        try {
+          // Actualizar en backend si hay conexión
+          if (this.tieneConexion) {
+            await this.solicitudCompraService.actualizarEstadoRequerimiento(
+              req.idrequerimiento,
+              'CONSOLIDADO',
+              this.usuario.documentoidentidad || ''
+            );
+          }
+          // Actualizar en Dexie local
+          const reqLocal = await this.dexieService.requerimientos
+            .where('idrequerimiento').equals(req.idrequerimiento).first();
+          if (reqLocal?.id) {
+            await this.dexieService.requerimientos.update(reqLocal.id, { estados: 'CONSOLIDADO' });
+          }
+        } catch (err) {
+          console.warn('⚠️ No se pudo actualizar estado del requerimiento:', req.idrequerimiento, err);
+        }
+      }
+
+      // Recargar tabla de requerimientos aprobados (los consolidados ya no aparecen)
+      await this.cargarRequerimientosAprobados();
 
       this.alertService.cerrarModalCarga();
       this.alertService.showAlert(
@@ -1020,12 +1062,12 @@ export class SolicitudesCompraComponent implements OnInit {
   }
 
   toggleSeleccionarTodos() {
-    if (this.allSelected) {
-      this.requerimientosSeleccionados = [];
-    } else {
-      this.requerimientosSeleccionados = [...this.requerimientosAprobados];
-    }
     this.allSelected = !this.allSelected;
+    if (this.allSelected) {
+      this.requerimientosSeleccionados = [...this.requerimientosAprobados];
+    } else {
+      this.requerimientosSeleccionados = [];
+    }
   }
 
   // Filtros
@@ -1136,9 +1178,9 @@ export class SolicitudesCompraComponent implements OnInit {
       // Cargar todos los requerimientos aprobados del almacén
       const todosRequerimientos = await this.dexieService.showRequerimiento();
       const reqsFiltrados = todosRequerimientos.filter(
-        (r: Requerimiento) => 
-          r.estado === 1 && 
-          !r.despachado && 
+        (r: Requerimiento) =>
+          (r as any).estados === 'APROBADO' &&
+          !r.despachado &&
           r.almacen === this.solicitud!.almacen
       );
 
@@ -1352,10 +1394,34 @@ export class SolicitudesCompraComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
       this.requerimientoSeleccionado = req;
-      
-      // Cargar los detalles del requerimiento
-      this.detallesRequerimiento = await this.dexieService.showDetallesByRequerimiento(req.idrequerimiento);
-      
+
+      // Primero usar el detalle embebido en el objeto (viene del backend sincronizado)
+      const detalleEmbebido: any[] = Array.isArray(req.detalle) ? req.detalle : [];
+
+      if (detalleEmbebido.length > 0) {
+        // Mapear al formato DetalleRequerimiento
+        this.detallesRequerimiento = detalleEmbebido.map((d: any) => ({
+          id: d.id ?? 0,
+          idrequerimiento: req.idrequerimiento,
+          codigo: d.codigo || d.idproducto || '',
+          producto: d.producto || d.iddescripcion || d.descripcion || d.codigo || '',
+          descripcion: d.descripcion || d.iddescripcion || d.producto || '',
+          cantidad: d.cantidad ?? 0,
+          unidad: d.unidad || d.idunidad || '',
+          unidadMedida: d.unidadMedida || d.unidad || d.idunidad || 'UND',
+          proyecto: d.proyecto || d.idproyecto || '',
+          ceco: d.ceco || d.idcentrocosto || '',
+          turno: d.turno || d.idturno || '',
+          labor: d.labor || d.idlabor || '',
+          esActivoFijo: d.esActivoFijo ?? false,
+          activoFijo: d.activoFijo || '',
+          estado: d.estado || 'PENDIENTE',
+        }));
+      } else {
+        // Fallback: buscar en tabla Dexie separada
+        this.detallesRequerimiento = await this.dexieService.showDetallesByRequerimiento(req.idrequerimiento);
+      }
+
       this.alertService.cerrarModalCarga();
       this.modalDetalleRequerimientoAbierto = true;
     } catch (error) {

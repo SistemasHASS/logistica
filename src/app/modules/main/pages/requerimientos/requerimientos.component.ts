@@ -703,6 +703,12 @@ export class RequerimientosComponent implements OnInit {
 
   agregarDetalleConsolidado(detalle: any) {
     console.log(detalle);
+    
+    // Buscar precio en maestro de ítems
+    const itemEnMaestro = this.maestrasSvc.items.find((it: any) => it.codigo === detalle.codigo);
+    const precioEstimado = itemEnMaestro?.precioEstimado || 0;
+    const moneda = itemEnMaestro?.moneda || 'PEN';
+    
     const nuevoDetalle: any = {
       id: this.contadorReq++,
       idrequerimiento: '', // Will be set when saving
@@ -713,8 +719,9 @@ export class RequerimientosComponent implements OnInit {
       cantidadAprobada: detalle.cantidad,
       cantidadAtendida: 0,
       unidadMedida: 'UNIDAD',
-      precioReferencial: 0,
-      montoReferencial: 0,
+      precioReferencial: precioEstimado,
+      monedaReferencial: moneda,
+      montoReferencial: precioEstimado * detalle.cantidad,
       proyecto: detalle.proyecto || this.proyectoSeleccionado?.proyectoio || '', // Use from consolidated detail first
       ceco: detalle.ceco || this.cecoSeleccionado?.localname || '', // Use from consolidated detail first
       turno: '', // No se usa turnos en compras

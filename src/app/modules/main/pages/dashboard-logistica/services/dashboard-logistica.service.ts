@@ -97,4 +97,54 @@ export class DashboardLogisticaService {
       payload
     );
   }
+
+  // ==================== REPORTES ====================
+
+  // Reporte de Compras
+  obtenerReporteCompras(payload: any) {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/logistica/dashboard-logistica/reporte-compras`,
+      payload
+    );
+  }
+
+  // Reporte de Inventario
+  obtenerReporteInventario(payload: any) {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/logistica/dashboard-logistica/reporte-inventario`,
+      payload
+    );
+  }
+
+  // Reporte de Proveedores
+  obtenerReporteProveedores(payload: any) {
+    return this.http.post<any[]>(
+      `${this.baseUrl}/api/logistica/dashboard-logistica/reporte-proveedores`,
+      payload
+    );
+  }
+
+  // Reporte de Tiempos
+  obtenerReporteTiempos(payload: any) {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/logistica/dashboard-logistica/reporte-tiempos`,
+      payload
+    );
+  }
+
+  // Reporte de Gastos
+  obtenerReporteGastos(payload: any) {
+    return this.http.post<any[]>(
+      `${this.baseUrl}/api/logistica/dashboard-logistica/reporte-gastos`,
+      payload
+    );
+  }
+
+  // Reporte Consolidado
+  obtenerReporteConsolidado(payload: any) {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/logistica/dashboard-logistica/reporte-consolidado`,
+      payload
+    );
+  }
 }

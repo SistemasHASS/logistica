@@ -13,19 +13,19 @@
       <li class="nav-item" role="presentation">
         <button class="nav-link" [class.active]="tabActiva === 'COTIZACIONES'" (click)="tabActiva = 'COTIZACIONES'" type="button">
           <i class="pi pi-list me-1"></i> Cotizaciones Recibidas
-          <span class="badge bg-primary ms-1" *ngIf="cotizaciones.length > 0">{{ cotizaciones.length }}</span>
+          <span class="badge badge-informativo ms-1" *ngIf="cotizaciones.length > 0">{{ cotizaciones.length }}</span>
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" [class.active]="tabActiva === 'GANADORES'" (click)="cambiarTabGanadores()" type="button">
           <i class="pi pi-trophy me-1"></i> Cotizaciones Ganadoras
-          <span class="badge bg-success ms-1" *ngIf="cotizacionesGanadoras.length > 0">{{ cotizacionesGanadoras.length }}</span>
+          <span class="badge badge-exito ms-1" *ngIf="cotizacionesGanadoras.length > 0">{{ cotizacionesGanadoras.length }}</span>
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" [class.active]="tabActiva === 'COMPARACION'" (click)="tabActiva = 'COMPARACION'" type="button">
           <i class="pi pi-chart-bar me-1"></i> Comparación
-          <span class="badge bg-info ms-1" *ngIf="cotizacionesComparativo.length > 0">{{ cotizacionesComparativo.length }}</span>
+          <span class="badge badge-informativo ms-1" *ngIf="cotizacionesComparativo.length > 0">{{ cotizacionesComparativo.length }}</span>
         </button>
       </li>
     </ul>
@@ -39,25 +39,25 @@
       </div>
       <div class="row mb-3">
         <div class="col-md-4">
-          <div class="card border-warning">
+          <div class="card border-pendiente">
             <div class="card-body text-center">
-              <h5 class="card-title text-warning">{{ totalSolicitudesPendientes }}</h5>
+              <h5 class="card-title texto-pendiente">{{ totalSolicitudesPendientes }}</h5>
               <p class="card-text">Pendientes</p>
             </div>
           </div>
         </div>
         <div class="col-md-4">
-          <div class="card border-info">
+          <div class="card border-informativo">
             <div class="card-body text-center">
-              <h5 class="card-title text-info">{{ totalSolicitudesEnRevision }}</h5>
+              <h5 class="card-title texto-informativo">{{ totalSolicitudesEnRevision }}</h5>
               <p class="card-text">En Revisión</p>
             </div>
           </div>
         </div>
         <div class="col-md-4">
-          <div class="card border-success">
+          <div class="card border-exito">
             <div class="card-body text-center">
-              <h5 class="card-title text-success">{{ totalSolicitudesCerradas }}</h5>
+              <h5 class="card-title texto-exito">{{ totalSolicitudesCerradas }}</h5>
               <p class="card-text">Cerradas</p>
             </div>
           </div>
@@ -70,21 +70,21 @@
           <button class="nav-link" [class.active]="subTabSolicitudes === 'PENDIENTES'" 
                   (click)="cambiarSubTab('PENDIENTES')" type="button">
             <i class="pi pi-exclamation-triangle me-1"></i> Pendientes
-            <span class="badge bg-warning ms-1">{{ totalSolicitudesPendientes }}</span>
+            <span class="badge badge-pendiente ms-1">{{ totalSolicitudesPendientes }}</span>
           </button>
         </li>
         <li class="nav-item">
           <button class="nav-link" [class.active]="subTabSolicitudes === 'EN_REVISION'" 
                   (click)="cambiarSubTab('EN_REVISION')" type="button">
             <i class="pi pi-clock me-1"></i> En Revisión
-            <span class="badge bg-info ms-1">{{ totalSolicitudesEnRevision }}</span>
+            <span class="badge badge-informativo ms-1">{{ totalSolicitudesEnRevision }}</span>
           </button>
         </li>
         <li class="nav-item">
           <button class="nav-link" [class.active]="subTabSolicitudes === 'CERRADA'" 
                   (click)="cambiarSubTab('CERRADA')" type="button">
             <i class="pi pi-check-circle me-1"></i> Cerradas
-            <span class="badge bg-success ms-1">{{ totalSolicitudesCerradas }}</span>
+            <span class="badge badge-exito ms-1">{{ totalSolicitudesCerradas }}</span>
           </button>
         </li>
       </ul>
@@ -111,8 +111,8 @@
             <td>{{ formatearFecha(solicitud.fechaGeneracion) }}</td>
             <td>
               <span class="badge" 
-                    [class]="(solicitud.tipo === 'COMPRA' ? 'bg-primary' : 
-                              solicitud.tipo === 'SERVICIO' ? 'bg-warning text-dark' : 'bg-secondary')"
+                    [class]="(solicitud.tipo === 'COMPRA' ? 'badge-primario' : 
+                              solicitud.tipo === 'SERVICIO' ? 'badge-advertencia' : 'badge-inactivo')"
                     style="font-size: 0.8em; padding: 6px 12px;">
                 <i [class]="(solicitud.tipo === 'COMPRA' ? 'bx bx-box' : 
                             solicitud.tipo === 'SERVICIO' ? 'bx bx-wrench' : 'bx bx-help-circle')" 
@@ -121,10 +121,10 @@
               </span>
             </td>
             <td class="text-center">
-              <span class="badge bg-info">{{ solicitud.totalItems || 0 }}</span>
+              <span class="badge badge-informativo">{{ solicitud.totalItems || 0 }}</span>
             </td>
             <td class="text-center">
-              <span class="badge bg-info">{{ contarCotizacionesPorSolicitud(solicitud.id) }}</span>
+              <span class="badge badge-informativo">{{ contarCotizacionesPorSolicitud(solicitud.id) }}</span>
             </td>
             <td>
               <span class="badge" [ngClass]="obtenerClaseEstadoSolicitud(solicitud.estado)">
@@ -157,7 +157,7 @@
         <ng-template pTemplate="emptymessage">
           <tr>
             <td colspan="8" class="text-center">
-              <p class="text-muted my-3">No hay solicitudes de cotización generadas</p>
+              <p class="texto-descriptivo my-3">No hay solicitudes de cotización generadas</p>
             </td>
           </tr>
         </ng-template>
@@ -173,7 +173,7 @@
         <div class="col-md-3">
           <div class="card border-info">
             <div class="card-body text-center">
-              <h5 class="card-title text-info">{{ totalRecibidas }}</h5>
+              <h5 class="card-title texto-informativo">{{ totalRecibidas }}</h5>
               <p class="card-text">Recibidas</p>
             </div>
           </div>
@@ -181,7 +181,7 @@
         <div class="col-md-3">
           <div class="card border-warning">
             <div class="card-body text-center">
-              <h5 class="card-title text-warning">{{ totalEnEvaluacion }}</h5>
+              <h5 class="card-title texto-advertencia">{{ totalEnEvaluacion }}</h5>
               <p class="card-text">En Evaluación</p>
             </div>
           </div>
@@ -189,7 +189,7 @@
         <div class="col-md-3">
           <div class="card border-success">
             <div class="card-body text-center">
-              <h5 class="card-title text-success">{{ totalSeleccionadas }}</h5>
+              <h5 class="card-title texto-confirmacion">{{ totalSeleccionadas }}</h5>
               <p class="card-text">Seleccionadas</p>
             </div>
           </div>
@@ -197,7 +197,7 @@
         <div class="col-md-3">
           <div class="card border-danger">
             <div class="card-body text-center">
-              <h5 class="card-title text-danger">{{ totalRechazadas }}</h5>
+              <h5 class="card-title texto-error">{{ totalRechazadas }}</h5>
               <p class="card-text">Rechazadas</p>
             </div>
           </div>
@@ -207,7 +207,7 @@
       <!-- Barra de acciones -->
       <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-          <span class="text-muted" *ngIf="cotizacionesFiltradas().length > 0">
+          <span class="texto-descriptivo" *ngIf="cotizacionesFiltradas().length > 0">
             {{ cotizacionesFiltradas().length }} cotizaciones encontradas
           </span>
         </div>
@@ -284,7 +284,7 @@
               <div>
                 <strong>{{ cotizacion.nombreProveedor }}</strong>
                 <br>
-                <small class="text-muted">RUC: {{ cotizacion.rucProveedor }}</small>
+                <small class="texto-descriptivo">RUC: {{ cotizacion.rucProveedor }}</small>
               </div>
             </td>
             <td class="text-right">
@@ -327,7 +327,7 @@
         <ng-template pTemplate="emptymessage">
           <tr>
             <td colspan="9" class="text-center">
-              <p class="text-muted my-3">No hay cotizaciones registradas</p>
+              <p class="texto-descriptivo my-3">No hay cotizaciones registradas</p>
             </td>
           </tr>
         </ng-template>
@@ -340,7 +340,7 @@
     <div *ngIf="tabActiva === 'GANADORES'">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">
-          <i class="pi pi-trophy text-success me-2"></i>
+          <i class="pi pi-trophy texto-confirmacion me-2"></i>
           Cotizaciones Seleccionadas como Ganadoras
         </h5>
         <div class="d-flex gap-2">
@@ -356,7 +356,7 @@
         <div class="col-md-3">
           <div class="card border-success">
             <div class="card-body text-center">
-              <h5 class="card-title text-success">{{ cotizacionesGanadoras.length }}</h5>
+              <h5 class="card-title texto-confirmacion">{{ cotizacionesGanadoras.length }}</h5>
               <p class="card-text">Total Ganadoras</p>
             </div>
           </div>
@@ -364,7 +364,7 @@
         <div class="col-md-3">
           <div class="card border-info">
             <div class="card-body text-center">
-              <h5 class="card-title text-info">{{ totalMontoGanadoras | number:'1.2-2' }}</h5>
+              <h5 class="card-title texto-informativo">{{ totalMontoGanadoras | number:'1.2-2' }}</h5>
               <p class="card-text">Monto Total (PEN)</p>
             </div>
           </div>
@@ -372,7 +372,7 @@
         <div class="col-md-3">
           <div class="card border-warning">
             <div class="card-body text-center">
-              <h5 class="card-title text-warning">{{ totalSolicitudesGeneradas }}</h5>
+              <h5 class="card-title texto-advertencia">{{ totalSolicitudesGeneradas }}</h5>
               <p class="card-text">Solicitudes Generadas</p>
             </div>
           </div>
@@ -380,7 +380,7 @@
         <div class="col-md-3">
           <div class="card border-primary">
             <div class="card-body text-center">
-              <h5 class="card-title text-primary">{{ promedioPlazoEntrega }}</h5>
+              <h5 class="card-title texto-primario">{{ promedioPlazoEntrega }}</h5>
               <p class="card-text">Plazo Promedio (días)</p>
             </div>
           </div>
@@ -404,12 +404,12 @@
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-cotizacion let-i="rowIndex">
-          <tr class="table-success">
+          <tr class="fila-confirmada">
             <td>{{ i + 1 }}</td>
             <td>
               <strong>{{ cotizacion.numeroCotizacion || 'COT-' + (cotizacion.id || 'N/A') }}</strong>
               <br>
-              <small class="text-success">
+              <small class="texto-confirmacion">
                 <i class="pi pi-trophy-fill"></i> GANADORA
               </small>
             </td>
@@ -419,18 +419,18 @@
               <div>
                 <strong>{{ cotizacion.nombreProveedor }}</strong>
                 <br>
-                <small class="text-muted">RUC: {{ cotizacion.rucProveedor }}</small>
+                <small class="texto-descriptivo">RUC: {{ cotizacion.rucProveedor }}</small>
               </div>
             </td>
             <td class="text-right">
-              <strong class="text-success">{{ formatearMoneda(cotizacion.montoTotal, cotizacion.moneda) }}</strong>
+              <strong class="texto-confirmacion">{{ formatearMoneda(cotizacion.montoTotal, cotizacion.moneda) }}</strong>
             </td>
             <td class="text-center">{{ cotizacion.plazoEntrega }} días</td>
             <td class="text-center">
-              <span class="badge bg-dark" *ngIf="tieneOrdenFromMap(cotizacion.id!)">
+              <span class="badge badge-inactivo" *ngIf="tieneOrdenFromMap(cotizacion.id!)">
                 <i class="pi pi-check"></i> {{ getNumeroOrdenFromMap(cotizacion.id!) }}
               </span>
-              <span class="badge bg-warning" *ngIf="!tieneOrdenFromMap(cotizacion.id!)">
+              <span class="badge badge-advertencia" *ngIf="!tieneOrdenFromMap(cotizacion.id!)">
                 <i class="pi pi-clock"></i> Pendiente
               </span>
             </td>
@@ -457,7 +457,7 @@
         <ng-template pTemplate="emptymessage">
           <tr>
             <td colspan="9" class="text-center">
-              <p class="text-muted my-3">
+              <p class="texto-descriptivo my-3">
                 <i class="pi pi-trophy" style="font-size: 2rem;"></i>
                 <br>
                 No hay cotizaciones ganadoras registradas
@@ -484,13 +484,13 @@
                 <th *ngFor="let cot of cotizacionesComparativo" class="text-center">
                   {{ cot.nombreProveedor }}
                   <br>
-                  <small class="text-muted">{{ cot.numeroCotizacion }}</small>
+                  <small class="texto-descriptivo">{{ cot.numeroCotizacion }}</small>
                 </th>
               </tr>
             </thead>
             <tbody>
               <!-- Fila de monto total -->
-              <tr class="table-info">
+              <tr class="fila-informativa">
                 <td><strong>MONTO TOTAL</strong></td>
                 <td *ngFor="let cot of cotizacionesComparativo" class="text-center">
                   <strong>{{ formatearMoneda(cot.montoTotal, cot.moneda) }}</strong>
@@ -532,9 +532,9 @@
                   <ng-container *ngIf="obtenerDetalleCotizacion(cot, item.codigoItem); let detalle">
                     {{ formatearMoneda(detalle.precioUnitario) }}
                     <br>
-                    <small class="text-muted">Total: {{ formatearMoneda(detalle.total) }}</small>
+                    <small class="texto-descriptivo">Total: {{ formatearMoneda(detalle.total) }}</small>
                   </ng-container>
-                  <span *ngIf="!obtenerDetalleCotizacion(cot, item.codigoItem)" class="text-muted">-</span>
+                  <span *ngIf="!obtenerDetalleCotizacion(cot, item.codigoItem)" class="texto-descriptivo">-</span>
                 </td>
               </tr>
             </tbody>
@@ -565,7 +565,7 @@
 
       <div *ngIf="!solicitudCotizacionSeleccionada || cotizacionesComparativo.length === 0" class="text-center my-5">
         <i class="bx bx-chart" style="font-size: 4rem; color: #ccc;"></i>
-        <p class="text-muted mt-3">Seleccione una solicitud con al menos 2 cotizaciones para comparar</p>
+        <p class="texto-descriptivo mt-3">Seleccione una solicitud con al menos 2 cotizaciones para comparar</p>
         <button pButton type="button" class="p-button-primary mt-2" (click)="tabActiva = 'SOLICITUDES'">
           <i class="bx bx-arrow-left"></i> Ir a Solicitudes
         </button>
@@ -635,7 +635,7 @@
 
     <div class="row mb-3">
       <div class="col-md-12">
-        <label class="form-label">Proveedor <span class="text-danger">*</span></label>
+        <label class="form-label">Proveedor <span class="texto-error">*</span></label>
         <app-dropdown 
           [(ngModel)]="cotizacion.proveedor"
           (ngModelChange)="onProveedorChange($event)"
@@ -649,7 +649,7 @@
           [required]="true"
           placeholder="Seleccione un proveedor...">
         </app-dropdown>
-        <small class="text-muted" *ngIf="cotizacion.proveedor">
+        <small class="texto-descriptivo" *ngIf="cotizacion.proveedor">
           Código: {{ cotizacion.proveedor }} | RUC: {{ getProveedorRUC(cotizacion.proveedor) }}
         </small>
       </div>
@@ -700,7 +700,7 @@
       <h6>Detalle del Servicio</h6>
       <div class="row mb-3">
         <div class="col-md-12">
-          <label class="form-label">Descripción del Servicio <span class="text-danger">*</span></label>
+          <label class="form-label">Descripción del Servicio <span class="texto-error">*</span></label>
           <textarea class="form-control" rows="3" 
             [(ngModel)]="detalleCotizacion[0].descripcion"
             placeholder="Describa el servicio a cotizar..."></textarea>
@@ -708,7 +708,7 @@
       </div>
       <div class="row mb-3">
         <div class="col-md-6">
-          <label class="form-label">Monto Total del Servicio <span class="text-danger">*</span></label>
+          <label class="form-label">Monto Total del Servicio <span class="texto-error">*</span></label>
           <input pInputText type="number" class="form-control" 
             [(ngModel)]="detalleCotizacion[0].precioUnitario" 
             (input)="calcularMontos(detalleCotizacion[0]); calcularTotales()"
@@ -845,7 +845,7 @@
         <div class="card">
           <div class="card-header bg-light d-flex justify-content-between align-items-center">
             <h6 class="mb-0"><i class="bx bx-list-ul"></i> Detalle de Items</h6>
-            <span class="badge bg-primary">{{ cotizacionDetalle.detalle.length || 0 }} items</span>
+            <span class="badge badge-primario">{{ cotizacionDetalle.detalle.length || 0 }} items</span>
           </div>
           <div class="card-body p-0">
             <!-- Tabla para desktop -->
@@ -873,7 +873,7 @@
                     <td class="text-end"><strong>{{ formatearMoneda(item.total) }}</strong></td>
                   </tr>
                   <tr *ngIf="!cotizacionDetalle.detalle || cotizacionDetalle.detalle.length === 0">
-                    <td colspan="7" class="text-center text-muted py-3">No hay items registrados</td>
+                    <td colspan="7" class="text-center texto-descriptivo py-3">No hay items registrados</td>
                   </tr>
                 </tbody>
                 <tfoot class="table-light" *ngIf="cotizacionDetalle.detalle && cotizacionDetalle.detalle.length > 0">
@@ -890,35 +890,35 @@
               <div class="card mb-3" *ngFor="let item of cotizacionDetalle.detalle; let i = index" [class]="cotizacionDetalle.detalle.length === 0 ? 'd-none' : ''">
                 <div class="card-body">
                   <div class="d-flex justify-content-between align-items-start mb-2">
-                    <span class="badge bg-primary">{{ i + 1 }}</span>
-                    <small class="text-muted">{{ item.codigo }}</small>
+                    <span class="badge badge-primario">{{ i + 1 }}</span>
+                    <small class="texto-descriptivo">{{ item.codigo }}</small>
                   </div>
                   <h6 class="card-title mb-2">{{ item.descripcion }}</h6>
                   <div class="row">
                     <div class="col-6">
-                      <small class="text-muted d-block">Cantidad</small>
+                      <small class="texto-descriptivo d-block">Cantidad</small>
                       <strong>{{ item.cantidad }} {{ item.unidadMedida || 'UND' }}</strong>
                     </div>
                     <div class="col-6 text-end">
-                      <small class="text-muted d-block">P. Unitario</small>
+                      <small class="texto-descriptivo d-block">P. Unitario</small>
                       <strong>{{ formatearMoneda(item.precioUnitario) }}</strong>
                     </div>
                   </div>
                   <hr class="my-2">
                   <div class="d-flex justify-content-between">
                     <span class="fw-bold">Total:</span>
-                    <span class="fw-bold text-primary">{{ formatearMoneda(item.total) }}</span>
+                    <span class="fw-bold texto-primario">{{ formatearMoneda(item.total) }}</span>
                   </div>
                 </div>
               </div>
-              <div *ngIf="!cotizacionDetalle.detalle || cotizacionDetalle.detalle.length === 0" class="text-center text-muted py-3">
+              <div *ngIf="!cotizacionDetalle.detalle || cotizacionDetalle.detalle.length === 0" class="text-center texto-descriptivo py-3">
                 No hay items registrados
               </div>
-              <div class="card bg-light" *ngIf="cotizacionDetalle.detalle && cotizacionDetalle.detalle.length > 0">
+              <div class="card fondo-suave" *ngIf="cotizacionDetalle.detalle && cotizacionDetalle.detalle.length > 0">
                 <div class="card-body">
                   <div class="d-flex justify-content-between">
                     <span class="h5 mb-0">Total:</span>
-                    <span class="h5 mb-0 text-primary">{{ formatearMoneda(cotizacionDetalle.montoTotal || 0) }}</span>
+                    <span class="h5 mb-0 texto-primario">{{ formatearMoneda(cotizacionDetalle.montoTotal || 0) }}</span>
                   </div>
                 </div>
               </div>
@@ -941,7 +941,7 @@
 <p-dialog header="Nueva Cotización Manual" [(visible)]="modalNuevaCotizacionAbierto" [modal]="true" [style]="{width: '90vw'}" [maximizable]="true">
   <div class="row mb-3">
       <div class="col-md-12">
-        <label class="form-label">Proveedor <span class="text-danger">*</span></label>
+        <label class="form-label">Proveedor <span class="texto-error">*</span></label>
         <p-select 
           [options]="proveedores" 
           optionLabel="proveedor" 
@@ -951,7 +951,7 @@
           placeholder="Seleccione un proveedor..."
           class="w-100">
         </p-select>
-        <small class="text-muted" *ngIf="cotizacion.proveedor">
+        <small class="texto-descriptivo" *ngIf="cotizacion.proveedor">
           Código: {{ cotizacion.proveedor }} | RUC: {{ cotizacion.rucProveedor }}
         </small>
       </div>
@@ -1017,7 +1017,7 @@
   <h6>Detalle de Items</h6>
   
   <div class="d-flex justify-content-between align-items-center mb-2">
-    <span class="text-muted">Items: {{ detalleCotizacion.length }}</span>
+    <span class="texto-descriptivo">Items: {{ detalleCotizacion.length }}</span>
     <div class="d-flex gap-2">
       <button pButton type="button" class="p-button-sm p-button-primary" (click)="abrirModalAgregarItem()">
         <i class="bx bx-plus"></i> Agregar Item
@@ -1067,7 +1067,7 @@
     <ng-template pTemplate="emptymessage">
       <tr>
         <td colspan="8" class="text-center">
-          <p class="text-muted my-3">No hay items agregados. Click en "Agregar Item" para comenzar.</p>
+          <p class="texto-descriptivo my-3">No hay items agregados. Click en "Agregar Item" para comenzar.</p>
         </td>
       </tr>
     </ng-template>
@@ -1092,7 +1092,7 @@
 <p-dialog header="Agregar Item" [(visible)]="modalItemAbierto" [modal]="true" [style]="{width: '60vw'}">
   <div class="row mb-3">
     <div class="col-md-12">
-      <label class="form-label">Item <span class="text-danger">*</span></label>
+      <label class="form-label">Item <span class="texto-error">*</span></label>
       <app-dropdown 
         [(ngModel)]="lineaTemporal.codigo"
         (itemSelected)="onItemSelected($event)"
@@ -1121,7 +1121,7 @@
 
   <div class="row mb-3">
     <div class="col-md-3">
-      <label class="form-label">Cantidad <span class="text-danger">*</span></label>
+      <label class="form-label">Cantidad <span class="texto-error">*</span></label>
       <input pInputText type="number" class="form-control" [(ngModel)]="lineaTemporal.cantidad">
     </div>
     <div class="col-md-3">
@@ -1129,7 +1129,7 @@
       <input pInputText type="text" class="form-control" [(ngModel)]="lineaTemporal.unidadMedida" placeholder="UND">
     </div>
     <div class="col-md-3">
-      <label class="form-label">Precio Unitario <span class="text-danger">*</span></label>
+      <label class="form-label">Precio Unitario <span class="texto-error">*</span></label>
       <input pInputText type="number" class="form-control" [(ngModel)]="lineaTemporal.precioUnitario"
         (input)="calcularMontos(lineaTemporal)">
     </div>
@@ -1172,7 +1172,7 @@
 <p-dialog header="Agregar Comodity" [(visible)]="modalComodityAbierto" [modal]="true" [style]="{width: '60vw'}">
   <div class="row mb-3">
     <div class="col-md-12">
-      <label class="form-label">Comodity <span class="text-danger">*</span></label>
+      <label class="form-label">Comodity <span class="texto-error">*</span></label>
       <app-dropdown 
         (itemSelected)="onComoditySelected($event)"
         [editable]="true"
@@ -1190,7 +1190,7 @@
   <!-- Selector de Subcomodity (aparece después de seleccionar comodity) -->
   <div class="row mb-3" *ngIf="comoditySeleccionado && subComoditiesFiltrados.length > 0">
     <div class="col-md-12">
-      <label class="form-label">Subcomodity <span class="text-danger">*</span></label>
+      <label class="form-label">Subcomodity <span class="texto-error">*</span></label>
       <app-dropdown 
         (itemSelected)="onSubComoditySelected($event)"
         [editable]="true"
@@ -1227,7 +1227,7 @@
 
   <div class="row mb-3">
     <div class="col-md-3">
-      <label class="form-label">Cantidad <span class="text-danger">*</span></label>
+      <label class="form-label">Cantidad <span class="texto-error">*</span></label>
       <input pInputText type="number" class="form-control" [(ngModel)]="lineaTemporal.cantidad">
     </div>
     <div class="col-md-3">
@@ -1235,7 +1235,7 @@
       <input pInputText type="text" class="form-control" [(ngModel)]="lineaTemporal.unidadMedida" placeholder="UND">
     </div>
     <div class="col-md-3">
-      <label class="form-label">Precio Unitario <span class="text-danger">*</span></label>
+      <label class="form-label">Precio Unitario <span class="texto-error">*</span></label>
       <input pInputText type="number" class="form-control" [(ngModel)]="lineaTemporal.precioUnitario"
         (input)="calcularMontos(lineaTemporal)">
     </div>

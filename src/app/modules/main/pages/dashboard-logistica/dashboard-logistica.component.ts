@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
@@ -10,9 +10,10 @@ import { take } from 'rxjs/operators';
 import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 import { ChartModule } from 'primeng/chart';
-
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
+import { RippleModule } from 'primeng/ripple';
+import { TooltipModule } from 'primeng/tooltip';
 import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
 
 @Component({
@@ -23,11 +24,14 @@ import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento
     FormsModule,
     TableModule,
     ButtonModule,
+    RippleModule,
+    TooltipModule,
     CardModule,
     DialogModule,
     ChartModule,
     NumeroRequerimientoPipe
   ],
+  providers: [DatePipe],
   templateUrl: './dashboard-logistica.component.html',
   styleUrls: ['./dashboard-logistica.component.scss']
 })
@@ -129,6 +133,26 @@ export class DashboardLogisticaComponent implements OnInit {
   // Loading
   loading: boolean = false;
 
+  // ==================== REPORTES ====================
+  // Estado de modales de reportes
+  modalReporteComprasAbierto: boolean = false;
+  modalReporteInventarioAbierto: boolean = false;
+  modalReporteProveedoresAbierto: boolean = false;
+  modalReporteTiemposAbierto: boolean = false;
+  modalReporteGastosAbierto: boolean = false;
+  modalReporteConsolidadoAbierto: boolean = false;
+
+  // Loading de reportes
+  loadingReporte: boolean = false;
+
+  // Datos de reportes
+  reporteComprasData: any = null;
+  reporteInventarioData: any = null;
+  reporteProveedoresData: any[] = [];
+  reporteTiemposData: any = null;
+  reporteGastosData: any[] = [];
+  reporteConsolidadoData: any = null;
+
   constructor(
     private dexieService: DexieService,
     private alertService: AlertService,
@@ -203,7 +227,7 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async calcularKPIsRequerimientos() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.ruc || this.empresaSeleccionada?.id || '000010';
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
       const payload = {
         idEmpresa: idEmpresa,
         fechaInicio: this.obtenerFechaInicio(),
@@ -254,7 +278,7 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async generarGraficaRequerimientos() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.ruc || this.empresaSeleccionada?.id || '000010';
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
       const anio = new Date().getFullYear();
       const payload = {
         idEmpresa: idEmpresa,
@@ -387,7 +411,7 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async calcularSeguimientoOrdenes() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.ruc || this.empresaSeleccionada?.id || '000010';
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
       const payload = {
         idEmpresa: idEmpresa
       };
@@ -426,7 +450,7 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async obtenerEntregasHoy() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.ruc || this.empresaSeleccionada?.id || '000010';
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
       const payload = {
         idEmpresa: idEmpresa,
         fecha: this.obtenerFechaFin()
@@ -475,7 +499,7 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async calcularEstadoAlmacen() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.ruc || this.empresaSeleccionada?.id || '000010';
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
       const payload = {
         idEmpresa: idEmpresa,
         idAlmacen: null
@@ -513,7 +537,7 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async calcularResumenCompras() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.ruc || this.empresaSeleccionada?.id || '000010';
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
       const payload = {
         idEmpresa: idEmpresa,
         fechaInicio: this.obtenerFechaInicio(),
@@ -553,7 +577,7 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async obtenerGastosMensuales() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.ruc || this.empresaSeleccionada?.id || '000010';
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
       const anio = new Date().getFullYear();
       const payload = {
         idEmpresa: idEmpresa,
@@ -608,7 +632,7 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async cargarDatosTabsHijos() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.ruc || this.empresaSeleccionada?.id || '000010';
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
       const payload = {
         idEmpresa: idEmpresa,
         pagina: 1,
@@ -762,7 +786,7 @@ export class DashboardLogisticaComponent implements OnInit {
       this.requerimientoExpandido = null;
       this.paginaActualModal = 1;
 
-      const idEmpresa = this.empresaSeleccionada?.ruc || this.empresaSeleccionada?.id || '000010';
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
       const payload = {
         idEmpresa: idEmpresa,
         estado: estado,
@@ -872,22 +896,22 @@ export class DashboardLogisticaComponent implements OnInit {
 
   obtenerClaseEstado(estado: string): string {
     const clases: { [key: string]: string } = {
-      'Pendiente': 'badge-warning',
-      'Aprobada': 'badge-success',
-      'En Tránsito': 'badge-info',
-      'Recibida': 'badge-primary',
-      'stockDisponible': 'badge-success',
-      'stockCritico': 'badge-warning',
-      'sinStock': 'badge-danger',
+      'Pendiente': 'badge-estado estado-pendiente',
+      'Aprobada': 'badge-estado estado-confirmado',
+      'En Tránsito': 'badge-estado estado-enprogreso',
+      'Recibida': 'badge-estado estado-confirmado',
+      'stockDisponible': 'badge-estado estado-confirmado',
+      'stockCritico': 'badge-estado estado-advertencia',
+      'sinStock': 'badge-estado estado-peligro',
       // Estados de requerimientos
-      'PENDIENTE': 'bg-danger',
-      'CONSOLIDADO': 'bg-success',
-      'DESPACHADO': 'bg-primary',
-      'APROBADO': 'bg-warning text-dark',
-      'RECHAZADO': 'bg-secondary',
-      'ANULADO': 'bg-dark'
+      'PENDIENTE': 'badge-estado estado-pendiente',
+      'CONSOLIDADO': 'badge-estado estado-confirmado',
+      'DESPACHADO': 'badge-estado estado-primario',
+      'APROBADO': 'badge-estado estado-advertencia',
+      'RECHAZADO': 'badge-estado estado-inactivo',
+      'ANULADO': 'badge-estado estado-inactivo'
     };
-    return clases[estado] || 'badge-secondary';
+    return clases[estado] || 'badge-estado estado-inactivo';
   }
 
   /**
@@ -898,5 +922,192 @@ export class DashboardLogisticaComponent implements OnInit {
       (acc, r) => acc + (Number(r.totalItems) || 0),
       0
     );
+  }
+
+  // ==================== MÉTODOS DE REPORTES ====================
+
+  /**
+   * Abre el modal del reporte de compras
+   */
+  async abrirReporteCompras() {
+    this.modalReporteComprasAbierto = true;
+    this.loadingReporte = true;
+    this.reporteComprasData = null;
+
+    try {
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const payload = {
+        idEmpresa: idEmpresa,
+        fechaInicio: this.obtenerFechaInicio(),
+        fechaFin: this.obtenerFechaFin()
+      };
+
+      const response: any = await this.dashboardLogisticaService.obtenerReporteCompras(payload).toPromise();
+      this.reporteComprasData = response;
+    } catch (error) {
+      console.error('Error al obtener reporte de compras:', error);
+      this.alertService.showAlert('Error', 'Error al cargar el reporte de compras.', 'error');
+    } finally {
+      this.loadingReporte = false;
+    }
+  }
+
+  cerrarReporteCompras() {
+    this.modalReporteComprasAbierto = false;
+    this.reporteComprasData = null;
+  }
+
+  /**
+   * Abre el modal del reporte de inventario
+   */
+  async abrirReporteInventario() {
+    this.modalReporteInventarioAbierto = true;
+    this.loadingReporte = true;
+    this.reporteInventarioData = null;
+
+    try {
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const payload = {
+        idEmpresa: idEmpresa,
+        idAlmacen: null
+      };
+
+      const response: any = await this.dashboardLogisticaService.obtenerReporteInventario(payload).toPromise();
+      this.reporteInventarioData = response;
+    } catch (error) {
+      console.error('Error al obtener reporte de inventario:', error);
+      this.alertService.showAlert('Error', 'Error al cargar el reporte de inventario.', 'error');
+    } finally {
+      this.loadingReporte = false;
+    }
+  }
+
+  cerrarReporteInventario() {
+    this.modalReporteInventarioAbierto = false;
+    this.reporteInventarioData = null;
+  }
+
+  /**
+   * Abre el modal del reporte de proveedores
+   */
+  async abrirReporteProveedores() {
+    this.modalReporteProveedoresAbierto = true;
+    this.loadingReporte = true;
+    this.reporteProveedoresData = [];
+
+    try {
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const payload = {
+        idEmpresa: idEmpresa,
+        fechaInicio: this.obtenerFechaInicio(),
+        fechaFin: this.obtenerFechaFin()
+      };
+
+      const response: any = await this.dashboardLogisticaService.obtenerReporteProveedores(payload).toPromise();
+      this.reporteProveedoresData = Array.isArray(response) ? response : (response || []);
+    } catch (error) {
+      console.error('Error al obtener reporte de proveedores:', error);
+      this.alertService.showAlert('Error', 'Error al cargar el reporte de proveedores.', 'error');
+    } finally {
+      this.loadingReporte = false;
+    }
+  }
+
+  cerrarReporteProveedores() {
+    this.modalReporteProveedoresAbierto = false;
+    this.reporteProveedoresData = [];
+  }
+
+  /**
+   * Abre el modal del reporte de tiempos
+   */
+  async abrirReporteTiempos() {
+    this.modalReporteTiemposAbierto = true;
+    this.loadingReporte = true;
+    this.reporteTiemposData = null;
+
+    try {
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const payload = {
+        idEmpresa: idEmpresa,
+        fechaInicio: this.obtenerFechaInicio(),
+        fechaFin: this.obtenerFechaFin()
+      };
+
+      const response: any = await this.dashboardLogisticaService.obtenerReporteTiempos(payload).toPromise();
+      this.reporteTiemposData = response;
+    } catch (error) {
+      console.error('Error al obtener reporte de tiempos:', error);
+      this.alertService.showAlert('Error', 'Error al cargar el reporte de tiempos.', 'error');
+    } finally {
+      this.loadingReporte = false;
+    }
+  }
+
+  cerrarReporteTiempos() {
+    this.modalReporteTiemposAbierto = false;
+    this.reporteTiemposData = null;
+  }
+
+  /**
+   * Abre el modal del reporte de gastos
+   */
+  async abrirReporteGastos() {
+    this.modalReporteGastosAbierto = true;
+    this.loadingReporte = true;
+    this.reporteGastosData = [];
+
+    try {
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const anio = new Date().getFullYear();
+      const payload = {
+        idEmpresa: idEmpresa,
+        anio: anio
+      };
+
+      const response: any = await this.dashboardLogisticaService.obtenerReporteGastos(payload).toPromise();
+      this.reporteGastosData = Array.isArray(response) ? response : (response || []);
+    } catch (error) {
+      console.error('Error al obtener reporte de gastos:', error);
+      this.alertService.showAlert('Error', 'Error al cargar el reporte de gastos.', 'error');
+    } finally {
+      this.loadingReporte = false;
+    }
+  }
+
+  cerrarReporteGastos() {
+    this.modalReporteGastosAbierto = false;
+    this.reporteGastosData = [];
+  }
+
+  /**
+   * Abre el modal del reporte consolidado
+   */
+  async abrirReporteConsolidado() {
+    this.modalReporteConsolidadoAbierto = true;
+    this.loadingReporte = true;
+    this.reporteConsolidadoData = null;
+
+    try {
+      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const payload = {
+        idEmpresa: idEmpresa,
+        fechaInicio: this.obtenerFechaInicio(),
+        fechaFin: this.obtenerFechaFin()
+      };
+
+      const response: any = await this.dashboardLogisticaService.obtenerReporteConsolidado(payload).toPromise();
+      this.reporteConsolidadoData = response;
+    } catch (error) {
+      console.error('Error al obtener reporte consolidado:', error);
+      this.alertService.showAlert('Error', 'Error al cargar el reporte consolidado.', 'error');
+    } finally {
+      this.loadingReporte = false;
+    }
+  }
+
+  cerrarReporteConsolidado() {
+    this.modalReporteConsolidadoAbierto = false;
+    this.reporteConsolidadoData = null;
   }
 }

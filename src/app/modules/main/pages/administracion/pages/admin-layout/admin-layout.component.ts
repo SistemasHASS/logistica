@@ -128,6 +128,8 @@ export class AdminLayoutComponent implements OnInit {
       'admin-config-smtp': 'Configuración SMTP',
       'admin-plantilla-correo': 'Plantillas de Correo',
       'admin-plantilla-pdf': 'Plantillas PDF',
+      'configuracion-colores': 'Configuracion del Sistema',
+      'admin-version-api': 'API Versionado',
     };
 
     this.currentPath = pathMap[currentUrl[currentUrl.length - 1]] || '';

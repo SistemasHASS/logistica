@@ -34,7 +34,7 @@
       font-size: 0.9rem;
 
       i {
-        color: #0d6efd;
+        color: var(--app-primary);
         width: 20px;
       }
     }
@@ -49,7 +49,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background-color: #f8f9fa;
+  background-color: var(--app-light);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
@@ -62,24 +62,24 @@
   }
 
   &.table-hover tbody tr:hover {
-    background-color: rgba(13, 110, 253, 0.05);
+    background-color: rgba(var(--app-primary-rgb), 0.05);
   }
+}
 
-  // Colores para estados de stock
-  &-danger {
-    background-color: #f8d7da !important;
-    border-left: 4px solid #dc3545;
-  }
+// Filas semánticas para estados de stock
+.fila-alerta {
+  background-color: rgba(var(--app-danger-rgb), 0.1) !important;
+  border-left: 4px solid var(--app-danger);
+}
 
-  &-warning {
-    background-color: #fff3cd !important;
-    border-left: 4px solid #ffc107;
-  }
+.fila-advertencia {
+  background-color: rgba(var(--app-warning-rgb), 0.1) !important;
+  border-left: 4px solid var(--app-warning);
+}
 
-  &-success {
-    background-color: #d1e7dd !important;
-    border-left: 4px solid #198754;
-  }
+.fila-confirmada {
+  background-color: rgba(var(--app-success-rgb), 0.1) !important;
+  border-left: 4px solid var(--app-success);
 }
 
 .form-control-sm {
@@ -89,11 +89,11 @@
 }
 
 code {
-  background-color: #f1f3f5;
+  background-color: var(--app-gray-100);
   padding: 0.2em 0.6em;
   border-radius: 4px;
   font-size: 0.9em;
-  color: #e83e8c;
+  color: var(--app-danger);
   font-weight: 500;
 }
 
@@ -158,7 +158,7 @@ code {
 }
 
 .breadcrumb {
-  background: #f8f9fa;
+  background: var(--app-light);
   padding: 0.75rem 1rem;
   border-radius: 8px;
   margin-bottom: 1.5rem;
@@ -167,7 +167,7 @@ code {
     font-size: 0.9rem;
 
     &.active {
-      color: #6c757d;
+      color: var(--app-secondary);
       font-weight: 500;
     }
   }
@@ -193,9 +193,33 @@ code {
   }
 
   .modal-footer {
-    border-top: 1px solid #dee2e6;
+    border-top: 1px solid var(--app-gray-300);
     padding: 1rem 1.5rem;
   }
+}
+
+// Fondos semánticos
+.fondo-suave {
+  background-color: var(--app-light) !important;
+}
+
+.fondo-primario {
+  background-color: var(--app-primary) !important;
+  color: white;
+}
+
+.fondo-informativo {
+  background-color: var(--app-info) !important;
+  color: white;
+}
+
+// Textos semánticos
+.texto-descriptivo {
+  color: var(--app-secondary);
+}
+
+.texto-error {
+  color: var(--app-danger);
 }
 
 // Responsive
@@ -232,7 +256,7 @@ code {
   }
 
   .card {
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--app-gray-300);
     box-shadow: none;
   }
 

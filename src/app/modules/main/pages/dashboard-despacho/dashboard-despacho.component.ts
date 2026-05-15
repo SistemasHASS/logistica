@@ -258,13 +258,13 @@ export class DashboardDespachoComponent implements OnInit {
   getEstadoClass(estado: string): string {
     switch (estado) {
       case 'COMPLETADO':
-        return 'badge bg-success';
+        return 'badge-estado estado-confirmado';
       case 'PENDIENTE':
-        return 'badge bg-warning';
+        return 'badge-estado estado-pendiente';
       case 'PARCIAL':
-        return 'badge bg-info';
+        return 'badge-estado estado-parcial';
       default:
-        return 'badge bg-secondary';
+        return 'badge-estado estado-inactivo';
     }
   }
 

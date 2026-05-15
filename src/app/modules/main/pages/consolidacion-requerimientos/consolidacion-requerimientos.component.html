@@ -240,14 +240,14 @@
           styleClass="p-datatable-sm p-datatable-striped" [globalFilterFields]="['item','descripcion','familia','categoria']">
           <ng-template pTemplate="caption">
             <div class="d-flex gap-2 align-items-center mb-2">
-              <input type="text" pInputText [(ngModel)]="filtroItem" placeholder="Buscar por item, descripción, familia o categoría"
+              <input type="text" pInputText [(ngModel)]="filtroItem" (ngModelChange)="aplicarFiltros()" placeholder="Buscar por item, descripción, familia o categoría"
                 style="width: 300px;">
               <p-select [(ngModel)]="filtroEmpresa" [options]="empresaOpciones" optionLabel="label" optionValue="value"
-                placeholder="Empresa" style="width: 150px;">
+                (ngModelChange)="aplicarFiltros()" placeholder="Empresa" style="width: 150px;">
               </p-select>
-              <p-select [(ngModel)]="filtroTipo" [options]="tipoOpciones" optionLabel="label" optionValue="value"
+              <!-- <p-select [(ngModel)]="filtroTipo" [options]="tipoOpciones" optionLabel="label" optionValue="value"
                 placeholder="Tipo" style="width: 120px;">
-              </p-select>
+              </p-select> -->
             </div>
           </ng-template>
           <ng-template pTemplate="header">
@@ -258,15 +258,16 @@
               </th>
               <th pSortableColumn="Empresa">Empresa <p-sortIcon field="Empresa"></p-sortIcon></th>
               <th pSortableColumn="fechaCreacion">Fecha <p-sortIcon field="fechaCreacion"></p-sortIcon></th>
+              <th pSortableColumn="requerimientoOrigen">Req. Origen <p-sortIcon field="requerimientoOrigen"></p-sortIcon></th>
               <th pSortableColumn="item">Item <p-sortIcon field="item"></p-sortIcon></th>
               <th pSortableColumn="descripcion">Descripción <p-sortIcon field="descripcion"></p-sortIcon></th>
               <th pSortableColumn="familia">Familia <p-sortIcon field="familia"></p-sortIcon></th>
               <th pSortableColumn="categoria">Categoría <p-sortIcon field="categoria"></p-sortIcon></th>
               <th pSortableColumn="cantidad" class="text-center">Cantidad <p-sortIcon field="cantidad"></p-sortIcon></th>
               <th>Unidad</th>
-              <th pSortableColumn="tipoRequerimiento">Tipo <p-sortIcon field="tipoRequerimiento"></p-sortIcon></th>
-              <th pSortableColumn="requerimientoOrigen">Req. Origen <p-sortIcon field="requerimientoOrigen"></p-sortIcon></th>
-              <th>Estado</th>
+              <!-- <th pSortableColumn="tipoRequerimiento">Tipo <p-sortIcon field="tipoRequerimiento"></p-sortIcon></th> -->
+              <!-- <th pSortableColumn="requerimientoOrigen">Req. Origen <p-sortIcon field="requerimientoOrigen"></p-sortIcon></th> -->
+              <!-- <th>Estado</th> -->
               <th pSortableColumn="nombreSolicitante">Usuario <p-sortIcon field="nombreSolicitante"></p-sortIcon></th>
               <th>Area</th>
               <th>Acciones</th>
@@ -281,21 +282,22 @@
               <td>{{ item.empresa }}</td>
               <!-- <td>{{ item.fechaCreacion | date:'dd/MM/yyyy hh:mm:ss a' }}</td> -->
               <td>{{ item.fechaAprobacion | date:'dd/MM/yyyy' }}</td>
+              <td>{{ formatearCodigoRequerimiento(item.requerimientoOrigen) }}</td>
               <td><strong>{{ item.item }}</strong></td>
               <td>{{ item.descripcion }}</td>
               <td>{{ item.familia || '-' }}</td>
               <td>{{ item.categoria || '-' }}</td>
               <td class="text-center"><strong>{{ item.cantidad }}</strong></td>
               <td>{{ item.unidad }}</td>
-              <td>
+              <!-- <td>
                 <span [ngClass]="getTipoBadgeClass(item.tipoRequerimiento)">
                   {{ item.tipoRequerimiento }}
                 </span>
-              </td>
-              <td>{{ item.requerimientoOrigen }}</td>
-              <td>
+              </td> -->
+              <!-- <td>{{ item.requerimientoOrigen }}</td> -->
+              <!-- <td>
                 <span class="badge bg-warning text-dark">{{ item.estadoDetalleConsolidacion }}</span>
-              </td>
+              </td> -->
               <td>{{ item.nombreSolicitante }}</td>
               <td>{{ item.area }}</td>
               <td>
@@ -797,7 +799,7 @@
               <th class="text-center">Total Ítems</th>
               <th>Proceso</th>
               <th>Observaciones</th>
-              <th style="width: 180px;">Acciones</th>
+              <th style="width: 220px;">Acciones</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-cons>
@@ -815,7 +817,7 @@
               </td>
               <td>{{ cons.observaciones || '-' }}</td>
               <td>
-                <div class="d-flex gap-1">
+                <div class="d-flex gap-1 flex-wrap">
                   <button class="btn btn-sm btn-info" (click)="verDetalle(cons)" title="Ver Detalle">
                     <i class="icon icon-eye"></i>
                   </button>
@@ -823,8 +825,18 @@
                     title="Generar Solicitud de Cotización" *ngIf="cons.estado === 'CONSOLIDADO'">
                     <i class="icon icon-box"></i>
                   </button>
+                  <button class="btn btn-sm btn-success" (click)="generarOCDesdeConsolidacion(cons)"
+                    title="Generar OC (Orden de Compra)"
+                    *ngIf="cons.estado === 'CONSOLIDADO' && cons.tipoConsolidacion !== 'SERVICIO' && cons.estadoProceso !== 'OC_APROBACION' && cons.estadoProceso !== 'OC_APROBADA'">
+                    OC
+                  </button>
+                  <button class="btn btn-sm btn-warning" (click)="generarOSDesdeConsolidacion(cons)"
+                    title="Generar OS (Orden de Servicio)"
+                    *ngIf="cons.estado === 'CONSOLIDADO' && cons.tipoConsolidacion === 'SERVICIO' && cons.estadoProceso !== 'OS_APROBACION' && cons.estadoProceso !== 'OS_APROBADA'">
+                    OS
+                  </button>
                   <button class="btn btn-sm btn-danger" (click)="anularConsolidacion(cons)" title="Anular Consolidación"
-                    *ngIf="cons.estado !== 'ANULADO'">
+                    *ngIf="cons.estado !== 'ANULADO' && cons.estado !== 'LIBERADO'">
                     <i class="icon icon-x"></i>
                   </button>
                 </div>
@@ -1002,7 +1014,7 @@
       <h6 class="mb-3">Líneas Consolidadas:</h6>
       <div class="table-responsive">
         <!-- Tabla para ITEMS -->
-        <table class="table table-bordered table-sm" *ngIf="consolidacionSeleccionada.detalles && consolidacionSeleccionada.detalles.length > 0 && consolidacionSeleccionada.detalles[0].tipo !== 'COMMODITY'">
+        <table class="table table-bordered table-sm" *ngIf="consolidacionSeleccionada.tipoConsolidacion !== 'SERVICIO'">
           <thead class="table-light">
             <tr>
               <th>#</th>
@@ -1034,7 +1046,7 @@
         </table>
 
         <!-- Tabla para SERVICIOS -->
-        <table class="table table-bordered table-sm" *ngIf="consolidacionSeleccionada.detalles && consolidacionSeleccionada.detalles.length > 0 && consolidacionSeleccionada.detalles[0].tipo === 'COMMODITY'">
+        <table class="table table-bordered table-sm" *ngIf="consolidacionSeleccionada.tipoConsolidacion === 'SERVICIO'">
           <thead class="table-light">
             <tr>
               <th>#</th>
@@ -1219,6 +1231,396 @@
 
     <div class="modal-footer">
       <button class="btn btn-secondary" (click)="cerrarModalDetallePendiente()">Cerrar</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================================================ -->
+<!-- MODAL: CREAR ORDEN DE COMPRA DESDE CONSOLIDACION -->
+<!-- ================================================ -->
+<div class="modal-backdrop" *ngIf="modalCrearOCAbierto" style="z-index:1060;">
+  <div class="modal-content-large" style="max-width:900px; max-height:90vh; overflow-y:auto;">
+    <div class="modal-header-custom bg-success text-white">
+      <h5>
+        <i class="icon icon-shopping-cart me-2"></i>
+        Nueva Orden de Compra — Consolidación {{ consolidacionParaOC?.codigo }}
+      </h5>
+      <button class="btn-close-custom text-white" (click)="cerrarModalCrearOC()">
+        <i class="icon icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-custom">
+
+      <!-- DATOS DEL PROVEEDOR -->
+      <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-header bg-light fw-semibold">
+          <i class="icon icon-building me-1"></i> Datos del Proveedor
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label form-label-sm">Código Proveedor <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOC.proveedor"
+                placeholder="P001" />
+            </div>
+            <div class="col-md-5">
+              <label class="form-label form-label-sm">Nombre Proveedor <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOC.nombreProveedor"
+                placeholder="Razón Social" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">RUC</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOC.rucProveedor"
+                placeholder="20XXXXXXXXX" maxlength="11" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Teléfono</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOC.telefonoProveedor" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Email</label>
+              <input type="email" class="form-control form-control-sm" [(ngModel)]="formOC.emailProveedor" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Dirección</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOC.direccionProveedor" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONDICIONES DE LA OC -->
+      <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-header bg-light fw-semibold">
+          <i class="icon icon-file-text me-1"></i> Condiciones de la Orden
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-2">
+              <label class="form-label form-label-sm">Moneda <span class="text-danger">*</span></label>
+              <select class="form-select form-select-sm" [(ngModel)]="formOC.moneda">
+                <option value="PEN">PEN (S/)</option>
+                <option value="USD">USD ($)</option>
+              </select>
+            </div>
+            <div class="col-md-2" *ngIf="formOC.moneda === 'USD'">
+              <label class="form-label form-label-sm">Tipo de Cambio</label>
+              <input type="number" class="form-control form-control-sm" [(ngModel)]="formOC.tipoCambio"
+                step="0.01" min="1" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm">Almacén Destino</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOC.almacen"
+                placeholder="ALM01" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm">Lugar de Entrega</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOC.lugarEntrega" />
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm">Fecha Entrega Estimada</label>
+              <input type="date" class="form-control form-control-sm" [(ngModel)]="formOC.fechaEntregaEstimada" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm">Condiciones de Pago</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOC.condicionesPago"
+                placeholder="30 días, contado..." />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm">Forma de Pago</label>
+              <select class="form-select form-select-sm" [(ngModel)]="formOC.formaPago">
+                <option value="Transferencia">Transferencia</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Crédito">Crédito</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label form-label-sm">Observaciones</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOC.observaciones" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLA DE ITEMS -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <span class="fw-semibold"><i class="icon icon-list me-1"></i> Ítems de la Orden</span>
+          <span class="badge bg-success fs-6">
+            Total (c/IGV): {{ formOC.moneda === 'USD' ? '$' : 'S/' }} {{ calcularTotalOC() | number:'1.2-2' }}
+          </span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th style="width:180px;">Código / Descripción</th>
+                  <th class="text-center" style="width:80px;">Cantidad</th>
+                  <th style="width:60px;">UM</th>
+                  <th class="text-end" style="width:110px;">Precio Unit. <span class="text-danger">*</span></th>
+                  <th class="text-end" style="width:90px;">Descuento</th>
+                  <th class="text-end" style="width:100px;">Subtotal s/IGV</th>
+                  <th style="width:100px;">Proyecto</th>
+                  <th style="width:90px;">CECO</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of formOC.items; let i = index">
+                  <td>
+                    <div class="fw-semibold small">{{ item.codigo }}</div>
+                    <div class="text-muted" style="font-size:.75rem;">{{ item.descripcion }}</div>
+                  </td>
+                  <td class="text-center">{{ item.cantidad | number:'1.2-2' }}</td>
+                  <td>{{ item.unidadMedida }}</td>
+                  <td>
+                    <input type="number" class="form-control form-control-sm text-end"
+                      [(ngModel)]="item.precioUnitario" min="0" step="0.01"
+                      [class.is-invalid]="!item.precioUnitario || item.precioUnitario <= 0"
+                      style="min-width:90px;" />
+                  </td>
+                  <td>
+                    <input type="number" class="form-control form-control-sm text-end"
+                      [(ngModel)]="item.descuento" min="0" step="0.01" style="min-width:70px;" />
+                  </td>
+                  <td class="text-end fw-semibold">
+                    {{ ((item.cantidad * item.precioUnitario) - (item.descuento || 0)) | number:'1.2-2' }}
+                  </td>
+                  <td>
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="item.proyecto"
+                      style="min-width:80px;" />
+                  </td>
+                  <td>
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="item.ceco"
+                      style="min-width:70px;" />
+                  </td>
+                </tr>
+                <tr *ngIf="formOC.items.length === 0">
+                  <td colspan="8" class="text-center text-muted py-3">
+                    No hay ítems. La consolidación no tiene detalles cargados.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <div class="me-auto text-muted small">
+        <i class="icon icon-info-circle me-1"></i>
+        La OC se creará con estado <strong>PENDIENTE</strong> y será enviada a aprobación.
+      </div>
+      <button class="btn btn-secondary me-2" (click)="cerrarModalCrearOC()">Cancelar</button>
+      <button class="btn btn-success" (click)="confirmarCrearOC()" [disabled]="loading">
+        <i class="icon icon-check me-1"></i>
+        Crear OC y Enviar a Aprobación
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================================================ -->
+<!-- MODAL: CREAR ORDEN DE SERVICIO DESDE CONSOLIDACION -->
+<!-- ================================================ -->
+<div class="modal-backdrop" *ngIf="modalCrearOSAbierto" style="z-index:1060;">
+  <div class="modal-content-large" style="max-width:900px; max-height:90vh; overflow-y:auto;">
+    <div class="modal-header-custom bg-warning text-dark">
+      <h5>
+        <i class="icon icon-tool me-2"></i>
+        Nueva Orden de Servicio — Consolidación {{ consolidacionParaOS?.codigo }}
+      </h5>
+      <button class="btn-close-custom" (click)="cerrarModalCrearOS()">
+        <i class="icon icon-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-custom">
+
+      <!-- DATOS DEL PROVEEDOR -->
+      <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-header bg-light fw-semibold">
+          <i class="icon icon-building me-1"></i> Datos del Proveedor de Servicio
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label form-label-sm">Código Proveedor <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOS.proveedor"
+                placeholder="P001" />
+            </div>
+            <div class="col-md-5">
+              <label class="form-label form-label-sm">Nombre / Razón Social <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOS.nombreProveedor" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">RUC</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOS.rucProveedor"
+                maxlength="11" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Contacto</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOS.contactoProveedor" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Teléfono</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOS.telefonoProveedor" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Email</label>
+              <input type="email" class="form-control form-control-sm" [(ngModel)]="formOS.emailProveedor" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATOS DEL SERVICIO -->
+      <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-header bg-light fw-semibold">
+          <i class="icon icon-clipboard me-1"></i> Datos del Servicio
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Tipo de Servicio</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOS.tipoServicio"
+                placeholder="Mantenimiento, Transporte..." />
+            </div>
+            <div class="col-md-8">
+              <label class="form-label form-label-sm">Descripción</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOS.descripcion" />
+            </div>
+            <div class="col-md-12">
+              <label class="form-label form-label-sm">Alcance / Especificaciones</label>
+              <textarea class="form-control form-control-sm" [(ngModel)]="formOS.alcance" rows="2"></textarea>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm">Fecha Inicio</label>
+              <input type="date" class="form-control form-control-sm" [(ngModel)]="formOS.fechaInicioServicio" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm">Fecha Fin</label>
+              <input type="date" class="form-control form-control-sm" [(ngModel)]="formOS.fechaFinServicio" />
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm">Plazo (días)</label>
+              <input type="number" class="form-control form-control-sm" [(ngModel)]="formOS.plazoEjecucion" min="1" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Ubicación del Servicio</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOS.ubicacionServicio" />
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm">Moneda</label>
+              <select class="form-select form-select-sm" [(ngModel)]="formOS.moneda">
+                <option value="PEN">PEN (S/)</option>
+                <option value="USD">USD ($)</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm">Condiciones de Pago</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOS.condicionesPago"
+                placeholder="50% adelanto, 50% al fin" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm">Forma de Pago</label>
+              <select class="form-select form-select-sm" [(ngModel)]="formOS.formaPago">
+                <option value="Transferencia">Transferencia</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Efectivo">Efectivo</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm">Centro de Costo</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOS.centroCosto" />
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm">Proyecto</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOS.proyecto" />
+            </div>
+            <div class="col-md-12">
+              <label class="form-label form-label-sm">Observaciones</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="formOS.observaciones" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLA DE ITEMS / SERVICIOS -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <span class="fw-semibold"><i class="icon icon-list me-1"></i> Ítems / Servicios</span>
+          <span class="badge bg-warning text-dark fs-6">
+            Total: {{ formOS.moneda === 'USD' ? '$' : 'S/' }} {{ calcularTotalOS() | number:'1.2-2' }}
+          </span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Descripción del Servicio</th>
+                  <th>Especificaciones</th>
+                  <th class="text-center" style="width:80px;">Cantidad</th>
+                  <th style="width:70px;">UM</th>
+                  <th class="text-end" style="width:120px;">Precio Unit. <span class="text-danger">*</span></th>
+                  <th class="text-end" style="width:100px;">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of formOS.items; let i = index">
+                  <td>
+                    <input type="text" class="form-control form-control-sm"
+                      [(ngModel)]="item.descripcionServicio" />
+                  </td>
+                  <td>
+                    <input type="text" class="form-control form-control-sm"
+                      [(ngModel)]="item.especificaciones" />
+                  </td>
+                  <td class="text-center">{{ item.cantidad | number:'1.2-2' }}</td>
+                  <td>
+                    <input type="text" class="form-control form-control-sm"
+                      [(ngModel)]="item.unidadMedida" style="width:60px;" />
+                  </td>
+                  <td>
+                    <input type="number" class="form-control form-control-sm text-end"
+                      [(ngModel)]="item.precioUnitario" min="0" step="0.01"
+                      [class.is-invalid]="!item.precioUnitario || item.precioUnitario <= 0"
+                      style="min-width:100px;" />
+                  </td>
+                  <td class="text-end fw-semibold">
+                    {{ (item.cantidad * item.precioUnitario) | number:'1.2-2' }}
+                  </td>
+                </tr>
+                <tr *ngIf="formOS.items.length === 0">
+                  <td colspan="6" class="text-center text-muted py-3">
+                    No hay ítems. La consolidación no tiene detalles cargados.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <div class="me-auto text-muted small">
+        <i class="icon icon-info-circle me-1"></i>
+        La OS se creará con estado <strong>PENDIENTE</strong> y será enviada a aprobación.
+      </div>
+      <button class="btn btn-secondary me-2" (click)="cerrarModalCrearOS()">Cancelar</button>
+      <button class="btn btn-warning" (click)="confirmarCrearOS()" [disabled]="loading">
+        <i class="icon icon-check me-1"></i>
+        Crear OS y Enviar a Aprobación
+      </button>
     </div>
 
   </div>
