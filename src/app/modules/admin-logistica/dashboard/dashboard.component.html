@@ -1,0 +1,188 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="welcome-section">
+      <h2>Bienvenido, {{ user()?.nombre }}</h2>
+      <p class="text-muted">Resumen de actividades del sistema de logística</p>
+    </div>
+    <button class="btn btn-outline-primary" (click)="refresh()">
+      <i class="bx bx-refresh me-2"></i>Actualizar
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-2">Cargando datos del dashboard...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error() && !loading()) {
+    <div class="alert alert-danger">
+      <i class="bx bx-error-circle me-2"></i>
+      {{ error() }}
+      <button class="btn btn-sm btn-outline-danger ms-3" (click)="refresh()">Reintentar</button>
+    </div>
+  }
+
+  <!-- KPI Cards -->
+  @if (!loading() && !error()) {
+    <div class="row g-4 mb-4">
+      @for (kpi of kpis(); track kpi.label) {
+        <div class="col-xl-3 col-md-6">
+          <div class="kpi-card" [routerLink]="['/admin-logistica', kpi.route.replace('./', '')]" style="cursor: pointer;">
+            <div class="kpi-icon" [style.background-color]="kpi.color + '20'" [style.color]="kpi.color">
+              <i class="bx" [class]="kpi.icon"></i>
+            </div>
+            <div class="kpi-content">
+              <h3 class="kpi-value">{{ kpi.value }}</h3>
+              <p class="kpi-label">{{ kpi.label }}</p>
+              @if (kpi.change !== undefined) {
+                <span class="kpi-change" [class.positive]="kpi.change > 0" [class.negative]="kpi.change < 0">
+                  <i class="bx" [class.bx-up-arrow-alt]="kpi.change > 0" [class.bx-down-arrow-alt]="kpi.change < 0"></i>
+                  {{ kpi.change > 0 ? '+' : '' }}{{ kpi.change }}%
+                </span>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Quick Access -->
+    <div class="row g-4 mb-4">
+      <div class="col-12">
+        <div class="card quick-access-card">
+          <div class="card-header">
+            <h5><i class="bx bx-rocket me-2"></i>Accesos Rápidos</h5>
+          </div>
+          <div class="card-body">
+            <div class="quick-actions">
+              <a class="quick-action-item" [routerLink]="['/admin-logistica', 'bandeja']">
+                <div class="icon bg-warning">
+                  <i class="bx bx-inbox"></i>
+                </div>
+                <span>Bandeja</span>
+              </a>
+              <a class="quick-action-item" [routerLink]="['/admin-logistica', 'aprobar-consumo']">
+                <div class="icon bg-success">
+                  <i class="bx bx-check-circle"></i>
+                </div>
+                <span>Aprobar Consumo</span>
+              </a>
+              <a class="quick-action-item" [routerLink]="['/admin-logistica', 'aprobar-sc']">
+                <div class="icon bg-info">
+                  <i class="bx bx-shopping-bag"></i>
+                </div>
+                <span>Aprobar SC</span>
+              </a>
+              <a class="quick-action-item" [routerLink]="['/admin-logistica', 'maestros']">
+                <div class="icon bg-primary">
+                  <i class="bx bx-equalizer"></i>
+                </div>
+                <span>Maestros</span>
+              </a>
+              @if (isAdmin()) {
+                <a class="quick-action-item" [routerLink]="['/admin-logistica', 'usuarios']">
+                  <div class="icon bg-secondary">
+                    <i class="bx bx-user"></i>
+                  </div>
+                  <span>Usuarios</span>
+                </a>
+                <a class="quick-action-item" [routerLink]="['/admin-logistica', 'parametros']">
+                  <div class="icon bg-dark">
+                    <i class="bx bx-cog"></i>
+                  </div>
+                  <span>Parámetros</span>
+                </a>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="card activity-card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5><i class="bx bx-history me-2"></i>Actividad Reciente</h5>
+            <a [routerLink]="['/admin-logistica', 'auditoria']" class="btn btn-sm btn-outline-primary" *ngIf="isAdmin()">Ver todo</a>
+          </div>
+          <div class="card-body p-0">
+            <div class="activity-list">
+              @if (recentActivity().length === 0) {
+                <div class="empty-state">
+                  <i class="bx bx-calendar-x"></i>
+                  <p>No hay actividad reciente</p>
+                </div>
+              }
+              @for (activity of recentActivity(); track activity.id) {
+                <div class="activity-item">
+                  <div class="activity-icon" [class]="'bg-' + getActivityColor(activity.tipo)">
+                    <i class="bx" [class]="getActivityIcon(activity.tipo)"></i>
+                  </div>
+                  <div class="activity-content">
+                    <p class="activity-description">{{ activity.descripcion }}</p>
+                    <div class="activity-meta">
+                      <span class="activity-user"><i class="bx bx-user me-1"></i>{{ activity.usuario }}</span>
+                      <span class="activity-module">{{ activity.modulo }}</span>
+                      <span class="activity-time">{{ activity.fecha | date:'short' }}</span>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Status -->
+      <div class="col-lg-4">
+        <div class="card status-card">
+          <div class="card-header">
+            <h5><i class="bx bx-pulse me-2"></i>Estado del Sistema</h5>
+          </div>
+          <div class="card-body">
+            <div class="status-item">
+              <div class="status-info">
+                <span class="status-label">Servidor Backend</span>
+                <span class="status-value text-success">Online</span>
+              </div>
+              <div class="status-indicator bg-success"></div>
+            </div>
+            <div class="status-item">
+              <div class="status-info">
+                <span class="status-label">Base de Datos</span>
+                <span class="status-value text-success">Conectada</span>
+              </div>
+              <div class="status-indicator bg-success"></div>
+            </div>
+            <div class="status-item">
+              <div class="status-info">
+                <span class="status-label">Servicio de Correo</span>
+                <span class="status-value text-success">Activo</span>
+              </div>
+              <div class="status-indicator bg-success"></div>
+            </div>
+            <div class="status-item">
+              <div class="status-info">
+                <span class="status-label">Generación PDF</span>
+                <span class="status-value text-success">Disponible</span>
+              </div>
+              <div class="status-indicator bg-success"></div>
+            </div>
+          </div>
+          <div class="card-footer text-center">
+            <small class="text-muted">Última actualización: {{ now | date:'short' }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

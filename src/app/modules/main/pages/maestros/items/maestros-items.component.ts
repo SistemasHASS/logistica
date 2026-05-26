@@ -1,183 +1,171 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
-import { Item, MaestroItem } from '@/app/shared/interfaces/Tables';
+import { Item, MaestroItem, UnidadMedida } from '@/app/shared/interfaces/Tables';
 import { ItemService } from '@/app/modules/main/services/items.service';
-import { Table, TableModule } from 'primeng/table';
+import { UnidadesMedidaService } from '@/app/modules/main/services/unidades-medida.service';
+import { TableModule } from 'primeng/table';
 import * as XLSX from 'xlsx';
 import { SearchMLService } from '@/app/modules/main/services/search-ml.service';
-import { AfterViewInit } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-maestros-items',
-  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, TableModule],
   templateUrl: './maestros-items.component.html',
   styleUrls: ['./maestros-items.component.scss'],
 })
 export class MaestrosItemsComponent implements OnInit {
-  @ViewChild('modalEdicion') modalEdicion!: ElementRef;
+  private readonly dexieService = inject(DexieService);
+  private readonly alertService = inject(AlertService);
+  private readonly itemService = inject(ItemService);
+  private readonly searchML = inject(SearchMLService);
+  private readonly unidadesSvc = inject(UnidadesMedidaService);
+
   expandedRows: { [s: string]: boolean } = {};
 
-  pagina: number = 1;
-  registrosPorPagina: number = 15;
-
+  pagina = 1;
+  registrosPorPagina = 15;
   paginas: number[] = [];
-  totalPaginas: number = 0;
-
+  totalPaginas = 0;
   paginaActualData: MaestroItem[] = [];
-  totalRegistros: number = 0;
-
-  ordenColumna: string = '';
+  totalRegistros = 0;
+  ordenColumna = '';
   ordenDireccion: 'asc' | 'desc' = 'asc';
-
-  filtro: string = '';
-
+  filtro = '';
   paginasVisibles = 5;
-
   listaItems: any[] = [];
   itemsFiltrados: MaestroItem[] = [];
-  filtros: string = '';
-
   loadingCorrelativo = false;
-  isEditMode: boolean = false;
-  correlativoItem: string = '';
+  isEditMode = false;
+  correlativoItem = '';
 
-  item: MaestroItem = {
-    id: 0,
-    item: '',
-    itemTipo: '',
-    linea: '',
-    familia: '',
-    subFamilia: '',
-    descripcionLocal: '',
-    descripcionIngles: '',
-    descripcionCompleta: '',
-    unidadCodigo: '',
-    monedaCodigo: '',
-    precioCosto: '',
-    precioUnitarioLocal: '',
-    precioUnitarioDolares: '',
-    itemPrecioFlag: '',
-    disponibleVentaFlag: '',
-    itemProcedencia: '',
-    manejoxLoteFlag: '',
-    manejoxSerieFlag: '',
-    manejoxKitFlag: '',
-    afectoImpuestoVentasFlag: '',
-    requisicionamientoAutomaticoFl: '',
-    disponibleTransferenciaFlag: '',
-    disponibleConsumoFlag: '',
-    formularioFlag: '',
-    manejoxUnidadFlag: '',
-    isoAplicableFlag: '',
-    cantidadDobleFlag: '',
-    unidadReplicacion: '',
-    cuentaInventario: '',
-    cuentaGasto: '',
-    cuentaServicioTecnico: '',
-    factorEquivalenciaComercial: '',
-    estado: '',
-    ultimaFechaModif: '',
-    ultimoUsuario: '',
-    cuentaVentas: '',
-    unidadCompra: '',
-    controlCalidadFlag: '',
-    cuentaTransito: '',
-    cantidadDobleFactor: '',
-    subFamiliaInferior: '',
-    stockMinimo: '',
-    stockMaximo: '',
-    referenciaFiscalIngreso02: '',
-  };
+  item: MaestroItem = this.emptyItem();
 
   items: MaestroItem[] = [];
-  isLoadingTable: boolean = false;
-  // estados loading
-  isLoading: boolean = false; // carga inicial
-  isProcessing: boolean = false; // procesando Excel
-  isImporting: boolean = false; // enviando al API
+  isLoadingTable = signal(false);
+  isLoading = signal(false);
+  isProcessing = false;
+  isImporting = false;
+
+  modalItemAbierto = signal(false);
+  modalImportAbierto = signal(false);
+  unidadesMedida = signal<UnidadMedida[]>([]);
 
   archivoExcel: any = null;
   excelPreview: any[] = [];
   excelData: any[] = [];
-
   sugerencias: any[] = [];
-  esEditar: boolean = false;
-
-  itemsDescripcion: string[] = this.items.map((x) => x.descripcionLocal);
-
-  constructor(
-    private dexieService: DexieService,
-    private alertService: AlertService,
-    private itemService: ItemService,
-    private searchML: SearchMLService
-  ) {}
+  esEditar = false;
 
   async ngOnInit() {
-    await this.sincronizaMaestroItem();
+    await Promise.all([
+      this.sincronizaMaestroItem(),
+      this.cargarUnidades(),
+    ]);
   }
 
-  ngAfterViewInit() {
-    const modalElement = document.getElementById('modalItem');
-    modalElement?.addEventListener('hidden.bs.modal', () => {
-      // cuando se cierre el modal, dejamos en modo "nuevo" y limpiar
-      this.esEditar = false;
-      this.nuevo(); // reutiliza tu función que resetea this.item
-    });
+  async cargarUnidades() {
+    try {
+      const data = await this.unidadesSvc.listar(true);
+      this.unidadesMedida.set(data);
+      // Sincronizar caché local
+      await this.dexieService.unidadesMedida.clear();
+      await this.dexieService.unidadesMedida.bulkPut(data);
+    } catch {
+      // Fallback a caché Dexie
+      await this.dexieService.seedUnidadesMedidaDefault();
+      const cached = await this.dexieService.getUnidadesMedidaActivas();
+      this.unidadesMedida.set(cached);
+    }
+  }
+
+  private emptyItem(): MaestroItem {
+    return {
+      id: 0, item: '', itemTipo: '', linea: '', familia: '', subFamilia: '',
+      descripcionLocal: '', descripcionIngles: '', descripcionCompleta: '',
+      unidadCodigo: '', monedaCodigo: '', precioCosto: '', precioUnitarioLocal: '',
+      precioUnitarioDolares: '', itemPrecioFlag: '', disponibleVentaFlag: '',
+      itemProcedencia: '', manejoxLoteFlag: '', manejoxSerieFlag: '', manejoxKitFlag: '',
+      afectoImpuestoVentasFlag: '', requisicionamientoAutomaticoFl: '',
+      disponibleTransferenciaFlag: '', disponibleConsumoFlag: '', formularioFlag: '',
+      manejoxUnidadFlag: '', isoAplicableFlag: '', cantidadDobleFlag: '',
+      unidadReplicacion: '', cuentaInventario: '', cuentaGasto: '', cuentaServicioTecnico: '',
+      factorEquivalenciaComercial: '', estado: '', ultimaFechaModif: '', ultimoUsuario: '',
+      cuentaVentas: '', unidadCompra: '', controlCalidadFlag: '', cuentaTransito: '',
+      cantidadDobleFactor: '', subFamiliaInferior: '', stockMinimo: '', stockMaximo: '',
+      referenciaFiscalIngreso02: '',
+    };
   }
 
   onFileChange(event: any) {
     const file = event.target.files[0];
     if (!file) return;
-
     this.archivoExcel = file;
-
     const reader = new FileReader();
-
     reader.onload = (e: any) => {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
-
       const sheetName = workbook.SheetNames[0];
       const excelRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-
-      this.excelPreview = excelRows.slice(0, 10); // Mostrar sample
+      this.excelPreview = excelRows.slice(0, 10);
       this.excelData = excelRows;
-
-      console.log('Excel importado:', this.excelData);
     };
-
     reader.readAsArrayBuffer(file);
   }
 
   async sincronizaMaestroItem() {
-    const count = await this.dexieService.countMaestroItems();
-
-    if (count > 0) {
-      console.log('📌 Dexie ya tiene MaestroItems → NO se llama API');
-      await this.listaMaestroItem();
-      return;
-    }
-
-    console.log('📌 Dexie vacío → trayendo MaestroItems del API');
-
-    const item = this.itemService.getItem([]);
-    item.subscribe(async (resp: any) => {
-      if (!!resp && resp.length) {
-        await this.dexieService.saveMaestroItems(resp);
+    this.isLoading.set(true);
+    try {
+      const count = await this.dexieService.countMaestroItems();
+      if (count > 0) {
         await this.listaMaestroItem();
+        return;
       }
-    });
+      const resp = await firstValueFrom(this.itemService.getItem([]));
+      if (Array.isArray(resp) && resp.length) {
+        await this.dexieService.saveMaestroItems(resp);
+      }
+      await this.listaMaestroItem();
+    } catch (error) {
+      console.error('Error sincronizando items:', error);
+      this.alertService.showAlertError('Error al cargar los Items desde el servidor', 'Error');
+      this.isLoading.set(false);
+    }
+  }
+
+  async actualizarDesdeApi() {
+    this.isLoading.set(true);
+    try {
+      const resp = await firstValueFrom(this.itemService.getItem([]));
+      if (Array.isArray(resp) && resp.length) {
+        await this.dexieService.clearMaestroItem();
+        await this.dexieService.saveMaestroItems(resp);
+      }
+      await this.listaMaestroItem();
+    } catch (error) {
+      console.error('Error actualizando items:', error);
+      this.alertService.showAlertError('Error al actualizar los Items', 'Error');
+      this.isLoading.set(false);
+    }
+  }
+
+  cerrarModal() {
+    this.modalItemAbierto.set(false);
+  }
+
+  cerrarImportModal() {
+    this.modalImportAbierto.set(false);
+    this.excelPreview = [];
+    this.excelData = [];
+    this.archivoExcel = null;
   }
 
   abrirNuevoItem() {
     this.isEditMode = false;
-    // Flag interno si quieres usarlo más adelante
-    // pero no es necesario para limpiar el modal
-    // this.esEditar = false;
     const filtro = {
       CompaniaCodigo: '999999',
       TipoComprobante: 'SY',
@@ -237,6 +225,7 @@ export class MaestrosItemsComponent implements OnInit {
       stockMaximo: '',
       referenciaFiscalIngreso02: '',
     };
+    this.modalItemAbierto.set(true);
   }
 
   // buscar con IA desde el input principal
@@ -282,29 +271,19 @@ export class MaestrosItemsComponent implements OnInit {
   }
 
   async listaMaestroItem() {
-    this.isLoading = true;
-    this.isLoadingTable = true;
+    this.isLoading.set(true);
+    this.isLoadingTable.set(true);
     this.paginaActualData = [];
     try {
       this.items = await this.dexieService.showMaestroItem();
-      this.itemsFiltrados = [...this.items]; // inicial
-      // this.totalRegistros = this.items.length;
+      this.itemsFiltrados = [...this.items];
       this.totalRegistros = this.itemsFiltrados.length;
-      this.isLoading = false;
-      this.isLoadingTable = false;
-
-      // inicializar embeddings y fuse
-      // await this.searchML.loadModel(); // asegura modelo cargado
-      // await this.searchML.init(this.items);
-      // if (this.items.length > 0) {
-      //   this.aplicarFiltros();
-      // }
     } catch (error) {
       console.error('Error cargando maestro item', error);
       this.alertService.showAlertError('Error cargando los Items', 'Error');
     } finally {
-      this.isLoading = false;
-      this.isLoadingTable = false;
+      this.isLoading.set(false);
+      this.isLoadingTable.set(false);
     }
   }
 
@@ -446,8 +425,7 @@ export class MaestrosItemsComponent implements OnInit {
       referenciaFiscalIngreso02: data.referenciaFiscalIngreso02,
     };
 
-    const modal = document.getElementById('modalItem');
-    (window as any).bootstrap.Modal.getOrCreateInstance(modal).show();
+    this.modalItemAbierto.set(true);
   }
 
   async guardar() {
@@ -461,8 +439,10 @@ export class MaestrosItemsComponent implements OnInit {
   }
 
   openImportModal() {
-    const modal = document.getElementById('importExcelModal');
-    (window as any).bootstrap.Modal.getOrCreateInstance(modal).show();
+    this.excelPreview = [];
+    this.excelData = [];
+    this.archivoExcel = null;
+    this.modalImportAbierto.set(true);
   }
 
   downloadTemplate() {

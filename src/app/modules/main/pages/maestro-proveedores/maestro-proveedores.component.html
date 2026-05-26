@@ -3,6 +3,10 @@
   <div class="page-header">
     <h2>Maestro de Proveedores</h2>
     <div class="header-actions">
+      <button class="btn btn-outline-secondary" (click)="cargarProveedores(true)" [disabled]="cargando" title="Actualizar desde servidor">
+        <i class="bx" [class.bx-refresh]="!cargando" [class.bx-loader-alt]="cargando" [class.bx-spin]="cargando"></i>
+        Actualizar
+      </button>
       <button class="btn-primary" (click)="nuevoProveedorForm()">
         <i class="icon-plus"></i> Nuevo Proveedor
       </button>
@@ -35,14 +39,14 @@
       </div>
     </div>
     <div class="stat-card success">
-      <div class="stat-icon"><i class="icon-check-circle"></i></div>
+      <div class="stat-icon"><i class="bx-check-circle"></i></div>
       <div class="stat-content">
         <span class="stat-value">{{ proveedoresActivos }}</span>
         <span class="stat-label">Activos</span>
       </div>
     </div>
     <div class="stat-card secondary">
-      <div class="stat-icon"><i class="icon-x-circle"></i></div>
+      <div class="stat-icon"><i class="bx-x-circle"></i></div>
       <div class="stat-content">
         <span class="stat-value">{{ proveedoresInactivos }}</span>
         <span class="stat-label">Inactivos</span>
@@ -85,72 +89,101 @@
     </div>
 
     <!-- TABLA DE PROVEEDORES -->
-    <div class="table-wrapper">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>RUC</th>
-            <th>Nombre/Razón Social</th>
-            <th>Tipo Persona</th>
-            <th>Tipo Pago</th>
-            <th>Moneda</th>
-            <th>Tipo Servicio</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let prov of proveedoresFiltrados; let i = index">
-            <td>{{ i + 1 }}</td>
-            <td><strong>{{ prov.ruc }}</strong></td>
-            <td>{{ prov.documento }}</td>
-            <td>
-              <span class="badge badge-info">{{ prov.TipoPersona }}</span>
-            </td>
-            <td>{{ obtenerEtiquetaTipoPago(prov.TipoPago) }}</td>
-            <td>{{ obtenerEtiquetaMoneda(prov.MonedaPago) }}</td>
-            <td>{{ prov.TipoServicio }}</td>
-            <td>
-              <span class="badge" [ngClass]="obtenerClaseEstado(prov.Estado)">
-                {{ prov.Estado }}
-              </span>
-            </td>
-            <td class="actions">
-              <button 
-                class="btn btn-sm btn-info me-2" 
-                (click)="verDetalle(prov)"
-                title="Ver Detalle">
-                <i class="icon-eye"></i>
-              </button>
-              <button 
-                class="btn btn-sm btn-warning me-2" 
-                (click)="editarProveedor(i)"
-                title="Editar">
-                <i class="icon-pencil"></i>
-              </button>
-              <button 
-                class="btn btn-sm me-2"
-                [ngClass]="prov.Estado === 'ACTIVO' ? 'btn-secondary' : 'btn-success'"
-                (click)="cambiarEstado(prov)"
-                [title]="prov.Estado === 'ACTIVO' ? 'Desactivar' : 'Activar'">
-                <i [class]="prov.Estado === 'ACTIVO' ? 'icon-x' : 'icon-check'"></i>
-              </button>
-              <button 
-                class="btn btn-sm btn-danger" 
-                (click)="eliminarProveedor(i)"
-                title="Eliminar">
-                <i class="icon-trash"></i>
-              </button>
-            </td>
-          </tr>
-          <tr *ngIf="proveedoresFiltrados.length === 0">
-            <td colspan="9" class="text-center">
-              <p class="no-data">No hay proveedores registrados.</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="card">
+      <div class="card-body p-0">
+        <!-- LOADING BANNER -->
+        <div *ngIf="cargando" class="loading-banner">
+          <div class="loading-bar">
+            <div class="loading-bar-progress"></div>
+          </div>
+          <div class="loading-text">
+            <i class="bx bx-loader-alt bx-spin me-2"></i>
+            Cargando proveedores desde el servidor...
+          </div>
+        </div>
+
+        <p-table
+          [value]="proveedoresFiltrados"
+          [loading]="cargando"
+          [paginator]="true"
+          [rows]="25"
+          [showCurrentPageReport]="true"
+          [rowsPerPageOptions]="[10, 25, 50, 100]"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} proveedores"
+          styleClass="p-datatable-sm p-datatable-gridlines"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width:3rem">#</th>
+              <th style="width:8rem">RUC</th>
+              <th>Nombre / Razón Social</th>
+              <th style="width:7rem">Tipo Persona</th>
+              <th style="width:7rem">Tipo Pago</th>
+              <th style="width:6rem">Moneda</th>
+              <th style="width:7rem">Tipo Servicio</th>
+              <th style="width:6rem">Estado</th>
+              <th style="width:8rem; white-space:nowrap">Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-prov let-rowIndex="rowIndex">
+            <tr>
+              <td>{{ rowIndex + 1 }}</td>
+              <td><strong>{{ prov.ruc }}</strong></td>
+              <td>{{ (prov.documento || prov.RazonSocial) || '' }}</td>
+              <td>
+                <span class="badge badge-info">{{ prov.TipoPersona }}</span>
+              </td>
+              <td>{{ obtenerEtiquetaTipoPago(prov.TipoPago) }}</td>
+              <td>{{ obtenerEtiquetaMoneda(prov.MonedaPago) }}</td>
+              <td>{{ prov.TipoServicio }}</td>
+              <td>
+                <p-tag
+                  [value]="prov.Estado"
+                  [severity]="prov.Estado === 'ACTIVO' ? 'success' : 'danger'">
+                </p-tag>
+              </td>
+              <td class="actions" style="white-space:nowrap">
+                <button
+                  class="btn btn-sm btn-info"
+                  (click)="verDetalle(prov)"
+                  title="Ver Detalle">
+                  <i class="bx bx-show"></i>
+                </button>
+                <button
+                  class="btn btn-sm btn-warning"
+                  (click)="editarProveedor(rowIndex)"
+                  title="Editar">
+                  <i class="bx bx-edit"></i>
+                </button>
+                <button
+                  class="btn btn-sm"
+                  [class.btn-secondary]="prov.Estado === 'ACTIVO'"
+                  [class.btn-success]="prov.Estado !== 'ACTIVO'"
+                  (click)="cambiarEstado(prov)"
+                  [title]="prov.Estado === 'ACTIVO' ? 'Desactivar' : 'Activar'">
+                  <i class="bx" [class.bx-power-off]="prov.Estado === 'ACTIVO'" [class.bx-check]="prov.Estado !== 'ACTIVO'"></i>
+                </button>
+                <!-- <button
+                  class="btn btn-sm btn-danger"
+                  (click)="eliminarProveedor(rowIndex)"
+                  title="Eliminar">
+                  <i class="bx bx-trash"></i>
+                </button> -->
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="9" class="text-center py-4">
+                <div class="empty-state">
+                  <i class="bx bx-store-alt text-muted" style="font-size: 48px;"></i>
+                  <p class="text-muted mt-2">No hay proveedores registrados.</p>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
     </div>
   </div>
 

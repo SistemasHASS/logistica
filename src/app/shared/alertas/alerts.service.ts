@@ -20,7 +20,8 @@ export class AlertService {
       html: message,
       icon: icon,
       confirmButtonText: 'Aceptar',
-      allowOutsideClick: false
+      allowOutsideClick: false,
+      customClass: { container: 'swal-high-zindex' }
     });
   }
 
@@ -30,7 +31,8 @@ export class AlertService {
       html: message,
       icon: 'error',
       confirmButtonText: 'Aceptar',
-      allowOutsideClick: false
+      allowOutsideClick: false,
+      customClass: { container: 'swal-high-zindex' }
     });
   }
 
@@ -39,8 +41,9 @@ export class AlertService {
       title: title,
       html: message,
       icon: icon,
-      timer: 2000,
-      showConfirmButton: false
+      timer: 3000,
+      showConfirmButton: false,
+      customClass: { container: 'swal-high-zindex' }
     })
   }
 

@@ -51,7 +51,7 @@
         (click)="cambiarTab(0)">
         <i class="bx bx-list-ul"></i> OC Pendientes
       </button>
-      <button 
+      <!-- <button 
         class="tab-button" 
         [class.active]="tabActiva === 1"
         (click)="cambiarTab(1)">
@@ -62,7 +62,7 @@
         [class.active]="tabActiva === 2"
         (click)="cambiarTab(2)">
         <i class="bx bx-sitemap"></i> Flujos de Aprobación
-      </button>
+      </button> -->
     </div>
 
     <!-- TAB 1: OC PENDIENTES -->
@@ -131,7 +131,7 @@
                     <span class="badge bg-secondary">-</span>
                   }
                 </td>
-                <td>{{ oc.FechaAccion ? formatearFecha(oc.FechaAccion) : '-' }}</td>
+                <td>{{ (oc.fechaAccion || oc.FechaAccion) ? formatearFecha(oc.fechaAccion || oc.FechaAccion) : '-' }}</td>
                 <td style="display:flex;gap:4px;">
                   <button class="btn btn-sm btn-info" (click)="verDetalleOC(oc)" title="Ver Detalle">
                     <i class="bx bx-show"></i>
@@ -199,6 +199,7 @@
           <thead>
             <tr>
               <th>Nro. Orden</th>
+              <th>Nro. SPRING</th>
               <th>Fecha</th>
               <th>Proveedor</th>
               <th>Monto Total</th>
@@ -211,6 +212,13 @@
           <tbody>
             <tr *ngFor="let oc of ocPendientesFiltradas">
               <td><strong>{{ oc.numeroOrden }}</strong></td>
+              <td>
+                @if (oc.numeroOrdenSpring) {
+                  <span class="badge bg-primary" title="Número en SPRING">{{ oc.numeroOrdenSpring }}</span>
+                } @else {
+                  <span class="text-muted">-</span>
+                }
+              </td>
               <td>{{ formatearFecha(oc.fechaOrden) }}</td>
               <td>
                 <div>{{ oc.nombreProveedor }}</div>
@@ -414,6 +422,14 @@
           <strong>{{ ocDetalle.numeroOrden }}</strong>
         </div>
         <div class="info-item">
+          <label>Número SPRING:</label>
+          @if (ocDetalle.numeroOrdenSpring) {
+            <span class="badge bg-primary fs-6">{{ ocDetalle.numeroOrdenSpring }}</span>
+          } @else {
+            <span class="text-muted">No sincronizado con SPRING</span>
+          }
+        </div>
+        <div class="info-item">
           <label>Fecha:</label>
           <span>{{ formatearFecha(ocDetalle.fechaOrden) }}</span>
         </div>
@@ -494,7 +510,7 @@
               </div>
               <div class="timeline-body">
                 <p><strong>Rol:</strong> {{ item.rolAprobador || item.RolAprobador }}</p>
-                <p><strong>Estado:</strong> 
+                <p><strong>Estado:</strong>
                   <span class="badge" [ngClass]="obtenerClaseEstado(item.estado || item.Estado)">
                     {{ item.estado || item.Estado }}
                   </span>
@@ -508,6 +524,35 @@
         <div class="no-data" *ngIf="!historialOC || historialOC.length === 0">
           <p>No hay historial de aprobaciones disponible.</p>
         </div>
+      </div>
+
+      <!-- Adjuntos -->
+      <div class="historial-section">
+        <h4>Adjuntos ({{ adjuntosOC.length }})</h4>
+        @if (adjuntosOC.length === 0) {
+          <div class="alert alert-info">No hay adjuntos.</div>
+        } @else {
+          <table class="table table-sm table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th>Archivo</th>
+                <th>Descripción</th>
+                <th>Fecha</th>
+                <th>Tamaño</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (adj of adjuntosOC; track adj.id) {
+                <tr>
+                  <td><i class="bx bx-file me-1 text-primary"></i>{{ adj.nombreArchivo }}</td>
+                  <td><small>{{ adj.descripcion || '-' }}</small></td>
+                  <td><small>{{ formatearFecha(adj.fechaSubida) }}</small></td>
+                  <td><small>{{ (adj.tamano / 1024) | number:'1.0-0' }} KB</small></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
       </div>
     </div>
 

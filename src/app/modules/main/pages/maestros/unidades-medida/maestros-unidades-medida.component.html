@@ -1,0 +1,222 @@
+<!-- TOOLBAR -->
+<div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+  <button class="btn btn-primary" (click)="nuevo()">
+    <i class="bx bx-plus me-1"></i> Nueva Unidad
+  </button>
+
+  @if (modoOffline) {
+    <span class="badge bg-warning text-dark ms-2">
+      <i class="bx bx-wifi-off me-1"></i> Modo sin conexión — datos locales
+    </span>
+  }
+
+  <div class="input-group ms-auto" style="max-width:280px">
+    <span class="input-group-text bg-white border-end-0">
+      <i class="bx bx-search text-muted"></i>
+    </span>
+    <input type="text" class="form-control border-start-0"
+      placeholder="Buscar unidad..."
+      [(ngModel)]="filtro">
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="d-flex gap-3 mb-3">
+  <div class="stat-pill stat-pill--total">
+    <i class="bx bx-ruler"></i>
+    <span><strong>{{ unidades().length }}</strong> Total</span>
+  </div>
+  <div class="stat-pill stat-pill--active">
+    <i class="bx bx-check-circle"></i>
+    <span><strong>{{ totalActivas }}</strong> Activas</span>
+  </div>
+  <div class="stat-pill stat-pill--inactive">
+    <i class="bx bx-x-circle"></i>
+    <span><strong>{{ totalInactivas }}</strong> Inactivas</span>
+  </div>
+</div>
+
+<!-- TABLA -->
+<div class="table-wrapper">
+  @if (isLoading()) {
+    <div class="d-flex justify-content-center align-items-center py-5">
+      <div class="spinner-border text-primary me-2" role="status"></div>
+      <span class="text-muted">Cargando unidades de medida...</span>
+    </div>
+  } @else {
+    <p-table
+      [value]="unidadesFiltradas()"
+      [rows]="15"
+      [paginator]="true"
+      [rowsPerPageOptions]="[10, 15, 25, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+      styleClass="p-datatable-sm p-datatable-gridlines"
+      [rowHover]="true">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="codigo" style="width:110px">
+            Código <p-sortIcon field="codigo" />
+          </th>
+          <th pSortableColumn="descripcion">
+            Descripción <p-sortIcon field="descripcion" />
+          </th>
+          <th style="width:100px">Abrev.</th>
+          <th pSortableColumn="tipo" style="width:120px">
+            Tipo <p-sortIcon field="tipo" />
+          </th>
+          <th style="width:90px">Estado</th>
+          <th style="width:100px">Última Mod.</th>
+          <th style="width:110px">Acciones</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-u>
+        <tr>
+          <td><strong>{{ u.codigo }}</strong></td>
+          <td>{{ u.descripcion }}</td>
+          <td class="text-center">
+            <span class="badge bg-light text-dark border">{{ u.abreviatura }}</span>
+          </td>
+          <td class="text-center">
+            <span class="badge tipo-badge tipo-badge--{{ u.tipo.toLowerCase() }}">
+              {{ u.tipo }}
+            </span>
+          </td>
+          <td class="text-center">
+            @if (u.estado === 'A') {
+              <span class="badge bg-success">Activo</span>
+            } @else {
+              <span class="badge bg-secondary">Inactivo</span>
+            }
+          </td>
+          <td class="text-center" style="font-size:12px;color:#78909c">
+            {{ u.ultimaFechaModif }}
+          </td>
+          <td class="actions">
+            <button class="btn btn-sm btn-warning" (click)="editar(u)" title="Editar">
+              <i class="bx bx-edit"></i>
+            </button>
+            <button class="btn btn-sm"
+              [class.btn-secondary]="u.estado === 'A'"
+              [class.btn-success]="u.estado === 'I'"
+              (click)="toggleEstado(u)"
+              [title]="u.estado === 'A' ? 'Desactivar' : 'Activar'">
+              <i class="bx" [class.bx-power-off]="u.estado === 'A'" [class.bx-check]="u.estado === 'I'"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" (click)="eliminar(u)" title="Eliminar">
+              <i class="bx bx-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">
+            <i class="bx bx-ruler fs-4 d-block mb-2"></i>
+            No hay unidades de medida registradas.
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  }
+</div>
+
+<!-- OVERLAY: NUEVA / EDITAR UNIDAD -->
+@if (modalAbierto()) {
+  <div class="maestro-overlay" (click)="cerrarModal()" role="dialog" aria-modal="true">
+    <div class="maestro-modal maestro-modal--md" (click)="$event.stopPropagation()">
+
+      <div class="maestro-modal__header">
+        <div class="maestro-modal__header-title">
+          <i class="bx" [class.bx-edit]="isEditMode" [class.bx-plus-circle]="!isEditMode"></i>
+          <span>{{ isEditMode ? 'Editar Unidad de Medida' : 'Nueva Unidad de Medida' }}</span>
+        </div>
+        <button class="maestro-modal__close" (click)="cerrarModal()" aria-label="Cerrar">
+          <i class="bx bx-x"></i>
+        </button>
+      </div>
+
+      <div class="maestro-modal__body">
+
+        <div class="section-title-maestro">
+          <i class="bx bx-ruler me-2"></i> Datos de la Unidad
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Código <span class="text-danger">*</span></label>
+              <input type="text" class="form-control text-uppercase" [(ngModel)]="modelo.codigo"
+                placeholder="Ej: KG" maxlength="10"
+                [readonly]="isEditMode">
+            </div>
+          </div>
+
+          <div class="col-md-8">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Descripción <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="modelo.descripcion"
+                placeholder="Ej: Kilogramo">
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Abreviatura <span class="text-danger">*</span></label>
+              <input type="text" class="form-control text-uppercase" [(ngModel)]="modelo.abreviatura"
+                placeholder="Ej: kg" maxlength="10">
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Tipo <span class="text-danger">*</span></label>
+              <select class="form-select" [(ngModel)]="modelo.tipo">
+                @for (t of tiposUnidad; track t) {
+                  <option [value]="t">{{ t }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Estado</label>
+              <div class="d-flex gap-3 mt-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" id="umActiva" name="umEstado"
+                    value="A" [(ngModel)]="modelo.estado">
+                  <label class="form-check-label" for="umActiva">
+                    <span class="badge bg-success">Activo</span>
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" id="umInactiva" name="umEstado"
+                    value="I" [(ngModel)]="modelo.estado">
+                  <label class="form-check-label" for="umInactiva">
+                    <span class="badge bg-secondary">Inactivo</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="maestro-modal__footer">
+        <button class="btn btn-outline-secondary" (click)="cerrarModal()">
+          <i class="bx bx-x me-1"></i> Cancelar
+        </button>
+        <button class="btn btn-primary" (click)="guardar()">
+          <i class="bx bx-save me-1"></i> Guardar
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

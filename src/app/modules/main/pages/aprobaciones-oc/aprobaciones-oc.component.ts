@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { AprobacionOCService } from '@/app/services/aprobacion-oc.service';
 import { AprobacionOrdenService } from '@/app/services/aprobacion-orden.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
@@ -9,6 +10,7 @@ import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { Usuario } from '@/app/shared/interfaces/Tables';
 import { TableModule } from 'primeng/table';
 import { lastValueFrom } from 'rxjs';
+import { environment } from '@/environments/environment';
 
 @Component({
   selector: 'app-aprobaciones-oc',
@@ -71,6 +73,7 @@ export class AprobacionesOCComponent implements OnInit {
   modalDetalleOC = false;
   ocDetalle: any = null;
   historialOC: any[] = [];
+  adjuntosOC: any[] = [];
 
   // Filtros
   filtroEstado = 'TODAS';
@@ -89,7 +92,8 @@ export class AprobacionesOCComponent implements OnInit {
     private aprobacionOrdenService: AprobacionOrdenService,
     private alertService: AlertService,
     private userService: UserService,
-    private dexieService: DexieService
+    private dexieService: DexieService,
+    private http: HttpClient
   ) {}
 
   async ngOnInit() {
@@ -174,24 +178,16 @@ export class AprobacionesOCComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
 
-      // Intentar nuevo endpoint con datos completos primero
-      let pendientes: any[] = [];
-      try {
-        const respDetallado = await lastValueFrom(
-          this.aprobacionOrdenService.listarPendientesDetallado(this.usuario.idrol, 'OC')
-        );
-        if (Array.isArray(respDetallado)) {
-          pendientes = respDetallado;
-        }
-      } catch {
-        // fallback al endpoint anterior
-        pendientes = await this.aprobacionOCService
-          .listarPendientes(this.usuario.documentoidentidad, this.usuario.idrol)
-          .toPromise() || [];
-      }
+      // Usar endpoint unificado que lista OCs de ambos flujos (antiguo + nuevo)
+      const resp = await lastValueFrom(
+        this.aprobacionOrdenService.listarOCPendientesUnificado(
+          this.usuario.documentoidentidad,
+          this.usuario.idrol
+        )
+      );
 
-      this.ocPendientes = pendientes;
-      this.contadores.totalPendientes = pendientes.length;
+      this.ocPendientes = Array.isArray(resp) ? resp : [];
+      this.contadores.totalPendientes = this.ocPendientes.length;
       this.aplicarFiltros();
 
       this.alertService.cerrarModalCarga();
@@ -247,19 +243,21 @@ export class AprobacionesOCComponent implements OnInit {
       this.alertService.mostrarModalCarga();
 
       // Intentar cargar OC completa con ítems reales
-      if (oc.idAprobacion || oc.CodigoOrden) {
+      if (oc.idAprobacion || oc.numeroOrden || oc.CodigoOrden) {
         try {
           const detalle = await lastValueFrom(
             this.aprobacionOrdenService.obtenerOCDesdeConsolidacion({
               idAprobacion: oc.idAprobacion || oc.IdAprobacion,
-              codigoOrden: oc.CodigoOrden || oc.codigoOrden,
+              codigoOrden: oc.numeroOrden || oc.CodigoOrden || oc.codigoOrden,
             })
           );
           if (detalle) {
-            this.ocDetalle = { ...oc, ...detalle };
-            this.historialOC = detalle.nivelesAprobacion || [];
-            console.log('Detalle cargado:', this.ocDetalle);
-            console.log('Historial:', this.historialOC);
+            // items y nivelesAprobacion pueden venir como string JSON (subquery FOR JSON)
+            const items = typeof detalle.items === 'string' ? JSON.parse(detalle.items) : (detalle.items || []);
+            const niveles = typeof detalle.nivelesAprobacion === 'string' ? JSON.parse(detalle.nivelesAprobacion) : (detalle.nivelesAprobacion || []);
+            this.ocDetalle = { ...oc, ...detalle, items };
+            this.historialOC = niveles;
+            await this.cargarAdjuntosOC(detalle.idOrden || oc.idOrden || oc.IdOrden);
             this.alertService.cerrarModalCarga();
             this.modalDetalleOC = true;
             return;
@@ -275,6 +273,7 @@ export class AprobacionesOCComponent implements OnInit {
         .obtenerHistorial(oc.idOrdenCompra)
         .toPromise();
       this.historialOC = historial || [];
+      await this.cargarAdjuntosOC(oc.idOrden || oc.IdOrden);
       this.alertService.cerrarModalCarga();
       this.modalDetalleOC = true;
     } catch (error) {
@@ -285,6 +284,21 @@ export class AprobacionesOCComponent implements OnInit {
         'Error al cargar detalle de la orden',
         'error'
       );
+    }
+  }
+
+  async cargarAdjuntosOC(idOrden: string | number) {
+    if (!idOrden) return;
+    try {
+      const resp: any = await lastValueFrom(
+        this.http.post(`${environment.baseUrl}/api/logistica/listar-adjuntos-oc`, { 
+          idOrden: idOrden.toString(),
+          tipoOrden: 'OC' 
+        })
+      );
+      this.adjuntosOC = Array.isArray(resp) ? resp : [];
+    } catch {
+      this.adjuntosOC = [];
     }
   }
 
@@ -309,20 +323,21 @@ export class AprobacionesOCComponent implements OnInit {
 
       const respuesta = await this.aprobacionOCService
         .aprobarRechazar(
-          oc.idAprobacion,
+          oc.idAprobacion || null,
           'APROBAR',
           this.usuario.documentoidentidad,
           this.usuario.nombre,
-          ''
+          '',
+          oc.numeroOrden
         )
         .toPromise();
 
       this.alertService.cerrarModalCarga();
 
-      if (respuesta?.status === 'success') {
+      if (respuesta?.errorgeneral === 0 || respuesta?.errorgeneral === '0' || respuesta?.status === 'success') {
         this.alertService.showAlert(
           'Éxito',
-          respuesta.mensaje || 'Orden de compra aprobada correctamente',
+          respuesta?.mensaje || respuesta?.message || 'Orden de compra aprobada correctamente',
           'success'
         );
 
@@ -336,7 +351,7 @@ export class AprobacionesOCComponent implements OnInit {
       } else {
         this.alertService.showAlert(
           'Error',
-          respuesta?.mensaje || 'Error al aprobar la orden de compra',
+          respuesta?.mensaje || respuesta?.message || 'Error al aprobar la orden de compra',
           'error'
         );
       }
@@ -392,10 +407,10 @@ export class AprobacionesOCComponent implements OnInit {
           })
         );
         this.alertService.cerrarModalCarga();
-        if (respuesta?.success) {
-          this.alertService.showAlert('Éxito', 'Orden de compra rechazada. Puede generarse una nueva OC desde el historial de consolidación.', 'success');
+        if (respuesta?.errorgeneral === 0 || respuesta?.errorgeneral === '0' || respuesta?.success) {
+          this.alertService.showAlert('Éxito', respuesta?.mensaje || 'Orden de compra rechazada. Puede generarse una nueva OC desde el historial de consolidación.', 'success');
         } else {
-          this.alertService.showAlert('Error', respuesta?.mensaje || 'Error al rechazar.', 'error');
+          this.alertService.showAlert('Error', respuesta?.mensaje || respuesta?.message || 'Error al rechazar.', 'error');
         }
       } else {
         const respuesta = await lastValueFrom(
@@ -407,14 +422,14 @@ export class AprobacionesOCComponent implements OnInit {
           })
         );
         this.alertService.cerrarModalCarga();
-        if (respuesta?.success) {
+        if (respuesta?.errorgeneral === 0 || respuesta?.errorgeneral === '0' || respuesta?.success) {
           this.alertService.showAlert(
             'Orden Anulada',
-            `La consolidación fue liberada. Los ítems volvieron a estado pendiente en Consolidación de Requerimientos.`,
+            respuesta?.mensaje || `La consolidación fue liberada. Los ítems volvieron a estado pendiente en Consolidación de Requerimientos.`,
             'success'
           );
         } else {
-          this.alertService.showAlert('Error', respuesta?.mensaje || 'Error al anular.', 'error');
+          this.alertService.showAlert('Error', respuesta?.mensaje || respuesta?.message || 'Error al anular.', 'error');
         }
       }
 

@@ -130,7 +130,7 @@ export class OrdenCompraService {
   }
 
   /**
-   * Sincronizar orden de compra con SPRING
+   * Sincronizar orden de compra con SPRING (flujo antiguo)
    */
   async sincronizarOrdenCompra(ordenCompra: any): Promise<any> {
     try {
@@ -139,6 +139,47 @@ export class OrdenCompraService {
       return response;
     } catch (error) {
       console.error('Error al sincronizar orden de compra con SPRING:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Sincronizar OC de consolidación con SPRING (flujo nuevo)
+   * Usa el endpoint específico para OCs creadas desde el módulo de consolidación
+   * @param idOrden ID de la orden de compra
+   * @param idEmpresa ID de empresa del usuario (desde API get-usuarios)
+   * @param distribucion Array de distribución contable (opcional)
+   */
+  async sincronizarOCConsolidacion(idOrden: number, idEmpresa?: string, distribucion?: any[], ordenCompleta?: any): Promise<any> {
+    try {
+      const url = `${this.baseUrl}/api/logistica/orden-compra/sincronizar-consolidacion`;
+      const body: any = { idOrden };
+
+      if (idEmpresa) {
+        body.idEmpresa = idEmpresa;
+        body.companiaCodigo = idEmpresa; // CompaniaCodigo es lo mismo que idEmpresa
+        body.companiaSocio = idEmpresa.padStart(6, '0') + '00'; // CompaniaSocio = CompaniaCodigo + '00'
+      }
+
+      body.tipoComprobante = 'SY'; // Fijo por ahora
+
+      // Enviar cabecera y detalles si se proporcionan
+      if (ordenCompleta) {
+        // Extraer cabecera (todos los campos excepto items)
+        const { items, ...cabecera } = ordenCompleta;
+        body.cabecera = cabecera;
+        // Enviar detalles (items)
+        body.detalles = items || [];
+      }
+
+      if (distribucion && distribucion.length > 0) {
+        body.distribucion = JSON.stringify(distribucion);
+      }
+
+      const response = await firstValueFrom(this.http.post<any>(url, body));
+      return response;
+    } catch (error) {
+      console.error('Error al sincronizar OC de consolidación con SPRING:', error);
       throw error;
     }
   }

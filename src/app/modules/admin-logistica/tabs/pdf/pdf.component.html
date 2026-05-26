@@ -1,0 +1,538 @@
+<div class="pdf-config-container">
+
+  <!-- Alerta global -->
+  @if (alertMsg()) {
+    <div class="alert alert-dismissible fade show mb-3"
+         [class.alert-success]="alertTipo() === 'success'"
+         [class.alert-danger]="alertTipo() === 'danger'"
+         role="alert">
+      <i class="bx me-2" [class.bx-check-circle]="alertTipo() === 'success'" [class.bx-error-circle]="alertTipo() === 'danger'"></i>
+      {{ alertMsg() }}
+    </div>
+  }
+
+  <!-- ════ DATOS DE EMPRESA ════ -->
+  <div class="config-section mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="section-title mb-0"><i class="bx bx-buildings me-2"></i>Datos de la Empresa</div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm" (click)="cargarEmpresasDesdeApi()" [disabled]="empresaCargando()">
+          <i class="bx me-1" [class.bx-refresh]="!empresaCargando()" [class.bx-loader-circle]="empresaCargando()"></i>
+          Recargar
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" (click)="resetEmpresa()">
+          <i class="bx bx-reset me-1"></i>Restablecer
+        </button>
+        <button class="btn btn-success btn-sm" (click)="guardarEmpresa()">
+          <i class="bx bx-save me-1"></i>Guardar
+        </button>
+      </div>
+    </div>
+
+    <!-- Selector dinámico desde BD -->
+    <div class="row g-2 mb-3">
+      <div class="col-md-8">
+        <label class="form-label fw-semibold">
+          <i class="bx bx-list-ul me-1 text-success"></i>Seleccionar empresa desde la base de datos
+        </label>
+        @if (empresaCargando()) {
+          <div class="d-flex align-items-center gap-2 text-muted small">
+            <i class="bx bx-loader-circle bx-spin"></i> Cargando empresas...
+          </div>
+        } @else if (empresaLista().length > 0) {
+          <select class="form-select form-select-sm" (change)="onSelectEmpresaChange($event)">
+            <option value="">-- Seleccione una empresa --</option>
+            @for (emp of empresaLista(); track emp.id) {
+              <option [value]="emp.id" [selected]="empresa().id === emp.id">
+                {{ emp.razonSocial }} — RUC: {{ emp.ruc }}
+              </option>
+            }
+          </select>
+        } @else {
+          <div class="text-muted small fst-italic">
+            <i class="bx bx-info-circle me-1"></i>No se encontraron empresas en la BD. Configure manualmente abajo.
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Datos seleccionados / edición manual -->
+    <div class="row g-3 align-items-start">
+      <div class="col-md-3">
+        <div class="logo-preview-box">
+          @if (empresa().logoBase64) {
+            <img [src]="empresa().logoBase64" alt="Logo empresa" class="logo-preview-img">
+          } @else {
+            <div class="logo-placeholder"><i class="bx bx-image-alt"></i><span>Sin logo</span></div>
+          }
+        </div>
+        <div class="d-flex gap-1 mt-2">
+          <label class="btn btn-outline-primary btn-sm flex-fill text-center">
+            <i class="bx bx-upload me-1"></i>Subir Logo
+            <input type="file" accept="image/*" hidden (change)="onLogoEmpresaChange($event)">
+          </label>
+          @if (empresa().logoBase64) {
+            <button class="btn btn-outline-danger btn-sm" (click)="eliminarLogoEmpresa()">
+              <i class="bx bx-trash"></i>
+            </button>
+          }
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Razón Social</label>
+        <input class="form-control form-control-sm" [ngModel]="empresa().razonSocial"
+          (ngModelChange)="patchEmpresa({razonSocial: $event})" placeholder="HASS PERU S.A.">
+        <label class="form-label mt-2">Dirección</label>
+        <input class="form-control form-control-sm" [ngModel]="empresa().direccion"
+          (ngModelChange)="patchEmpresa({direccion: $event})" placeholder="Av. Ejemplo 123...">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">RUC</label>
+        <input class="form-control form-control-sm" [ngModel]="empresa().ruc"
+          (ngModelChange)="patchEmpresa({ruc: $event})" placeholder="20000000000">
+        <label class="form-label mt-2">Teléfono</label>
+        <input class="form-control form-control-sm" [ngModel]="empresa().telefono"
+          (ngModelChange)="patchEmpresa({telefono: $event})" placeholder="01-234-5678">
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout 2 columnas: config | preview -->
+  <div class="two-col-layout">
+    <!-- Columna izquierda: tabs + config -->
+    <div class="col-config">
+
+      <!-- Tabs principales -->
+      <ul class="nav nav-tabs mb-0" role="tablist">
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="tabActivo() === 'oc'" (click)="tabActivo.set('oc'); refreshPreview()">
+            <i class="bx bx-cart me-1"></i> Plantilla OC
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="tabActivo() === 'os'" (click)="tabActivo.set('os'); refreshPreview()">
+            <i class="bx bx-wrench me-1"></i> Plantilla OS
+          </button>
+        </li>
+      </ul>
+
+      <div class="tab-panel-body">
+
+    <!-- ════════════════ TAB OC ════════════════ -->
+    @if (tabActivo() === 'oc') {
+      <div class="d-flex justify-content-end gap-2 mb-3 pt-3">
+        <button class="btn btn-outline-secondary btn-sm" (click)="resetOC()">
+          <i class="bx bx-reset me-1"></i>Restablecer
+        </button>
+        <button class="btn btn-success btn-sm" (click)="guardarOC()">
+          <i class="bx bx-save me-1"></i>Guardar Plantilla OC
+        </button>
+      </div>
+
+      <!-- 1. LOGO -->
+      <div class="config-section">
+        <div class="section-title"><i class="bx bx-image me-2"></i>Logo del Documento</div>
+        <div class="d-flex align-items-center gap-3">
+          <div class="logo-preview-box">
+            @if (logoOC()) {
+              <img [src]="logoOC()" alt="Logo OC" class="logo-preview-img">
+            } @else {
+              <div class="logo-placeholder"><i class="bx bx-image-alt"></i><span>Sin logo</span></div>
+            }
+          </div>
+          <div>
+            <label class="btn btn-outline-primary btn-sm">
+              <i class="bx bx-upload me-1"></i>Subir Logo
+              <input type="file" accept="image/*" hidden (change)="onLogoChange($event, 'oc')">
+            </label>
+            @if (logoOC()) {
+              <button class="btn btn-outline-danger btn-sm ms-2" (click)="eliminarLogo('oc')">
+                <i class="bx bx-trash"></i>
+              </button>
+            }
+            <div class="form-text mt-1">PNG, JPG. Se mostrará en la cabecera del PDF.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. CONFIGURACIÓN GENERAL OC -->
+      <div class="config-section">
+        <div class="section-title"><i class="bx bx-cog me-2"></i>Configuración General</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Título del documento</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOC().tituloDocumento"
+              (ngModelChange)="patchOC({tituloDocumento: $event})">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nota al pie</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOC().notaPie"
+              (ngModelChange)="patchOC({notaPie: $event})" placeholder="Ej: Documento generado por el sistema...">
+          </div>
+        </div>
+        <div class="row g-3 mt-1">
+          <div class="col-12"><strong class="form-label">Columnas visibles en tabla de ítems:</strong></div>
+          <div class="col-auto">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="oc-commodity"
+                [ngModel]="cfgOC().mostrarCommodity" (ngModelChange)="patchOC({mostrarCommodity: $event})">
+              <label class="form-check-label" for="oc-commodity">Commodity</label>
+            </div>
+          </div>
+          <div class="col-auto">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="oc-cnd"
+                [ngModel]="cfgOC().mostrarCnd" (ngModelChange)="patchOC({mostrarCnd: $event})">
+              <label class="form-check-label" for="oc-cnd">Cnd</label>
+            </div>
+          </div>
+          <div class="col-auto">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="oc-unidad"
+                [ngModel]="cfgOC().mostrarUnidad" (ngModelChange)="patchOC({mostrarUnidad: $event})">
+              <label class="form-check-label" for="oc-unidad">Unidad</label>
+            </div>
+          </div>
+          <div class="col-auto">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="oc-cotizacion"
+                [ngModel]="cfgOC().mostrarCotizacion" (ngModelChange)="patchOC({mostrarCotizacion: $event})">
+              <label class="form-check-label" for="oc-cotizacion">N° Cotización</label>
+            </div>
+          </div>
+          <div class="col-auto">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="oc-tipocambio"
+                [ngModel]="cfgOC().mostrarTipoCambio" (ngModelChange)="patchOC({mostrarTipoCambio: $event})">
+              <label class="form-check-label" for="oc-tipocambio">T. Cambio</label>
+            </div>
+          </div>
+          <div class="col-auto">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="oc-clasificacion"
+                [ngModel]="cfgOC().mostrarClasificacion" (ngModelChange)="patchOC({mostrarClasificacion: $event})">
+              <label class="form-check-label" for="oc-clasificacion">Clasificación</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. ETIQUETAS OC -->
+      <div class="config-section">
+        <div class="section-title"><i class="bx bx-text me-2"></i>Etiquetas de Columnas</div>
+        <div class="row g-2">
+          <div class="col-md-3"><label class="form-label">Commodity</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOC().etiquetaCommodity" (ngModelChange)="patchOC({etiquetaCommodity: $event})"></div>
+          <div class="col-md-3"><label class="form-label">Cnd</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOC().etiquetaCnd" (ngModelChange)="patchOC({etiquetaCnd: $event})"></div>
+          <div class="col-md-3"><label class="form-label">Descripción</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOC().etiquetaDescripcion" (ngModelChange)="patchOC({etiquetaDescripcion: $event})"></div>
+          <div class="col-md-3"><label class="form-label">Unidad</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOC().etiquetaUnidad" (ngModelChange)="patchOC({etiquetaUnidad: $event})"></div>
+          <div class="col-md-3"><label class="form-label">Cantidad</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOC().etiquetaCantidad" (ngModelChange)="patchOC({etiquetaCantidad: $event})"></div>
+          <div class="col-md-3"><label class="form-label">Precio Unitario</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOC().etiquetaPrecioUnit" (ngModelChange)="patchOC({etiquetaPrecioUnit: $event})"></div>
+          <div class="col-md-3"><label class="form-label">Monto Total</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOC().etiquetaMontoTotal" (ngModelChange)="patchOC({etiquetaMontoTotal: $event})"></div>
+          <div class="col-md-3"><label class="form-label">Total Neto</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOC().etiquetaTotalNeto" (ngModelChange)="patchOC({etiquetaTotalNeto: $event})"></div>
+          <div class="col-md-3"><label class="form-label">I.G.V.</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOC().etiquetaIGV" (ngModelChange)="patchOC({etiquetaIGV: $event})"></div>
+          <div class="col-md-3"><label class="form-label">Total O/C</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOC().etiquetaTotalOC" (ngModelChange)="patchOC({etiquetaTotalOC: $event})"></div>
+        </div>
+      </div>
+
+      <!-- 4. FIRMAS OC -->
+      <div class="config-section">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="section-title mb-0"><i class="bx bx-pen me-2"></i>Firmas del Documento</div>
+          <button class="btn btn-outline-primary btn-sm" (click)="agregarFirma('oc')">
+            <i class="bx bx-plus me-1"></i>Agregar firma
+          </button>
+        </div>
+        <div class="firmas-grid">
+          @for (f of firmasOC(); track $index) {
+            <div class="firma-card">
+              <div class="firma-preview">
+                <div class="firma-linea"></div>
+                <input class="form-control form-control-sm text-center fw-bold"
+                  [ngModel]="f.etiqueta" (ngModelChange)="updateFirma('oc', $index, 'etiqueta', $event)"
+                  placeholder="Nombre / Rol">
+                <input class="form-control form-control-sm text-center text-muted mt-1"
+                  [ngModel]="f.cargo" (ngModelChange)="updateFirma('oc', $index, 'cargo', $event)"
+                  placeholder="Cargo (opcional)">
+              </div>
+              <button class="btn btn-link text-danger btn-sm p-0 mt-1" (click)="eliminarFirma('oc', $index)">
+                <i class="bx bx-trash"></i> Eliminar
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- 5. TÉRMINOS Y CONDICIONES OC -->
+      <div class="config-section">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="section-title mb-0"><i class="bx bx-list-ul me-2"></i>Términos y Condiciones OC</div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm" (click)="resetTcOC()">
+              <i class="bx bx-reset me-1"></i>Restablecer
+            </button>
+            <button class="btn btn-success btn-sm" (click)="guardarTcOC()">
+              <i class="bx bx-save me-1"></i>Guardar T&C
+            </button>
+          </div>
+        </div>
+        <div class="tc-list">
+          @for (item of tcOC(); track $index) {
+            <div class="tc-item">
+              <span class="tc-num">{{ $index + 1 }}.</span>
+              <textarea class="form-control form-control-sm tc-textarea" rows="2"
+                [ngModel]="item" (ngModelChange)="updateTcOC($index, $event)"></textarea>
+              <button class="btn btn-link text-danger btn-sm p-0" (click)="eliminarTcOC($index)" title="Eliminar">
+                <i class="bx bx-x-circle fs-5"></i>
+              </button>
+            </div>
+          }
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <textarea class="form-control form-control-sm" rows="2" placeholder="Nuevo término..."
+            [ngModel]="nuevoTcOC()" (ngModelChange)="nuevoTcOC.set($event)"></textarea>
+          <button class="btn btn-outline-primary btn-sm px-3" (click)="agregarTcOC()">
+            <i class="bx bx-plus"></i>
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ════════════════ TAB OS ════════════════ -->
+    @if (tabActivo() === 'os') {
+      <div class="d-flex justify-content-end gap-2 mb-3 pt-3">
+        <button class="btn btn-outline-secondary btn-sm" (click)="resetOS()">
+          <i class="bx bx-reset me-1"></i>Restablecer
+        </button>
+        <button class="btn btn-success btn-sm" (click)="guardarOS()">
+          <i class="bx bx-save me-1"></i>Guardar Plantilla OS
+        </button>
+      </div>
+
+      <!-- 1. LOGO OS -->
+      <div class="config-section">
+        <div class="section-title"><i class="bx bx-image me-2"></i>Logo del Documento</div>
+        <div class="d-flex align-items-center gap-3">
+          <div class="logo-preview-box">
+            @if (logoOS()) {
+              <img [src]="logoOS()" alt="Logo OS" class="logo-preview-img">
+            } @else {
+              <div class="logo-placeholder"><i class="bx bx-image-alt"></i><span>Sin logo</span></div>
+            }
+          </div>
+          <div>
+            <label class="btn btn-outline-primary btn-sm">
+              <i class="bx bx-upload me-1"></i>Subir Logo
+              <input type="file" accept="image/*" hidden (change)="onLogoChange($event, 'os')">
+            </label>
+            @if (logoOS()) {
+              <button class="btn btn-outline-danger btn-sm ms-2" (click)="eliminarLogo('os')">
+                <i class="bx bx-trash"></i>
+              </button>
+            }
+            <div class="form-text mt-1">PNG, JPG. Se mostrará en la cabecera del PDF.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. CONFIGURACIÓN GENERAL OS -->
+      <div class="config-section">
+        <div class="section-title"><i class="bx bx-cog me-2"></i>Configuración General</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Título del documento</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOS().tituloDocumento"
+              (ngModelChange)="patchOS({tituloDocumento: $event})">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nota al pie</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOS().notaPie"
+              (ngModelChange)="patchOS({notaPie: $event})" placeholder="Texto al pie de la OS...">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Título sección Datos del Servicio</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOS().tituloSeccionDatos"
+              (ngModelChange)="patchOS({tituloSeccionDatos: $event})">
+          </div>
+        </div>
+        <div class="row g-3 mt-1">
+          <div class="col-12"><strong class="form-label">Secciones visibles:</strong></div>
+          <div class="col-auto">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="os-comentarios"
+                [ngModel]="cfgOS().mostrarComentarios" (ngModelChange)="patchOS({mostrarComentarios: $event})">
+              <label class="form-check-label" for="os-comentarios">Sección Comentarios</label>
+            </div>
+          </div>
+          <div class="col-auto">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="os-datos"
+                [ngModel]="cfgOS().mostrarDatosServicio" (ngModelChange)="patchOS({mostrarDatosServicio: $event})">
+              <label class="form-check-label" for="os-datos">Sección Datos del Servicio</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. ETIQUETAS OS -->
+      <div class="config-section">
+        <div class="section-title"><i class="bx bx-text me-2"></i>Etiquetas</div>
+        <div class="row g-2">
+          <div class="col-md-4"><label class="form-label">Detalle</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOS().etiquetaDetalle" (ngModelChange)="patchOS({etiquetaDetalle: $event})"></div>
+          <div class="col-md-4"><label class="form-label">Monto Total</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOS().etiquetaMontoTotal" (ngModelChange)="patchOS({etiquetaMontoTotal: $event})"></div>
+          <div class="col-md-4"><label class="form-label">Valor Servicio</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOS().etiquetaValorServicio" (ngModelChange)="patchOS({etiquetaValorServicio: $event})"></div>
+          <div class="col-md-4"><label class="form-label">Impuestos</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOS().etiquetaImpuestos" (ngModelChange)="patchOS({etiquetaImpuestos: $event})"></div>
+          <div class="col-md-4"><label class="form-label">Total</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOS().etiquetaTotal" (ngModelChange)="patchOS({etiquetaTotal: $event})"></div>
+        </div>
+      </div>
+
+      <!-- 4. DATOS DEL SERVICIO OS -->
+      <div class="config-section">
+        <div class="section-title"><i class="bx bx-list-check me-2"></i>Datos del Servicio</div>
+        <div class="tc-list">
+          @for (item of cfgOS().datosServicio; track $index) {
+            <div class="tc-item">
+              <span class="tc-num">{{ $index + 1 }}.</span>
+              <textarea class="form-control form-control-sm tc-textarea" rows="2"
+                [ngModel]="item" (ngModelChange)="updateDatoOS($index, $event)"></textarea>
+              <button class="btn btn-link text-danger btn-sm p-0" (click)="eliminarDatoOS($index)" title="Eliminar">
+                <i class="bx bx-x-circle fs-5"></i>
+              </button>
+            </div>
+          }
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <textarea class="form-control form-control-sm" rows="2" placeholder="Nuevo dato del servicio..."
+            [ngModel]="nuevoDatoOS()" (ngModelChange)="nuevoDatoOS.set($event)"></textarea>
+          <button class="btn btn-outline-primary btn-sm px-3" (click)="agregarDatoOS()">
+            <i class="bx bx-plus"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 5. FIRMAS OS -->
+      <div class="config-section">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="section-title mb-0"><i class="bx bx-pen me-2"></i>Firmas del Documento</div>
+          <button class="btn btn-outline-primary btn-sm" (click)="agregarFirma('os')">
+            <i class="bx bx-plus me-1"></i>Agregar firma
+          </button>
+        </div>
+        <div class="firmas-grid">
+          @for (f of firmasOS(); track $index) {
+            <div class="firma-card">
+              <div class="firma-preview">
+                <div class="firma-linea"></div>
+                <input class="form-control form-control-sm text-center fw-bold"
+                  [ngModel]="f.etiqueta" (ngModelChange)="updateFirma('os', $index, 'etiqueta', $event)"
+                  placeholder="Nombre / Rol">
+                <input class="form-control form-control-sm text-center text-muted mt-1"
+                  [ngModel]="f.cargo" (ngModelChange)="updateFirma('os', $index, 'cargo', $event)"
+                  placeholder="Cargo (opcional)">
+              </div>
+              <button class="btn btn-link text-danger btn-sm p-0 mt-1" (click)="eliminarFirma('os', $index)">
+                <i class="bx bx-trash"></i> Eliminar
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- 6. TÉRMINOS Y CONDICIONES OS -->
+      <div class="config-section">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="section-title mb-0"><i class="bx bx-list-ul me-2"></i>Términos y Condiciones OS</div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm" (click)="resetTcOS()">
+              <i class="bx bx-reset me-1"></i>Restablecer
+            </button>
+            <button class="btn btn-success btn-sm" (click)="guardarTcOS()">
+              <i class="bx bx-save me-1"></i>Guardar T&C
+            </button>
+          </div>
+        </div>
+        <div class="tc-list">
+          @for (item of tcOS(); track $index) {
+            <div class="tc-item">
+              <span class="tc-num">{{ $index + 1 }}.</span>
+              <textarea class="form-control form-control-sm tc-textarea" rows="2"
+                [ngModel]="item" (ngModelChange)="updateTcOS($index, $event)"></textarea>
+              <button class="btn btn-link text-danger btn-sm p-0" (click)="eliminarTcOS($index)" title="Eliminar">
+                <i class="bx bx-x-circle fs-5"></i>
+              </button>
+            </div>
+          }
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <textarea class="form-control form-control-sm" rows="2" placeholder="Nuevo término..."
+            [ngModel]="nuevoTcOS()" (ngModelChange)="nuevoTcOS.set($event)"></textarea>
+          <button class="btn btn-outline-primary btn-sm px-3" (click)="agregarTcOS()">
+            <i class="bx bx-plus"></i>
+          </button>
+        </div>
+      </div>
+    }
+
+      </div><!-- /tab-panel-body -->
+    </div><!-- /col-config -->
+
+    <!-- Columna derecha: vista previa sticky -->
+    <div class="col-preview">
+      <div class="preview-sticky">
+        <div class="preview-header-bar">
+          <i class="bx bx-file-blank me-1"></i>Vista Previa
+          <div class="ms-auto d-flex gap-1">
+            <button class="btn btn-outline-secondary btn-sm" (click)="refreshPreview()" title="Actualizar">
+              <i class="bx bx-refresh"></i>
+            </button>
+            <button class="btn btn-outline-primary btn-sm" (click)="abrirModalPreview()" title="Ampliar vista previa">
+              <i class="bx bx-fullscreen"></i>
+            </button>
+          </div>
+        </div>
+        @if (previewUrl()) {
+          <iframe [src]="previewUrl()!" class="preview-iframe" title="Vista previa del documento"
+                  style="cursor:zoom-in" (click)="abrirModalPreview()"></iframe>
+        } @else {
+          <div class="preview-empty"><i class="bx bx-loader-circle bx-spin fs-2"></i></div>
+        }
+      </div>
+    </div><!-- /col-preview -->
+
+  </div><!-- /two-col-layout -->
+
+  <!-- ════ MODAL VISTA PREVIA GRANDE ════ -->
+  @if (modalPreviewAbierto()) {
+    <div class="preview-modal-backdrop" (click)="cerrarModalPreview()">
+      <div class="preview-modal-box" (click)="$event.stopPropagation()">
+        <div class="preview-modal-header">
+          <span><i class="bx bx-file-blank me-2"></i>Vista Previa — {{ tabActivo() === 'oc' ? 'Orden de Compra' : 'Orden de Servicio' }}</span>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm" (click)="refreshPreview()">
+              <i class="bx bx-refresh me-1"></i>Actualizar
+            </button>
+            <button class="btn btn-danger btn-sm" (click)="cerrarModalPreview()">
+              <i class="bx bx-x me-1"></i>Cerrar
+            </button>
+          </div>
+        </div>
+        <iframe [src]="previewUrl()!" class="preview-modal-iframe" title="Vista previa ampliada"></iframe>
+      </div>
+    </div>
+  }
+
+</div>

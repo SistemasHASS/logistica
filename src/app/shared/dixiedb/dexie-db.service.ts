@@ -61,6 +61,7 @@ import {
   SolicitudCotizacion,
   DetalleSolicitudCotizacion,
   DetalleSolicitudCotizacionLegacy,
+  UnidadMedida,
 } from '../interfaces/Tables';
 import Dexie from 'dexie';
 
@@ -141,9 +142,10 @@ export class DexieService extends Dexie {
   public itemsTemporales!: Dexie.Table<ItemTemporalConsolidacion, number>;
   public solicitudesCotizacion!: Dexie.Table<SolicitudCotizacion, number>;
   public detalleSolicitudCotizacion!: Dexie.Table<DetalleSolicitudCotizacionLegacy, number>;
+  public unidadesMedida!: Dexie.Table<UnidadMedida, number>;
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 37; // Added email configuration tables
+  private static readonly DB_VERSION = 39; // Added email configuration tables
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -217,7 +219,7 @@ export class DexieService extends Dexie {
         detalleDespachos: `++id,despachoId,codigo,descripcion,cantidad,estado`,
         // ✅ TABLAS PARA RECEPCIÓN, DEVOLUCIONES Y EVALUACIÓN
         recepcionesOrdenCompra: `++id,numeroRecepcion,ordenCompraId,numeroOrden,fecha,almacen,estado,conformidad`,
-        detalleRecepciones: `++id,recepcionId,detalleOrdenCompraId,codigo,descripcion,estado`,
+        detalleRecepciones: `++id,recepcionId,detalleOrdenCompraId,codigo,descripcion,estadoItem`,
         devolucionesProveedor: `++id,numeroDevolucion,recepcionId,ordenCompraId,proveedor,fecha,estado,tipoDevolucion`,
         detalleDevoluciones: `++id,devolucionId,codigo,descripcion,cantidadDevuelta,estado`,
         evaluacionesProveedor: `++id,proveedor,periodo,fechaEvaluacion,calificacionTotal,nivel,estado`,
@@ -230,6 +232,19 @@ export class DexieService extends Dexie {
         configuracionServidorCorreo: `id,servidor,puerto,usuario,activo`,
         destinatariosCorreo: `id,email,tipo,activo`,
         plantillasCorreo: `id,tipo,activo`,
+        unidadesMedida: `++id,codigo,descripcion,abreviatura,tipo,estado`,
+      }).upgrade(async (tx) => {
+        // Migración versión 38: Convertir estado a estadoItem en detalleRecepciones
+        const detalleRecepciones = tx.table('detalleRecepciones');
+        const detalles = await detalleRecepciones.toArray();
+        
+        for (const det of detalles) {
+          if (det.estado && !det.estadoItem) {
+            await detalleRecepciones.update(det.id, { estadoItem: det.estado });
+          }
+        }
+        
+        console.log(`✅ Migración v38: ${detalles.length} detalles de recepción migrados de estado a estadoItem`);
       });
 
       this.usuario = this.table('usuario');
@@ -295,6 +310,7 @@ export class DexieService extends Dexie {
       this.itemsTemporales = this.table('itemsTemporales');
       this.solicitudesCotizacion = this.table('solicitudesCotizacion');
       this.detalleSolicitudCotizacion = this.table('detalleSolicitudCotizacion');
+      this.unidadesMedida = this.table('unidadesMedida');
 
       // 🔧 Manejo automático de errores por versión o corrupción
       this.open().catch(async (err) => {
@@ -316,6 +332,12 @@ export class DexieService extends Dexie {
       await table.clear();
     }
     console.log('🧹 Todas las tablas de Dexie han sido limpiadas.');
+  }
+
+  async deleteAndRecreate() {
+    await this.delete();
+    console.log('🗑️ IndexedDB eliminada. Recargando para recrear...');
+    location.reload();
   }
 
   //Empresas
@@ -1554,13 +1576,54 @@ export class DexieService extends Dexie {
   }
 
   async deleteSolicitudCotizacion(id: number): Promise<void> {
-    // Eliminar detalles primero
     await this.detalleSolicitudCotizacion
       .where('idSolicitudCotizacion')
       .equals(id)
       .delete();
-    
-    // Eliminar solicitud
     await this.solicitudesCotizacion.delete(id);
+  }
+
+  // ─── UNIDADES DE MEDIDA ───────────────────────────────────────────────────
+  async getUnidadesMedida(): Promise<UnidadMedida[]> {
+    return this.unidadesMedida.orderBy('codigo').toArray();
+  }
+
+  async getUnidadesMedidaActivas(): Promise<UnidadMedida[]> {
+    return this.unidadesMedida.where('estado').equals('A').sortBy('codigo');
+  }
+
+  async saveUnidadMedida(u: UnidadMedida): Promise<number> {
+    return this.unidadesMedida.put(u);
+  }
+
+  async deleteUnidadMedida(id: number): Promise<void> {
+    return this.unidadesMedida.delete(id);
+  }
+
+  async seedUnidadesMedidaDefault(): Promise<void> {
+    const count = await this.unidadesMedida.count();
+    if (count > 0) return;
+    const defaults: UnidadMedida[] = [
+      { codigo: 'UND', descripcion: 'Unidad', abreviatura: 'UND', tipo: 'UNIDAD', estado: 'A' },
+      { codigo: 'KG', descripcion: 'Kilogramo', abreviatura: 'KG', tipo: 'PESO', estado: 'A' },
+      { codigo: 'GR', descripcion: 'Gramo', abreviatura: 'GR', tipo: 'PESO', estado: 'A' },
+      { codigo: 'TN', descripcion: 'Tonelada', abreviatura: 'TN', tipo: 'PESO', estado: 'A' },
+      { codigo: 'LT', descripcion: 'Litro', abreviatura: 'LT', tipo: 'VOLUMEN', estado: 'A' },
+      { codigo: 'ML', descripcion: 'Mililitro', abreviatura: 'ML', tipo: 'VOLUMEN', estado: 'A' },
+      { codigo: 'M3', descripcion: 'Metro Cúbico', abreviatura: 'M3', tipo: 'VOLUMEN', estado: 'A' },
+      { codigo: 'MT', descripcion: 'Metro', abreviatura: 'MT', tipo: 'LONGITUD', estado: 'A' },
+      { codigo: 'CM', descripcion: 'Centímetro', abreviatura: 'CM', tipo: 'LONGITUD', estado: 'A' },
+      { codigo: 'M2', descripcion: 'Metro Cuadrado', abreviatura: 'M2', tipo: 'AREA', estado: 'A' },
+      { codigo: 'HA', descripcion: 'Hectárea', abreviatura: 'HA', tipo: 'AREA', estado: 'A' },
+      { codigo: 'CJA', descripcion: 'Caja', abreviatura: 'CJA', tipo: 'UNIDAD', estado: 'A' },
+      { codigo: 'BLS', descripcion: 'Bolsa', abreviatura: 'BLS', tipo: 'UNIDAD', estado: 'A' },
+      { codigo: 'PAR', descripcion: 'Par', abreviatura: 'PAR', tipo: 'UNIDAD', estado: 'A' },
+      { codigo: 'JGO', descripcion: 'Juego', abreviatura: 'JGO', tipo: 'UNIDAD', estado: 'A' },
+      { codigo: 'ROL', descripcion: 'Rollo', abreviatura: 'ROL', tipo: 'UNIDAD', estado: 'A' },
+      { codigo: 'GL', descripcion: 'Galón', abreviatura: 'GL', tipo: 'VOLUMEN', estado: 'A' },
+      { codigo: 'HRS', descripcion: 'Horas', abreviatura: 'HRS', tipo: 'TIEMPO', estado: 'A' },
+      { codigo: 'DIA', descripcion: 'Día', abreviatura: 'DIA', tipo: 'TIEMPO', estado: 'A' },
+    ];
+    await this.unidadesMedida.bulkPut(defaults);
   }
 }

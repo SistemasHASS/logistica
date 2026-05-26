@@ -1,54 +1,52 @@
-<div class="d-flex gap-2">
-  <!-- botón abrir modal -->
-  <!-- <div class="d-flex justify-content-end mb-3"> -->
-  <button class="btn btn-primary mb-3" (click)="nuevo()">Agregar Commodity</button>
-  <!-- </div> -->
-
-  <!-- BOTÓN IMPORTAR -->
-  <button class="btn btn-success mb-3" (click)="openImportModal()">
-    Importar Excel
+<div class="d-flex gap-2 mb-3">
+  <button class="btn btn-primary" (click)="nuevo()">
+    <i class="bx bx-plus me-1"></i> Agregar Commodity
   </button>
-
-  <!-- BOTÓN DESCARGAR PLANTILLA -->
-  <button class="btn btn-outline-secondary mb-3" (click)="downloadTemplate()">
-    Descargar Plantilla
+  <button class="btn btn-success" (click)="openImportModal()">
+    <i class="bx bx-upload me-1"></i> Importar Excel
+  </button>
+  <button class="btn btn-outline-secondary" (click)="downloadTemplate()">
+    <i class="bx bx-download me-1"></i> Descargar Plantilla
+  </button>
+  <button class="btn btn-outline-primary ms-auto" (click)="actualizarDesdeApi()" [disabled]="isLoading()">
+    @if (isLoading()) {
+      <span class="spinner-border spinner-border-sm me-1"></span>
+    } @else {
+      <i class="bx bx-refresh me-1"></i>
+    }
+    Actualizar
   </button>
 </div>
 
-<!-- FILTRO -->
 <div class="d-flex justify-content-between mb-2">
   <input type="text" class="form-control w-25" placeholder="Buscar..." [(ngModel)]="filtro" (input)="buscar()">
-
-  <div>
-    <span class="me-2">Total: {{ totalRegistros }}</span>
-  </div>
+  <span class="align-self-center text-muted">Total: {{ totalRegistros }}</span>
 </div>
 
-<!-- LOADING GENERAL -->
-<div class="text-center my-4" *ngIf="isLoading">
-  <div class="spinner-border text-primary" role="status"></div>
-  <p class="mt-2">Cargando datos...</p>
-</div>
-
-<!-- <div class="tabla-container"> -->
-<div class="tabla-container position-relative" *ngIf="!isLoading">
-  <!-- OVERLAY LOADING -->
-  <div *ngIf="isLoadingTable" class="overlay-loading d-flex justify-content-center align-items-center">
-    <div class="spinner-border text-primary"></div>
+@if (isLoading()) {
+  <div class="text-center my-4">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2">Cargando datos...</p>
   </div>
-  <!-- OVERLAY LOADING -->
-  <div *ngIf="isLoadingTable" class="overlay-loading d-flex justify-content-center align-items-center">
-    <div class="spinner-border text-primary"></div>
-  </div>
+}
 
-  <!-- SKELETON -->
-  <div *ngIf="commoditysFiltrados.length === 0" class="skeleton-container">
-    <div class="skeleton-row" *ngFor="let x of [1,2,3,4,5,6]"></div>
-  </div>
+<div class="tabla-container position-relative" [style.display]="isLoading() ? 'none' : 'block'">
+  @if (isLoadingTable()) {
+    <div class="overlay-loading d-flex justify-content-center align-items-center">
+      <div class="spinner-border text-primary"></div>
+    </div>
+  }
 
-  <!-- TABLA REAL -->
+  @if (commoditysFiltrados.length === 0 && !isLoadingTable()) {
+    <div class="skeleton-container">
+      @for (x of [1,2,3,4,5,6]; track x) {
+        <div class="skeleton-row"></div>
+      }
+    </div>
+  }
+
   <p-table #dt [value]="commoditysFiltrados" [paginator]="true" [rows]="20" [totalRecords]="commoditysFiltrados.length"
-    [loading]="isLoading" responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+    [loading]="isLoadingTable()" responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
     currentPageReportTemplate="<{first} - {last} de {totalRecords}>" styleClass="p-datatable-sm p-datatable-striped">
 
     <ng-template pTemplate="header">
@@ -92,163 +90,219 @@
   </p-table>
 </div>
 
-<!-- MODAL IMPORTAR EXCEL -->
-<div class="modal fade" id="importExcelModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-md">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Importar Commodity desde Excel</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-
-      <div class="modal-body">
-        <input type="file" accept=".xlsx, .xls" class="form-control" (change)="onFileChange($event)" />
-
-        <div *ngIf="excelPreview?.length" class="mt-3">
-          <b>Registros detectados:</b> {{ excelPreview.length }}
+<!-- OVERLAY: IMPORTAR EXCEL -->
+@if (modalImportAbierto()) {
+  <div class="maestro-overlay" (click)="cerrarImportModal()" role="dialog" aria-modal="true">
+    <div class="maestro-modal maestro-modal--md" (click)="$event.stopPropagation()">
+      <div class="maestro-modal__header">
+        <div class="maestro-modal__header-title">
+          <i class="bx bx-file-import"></i>
+          <span>Importar Commodities desde Excel</span>
         </div>
+        <button class="maestro-modal__close" (click)="cerrarImportModal()" aria-label="Cerrar">
+          <i class="bx bx-x"></i>
+        </button>
       </div>
 
-      <div class="modal-footer justify-content-between">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">
-          Cancelar
-        </button>
+      <div class="maestro-modal__body">
+        <p class="text-muted mb-3" style="font-size:13px">
+          Seleccione un archivo <strong>.xlsx</strong> o <strong>.xls</strong>.
+          Use la plantilla oficial para garantizar el formato correcto.
+        </p>
+        <div class="form-group-maestro">
+          <label class="form-label-maestro">Archivo Excel <span class="text-danger">*</span></label>
+          <input type="file" accept=".xlsx,.xls" class="form-control" (change)="onFileChange($event)" />
+        </div>
+        @if (excelPreview.length) {
+          <div class="alert alert-success d-flex align-items-center gap-2 mt-3 py-2">
+            <i class="bx bx-check-circle fs-5"></i>
+            <span><strong>{{ excelPreview.length }}</strong> registros detectados y listos para importar.</span>
+          </div>
+        }
+      </div>
 
-        <button class="btn btn-success mb-3" (click)="importarCommodity()">
-          Importar Excel
+      <div class="maestro-modal__footer">
+        <button class="btn btn-outline-secondary" (click)="cerrarImportModal()">
+          <i class="bx bx-x me-1"></i> Cancelar
+        </button>
+        <button class="btn btn-success" (click)="importarCommodity()" [disabled]="!excelData.length">
+          <i class="bx bx-upload me-1"></i> Importar
         </button>
       </div>
     </div>
   </div>
-</div>
+}
 
+<!-- OVERLAY: AGREGAR / EDITAR COMMODITY -->
+@if (modalCommodityAbierto()) {
+  <div class="maestro-overlay" (click)="cerrarModal()" role="dialog" aria-modal="true">
+    <div class="maestro-modal maestro-modal--xl" (click)="$event.stopPropagation()">
 
-<!-- MODAL (igual que el HTML detallado previamente) -->
-<div class="modal fade" id="modalMaestrosComodity" tabindex="-1">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content">
-
-      <div class="modal-header bg-primary text-white py-2">
-        <h6 class="modal-title color-text">{{ modelo.id ? "Editar Commodity" : "Agregar Commodity" }}</h6>
-        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      <div class="maestro-modal__header">
+        <div class="maestro-modal__header-title">
+          <i class="bx" [class.bx-edit]="modelo.id" [class.bx-plus-circle]="!modelo.id"></i>
+          <span>{{ modelo.id ? 'Editar Commodity' : 'Nuevo Commodity' }}</span>
+        </div>
+        <button class="maestro-modal__close" (click)="cerrarModal()" aria-label="Cerrar">
+          <i class="bx bx-x"></i>
+        </button>
       </div>
 
-      <div class="modal-body">
+      <div class="maestro-modal__body">
 
-        <div class="row">
-          <div class="col-3">
-            <label><strong>Commodity</strong></label>
-            <input type="text" class="form-control" [(ngModel)]="modelo.codigo">
-          </div>
+        <div class="section-title-maestro">
+          <i class="bx bx-id-card me-2"></i> Identificación
+        </div>
 
-          <div class="col-3">
-            <label><strong>Clasificación de Commodity</strong></label>
-            <select class="form-select" [(ngModel)]="modelo.clasificacion">
-              <option value="">Seleccione</option>
-              <option *ngFor="let c of listaClasificaciones" [value]="c.id">{{ c.descripcion }}</option>
-            </select>
-          </div>
-
-          <div class="col-3 d-flex align-items-end">
-            <div class="form-check me-3">
-              <input class="form-check-input" type="radio" name="estado" value="A" [(ngModel)]="modelo.estado">
-              <label class="form-check-label">Activo</label>
-            </div>
-
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="estado" value="I" [(ngModel)]="modelo.estado">
-              <label class="form-check-label">Inactivo</label>
+        <div class="row g-3 mb-3">
+          <div class="col-md-3">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Código Commodity <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="modelo.codigo" placeholder="Ej: COMM-001">
             </div>
           </div>
 
-          <div class="col-3">
-            <label>Última Modif.</label>
-            <input type="text" class="form-control" readonly [value]="usuarioActual">
-            <input type="date" class="form-control mt-1" readonly [value]="fechaHoy">
+          <div class="col-md-3">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Clasificación <span class="text-danger">*</span></label>
+              <select class="form-select" [(ngModel)]="modelo.clasificacion">
+                <option value="">Seleccione</option>
+                @for (c of listaClasificaciones; track c.id) {
+                  <option [value]="c.id">{{ c.descripcion }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Estado</label>
+              <div class="d-flex gap-4 mt-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" id="commActivo" name="commEstado" value="A" [(ngModel)]="modelo.estado">
+                  <label class="form-check-label" for="commActivo"><span class="badge bg-success">Activo</span></label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" id="commInactivo" name="commEstado" value="I" [(ngModel)]="modelo.estado">
+                  <label class="form-check-label" for="commInactivo"><span class="badge bg-secondary">Inactivo</span></label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Última Modificación</label>
+              <input type="text" class="form-control" readonly [value]="usuarioActual">
+              <input type="date" class="form-control mt-1" readonly [value]="fechaHoy">
+            </div>
           </div>
         </div>
 
-        <div class="row mt-3">
-          <div class="col-6">
-            <label>Descripción Local</label>
-            <input type="text" class="form-control" [(ngModel)]="modelo.descripcionLocal">
+        <div class="section-title-maestro">
+          <i class="bx bx-text me-2"></i> Descripción
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Descripción Local <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="modelo.descripcionLocal" placeholder="Descripción en español">
+            </div>
           </div>
 
-          <div class="col-6">
-            <label>Descripción Ingles</label>
-            <input type="text" class="form-control" [(ngModel)]="modelo.descripcionIngles">
+          <div class="col-md-6">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Descripción en Inglés</label>
+              <input type="text" class="form-control" [(ngModel)]="modelo.descripcionIngles" placeholder="Description in English">
+            </div>
           </div>
 
-          <div class="col-6">
-            <label>Cuenta Contable <span class="text-danger">*</span></label>
-            <app-dropdown [(ngModel)]="modelo.cuentaContableGasto" [required]="true" [editable]="true"
-              [data]="cuentaContable" [valueField]="'account'" [textShow2]="'un cuenta'" [optionLabel]="'localname'" />
+          <div class="col-md-6">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Cuenta Contable Gasto <span class="text-danger">*</span></label>
+              <app-dropdown [(ngModel)]="modelo.cuentaContableGasto" [required]="true" [editable]="true"
+                [data]="cuentaContable" [valueField]="'account'" [textShow2]="'una cuenta'" [optionLabel]="'localname'" />
+            </div>
           </div>
 
-          <div class="col-6">
-            <label>Partida</label>
-            <select class="form-select" [(ngModel)]="seleccionaPartida">
-              <option value="">Seleccione</option>
-              <option *ngFor="let e of partida" [value]="e.codigo">{{ e.descripcion }}</option>
-            </select>
+          <div class="col-md-6">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Partida</label>
+              <select class="form-select" [(ngModel)]="seleccionaPartida">
+                <option value="">Seleccione</option>
+                @for (e of partida; track e.codigo) {
+                  <option [value]="e.codigo">{{ e.descripcion }}</option>
+                }
+              </select>
+            </div>
           </div>
         </div>
 
-        <div class="mt-4 border p-2">
-          <strong>Sub Clasificación</strong>
+        <div class="section-title-maestro" style="justify-content:space-between">
+          <span><i class="bx bx-list-ul me-2"></i> Sub Clasificaciones</span>
+          <button class="btn btn-sm btn-outline-primary" (click)="agregarSubClasificacion()">
+            <i class="bx bx-plus me-1"></i> Agregar fila
+          </button>
+        </div>
 
-          <div class="tabla-subclasificacion">
-            <table class="table table-bordered table-sm mt-2">
-              <thead class="table-light">
+        <div class="tabla-subclasificacion mb-2">
+          <table class="table table-sm table-hover table-bordered align-middle mb-0">
+            <thead class="table-primary">
+              <tr>
+                <th style="min-width:100px">Sub Clase</th>
+                <th style="min-width:160px">Descripción</th>
+                <th style="min-width:70px">Uni</th>
+                <th style="min-width:120px">Cuenta Gastos</th>
+                <th style="min-width:160px">Elemento Gasto</th>
+                <th style="min-width:130px">Clasif. Activo</th>
+                <th style="min-width:110px">Legacy #</th>
+                <th style="width:60px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (!modelo.subClasificaciones?.length) {
                 <tr>
-                  <th>Sub Clase</th>
-                  <th>Descripción</th>
-                  <th>Uni</th>
-                  <th>Cuenta Gastos</th>
-                  <th>Elemento Gasto</th>
-                  <th>Clasificación Activo</th>
-                  <th>Legacy Number</th>
-                  <th></th>
+                  <td colspan="8" class="text-center text-muted py-3" style="font-style:italic">
+                    Sin sub clasificaciones. Haga clic en "Agregar fila" para añadir.
+                  </td>
                 </tr>
-              </thead>
-
-              <tbody>
-                <tr *ngFor="let s of modelo.subClasificaciones; let i = index">
-                  <td><input class="form-control" [(ngModel)]="s.subClase"></td>
-                  <td><input class="form-control" [(ngModel)]="s.descripcion"></td>
-                  <td><input class="form-control" [(ngModel)]="s.unidad"></td>
-                  <td><input class="form-control" [(ngModel)]="s.cuentaGasto"></td>
+              }
+              @for (s of modelo.subClasificaciones; track $index; let i = $index) {
+                <tr>
+                  <td><input class="form-control form-control-sm" [(ngModel)]="s.subClase" placeholder="SC-01"></td>
+                  <td><input class="form-control form-control-sm" [(ngModel)]="s.descripcion" placeholder="Descripción"></td>
+                  <td><input class="form-control form-control-sm" [(ngModel)]="s.unidad" placeholder="UND"></td>
+                  <td><input class="form-control form-control-sm" [(ngModel)]="s.cuentaGasto" placeholder="6X.X.X"></td>
                   <td>
-                    <!-- <select class="form-select" [(ngModel)]="s.elementoGasto">
-                    <option *ngFor="let e of elementosGasto" [value]="e.id">{{ e.descripcion }}</option>
-                  </select> -->
                     <app-dropdown [(ngModel)]="s.elementoGasto" [required]="true" [editable]="true"
                       [data]="elementosGasto" [valueField]="'codigo'" [textShow2]="'un elemento'"
-                      [optionLabel]="'descripcion'" class="table-mode"/>
+                      [optionLabel]="'descripcion'" class="table-mode" />
                   </td>
-                  <td><input class="form-control" [(ngModel)]="s.clasificacionActivo"></td>
-                  <td><input class="form-control" [(ngModel)]="s.legacyNumber"></td>
-                  <td><button class="btn btn-danger btn-sm" (click)="eliminarSubClasificacion(i)">Eliminar</button></td>
+                  <td><input class="form-control form-control-sm" [(ngModel)]="s.clasificacionActivo"></td>
+                  <td><input class="form-control form-control-sm" [(ngModel)]="s.legacyNumber"></td>
+                  <td class="text-center">
+                    <button class="btn btn-sm btn-outline-danger" (click)="eliminarSubClasificacion(i)" title="Eliminar">
+                      <i class="bx bx-trash"></i>
+                    </button>
+                  </td>
                 </tr>
-              </tbody>
-            </table>
-          </div>
-
-
-          <div class="d-flex gap-2">
-            <button class="btn btn-secondary btn-sm" (click)="agregarSubClasificacion()">Insertar</button>
-            <!-- <button class="btn btn-outline-primary btn-sm">Selec. Cuenta</button>
-            <button class="btn btn-outline-secondary btn-sm">Clasificación</button>
-            <button class="btn btn-outline-success btn-sm">Partida</button> -->
-          </div>
+              }
+            </tbody>
+          </table>
         </div>
 
       </div>
 
-      <div class="modal-footer">
-        <button class="btn btn-success" (click)="guardar()">Aceptar</button>
-        <button class="btn btn-outline-secondary" (click)="cerrarModal()">Cancelar</button>
+      <div class="maestro-modal__footer">
+        <button class="btn btn-outline-secondary" (click)="cerrarModal()">
+          <i class="bx bx-x me-1"></i> Cancelar
+        </button>
+        <button class="btn btn-primary" (click)="guardar()">
+          <i class="bx bx-save me-1"></i> Guardar
+        </button>
       </div>
+
     </div>
   </div>
-</div>
+}

@@ -9,6 +9,11 @@
 @use './app/modules/main/pages/administracion/styles/admin.scss';
 
 
+html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
 html{
     scroll-behavior: smooth;
 }
@@ -18,7 +23,6 @@ html{
 *{
     transition: background-color .3s ease-in-out;
     interpolate-size: allow-keywords;
-    text-wrap: nowrap;
 }
 *:not(i):not(.sidebar-item span), * .btn{
     font-size: var(--tamaño-letra);
@@ -30,7 +34,6 @@ textarea{
 table *{
     text-align: center;
     vertical-align: middle;
-    text-wrap: nowrap !important;
 }
 table tr button{
     display: flex;
@@ -233,3 +236,16 @@ table tr button{
  *   - En Tránsito: estado-pendiente
  *   - Devuelto: estado-rechazado
  */
+
+/* SweetAlert2 High Z-Index para aparecer sobre modales */
+.swal-high-zindex {
+  z-index: 100000 !important;
+}
+
+.swal-high-zindex .swal2-popup {
+  z-index: 100001 !important;
+}
+
+body.swal2-shown > .swal2-container.swal-high-zindex {
+  z-index: 100000 !important;
+}

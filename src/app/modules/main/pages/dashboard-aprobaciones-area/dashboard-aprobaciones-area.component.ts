@@ -83,6 +83,19 @@ export class DashboardAprobacionesAreaComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.usuario = await this.dexieService.showUsuario();
+    console.log('📊 Dashboard - Usuario cargado:', this.usuario);
+    console.log('📊 Dashboard - documentoidentidad:', this.usuario?.documentoidentidad);
+    console.log('📊 Dashboard - dni:', this.usuario?.dni);
+    console.log('📊 Dashboard - ruc:', this.usuario?.ruc);
+    
+    // Verificar si tiene los datos necesarios
+    if (!this.usuario?.documentoidentidad && !this.usuario?.dni) {
+      console.error('❌ Dashboard - ERROR: Usuario no tiene documentoidentidad ni dni');
+    }
+    if (!this.usuario?.ruc) {
+      console.error('❌ Dashboard - ERROR: Usuario no tiene ruc');
+    }
+    
     await this.cargarDashboard();
   }
 
@@ -108,56 +121,78 @@ export class DashboardAprobacionesAreaComponent implements OnInit {
 
   async cargarRequerimientosPendientes(): Promise<void> {
     try {
+      const params = {
+        documentoidentidad: this.usuario?.documentoidentidad || this.usuario?.dni || '',
+        ruc: this.usuario?.ruc
+      };
+      console.log('📊 Dashboard - Params pendientes:', params);
+
       const response = await firstValueFrom(
-        this.aprobacionesAreaService.obtenerRequerimientosPendientesArea({
-          documentoidentidad: this.usuario?.documentoidentidad || this.usuario?.dni || '',
-          ruc: this.usuario?.ruc
-        })
+        this.aprobacionesAreaService.obtenerRequerimientosPendientesArea(params)
       );
-      this.requerimientosPendientes = response?.resultado || response?.data || [];
+      console.log('📊 Dashboard - Respuesta pendientes RAW:', response);
+      console.log('📊 Dashboard - ¿Es array?', Array.isArray(response));
+      console.log('📊 Dashboard - Keys de respuesta:', response ? Object.keys(response) : 'null');
+
+      // Manejar respuesta directa como array o envuelta en objeto
+      this.requerimientosPendientes = Array.isArray(response) 
+        ? response 
+        : (response?.resultado || response?.data || []);
+      console.log('📊 Dashboard - Requerimientos pendientes procesados:', this.requerimientosPendientes.length, this.requerimientosPendientes);
     } catch (error) {
-      console.error('Error cargando pendientes:', error);
+      console.error('❌ Error cargando pendientes:', error);
       this.requerimientosPendientes = [];
     }
   }
 
   async cargarMisAprobaciones(): Promise<void> {
     try {
+      const params = {
+        documentoidentidad: this.usuario?.documentoidentidad || this.usuario?.dni || '',
+        ruc: this.usuario?.ruc
+      };
+      console.log('📊 Dashboard - Params aprobaciones:', params);
+
       const response = await firstValueFrom(
-        this.aprobacionesAreaService.obtenerReporteAprobacionesArea({
-          documentoidentidad: this.usuario?.documentoidentidad || this.usuario?.dni || '',
-          ruc: this.usuario?.ruc
-        })
+        this.aprobacionesAreaService.obtenerReporteAprobacionesArea(params)
       );
-      this.misAprobaciones = response?.resultado || response?.data || [];
+      console.log('📊 Dashboard - Respuesta aprobaciones RAW:', response);
+      console.log('📊 Dashboard - ¿Es array?', Array.isArray(response));
+      console.log('📊 Dashboard - Keys de respuesta:', response ? Object.keys(response) : 'null');
+
+      // Manejar respuesta directa como array o envuelta en objeto
+      this.misAprobaciones = Array.isArray(response) 
+        ? response 
+        : (response?.resultado || response?.data || []);
+      console.log('📊 Dashboard - Aprobaciones procesadas:', this.misAprobaciones.length, this.misAprobaciones);
     } catch (error) {
-      console.error('Error cargando aprobaciones:', error);
+      console.error('❌ Error cargando aprobaciones:', error);
       this.misAprobaciones = [];
     }
   }
 
   calcularResumen(): void {
-    // Calcular pendientes por tipo
+    // Calcular pendientes por tipo (usando itemtipo)
     const pendientesConsumo = this.requerimientosPendientes.filter(
-      (r: any) => (r.tipo === 'CONSUMO' || !r.tipo)
+      (r: any) => (r.itemtipo === 'CONSUMO' || !r.itemtipo)
     ).length;
     const pendientesCompra = this.requerimientosPendientes.filter(
-      (r: any) => r.tipo === 'COMPRA'
+      (r: any) => r.itemtipo === 'COMPRA'
     ).length;
 
-    // Calcular aprobados/rechazados por tipo del reporte
+    // Calcular aprobados/rechazados por tipo del reporte (usando itemtipo)
     const aprobadosConsumo = this.misAprobaciones.filter(
-      (a: any) => a.accion === 'APROBADO' && (a.tipo === 'CONSUMO' || !a.tipo)
+      (a: any) => (a.accion === 'APROBADO' || a.estado === 'APROBADO') && (a.itemtipo === 'CONSUMO' || !a.itemtipo)
     ).length;
     const aprobadosCompra = this.misAprobaciones.filter(
-      (a: any) => a.accion === 'APROBADO' && a.tipo === 'COMPRA'
+      (a: any) => (a.accion === 'APROBADO' || a.estado === 'APROBADO') && a.itemtipo === 'COMPRA'
     ).length;
 
     const rechazadosConsumo = this.misAprobaciones.filter(
-      (a: any) => a.accion === 'RECHAZADO' && (a.tipo === 'CONSUMO' || !a.tipo)
+      (a: any) => (a.accion === 'RECHAZADO' || a.estado === 'RECHAZADO') && (a.itemtipo === 'CONSUMO' || !a.itemtipo)
     ).length;
     const rechazadosCompra = this.misAprobaciones.filter(
-      (a: any) => a.accion === 'RECHAZADO' && a.tipo === 'COMPRA'
+      (a: any) => (a.accion === 'RECHAZADO' || a.estado === 'RECHAZADO') && a.itemtipo === 'COMPRA'
     ).length;
 
     this.resumen = {
@@ -172,6 +207,7 @@ export class DashboardAprobacionesAreaComponent implements OnInit {
       totalRechazados: rechazadosConsumo + rechazadosCompra,
       totalRequerimientos: this.requerimientosPendientes.length + this.misAprobaciones.length
     };
+    console.log('📊 Dashboard - Resumen calculado:', this.resumen);
   }
 
   // Filtros computados
@@ -179,21 +215,27 @@ export class DashboardAprobacionesAreaComponent implements OnInit {
     let filtrados = this.requerimientosPendientes;
 
     if (this.filtroTipo !== 'TODOS') {
-      filtrados = filtrados.filter(r => r.tipo === this.filtroTipo);
+      filtrados = filtrados.filter(r => r.itemtipo === this.filtroTipo);
     }
 
     return filtrados;
   }
 
-  get misAprobacionesFiltradas(): any[] {
-    let filtrados = this.misAprobaciones;
-
-    if (this.filtroEstado !== 'TODOS') {
-      filtrados = filtrados.filter(r => r.estadoAprobacion === this.filtroEstado);
-    }
+  get aprobacionesFiltradas(): any[] {
+    let filtrados = this.misAprobaciones.filter((a: any) => a.accion === 'APROBADO' || a.estado === 'APROBADO' || a.estadoAprobacion === 'APROBADO');
 
     if (this.filtroTipo !== 'TODOS') {
-      filtrados = filtrados.filter(r => r.tipo === this.filtroTipo);
+      filtrados = filtrados.filter(r => r.itemtipo === this.filtroTipo);
+    }
+
+    return filtrados;
+  }
+
+  get rechazosFiltrados(): any[] {
+    let filtrados = this.misAprobaciones.filter((a: any) => a.accion === 'RECHAZADO' || a.estado === 'RECHAZADO' || a.estadoAprobacion === 'RECHAZADO');
+
+    if (this.filtroTipo !== 'TODOS') {
+      filtrados = filtrados.filter(r => r.itemtipo === this.filtroTipo);
     }
 
     return filtrados;

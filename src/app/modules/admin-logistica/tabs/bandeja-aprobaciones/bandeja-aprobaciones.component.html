@@ -1,0 +1,141 @@
+<div class="bandeja-container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="m-0 fw-bold">Bandeja de Aprobaciones</h4>
+    <button class="btn btn-outline-primary" (click)="refresh()">
+      <i class="bx bx-refresh me-2"></i>Actualizar
+    </button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+      <div class="card kpi-card border-warning">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="text-muted mb-1">Total Pendientes</h6>
+              <h3 class="m-0 fw-bold">{{ kpis().totalPendientes }}</h3>
+            </div>
+            <div class="icon-box bg-warning">
+              <i class="bx bx-time text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="card kpi-card border-info">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="text-muted mb-1">Consumo Pendiente</h6>
+              <h3 class="m-0 fw-bold">{{ kpis().consumoPendientes }}</h3>
+            </div>
+            <div class="icon-box bg-info">
+              <i class="bx bx-package text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="card kpi-card border-success">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="text-muted mb-1">Compra Pendiente</h6>
+              <h3 class="m-0 fw-bold">{{ kpis().compraPendientes }}</h3>
+            </div>
+            <div class="icon-box bg-success">
+              <i class="bx bx-cart text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="card kpi-card border-danger">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="text-muted mb-1">Urgentes</h6>
+              <h3 class="m-0 fw-bold">{{ kpis().urgentes }}</h3>
+            </div>
+            <div class="icon-box bg-danger">
+              <i class="bx bx-error text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="card">
+    <div class="card-header bg-white">
+      <h5 class="m-0">Requerimientos Pendientes</h5>
+    </div>
+    <div class="card-body p-0">
+      <p-table 
+        [value]="pendientes()" 
+        [loading]="loading()"
+        [paginator]="true" 
+        [rows]="10"
+        [showCurrentPageReport]="true"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        styleClass="p-datatable-sm"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Número</th>
+            <th>Tipo</th>
+            <th>Solicitante</th>
+            <th>Área</th>
+            <th>Fecha</th>
+            <th>Monto</th>
+            <th>Prioridad</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td>{{ item.numero }}</td>
+            <td>
+              <p-tag [value]="item.tipo" [severity]="getTipoSeverity(item.tipo)"></p-tag>
+            </td>
+            <td>{{ item.solicitante }}</td>
+            <td>{{ item.area }}</td>
+            <td>{{ item.fecha | date:'dd/MM/yyyy' }}</td>
+            <td>{{ item.monto | currency:'PEN':'S/ ':'1.2-2' }}</td>
+            <td>
+              @if (item.prioridad === 'URGENTE') {
+                <span class="badge bg-danger">{{ item.prioridad }}</span>
+              } @else {
+                <span class="badge bg-info">{{ item.prioridad }}</span>
+              }
+            </td>
+            <td>
+              <p-tag [value]="item.estado" [severity]="getSeverity(item.estado)"></p-tag>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-primary" (click)="verDetalle(item)">
+                <i class="bx bx-eye"></i>
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="9" class="text-center py-4">
+              <div class="empty-state">
+                <i class="bx bx-inbox text-muted" style="font-size: 48px;"></i>
+                <p class="text-muted mt-2">No hay requerimientos pendientes</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>

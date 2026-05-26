@@ -1,0 +1,13 @@
+.maestros-container {
+  .nav-tabs {
+    .nav-link {
+      color: #666;
+      font-weight: 500;
+
+      &.active {
+        color: #1e3c72;
+        font-weight: 600;
+      }
+    }
+  }
+}

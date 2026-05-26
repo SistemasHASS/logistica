@@ -39,44 +39,30 @@ export class AprobadoresService {
   }
 
   listarNiveles(): Observable<Nivel[]> {
-    // const url = `${this.baseUrl}/api/logistica/listar-niveles-aprobadores`;
-    return this.http.get<Nivel[]>(
-      `${this.baseUrl}/LOGISTICA_listarNivelesAprobacion`
-    );
-    // try {
-    //   return this.http.post<any>(url, body);
-    // } catch (error: any) {
-    //   throw new Error(
-    //     error.error?.message || 'Error al registrar usuario aprobador'
-    //   );
-    // }
+    const url = `${this.baseUrl}/api/logistica/listar-aprobadores`;
+    return this.http.post<Nivel[]>(url, { tipo: 'NIVELES' });
   }
 
   listarTiposDocumento(): Observable<TipoDocumento[]> {
-    return this.http.get<TipoDocumento[]>(
-      `${this.baseUrl}/LOGISTICA_listarTiposDocumentoAprobacion`
-    );
-    // Si no existe endpoint para tipos, puedes codificarlos en frontend.
+    const url = `${this.baseUrl}/api/logistica/listar-aprobadores`;
+    return this.http.post<TipoDocumento[]>(url, { tipo: 'TIPOS' });
   }
 
   listarAprobadores(
     idNivel: number,
     codigoDocumento: string
   ): Observable<Aprobador[]> {
-    // Si tu endpoint acepta JSON, envía el body necesario. Ejemplo usando query:
-    return this.http.get<Aprobador[]>(
-      `${this.baseUrl}/LOGISTICA_listarAprobadoresNivel?idNivel=${idNivel}&codigoDocumento=${codigoDocumento}`
-    );
+    const url = `${this.baseUrl}/api/logistica/listar-aprobadores`;
+    return this.http.post<Aprobador[]>(url, { idNivel, codigoDocumento });
   }
 
   registrarAprobador(a: Aprobador): Observable<any> {
-    // Post con body o exec SP según tu backend
-    return this.http.post(`${this.baseUrl}/LOGISTICA_registrarAprobadorNivel`, a);
+    const url = `${this.baseUrl}/api/logistica/crear-aprobador`;
+    return this.http.post(url, a);
   }
 
   desactivarAprobador(idAprobador: number): Observable<any> {
-    return this.http.post(`${this.baseUrl}/LOGISTICA_desactivarAprobador`, {
-      idAprobador,
-    });
+    const url = `${this.baseUrl}/api/logistica/crear-aprobador`;
+    return this.http.post(url, { idAprobador, accion: 'DESACTIVAR' });
   }
 }

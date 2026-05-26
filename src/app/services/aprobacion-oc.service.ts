@@ -33,15 +33,31 @@ export class AprobacionOCService {
    * Aprobar o rechazar una orden de compra
    */
   aprobarRechazar(
-    idAprobacion: number,
+    idAprobacion: number | null,
     accion: 'APROBAR' | 'RECHAZAR',
     usuarioAprueba: string,
     nombreUsuario: string,
-    observaciones?: string
+    observaciones?: string,
+    numeroOrden?: string
   ): Observable<any> {
+    const payload: any = {
+      accion,
+      usuarioAprueba,
+      nombreUsuario,
+      observaciones
+    };
+
+    if (idAprobacion) {
+      payload.idAprobacion = idAprobacion;
+    }
+
+    if (numeroOrden) {
+      payload.numeroOrden = numeroOrden;
+    }
+
     return this.http.post(
       `${this.baseUrl}/api/logistica/aprobacion-oc/aprobar-rechazar`,
-      { idAprobacion, accion, usuarioAprueba, nombreUsuario, observaciones },
+      payload,
       { headers: this.headers }
     ).pipe(
       map(response => response),

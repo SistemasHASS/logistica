@@ -203,4 +203,16 @@ export class AprobacionOrdenService {
       { headers: this.headers }
     );
   }
+
+  /**
+   * Listar OCs pendientes de aprobación de ambos flujos (antiguo + nuevo).
+   * Retorna OCs con campo 'origen' ('ANTIGUO' | 'NUEVO').
+   */
+  listarOCPendientesUnificado(documentoIdentidad: string, rol: string, estado?: string): Observable<any> {
+    return this.http.post(
+      `${this.base}/listar-oc-pendientes-unificado`,
+      { documentoIdentidad, rol, estado },
+      { headers: this.headers }
+    );
+  }
 }

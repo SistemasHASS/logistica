@@ -64,7 +64,8 @@ import { DevolucionConsumoGuard, ReingresoGuard } from './modules/main/guards/ro
 import { AprobadorOCGuard } from './modules/auth/guard/aprobador-oc.guard';
 import { ConsolidacionComprasComponent } from './modules/main/pages/consolidacion-compras/consolidacion-compras.component';
 import { ConsolidacionServiciosComponent } from './modules/main/pages/consolidacion-servicios/consolidacion-servicios.component';
-
+import { AdminLogisticaComponent } from './modules/main/pages/admin-logistica/admin-logistica.component';
+import { AdminLogisticaGuard } from './modules/auth/guard/admin-logistica.guard';
 
 export const routes: Routes = [
   {
@@ -77,6 +78,10 @@ export const routes: Routes = [
       import('./modules/main/pages/administracion/admin.module')
         .then(m => m.AdminModule),
     canActivate: [AdminGuard]
+  },
+  {
+    path: 'admin-logistica',
+    loadChildren: () => import('./modules/admin-logistica/admin-logistica.routes').then(m => m.adminLogisticaRoutes)
   },
   {
     path: 'auth',

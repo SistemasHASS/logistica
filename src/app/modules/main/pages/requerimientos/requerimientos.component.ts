@@ -1,6 +1,7 @@
 ﻿import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { lastValueFrom } from 'rxjs';
 import { UserService } from '@/app/shared/services/user.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
@@ -10,6 +11,7 @@ import { RequerimientosItemService } from './services/requerimientos-item.servic
 import { RequerimientosCommodityService } from './services/requerimientos-commodity.service';
 import { RequerimientosActivoFijoService } from './services/requerimientos-activo-fijo.service';
 import { RequerimientosActivoMenorService } from './services/requerimientos-activo-menor.service';
+import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import {
   Requerimiento,
   DetalleRequerimiento,
@@ -589,6 +591,7 @@ export class RequerimientosComponent implements OnInit {
     private aprobacionesAreaService: AprobacionesAreaService, // ? Servicio de aprobaciones por área
     public prioridadService: PrioridadRequerimientoService, // ? Servicio de prioridades (public para usar en template)
     private commodityService: CommodityService, // ? Servicio para sincronizar maestro commodity
+    private maestrasService: MaestrasService,
   ) { }
   async ngOnInit() {
     await this.maestrasSvc.cargarUsuario();
@@ -685,6 +688,24 @@ export class RequerimientosComponent implements OnInit {
         this.SeleccionaPrioridadITEM = '1';
         this.glosa = data.descripcion;
         this.tabActiva = 'ITEM';
+
+        // Establecer almacén por defecto del requerimiento consolidado
+        if (data.detalles && data.detalles.length > 0) {
+          const primerDetalle = data.detalles[0];
+          const almacenOrigen = primerDetalle.almacen || primerDetalle.AlmacenCodigo || '';
+          if (almacenOrigen) {
+            // Buscar el almacén en la lista de almacenes
+            const almacenEnLista = this.almacenes.find((a: any) =>
+              a.idalmacen === almacenOrigen ||
+              a.codigo === almacenOrigen ||
+              a.AlmacenCodigo === almacenOrigen
+            );
+            if (almacenEnLista) {
+              this.almacenSeleccionado = almacenEnLista.idalmacen || almacenEnLista.codigo || almacenEnLista.AlmacenCodigo;
+            }
+          }
+        }
+
         data.detalles.forEach((detalle: any) => {
           this.agregarDetalleConsolidado(detalle);
         });
@@ -1375,6 +1396,26 @@ export class RequerimientosComponent implements OnInit {
   async ListarAlmacenes() {
     await this.maestrasSvc.ListarAlmacenes();
     this.almacenes = this.maestrasSvc.almacenes;
+    console.log('📦 Almacenes cargados desde Dexie:', this.almacenes.length, this.almacenes);
+
+    // Si no hay almacenes en Dexie, cargar desde API como fallback
+    if (!this.almacenes || this.almacenes.length === 0) {
+      console.log('⚠️ No hay almacenes en Dexie, cargando desde API...');
+      try {
+        const resp: any = await lastValueFrom(
+          this.maestrasService.getAlmacenes([
+            { ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA' }
+          ])
+        );
+        this.almacenes = Array.isArray(resp) ? resp : [];
+        console.log('📦 Almacenes cargados desde API:', this.almacenes.length, this.almacenes);
+        // Guardar en Dexie para futuros usos
+        await this.dexieService.saveAlmacenes(this.almacenes);
+      } catch (error) {
+        console.error('❌ Error al cargar almacenes desde API:', error);
+      }
+    }
+
     if (this.modoEdicion) { this.reasignarAlmacenDesdeDescripcion(); }
   }
 

@@ -1,0 +1,249 @@
+<div class="container-fluid py-3">
+
+  <!-- Mensajes -->
+  @if (successMsg) {
+    <div class="alert alert-success py-2"><i class="bx bx-check-circle me-1"></i>{{ successMsg }}</div>
+  }
+  @if (errorMsg) {
+    <div class="alert alert-danger py-2"><i class="bx bx-error-circle me-1"></i>{{ errorMsg }}</div>
+  }
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h5 class="fw-bold mb-0 text-primary"><i class="bx bx-user me-2"></i>Gestión de Usuarios</h5>
+      <small class="text-muted">Crear, editar y desactivar usuarios del sistema</small>
+    </div>
+    <button class="btn btn-primary btn-sm" (click)="abrirCrear()">
+      <i class="bx bx-plus me-1"></i>Nuevo Usuario
+    </button>
+  </div>
+
+  <!-- Tabla -->
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+      @if (loading) {
+        <div class="text-center py-4 text-muted">
+          <div class="spinner-border spinner-border-sm me-2"></div>Cargando usuarios...
+        </div>
+      } @else if (usuarios.length === 0) {
+        <div class="text-center py-4 text-muted">
+          <i class="bx bx-user-x fs-3 d-block mb-2"></i>No hay usuarios registrados
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover table-sm mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>DNI</th>
+                <th>Usuario</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th class="text-center">Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (u of usuarios; track u.id) {
+                <tr>
+                  <td class="text-muted small">{{ u.usuario }}</td>
+                  <td><span class="fw-semibold">{{ u.usuario }}</span></td>
+                  <td>{{ u.nombre }}</td>
+                  <td class="text-muted small">{{ u.email }}</td>
+                  <td>
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
+                      {{ getRolNombre(u.idrol) }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <span [class]="u.activo ? 'badge bg-success' : 'badge bg-secondary'">
+                      {{ u.activo ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <button class="btn btn-outline-primary btn-sm me-1" title="Editar" (click)="abrirEditar(u)">
+                      <i class="bx bx-edit"></i>
+                    </button>
+                    <button
+                      [class]="u.activo ? 'btn btn-outline-warning btn-sm' : 'btn btn-outline-success btn-sm'"
+                      [title]="u.activo ? 'Desactivar' : 'Activar'"
+                      (click)="toggleActivo(u)">
+                      <i [class]="u.activo ? 'bx bx-block' : 'bx bx-check'"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Modal Crear / Editar -->
+  @if (modalVisible) {
+    <div class="modal-backdrop">
+      <div class="modal-content modal-detalle-mejorado" style="max-width: 500px;">
+
+          <div class="modal-header py-2 bg-primary text-white">
+            <h6 class="modal-title mb-0">
+              <i class="bx me-2" [class.bx-user-plus]="!isEditing" [class.bx-edit]="isEditing"></i>
+              {{ isEditing ? 'Editar Usuario' : 'Nuevo Usuario' }}
+            </h6>
+            <button type="button" class="btn-close btn-close-white btn-sm" (click)="cerrarModal()"></button>
+          </div>
+
+          <div class="modal-body" [formGroup]="form">
+
+            <!-- PASO 1: Empresa (solo creación) -->
+            @if (!isEditing) {
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Empresa <span class="text-danger">*</span></label>
+                <select class="form-select form-select-sm" formControlName="ruc"
+                  [class.is-invalid]="form.get('ruc')?.invalid && form.get('ruc')?.touched">
+                  <option value="">-- Seleccionar empresa --</option>
+                  @for (e of empresas; track e.ruc) {
+                    <option [value]="e.ruc">{{ e.razonSocial }}</option>
+                  }
+                </select>
+                @if (form.get('ruc')?.errors?.['required'] && form.get('ruc')?.touched) {
+                  <div class="invalid-feedback">Seleccione una empresa</div>
+                }
+              </div>
+
+              <!-- PASO 2: Buscar trabajador en ERP -->
+              <div class="mb-3 p-3 bg-light rounded border">
+                <label class="form-label small fw-semibold text-secondary">
+                  <i class="bx bx-search me-1"></i>Buscar trabajador en el ERP
+                  <span class="text-muted fw-normal">(por DNI o nombre)</span>
+                </label>
+
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text"><i class="bx bx-search-alt"></i></span>
+                  <input
+                    type="text"
+                    class="form-control"
+                    placeholder="Ingrese DNI o nombre del trabajador..."
+                    [value]="busquedaErp"
+                    (input)="onBusquedaErpInput($event)"
+                    (keydown.enter)="buscarManual()"
+                    autocomplete="off" />
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary"
+                    [disabled]="buscandoErp"
+                    (click)="buscarManual()"
+                    title="Buscar">
+                    @if (buscandoErp) {
+                      <span class="spinner-border spinner-border-sm"></span>
+                    } @else {
+                      <i class="bx bx-search"></i>
+                    }
+                  </button>
+                </div>
+
+                <!-- Resultados dropdown -->
+                @if (erpResultados.length > 0) {
+                  <div class="list-group mt-1 shadow-sm" style="max-height:180px;overflow-y:auto">
+                    @for (r of erpResultados; track r.nrodocumento) {
+                      <button type="button"
+                        class="list-group-item list-group-item-action py-1 px-2 small"
+                        (click)="seleccionarErp(r)">
+                        <span class="fw-semibold text-primary me-2">{{ r.nrodocumento }}</span>
+                        {{ r.nombre }}
+                      </button>
+                    }
+                  </div>
+                }
+
+                @if (errorErp) {
+                  <div class="text-danger small mt-1"><i class="bx bx-error me-1"></i>{{ errorErp }}</div>
+                }
+
+                @if (erpSeleccionado) {
+                  <div class="alert alert-success py-1 px-2 mt-2 mb-0 small">
+                    <i class="bx bx-check-circle me-1"></i>
+                    Seleccionado: <strong>{{ erpSeleccionado.nombre }}</strong>
+                    (DNI: {{ erpSeleccionado.nrodocumento }})
+                  </div>
+                }
+
+                <div class="text-muted mt-1" style="font-size:0.72rem">
+                  Mínimo 3 caracteres para buscar. Solo trabajadores activos en el ERP.
+                </div>
+              </div>
+            }
+
+            <!-- Usuario ERP -->
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Usuario ERP <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" formControlName="usuario"
+                [class.is-invalid]="form.get('usuario')?.invalid && form.get('usuario')?.touched" />
+              @if (form.get('usuario')?.errors?.['required'] && form.get('usuario')?.touched) {
+                <div class="invalid-feedback">Campo obligatorio</div>
+              }
+            </div>
+
+            <!-- Nombre completo -->
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Nombre completo <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" formControlName="nombre"
+                [class.is-invalid]="form.get('nombre')?.invalid && form.get('nombre')?.touched" />
+              @if (form.get('nombre')?.errors?.['required'] && form.get('nombre')?.touched) {
+                <div class="invalid-feedback">Campo obligatorio</div>
+              }
+            </div>
+
+            <!-- Email -->
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Email</label>
+              <input type="email" class="form-control form-control-sm" formControlName="email"
+                placeholder="correo@empresa.com"
+                [class.is-invalid]="form.get('email')?.invalid && form.get('email')?.touched" />
+              @if (form.get('email')?.errors?.['email'] && form.get('email')?.touched) {
+                <div class="invalid-feedback">Email inválido</div>
+              }
+            </div>
+
+            <!-- Rol -->
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Rol <span class="text-danger">*</span></label>
+              <select class="form-select form-select-sm" formControlName="idrol"
+                [class.is-invalid]="form.get('idrol')?.invalid && form.get('idrol')?.touched">
+                <option value="">-- Seleccionar rol --</option>
+                @for (r of roles; track r.id) {
+                  <option [value]="r.id">{{ r.nombre }}</option>
+                }
+              </select>
+              @if (form.get('idrol')?.errors?.['required'] && form.get('idrol')?.touched) {
+                <div class="invalid-feedback">Seleccione un rol</div>
+              }
+            </div>
+
+            <!-- Activo (solo edición) -->
+            @if (isEditing) {
+              <div class="form-check mt-2">
+                <input type="checkbox" class="form-check-input" id="chkActivo" formControlName="activo" />
+                <label class="form-check-label small" for="chkActivo">Usuario activo</label>
+              </div>
+            }
+
+          </div>
+
+          <div class="modal-footer py-2">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="cerrarModal()">Cancelar</button>
+            <button type="button" class="btn btn-primary btn-sm" [disabled]="guardando" (click)="guardar()">
+              @if (guardando) {
+                <span class="spinner-border spinner-border-sm me-1"></span>Guardando...
+              } @else {
+                <i class="bx bx-save me-1"></i>{{ isEditing ? 'Actualizar' : 'Crear Usuario' }}
+              }
+            </button>
+          </div>
+
+      </div>
+    </div>
+  }
+
+</div>

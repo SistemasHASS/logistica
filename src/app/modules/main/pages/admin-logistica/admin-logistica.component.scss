@@ -1,0 +1,11 @@
+.admin-logistica-container {
+  padding: 20px;
+}
+
+.nav-tabs .nav-link {
+  cursor: pointer;
+  
+  &.active {
+    font-weight: 600;
+  }
+}

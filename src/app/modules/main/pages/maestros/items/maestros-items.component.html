@@ -1,55 +1,52 @@
-<div class="d-flex gap-2">
-  <!-- BOTÓN ABRIR MODAL -->
-  <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalItem" (click)="abrirNuevoItem()">
-    Nuevo Item
+<div class="d-flex gap-2 mb-3">
+  <button class="btn btn-primary" (click)="abrirNuevoItem()">
+    <i class="bx bx-plus me-1"></i> Nuevo Item
   </button>
-
-  <!-- BOTÓN IMPORTAR -->
-  <button class="btn btn-success  mb-3" (click)="openImportModal()">
-    Importar Excel
+  <button class="btn btn-success" (click)="openImportModal()">
+    <i class="bx bx-upload me-1"></i> Importar Excel
   </button>
-
-  <!-- BOTÓN DESCARGAR PLANTILLA -->
-  <button class="btn btn-outline-secondary  mb-3" (click)="downloadTemplate()">
-    Descargar Plantilla
+  <button class="btn btn-outline-secondary" (click)="downloadTemplate()">
+    <i class="bx bx-download me-1"></i> Descargar Plantilla
+  </button>
+  <button class="btn btn-outline-primary ms-auto" (click)="actualizarDesdeApi()" [disabled]="isLoading()">
+    @if (isLoading()) {
+      <span class="spinner-border spinner-border-sm me-1"></span>
+    } @else {
+      <i class="bx bx-refresh me-1"></i>
+    }
+    Actualizar
   </button>
 </div>
 
-
-<!-- FILTRO -->
 <div class="d-flex justify-content-between mb-2">
   <input type="text" class="form-control w-25" placeholder="Buscar..." [(ngModel)]="filtro" (input)="buscar()">
-
-  <div>
-    <span class="me-2">Total: {{ totalRegistros }}</span>
-  </div>
+  <span class="align-self-center text-muted">Total: {{ totalRegistros }}</span>
 </div>
 
-<!-- LOADING GENERAL -->
-<div class="text-center my-4" *ngIf="isLoading">
-  <div class="spinner-border text-primary" role="status"></div>
-  <p class="mt-2">Cargando datos...</p>
-</div>
-
-<!-- <div class="tabla-container"> -->
-<div class="tabla-container position-relative" *ngIf="!isLoading">
-  <!-- OVERLAY LOADING -->
-  <div *ngIf="isLoadingTable" class="overlay-loading d-flex justify-content-center align-items-center">
-    <div class="spinner-border text-primary"></div>
+@if (isLoading()) {
+  <div class="text-center my-4">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2">Cargando datos...</p>
   </div>
-  <!-- OVERLAY LOADING -->
-  <div *ngIf="isLoadingTable" class="overlay-loading d-flex justify-content-center align-items-center">
-    <div class="spinner-border text-primary"></div>
-  </div>
+}
 
-  <!-- SKELETON -->
-  <div *ngIf="itemsFiltrados.length === 0" class="skeleton-container">
-    <div class="skeleton-row" *ngFor="let x of [1,2,3,4,5,6]"></div>
-  </div>
+<div class="tabla-container position-relative" [style.display]="isLoading() ? 'none' : 'block'">
+  @if (isLoadingTable()) {
+    <div class="overlay-loading d-flex justify-content-center align-items-center">
+      <div class="spinner-border text-primary"></div>
+    </div>
+  }
 
-  <!-- TABLA REAL -->
+  @if (itemsFiltrados.length === 0 && !isLoadingTable()) {
+    <div class="skeleton-container">
+      @for (x of [1,2,3,4,5,6]; track x) {
+        <div class="skeleton-row"></div>
+      }
+    </div>
+  }
+
   <p-table #dt [value]="itemsFiltrados" [paginator]="true" [rows]="20" [totalRecords]="itemsFiltrados.length"
-    [loading]="isLoading" responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
+    [loading]="isLoadingTable()" responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
     [expandedRowKeys]="expandedRows" [showGridlines]="false"
     currentPageReportTemplate="<{first} - {last} de {totalRecords}>" styleClass="p-datatable-sm p-datatable-striped">
 
@@ -100,179 +97,187 @@
   </p-table>
 </div>
 
-<!-- MODAL IMPORTAR EXCEL -->
-<div class="modal fade" id="importExcelModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-md">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Importar Items desde Excel</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-
-      <div class="modal-body">
-        <input type="file" accept=".xlsx, .xls" class="form-control" (change)="onFileChange($event)" />
-
-        <div *ngIf="excelPreview?.length" class="mt-3">
-          <b>Registros detectados:</b> {{ excelPreview.length }}
+<!-- OVERLAY: IMPORTAR EXCEL -->
+@if (modalImportAbierto()) {
+  <div class="maestro-overlay" (click)="cerrarImportModal()" role="dialog" aria-modal="true">
+    <div class="maestro-modal maestro-modal--md" (click)="$event.stopPropagation()">
+      <div class="maestro-modal__header">
+        <div class="maestro-modal__header-title">
+          <i class="bx bx-file-import"></i>
+          <span>Importar Items desde Excel</span>
         </div>
+        <button class="maestro-modal__close" (click)="cerrarImportModal()" aria-label="Cerrar">
+          <i class="bx bx-x"></i>
+        </button>
       </div>
 
-      <div class="modal-footer justify-content-between">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">
-          Cancelar
-        </button>
+      <div class="maestro-modal__body">
+        <p class="text-muted mb-3" style="font-size:13px">
+          Seleccione un archivo <strong>.xlsx</strong> o <strong>.xls</strong>.
+          Use la plantilla oficial para garantizar el formato correcto.
+        </p>
+        <div class="form-group-maestro">
+          <label class="form-label-maestro">Archivo Excel <span class="text-danger">*</span></label>
+          <input type="file" accept=".xlsx,.xls" class="form-control" (change)="onFileChange($event)" />
+        </div>
+        @if (excelPreview.length) {
+          <div class="alert alert-success d-flex align-items-center gap-2 mt-3 py-2">
+            <i class="bx bx-check-circle fs-5"></i>
+            <span><strong>{{ excelPreview.length }}</strong> registros detectados y listos para importar.</span>
+          </div>
+        }
+      </div>
 
-        <button class="btn btn-success mb-3" (click)="importarItems()">
-          Importar Excel
+      <div class="maestro-modal__footer">
+        <button class="btn btn-outline-secondary" (click)="cerrarImportModal()">
+          <i class="bx bx-x me-1"></i> Cancelar
+        </button>
+        <button class="btn btn-success" (click)="importarItems()" [disabled]="!excelData.length">
+          <i class="bx bx-upload me-1"></i> Importar
         </button>
       </div>
     </div>
   </div>
-</div>
+}
 
-<!-- MODAL -->
-<div class="modal fade" id="modalItem" tabindex="-1">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content">
+<!-- OVERLAY: AGREGAR / EDITAR ITEM -->
+@if (modalItemAbierto()) {
+  <div class="maestro-overlay" (click)="cerrarModal()" role="dialog" aria-modal="true">
+    <div class="maestro-modal maestro-modal--xl" (click)="$event.stopPropagation()">
 
-      <!-- HEADER -->
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title color-text">{{ isEditMode ? 'Editar Item' : 'Agregar Item' }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      <div class="maestro-modal__header">
+        <div class="maestro-modal__header-title">
+          <i class="bx" [class.bx-edit]="isEditMode" [class.bx-plus-circle]="!isEditMode"></i>
+          <span>{{ isEditMode ? 'Editar Item' : 'Nuevo Item' }}</span>
+        </div>
+        <button class="maestro-modal__close" (click)="cerrarModal()" aria-label="Cerrar">
+          <i class="bx bx-x"></i>
+        </button>
       </div>
 
-      <!-- BODY -->
-      <div class="modal-body">
+      <div class="maestro-modal__body">
 
-        <!-- TABS -->
-        <ul class="nav nav-tabs" id="itemTabs" role="tablist">
-          <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#datosGenerales">🟦 Datos
-              Generales</a></li>
-          <!-- <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#infoAdicional">📄 Información
-              Adicional</a></li>
-          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#caracteristicas">⚙ Características
-              Especiales</a></li>
-          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#numeracion">🔢 Numeración</a></li> -->
-        </ul>
+        <div class="section-title-maestro">
+          <i class="bx bx-id-card me-2"></i> Identificación
+        </div>
 
-        <!-- TAB CONTENT -->
-        <div class="tab-content mt-3">
+        <div class="row g-3 mb-3">
+          <div class="col-md-3">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Código del Item</label>
+              @if (isEditMode) {
+                <input type="text" class="form-control" [(ngModel)]="item.item" readonly>
+              } @else {
+                <input type="text" class="form-control" [value]="'00' + correlativoItem" readonly>
+              }
+            </div>
+          </div>
 
-          <!-- ✅ TAB 1: DATOS GENERALES -->
-          <div class="tab-pane fade show active" id="datosGenerales">
-            <div class="row">
-              <div class="col-4">
-                <label>Código del Item</label>
-                <input *ngIf="isEditMode" type="text" class="form-control" [(ngModel)]="item.item" readonly>
-                <input *ngIf="!isEditMode" class="form-control" [value]="'00'+correlativoItem" readonly>
-              </div>
+          <div class="col-md-9">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Descripción Local <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="item.descripcionLocal"
+                placeholder="Ingrese descripción local del ítem"
+                (input)="onDescripcionInput($event.target.value)">
+              @if (sugerencias.length) {
+                <div class="autocomplete-container">
+                  @for (s of sugerencias; track s) {
+                    <div class="suggestion" (click)="selectSuggestionInModal(s)">
+                      {{ s.item ? s.item.descripcionLocal : s.descripcionLocal || s }}
+                      @if (s._score) {
+                        <small class="text-muted"> ({{ (s._score).toFixed(2) }})</small>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
 
-              <div class="col-8">
-                <label>Descripción Local</label>
-                <input type="text" class="form-control" [(ngModel)]="item.descripcionLocal"
-                  (input)="onDescripcionInput($event.target.value)">
-                <div class="autocomplete-container" *ngIf="sugerencias?.length">
-                  <div class="suggestion" *ngFor="let s of sugerencias" (click)="selectSuggestionInModal(s)">
-                    {{ s.item ? s.item.descripcionLocal : s.descripcionLocal || s }}
-                    <small *ngIf="s._score"> ({{ (s._score).toFixed(2) }})</small>
-                  </div>
+          <div class="col-12">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Descripción Completa</label>
+              <textarea class="form-control" rows="2" [(ngModel)]="item.descripcionCompleta"
+                placeholder="Descripción técnica detallada del ítem"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title-maestro">
+          <i class="bx bx-ruler me-2"></i> Unidades de Medida
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Unidad de Medida <span class="text-danger">*</span></label>
+              <select class="form-select" [(ngModel)]="item.unidadCodigo">
+                <option value="">Seleccione</option>
+                @for (u of unidadesMedida(); track u.codigo) {
+                  <option [value]="u.codigo">{{ u.codigo }} — {{ u.descripcion }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Unidad de Compra <span class="text-danger">*</span></label>
+              <select class="form-select" [(ngModel)]="item.unidadCompra">
+                <option value="">Seleccione</option>
+                @for (u of unidadesMedida(); track u.codigo) {
+                  <option [value]="u.codigo">{{ u.codigo }} — {{ u.descripcion }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Precio Unitario (Local)</label>
+              <input type="number" class="form-control" [(ngModel)]="item.precioUnitarioLocal"
+                placeholder="0.00" step="0.01" min="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title-maestro">
+          <i class="bx bx-info-circle me-2"></i> Estado
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="form-group-maestro">
+              <label class="form-label-maestro">Estado del Ítem</label>
+              <div class="d-flex gap-4 mt-1">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" id="itemActivo" [(ngModel)]="item.estado" value="A">
+                  <label class="form-check-label" for="itemActivo">
+                    <span class="badge bg-success">Activo</span>
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" id="itemInactivo" [(ngModel)]="item.estado" value="I">
+                  <label class="form-check-label" for="itemInactivo">
+                    <span class="badge bg-secondary">Inactivo</span>
+                  </label>
                 </div>
               </div>
-
-              <div class="col-12 mt-2">
-                <label>Descripción Completa</label>
-                <textarea class="form-control" [(ngModel)]="item.descripcionCompleta"></textarea>
-              </div>
-            </div>
-
-            <hr>
-
-            <div class="row mt-2">
-              <div class="col-4">
-                <label>Unidad Medida</label>
-                <select class="form-select" [(ngModel)]="item.unidadCodigo">
-                  <option>UNIDAD</option>
-                  <option>KG</option>
-                  <option>MTS</option>
-                </select>
-              </div>
-
-              <div class="col-4">
-                <label>Unidad Compra</label>
-                <select class="form-select" [(ngModel)]="item.unidadCompra">
-                  <option>UNIDAD</option>
-                  <option>KG</option>
-                  <option>MTS</option>
-                </select>
-              </div>
-
-              <!-- <div class="col-4">
-                <label>Unidad Embalaje</label>
-                <select class="form-select" [(ngModel)]="item2.unidadEmbalaje">
-                  <option>UNIDAD</option>
-                  <option>CAJA</option>
-                </select>
-              </div> -->
-            </div>
-
-            <hr>
-
-            <div class="row mt-2">
-              <!-- <div class="col-6">
-                <label>Compañía</label>
-                <input type="text" class="form-control" maxlength="2" [(ngModel)]="item.compania">
-              </div> -->
-
-              <div class="col-6">
-                <label>Imagen del Item</label>
-                <input type="file" class="form-control">
-              </div>
-            </div>
-
-            <div class="mt-3">
-              <label class="me-3"><input type="radio" [(ngModel)]="item.estado" value="A"> Activo</label>
-              <label><input type="radio" [(ngModel)]="item.estado" value="I"> Inactivo</label>
             </div>
           </div>
-
-          <!-- ✅ TAB 2: INFO ADICIONAL -->
-          <div class="tab-pane fade" id="infoAdicional">
-            <p>Campos adicionales aquí...</p>
-          </div>
-
-          <!-- ✅ TAB 3: CARACTERÍSTICAS ESPECIALES -->
-          <div class="tab-pane fade" id="caracteristicas">
-            <div class="row">
-              <div class="col-4">
-                <input type="checkbox"> Se maneja por Lotes <br>
-                <input type="checkbox"> Tiene n° de Serie por Item
-              </div>
-              <div class="col-4">
-                <input type="checkbox"> Item Relacionado <br>
-                <input type="checkbox"> Aplica Norma ISO
-              </div>
-              <div class="col-4">
-                <input type="checkbox"> Convertible en otro item <br>
-                <input type="checkbox"> Disponible para venta
-              </div>
-            </div>
-          </div>
-
-          <!-- ✅ TAB 4: NUMERACIÓN -->
-          <!-- <div class="tab-pane fade" id="numeracion">
-            <label>Numeración de Item:</label>
-            <input type="text" class="form-control" [(ngModel)]="item.numeracion">
-          </div> -->
-
         </div>
+
       </div>
 
-      <!-- FOOTER -->
-      <div class="modal-footer">
-        <button class="btn btn-success" data-bs-dismiss="modal" (click)="guardar()">Aceptar</button>
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+      <div class="maestro-modal__footer">
+        <button class="btn btn-outline-secondary" (click)="cerrarModal()">
+          <i class="bx bx-x me-1"></i> Cancelar
+        </button>
+        <button class="btn btn-primary" (click)="guardar(); cerrarModal()">
+          <i class="bx bx-save me-1"></i> Guardar
+        </button>
       </div>
 
     </div>
   </div>
-</div>
+}

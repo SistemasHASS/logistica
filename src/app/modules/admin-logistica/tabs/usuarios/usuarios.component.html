@@ -1,0 +1,144 @@
+<div class="usuarios-container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="m-0 fw-bold">Gestión de Usuarios</h4>
+    <div>
+      <button class="btn btn-outline-primary me-2" (click)="refresh()">
+        <i class="bx bx-refresh me-2"></i>Actualizar
+      </button>
+      <button class="btn btn-primary" (click)="openCreate()">
+        <i class="bx bx-plus me-2"></i>Nuevo Usuario
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0">
+      <p-table 
+        [value]="usuarios()" 
+        [loading]="loading()"
+        [paginator]="true" 
+        [rows]="10"
+        [showCurrentPageReport]="true"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        styleClass="p-datatable-sm"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Usuario</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Fecha Creación</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-usuario>
+          <tr>
+            <td>{{ usuario.usuario }}</td>
+            <td>{{ usuario.nombre }}</td>
+            <td>{{ usuario.email }}</td>
+            <td>
+              <span class="badge bg-secondary">{{ getRolNombre(usuario.idrol) }}</span>
+            </td>
+            <td>
+              <p-tag [value]="usuario.activo ? 'Activo' : 'Inactivo'" [severity]="usuario.activo ? 'success' : 'danger'"></p-tag>
+            </td>
+            <td>{{ usuario.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary me-2" (click)="openEdit(usuario)">
+                <i class="bx bx-edit"></i>
+              </button>
+              <button class="btn btn-sm" [class.btn-outline-success]="!usuario.activo" [class.btn-outline-danger]="usuario.activo" (click)="toggleActivo(usuario)">
+                <i class="bx" [class.bx-power-off]="usuario.activo" [class.bx-check]="!usuario.activo"></i>
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center py-4">
+              <div class="empty-state">
+                <i class="bx bx-user-x text-muted" style="font-size: 48px;"></i>
+                <p class="text-muted mt-2">No hay usuarios registrados</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <p-dialog 
+    [header]="isEditing() ? 'Editar Usuario' : 'Nuevo Usuario'"
+    [(visible)]="modalVisible"
+    [modal]="true"
+    [style]="{width: '500px'}"
+    [draggable]="false"
+    [resizable]="false"
+  >
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="mb-3">
+        <label class="form-label">Usuario *</label>
+        <input type="text" class="form-control" formControlName="usuario" [class.is-invalid]="form.get('usuario')?.invalid && form.get('usuario')?.touched">
+        @if (form.get('usuario')?.invalid && form.get('usuario')?.touched) {
+          <div class="invalid-feedback">Usuario requerido (mínimo 3 caracteres)</div>
+        }
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Nombre Completo *</label>
+        <input type="text" class="form-control" formControlName="nombre" [class.is-invalid]="form.get('nombre')?.invalid && form.get('nombre')?.touched">
+        @if (form.get('nombre')?.invalid && form.get('nombre')?.touched) {
+          <div class="invalid-feedback">Nombre requerido</div>
+        }
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Email *</label>
+        <input type="email" class="form-control" formControlName="email" [class.is-invalid]="form.get('email')?.invalid && form.get('email')?.touched">
+        @if (form.get('email')?.invalid && form.get('email')?.touched) {
+          <div class="invalid-feedback">Email válido requerido</div>
+        }
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Rol *</label>
+        <select class="form-select" formControlName="idrol" [class.is-invalid]="form.get('idrol')?.invalid && form.get('idrol')?.touched">
+          <option value="">Seleccione un rol</option>
+          @for (rol of roles; track rol.id) {
+            <option [value]="rol.id">{{ rol.nombre }}</option>
+          }
+        </select>
+        @if (form.get('idrol')?.invalid && form.get('idrol')?.touched) {
+          <div class="invalid-feedback">Rol requerido</div>
+        }
+      </div>
+
+      @if (!isEditing()) {
+        <div class="mb-3">
+          <label class="form-label">Contraseña *</label>
+          <input type="password" class="form-control" formControlName="clave" [class.is-invalid]="form.get('clave')?.invalid && form.get('clave')?.touched">
+          @if (form.get('clave')?.invalid && form.get('clave')?.touched) {
+            <div class="invalid-feedback">Contraseña requerida (mínimo 4 caracteres)</div>
+          }
+        </div>
+      }
+
+      <div class="mb-3">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="activo" formControlName="activo">
+          <label class="form-check-label" for="activo">Usuario activo</label>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+          <i class="bx bx-save me-2"></i>{{ isEditing() ? 'Guardar Cambios' : 'Crear Usuario' }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+</div>

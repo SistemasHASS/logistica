@@ -11,7 +11,7 @@ export class AprobacionOSService {
 
   constructor(private http: HttpClient) {}
 
-  obtenerContadores(documentoIdentidad: string): Observable<any> {
+  obtenerContadores(documentoIdentidad?: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/logistica/aprobacion-os/contadores`, {
       documentoIdentidad,
     });

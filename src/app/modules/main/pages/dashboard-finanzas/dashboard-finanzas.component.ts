@@ -57,15 +57,16 @@ export class DashboardFinanzasComponent implements OnInit {
   async cargarContadores() {
     this.cargando = true;
     try {
-      // Cargar contadores de OC
+      // Cargar contadores de OC (sin filtro de usuario - muestra TODOS los pendientes)
+      // Pasando body vacío {} para que el SP cuente todas las OC sin filtrar por aprobador
       const contadoresOC = await this.aprobacionOCService
-        .obtenerContadores(this.usuario.documentoidentidad)
+        .obtenerContadores('')  // string vacío = body vacío = todos los pendientes
         .toPromise();
       this.contadoresOC = contadoresOC || {};
 
-      // Cargar contadores de OS
+      // Cargar contadores de OS (sin filtro de usuario - muestra TODOS los pendientes)
       const contadoresOS = await this.aprobacionOSService
-        .obtenerContadores(this.usuario.documentoidentidad)
+        .obtenerContadores('')  // string vacío = body vacío = todos los pendientes
         .toPromise();
       this.contadoresOS = contadoresOS || {};
     } catch (error) {

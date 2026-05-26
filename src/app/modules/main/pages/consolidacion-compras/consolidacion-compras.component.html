@@ -232,34 +232,70 @@
             Los ítems con el mismo código se agrupan automáticamente.
           </div>
 
-          @for (grupo of gruposConsolidados(); track grupo.codigo) {
-            <div class="card mb-3 border-primary">
-              <div class="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
-                <div>
-                  <strong><code>{{ grupo.codigo }}</code></strong> — {{ grupo.descripcion }}
-                  <span class="badge bg-primary ms-2">{{ grupo.items.length }} requerimiento(s)</span>
-                </div>
-                <div>
-                  <span class="fw-bold text-primary">Total: {{ grupo.cantidadTotal | number:'1.2-2' }} {{ grupo.unidadMedida }}</span>
-                </div>
-              </div>
-              <div class="card-body p-2">
-                <table class="table table-sm mb-0">
-                  <thead><tr><th>Nro. Req.</th><th>Área</th><th>CECO</th><th>Cantidad</th></tr></thead>
-                  <tbody>
-                    @for (item of grupo.items; track item.idDetalle) {
-                      <tr>
-                        <td><small>{{ recortarNumeroReq(item.numeroRequerimiento) }}</small></td>
-                        <td><small>{{ item.area }}</small></td>
-                        <td><small>{{ item.ceco }}</small></td>
-                        <td>{{ item.cantidadPendiente | number:'1.2-2' }} {{ item.unidadMedida }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          }
+          <p-table [value]="gruposConsolidados()"
+                   [paginator]="false"
+                   responsiveLayout="scroll"
+                   styleClass="p-datatable-sm p-datatable-striped">
+
+            <ng-template pTemplate="header">
+              <tr>
+                <th style="width:40px"></th>
+                <th style="min-width:110px">Código</th>
+                <th style="min-width:250px">Descripción</th>
+                <th style="min-width:100px" class="text-end">Cant. Total</th>
+                <th style="min-width:70px">UM</th>
+                <th style="min-width:80px" class="text-end">Precio Unit.</th>
+                <th style="min-width:100px" class="text-end">Valor Total</th>
+                <th style="min-width:100px">Req.</th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-grupo>
+              <tr [class.table-primary]="estaFilaExpandida(grupo.codigo)" (click)="toggleFilaExpandida(grupo.codigo)" style="cursor:pointer">
+                <td>
+                  @if (estaFilaExpandida(grupo.codigo)) {
+                    <i class="bx bx-chevron-down"></i>
+                  } @else {
+                    <i class="bx bx-chevron-right"></i>
+                  }
+                </td>
+                <td><code>{{ grupo.codigo }}</code></td>
+                <td>{{ grupo.descripcion }}</td>
+                <td class="text-end fw-bold">{{ grupo.cantidadTotal | number:'1.2-2' }}</td>
+                <td>{{ grupo.unidadMedida }}</td>
+                <td class="text-end">{{ simboloMoneda(grupo.moneda) }} {{ grupo.precioUnitario | number:'1.2-2' }}</td>
+                <td class="text-end fw-bold">{{ simboloMoneda(grupo.moneda) }} {{ grupo.valorTotal | number:'1.2-2' }}</td>
+                <td><span class="badge bg-primary">{{ grupo.items.length }}</span></td>
+              </tr>
+
+              @if (estaFilaExpandida(grupo.codigo)) {
+                <tr>
+                  <td colspan="8" class="p-2 bg-light">
+                    <table class="table table-sm mb-0">
+                      <thead><tr><th>Nro. Req.</th><th>Área</th><th>CECO</th><th>Cantidad</th></tr></thead>
+                      <tbody>
+                        @for (item of grupo.items; track item.idDetalle) {
+                          <tr>
+                            <td><small>{{ recortarNumeroReq(item.numeroRequerimiento) }}</small></td>
+                            <td><small>{{ item.area }}</small></td>
+                            <td><small>{{ item.ceco }}</small></td>
+                            <td>{{ item.cantidadPendiente | number:'1.2-2' }} {{ item.unidadMedida }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              }
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="8" class="text-center py-3 text-muted">No hay grupos para consolidar.</td>
+              </tr>
+            </ng-template>
+
+          </p-table>
 
           <div class="d-flex gap-2 mt-3">
             <button class="btn btn-success" (click)="abrirModalEmitirOC()">
@@ -299,57 +335,84 @@
         } @else if (ordenesCompra().length === 0) {
           <div class="alert alert-info">No hay órdenes de compra.</div>
         } @else {
-          @for (oc of ordenesCompra(); track oc.idOrden) {
-            <div class="card mb-2" [class.border-warning]="oc.estado==='PENDIENTE'"
-                 [class.border-info]="oc.estado==='PENDIENTE_APROBACION'"
-                 [class.border-success]="oc.estado==='APROBADA'"
-                 [class.border-primary]="oc.estado==='ENVIADA'">
-              <div class="card-body p-3">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-                  <div>
-                    <h6 class="mb-1 fw-bold">{{ oc.numeroOrden }}</h6>
-                    <div class="text-muted small">{{ oc.nombreProveedor }} | RUC: {{ oc.rucProveedor }}</div>
-                    <div class="small">
-                      <span class="me-3">{{ oc.moneda }} {{ oc.totalOrden | number:'1.2-2' }}</span>
-                      <!-- <span class="me-3"><i class="bx bx-dollar"></i> {{ oc.moneda }} {{ oc.totalOrden | number:'1.2-2' }}</span> -->
-                      <span><i class="bx bx-calendar"></i> {{ oc.fechaCreacion }}</span>
-                    </div>
-                  </div>
-                  <div class="d-flex gap-1 flex-wrap align-items-center">
-                    <span class="badge" [class]="badgeEstadoOC(oc.estado)">{{ oc.estado }}</span>
+          <p-table [value]="ordenesCompra()" [rows]="10" [paginator]="true" [rowsPerPageOptions]="[10, 20, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} órdenes" styleClass="p-datatable-sm p-datatable-gridlines">
+            <ng-template pTemplate="header">
+              <tr>
+                <th style="width:40px"></th>
+                <th style="width:50px">#</th>
+                <th>Número OC</th>
+                <th>Número SPRING</th>
+                <th>Proveedor</th>
+                <th>RUC</th>
+                <th>Total</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-oc let-rowIndex="rowIndex">
+              <tr [class.table-warning]="oc.estado==='PENDIENTE'"
+                  [class.table-info]="oc.estado==='PENDIENTE_APROBACION'"
+                  [class.table-success]="oc.estado==='APROBADA'"
+                  [class.table-primary]="oc.estado==='ENVIADA'">
+                <td></td>
+                <td>{{ rowIndex + 1 }}</td>
+                <td><strong>{{ oc.numeroOrden }}</strong></td>
+                <td>
+                  @if (oc.numeroOrdenSpring) {
+                    <span class="badge bg-primary">{{ oc.numeroOrdenSpring }}</span>
+                  } @else {
+                    <span class="text-muted">-</span>
+                  }
+                </td>
+                <td>{{ oc.nombreProveedor }}</td>
+                <td>{{ oc.rucProveedor }}</td>
+                <td>{{ oc.moneda }} {{ oc.totalOrden | number:'1.2-2' }}</td>
+                <td>{{ oc.fechaCreacion }}</td>
+                <td><span class="badge" [class]="badgeEstadoOC(oc.estado)">{{ oc.estado }}</span></td>
+                <td>
+                  <div class="d-flex gap-1 align-items-center">
                     <button class="btn btn-sm btn-outline-secondary" (click)="abrirAdjuntos(oc, 'OC')" title="Ver adjuntos">
                       <i class="bx bx-paperclip"></i> {{ oc.cantAdjuntos ?? 0 }}
                     </button>
-                    <button class="btn btn-sm btn-outline-primary" (click)="verDetalleOC(oc)">
+                    <button class="btn btn-sm btn-outline-primary" (click)="verDetalleOC(oc)" title="Ver detalle">
                       <i class="bx bx-show"></i>
                     </button>
                     @if (oc.estado === 'PENDIENTE') {
-                      <button class="btn btn-sm btn-outline-secondary" (click)="abrirAdjuntos(oc, 'OC')">
-                        <i class="bx bx-paperclip"></i> Adjuntar
+                      <button class="btn btn-sm btn-outline-secondary" (click)="abrirAdjuntos(oc, 'OC')" title="Adjuntar">
+                        <i class="bx bx-paperclip"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-success" (click)="sincronizarOCConSpring(oc)" title="Sincronizar con SPRING">
+                        <i class="bx bx-sync"></i>
                       </button>
                       <button class="btn btn-sm btn-warning"
                               [disabled]="!ocsConPdfYExcel().has(oc.idOrden)"
                               (click)="enviarOCAprobacion(oc)"
                               [title]="!ocsConPdfYExcel().has(oc.idOrden) ? 'Debe adjuntar un PDF y un Excel' : 'Enviar a aprobación'">
-                        <i class="bx bx-send"></i> Enviar Aprobación
+                        <i class="bx bx-send"></i>
                       </button>
                     }
                     <button class="btn btn-sm btn-outline-info" title="Ver / Imprimir PDF" (click)="verPdfOC(oc)">
                       <i class="bx bx-file-pdf"></i> PDF
                     </button>
                     @if (oc.estado === 'APROBADA' && !oc.correoEnviado) {
-                      <button class="btn btn-sm btn-success" (click)="confirmarEnvioOC(oc)">
-                        <i class="bx bx-envelope"></i> Confirmar y Enviar
+                      <button class="btn btn-sm btn-success" (click)="confirmarEnvioOC(oc)" title="Confirmar y Enviar">
+                        <i class="bx bx-envelope"></i>
                       </button>
                     }
                     @if (oc.correoEnviado) {
-                      <span class="badge bg-success"><i class="bx bx-check-double"></i> Correo enviado</span>
+                      <span class="badge bg-success"><i class="bx bx-check-double"></i></span>
                     }
                   </div>
-                </div>
-              </div>
-            </div>
-          }
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="10" class="text-center">No hay órdenes de compra</td>
+              </tr>
+            </ng-template>
+          </p-table>
         }
       </div>
     }
@@ -362,7 +425,7 @@
   <div class="modal-overlay" (click)="cerrarModalOC()">
     <div class="modal-box modal-xl" (click)="$event.stopPropagation()">
       <div class="modal-header bg-primary text-white">
-        <h5 class="mb-0"><i class="bx bx-file-blank me-2"></i>Emitir Orden de Compra</h5>
+        <h5 class="mb-0 text-white"><i class="bx bx-file-blank me-2"></i>Emitir Orden de Compra</h5>
         <button class="btn-close btn-close-white" (click)="cerrarModalOC()"></button>
       </div>
       <div class="modal-body" style="max-height:75vh;overflow-y:auto">
@@ -483,7 +546,15 @@
           </div>
           <div class="col-md-3">
             <label class="form-label small fw-bold">Almacén *</label>
-            <input class="form-control form-control-sm" [(ngModel)]="ocForm.almacen" placeholder="ALM001">
+            <app-dropdown
+              [data]="almacenes()"
+              optionLabel="almacen"
+              valueField="idalmacen"
+              [(ngModel)]="ocForm.almacen"
+              [required]="true"
+              [editable]="false"
+              textShow2="un almacén"
+            ></app-dropdown>
           </div>
           <div class="col-md-6">
             <label class="form-label small fw-bold">Lugar de Entrega *</label>

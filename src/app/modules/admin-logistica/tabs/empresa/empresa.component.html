@@ -1,0 +1,192 @@
+<div class="empresa-container">
+
+  @if (alertMsg()) {
+    <div class="alert fade show mb-3"
+         [class.alert-success]="alertTipo() === 'success'"
+         [class.alert-danger]="alertTipo() === 'danger'"
+         role="alert">
+      <i class="bx me-2" [class.bx-check-circle]="alertTipo() === 'success'" [class.bx-error-circle]="alertTipo() === 'danger'"></i>
+      {{ alertMsg() }}
+    </div>
+  }
+
+  <div class="two-col">
+
+    <!-- Lista de empresas -->
+    <div class="col-lista">
+      <div class="lista-header">
+        <span class="fw-semibold"><i class="bx bx-buildings me-1 text-success"></i>Empresas registradas</span>
+        <button class="btn btn-success btn-sm" (click)="nuevaEmpresa()">
+          <i class="bx bx-plus me-1"></i>Nueva
+        </button>
+      </div>
+
+      @if (cargando()) {
+        <div class="text-center py-4 text-muted">
+          <i class="bx bx-loader-circle bx-spin fs-4"></i><br>Cargando...
+        </div>
+      } @else if (empresas().length === 0) {
+        <div class="empty-lista">
+          <i class="bx bx-building fs-2 text-muted"></i>
+          <p class="text-muted small mt-2">No hay empresas registradas.<br>Crea la primera.</p>
+        </div>
+      } @else {
+        <ul class="empresa-list">
+          @for (emp of empresas(); track emp.id) {
+            <li class="empresa-item" [class.active]="empresa().id === emp.id" (click)="seleccionar(emp)">
+              <div class="empresa-logo">
+                @if (emp.logoBase64) {
+                  <img [src]="emp.logoBase64" alt="logo">
+                } @else {
+                  <i class="bx bx-buildings text-muted"></i>
+                }
+              </div>
+              <div class="empresa-info">
+                <div class="fw-semibold small">{{ emp.razonSocial }}</div>
+                <div class="text-muted" style="font-size:11px">RUC: {{ emp.ruc }}</div>
+              </div>
+              @if (emp.activo) {
+                <span class="badge bg-success ms-auto" style="font-size:10px">Activa</span>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <!-- Formulario -->
+    <div class="col-form">
+      <div class="form-header">
+        <span class="fw-semibold">
+          <i class="bx me-1 text-success" [class.bx-edit]="!modoNuevo()" [class.bx-plus-circle]="modoNuevo()"></i>
+          {{ modoNuevo() ? 'Nueva Empresa' : 'Editar Empresa' }}
+        </span>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-secondary btn-sm" (click)="cargar()" [disabled]="cargando()">
+            <i class="bx bx-refresh me-1"></i>Recargar
+          </button>
+          <button class="btn btn-success btn-sm" (click)="guardar()" [disabled]="guardando()">
+            <i class="bx me-1" [class.bx-save]="!guardando()" [class.bx-loader-circle]="guardando()"></i>
+            {{ guardando() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Sub-tabs -->
+      <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="tabActivo() === 'datos'" (click)="tabActivo.set('datos')">
+            <i class="bx bx-id-card me-1"></i>Datos generales
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="tabActivo() === 'smtp'" (click)="tabActivo.set('smtp')">
+            <i class="bx bx-envelope me-1"></i>Correo / SMTP
+          </button>
+        </li>
+      </ul>
+
+      <!-- Tab: Datos generales -->
+      @if (tabActivo() === 'datos') {
+        <div class="row g-3">
+
+          <!-- Logo -->
+          <div class="col-12">
+            <div class="logo-section">
+              <div class="logo-box">
+                @if (empresa().logoBase64) {
+                  <img [src]="empresa().logoBase64" alt="Logo" class="logo-img">
+                } @else {
+                  <div class="logo-placeholder"><i class="bx bx-image-alt"></i><span>Sin logo</span></div>
+                }
+              </div>
+              <div class="logo-actions">
+                <label class="btn btn-outline-primary btn-sm">
+                  <i class="bx bx-upload me-1"></i>Subir Logo
+                  <input type="file" accept="image/*" hidden (change)="onLogoChange($event)">
+                </label>
+                @if (empresa().logoBase64) {
+                  <button class="btn btn-outline-danger btn-sm" (click)="eliminarLogo()">
+                    <i class="bx bx-trash me-1"></i>Eliminar
+                  </button>
+                }
+                <small class="text-muted">PNG, JPG. Máx 2MB. Se guarda en BD.</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-8">
+            <label class="form-label">Razón Social <span class="text-danger">*</span></label>
+            <input class="form-control form-control-sm" [ngModel]="empresa().razonSocial"
+              (ngModelChange)="patch({razonSocial: $event})" placeholder="HASS PERU S.A.">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">RUC <span class="text-danger">*</span></label>
+            <input class="form-control form-control-sm" [ngModel]="empresa().ruc"
+              (ngModelChange)="patch({ruc: $event})" placeholder="20xxxxxxxxx" maxlength="11">
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Dirección</label>
+            <input class="form-control form-control-sm" [ngModel]="empresa().direccion"
+              (ngModelChange)="patch({direccion: $event})" placeholder="Av. Ejemplo 123, Lima">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Teléfono</label>
+            <input class="form-control form-control-sm" [ngModel]="empresa().telefono"
+              (ngModelChange)="patch({telefono: $event})" placeholder="01-234-5678">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input class="form-control form-control-sm" type="email" [ngModel]="empresa().email"
+              (ngModelChange)="patch({email: $event})" placeholder="empresa@ejemplo.com">
+          </div>
+        </div>
+      }
+
+      <!-- Tab: Correo / SMTP -->
+      @if (tabActivo() === 'smtp') {
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Correo de envío</label>
+            <input class="form-control form-control-sm" type="email" [ngModel]="empresa().correoEnvio"
+              (ngModelChange)="patch({correoEnvio: $event})" placeholder="logistica@empresa.com">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nombre remitente</label>
+            <input class="form-control form-control-sm" [ngModel]="empresa().correoNombre"
+              (ngModelChange)="patch({correoNombre: $event})" placeholder="Logística Empresa">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Servidor SMTP</label>
+            <input class="form-control form-control-sm" [ngModel]="empresa().smtpHost"
+              (ngModelChange)="patch({smtpHost: $event})" placeholder="smtp.gmail.com">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Puerto</label>
+            <input class="form-control form-control-sm" type="number" [ngModel]="empresa().smtpPort"
+              (ngModelChange)="patch({smtpPort: +$event})" placeholder="587">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Usuario SMTP</label>
+            <input class="form-control form-control-sm" [ngModel]="empresa().smtpUser"
+              (ngModelChange)="patch({smtpUser: $event})" placeholder="usuario@gmail.com">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Contraseña SMTP</label>
+            <input class="form-control form-control-sm" type="password" [ngModel]="empresa().smtpPassword"
+              (ngModelChange)="patch({smtpPassword: $event})" placeholder="••••••••">
+          </div>
+          <div class="col-md-4">
+            <div class="form-check mt-4">
+              <input class="form-check-input" type="checkbox" id="smtpSeguro"
+                [ngModel]="empresa().smtpSeguro"
+                (ngModelChange)="patch({smtpSeguro: $event})">
+              <label class="form-check-label" for="smtpSeguro">Conexión segura (SSL/TLS)</label>
+            </div>
+          </div>
+        </div>
+      }
+
+    </div>
+  </div>
+</div>

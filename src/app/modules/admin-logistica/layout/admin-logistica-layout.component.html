@@ -1,0 +1,90 @@
+<div class="admin-logistica-layout" [class.sidebar-collapsed]="sidebarCollapsed()">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <i class="bx bxs-truck"></i>
+        <span class="logo-text">Admin Logística</span>
+      </div>
+      <button class="toggle-btn" (click)="toggleSidebar()">
+        <i class="bx" [class.bx-menu]="!sidebarCollapsed()" [class.bx-x]="sidebarCollapsed()"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ul class="nav-list">
+        @for (item of menuItems; track item.route) {
+          @if (item.visible()) {
+            <li class="nav-item">
+              <a 
+                class="nav-link" 
+                [routerLink]="['./', item.route]" 
+                routerLinkActive="active"
+                [class.active]="currentRoute() === item.route"
+              >
+                <i class="bx" [class]="item.icon"></i>
+                <span class="nav-text">{{ item.label }}</span>
+              </a>
+            </li>
+          }
+        }
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info" *ngIf="!sidebarCollapsed() && user()">
+        <div class="user-avatar">
+          <i class="bx bx-user-circle"></i>
+        </div>
+        <div class="user-details">
+          <span class="user-name">{{ user()?.nombre }}</span>
+          <span class="user-role">{{ user()?.rol }}</span>
+        </div>
+      </div>
+      <button class="logout-btn" (click)="logout()">
+        <i class="bx bx-log-out"></i>
+        <span *ngIf="!sidebarCollapsed()">Cerrar Sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="header-left">
+        <h3 class="page-title">
+          @switch (currentRoute()) {
+            @case ('dashboard') { Dashboard }
+            @case ('bandeja') { Bandeja de Aprobaciones }
+            @case ('aprobar-consumo') { Aprobar Requerimientos de Consumo }
+            @case ('aprobar-sc') { Aprobar Solicitudes de Compra }
+            @case ('maestros') { Maestros }
+            @case ('usuarios') { Gestión de Usuarios }
+            @case ('areas') { Gestión de Áreas }
+            @case ('usuario-area') { Usuarios por Área }
+            @case ('pdf') { Configuración de PDF }
+            @case ('parametros') { Parámetros del Sistema }
+            @case ('aprobadores') { Configuración de Aprobadores }
+            @case ('auditoria') { Auditoría y Logs }
+            @default { Admin Logística }
+          }
+        </h3>
+      </div>
+      <div class="header-right">
+        <div class="info-nav">
+          <span class="currentPath" [ngClass]="{'text-danger': !isOnline}">
+            {{!isOnline ? 'Modo Offline...' : fechaHoy}}
+            <i [ngClass]="!isOnline ? 'bx-wifi-off' : 'bx-wifi'" class='bx'></i>
+          </span>
+          <span class="nombre2"><i class="icon-pin"></i>{{ user()?.razonSocial || 'Hass Perú' }}</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="content-wrapper">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

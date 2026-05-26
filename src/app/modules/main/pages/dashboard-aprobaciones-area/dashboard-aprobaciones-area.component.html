@@ -67,8 +67,8 @@
         <div class="kpi-number">{{ resumen.totalPendientes }}</div>
         <div class="kpi-label">Total Pendientes</div>
         <div class="kpi-subtipo" *ngIf="filtroTipo === 'TODOS'">
-          <span class="badge badge-advertencia">{{ resumen.pendientesConsumo }} Consumo</span>
-          <span class="badge badge-primario ms-1">{{ resumen.pendientesCompra }} Compra</span>
+          <span class="badge badge-advertencia">{{ resumen.pendientesConsumo }} CONSUMO</span>
+          <span class="badge badge-primario ms-1">{{ resumen.pendientesCompra }} COMPRA</span>
         </div>
       </div>
     </div>
@@ -146,8 +146,8 @@
         <div class="kpi-number">{{ resumen.totalAprobados }}</div>
         <div class="kpi-label">Total Aprobados</div>
         <div class="kpi-subtipo" *ngIf="filtroTipo === 'TODOS'">
-          <span class="badge badge-exito">{{ resumen.aprobadosConsumo }} Consumo</span>
-          <span class="badge badge-exito ms-1">{{ resumen.aprobadosCompra }} Compra</span>
+          <span class="badge badge-exito">{{ resumen.aprobadosConsumo }} CONSUMO</span>
+          <span class="badge badge-exito ms-1">{{ resumen.aprobadosCompra }} COMPRA</span>
         </div>
       </div>
     </div>
@@ -199,28 +199,32 @@
         <div class="kpi-number">{{ resumen.totalRechazados }}</div>
         <div class="kpi-label">Total Rechazados</div>
         <div class="kpi-subtipo" *ngIf="filtroTipo === 'TODOS' && resumen.totalRechazados > 0">
-          <span class="badge badge-peligro">{{ resumen.rechazadosConsumo }} Consumo</span>
-          <span class="badge badge-peligro ms-1">{{ resumen.rechazadosCompra }} Compra</span>
+          <span class="badge badge-peligro">{{ resumen.rechazadosConsumo }} CONSUMO</span>
+          <span class="badge badge-peligro ms-1">{{ resumen.rechazadosCompra }} COMPRA</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Tabla de Requerimientos Pendientes -->
+  <!-- SECCIÓN: REQUERIMIENTOS PENDIENTES POR APROBAR -->
   <div class="card mb-4" *ngIf="requerimientosFiltrados.length > 0">
     <div class="card-header d-flex justify-content-between align-items-center fondo-suave">
       <h6 class="mb-0 texto-primario">
-        <i class="ti ti-list me-2"></i>
-        Requerimientos Pendientes - {{ filtroTipo === 'TODOS' ? 'Todos' : filtroTipo }}
+        <i class="ti ti-clock-hour-4 me-2"></i>
+        Requerimientos Pendientes por Aprobar
+        <span class="badge badge-advertencia ms-2">{{ resumen.totalPendientes }} total</span>
       </h6>
-      <span class="badge badge-advertencia">{{ requerimientosFiltrados.length }} pendientes</span>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge badge-advertencia">{{ resumen.pendientesConsumo }} CONSUMO</span>
+        <span class="badge badge-primario">{{ resumen.pendientesCompra }} COMPRA</span>
+      </div>
     </div>
     <div class="card-body p-0">
       <p-table
         [value]="requerimientosFiltrados"
         [paginator]="true"
-        [rows]="5"
-        [rowsPerPageOptions]="[5, 10, 20]"
+        [rows]="10"
+        [rowsPerPageOptions]="[5, 10, 20, 50]"
         styleClass="p-datatable-sm p-datatable-striped"
         [responsiveLayout]="'scroll'">
         <ng-template pTemplate="header">
@@ -241,8 +245,8 @@
             </td>
             <td>
               <p-tag
-                [value]="req.tipo || 'CONSUMO'"
-                [severity]="req.tipo === 'COMPRA' ? 'info' : 'warn'"
+                [value]="req.itemtipo || 'CONSUMO'"
+                [severity]="req.itemtipo === 'COMPRA' ? 'info' : 'warn'"
                 styleClass="text-uppercase">
               </p-tag>
             </td>
@@ -271,11 +275,19 @@
             </td>
           </tr>
         </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="text-center py-4">
+              <i class="ti ti-checkbox fs-1 texto-confirmacion mb-2"></i>
+              <p class="texto-descriptivo">No hay requerimientos pendientes de aprobación</p>
+            </td>
+          </tr>
+        </ng-template>
       </p-table>
     </div>
   </div>
 
-  <!-- Estado vacío -->
+  <!-- Estado vacío pendientes -->
   <div class="card mb-4" *ngIf="requerimientosFiltrados.length === 0 && !loading">
     <div class="card-body text-center py-5">
       <i class="ti ti-checkbox fs-1 texto-confirmacion mb-3"></i>
@@ -290,40 +302,33 @@
     </div>
   </div>
 
-  <!-- Mis Aprobaciones Recientes -->
-  <div class="card" *ngIf="misAprobacionesFiltradas.length > 0">
+  <!-- SECCIÓN: REQUERIMIENTOS APROBADOS -->
+  <div class="card mb-4" *ngIf="aprobacionesFiltradas.length > 0">
     <div class="card-header d-flex justify-content-between align-items-center fondo-exito">
       <h6 class="mb-0 texto-contraste">
-        <i class="ti ti-history me-2"></i>
-        Mis Aprobaciones Recientes - {{ filtroEstado === 'TODOS' ? 'Todas' : filtroEstado }}
+        <i class="ti ti-checkbox me-2"></i>
+        Requerimientos Aprobados
+        <span class="badge bg-light text-dark ms-2">{{ resumen.totalAprobados }} total</span>
       </h6>
-      <div class="btn-group btn-group-sm">
-        <button
-          class="btn btn-light"
-          [class.active]="filtroEstado === 'TODOS'"
-          (click)="setFiltroEstado('TODOS')">Todas</button>
-        <button
-          class="btn btn-light"
-          [class.active]="filtroEstado === 'APROBADO'"
-          (click)="setFiltroEstado('APROBADO')">Aprobadas</button>
-        <button
-          class="btn btn-light"
-          [class.active]="filtroEstado === 'RECHAZADO'"
-          (click)="setFiltroEstado('RECHAZADO')">Rechazadas</button>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-success">{{ resumen.aprobadosConsumo }} CONSUMO</span>
+        <span class="badge bg-info">{{ resumen.aprobadosCompra }} COMPRA</span>
       </div>
     </div>
     <div class="card-body p-0">
       <p-table
-        [value]="misAprobacionesFiltradas"
+        [value]="aprobacionesFiltradas"
         [paginator]="true"
-        [rows]="5"
+        [rows]="10"
+        [rowsPerPageOptions]="[5, 10, 20, 50]"
         styleClass="p-datatable-sm p-datatable-striped">
         <ng-template pTemplate="header">
           <tr>
             <th>Requerimiento</th>
             <th>Tipo</th>
-            <th>Estado Aprobación</th>
+            <th>Solicitante</th>
             <th>Fecha Aprobación</th>
+            <th>Aprobado por</th>
             <th>Observaciones</th>
           </tr>
         </ng-template>
@@ -331,26 +336,119 @@
           <tr>
             <td>
               <strong>{{ apro.idrequerimiento | numeroRequerimiento }}</strong>
+              <div class="texto-descriptivo small">{{ apro.descripcion || 'Sin descripción' }}</div>
             </td>
             <td>
               <p-tag
-                [value]="apro.tipo || 'CONSUMO'"
-                [severity]="apro.tipo === 'COMPRA' ? 'info' : 'warn'"
+                [value]="apro.itemtipo || 'CONSUMO'"
+                [severity]="apro.itemtipo === 'COMPRA' ? 'info' : 'warn'"
                 styleClass="text-uppercase">
               </p-tag>
             </td>
-            <td>
-              <span class="badge"
-                [class.badge-exito]="apro.estadoAprobacion === 'APROBADO'"
-                [class.badge-peligro]="apro.estadoAprobacion === 'RECHAZADO'">
-                {{ apro.estadoAprobacion }}
-              </span>
-            </td>
+            <td>{{ apro.solicitante || 'N/A' }}</td>
             <td>{{ apro.fechaAprobacion | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ apro.aprobador || apro.usuarioAprobador || 'N/A' }}</td>
             <td>{{ apro.observaciones || 'Sin observaciones' }}</td>
           </tr>
         </ng-template>
       </p-table>
+    </div>
+  </div>
+
+  <!-- SECCIÓN: REQUERIMIENTOS RECHAZADOS -->
+  <div class="card mb-4" *ngIf="rechazosFiltrados.length > 0">
+    <div class="card-header d-flex justify-content-between align-items-center fondo-peligro">
+      <h6 class="mb-0 texto-contraste">
+        <i class="ti ti-x me-2"></i>
+        Requerimientos Rechazados
+        <span class="badge bg-light text-dark ms-2">{{ resumen.totalRechazados }} total</span>
+      </h6>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-danger">{{ resumen.rechazadosConsumo }} CONSUMO</span>
+        <span class="badge bg-danger">{{ resumen.rechazadosCompra }} COMPRA</span>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <p-table
+        [value]="rechazosFiltrados"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[5, 10, 20, 50]"
+        styleClass="p-datatable-sm p-datatable-striped">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Requerimiento</th>
+            <th>Tipo</th>
+            <th>Solicitante</th>
+            <th>Fecha Rechazo</th>
+            <th>Rechazado por</th>
+            <th>Motivo</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-rech>
+          <tr>
+            <td>
+              <strong>{{ rech.idrequerimiento | numeroRequerimiento }}</strong>
+              <div class="texto-descriptivo small">{{ rech.descripcion || 'Sin descripción' }}</div>
+            </td>
+            <td>
+              <p-tag
+                [value]="rech.itemtipo || 'CONSUMO'"
+                [severity]="rech.itemtipo === 'COMPRA' ? 'info' : 'warn'"
+                styleClass="text-uppercase">
+              </p-tag>
+            </td>
+            <td>{{ rech.solicitante || 'N/A' }}</td>
+            <td>{{ rech.fechaAprobacion | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ rech.aprobador || rech.usuarioAprobador || 'N/A' }}</td>
+            <td>{{ rech.observaciones || 'Sin observaciones' }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- RESUMEN GENERAL -->
+  <div class="card" *ngIf="!loading">
+    <div class="card-header d-flex justify-content-between align-items-center fondo-primario">
+      <h6 class="mb-0 texto-contraste">
+        <i class="ti ti-chart-bar me-2"></i>
+        Resumen General de Aprobaciones por Tipo
+      </h6>
+    </div>
+    <div class="card-body">
+      <div class="row text-center">
+        <div class="col-md-4">
+          <div class="p-3 border rounded bg-warning-subtle">
+            <h4 class="text-warning mb-1">{{ resumen.totalPendientes }}</h4>
+            <small class="text-muted">Total Pendientes</small>
+            <div class="mt-2">
+              <span class="badge badge-advertencia">{{ resumen.pendientesConsumo }} CONSUMO</span>
+              <span class="badge badge-primario ms-1">{{ resumen.pendientesCompra }} COMPRA</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="p-3 border rounded bg-success-subtle">
+            <h4 class="text-success mb-1">{{ resumen.totalAprobados }}</h4>
+            <small class="text-muted">Total Aprobados</small>
+            <div class="mt-2">
+              <span class="badge badge-exito">{{ resumen.aprobadosConsumo }} CONSUMO</span>
+              <span class="badge badge-exito ms-1">{{ resumen.aprobadosCompra }} COMPRA</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="p-3 border rounded bg-danger-subtle">
+            <h4 class="text-danger mb-1">{{ resumen.totalRechazados }}</h4>
+            <small class="text-muted">Total Rechazados</small>
+            <div class="mt-2">
+              <span class="badge badge-peligro">{{ resumen.rechazadosConsumo }} CONSUMO</span>
+              <span class="badge badge-peligro ms-1">{{ resumen.rechazadosCompra }} COMPRA</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

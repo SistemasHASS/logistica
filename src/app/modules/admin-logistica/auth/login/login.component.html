@@ -1,0 +1,91 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="logo">
+        <i class="bx bxs-truck"></i>
+      </div>
+      <h2>Admin Logística</h2>
+      <p class="subtitle">Sistema de Gestión Logística</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      @if (errorMessage()) {
+        <div class="alert alert-danger" role="alert">
+          <i class="bx bx-error-circle me-2"></i>
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <div class="form-group">
+        <label for="usuario">Usuario</label>
+        <div class="input-group">
+          <span class="input-icon"><i class="bx bx-user"></i></span>
+          <input 
+            type="text" 
+            id="usuario" 
+            formControlName="usuario" 
+            class="form-control" 
+            placeholder="Ingrese su usuario"
+            [class.is-invalid]="usuarioControl?.invalid && usuarioControl?.touched"
+          />
+        </div>
+        @if (usuarioControl?.invalid && usuarioControl?.touched) {
+          <div class="invalid-feedback">
+            @if (usuarioControl?.errors?.['required']) {
+              El usuario es requerido
+            }
+            @if (usuarioControl?.errors?.['minlength']) {
+              Mínimo 3 caracteres
+            }
+          </div>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="clave">Contraseña</label>
+        <div class="input-group">
+          <span class="input-icon"><i class="bx bx-lock-alt"></i></span>
+          <input 
+            type="password" 
+            id="clave" 
+            formControlName="clave" 
+            class="form-control" 
+            placeholder="Ingrese su contraseña"
+            [class.is-invalid]="claveControl?.invalid && claveControl?.touched"
+          />
+        </div>
+        @if (claveControl?.invalid && claveControl?.touched) {
+          <div class="invalid-feedback">
+            @if (claveControl?.errors?.['required']) {
+              La contraseña es requerida
+            }
+            @if (claveControl?.errors?.['minlength']) {
+              Mínimo 4 caracteres
+            }
+          </div>
+        }
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn btn-primary btn-login" 
+        [disabled]="loading() || loginForm.invalid"
+      >
+        @if (loading()) {
+          <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          Iniciando sesión...
+        } @else {
+          <i class="bx bx-log-in me-2"></i>
+          Iniciar Sesión
+        }
+      </button>
+
+      <div class="login-footer">
+        <a routerLink="/auth/login" class="back-link">
+          <i class="bx bx-arrow-back me-1"></i>
+          Volver al sistema principal
+        </a>
+      </div>
+    </form>
+  </div>
+</div>

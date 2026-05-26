@@ -1,0 +1,103 @@
+<div class="auditoria-container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="m-0 fw-bold">Auditoría y Logs del Sistema</h4>
+    <button class="btn btn-outline-success" (click)="exportar()">
+      <i class="bx bx-export me-2"></i>Exportar
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Fecha Inicio</label>
+          <p-datepicker 
+            [(ngModel)]="fechaInicio" 
+            [showIcon]="true" 
+            inputStyleClass="form-control"
+            dateFormat="dd/mm/yy"
+          ></p-datepicker>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Fecha Fin</label>
+          <p-datepicker 
+            [(ngModel)]="fechaFin" 
+            [showIcon]="true" 
+            inputStyleClass="form-control"
+            dateFormat="dd/mm/yy"
+          ></p-datepicker>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Tipo</label>
+          <select class="form-select" [(ngModel)]="filtroTipo">
+            @for (tipo of tipos; track tipo.value) {
+              <option [value]="tipo.value">{{ tipo.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Usuario</label>
+          <input type="text" class="form-control" [(ngModel)]="filtroUsuario" placeholder="Buscar usuario...">
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-12 text-end">
+          <button class="btn btn-primary" (click)="buscar()">
+            <i class="bx bx-search me-2"></i>Buscar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="card">
+    <div class="card-body p-0">
+      <p-table 
+        [value]="logs()" 
+        [loading]="loading()"
+        [paginator]="true" 
+        [rows]="25"
+        [showCurrentPageReport]="true"
+        [rowsPerPageOptions]="[10, 25, 50, 100]"
+        styleClass="p-datatable-sm"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Fecha</th>
+            <th>Usuario</th>
+            <th>Tipo</th>
+            <th>Módulo</th>
+            <th>Acción</th>
+            <th>Descripción</th>
+            <th>IP</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-log>
+          <tr>
+            <td>{{ log.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ log.usuario }}</td>
+            <td>
+              <p-tag [value]="getTipoLabel(log.tipo)" [severity]="getTipoSeverity(log.tipo)"></p-tag>
+            </td>
+            <td>{{ log.modulo }}</td>
+            <td>{{ log.accion }}</td>
+            <td>{{ log.descripcion }}</td>
+            <td><small class="text-muted">{{ log.ipAddress }}</small></td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center py-4">
+              <div class="empty-state">
+                <i class="bx bx-clipboard text-muted" style="font-size: 48px;"></i>
+                <p class="text-muted mt-2">No se encontraron registros</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>

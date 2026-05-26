@@ -1,15 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { Proveedor, Usuario } from '@/app/shared/interfaces/Tables';
 import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-maestro-proveedores',
   standalone: true,
-  imports: [CommonModule, FormsModule, TableModule],
+  imports: [CommonModule, FormsModule, TableModule, TagModule],
   templateUrl: './maestro-proveedores.component.html',
   styleUrls: ['./maestro-proveedores.component.scss'],
 })
@@ -47,6 +50,9 @@ export class MaestroProveedoresComponent implements OnInit {
   filtroEstado: string = 'TODOS';
   filtroTipoPersona: string = 'TODOS';
 
+  // Estado de carga
+  cargando = false;
+
   // Contadores
   totalProveedores = 0;
   proveedoresActivos = 0;
@@ -63,16 +69,14 @@ export class MaestroProveedoresComponent implements OnInit {
   monedas = ['PEN', 'USD'];
   tiposServicio = ['BIENES', 'SERVICIOS', 'MIXTO'];
 
-  constructor(
-    private dexieService: DexieService,
-    private alertService: AlertService
-  ) {}
+  private http = inject(HttpClient);
+  private dexieService = inject(DexieService);
+  private alertService = inject(AlertService);
+  private baseUrl = environment.baseUrl;
 
   async ngOnInit() {
     await this.cargarUsuario();
     await this.cargarProveedores();
-    this.aplicarFiltros();
-    this.calcularContadores();
   }
 
   async cargarUsuario() {
@@ -82,15 +86,72 @@ export class MaestroProveedoresComponent implements OnInit {
     }
   }
 
-  async cargarProveedores() {
+  private normalizarProveedor(p: any): Proveedor {
+    return { ...p, documento: p.documento || p.RazonSocial || '' };
+  }
+
+  async cargarProveedores(forzarApi = false) {
+    const debeRecargarApi = sessionStorage.getItem('proveedores_recargar_api') === '1';
+
+    // 1. Carga inmediata desde Dexie
+    const dexieRaw = await this.dexieService.showProveedores();
+    const dexieData: Proveedor[] = dexieRaw.map((p: any) => this.normalizarProveedor(p));
+    const hayDataEnDexie = dexieData.length > 0;
+
+    // Detectar data corrupta: todos sin documento y sin RazonSocial
+    const dexieCorrupto = hayDataEnDexie &&
+      dexieData.every(p => !p.documento && !(p as any).RazonSocial);
+
+    if (hayDataEnDexie && !dexieCorrupto) {
+      this.proveedores = dexieData;
+      this.aplicarFiltros();
+      this.calcularContadores();
+    }
+
+    // 2. Llamar API si: Dexie vacío, corrupto, forzado externamente, o hay flag de nuevo registro
+    const necesitaApi = !hayDataEnDexie || dexieCorrupto || forzarApi || debeRecargarApi;
+    if (!necesitaApi) return;
+
+    sessionStorage.removeItem('proveedores_recargar_api');
+    // Mostrar loading solo si Dexie estaba vacío (primera carga)
+    if (!hayDataEnDexie) this.cargando = true;
+
     try {
-      this.alertService.mostrarModalCarga();
-      this.proveedores = await this.dexieService.showProveedores();
-      this.alertService.cerrarModalCarga();
-    } catch (error) {
-      console.error('Error al cargar proveedores:', error);
-      this.alertService.cerrarModalCarga();
-      this.alertService.showAlert('Error', 'Error al cargar los proveedores.', 'error');
+      const body = {
+        documento: this.filtroDocumento || '',
+        estado: this.filtroEstado !== 'TODOS' ? this.filtroEstado : ''
+      };
+      const data: any = await this.http
+        .post(`${this.baseUrl}/api/logistica/listar-proveedores`, body)
+        .toPromise();
+
+      let proveedoresApi: Proveedor[] = [];
+      if (Array.isArray(data)) {
+        proveedoresApi = data;
+      } else if (data && Array.isArray(data.value)) {
+        proveedoresApi = data.value;
+      } else if (typeof data === 'string') {
+        try { proveedoresApi = JSON.parse(data); } catch { proveedoresApi = []; }
+      } else if (data && typeof data === 'object') {
+        const keys = Object.keys(data);
+        if (keys.length > 0 && Array.isArray(data[keys[0]])) {
+          proveedoresApi = data[keys[0]];
+        }
+      }
+
+      proveedoresApi = proveedoresApi.map((p: any) => this.normalizarProveedor(p));
+
+      if (proveedoresApi.length > 0) {
+        this.proveedores = proveedoresApi;
+        await this.dexieService.clearProveedores();
+        await this.dexieService.saveProveedores(proveedoresApi);
+      }
+    } catch {
+      console.warn('[Proveedores] API no disponible, usando Dexie como fallback.');
+    } finally {
+      this.cargando = false;
+      this.aplicarFiltros();
+      this.calcularContadores();
     }
   }
 
@@ -121,42 +182,38 @@ export class MaestroProveedoresComponent implements OnInit {
   }
 
   async guardarProveedor() {
-    // Validaciones
     if (!this.proveedor.documento) {
       this.alertService.showAlert('Atención', 'Debe ingresar el nombre/razón social.', 'warning');
       return;
     }
-
     if (!this.proveedor.ruc) {
-      this.alertService.showAlert('Atención', 'Debe ingresar el RUC.', 'warning');
-      return;
-    }
-
-    if (this.proveedor.ruc.length !== 11) {
-      this.alertService.showAlert('Atención', 'El RUC debe tener 11 dígitos.', 'warning');
+      this.alertService.showAlert('Atención', 'Debe ingresar el RUC/Documento.', 'warning');
       return;
     }
 
     try {
       this.alertService.mostrarModalCarga();
-
-      if (this.modoEdicion) {
-        // Actualizar
-        await this.dexieService.saveProveedor(this.proveedor);
-        this.proveedores[this.editIndex] = { ...this.proveedor };
-      } else {
-        // Crear nuevo
-        this.proveedor.id = Date.now(); // ID temporal
-        await this.dexieService.saveProveedor(this.proveedor);
-        this.proveedores.push({ ...this.proveedor });
-      }
+      const body = {
+        ...this.proveedor,
+        usuario: this.usuario.usuario || 'LOGISTICA'
+      };
+      const resp: any = await this.http
+        .post(`${this.baseUrl}/api/logistica/registrar-proveedor`, body)
+        .toPromise();
 
       this.alertService.cerrarModalCarga();
-      this.alertService.showAlert('Éxito', 'Proveedor guardado correctamente.', 'success');
 
-      this.mostrarFormulario = false;
-      this.aplicarFiltros();
-      this.calcularContadores();
+      const resultado = resp?.resultado || resp?.value?.resultado || 'ERROR';
+      const mensaje   = resp?.mensaje   || resp?.value?.mensaje   || 'Error desconocido';
+
+      if (resultado === 'OK') {
+        this.alertService.showAlert('Éxito', mensaje, 'success');
+        this.mostrarFormulario = false;
+        sessionStorage.setItem('proveedores_recargar_api', '1');
+        await this.cargarProveedores(true); // fuerza recarga API tras nuevo registro
+      } else {
+        this.alertService.showAlert('Error', mensaje, 'error');
+      }
     } catch (error) {
       console.error('Error al guardar proveedor:', error);
       this.alertService.cerrarModalCarga();
@@ -172,55 +229,12 @@ export class MaestroProveedoresComponent implements OnInit {
     this.modoEdicion = true;
   }
 
-  async eliminarProveedor(index: number) {
-    const proveedor = this.proveedoresFiltrados[index];
-
-    const confirmacion = await this.alertService.showConfirm(
-      'Confirmación',
-      `¿Está seguro de eliminar al proveedor ${proveedor.documento}?`,
-      'warning'
-    );
-
-    if (!confirmacion) return;
-
-    try {
-      await this.dexieService.proveedores.delete(proveedor.id);
-      
-      const indexOriginal = this.proveedores.findIndex(p => p.id === proveedor.id);
-      if (indexOriginal > -1) {
-        this.proveedores.splice(indexOriginal, 1);
-      }
-
-      this.alertService.showAlert('Éxito', 'Proveedor eliminado correctamente.', 'success');
-      this.aplicarFiltros();
-      this.calcularContadores();
-    } catch (error) {
-      console.error('Error al eliminar proveedor:', error);
-      this.alertService.showAlert('Error', 'Ocurrió un error al eliminar el proveedor.', 'error');
-    }
+  eliminarProveedor(index: number) {
+    this.alertService.showAlert('Info', 'Para desactivar un proveedor en SPRING contacte al administrador del sistema.', 'info');
   }
 
-  async cambiarEstado(proveedor: Proveedor) {
-    const nuevoEstado = proveedor.Estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
-    
-    const confirmacion = await this.alertService.showConfirm(
-      'Confirmación',
-      `¿Desea cambiar el estado del proveedor a ${nuevoEstado}?`,
-      'info'
-    );
-
-    if (!confirmacion) return;
-
-    try {
-      proveedor.Estado = nuevoEstado;
-      await this.dexieService.saveProveedor(proveedor);
-      
-      this.alertService.showAlert('Éxito', 'Estado actualizado correctamente.', 'success');
-      this.calcularContadores();
-    } catch (error) {
-      console.error('Error al cambiar estado:', error);
-      this.alertService.showAlert('Error', 'Ocurrió un error al cambiar el estado.', 'error');
-    }
+  cambiarEstado(proveedor: Proveedor) {
+    this.alertService.showAlert('Info', 'Para cambiar el estado de un proveedor en SPRING contacte al administrador del sistema.', 'info');
   }
 
   verDetalle(proveedor: Proveedor) {
@@ -245,10 +259,10 @@ export class MaestroProveedoresComponent implements OnInit {
       let cumpleFiltro = true;
 
       if (this.filtroDocumento) {
-        cumpleFiltro = cumpleFiltro && (
-          p.documento.toLowerCase().includes(this.filtroDocumento.toLowerCase()) ||
-          p.ruc.includes(this.filtroDocumento)
-        );
+        const doc = (p.documento || p.RazonSocial || '').toLowerCase();
+        const ruc = (p.ruc || '').toLowerCase();
+        const filtro = this.filtroDocumento.toLowerCase();
+        cumpleFiltro = cumpleFiltro && (doc.includes(filtro) || ruc.includes(filtro));
       }
 
       if (this.filtroEstado !== 'TODOS') {

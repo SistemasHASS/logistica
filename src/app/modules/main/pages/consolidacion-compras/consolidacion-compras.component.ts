@@ -10,13 +10,15 @@ import { Usuario } from '@/app/shared/interfaces/Tables';
 import { environment } from '@/environments/environment';
 import { OrdenPdfService } from './orden-pdf.service';
 import { MaestrasService } from '@/app/modules/main/services/maestras.service';
+import { OrdenCompraService } from '@/app/services/orden-compra.service';
+import { DropdownComponent } from '@/app/modules/main/components/dropdown/dropdown.component';
 import * as XLSX from 'xlsx';
 import FileSaver from 'file-saver';
 
 @Component({
   selector: 'app-consolidacion-compras',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, TableModule],
+  imports: [CommonModule, FormsModule, TableModule, DropdownComponent],
   templateUrl: './consolidacion-compras.component.html',
   styleUrls: ['./consolidacion-compras.component.scss'],
 })
@@ -45,6 +47,9 @@ export class ConsolidacionComprasComponent implements OnInit {
   requerimientoDetalleActual = signal<any>(null);
   tipoOrdenActual = signal<'OC' | 'OS'>('OC');
   ocsConPdfYExcel = signal<Set<number>>(new Set());
+  itemsMaestra = signal<any[]>([]);
+  filasExpandidas = signal<Set<string>>(new Set());
+  almacenes = signal<any[]>([]);
 
   // Filtros
   busqueda = '';
@@ -75,13 +80,18 @@ export class ConsolidacionComprasComponent implements OnInit {
 
   gruposConsolidados = computed(() => {
     const mapa = new Map<string, any>();
+    const maestra = this.itemsMaestra();
+    
     for (const item of this.itemsSeleccionados()) {
       if (!mapa.has(item.codigo)) {
+        const itemMaestra = maestra.find((m: any) => m.codigo === item.codigo);
         mapa.set(item.codigo, {
           codigo: item.codigo,
           descripcion: item.descripcion,
           unidadMedida: item.unidadMedida,
           cantidadTotal: 0,
+          precioUnitario: itemMaestra?.precio || 0,
+          moneda: itemMaestra?.moneda || 'LO',
           items: []
         });
       }
@@ -89,7 +99,11 @@ export class ConsolidacionComprasComponent implements OnInit {
       grupo.cantidadTotal += item.cantidadPendiente;
       grupo.items.push(item);
     }
-    return Array.from(mapa.values());
+    
+    return Array.from(mapa.values()).map(g => ({
+      ...g,
+      valorTotal: g.cantidadTotal * (g.precioUnitario || 0)
+    }));
   });
 
   // Formulario OC
@@ -121,13 +135,15 @@ export class ConsolidacionComprasComponent implements OnInit {
     private dexieService: DexieService,
     private alertService: AlertService,
     private pdfService: OrdenPdfService,
-    private maestrasService: MaestrasService
+    private maestrasService: MaestrasService,
+    private ordenCompraService: OrdenCompraService
   ) {}
 
   async ngOnInit() {
     this.usuario = (await this.dexieService.obtenerPrimerUsuario()) ?? null;
     await this.cargarRequerimientos();
     await this.cargarRequerimientosCompletos();
+    await this.cargarAlmacenes();
   }
 
   async cargarRequerimientos() {
@@ -163,6 +179,19 @@ export class ConsolidacionComprasComponent implements OnInit {
       this.requerimientosCompletos.set([]);
     } finally {
       this.cargandoReqsCompletos.set(false);
+    }
+  }
+
+  async cargarAlmacenes() {
+    try {
+      const resp: any = await lastValueFrom(
+        this.maestrasService.getAlmacenes([
+          { ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA' }
+        ])
+      );
+      this.almacenes.set(Array.isArray(resp) ? resp : []);
+    } catch {
+      this.almacenes.set([]);
     }
   }
 
@@ -215,11 +244,60 @@ export class ConsolidacionComprasComponent implements OnInit {
       const nuevos = itemsMismoCodigo.filter(i => !idsActuales.has(i.idDetalle));
       this.itemsSeleccionados.set([...actual, ...nuevos]);
     }
+    
+    // Cargar items del maestra para los códigos seleccionados
+    this.cargarItemsMaestra();
   }
 
   seleccionarTodos(event: Event) {
     const checked = (event.target as HTMLInputElement).checked;
     this.itemsSeleccionados.set(checked ? [...this.requerimientos()] : []);
+    if (checked) {
+      this.cargarItemsMaestra();
+    }
+  }
+
+  async cargarItemsMaestra() {
+    const codigosUnicos = [...new Set(this.itemsSeleccionados().map(i => i.codigo))];
+    if (codigosUnicos.length === 0) {
+      this.itemsMaestra.set([]);
+      return;
+    }
+    try {
+      const resp: any = await lastValueFrom(
+        this.maestrasService.getItems({
+          ruc: this.usuario?.ruc,
+          codigos: codigosUnicos
+        })
+      );
+      this.itemsMaestra.set(Array.isArray(resp) ? resp : []);
+    } catch {
+      this.itemsMaestra.set([]);
+    }
+  }
+
+  toggleFilaExpandida(codigo: string) {
+    const actual = new Set(this.filasExpandidas());
+    if (actual.has(codigo)) {
+      actual.delete(codigo);
+    } else {
+      actual.add(codigo);
+    }
+    this.filasExpandidas.set(actual);
+  }
+
+  estaFilaExpandida(codigo: string): boolean {
+    return this.filasExpandidas().has(codigo);
+  }
+
+  simboloMoneda(moneda: string): string {
+    return moneda === 'EX' ? '$' : 'S/';
+  }
+
+  getNombreAlmacen(codigo: string): string {
+    if (!codigo) return '';
+    const almacen = this.almacenes().find((a: any) => a.codigo === codigo || a.AlmacenCodigo === codigo);
+    return almacen?.descripcion || almacen?.AlmacenDescripcion || codigo;
   }
 
   limpiarSeleccion() {
@@ -236,15 +314,21 @@ export class ConsolidacionComprasComponent implements OnInit {
       descripcion: g.descripcion,
       cantidad: g.cantidadTotal,
       unidadMedida: g.unidadMedida,
-      precioUnitario: 0,
+      precioUnitario: g.precioUnitario || 0,
       descuento: 0,
       ceco: g.items[0]?.ceco || '',
       proyecto: g.items[0]?.proyecto || '',
       idDetalle: g.items[0]?.idDetalle,
       idConsolidacion: g.items[0]?.IdConsolidacion
     }));
+
+    // Obtener almacén del primer requerimiento seleccionado
+    const primerItem = this.itemsSeleccionados()[0];
+    const almacenOrigen = primerItem?.almacen || primerItem?.idalmacen || primerItem?.AlmacenCodigo || '';
+
     this.ocForm = {
       ...this.ocForm,
+      almacen: almacenOrigen,
       items,
       subtotal: 0, igv: 0, totalOrden: 0
     };
@@ -264,6 +348,81 @@ export class ConsolidacionComprasComponent implements OnInit {
     this.ocForm.subtotal = Math.round(subtotal * 100) / 100;
     this.ocForm.igv = Math.round(subtotal * 0.18 * 100) / 100;
     this.ocForm.totalOrden = Math.round((subtotal + this.ocForm.igv) * 100) / 100;
+  }
+
+  /**
+   * Genera la distribución contable para sincronización con SPRING
+   * Basado en los items de la OC, agrupa por ceco/proyecto y asigna cuentas según tipo de ítem
+   * @param orden Orden de compra con items
+   * @returns Array de distribución contable
+   */
+  private generarDistribucionContable(orden: any): any[] {
+    const distribucion: any[] = [];
+
+    if (!orden.items || orden.items.length === 0) {
+      return distribucion;
+    }
+
+    // Mapa de agrupación por ceco y proyecto
+    const grupos = new Map<string, { monto: number; proyecto: string; ceco: string }>();
+
+    for (const item of orden.items) {
+      const ceco = item.ceco || '999999';
+      const proyecto = item.proyecto || '';
+      const key = `${ceco}-${proyecto}`;
+
+      const subtotal = this.subtotalItem(item);
+
+      if (grupos.has(key)) {
+        grupos.get(key)!.monto += subtotal;
+      } else {
+        grupos.set(key, { monto: subtotal, proyecto, ceco });
+      }
+    }
+
+    // Generar distribución por cada grupo
+    for (const [key, grupo] of grupos) {
+      const montoRedondeado = Math.round(grupo.monto * 100) / 100;
+
+      // Determinar cuenta contable según tipo de ítem (usar primer ítem del grupo como referencia)
+      const itemReferencia = orden.items.find((i: any) =>
+        (i.ceco || '999999') === grupo.ceco && (i.proyecto || '') === grupo.proyecto
+      );
+
+      let cuenta = '25301001'; // Default: COMMODITY
+      let descripcion = 'COMMODITY';
+
+      if (itemReferencia) {
+        const codigo = (itemReferencia.codigo || '').toString();
+        const tipo = (itemReferencia.tipo || '').toString().toUpperCase();
+
+        if (tipo.includes('ACTIVO FIJO') || codigo.startsWith('3')) {
+          cuenta = '33010101';
+          descripcion = 'ACTIVO FIJO';
+        } else if (tipo.includes('ACTIVO MENOR') || codigo.startsWith('4')) {
+          cuenta = '25302001';
+          descripcion = 'ACTIVO MENOR';
+        } else if (tipo.includes('SERVICIO') || codigo.startsWith('5') || codigo.startsWith('9')) {
+          cuenta = '63910101';
+          descripcion = 'SERVICIO';
+        } else if (codigo.startsWith('1') || codigo.startsWith('2') || tipo.includes('COMMODITY')) {
+          cuenta = '25301001';
+          descripcion = 'COMMODITY';
+        }
+      }
+
+      distribucion.push({
+        cuenta: cuenta,
+        descripcion: descripcion,
+        centrocosto: grupo.ceco,
+        proyecto: grupo.proyecto,
+        monto: montoRedondeado,
+        referencia: orden.numeroOrden || '',
+        ccdestino: grupo.ceco
+      });
+    }
+
+    return distribucion;
   }
 
   async crearOCBorrador() {
@@ -291,9 +450,11 @@ export class ConsolidacionComprasComponent implements OnInit {
         this.http.post(`${this.baseUrl}/api/logistica/crear-oc-borrador`, payload)
       );
       if (resp?.success) {
-        this.alertService.showAlert('OC Creada', `Orden de Compra ${resp.numeroOC} creada en borrador.`, 'success');
+        this.alertService.showAlert('OC Creada', `Orden de Compra ${resp.numeroOC} creada en borrador. Adjunte los documentos y luego envíe a aprobación.`, 'success');
+
         this.cerrarModalOC();
         this.limpiarSeleccion();
+        await this.cargarRequerimientos();
         this.tabActiva.set(3);
         await this.cargarOrdenesCompra();
       } else {
@@ -306,17 +467,83 @@ export class ConsolidacionComprasComponent implements OnInit {
     }
   }
 
+  async sincronizarOCConSpring(oc: any) {
+    const ok = await this.alertService.showConfirm('Sincronizar con SPRING',
+      `¿Confirma sincronizar la OC ${oc.numeroOrden} con SPRING?`, 'question');
+    if (!ok) return;
+
+    try {
+      this.alertService.mostrarModalCarga();
+      console.log('Sincronizando OC con SPRING:', oc);
+
+      // 1. Obtener datos completos de la OC para sincronización con SPRING
+      const companiaCodigo = this.usuario?.idempresa || '000008';
+      const companiaSocio = (companiaCodigo || '000008').padStart(6, '0') + '00'; // Ej: 00000800
+      const tipoComprobante = 'SY'; // Fijo por ahora, podría venir de la sesión en el futuro
+
+      const detalleResp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/obtener-oc-para-sincronizar`, {
+          idOrden: oc.idOrden,
+          companiaCodigo,
+          companiaSocio,
+          tipoComprobante
+        })
+      );
+
+      // La respuesta viene directamente como el objeto JSON (no envuelto en {success, data})
+      const ocCompleta = detalleResp?.jsonSincronizacion || detalleResp;
+
+      if (!ocCompleta || typeof ocCompleta !== 'object') {
+        this.alertService.cerrarModalCarga();
+        this.alertService.showAlert('Error', 'No se pudo obtener los detalles de la OC', 'error');
+        return;
+      }
+      console.log('OC completa obtenida:', ocCompleta);
+
+      // 2. Generar distribución contable
+      const distribucion = this.generarDistribucionContable(ocCompleta);
+      console.log('Distribución contable generada:', distribucion);
+
+      // 3. Obtener idEmpresa del usuario
+      const idEmpresa = this.usuario?.idempresa || '000008';
+
+      // 4. Sincronizar con SPRING
+      const syncResp = await this.ordenCompraService.sincronizarOCConsolidacion(
+        oc.idOrden,
+        idEmpresa,
+        distribucion,
+        ocCompleta
+      );
+
+      this.alertService.cerrarModalCarga();
+
+      if (syncResp?.errorgeneral === 0) {
+        this.alertService.showAlert('Éxito', `OC sincronizada con SPRING exitosamente. Número SPRING: ${syncResp.numeroOrdenSpring || 'N/A'}`, 'success');
+        await this.cargarOrdenesCompra();
+      } else {
+        this.alertService.showAlert('Error', `Error al sincronizar: ${syncResp?.mensaje || 'Error desconocido'}`, 'error');
+      }
+    } catch (error: any) {
+      this.alertService.cerrarModalCarga();
+      console.error('Error al sincronizar OC con SPRING:', error);
+      this.alertService.showAlert('Error', error?.message || 'Error inesperado', 'error');
+    }
+  }
+
   async enviarOCAprobacion(oc: any) {
+    console.log('DEBUG enviarOCAprobacion - oc:', oc, 'idOrden:', oc.idOrden, 'tipo:', typeof oc.idOrden);
     const ok = await this.alertService.showConfirm('Enviar a Aprobación',
       `¿Confirma enviar la OC ${oc.numeroOrden} a aprobación? Monto: ${oc.moneda} ${oc.totalOrden}`, 'question');
     if (!ok) return;
     try {
       this.alertService.mostrarModalCarga();
       console.log('OC completa:', oc);
-      // Intentar obtener idConsolidacion de la OC o de sus items
-      const idConsolidacion = oc.idConsolidacion || oc.codigoConsolidacion || oc.consolidacionId || 
+
+      // Enviar a aprobación local (el SP sincroniza automáticamente con SPRING en estado PR)
+      const idConsolidacion = oc.idConsolidacion || oc.codigoConsolidacion || oc.consolidacionId ||
                                 (oc.items && oc.items.length > 0 ? oc.items[0]?.idConsolidacion : null);
       console.log('IdConsolidacion a enviar:', idConsolidacion);
+
       const resp: any = await lastValueFrom(
         this.http.post(`${this.baseUrl}/api/logistica/enviar-oc-aprobacion`, {
           idOrden: oc.idOrden,
@@ -324,9 +551,15 @@ export class ConsolidacionComprasComponent implements OnInit {
           usuarioGenera: this.usuario?.documentoidentidad
         })
       );
+
       this.alertService.cerrarModalCarga();
-      if (resp?.success) {
-        this.alertService.showAlert('Éxito', 'OC enviada a aprobación correctamente.', 'success');
+
+      const esExito = resp?.success === 1 || resp?.success === true || resp?.errorgeneral === 0;
+      if (esExito) {
+        const mensajeSync = resp?.numeroOrdenSpring
+          ? ` Sincronizada con SPRING: ${resp.numeroOrdenSpring}`
+          : '';
+        this.alertService.showAlert('Éxito', `OC enviada a aprobación.${mensajeSync}`, 'success');
         await this.cargarOrdenesCompra();
       } else {
         this.alertService.showAlert('Error', resp?.mensaje || 'Error.', 'error');
@@ -358,7 +591,9 @@ export class ConsolidacionComprasComponent implements OnInit {
       const resp: any = await this.pdfService.enviarOrdenAlProveedor('OC', oc.idOrden);
       this.alertService.cerrarModalCarga();
       if (resp?.success) {
-        this.alertService.showAlert('Enviado', resp.mensaje || 'OC enviada al proveedor correctamente.', 'success');
+        const tipo = resp?.correoEnviado === false ? 'warning' : 'success';
+        const titulo = resp?.correoEnviado === false ? 'OC Confirmada' : 'Enviado';
+        this.alertService.showAlert(titulo, resp.mensaje, tipo);
         await this.cargarOrdenesCompra();
       } else {
         this.alertService.showAlert('Error', resp?.mensaje || 'Error al enviar.', 'error');
@@ -414,10 +649,14 @@ export class ConsolidacionComprasComponent implements OnInit {
   }
 
   async cargarAdjuntos(idOrden: number, tipo: string) {
+    console.log('DEBUG cargarAdjuntos - idOrden:', idOrden, 'tipo:', typeof idOrden);
     try {
+      const payload = { idOrden, tipoOrden: tipo };
+      console.log('DEBUG cargarAdjuntos - payload:', payload);
       const resp: any = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/logistica/listar-adjuntos-oc`, { idOrden, tipoOrden: tipo })
+        this.http.post(`${this.baseUrl}/api/logistica/listar-adjuntos-oc`, payload)
       );
+      console.log('DEBUG cargarAdjuntos - resp:', resp);
       this.adjuntos.set(Array.isArray(resp) ? resp : []);
     } catch {
       this.adjuntos.set([]);
@@ -435,9 +674,11 @@ export class ConsolidacionComprasComponent implements OnInit {
     try {
       const b64 = await this.fileToBase64(this.archivoSeleccionado);
       const tipoArchivo = this.obtenerTipoArchivo(this.archivoSeleccionado.name);
+      const idOrden = this.ordenActual()?.idOrden;
+      console.log('DEBUG subirAdjunto - idOrden:', idOrden, 'tipo:', typeof idOrden, 'ordenActual:', this.ordenActual());
       const resp: any = await lastValueFrom(
         this.http.post(`${this.baseUrl}/api/logistica/guardar-adjunto-oc`, {
-          idOrden: this.ordenActual()?.idOrden,
+          idOrden: idOrden,
           tipoOrden: this.tipoOrdenActual(),
           nombreArchivo: this.archivoSeleccionado.name,
           tipoArchivo: tipoArchivo,
@@ -451,6 +692,8 @@ export class ConsolidacionComprasComponent implements OnInit {
         this.archivoSeleccionado = null;
         this.adjuntoDescripcion = '';
         await this.cargarAdjuntos(this.ordenActual()?.idOrden, this.tipoOrdenActual());
+        // Refrescar el contador de adjuntos en la tabla sin cerrar el modal
+        this.cargarOrdenesCompra();
         
         // Actualizar signal ocsConPdfYExcel
         const idOrden = this.ordenActual()?.idOrden;
@@ -488,6 +731,8 @@ export class ConsolidacionComprasComponent implements OnInit {
       );
       if (resp?.success) {
         await this.cargarAdjuntos(this.ordenActual()?.idOrden, this.tipoOrdenActual());
+        // Refrescar el contador de adjuntos en la tabla sin cerrar el modal
+        this.cargarOrdenesCompra();
         
         // Actualizar signal ocsConPdfYExcel
         const idOrden = this.ordenActual()?.idOrden;
@@ -513,21 +758,46 @@ export class ConsolidacionComprasComponent implements OnInit {
     const adjuntos = this.adjuntos();
     console.log('Adjuntos actuales:', adjuntos);
     console.log('Tipos de archivo:', adjuntos.map(a => a.tipoArchivo));
-    const tienePdf = adjuntos.some(a => a.tipoArchivo === 'PDF' || a.tipoArchivo === 'application/pdf');
-    const tieneExcel = adjuntos.some(a => a.tipoArchivo === 'EXCEL' || a.tipoArchivo?.toLowerCase().includes('excel') || a.tipoArchivo?.toLowerCase().includes('spreadsheet'));
+    // Check for PDF (case-insensitive)
+    const tienePdf = adjuntos.some(a => {
+      const tipo = (a.tipoArchivo || '').toLowerCase();
+      return tipo === 'pdf' || tipo === 'application/pdf' || a.nombreArchivo?.toLowerCase().endsWith('.pdf');
+    });
+    // Check for Excel (case-insensitive)
+    const tieneExcel = adjuntos.some(a => {
+      const tipo = (a.tipoArchivo || '').toLowerCase();
+      const nombre = (a.nombreArchivo || '').toLowerCase();
+      return tipo === 'excel' || tipo.includes('excel') || tipo.includes('spreadsheet') ||
+             nombre.endsWith('.xlsx') || nombre.endsWith('.xls');
+    });
     console.log('Tiene PDF:', tienePdf, 'Tiene Excel:', tieneExcel);
     return tienePdf && tieneExcel;
   }
 
   async tienePdfYExcelParaOC(oc: any): Promise<boolean> {
+    console.log('DEBUG tienePdfYExcelParaOC - oc.idOrden:', oc.idOrden, 'tipo:', typeof oc.idOrden);
     try {
+      const payload = { idOrden: oc.idOrden, tipoOrden: 'OC' };
+      console.log('DEBUG tienePdfYExcelParaOC - payload:', payload);
       const resp: any = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/logistica/listar-adjuntos-oc`, { idOrden: oc.idOrden, tipoOrden: 'OC' })
+        this.http.post(`${this.baseUrl}/api/logistica/listar-adjuntos-oc`, payload)
       );
       const adjuntos = Array.isArray(resp) ? resp : [];
-      console.log('Adjuntos de OC', oc.idOrden, ':', adjuntos);
-      const tienePdf = adjuntos.some((a: any) => a.tipoArchivo === 'PDF' || a.tipoArchivo === 'application/pdf');
-      const tieneExcel = adjuntos.some((a: any) => a.tipoArchivo === 'EXCEL' || a.tipoArchivo?.toLowerCase().includes('excel') || a.tipoArchivo?.toLowerCase().includes('spreadsheet'));
+      console.log('DEBUG Adjuntos de OC', oc.idOrden, ':', adjuntos);
+      console.log('DEBUG Tipos de archivo:', adjuntos.map((a: any) => ({ nombre: a.nombreArchivo, tipo: a.tipoArchivo, idOrden: a.idOrden })));
+      // Check for PDF (case-insensitive, also check file name)
+      const tienePdf = adjuntos.some((a: any) => {
+        const tipo = (a.tipoArchivo || '').toLowerCase();
+        const nombre = (a.nombreArchivo || '').toLowerCase();
+        return tipo === 'pdf' || tipo === 'application/pdf' || nombre.endsWith('.pdf');
+      });
+      // Check for Excel (case-insensitive, also check file name)
+      const tieneExcel = adjuntos.some((a: any) => {
+        const tipo = (a.tipoArchivo || '').toLowerCase();
+        const nombre = (a.nombreArchivo || '').toLowerCase();
+        return tipo === 'excel' || tipo.includes('excel') || tipo.includes('spreadsheet') ||
+               nombre.endsWith('.xlsx') || nombre.endsWith('.xls');
+      });
       console.log('OC', oc.idOrden, '- Tiene PDF:', tienePdf, 'Tiene Excel:', tieneExcel);
       return tienePdf && tieneExcel;
     } catch {
@@ -618,7 +888,16 @@ export class ConsolidacionComprasComponent implements OnInit {
         estado: 'ACTIVO'
       };
       const resp: any = await lastValueFrom(this.maestrasService.getProveedores(body));
-      const proveedores = Array.isArray(resp) ? resp : [];
+      let proveedores = Array.isArray(resp) ? resp : [];
+
+      // Filtro local adicional por si el backend no filtra correctamente
+      const busquedaLower = this.busquedaProveedor.toLowerCase();
+      proveedores = proveedores.filter((prov: any) => {
+        const nombre = (prov.proveedor || prov.nombre || '').toLowerCase();
+        const ruc = (prov.ruc || prov.documento || '').toLowerCase();
+        return nombre.includes(busquedaLower) || ruc.includes(busquedaLower);
+      });
+
       this.proveedoresSugeridos.set(proveedores.slice(0, 10)); // Máximo 10 sugerencias
       this.mostrarSugerenciasProveedor.set(proveedores.length > 0);
     } catch (error) {

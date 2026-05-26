@@ -1,9 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { UserService } from '@/app/shared/services/user.service';
-import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
-import { AlertService } from '@/app/shared/alertas/alerts.service';
-import { UtilsService } from '@/app/shared/utils/utils.service';
 import { AprobadoresService } from '@/app/modules/main/services/aprobadores.service';
 import { Aprobador, Nivel, TipoDocumento } from 'src/app/shared/interfaces/Tables';
 import { finalize } from 'rxjs/operators';
@@ -40,22 +36,23 @@ export class AprobadoresMantenedorComponent implements OnInit {
   ngOnInit(): void {
     this.cargarNiveles();
     this.cargarTiposDocumento();
+    this.cargarAprobadores(0, '');
   }
 
   cargarNiveles() {
-    this.cargando = true;
-    this.svc.listarNiveles().pipe(finalize(()=> this.cargando = false))
-      .subscribe(res => this.niveles = res, err => this.handleError(err));
+    this.niveles = [
+      { idNivel: 1, descripcion: 'Nivel 1', orden: 1 },
+      { idNivel: 2, descripcion: 'Nivel 2', orden: 2 },
+      { idNivel: 3, descripcion: 'Nivel 3', orden: 3 },
+    ];
   }
 
   cargarTiposDocumento() {
-    // Si no tienes endpoint, setea manualmente:
     this.tipos = [
       { idTipoDocumento: 1, codigo: 'REQ', descripcion: 'Requerimiento' },
       { idTipoDocumento: 2, codigo: 'OC', descripcion: 'Orden Compra' },
       { idTipoDocumento: 3, codigo: 'OS', descripcion: 'Orden Servicio' }
     ];
-    // Si tienes endpoint, usa svc.listarTiposDocumento()
   }
 
   onSeleccionNivel(nivelId: number) {

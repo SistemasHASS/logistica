@@ -68,9 +68,11 @@
             <tr>
               <th>#</th>
               <th>Número Orden</th>
+              <th>Número SPRING</th>
               <th>Proveedor</th>
               <th>Fecha Entrega</th>
               <th>Estado</th>
+              <th style="text-align:center">Items Pendientes</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -78,6 +80,13 @@
             <tr *ngFor="let orden of ordenesCompra; let i = index">
               <td>{{ i + 1 }}</td>
               <td><strong>{{ orden.numeroOrden }}</strong></td>
+              <td>
+                @if (orden.numeroOrdenSpring) {
+                  <span class="badge bg-primary" title="Número en SPRING">{{ orden.numeroOrdenSpring }}</span>
+                } @else {
+                  <span class="text-muted">-</span>
+                }
+              </td>
               <td>
                 <div class="proveedor-info">
                   <strong>{{ orden.nombreProveedor }}</strong>
@@ -88,6 +97,11 @@
               <td>
                 <span class="badge" [ngClass]="obtenerClaseEstado(orden.estado)">
                   {{ orden.estado }}
+                </span>
+              </td>
+              <td style="text-align:center">
+                <span title="Items pendientes / total">
+                  {{ contarItemsPendientes(orden) }} / {{ orden.detalle.length || 0 }}
                 </span>
               </td>
               <td class="actions">
@@ -173,11 +187,26 @@
             <td class="text-center">{{ recep.detalle.length }}</td>
             <td class="actions">
               <button 
-                class="btn btn-sm btn-info me-2" 
+                class="btn btn-sm btn-info me-1" 
                 (click)="verDetalle(recep)"
                 title="Ver Detalle">
                 <i class="icon-eye"></i>
               </button>
+              <!-- Botón Ingresar a Almacén - solo si no está ingresado y tiene ID -->
+              <button 
+                *ngIf="recep.id && !recep.ingresadoKardex"
+                class="btn btn-sm btn-success me-1" 
+                (click)="validarYIngresarKardex(recep)"
+                title="Ingresar a Almacén (SPRING)">
+                <i class="bx bx-archive-in"></i> Ingresar
+              </button>
+              <!-- Badge de ya ingresado -->
+              <span 
+                *ngIf="recep.ingresadoKardex"
+                class="badge badge-success me-1"
+                title="Ya ingresado a almacén - NI: {{ recep.numeroNI }}">
+                <i class="bx bx-check"></i> Ingresado
+              </span>
               <button 
                 class="btn btn-sm btn-danger" 
                 (click)="eliminarRecepcion(i)"
@@ -249,26 +278,36 @@
         <div class="form-group full-width" *ngIf="ordenSeleccionada">
           <div class="orden-info">
             <h4>Información de la Orden</h4>
-            <div class="info-grid">
-              <div class="info-item">
-                <label>Proveedor:</label>
-                <span>{{ ordenSeleccionada.nombreProveedor }}</span>
-              </div>
-              <div class="info-item">
-                <label>RUC:</label>
-                <span>{{ ordenSeleccionada.rucProveedor }}</span>
-              </div>
-              <div class="info-item">
-                <label>Fecha Entrega:</label>
-                <span>{{ formatearFecha(ordenSeleccionada.fechaEntrega) }}</span>
-              </div>
-              <div class="info-item">
-                <label>Estado:</label>
-                <span class="badge" [ngClass]="obtenerClaseEstado(ordenSeleccionada.estado)">
-                  {{ ordenSeleccionada.estado }}
-                </span>
-              </div>
-            </div>
+            <table style="width:100%; border-collapse:collapse; font-size:0.875rem;">
+              <colgroup>
+                <col style="width:35%">
+                <col style="width:15%">
+                <col style="width:25%">
+                <col style="width:25%">
+              </colgroup>
+              <thead>
+                <tr style="background:#f0f4f8;">
+                  <th style="padding:6px 10px; text-align:left; font-weight:600; border-bottom:1px solid #dde3ec;">PROVEEDOR</th>
+                  <th style="padding:6px 10px; text-align:left; font-weight:600; border-bottom:1px solid #dde3ec;">RUC</th>
+                  <th style="padding:6px 10px; text-align:left; font-weight:600; border-bottom:1px solid #dde3ec;">FECHA ENTREGA</th>
+                  <th style="padding:6px 10px; text-align:left; font-weight:600; border-bottom:1px solid #dde3ec;">ESTADO</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding:8px 10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:0;">
+                    <span [title]="ordenSeleccionada.nombreProveedor">{{ ordenSeleccionada.nombreProveedor }}</span>
+                  </td>
+                  <td style="padding:8px 10px; white-space:nowrap;">{{ ordenSeleccionada.rucProveedor }}</td>
+                  <td style="padding:8px 10px; white-space:nowrap;">{{ formatearFecha(ordenSeleccionada.fechaEntrega) }}</td>
+                  <td style="padding:8px 10px;">
+                    <span class="badge" [ngClass]="obtenerClaseEstado(ordenSeleccionada.estado)">
+                      {{ ordenSeleccionada.estado }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -360,8 +399,8 @@
                     [(ngModel)]="det.fechaVencimiento">
                 </td>
                 <td>
-                  <span class="badge badge-sm" [ngClass]="obtenerClaseEstado(det.estado)">
-                    {{ det.estado }}
+                  <span class="badge badge-sm" [ngClass]="obtenerClaseEstado(det.estadoItem)">
+                    {{ det.estadoItem }}
                   </span>
                 </td>
                 <td>
@@ -422,8 +461,9 @@
         </div>
         <div class="info-item">
           <label>Estado:</label>
-          <span class="badge" [ngClass]="obtenerClaseEstado(recepcionDetalle.estado)">
-            {{ recepcionDetalle.estado }}
+          @let estadoValue = recepcionDetalle.estado || 'PARCIAL';
+          <span class="badge" [ngClass]="obtenerClaseEstado(estadoValue)">
+            {{ estadoValue }}
           </span>
         </div>
         <div class="info-item">
@@ -450,13 +490,28 @@
         </div>
       </div>
 
+      <!-- ALERTA: OC NO SINCRONIZADA CON SPRING -->
+      <div class="alert alert-warning" style="margin: 16px 0; padding: 12px 16px; background: #fff3e0; border-left: 4px solid #f57c00; border-radius: 4px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <strong style="color: #f57c00;">⚠️ Orden no sincronizada con SPRING</strong>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: #666;">
+              Esta OC debe sincronizarse con SPRING antes de poder ingresar al kardex.
+            </p>
+          </div>
+          <button class="btn-primary" (click)="sincronizarConSpring()" style="margin-left: 16px; white-space: nowrap;">
+            <i class="icon-refresh"></i> Sincronizar con SPRING
+          </button>
+        </div>
+      </div>
+
       <!-- DETALLE -->
       <h4>Items Recibidos</h4>
       <div class="table-wrapper">
         <table class="table">
           <thead>
             <tr>
-              <th>#</th>
+              <th>Item</th>
               <th>Código</th>
               <th>Descripción</th>
               <th>Ordenada</th>
@@ -469,7 +524,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let det of recepcionDetalle.detalle; let i = index">
-              <td>{{ i + 1 }}</td>
+              <td>{{ det.item || (i + 1) }}</td>
               <td>{{ det.codigo }}</td>
               <td>{{ det.descripcion }}</td>
               <td class="text-right">{{ det.cantidadOrdenada }}</td>
@@ -478,9 +533,16 @@
               <td class="text-right highlight-danger">{{ det.cantidadRechazada }}</td>
               <td>{{ det.lote || '-' }}</td>
               <td>
-                <span class="badge" [ngClass]="obtenerClaseEstado(det.estado)">
-                  {{ det.estado }}
+                <span class="badge" 
+                      [style.background]="det.estadoItem === 'NO_CONFORME' ? '#ffebee' : '#e8f5e9'"
+                      [style.color]="det.estadoItem === 'NO_CONFORME' ? '#d32f2f' : '#388e3c'">
+                  {{ det.estadoItem || 'CONFORME' }}
                 </span>
+              </td>
+            </tr>
+            <tr *ngIf="!recepcionDetalle.detalle || recepcionDetalle.detalle.length === 0">
+              <td colspan="9" class="text-center text-muted">
+                No hay items en esta recepción
               </td>
             </tr>
           </tbody>

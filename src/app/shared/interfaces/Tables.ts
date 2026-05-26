@@ -488,12 +488,19 @@ export interface Proveedor {
   id: number;
   TipoPersona: string;
   documento: string;
+  RazonSocial?: string;
   ruc: string;
   Estado: string;
   TipoPago: string;
   MonedaPago: string;
   detraccion: string;
   TipoServicio: string;
+  correo?: string;
+  direccion?: string;
+  descripcionTipoPago?: string;
+  codigoFiscal?: string;
+  descripcionMoneda?: string;
+  siglaMoneda?: string;
 }
 
 export interface TipoGasto {
@@ -810,6 +817,7 @@ export interface CriterioEvaluacion {
 export interface OrdenCompra {
   id?: number;
   numeroOrden: string;
+  numeroOrdenSpring?: string | null;  // Número de orden en SPRING (cuando se sincroniza)
   solicitudCompraId: number;
   cotizacionId?: number;
   fecha: string;
@@ -854,6 +862,7 @@ export interface OrdenCompra {
 export interface DetalleOrdenCompra {
   id?: number;
   ordenCompraId: number;
+  item?: number;
   codigo: string;
   descripcion: string;
   cantidad: number;
@@ -871,6 +880,8 @@ export interface DetalleOrdenCompra {
   fechaEntregaEstimada?: string;
   estado: 'PENDIENTE' | 'PARCIAL' | 'COMPLETO' | 'CANCELADO';
   observaciones?: string;
+  proyecto?: string;
+  ceco?: string;
 }
 
 export interface RecepcionOrdenCompra {
@@ -884,13 +895,22 @@ export interface RecepcionOrdenCompra {
   observaciones?: string;
   conformidad: boolean;
   usuarioRecibe: string;
-  estado: 'PARCIAL' | 'COMPLETA';
+  estado: 'PARCIAL' | 'COMPLETA' | 'PENDIENTE' | 'INGRESADO';
+  // Campos para integración con SPRING
+  ingresadoKardex?: boolean;
+  fechaIngresoKardex?: string;
+  numeroNI?: string;
+  idTransaccionKardex?: number;
+  proveedor?: string;
+  nombreProveedor?: string;
+  guiaRemision?: string;
 }
 
 export interface DetalleRecepcion {
   id?: number;
   recepcionId: number;
   detalleOrdenCompraId: number;
+  item?: number;
   codigo: string;
   descripcion: string;
   cantidadOrdenada: number;
@@ -901,7 +921,7 @@ export interface DetalleRecepcion {
   observaciones?: string;
   lote?: string;
   fechaVencimiento?: string;
-  estado: 'CONFORME' | 'NO_CONFORME';
+  estadoItem: 'CONFORME' | 'NO_CONFORME';
 }
 
 export interface Nivel {
@@ -1510,4 +1530,15 @@ export interface PlantillaCorreo {
   fechaCreacion?: Date;
   usuarioModifica?: string;
   fechaModificacion?: Date;
+}
+
+export interface UnidadMedida {
+  id?: number;
+  codigo: string;
+  descripcion: string;
+  abreviatura: string;
+  tipo: 'PESO' | 'VOLUMEN' | 'LONGITUD' | 'AREA' | 'UNIDAD' | 'TIEMPO' | 'OTRO';
+  estado: 'A' | 'I';
+  ultimoUsuario?: string;
+  ultimaFechaModif?: string;
 }

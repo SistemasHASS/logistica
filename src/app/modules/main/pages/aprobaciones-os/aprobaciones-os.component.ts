@@ -299,10 +299,10 @@ export class AprobacionesOSComponent implements OnInit {
         .aprobarRechazarOS(payload)
         .toPromise();
 
-      if (response?.success) {
+      if (response?.errorgeneral === 0 || response?.errorgeneral === '0' || response?.success) {
         this.alertService.showAlert(
           'Éxito',
-          `Orden de servicio ${this.accionAprobacion === 'APROBAR' ? 'aprobada' : 'rechazada'} correctamente`,
+          response?.mensaje || `Orden de servicio ${this.accionAprobacion === 'APROBAR' ? 'aprobada' : 'rechazada'} correctamente`,
           'success'
         );
 
@@ -312,7 +312,7 @@ export class AprobacionesOSComponent implements OnInit {
       } else {
         this.alertService.showAlert(
           'Error',
-          response?.message || 'No se pudo procesar la aprobación',
+          response?.mensaje || response?.message || 'No se pudo procesar la aprobación',
           'error'
         );
       }

@@ -105,6 +105,26 @@ export class RecepcionOCService {
   }
 
   /**
+   * Actualizar cantidad recibida de un detalle de recepción
+   */
+  actualizarCantidadRecepcion(datos: {
+    idDetalleRecepcion: number;
+    cantidadRecibida?: number;
+    cantidadAceptada?: number;
+    lote?: string;
+    motivoRechazo?: string;
+  }): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/api/logistica/recepcion-oc/actualizar-cantidad`,
+      datos,
+      { headers: this.headers }
+    ).pipe(
+      map(response => response),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
    * Obtener contadores de recepciones
    */
   obtenerContadores(): Observable<any> {

@@ -1,0 +1,124 @@
+<div class="parametros-container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="m-0 fw-bold">Parámetros del Sistema</h4>
+    <div>
+      <button class="btn btn-outline-secondary me-2" (click)="reset()">
+        <i class="bx bx-reset me-2"></i>Restablecer
+      </button>
+      <button class="btn btn-primary" (click)="save()" [disabled]="saving()">
+        <i class="bx bx-save me-2"></i>{{ saving() ? 'Guardando...' : 'Guardar Cambios' }}
+      </button>
+    </div>
+  </div>
+
+  @if (message()) {
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="bx bx-check-circle me-2"></i>{{ message() }}
+      <button type="button" class="btn-close" (click)="message.set('')"></button>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bx bx-error-circle me-2"></i>{{ error() }}
+      <button type="button" class="btn-close" (click)="error.set('')"></button>
+    </div>
+  }
+
+  <div class="row g-4">
+    <!-- Parámetros de Aprobación -->
+    <div class="col-lg-6">
+      <p-card header="Aprobaciones">
+        <form [formGroup]="form">
+          <div class="mb-3">
+            <label class="form-label">Monto Límite Directo (S/)</label>
+            <input type="number" class="form-control" formControlName="montoLimiteDirecto" min="0" step="100">
+            <div class="form-text">Monto máximo que puede aprobar un jefe de área directamente</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Monto Requiere Aprobación (S/)</label>
+            <input type="number" class="form-control" formControlName="requiereAprobacionMonto" min="0" step="100">
+            <div class="form-text">A partir de este monto se requiere aprobación adicional</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Días Máximo para Aprobación</label>
+            <input type="number" class="form-control" formControlName="diasMaximoAprobacion" min="1" max="30">
+            <div class="form-text">Días máximos que tiene un aprobador para responder</div>
+          </div>
+        </form>
+      </p-card>
+    </div>
+
+    <!-- Parámetros de Compra -->
+    <div class="col-lg-6">
+      <p-card header="Configuración de Compras">
+        <form [formGroup]="form">
+          <div class="mb-3">
+            <label class="form-label">Días de Entrega Default</label>
+            <input type="number" class="form-control" formControlName="diasEntregaDefault" min="1">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Días de Crédito Default</label>
+            <input type="number" class="form-control" formControlName="diasCreditoDefault" min="0">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Moneda Default</label>
+            <select class="form-select" formControlName="monedaDefault">
+              @for (moneda of monedas; track moneda.codigo) {
+                <option [value]="moneda.codigo">{{ moneda.nombre }}</option>
+              }
+            </select>
+          </div>
+        </form>
+      </p-card>
+    </div>
+
+    <!-- Parámetros de Sistema -->
+    <div class="col-lg-6">
+      <p-card header="Configuración del Sistema">
+        <form [formGroup]="form">
+          <div class="mb-3">
+            <label class="form-label">Horario de Corte</label>
+            <input type="time" class="form-control" formControlName="horarioCorte">
+            <div class="form-text">Hora límite para procesos automáticos del día</div>
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="enviarNotificaciones" formControlName="enviarNotificaciones">
+              <label class="form-check-label" for="enviarNotificaciones">Enviar notificaciones por email</label>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="consolidacionAutomatica" formControlName="consolidacionAutomatica">
+              <label class="form-check-label" for="consolidacionAutomatica">Habilitar consolidación automática</label>
+            </div>
+          </div>
+        </form>
+      </p-card>
+    </div>
+
+    <!-- Límites -->
+    <div class="col-lg-6">
+      <p-card header="Límites del Sistema">
+        <form [formGroup]="form">
+          <div class="mb-3">
+            <label class="form-label">Máximo Items por Requerimiento</label>
+            <input type="number" class="form-control" formControlName="maximoItemsPorReq" min="1" max="100">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Máximo OC en Borrador por Usuario</label>
+            <input type="number" class="form-control" formControlName="maximoOCBorrador" min="1" max="50">
+          </div>
+        </form>
+      </p-card>
+    </div>
+  </div>
+</div>

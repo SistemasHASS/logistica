@@ -147,9 +147,15 @@
                   <i class="pi pi-sort"></i>
                 </div>
               </th>
-              <th class="table-header-cell">
+              <!-- <th class="table-header-cell">
                 <div class="header-cell-content">
                   <span>Fecha</span>
+                  <i class="pi pi-sort"></i>
+                </div>
+              </th> -->
+              <th class="table-header-cell">
+                <div class="header-cell-content">
+                  <span>Fecha Aprobación</span>
                   <i class="pi pi-sort"></i>
                 </div>
               </th>
@@ -177,12 +183,6 @@
                   <i class="pi pi-sort"></i>
                 </div>
               </th>
-              <th class="table-header-cell">
-                <div class="header-cell-content">
-                  <span>Fecha Aprobación</span>
-                  <i class="pi pi-sort"></i>
-                </div>
-              </th>
               <th class="table-header-cell">Acciones</th>
             </tr>
           </ng-template>
@@ -194,9 +194,14 @@
                   <span class="req-number">{{ aprobacion['idrequerimiento'] | numeroRequerimiento : aprobacion['RequisicionNumero'] }}</span>
                 </div>
               </td>
-              <td class="table-cell">
+              <!-- <td class="table-cell">
                 <div class="cell-content">
                   <span class="date-text">{{ formatFecha(aprobacion['fechaSolicitud']) }}</span>
+                </div>
+              </td> -->
+              <td class="table-cell">
+                <div class="cell-content">
+                  <span class="date-text">{{ formatFecha(aprobacion['fechaAprobacion']) }}</span>
                 </div>
               </td>
               <td class="table-cell">
@@ -224,11 +229,6 @@
                   <span class="status-badge" [ngClass]="getStatusClass(aprobacion['estado'])">
                     {{ getEstadoBadge(aprobacion['estado']).label }}
                   </span>
-                </div>
-              </td>
-              <td class="table-cell">
-                <div class="cell-content">
-                  <span class="date-text">{{ formatFecha(aprobacion['fechaAprobacion']) }}</span>
                 </div>
               </td>
               <td class="table-cell">

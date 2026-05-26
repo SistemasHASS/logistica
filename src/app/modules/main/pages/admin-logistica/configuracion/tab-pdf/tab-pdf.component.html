@@ -1,0 +1,534 @@
+<div class="container-fluid py-3">
+
+  <!-- ENCABEZADO -->
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <i class="bx bxs-file-pdf text-danger fs-4"></i>
+    <div>
+      <h5 class="fw-bold mb-0">Plantillas de Documentos PDF</h5>
+      <small class="text-muted">Configure la estructura, etiquetas y contenido de la Orden de Compra y Orden de Servicio</small>
+    </div>
+  </div>
+
+  <!-- TABS OC / OS -->
+  <ul class="nav nav-tabs mb-0">
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="tabActivo() === 'oc'" (click)="setTab('oc')">
+        <i class="bx bx-cart me-1 text-primary"></i> Orden de Compra (OC)
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="tabActivo() === 'os'" (click)="setTab('os')">
+        <i class="bx bx-wrench me-1 text-warning"></i> Orden de Servicio (OS)
+      </button>
+    </li>
+  </ul>
+
+  <!-- ════════════════════════════ TAB OC ════════════════════════════════ -->
+  @if (tabActivo() === 'oc') {
+
+    <!-- Sub-secciones -->
+    <div class="bg-light border border-top-0 rounded-bottom px-3 py-2 mb-3">
+      <ul class="nav nav-pills nav-sm gap-1">
+        <li class="nav-item">
+          <button class="nav-link py-1 px-3" style="font-size:12.5px"
+            [class.active]="seccionTab() === 'plantilla'" (click)="setSeccion('plantilla')">
+            <i class="bx bx-layout me-1"></i> Configurar Plantilla
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link py-1 px-3" style="font-size:12.5px"
+            [class.active]="seccionTab() === 'tc'" (click)="setSeccion('tc')">
+            <i class="bx bx-list-check me-1"></i> Términos y Condiciones
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- ── OC: Configurar Plantilla ── -->
+    @if (seccionTab() === 'plantilla') {
+      <div class="row g-3">
+
+        <!-- Panel izquierdo: configuración -->
+        <div class="col-lg-5">
+
+          <!-- Cabecera del panel -->
+          <div class="card shadow-sm h-100">
+            <div class="card-header d-flex align-items-center justify-content-between py-2">
+              <span class="fw-semibold"><i class="bx bx-cog me-1 text-primary"></i> Configuración Plantilla OC</span>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary" (click)="resetCfgOC()">
+                  <i class="bx bx-reset me-1"></i> Restaurar
+                </button>
+                <button class="btn btn-sm btn-primary" (click)="guardarCfgOC()">
+                  <i class="bx bx-save me-1"></i> Guardar
+                </button>
+              </div>
+            </div>
+            <div class="card-body" style="overflow-y:auto;max-height:740px">
+
+              <!-- Título del documento -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold mb-1" style="font-size:12px">Título del documento</label>
+                <input type="text" class="form-control form-control-sm"
+                  [value]="cfgOC().tituloDocumento"
+                  (input)="patchOC({tituloDocumento: $any($event.target).value})">
+              </div>
+
+              <!-- Columnas visibles -->
+              <div class="mb-3">
+                <div class="fw-semibold mb-2" style="font-size:12px">Columnas visibles en tabla de ítems</div>
+                <div class="d-flex flex-wrap gap-2">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="ocCommodity"
+                      [checked]="cfgOC().mostrarCommodity"
+                      (change)="patchOC({mostrarCommodity: $any($event.target).checked})">
+                    <label class="form-check-label" for="ocCommodity" style="font-size:12px">Commodity</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="ocCnd"
+                      [checked]="cfgOC().mostrarCnd"
+                      (change)="patchOC({mostrarCnd: $any($event.target).checked})">
+                    <label class="form-check-label" for="ocCnd" style="font-size:12px">Cnd</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="ocUnidad"
+                      [checked]="cfgOC().mostrarUnidad"
+                      (change)="patchOC({mostrarUnidad: $any($event.target).checked})">
+                    <label class="form-check-label" for="ocUnidad" style="font-size:12px">Unidad</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Campos opcionales de cabecera -->
+              <div class="mb-3">
+                <div class="fw-semibold mb-2" style="font-size:12px">Campos opcionales de cabecera</div>
+                <div class="d-flex flex-wrap gap-2">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="ocCotizacion"
+                      [checked]="cfgOC().mostrarCotizacion"
+                      (change)="patchOC({mostrarCotizacion: $any($event.target).checked})">
+                    <label class="form-check-label" for="ocCotizacion" style="font-size:12px">Cotización #</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="ocClasificacion"
+                      [checked]="cfgOC().mostrarClasificacion"
+                      (change)="patchOC({mostrarClasificacion: $any($event.target).checked})">
+                    <label class="form-check-label" for="ocClasificacion" style="font-size:12px">Clasificación</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="ocTipoCambio"
+                      [checked]="cfgOC().mostrarTipoCambio"
+                      (change)="patchOC({mostrarTipoCambio: $any($event.target).checked})">
+                    <label class="form-check-label" for="ocTipoCambio" style="font-size:12px">Tipo de Cambio</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Etiquetas de columnas -->
+              <div class="mb-3">
+                <div class="fw-semibold mb-2" style="font-size:12px">Etiquetas de columnas</div>
+                <div class="row g-2">
+                  @if (cfgOC().mostrarCommodity) {
+                    <div class="col-6">
+                      <label class="form-label mb-0" style="font-size:11px">Commodity</label>
+                      <input type="text" class="form-control form-control-sm"
+                        [value]="cfgOC().etiquetaCommodity"
+                        (input)="patchOC({etiquetaCommodity: $any($event.target).value})">
+                    </div>
+                  }
+                  @if (cfgOC().mostrarCnd) {
+                    <div class="col-6">
+                      <label class="form-label mb-0" style="font-size:11px">Cnd</label>
+                      <input type="text" class="form-control form-control-sm"
+                        [value]="cfgOC().etiquetaCnd"
+                        (input)="patchOC({etiquetaCnd: $any($event.target).value})">
+                    </div>
+                  }
+                  <div class="col-6">
+                    <label class="form-label mb-0" style="font-size:11px">Descripción</label>
+                    <input type="text" class="form-control form-control-sm"
+                      [value]="cfgOC().etiquetaDescripcion"
+                      (input)="patchOC({etiquetaDescripcion: $any($event.target).value})">
+                  </div>
+                  @if (cfgOC().mostrarUnidad) {
+                    <div class="col-6">
+                      <label class="form-label mb-0" style="font-size:11px">Unidad</label>
+                      <input type="text" class="form-control form-control-sm"
+                        [value]="cfgOC().etiquetaUnidad"
+                        (input)="patchOC({etiquetaUnidad: $any($event.target).value})">
+                    </div>
+                  }
+                  <div class="col-6">
+                    <label class="form-label mb-0" style="font-size:11px">Cantidad</label>
+                    <input type="text" class="form-control form-control-sm"
+                      [value]="cfgOC().etiquetaCantidad"
+                      (input)="patchOC({etiquetaCantidad: $any($event.target).value})">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label mb-0" style="font-size:11px">Precio Unitario</label>
+                    <input type="text" class="form-control form-control-sm"
+                      [value]="cfgOC().etiquetaPrecioUnit"
+                      (input)="patchOC({etiquetaPrecioUnit: $any($event.target).value})">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label mb-0" style="font-size:11px">Monto Total</label>
+                    <input type="text" class="form-control form-control-sm"
+                      [value]="cfgOC().etiquetaMontoTotal"
+                      (input)="patchOC({etiquetaMontoTotal: $any($event.target).value})">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Etiquetas de totales -->
+              <div class="mb-3">
+                <div class="fw-semibold mb-2" style="font-size:12px">Etiquetas de totales</div>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label mb-0" style="font-size:11px">Total Neto</label>
+                    <input type="text" class="form-control form-control-sm"
+                      [value]="cfgOC().etiquetaTotalNeto"
+                      (input)="patchOC({etiquetaTotalNeto: $any($event.target).value})">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label mb-0" style="font-size:11px">I.G.V.</label>
+                    <input type="text" class="form-control form-control-sm"
+                      [value]="cfgOC().etiquetaIGV"
+                      (input)="patchOC({etiquetaIGV: $any($event.target).value})">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label mb-0" style="font-size:11px">Total O/C</label>
+                    <input type="text" class="form-control form-control-sm"
+                      [value]="cfgOC().etiquetaTotalOC"
+                      (input)="patchOC({etiquetaTotalOC: $any($event.target).value})">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Nota de pie -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold mb-1" style="font-size:12px">Nota de pie de página</label>
+                <textarea class="form-control form-control-sm" rows="2"
+                  style="font-size:12px;resize:vertical"
+                  [value]="cfgOC().notaPie"
+                  (input)="patchOC({notaPie: $any($event.target).value})"></textarea>
+                <div class="form-text" style="font-size:11px">Texto que aparece debajo de la tabla de ítems (opcional).</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel derecho: preview -->
+        <div class="col-lg-7">
+          <div class="card shadow-sm h-100">
+            <div class="card-header d-flex align-items-center justify-content-between py-2">
+              <span class="fw-semibold"><i class="bx bx-show me-1 text-primary"></i> Vista previa OC</span>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary" (click)="refrescarPreviewOC()">
+                  <i class="bx bx-refresh me-1"></i> Actualizar
+                </button>
+                <button class="btn btn-sm btn-primary" (click)="abrirVentana('oc')">
+                  <i class="bx bx-printer me-1"></i> Imprimir
+                </button>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div class="alert alert-secondary mx-3 mt-2 mb-0 py-1" style="font-size:11px">
+                <i class="bx bx-info-circle me-1"></i> Datos de ejemplo. Guarda los cambios y presiona Actualizar para ver el resultado.
+              </div>
+              @if (previewOCUrl()) {
+                <iframe [src]="previewOCUrl()"
+                  style="width:100%;height:720px;border:none;display:block;margin-top:8px"
+                  title="Vista previa OC">
+                </iframe>
+              } @else {
+                <div class="d-flex align-items-center justify-content-center py-5 text-muted">
+                  <i class="bx bx-loader-alt bx-spin me-2 fs-5"></i> Cargando...
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+      </div>
+    }
+
+    <!-- ── OC: T&C ── -->
+    @if (seccionTab() === 'tc') {
+      <div class="card shadow-sm">
+        <div class="card-header d-flex align-items-center justify-content-between py-2">
+          <span class="fw-semibold">
+            <i class="bx bx-list-ol me-1 text-primary"></i>
+            Términos y Condiciones — OC ({{ tcOC().length }} cláusulas)
+          </span>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" (click)="resetTcOC()">
+              <i class="bx bx-reset me-1"></i> Restaurar
+            </button>
+            <button class="btn btn-sm btn-success" (click)="guardarTcOC()">
+              <i class="bx bx-save me-1"></i> Guardar cambios
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info py-2 mb-3" style="font-size:12px">
+            <i class="bx bx-info-circle me-1"></i>
+            Estos términos se imprimirán en la segunda página del PDF. Los cambios aplican de inmediato.
+          </div>
+          @for (item of tcOC(); track $index) {
+            <div class="d-flex gap-2 mb-2 align-items-start">
+              <span class="badge bg-primary mt-2" style="min-width:28px;text-align:center">{{ $index + 1 }}</span>
+              <textarea class="form-control form-control-sm" rows="3"
+                style="resize:vertical;font-size:12.5px;line-height:1.5"
+                [value]="item"
+                (input)="actualizarTcOC($index, $any($event.target).value)">
+              </textarea>
+              <button class="btn btn-sm btn-outline-danger mt-1" (click)="eliminarTcOC($index)" title="Eliminar">
+                <i class="bx bx-trash"></i>
+              </button>
+            </div>
+          }
+          <button class="btn btn-sm btn-outline-primary mt-2" (click)="agregarTcOC()">
+            <i class="bx bx-plus me-1"></i> Agregar cláusula
+          </button>
+        </div>
+      </div>
+    }
+
+  }
+
+  <!-- ════════════════════════════ TAB OS ════════════════════════════════ -->
+  @if (tabActivo() === 'os') {
+
+    <!-- Sub-secciones -->
+    <div class="bg-light border border-top-0 rounded-bottom px-3 py-2 mb-3">
+      <ul class="nav nav-pills nav-sm gap-1">
+        <li class="nav-item">
+          <button class="nav-link py-1 px-3" style="font-size:12.5px"
+            [class.active]="seccionTab() === 'plantilla'" (click)="setSeccion('plantilla')">
+            <i class="bx bx-layout me-1"></i> Configurar Plantilla
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link py-1 px-3" style="font-size:12.5px"
+            [class.active]="seccionTab() === 'tc'" (click)="setSeccion('tc')">
+            <i class="bx bx-list-check me-1"></i> Términos y Condiciones
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- ── OS: Configurar Plantilla ── -->
+    @if (seccionTab() === 'plantilla') {
+      <div class="row g-3">
+
+        <!-- Panel izquierdo: configuración -->
+        <div class="col-lg-5">
+          <div class="card shadow-sm h-100">
+            <div class="card-header d-flex align-items-center justify-content-between py-2">
+              <span class="fw-semibold"><i class="bx bx-cog me-1 text-warning"></i> Configuración Plantilla OS</span>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary" (click)="resetCfgOS()">
+                  <i class="bx bx-reset me-1"></i> Restaurar
+                </button>
+                <button class="btn btn-sm btn-warning text-white" (click)="guardarCfgOS()">
+                  <i class="bx bx-save me-1"></i> Guardar
+                </button>
+              </div>
+            </div>
+            <div class="card-body" style="overflow-y:auto;max-height:740px">
+
+              <!-- Título del documento -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold mb-1" style="font-size:12px">Título del documento</label>
+                <input type="text" class="form-control form-control-sm"
+                  [value]="cfgOS().tituloDocumento"
+                  (input)="patchOS({tituloDocumento: $any($event.target).value})">
+              </div>
+
+              <!-- Opciones de visibilidad -->
+              <div class="mb-3">
+                <div class="fw-semibold mb-2" style="font-size:12px">Secciones visibles</div>
+                <div class="d-flex flex-wrap gap-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="osComentarios"
+                      [checked]="cfgOS().mostrarComentarios"
+                      (change)="patchOS({mostrarComentarios: $any($event.target).checked})">
+                    <label class="form-check-label" for="osComentarios" style="font-size:12px">Comentarios</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="osDatosServicio"
+                      [checked]="cfgOS().mostrarDatosServicio"
+                      (change)="patchOS({mostrarDatosServicio: $any($event.target).checked})">
+                    <label class="form-check-label" for="osDatosServicio" style="font-size:12px">Datos del Servicio</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Etiquetas de columnas -->
+              <div class="mb-3">
+                <div class="fw-semibold mb-2" style="font-size:12px">Etiquetas de columnas</div>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label mb-0" style="font-size:11px">Detalle</label>
+                    <input type="text" class="form-control form-control-sm"
+                      [value]="cfgOS().etiquetaDetalle"
+                      (input)="patchOS({etiquetaDetalle: $any($event.target).value})">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label mb-0" style="font-size:11px">Monto Total</label>
+                    <input type="text" class="form-control form-control-sm"
+                      [value]="cfgOS().etiquetaMontoTotal"
+                      (input)="patchOS({etiquetaMontoTotal: $any($event.target).value})">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Etiquetas de totales -->
+              <div class="mb-3">
+                <div class="fw-semibold mb-2" style="font-size:12px">Etiquetas de totales</div>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label mb-0" style="font-size:11px">Valor Servicio</label>
+                    <input type="text" class="form-control form-control-sm"
+                      [value]="cfgOS().etiquetaValorServicio"
+                      (input)="patchOS({etiquetaValorServicio: $any($event.target).value})">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label mb-0" style="font-size:11px">Impuestos</label>
+                    <input type="text" class="form-control form-control-sm"
+                      [value]="cfgOS().etiquetaImpuestos"
+                      (input)="patchOS({etiquetaImpuestos: $any($event.target).value})">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label mb-0" style="font-size:11px">Total</label>
+                    <input type="text" class="form-control form-control-sm"
+                      [value]="cfgOS().etiquetaTotal"
+                      (input)="patchOS({etiquetaTotal: $any($event.target).value})">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Datos del servicio -->
+              @if (cfgOS().mostrarDatosServicio) {
+                <div class="mb-3">
+                  <div class="fw-semibold mb-1" style="font-size:12px">Título sección datos del servicio</div>
+                  <input type="text" class="form-control form-control-sm mb-2"
+                    [value]="cfgOS().tituloSeccionDatos"
+                    (input)="patchOS({tituloSeccionDatos: $any($event.target).value})">
+
+                  <div class="fw-semibold mb-1" style="font-size:12px">
+                    Ítems de datos del servicio ({{ cfgOS().datosServicio.length }})
+                  </div>
+                  @for (dato of cfgOS().datosServicio; track $index) {
+                    <div class="d-flex gap-2 mb-2 align-items-start">
+                      <span class="badge bg-secondary mt-2" style="min-width:24px;text-align:center;font-size:10px">{{ $index + 1 }}</span>
+                      <textarea class="form-control form-control-sm" rows="2"
+                        style="resize:vertical;font-size:12px;line-height:1.4"
+                        [value]="dato"
+                        (input)="actualizarDatoOS($index, $any($event.target).value)">
+                      </textarea>
+                      <button class="btn btn-sm btn-outline-danger mt-1" (click)="eliminarDatoOS($index)" title="Eliminar">
+                        <i class="bx bx-trash"></i>
+                      </button>
+                    </div>
+                  }
+                  <button class="btn btn-sm btn-outline-secondary mt-1" (click)="agregarDatoOS()">
+                    <i class="bx bx-plus me-1"></i> Agregar ítem
+                  </button>
+                </div>
+              }
+
+              <!-- Nota de pie -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold mb-1" style="font-size:12px">Nota de pie de página</label>
+                <textarea class="form-control form-control-sm" rows="2"
+                  style="font-size:12px;resize:vertical"
+                  [value]="cfgOS().notaPie"
+                  (input)="patchOS({notaPie: $any($event.target).value})"></textarea>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel derecho: preview -->
+        <div class="col-lg-7">
+          <div class="card shadow-sm h-100">
+            <div class="card-header d-flex align-items-center justify-content-between py-2">
+              <span class="fw-semibold"><i class="bx bx-show me-1 text-warning"></i> Vista previa OS</span>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-warning" (click)="refrescarPreviewOS()">
+                  <i class="bx bx-refresh me-1"></i> Actualizar
+                </button>
+                <button class="btn btn-sm btn-warning text-white" (click)="abrirVentana('os')">
+                  <i class="bx bx-printer me-1"></i> Imprimir
+                </button>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div class="alert alert-secondary mx-3 mt-2 mb-0 py-1" style="font-size:11px">
+                <i class="bx bx-info-circle me-1"></i> Datos de ejemplo. Guarda los cambios y presiona Actualizar para ver el resultado.
+              </div>
+              @if (previewOSUrl()) {
+                <iframe [src]="previewOSUrl()"
+                  style="width:100%;height:720px;border:none;display:block;margin-top:8px"
+                  title="Vista previa OS">
+                </iframe>
+              } @else {
+                <div class="d-flex align-items-center justify-content-center py-5 text-muted">
+                  <i class="bx bx-loader-alt bx-spin me-2 fs-5"></i> Cargando...
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+      </div>
+    }
+
+    <!-- ── OS: T&C ── -->
+    @if (seccionTab() === 'tc') {
+      <div class="card shadow-sm">
+        <div class="card-header d-flex align-items-center justify-content-between py-2">
+          <span class="fw-semibold">
+            <i class="bx bx-list-ol me-1 text-warning"></i>
+            Términos y Condiciones — OS ({{ tcOS().length }} cláusulas)
+          </span>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" (click)="resetTcOS()">
+              <i class="bx bx-reset me-1"></i> Restaurar
+            </button>
+            <button class="btn btn-sm btn-success" (click)="guardarTcOS()">
+              <i class="bx bx-save me-1"></i> Guardar cambios
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info py-2 mb-3" style="font-size:12px">
+            <i class="bx bx-info-circle me-1"></i>
+            Estos términos se imprimirán en la segunda página del PDF. Los cambios aplican de inmediato.
+          </div>
+          @for (item of tcOS(); track $index) {
+            <div class="d-flex gap-2 mb-2 align-items-start">
+              <span class="badge bg-warning text-dark mt-2" style="min-width:28px;text-align:center">{{ $index + 1 }}</span>
+              <textarea class="form-control form-control-sm" rows="3"
+                style="resize:vertical;font-size:12.5px;line-height:1.5"
+                [value]="item"
+                (input)="actualizarTcOS($index, $any($event.target).value)">
+              </textarea>
+              <button class="btn btn-sm btn-outline-danger mt-1" (click)="eliminarTcOS($index)" title="Eliminar">
+                <i class="bx bx-trash"></i>
+              </button>
+            </div>
+          }
+          <button class="btn btn-sm btn-outline-warning mt-2" (click)="agregarTcOS()">
+            <i class="bx bx-plus me-1"></i> Agregar cláusula
+          </button>
+        </div>
+      </div>
+    }
+
+  }
+
+</div>

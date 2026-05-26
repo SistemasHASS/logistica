@@ -1,5 +1,4 @@
-// src/app/modules/main/pages/maestros/comodities/maestros-comodity.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaestrasService } from '../../../services/maestras.service';
@@ -8,36 +7,36 @@ import { Comodity, MaestroCommodity } from '@/app/shared/interfaces/Tables';
 import { SubClasificacion } from '@/app/shared/interfaces/Tables';
 import { CommodityService } from '@/app/modules/main/services/commoditys.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
-import { Table, TableModule } from 'primeng/table';
+import { TableModule } from 'primeng/table';
 import * as XLSX from 'xlsx';
 import { DropdownComponent } from '../../../components/dropdown/dropdown.component';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-maestros-comodities',
-  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, TableModule, DropdownComponent],
   templateUrl: './maestros-comodities.component.html',
   styleUrls: ['./maestros-comodities.component.scss'],
 })
 export class MaestrosComoditiesComponent implements OnInit {
-  // listaComodity: Comodity[] = [];
+  private readonly maestrasService = inject(MaestrasService);
+  private readonly dexieService = inject(DexieService);
+  private readonly alertService = inject(AlertService);
+  private readonly commodityService = inject(CommodityService);
+
   modelo: any = this.createEmptyModelo();
   cuentaContable: any[] = [];
 
-  pagina: number = 1;
-  registrosPorPagina: number = 15;
-
+  pagina = 1;
+  registrosPorPagina = 15;
   paginas: number[] = [];
-  totalPaginas: number = 0;
-
+  totalPaginas = 0;
   paginaActualData: Comodity[] = [];
-  totalRegistros: number = 0;
-
-  ordenColumna: string = '';
+  totalRegistros = 0;
+  ordenColumna = '';
   ordenDireccion: 'asc' | 'desc' = 'asc';
-
-  filtro: string = '';
-
+  filtro = '';
   paginasVisibles = 5;
 
   archivoExcel: any = null;
@@ -46,13 +45,14 @@ export class MaestrosComoditiesComponent implements OnInit {
 
   listaComodity: any[] = [];
   commoditysFiltrados: MaestroCommodity[] = [];
-  filtros: string = '';
 
-  isLoadingTable: boolean = false;
-  // estados loading
-  isLoading: boolean = false; // carga inicial
-  isProcessing: boolean = false; // procesando Excel
-  isImporting: boolean = false; // enviando al API
+  isLoadingTable = signal(false);
+  isLoading = signal(false);
+  isProcessing = false;
+  isImporting = false;
+
+  modalCommodityAbierto = signal(false);
+  modalImportAbierto = signal(false);
 
   commodity: MaestroCommodity = {
     id: 0,
@@ -61,83 +61,76 @@ export class MaestrosComoditiesComponent implements OnInit {
     codigoBarrasFlag: '',
     descripcionLocal: '',
     descripcionIngles: '',
-    // unidadporDefecto: '',
-    // cuentaContableGasto: '',
-    // elementoGasto: '',
-    // clasificacionActivo: '',
     estado: '',
     ultimoUsuario: '',
     ultimaFechaModif: '',
-    // montoReferencial: '',
-    // montoReferencialMoneda: '',
-    // descripcionEditableFlag: '',
-    // igvExoneradoFlag: '',
   };
 
   commoditys: MaestroCommodity[] = [];
 
-  // combos / datos auxiliares
-  listaClasificaciones: any[] = []; // cargar desde Dexie o API
-  elementosGasto: any[] = []; // cargar desde Dexie o API
+  listaClasificaciones: any[] = [];
+  elementosGasto: any[] = [];
   partida: any[] = [];
   seleccionaPartida = '';
 
-  usuarioActual = 'MISESF';
-  fechaHoy = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  readonly usuarioActual = 'MISESF';
+  readonly fechaHoy = new Date().toISOString().slice(0, 10);
 
-  constructor(
-    private maestrasService: MaestrasService,
-    private dexieService: DexieService,
-    private alertService: AlertService,
-    private commodityService: CommodityService
-  ) {}
-
-  ngOnInit(): void {
-    this.sincronizaMaestroCommodity();
-    this.cargarLista();
+  async ngOnInit() {
+    await this.sincronizaMaestroCommodity();
     this.cargarCombos();
   }
 
   async sincronizaMaestroCommodity() {
-    const count = await this.dexieService.countMaestroCommodity();
-
-    if (count > 0) {
-      console.log('📌 Dexie ya tiene MaestroCommodity → NO se llama API');
-      await this.listaMaestroCommodity();
-      return;
-    }
-
-    console.log('📌 Dexie vacío → trayendo MaestroItems del API');
-
-    const commodity = this.commodityService.getCommodity([]);
-    commodity.subscribe(async (resp: any) => {
-      if (!!resp && resp.length) {
-        await this.dexieService.saveMaestroCommodities(resp);
+    this.isLoading.set(true);
+    try {
+      const count = await this.dexieService.countMaestroCommodity();
+      if (count > 0) {
         await this.listaMaestroCommodity();
+        return;
       }
-    });
+      const resp = await firstValueFrom(this.commodityService.getCommodity([]));
+      if (Array.isArray(resp) && resp.length) {
+        await this.dexieService.saveMaestroCommodities(resp);
+      }
+      await this.listaMaestroCommodity();
+    } catch (error) {
+      console.error('Error sincronizando commodities:', error);
+      this.alertService.showAlertError('Error al cargar los Commodities desde el servidor', 'Error');
+      this.isLoading.set(false);
+    }
+  }
+
+  async actualizarDesdeApi() {
+    this.isLoading.set(true);
+    try {
+      const resp = await firstValueFrom(this.commodityService.getCommodity([]));
+      if (Array.isArray(resp) && resp.length) {
+        await this.dexieService.clearMaestroCommodity();
+        await this.dexieService.saveMaestroCommodities(resp);
+      }
+      await this.listaMaestroCommodity();
+    } catch (error) {
+      console.error('Error actualizando commodities:', error);
+      this.alertService.showAlertError('Error al actualizar los Commodities', 'Error');
+      this.isLoading.set(false);
+    }
   }
 
   async listaMaestroCommodity() {
-    this.isLoading = true;
-    this.isLoadingTable = true;
+    this.isLoading.set(true);
+    this.isLoadingTable.set(true);
     this.paginaActualData = [];
     try {
       this.commoditys = await this.dexieService.showMaestroCommodity();
-      this.commoditysFiltrados = [...this.commoditys]; // inicial
-      // this.totalRegistros = this.items.length;
+      this.commoditysFiltrados = [...this.commoditys];
       this.totalRegistros = this.commoditysFiltrados.length;
-      this.isLoading = false;
-      this.isLoadingTable = false;
-      // if (this.items.length > 0) {
-      //   this.aplicarFiltros();
-      // }
     } catch (error) {
-      console.error('Error cargando maestro item', error);
-      this.alertService.showAlertError('Error cargando los Items', 'Error');
+      console.error('Error cargando maestro commodity', error);
+      this.alertService.showAlertError('Error cargando los Commodities', 'Error');
     } finally {
-      this.isLoading = false;
-      this.isLoadingTable = false;
+      this.isLoading.set(false);
+      this.isLoadingTable.set(false);
     }
   }
 
@@ -622,37 +615,17 @@ export class MaestrosComoditiesComponent implements OnInit {
     ];
   }
 
-  // abrir modal para nuevo
   nuevo() {
     this.modelo = this.createEmptyModelo();
-    // abrir bootstrap modal por id
-    const el = document.getElementById('modalMaestrosComodity') as any;
-    if (el) {
-      el.classList.add('show');
-      el.style.display = 'block';
-      el.setAttribute('aria-modal', 'true');
-    }
+    this.modalCommodityAbierto.set(true);
   }
 
-  // abrir modal y cargar datos existentes (editar)
   async editar(c: Comodity) {
-    const full = await this.dexieService.showComodities(); // carga general
-    // load comodity from dexie
-    const comod = await (await this.dexieService).showComodities(); // not ideal but safe fallback
-    // mejor: pedir dexie direct: assuming maestrasService has method showComodityById if needed
     this.modelo = {
       ...c,
-      subClasificaciones: await this.dexieService.showSubClasificacionById(
-        c.id
-      ), // Convert to string to match expected type
+      subClasificaciones: await this.dexieService.showSubClasificacionById(c.id),
     };
-
-    const el = document.getElementById('modalMaestrosComodity') as any;
-    if (el) {
-      el.classList.add('show');
-      el.style.display = 'block';
-      el.setAttribute('aria-modal', 'true');
-    }
+    this.modalCommodityAbierto.set(true);
   }
 
   // subclasificaciones
@@ -709,17 +682,21 @@ export class MaestrosComoditiesComponent implements OnInit {
   }
 
   cerrarModal() {
-    const el = document.getElementById('modalMaestrosComodity') as any;
-    if (el) {
-      el.classList.remove('show');
-      el.style.display = 'none';
-      el.removeAttribute('aria-modal');
-    }
+    this.modalCommodityAbierto.set(false);
+  }
+
+  cerrarImportModal() {
+    this.modalImportAbierto.set(false);
+    this.excelPreview = [];
+    this.excelData = [];
+    this.archivoExcel = null;
   }
 
   openImportModal() {
-    const modal = document.getElementById('importExcelModal');
-    (window as any).bootstrap.Modal.getOrCreateInstance(modal).show();
+    this.excelPreview = [];
+    this.excelData = [];
+    this.archivoExcel = null;
+    this.modalImportAbierto.set(true);
   }
 
   downloadTemplate() {

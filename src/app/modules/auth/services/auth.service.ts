@@ -50,7 +50,8 @@ export class AuthService {
   //Perfil Administrador
   async isAdministrador() {
     const user = await this.getUser();
-    return user?.idrol === 'ADLOGIST';
+    const rol = user?.idrol ?? '';
+    return rol.includes('ADLOGIST') || rol.includes('TILOGIST');
   }
 
   //Perfil Aprobador
@@ -86,7 +87,9 @@ export class AuthService {
   //Perfil Logístico
   async isLogistico() {
     const user = await this.getUser();
-    return user?.idrol === 'LOLOGIST';
+    const rol = user?.idrol ?? '';
+    return rol.includes('LOLOGIST') || rol.includes('TILOGIST') || 
+           rol.includes('ADLOGIST') || rol.includes('JLOLOGIST');
   }
 
   // ============================
