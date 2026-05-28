@@ -152,6 +152,14 @@
     border-radius: 0 0 12px 12px;
     flex-shrink: 0;
   }
+
+  .container-modal {
+    background: #008e63;
+  }
+
+  .text-modal {
+    color: #008e63;
+  }
 }
 
 @keyframes fadeIn {

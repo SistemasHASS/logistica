@@ -324,6 +324,9 @@
           <button class="btn btn-outline-secondary btn-sm" (click)="cargarOrdenesCompra()">
             <i class="bx bx-refresh"></i>
           </button>
+          <button class="btn btn-success btn-sm" (click)="abrirModalOCDirecta()" title="Crear Orden de Compra directa sin requerimiento">
+            <i class="bx bx-plus me-1"></i>OC Directa
+          </button>
           <button class="btn btn-outline-success btn-sm ms-auto" (click)="exportarExcelOC()"
                   [disabled]="ordenesCompra().length === 0" title="Exportar a Excel">
             <i class="bx bx-download me-1"></i>Exportar Excel
@@ -338,8 +341,8 @@
           <p-table [value]="ordenesCompra()" [rows]="10" [paginator]="true" [rowsPerPageOptions]="[10, 20, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} órdenes" styleClass="p-datatable-sm p-datatable-gridlines">
             <ng-template pTemplate="header">
               <tr>
-                <th style="width:40px"></th>
-                <th style="width:50px">#</th>
+                <!-- <th style="width:40px"></th> -->
+                <th style="width:20px">#</th>
                 <th>Número OC</th>
                 <th>Número SPRING</th>
                 <th>Proveedor</th>
@@ -355,7 +358,7 @@
                   [class.table-info]="oc.estado==='PENDIENTE_APROBACION'"
                   [class.table-success]="oc.estado==='APROBADA'"
                   [class.table-primary]="oc.estado==='ENVIADA'">
-                <td></td>
+                <!-- <td></td> -->
                 <td>{{ rowIndex + 1 }}</td>
                 <td><strong>{{ oc.numeroOrden }}</strong></td>
                 <td>
@@ -392,9 +395,17 @@
                         <i class="bx bx-send"></i>
                       </button>
                     }
-                    <button class="btn btn-sm btn-outline-info" title="Ver / Imprimir PDF" (click)="verPdfOC(oc)">
-                      <i class="bx bx-file-pdf"></i> PDF
-                    </button>
+                    @if (oc.estado === 'APROBADA' || oc.estado === 'ENVIADA') {
+                      <!-- PDF con formato configurable (solo cuando está aprobada/enviada) -->
+                      <button class="btn btn-sm btn-outline-danger" title="Ver / Imprimir PDF (Formato oficial)" (click)="verPdfOCFormateado(oc)">
+                        <i class="bx bx-file-pdf"></i> PDF
+                      </button>
+                    } @else {
+                      <!-- Vista previa simple para estados previos -->
+                      <button class="btn btn-sm btn-outline-secondary" title="Vista previa borrador" (click)="verPdfOC(oc)">
+                        <i class="bx bx-file-blank"></i> Borrador
+                      </button>
+                    }
                     @if (oc.estado === 'APROBADA' && !oc.correoEnviado) {
                       <button class="btn btn-sm btn-success" (click)="confirmarEnvioOC(oc)" title="Confirmar y Enviar">
                         <i class="bx bx-envelope"></i>
@@ -544,6 +555,26 @@
               <option value="Cheque">Cheque</option>
             </select>
           </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Clasificación *</label>
+            <select class="form-select form-select-sm" [(ngModel)]="ocForm.clasificacion"
+                    (ngModelChange)="onClasificacionChange(ocForm)">
+              @for (op of clasificacionOpciones; track op.value) {
+                <option [value]="op.value">{{ op.label }}</option>
+              }
+            </select>
+          </div>
+          @if (ocForm.clasificacion === 'IMP') {
+            <div class="col-md-3">
+              <label class="form-label small fw-bold">Incoterm *</label>
+              <select class="form-select form-select-sm" [(ngModel)]="ocForm.incoterm">
+                <option value="">-- Seleccione --</option>
+                @for (inc of incoterms(); track inc.incoterm) {
+                  <option [value]="inc.incoterm">{{ inc.incoterm }} - {{ inc.descripcionLocal }}</option>
+                }
+              </select>
+            </div>
+          }
           <div class="col-md-3">
             <label class="form-label small fw-bold">Almacén *</label>
             <app-dropdown
@@ -698,6 +729,348 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="cerrarModalAdjuntos()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- MODAL OC DIRECTA -->
+@if (modalOCDirectaAbierto()) {
+  <div class="modal-overlay" (click)="cerrarModalOCDirecta()">
+    <div class="modal-box modal-xl" (click)="$event.stopPropagation()">
+      <div class="modal-header container-modal text-white">
+        <h5 class="mb-0 text-white"><i class="bx bx-plus-circle me-2"></i>Nueva Orden de Compra Directa</h5>
+        <button class="btn-close btn-close-white" (click)="cerrarModalOCDirecta()"></button>
+      </div>
+      <div class="modal-body" style="max-height:80vh;overflow-y:auto">
+
+        <!-- Datos proveedor -->
+        <h6 class="fw-bold border-bottom pb-2 mb-3 text-modal">Datos del Proveedor</h6>
+        <div class="row g-2 mb-3">
+          <div class="col-md-12 position-relative">
+            <label class="form-label small fw-bold">Buscar Proveedor (RUC o Nombre)</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text"><i class="bx bx-search"></i></span>
+              <input type="text" class="form-control" [(ngModel)]="busquedaProveedorDirecta"
+                     (input)="buscarProveedoresDirecta()"
+                     (blur)="cerrarSugerenciasProveedorDirecta()"
+                     placeholder="Escribe al menos 3 caracteres...">
+              @if (cargandoProveedoresDirecta()) {
+                <span class="input-group-text">
+                  <div class="spinner-border spinner-border-sm" role="status"></div>
+                </span>
+              }
+              @if (proveedorSeleccionadoDirecta()) {
+                <button class="btn btn-outline-danger" type="button" (click)="limpiarProveedorDirecta()">
+                  <i class="bx bx-x"></i> Limpiar
+                </button>
+              }
+            </div>
+            @if (mostrarSugerenciasProveedorDirecta() && proveedoresSugeridosDirecta().length > 0) {
+              <div class="dropdown-menu show w-100 position-absolute" style="z-index:1050;max-height:300px;overflow-y:auto">
+                @for (prov of proveedoresSugeridosDirecta(); track prov.ruc || prov.documento || prov.id) {
+                  <a class="dropdown-item" href="javascript:void(0)" (click)="seleccionarProveedorDirecta(prov)">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <strong class="text-primary">{{ prov.proveedor || 'Sin nombre' }}</strong>
+                        <div class="small text-muted">RUC: {{ prov.ruc || prov.documento || 'Sin RUC' }}</div>
+                      </div>
+                      <span class="badge bg-success">Seleccionar</span>
+                    </div>
+                  </a>
+                }
+              </div>
+            }
+            @if (proveedorSeleccionadoDirecta()) {
+              <div class="alert alert-success mt-2 py-2">
+                <i class="bx bx-check-circle me-1"></i>
+                <strong>Proveedor seleccionado:</strong> {{ proveedorSeleccionadoDirecta().proveedor }}
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">RUC Proveedor *</label>
+            <input class="form-control form-control-sm" [(ngModel)]="ocDirectaForm.rucProveedor" placeholder="20123456789" [readonly]="proveedorSeleccionadoDirecta()">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label small fw-bold">Nombre / Razón Social *</label>
+            <input class="form-control form-control-sm" [(ngModel)]="ocDirectaForm.nombreProveedor" placeholder="Proveedor SAC" [readonly]="proveedorSeleccionadoDirecta()">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Email Proveedor *</label>
+            <input class="form-control form-control-sm" type="email" [(ngModel)]="ocDirectaForm.emailProveedor" placeholder="ventas@proveedor.com">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Teléfono</label>
+            <input class="form-control form-control-sm" [(ngModel)]="ocDirectaForm.telefonoProveedor">
+          </div>
+          <div class="col-md-8">
+            <label class="form-label small fw-bold">Dirección</label>
+            <input class="form-control form-control-sm" [(ngModel)]="ocDirectaForm.direccionProveedor">
+          </div>
+        </div>
+
+        <!-- Condiciones OC -->
+        <h6 class="fw-bold border-bottom pb-2 mb-3 text-modal">Condiciones de la Orden</h6>
+        <div class="row g-2 mb-3">
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Moneda *</label>
+            <select class="form-select form-select-sm" [(ngModel)]="ocDirectaForm.moneda">
+              <option value="PEN">PEN - Soles</option>
+              <option value="USD">USD - Dólares</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Tipo de Cambio</label>
+            <input class="form-control form-control-sm" type="number" [(ngModel)]="ocDirectaForm.tipoCambio" step="0.01">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Fecha de Entrega *</label>
+            <input class="form-control form-control-sm" type="date" [(ngModel)]="ocDirectaForm.fechaEntregaEstimada">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Condiciones de Pago</label>
+            <select class="form-select form-select-sm" [(ngModel)]="ocDirectaForm.condicionesPago">
+              <option value="Contado">Contado</option>
+              <option value="30 días">30 días</option>
+              <option value="60 días">60 días</option>
+              <option value="90 días">90 días</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Forma de Pago</label>
+            <select class="form-select form-select-sm" [(ngModel)]="ocDirectaForm.formaPago">
+              <option value="Transferencia">Transferencia</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Cheque">Cheque</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Clasificación *</label>
+            <select class="form-select form-select-sm" [(ngModel)]="ocDirectaForm.clasificacion"
+                    (ngModelChange)="onClasificacionChange(ocDirectaForm)">
+              @for (op of clasificacionOpciones; track op.value) {
+                <option [value]="op.value">{{ op.label }}</option>
+              }
+            </select>
+          </div>
+          @if (ocDirectaForm.clasificacion === 'IMP') {
+            <div class="col-md-3">
+              <label class="form-label small fw-bold">Incoterm *</label>
+              <select class="form-select form-select-sm" [(ngModel)]="ocDirectaForm.incoterm">
+                <option value="">-- Seleccione --</option>
+                @for (inc of incoterms(); track inc.incoterm) {
+                  <option [value]="inc.incoterm">{{ inc.incoterm }} - {{ inc.descripcionLocal }}</option>
+                }
+              </select>
+            </div>
+          }
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Almacén</label>
+            <app-dropdown
+              [data]="almacenes()"
+              optionLabel="almacen"
+              valueField="idalmacen"
+              [(ngModel)]="ocDirectaForm.almacen"
+              [editable]="false"
+              textShow2="un almacén"
+            ></app-dropdown>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Lugar de Entrega *</label>
+            <input class="form-control form-control-sm" [(ngModel)]="ocDirectaForm.lugarEntrega" placeholder="Almacén central / Fundo X">
+          </div>
+          <div class="col-md-12">
+            <label class="form-label small fw-bold">Observaciones</label>
+            <textarea class="form-control form-control-sm" rows="2" [(ngModel)]="ocDirectaForm.observaciones"></textarea>
+          </div>
+        </div>
+
+        <!-- Items editables -->
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+          <h6 class="fw-bold text-modal mb-0">Ítems de la Orden</h6>
+          <button class="btn btn-sm btn-outline-success" (click)="agregarItemDirecta()">
+            <i class="bx bx-plus me-1"></i> Agregar ítem
+          </button>
+        </div>
+
+        @if (ocDirectaForm.items.length === 0) {
+          <div class="alert alert-warning">
+            <i class="bx bx-info-circle me-1"></i> Haga clic en "Agregar ítem" para añadir productos a la orden.
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th style="min-width:220px">Buscar / Ítem *</th>
+                  <th style="min-width:120px">Tipo *</th>
+                  <th style="min-width:70px" class="text-end">Cantidad</th>
+                  <th style="min-width:55px">UM</th>
+                  <th style="min-width:110px" class="text-end">Precio Unit. *</th>
+                  <th style="min-width:85px" class="text-end">Descuento</th>
+                  <th style="min-width:90px" class="text-end">Subtotal</th>
+                  <th style="min-width:160px">CECO *</th>
+                  <th style="min-width:130px">Proyecto</th>
+                  <th style="width:40px"></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of ocDirectaForm.items; track $index) {
+                  <tr [class.table-warning]="!item.codigo">
+                    <!-- Buscador de ítem -->
+                    <td>
+                      <app-item-search
+                        [items]="itemsMaestroDirecta()"
+                        [tipo]="item.tipo"
+                        (itemSelected)="onProductoSelectDirecta($index, $event)"
+                      ></app-item-search>
+                      @if (item.codigo) {
+                        <div class="mt-1 d-flex align-items-start gap-1">
+                          <span class="badge bg-primary">{{ item.codigo }}</span>
+                          <small class="text-muted" style="line-height:1.3">{{ item.descripcion }}</small>
+                        </div>
+                        @if (item.cuentaContable) {
+                          <small class="text-success"><i class="bx bx-check-circle me-1"></i><code>{{ item.cuentaContable }}</code></small>
+                        }
+                      }
+                    </td>
+                    <!-- Tipo -->
+                    <td>
+                      <select class="form-select form-select-sm" [(ngModel)]="item.tipo"
+                              (ngModelChange)="calcularTotalesOCDirecta()">
+                        <option value="ITEM">ITEM</option>
+                        <option value="COMMODITY">COMMODITY</option>
+                        <option value="ACTIVO FIJO">ACTIVO FIJO</option>
+                        <option value="ACTIVO MENOR">ACTIVO MENOR</option>
+                        <option value="SERVICIO">SERVICIO</option>
+                      </select>
+                    </td>
+                    <!-- Cantidad -->
+                    <td>
+                      <input type="number" class="form-control form-control-sm text-end"
+                             [(ngModel)]="item.cantidad" min="0.01" step="0.01"
+                             (ngModelChange)="calcularTotalesOCDirecta()">
+                    </td>
+                    <!-- UM -->
+                    <td>
+                      <input type="text" class="form-control form-control-sm"
+                             [(ngModel)]="item.unidadMedida" placeholder="UND">
+                    </td>
+                    <!-- Precio -->
+                    <td>
+                      <input type="number" class="form-control form-control-sm text-end"
+                             [(ngModel)]="item.precioUnitario" min="0" step="0.01"
+                             (ngModelChange)="calcularTotalesOCDirecta()">
+                    </td>
+                    <!-- Descuento -->
+                    <td>
+                      <input type="number" class="form-control form-control-sm text-end"
+                             [(ngModel)]="item.descuento" min="0" step="0.01"
+                             (ngModelChange)="calcularTotalesOCDirecta()">
+                    </td>
+                    <!-- Subtotal -->
+                    <td class="text-end fw-bold">{{ subtotalItemDirecta(item) | number:'1.2-2' }}</td>
+                    <!-- CECO dropdown -->
+                    <td>
+                      <select class="form-select form-select-sm" [(ngModel)]="item.ceco"
+                              (ngModelChange)="calcularTotalesOCDirecta()">
+                        <option value="">-- CECO --</option>
+                        @for (ceco of cecosDirecta(); track ceco.id) {
+                          <option [value]="ceco.costcenter">{{ ceco.localname }} ({{ ceco.costcenter }})</option>
+                        }
+                      </select>
+                    </td>
+                    <!-- Proyecto dropdown -->
+                    <td>
+                      <select class="form-select form-select-sm" [(ngModel)]="item.proyecto"
+                              (ngModelChange)="calcularTotalesOCDirecta()">
+                        <option value="">-- Proyecto --</option>
+                        @for (proy of proyectosDirecta(); track proy.id) {
+                          <option [value]="proy.proyectoio">{{ proy.proyectoio }}</option>
+                        }
+                      </select>
+                    </td>
+                    <!-- Quitar -->
+                    <td class="text-center">
+                      <button class="btn btn-sm btn-outline-danger" (click)="quitarItemDirectaConState($index)" title="Quitar ítem">
+                        <i class="bx bx-x"></i>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <td colspan="6" class="text-end fw-bold">Subtotal:</td>
+                  <td class="text-end fw-bold">{{ ocDirectaForm.subtotal | number:'1.2-2' }}</td>
+                  <td colspan="3"></td>
+                </tr>
+                <tr>
+                  <td colspan="6" class="text-end fw-bold">IGV (18%):</td>
+                  <td class="text-end fw-bold">{{ ocDirectaForm.igv | number:'1.2-2' }}</td>
+                  <td colspan="3"></td>
+                </tr>
+                <tr class="table-success">
+                  <td colspan="6" class="text-end fw-bold fs-6">TOTAL {{ ocDirectaForm.moneda }}:</td>
+                  <td class="text-end fw-bold fs-6">{{ ocDirectaForm.totalOrden | number:'1.2-2' }}</td>
+                  <td colspan="3"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        }
+
+        <!-- Distribución contable preview -->
+        @if (ocDirectaForm.items.length > 0) {
+          <h6 class="fw-bold border-bottom pb-2 mb-3 mt-4 text-modal">
+            <i class="bx bx-calculator me-1"></i>Distribución Contable (preview SPRING)
+          </h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead class="table-light">
+                <tr>
+                  <th>Cuenta Contable</th>
+                  <th>Tipo</th>
+                  <th>CECO</th>
+                  <th>Proyecto</th>
+                  <th class="text-end">Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (dist of generarDistribucionContableDirecta(); track $index) {
+                  <tr>
+                    <td><code>{{ dist.cuenta }}</code></td>
+                    <td><span class="badge bg-secondary">{{ dist.descripcion }}</span></td>
+                    <td><small>{{ dist.centrocosto }}</small></td>
+                    <td><small>{{ dist.proyecto || '-' }}</small></td>
+                    <td class="text-end fw-bold">{{ ocDirectaForm.moneda }} {{ dist.monto | number:'1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="alert alert-info py-2 small">
+            <i class="bx bx-info-circle me-1"></i>
+            La cuenta contable se determina por el <strong>Tipo</strong> de cada ítem.
+            CECO <code>999999</code> se usa cuando el campo está vacío.
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" (click)="cerrarModalOCDirecta()">Cancelar</button>
+        <button class="btn btn-outline-primary" (click)="crearOCDirecta(false)" [disabled]="guardandoOCDirecta()">
+          @if (guardandoOCDirecta()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+          <i class="bx bx-save me-1"></i> Guardar como Borrador
+        </button>
+        <button class="btn btn-success" (click)="crearOCDirecta(true)" [disabled]="guardandoOCDirecta()">
+          @if (guardandoOCDirecta()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+          <i class="bx bx-sync me-1"></i> Crear y Enviar a SPRING
+        </button>
       </div>
     </div>
   </div>

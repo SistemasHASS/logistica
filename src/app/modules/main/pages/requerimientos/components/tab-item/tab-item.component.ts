@@ -127,6 +127,7 @@ export class TabItemComponent {
   @Output() eliminarSelectEvt = new EventEmitter<any[]>();
   @Output() checkChangeEvt = new EventEmitter<{event: any; row: any}>();
   @Output() sincronizarEvt = new EventEmitter<void>();
+  @Output() areaDetectadaEvt = new EventEmitter<string>();
 
   // ─── Grupo B: acciones que notifican al padre ─────────────────────────────
   guardar() { this.guardarEvt.emit(); }
@@ -140,10 +141,22 @@ export class TabItemComponent {
     const file = event?.target?.files?.[0];
     if (!file) return;
     this.resetFileInput();
-    const result = await this.itemSvc.cargarExcel(file, this.activosFijosFiltrados);
-    this.lineasPreview = result.lineasPreview;
-    this.tieneErroresExcel = result.tieneErrores;
-    this.puedeGuardar = result.puedeGuardar;
+    if (this.TipoSelecionado === 'COMPRA') {
+      const result = await this.itemSvc.cargarExcelCompra(file);
+      this.lineasPreview = result.lineasPreview;
+      this.tieneErroresExcel = result.tieneErrores;
+      this.puedeGuardar = result.puedeGuardar;
+      if (result.idAreaDetectada) {
+        this.areaDetectadaEvt.emit(result.idAreaDetectada);
+      } else if (result.areaDetectada) {
+        this.itemSvc.alertarAreaNoEncontrada(result.areaDetectada);
+      }
+    } else {
+      const result = await this.itemSvc.cargarExcel(file, this.activosFijosFiltrados);
+      this.lineasPreview = result.lineasPreview;
+      this.tieneErroresExcel = result.tieneErrores;
+      this.puedeGuardar = result.puedeGuardar;
+    }
     this.modalVisible = true;
   }
   editarRequerimiento(i: number) { this.editarEvt.emit(i); }
@@ -184,6 +197,11 @@ export class TabItemComponent {
     this.itemSvc.validarFilaSimple(row, this.lineasPreview, this.activosFijosFiltrados);
     this.tieneErroresExcel = this.lineasPreview.some((r: any) => r.errores.length > 0);
     this.puedeGuardar = !this.lineasPreview.some((r: any) => r.error);
+  }
+  onLineasCambiadas(nuevasLineas: any[]) {
+    this.lineasPreview = nuevasLineas;
+    this.tieneErroresExcel = this.lineasPreview.some((r: any) => r.errores.length > 0);
+    this.puedeGuardar = this.lineasPreview.length > 0 && !this.lineasPreview.some((r: any) => r.error);
   }
   cerrarModalCargaMasiva() {
     this.modalVisible = false;

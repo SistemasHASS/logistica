@@ -77,6 +77,8 @@ export class RequerimientosItemService {
     private maestras: RequerimientosMaestrasService,
   ) {}
 
+  get usuario() { return this.maestras.usuario; }
+
   private emptyReq(): Requerimiento {
     return {
       idrequerimiento: '', fecha: '', almacen: '', glosa: '', tipo: '', itemtipo: '',
@@ -586,9 +588,11 @@ export class RequerimientosItemService {
       }
       try {
         if (req.idarea) {
+          const idrol = this.maestras.usuario?.idrol ?? '';
           const tipoAprobacion = req.itemtipo === 'CONSUMO' ? 'CONSUMO'
-            : req.itemtipo === 'COMPRA' ? 'COMPRA'
             : req.itemtipo === 'TRANSFERENCIA' ? 'TRANSFERENCIA'
+            : req.itemtipo === 'COMPRA'
+              ? (idrol.includes('APLOGIST') && !idrol.includes('JLOLOGIST') ? 'COMPRA_AREA' : 'COMPRA')
             : 'ITEM';
           await this.aprobacionesAreaService.registrarRequerimiento({
             ruc: req.ruc, idrequerimiento: req.idrequerimiento,
@@ -962,12 +966,137 @@ export class RequerimientosItemService {
       }
     }
     if (!row.cantidad || row.cantidad <= 0) row.errores.push({ columna: 'Cantidad', mensaje: 'Debe ser mayor a 0' });
-    if (!row.turno) row.errores.push({ columna: 'Turno', mensaje: 'Requerido' });
+    if (this.TipoSelecionado === 'CONSUMO' && !row.turno) {
+      row.errores.push({ columna: 'Turno', mensaje: 'Requerido' });
+    }
     if (row.activofijo && row.activofijo.toString().trim() !== '') {
       const activoExiste = activosFijos.some((af: any) => af.activo === row.activofijo);
       if (!activoExiste) row.errores.push({ columna: 'ActivoFijo', mensaje: 'No existe el activo fijo' });
     }
     row.error = row.errores.length > 0;
+  }
+
+  alertarAreaNoEncontrada(area: string): void {
+    this.alertService.mostrarInfo(`Área "${area}" no encontrada en el catálogo. Verifique el área manualmente.`);
+  }
+
+  validarFilaCompra(row: DetalleExcelPreview): void {
+    row.errores = [];
+    if (!row.codigo) {
+      row.errores.push({ columna: 'Código', mensaje: 'Requerido' });
+    } else {
+      const codigoPadded = String(row.codigo).padStart(6, '0');
+      row.codigo = codigoPadded;
+      const item = this.maestras.items.find((i: any) => i.codigo === codigoPadded);
+      if (!item) {
+        row.errores.push({ columna: 'Código', mensaje: 'No existe en catálogo' });
+      } else {
+        row.descripcion = item.descripcion;
+        row.unidadMedida = item.um || row.unidadMedida;
+      }
+    }
+    if (!row.cantidad || row.cantidad <= 0) {
+      row.errores.push({ columna: 'Cantidad', mensaje: 'Debe ser mayor a 0' });
+    }
+    row.error = row.errores.length > 0;
+  }
+
+  async cargarExcelCompra(file: File): Promise<{ lineasPreview: DetalleExcelPreview[]; tieneErrores: boolean; puedeGuardar: boolean; areaDetectada: string; idAreaDetectada: string; responsableDetectado: string }> {
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    const lineasPreview: DetalleExcelPreview[] = [];
+    let areaDetectada = '';
+    let idAreaDetectada = '';
+    let responsableDetectado = '';
+    for (const r of rows) {
+      const rawCodigo = r['COD MATERIAL'];
+      const codigoPadded = rawCodigo !== undefined && rawCodigo !== ''
+        ? String(rawCodigo).padStart(6, '0')
+        : '';
+      const itemEncontrado = codigoPadded
+        ? this.maestras.items.find((i: any) => i.codigo === codigoPadded)
+        : undefined;
+      if (!areaDetectada && r['AREA']) {
+        areaDetectada = String(r['AREA']).trim();
+        idAreaDetectada = this.maestras.resolverAreaDesdeTexto(areaDetectada);
+      }
+      if (!responsableDetectado && r['RESPONSABLE DE PEDIDO']) {
+        responsableDetectado = String(r['RESPONSABLE DE PEDIDO']).trim();
+      }
+      // Búsqueda flexible de CECO (variantes de nombres de columna)
+      const cecoRaw = r['CENTRO DE COSTO'] ?? r['CECO'] ?? r['CENTRO_COSTO'] ?? r['COST CENTER'] ?? '';
+      // Búsqueda flexible de PROYECTO (variantes de nombres de columna)
+      const proyectoRaw = r['PROYECTO'] ?? r['PROJECT'] ?? r['PROY'] ?? '';
+      // Búsqueda flexible de ACTIVIDAD/LABOR
+      const laborRaw = r['ACTIVIDAD'] ?? r['LABOR'] ?? r['ACTIVITY'] ?? '';
+
+      // Búsqueda mejorada de CECO: localname exacto → localname parcial → costcenter → fallback
+      let ceco = cecoRaw;
+      if (cecoRaw && this.maestras.cecos) {
+        // 1. Coincidencia exacta por localname
+        const cecoExacto = this.maestras.cecos.find((c: any) => c.localname === cecoRaw);
+        if (cecoExacto) {
+          ceco = cecoExacto.localname;
+        } else {
+          // 2. Coincidencia parcial por localname (case-insensitive)
+          const cecoSimilar = this.maestras.cecos.find((c: any) =>
+            c.localname.toLowerCase().includes(cecoRaw.toLowerCase()) ||
+            cecoRaw.toLowerCase().includes(c.localname.toLowerCase())
+          );
+          if (cecoSimilar) {
+            ceco = cecoSimilar.localname;
+          } else {
+            // 3. Coincidencia por costcenter (código numérico)
+            const cecoPorCodigo = this.maestras.cecos.find((c: any) => c.costcenter === cecoRaw);
+            if (cecoPorCodigo) {
+              ceco = cecoPorCodigo.localname;
+            }
+          }
+        }
+      }
+
+      // Búsqueda aproximada de PROYECTO si no coincide exactamente
+      let proyecto = proyectoRaw;
+      if (proyectoRaw && this.maestras.proyectos) {
+        const proyectoExacto = this.maestras.proyectos.find((p: any) => p.proyectoio === proyectoRaw);
+        if (!proyectoExacto) {
+          const proyectoSimilar = this.maestras.proyectos.find((p: any) =>
+            p.proyectoio.toLowerCase().includes(proyectoRaw.toLowerCase()) ||
+            proyectoRaw.toLowerCase().includes(p.proyectoio.toLowerCase())
+          );
+          proyecto = proyectoSimilar?.proyectoio || proyectoRaw;
+        }
+      }
+
+      const fila: DetalleExcelPreview = {
+        codigo: codigoPadded,
+        descripcion: itemEncontrado?.descripcion ?? r['DESCRIPCION'] ?? '',
+        cantidad: Number(r['CANT.'] ?? r['CANTIDAD'] ?? 0),
+        unidadMedida: itemEncontrado?.um || r['UM'] || 'UND',
+        turno: '',
+        ceco: ceco || (this.maestras.cecoSeleccionado as any)?.localname || '',
+        proyecto: proyecto || (this.maestras.proyectoSeleccionado as any)?.proyectoio || '',
+        labor: laborRaw || (this.maestras.laborSeleccionado?.labor ?? ''),
+        activofijo: '',
+        errores: [],
+        error: false,
+      };
+      this.validarFilaCompra(fila);
+      lineasPreview.push(fila);
+    }
+    if (idAreaDetectada) {
+      this.maestras.areaSeleccionada = idAreaDetectada;
+    }
+    if (responsableDetectado) {
+      const areaTexto = areaDetectada ? ` - ÁREA: ${areaDetectada}` : '';
+      this.requerimiento.glosa = `REQUERIMIENTO DE COMPRA - SOLICITANTE: ${responsableDetectado}${areaTexto}`;
+      this.glosa = this.requerimiento.glosa;
+    }
+    const tieneErrores = lineasPreview.some((r) => r.errores.length > 0);
+    const puedeGuardar = !lineasPreview.some((l) => l.error);
+    return { lineasPreview, tieneErrores, puedeGuardar, areaDetectada, idAreaDetectada, responsableDetectado };
   }
 
   async cargarExcel(file: File, activosFijos: any[]): Promise<{ lineasPreview: DetalleExcelPreview[]; tieneErrores: boolean; puedeGuardar: boolean }> {
@@ -984,6 +1113,47 @@ export class RequerimientosItemService {
       const itemEncontrado = codigoPadded
         ? this.maestras.items.find((i: any) => i.codigo === codigoPadded)
         : undefined;
+
+      // Búsqueda flexible de CECO (variantes de nombres de columna)
+      const cecoRaw = r['CECO'] ?? r['CENTRO DE COSTO'] ?? r['CENTRO_COSTO'] ?? r['COST CENTER'] ?? r['Centro Costo'] ?? r['Centro de costos'] ?? '';
+      // Búsqueda flexible de PROYECTO
+      const proyectoRaw = r['PROYECTO'] ?? r['PROJECT'] ?? r['PROY'] ?? r['Proyecto'] ?? '';
+
+      // Búsqueda mejorada de CECO: localname exacto → localname parcial → costcenter → fallback
+      let ceco = cecoRaw;
+      if (cecoRaw && this.maestras.cecos) {
+        const cecoExacto = this.maestras.cecos.find((c: any) => c.localname === cecoRaw);
+        if (cecoExacto) {
+          ceco = cecoExacto.localname;
+        } else {
+          const cecoSimilar = this.maestras.cecos.find((c: any) =>
+            c.localname.toLowerCase().includes(cecoRaw.toLowerCase()) ||
+            cecoRaw.toLowerCase().includes(c.localname.toLowerCase())
+          );
+          if (cecoSimilar) {
+            ceco = cecoSimilar.localname;
+          } else {
+            const cecoPorCodigo = this.maestras.cecos.find((c: any) => c.costcenter === cecoRaw);
+            if (cecoPorCodigo) {
+              ceco = cecoPorCodigo.localname;
+            }
+          }
+        }
+      }
+
+      // Búsqueda mejorada de PROYECTO
+      let proyecto = proyectoRaw;
+      if (proyectoRaw && this.maestras.proyectos) {
+        const proyectoExacto = this.maestras.proyectos.find((p: any) => p.proyectoio === proyectoRaw);
+        if (!proyectoExacto) {
+          const proyectoSimilar = this.maestras.proyectos.find((p: any) =>
+            p.proyectoio.toLowerCase().includes(proyectoRaw.toLowerCase()) ||
+            proyectoRaw.toLowerCase().includes(p.proyectoio.toLowerCase())
+          );
+          proyecto = proyectoSimilar?.proyectoio || proyectoRaw;
+        }
+      }
+
       const fila: DetalleExcelPreview = {
         codigo: codigoPadded,
         descripcion: itemEncontrado?.descripcion ?? r['Descripcion Item'] ?? '',
@@ -991,8 +1161,9 @@ export class RequerimientosItemService {
         unidadMedida: itemEncontrado?.um || r['Unidad Medida'] || 'UND',
         turno: r['Turno'],
         activofijo: r['ActivoFijo'],
-        proyecto: (this.maestras.proyectoSeleccionado as any)?.proyectoio ?? '',
-        ceco: (this.maestras.cecoSeleccionado as any)?.localname ?? '',
+        proyecto: proyecto || (this.maestras.proyectoSeleccionado as any)?.proyectoio || '',
+        ceco: ceco || (this.maestras.cecoSeleccionado as any)?.localname || '',
+        labor: this.maestras.laborSeleccionado?.labor ?? '',
         errores: [],
         error: false,
       };
@@ -1018,8 +1189,8 @@ export class RequerimientosItemService {
       unidadMedida: l.unidadMedida || 'UND',
       proyecto: l.proyecto,
       ceco: l.ceco,
-      turno: l.turno,
-      labor: this.maestras.laborSeleccionado?.labor ?? '',
+      turno: l.turno ?? '',
+      labor: l.labor || (this.maestras.laborSeleccionado?.labor ?? ''),
       esActivoFijo: false,
       activoFijo: l.activofijo,
       estado: 0,

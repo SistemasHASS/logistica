@@ -88,6 +88,14 @@
       </div>
 
       <div class="mb-3">
+        <label class="form-label">Nro. Documento (DNI) *</label>
+        <input type="text" class="form-control" formControlName="nrodocumento" [class.is-invalid]="form.get('nrodocumento')?.invalid && form.get('nrodocumento')?.touched" placeholder="Ej: 40913559">
+        @if (form.get('nrodocumento')?.invalid && form.get('nrodocumento')?.touched) {
+          <div class="invalid-feedback">DNI requerido (8 a 20 caracteres)</div>
+        }
+      </div>
+
+      <div class="mb-3">
         <label class="form-label">Nombre Completo *</label>
         <input type="text" class="form-control" formControlName="nombre" [class.is-invalid]="form.get('nombre')?.invalid && form.get('nombre')?.touched">
         @if (form.get('nombre')?.invalid && form.get('nombre')?.touched) {

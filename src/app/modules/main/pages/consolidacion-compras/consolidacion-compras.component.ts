@@ -12,13 +12,14 @@ import { OrdenPdfService } from './orden-pdf.service';
 import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import { OrdenCompraService } from '@/app/services/orden-compra.service';
 import { DropdownComponent } from '@/app/modules/main/components/dropdown/dropdown.component';
+import { ItemSearchComponent } from './item-search/item-search.component';
 import * as XLSX from 'xlsx';
 import FileSaver from 'file-saver';
 
 @Component({
   selector: 'app-consolidacion-compras',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, TableModule, DropdownComponent],
+  imports: [CommonModule, FormsModule, TableModule, DropdownComponent, ItemSearchComponent],
   templateUrl: './consolidacion-compras.component.html',
   styleUrls: ['./consolidacion-compras.component.scss'],
 })
@@ -36,6 +37,8 @@ export class ConsolidacionComprasComponent implements OnInit {
   modalAdjuntosAbierto = signal(false);
   modalDetalleReqAbierto = signal(false);
   modalDetalleOCAbierto = signal(false);
+  modalOCDirectaAbierto = signal(false);
+  guardandoOCDirecta = signal(false);
 
   // Datos
   requerimientos = signal<any[]>([]);
@@ -50,6 +53,11 @@ export class ConsolidacionComprasComponent implements OnInit {
   itemsMaestra = signal<any[]>([]);
   filasExpandidas = signal<Set<string>>(new Set());
   almacenes = signal<any[]>([]);
+  itemsMaestroDirecta = signal<any[]>([]);
+  cecosDirecta = signal<any[]>([]);
+  proyectosDirecta = signal<any[]>([]);
+  // Autocomplete estado por fila: indexado por posición del ítem
+  itemAutocompleteState: { busqueda: string; sugerencias: any[]; mostrar: boolean }[] = [];
 
   // Filtros
   busqueda = '';
@@ -106,6 +114,14 @@ export class ConsolidacionComprasComponent implements OnInit {
     }));
   });
 
+  // Clasificacion e Incoterms
+  incoterms = signal<any[]>([]);
+  clasificacionOpciones = [
+    { value: 'IMP', label: 'IMP - Importación' },
+    { value: 'LOC', label: 'LOC - Compras Locales' },
+    { value: 'NAC', label: 'NAC - Compras Nacionales' }
+  ];
+
   // Formulario OC
   ocForm: any = {
     rucProveedor: '', nombreProveedor: '', emailProveedor: '',
@@ -113,8 +129,25 @@ export class ConsolidacionComprasComponent implements OnInit {
     moneda: 'PEN', tipoCambio: 1, fechaEntregaEstimada: '',
     condicionesPago: 'Contado', formaPago: 'Transferencia',
     almacen: '', lugarEntrega: '', observaciones: '',
+    clasificacion: 'LOC', incoterm: '',
     items: [], subtotal: 0, igv: 0, totalOrden: 0
   };
+
+  // Formulario OC Directa
+  ocDirectaForm: any = {
+    rucProveedor: '', nombreProveedor: '', emailProveedor: '',
+    telefonoProveedor: '', direccionProveedor: '',
+    moneda: 'PEN', tipoCambio: 1, fechaEntregaEstimada: '',
+    condicionesPago: 'Contado', formaPago: 'Transferencia',
+    almacen: '', lugarEntrega: '', observaciones: '',
+    clasificacion: 'LOC', incoterm: '',
+    items: [], subtotal: 0, igv: 0, totalOrden: 0
+  };
+  busquedaProveedorDirecta = '';
+  proveedoresSugeridosDirecta = signal<any[]>([]);
+  cargandoProveedoresDirecta = signal(false);
+  proveedorSeleccionadoDirecta = signal<any>(null);
+  mostrarSugerenciasProveedorDirecta = signal(false);
 
   // Búsqueda de proveedores
   busquedaProveedor = '';
@@ -144,6 +177,110 @@ export class ConsolidacionComprasComponent implements OnInit {
     await this.cargarRequerimientos();
     await this.cargarRequerimientosCompletos();
     await this.cargarAlmacenes();
+    this.cargarItemsMaestroDirecta();
+    this.cargarCecosDirecta();
+    this.cargarProyectosDirecta();
+    this.cargarIncoterms();
+    await this.cargarOrdenesCompra();
+  }
+
+  async cargarIncoterms() {
+    try {
+      const lista = await this.ordenCompraService.listarIncoterms();
+      this.incoterms.set(lista);
+    } catch {
+      this.incoterms.set([]);
+    }
+  }
+
+  onClasificacionChange(form: any) {
+    if (form.clasificacion !== 'IMP') {
+      form.incoterm = '';
+    }
+  }
+
+  async cargarCecosDirecta() {
+    try {
+      let cecos = await this.dexieService.showCecos();
+      if (!cecos || cecos.length === 0) {
+        const resp: any = await lastValueFrom(
+          this.maestrasService.getCecos([{ aplicacion: 'LOGISTICA', esadmin: 0 }])
+        );
+        cecos = Array.isArray(resp) ? resp : [];
+        if (cecos.length > 0) await this.dexieService.saveCecos(cecos);
+      }
+      // Deduplicar por costcenter
+      const vistos = new Set<string>();
+      const unicos = cecos.filter((c: any) => {
+        const key = c.costcenter || c.id;
+        if (vistos.has(key)) return false;
+        vistos.add(key);
+        return true;
+      });
+      this.cecosDirecta.set(unicos);
+    } catch {
+      this.cecosDirecta.set([]);
+    }
+  }
+
+  async cargarProyectosDirecta() {
+    try {
+      let proyectos = await this.dexieService.showProyectos();
+      if (!proyectos || proyectos.length === 0) {
+        const resp: any = await lastValueFrom(
+          this.maestrasService.getProyectos([{ ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA', esadmin: 0 }])
+        );
+        proyectos = Array.isArray(resp) ? resp : [];
+        if (proyectos.length > 0) await this.dexieService.saveProyectos(proyectos);
+      }
+      // Deduplicar por proyectoio
+      const vistos = new Set<string>();
+      const unicos = proyectos.filter((p: any) => {
+        const key = p.proyectoio || p.afe;
+        if (vistos.has(key)) return false;
+        vistos.add(key);
+        return true;
+      });
+      this.proyectosDirecta.set(unicos);
+    } catch {
+      this.proyectosDirecta.set([]);
+    }
+  }
+
+  async cargarItemsMaestroDirecta() {
+    try {
+      // Intentar desde Dexie primero (más rápido, tiene descripcionLocal + cuentaGasto)
+      let items = await this.dexieService.showMaestroItem();
+      if (!items || items.length === 0) {
+        // Fallback: cargar desde API y guardar en Dexie
+        const resp: any = await lastValueFrom(
+          this.maestrasService.getItems([{ ruc: this.usuario?.ruc }])
+        );
+        items = Array.isArray(resp) ? resp : [];
+        if (items.length > 0) {
+          await this.dexieService.saveMaestroItems(items);
+        }
+      }
+      this.itemsMaestroDirecta.set(items);
+    } catch {
+      this.itemsMaestroDirecta.set([]);
+    }
+  }
+
+  buscarCuentaContableItem(codigo: string): string {
+    if (!codigo) return '';
+    const encontrado = this.itemsMaestroDirecta().find(
+      (i: any) => (i.item || i.codigo || '').toString().toUpperCase() === codigo.toString().toUpperCase()
+    );
+    return encontrado?.cuentaGasto || encontrado?.cuentaInventario || '';
+  }
+
+  onCodigoItemDirectaChange(item: any) {
+    const cuenta = this.buscarCuentaContableItem(item.codigo);
+    if (cuenta) {
+      item.cuentaContable = cuenta;
+    }
+    this.calcularTotalesOCDirecta();
   }
 
   async cargarRequerimientos() {
@@ -330,6 +467,8 @@ export class ConsolidacionComprasComponent implements OnInit {
       ...this.ocForm,
       almacen: almacenOrigen,
       items,
+      clasificacion: 'LOC',
+      incoterm: '',
       subtotal: 0, igv: 0, totalOrden: 0
     };
     this.modalOCAbierto.set(true);
@@ -444,7 +583,8 @@ export class ConsolidacionComprasComponent implements OnInit {
       const payload = {
         ...this.ocForm,
         idConsolidacion: this.ocForm.items[0]?.idConsolidacion,
-        usuarioGenera: this.usuario?.documentoidentidad
+        usuarioGenera: this.usuario?.documentoidentidad,
+        rucEmpresa: this.usuario?.ruc
       };
       const resp: any = await lastValueFrom(
         this.http.post(`${this.baseUrl}/api/logistica/crear-oc-borrador`, payload)
@@ -571,14 +711,32 @@ export class ConsolidacionComprasComponent implements OnInit {
   }
 
   async verPdfOC(oc: any) {
+    // Vista previa simple (sin formato configurable) - usada para estados previos
     try {
       const empresa: any = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/logistica/obtener-config-empresa`, {})
+        this.http.post(`${this.baseUrl}/api/logistica/obtener-config-empresa`, { ruc: oc.rucEmpresa || '' })
       );
       const html = this.pdfService.buildOCHtml(oc, empresa);
       this.pdfService.imprimirOrdenHtml(html, oc.numeroOrden);
     } catch {
       this.alertService.showAlert('Aviso', 'No se pudo cargar la configuración de empresa para el PDF.', 'warning');
+    }
+  }
+
+  async verPdfOCFormateado(oc: any) {
+    // PDF con formato configurable (solo para OC APROBADA o ENVIADA)
+    try {
+      // Siempre cargar empresa según rucEmpresa de la OC (multiempresa)
+      const empresa: any = await lastValueFrom(
+        this.http.post<any>(`${this.baseUrl}/api/logistica/obtener-config-empresa`, { ruc: oc.rucEmpresa || '' })
+      );
+      if (empresa?.logoBase64) {
+        this.pdfService.saveEmpresa(empresa);
+      }
+      const html = this.pdfService.buildOCHtml(oc, empresa);
+      this.pdfService.imprimirOrdenHtml(html, oc.numeroOrden);
+    } catch {
+      this.alertService.showAlert('Aviso', 'No se pudo cargar el PDF con formato.', 'warning');
     }
   }
 
@@ -935,5 +1093,270 @@ export class ConsolidacionComprasComponent implements OnInit {
     setTimeout(() => {
       this.mostrarSugerenciasProveedor.set(false);
     }, 200);
+  }
+
+  // ========== OC DIRECTA ==========
+  abrirModalOCDirecta() {
+    this.ocDirectaForm = {
+      rucProveedor: '', nombreProveedor: '', emailProveedor: '',
+      telefonoProveedor: '', direccionProveedor: '',
+      moneda: 'PEN', tipoCambio: 1, fechaEntregaEstimada: '',
+      condicionesPago: 'Contado', formaPago: 'Transferencia',
+      almacen: '', lugarEntrega: '', observaciones: '',
+      clasificacion: 'LOC', incoterm: '',
+      items: [], subtotal: 0, igv: 0, totalOrden: 0
+    };
+    this.busquedaProveedorDirecta = '';
+    this.proveedorSeleccionadoDirecta.set(null);
+    this.proveedoresSugeridosDirecta.set([]);
+    this.itemAutocompleteState = [];
+    this.modalOCDirectaAbierto.set(true);
+  }
+
+  cerrarModalOCDirecta() {
+    this.modalOCDirectaAbierto.set(false);
+  }
+
+  agregarItemDirecta() {
+    this.ocDirectaForm.items = [
+      ...this.ocDirectaForm.items,
+      { codigo: '', descripcion: '', cantidad: 1, unidadMedida: 'UND', precioUnitario: 0, descuento: 0, ceco: '', proyecto: '', tipo: 'ITEM', cuentaContable: '' }
+    ];
+    this.itemAutocompleteState.push({ busqueda: '', sugerencias: [], mostrar: false });
+  }
+
+  quitarItemDirectaConState(index: number) {
+    this.ocDirectaForm.items = this.ocDirectaForm.items.filter((_: any, i: number) => i !== index);
+    this.itemAutocompleteState.splice(index, 1);
+    this.calcularTotalesOCDirecta();
+  }
+
+  buscarItemsDirecta(index: number, valor: string) {
+    const state = this.itemAutocompleteState[index];
+    if (!state) return;
+    state.busqueda = valor;
+    if (!valor || valor.length < 2) {
+      state.sugerencias = [];
+      state.mostrar = false;
+      return;
+    }
+    const busq = valor.toLowerCase();
+    state.sugerencias = this.itemsMaestroDirecta()
+      .filter((i: any) =>
+        (i.item || '').toLowerCase().includes(busq) ||
+        (i.descripcionLocal || '').toLowerCase().includes(busq)
+      )
+      .slice(0, 10);
+    state.mostrar = state.sugerencias.length > 0;
+  }
+
+  seleccionarItemDirecta(index: number, maestroItem: any) {
+    const item = this.ocDirectaForm.items[index];
+    if (!item) return;
+    item.codigo = maestroItem.item || maestroItem.codigo || '';
+    item.descripcion = maestroItem.descripcionLocal || maestroItem.descripcion || '';
+    item.unidadMedida = maestroItem.unidadCodigo || maestroItem.unidadCompra || maestroItem.unidadMedida || 'UND';
+    item.cuentaContable = maestroItem.cuentaGasto || maestroItem.cuentaInventario || '';
+    item.precioUnitario = parseFloat(maestroItem.precioUnitarioLocal || '0') || 0;
+    this.calcularTotalesOCDirecta();
+  }
+
+  onProductoSelectDirecta(index: number, event: any) {
+    this.seleccionarItemDirecta(index, event);
+  }
+
+  cerrarAutocompleteItem(index: number) {
+    setTimeout(() => {
+      const state = this.itemAutocompleteState[index];
+      if (state) state.mostrar = false;
+    }, 200);
+  }
+
+  generarDistribucionContableDirecta(): any[] {
+    const items = this.ocDirectaForm.items;
+    if (!items || items.length === 0) return [];
+
+    const grupos = new Map<string, { monto: number; proyecto: string; ceco: string; itemRef: any }>();
+    for (const item of items) {
+      const ceco = item.ceco || '999999';
+      const proyecto = item.proyecto || '';
+      const key = `${ceco}-${proyecto}-${item.codigo}`;
+      const subtotal = this.subtotalItemDirecta(item);
+      if (grupos.has(key)) {
+        grupos.get(key)!.monto += subtotal;
+      } else {
+        grupos.set(key, { monto: subtotal, proyecto, ceco, itemRef: item });
+      }
+    }
+
+    const distribucion: any[] = [];
+    for (const [, grupo] of grupos) {
+      const monto = Math.round(grupo.monto * 100) / 100;
+      const itemRef = grupo.itemRef;
+      const codigo = (itemRef.codigo || '').toString();
+      const tipo = (itemRef.tipo || '').toString().toUpperCase();
+
+      // Prioridad 1: cuenta contable cargada desde la maestra de items
+      let cuenta = itemRef.cuentaContable || '';
+      let descripcion = tipo || 'ITEM';
+
+      // Prioridad 2: cuenta por tipo seleccionado
+      if (!cuenta) {
+        if (tipo === 'ITEM') {
+          cuenta = this.buscarCuentaContableItem(codigo) || '25241001';
+          descripcion = 'ITEM';
+        } else if (tipo.includes('ACTIVO FIJO') || codigo.startsWith('3')) {
+          cuenta = '33010101'; descripcion = 'ACTIVO FIJO';
+        } else if (tipo.includes('ACTIVO MENOR') || codigo.startsWith('4')) {
+          cuenta = '25302001'; descripcion = 'ACTIVO MENOR';
+        } else if (tipo.includes('SERVICIO') || codigo.startsWith('5') || codigo.startsWith('9')) {
+          cuenta = '63910101'; descripcion = 'SERVICIO';
+        } else {
+          cuenta = '25301001'; descripcion = 'COMMODITY';
+        }
+      }
+
+      distribucion.push({
+        cuenta,
+        descripcion,
+        centrocosto: grupo.ceco,
+        proyecto: grupo.proyecto,
+        monto,
+        ccdestino: grupo.ceco
+      });
+    }
+    return distribucion;
+  }
+
+  quitarItemDirecta(index: number) {
+    this.ocDirectaForm.items = this.ocDirectaForm.items.filter((_: any, i: number) => i !== index);
+    this.calcularTotalesOCDirecta();
+  }
+
+  calcularTotalesOCDirecta() {
+    const subtotal = this.ocDirectaForm.items.reduce((s: number, i: any) => {
+      return s + Math.round((i.cantidad * i.precioUnitario - (i.descuento || 0)) * 100) / 100;
+    }, 0);
+    this.ocDirectaForm.subtotal = Math.round(subtotal * 100) / 100;
+    this.ocDirectaForm.igv = Math.round(subtotal * 0.18 * 100) / 100;
+    this.ocDirectaForm.totalOrden = Math.round((subtotal + this.ocDirectaForm.igv) * 100) / 100;
+  }
+
+  subtotalItemDirecta(item: any): number {
+    return Math.round((item.cantidad * item.precioUnitario - (item.descuento || 0)) * 100) / 100;
+  }
+
+  async buscarProveedoresDirecta() {
+    if (!this.busquedaProveedorDirecta || this.busquedaProveedorDirecta.length < 3) {
+      this.proveedoresSugeridosDirecta.set([]);
+      this.mostrarSugerenciasProveedorDirecta.set(false);
+      return;
+    }
+    this.cargandoProveedoresDirecta.set(true);
+    try {
+      const body = { ruc: this.usuario?.ruc, busqueda: this.busquedaProveedorDirecta, estado: 'ACTIVO' };
+      const resp: any = await lastValueFrom(this.maestrasService.getProveedores(body));
+      let proveedores = Array.isArray(resp) ? resp : [];
+      const busq = this.busquedaProveedorDirecta.toLowerCase();
+      proveedores = proveedores.filter((p: any) => {
+        const nombre = (p.proveedor || p.nombre || '').toLowerCase();
+        const rucP = (p.ruc || p.documento || '').toLowerCase();
+        return nombre.includes(busq) || rucP.includes(busq);
+      });
+      this.proveedoresSugeridosDirecta.set(proveedores.slice(0, 10));
+      this.mostrarSugerenciasProveedorDirecta.set(proveedores.length > 0);
+    } catch {
+      this.proveedoresSugeridosDirecta.set([]);
+      this.mostrarSugerenciasProveedorDirecta.set(false);
+    } finally {
+      this.cargandoProveedoresDirecta.set(false);
+    }
+  }
+
+  seleccionarProveedorDirecta(prov: any) {
+    this.proveedorSeleccionadoDirecta.set(prov);
+    this.ocDirectaForm.rucProveedor = prov.ruc || prov.documento || '';
+    this.ocDirectaForm.nombreProveedor = prov.proveedor || '';
+    this.ocDirectaForm.emailProveedor = prov.email || '';
+    this.ocDirectaForm.telefonoProveedor = prov.telefono || '';
+    this.ocDirectaForm.direccionProveedor = prov.direccion || '';
+    this.busquedaProveedorDirecta = '';
+    this.mostrarSugerenciasProveedorDirecta.set(false);
+    this.proveedoresSugeridosDirecta.set([]);
+  }
+
+  limpiarProveedorDirecta() {
+    this.proveedorSeleccionadoDirecta.set(null);
+    this.ocDirectaForm.rucProveedor = '';
+    this.ocDirectaForm.nombreProveedor = '';
+    this.ocDirectaForm.emailProveedor = '';
+    this.ocDirectaForm.telefonoProveedor = '';
+    this.ocDirectaForm.direccionProveedor = '';
+    this.busquedaProveedorDirecta = '';
+    this.mostrarSugerenciasProveedorDirecta.set(false);
+  }
+
+  cerrarSugerenciasProveedorDirecta() {
+    setTimeout(() => this.mostrarSugerenciasProveedorDirecta.set(false), 200);
+  }
+
+  async crearOCDirecta(enviarASpring = false) {
+    if (!this.ocDirectaForm.nombreProveedor || !this.ocDirectaForm.rucProveedor || !this.ocDirectaForm.emailProveedor) {
+      this.alertService.showAlert('Atención', 'Complete los datos del proveedor (RUC, Nombre, Email).', 'warning');
+      return;
+    }
+    if (!this.ocDirectaForm.lugarEntrega || !this.ocDirectaForm.fechaEntregaEstimada) {
+      this.alertService.showAlert('Atención', 'Indique el lugar de entrega y la fecha estimada.', 'warning');
+      return;
+    }
+    if (!this.ocDirectaForm.items.length) {
+      this.alertService.showAlert('Atención', 'Agregue al menos un ítem a la orden.', 'warning');
+      return;
+    }
+    if (this.ocDirectaForm.items.some((i: any) => !i.codigo || !i.descripcion)) {
+      this.alertService.showAlert('Atención', 'Todos los ítems deben tener código y descripción.', 'warning');
+      return;
+    }
+    if (this.ocDirectaForm.items.some((i: any) => !i.precioUnitario || i.precioUnitario <= 0)) {
+      this.alertService.showAlert('Atención', 'Todos los ítems deben tener precio unitario mayor a 0.', 'warning');
+      return;
+    }
+
+    this.guardandoOCDirecta.set(true);
+    try {
+      const distribucion = this.generarDistribucionContableDirecta();
+      const payload = {
+        ...this.ocDirectaForm,
+        idConsolidacion: null,
+        esocdirecta: true,
+        usuarioGenera: this.usuario?.documentoidentidad,
+        distribucionContable: distribucion
+      };
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/crear-oc-borrador`, payload)
+      );
+      if (resp?.success) {
+        this.cerrarModalOCDirecta();
+        this.tabActiva.set(3);
+        await this.cargarOrdenesCompra();
+
+        if (enviarASpring) {
+          const ocNueva = this.ordenesCompra().find(o => o.numeroOrden === resp.numeroOC);
+          if (ocNueva) {
+            await this.sincronizarOCConSpring(ocNueva);
+          } else {
+            this.alertService.showAlert('OC Creada', `Orden ${resp.numeroOC} creada. Sincronícela con SPRING desde la tabla.`, 'success');
+          }
+        } else {
+          this.alertService.showAlert('OC Creada', `Orden de Compra ${resp.numeroOC} creada como borrador.`, 'success');
+        }
+      } else {
+        this.alertService.showAlert('Error', resp?.mensaje || 'Error al crear OC Directa.', 'error');
+      }
+    } catch (e: any) {
+      this.alertService.showAlert('Error', e?.message || 'Error inesperado.', 'error');
+    } finally {
+      this.guardandoOCDirecta.set(false);
+    }
   }
 }

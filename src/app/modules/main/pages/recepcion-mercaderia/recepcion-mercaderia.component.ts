@@ -184,6 +184,7 @@ export class RecepcionMercaderiaComponent implements OnInit {
             usuarioRecibe: r.usuarioRecibe,
             fechaIngresoKardex: r.fechaIngresoKardex,
             ingresadoKardex: !!r.fechaIngresoKardex,
+            numeroNI: r.numeroNI || null,                  // NI generada en SPRING
             detalle: detalleArr.map((d: any) => {
               // Debug: log estadoItem value
               console.log('Mapping detalle:', d.idDetalleRecepcion, 'estadoItem:', d.estadoItem);

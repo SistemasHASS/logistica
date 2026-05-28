@@ -1,135 +1,180 @@
 <div class="container-fluid py-3">
   <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h5 class="fw-bold mb-0 text-primary"><i class="bx bx-buildings me-2"></i>Gestión de Áreas</h5>
+      <h4 class="m-0 fw-bold">Gestión de Áreas</h4>
       <small class="text-muted">Configurar áreas y subáreas por empresa</small>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" (click)="sincronizarDesdeCatalogo()">
-        <i class="bx bx-refresh me-1"></i>Sincronizar Catálogo
+      <button class="btn btn-outline-secondary" (click)="sincronizarDesdeCatalogo()">
+        <i class="bx bx-refresh me-2"></i>Sincronizar Catálogo
       </button>
-      <button class="btn btn-primary btn-sm" (click)="abrirCrear()">
-        <i class="bx bx-plus me-1"></i>Nueva Área
+      <button class="btn btn-primary" (click)="abrirCrear()">
+        <i class="bx bx-plus me-2"></i>Nueva Área
       </button>
     </div>
   </div>
 
-  <!-- Tabla -->
-  <div class="card shadow-sm border-0">
-    <div class="card-body p-0">
-      @if (loading) {
-        <div class="text-center py-4 text-muted">
-          <div class="spinner-border spinner-border-sm me-2"></div>Cargando áreas...
-        </div>
-      } @else if (areas.length === 0) {
-        <div class="text-center py-4 text-muted">
-          <i class="bx bx-building-x fs-3 d-block mb-2"></i>No hay áreas registradas
-        </div>
-      } @else {
-        <div class="table-responsive">
-          <table class="table table-hover table-sm mb-0 align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Código</th>
-                <th>Nombre</th>
-                <th>Descripción</th>
-                <th class="text-center">Admisión</th>
-                <th class="text-center">Estado</th>
-                <th class="text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (area of areas; track area.idarea) {
-                <tr>
-                  <td><span class="badge bg-secondary">{{ area.idarea }}</span></td>
-                  <td class="fw-semibold">{{ area.nombre || area.descripcion }}</td>
-                  <td class="text-muted small">{{ area.descripcion }}</td>
-                  <td class="text-center">
-                    @if (area.mostrarAdmision) {
-                      <span class="badge bg-info">Sí</span>
-                    } @else {
-                      <span class="badge bg-light text-muted">No</span>
-                    }
-                  </td>
-                  <td class="text-center">
-                    <span [class]="area.estado ? 'badge bg-success' : 'badge bg-secondary'">
-                      {{ area.estado ? 'Activa' : 'Inactiva' }}
-                    </span>
-                  </td>
-                  <td class="text-center">
-                    <button class="btn btn-outline-primary btn-sm me-1" title="Editar" (click)="abrirEditar(area)">
-                      <i class="bx bx-edit"></i>
-                    </button>
-                    <button class="btn btn-outline-danger btn-sm" title="Eliminar" (click)="eliminar(area)">
-                      <i class="bx bx-trash"></i>
-                    </button>
-                  </td>
-                </tr>
+  <!-- Filtro por Empresa -->
+  <div class="card mb-3">
+    <div class="card-body py-3">
+      <!-- Selector de Empresa estilo pills -->
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1">
+          <label class="fw-semibold mb-2 d-block">
+            <i class="bx bx-buildings me-1 text-success"></i>Empresa
+          </label>
+          <div class="empresa-selector d-flex gap-2 flex-wrap">
+            @if (empresas().length === 0) {
+              <div class="text-muted py-2">
+                <i class="bx bx-building-x me-1"></i>
+                No hay empresas disponibles
+              </div>
+            } @else {
+              @for (emp of empresas(); track emp.ruc) {
+                <button
+                  class="btn empresa-pill"
+                  [class.btn-success]="rucSeleccionado() === emp.ruc"
+                  [class.btn-outline-secondary]="rucSeleccionado() !== emp.ruc"
+                  (click)="onEmpresaChange(emp.ruc)">
+                  <i class="bx bx-buildings me-1"></i>
+                  <span class="fw-semibold">{{ emp.razonSocial || emp.nombre }}</span>
+                  <small class="ms-1 opacity-75">({{ emp.ruc }})</small>
+                </button>
               }
-            </tbody>
-          </table>
-        </div>
-      }
-    </div>
-  </div>
-</div>
-
-<!-- Modal -->
-@if (modalVisible) {
-  <div class="modal-backdrop" (click)="cerrarModal()">
-    <div class="modal-content" style="max-width: 500px;" (click)="$event.stopPropagation()">
-      <div class="modal-header py-2 bg-primary text-white">
-        <h6 class="modal-title mb-0">
-          <i class="bx me-2" [class.bx-plus]="!isEditing" [class.bx-edit]="isEditing"></i>
-          {{ isEditing ? 'Editar Área' : 'Nueva Área' }}
-        </h6>
-        <button type="button" class="btn-close btn-close-white btn-sm" (click)="cerrarModal()"></button>
-      </div>
-
-      <div class="modal-body" [formGroup]="form">
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">Nombre <span class="text-danger">*</span></label>
-          <input type="text" class="form-control form-control-sm" formControlName="nombre"
-            placeholder="Nombre del área"
-            [class.is-invalid]="form.get('nombre')?.invalid && form.get('nombre')?.touched" />
-          @if (form.get('nombre')?.errors?.['required'] && form.get('nombre')?.touched) {
-            <div class="invalid-feedback">Campo obligatorio</div>
-          }
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">Descripción <span class="text-danger">*</span></label>
-          <textarea class="form-control form-control-sm" formControlName="descripcion" rows="2"
-            placeholder="Descripción del área"
-            [class.is-invalid]="form.get('descripcion')?.invalid && form.get('descripcion')?.touched"></textarea>
-          @if (form.get('descripcion')?.errors?.['required'] && form.get('descripcion')?.touched) {
-            <div class="invalid-feedback">Campo obligatorio</div>
-          }
-        </div>
-
-        <div class="row">
-          <div class="col-6">
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="chkEstado" formControlName="estado" />
-              <label class="form-check-label small" for="chkEstado">Área activa</label>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="chkAdmision" formControlName="mostrarAdmision" />
-              <label class="form-check-label small" for="chkAdmision">Mostrar en admisión</label>
-            </div>
+            }
           </div>
         </div>
-      </div>
-
-      <div class="modal-footer py-2">
-        <button type="button" class="btn btn-secondary btn-sm" (click)="cerrarModal()">Cancelar</button>
-        <button type="button" class="btn btn-primary btn-sm" (click)="guardar()">
-          <i class="bx bx-save me-1"></i>{{ isEditing ? 'Actualizar' : 'Guardar' }}
+        <button class="btn btn-outline-primary btn-sm mt-4" (click)="refresh()">
+          <i class="bx bx-refresh"></i>
         </button>
       </div>
     </div>
   </div>
-}
+
+  <!-- Tabla PrimeNG -->
+  <div class="card">
+    <div class="card-body p-0">
+      <p-table 
+        [value]="areas()" 
+        [loading]="loading()"
+        [paginator]="true" 
+        [rows]="10"
+        [showCurrentPageReport]="true"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        styleClass="p-datatable-sm"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th class="text-center">Admisión</th>
+            <th class="text-center">Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-area>
+          <tr>
+            <td><span class="badge bg-secondary">{{ area.idarea }}</span></td>
+            <td class="fw-semibold">{{ area.nombre }}</td>
+            <td class="text-muted">{{ area.descripcion }}</td>
+            <td class="text-center">
+              <p-tag [value]="area.mostrarAdmision ? 'Sí' : 'No'" [severity]="area.mostrarAdmision ? 'info' : 'secondary'"></p-tag>
+            </td>
+            <td class="text-center">
+              <p-tag [value]="area.activo ? 'Activa' : 'Inactiva'" [severity]="area.activo ? 'success' : 'danger'"></p-tag>
+            </td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-primary me-2" (click)="abrirEditar(area)">
+                <i class="bx bx-edit"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="eliminar(area)">
+                <i class="bx bx-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="text-center py-4">
+              <div class="empty-state">
+                <i class="bx bx-building-x text-muted" style="font-size: 48px;"></i>
+                <p class="text-muted mt-2">No hay áreas registradas para esta empresa</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Modal PrimeNG -->
+  <p-dialog 
+    [header]="isEditing() ? 'Editar Área' : 'Nueva Área'"
+    [(visible)]="modalVisible"
+    [modal]="true"
+    [style]="{width: '500px'}"
+    [draggable]="false"
+    [resizable]="false"
+  >
+    <form [formGroup]="form">
+      <!-- Empresa -->
+      <div class="mb-3">
+        <label class="form-label">Empresa *</label>
+        <select class="form-select" formControlName="ruc"
+          [class.is-invalid]="form.get('ruc')?.invalid && form.get('ruc')?.touched">
+          <option value="">Seleccione empresa</option>
+          @for (emp of empresas(); track emp.ruc) {
+            <option [value]="emp.ruc">{{ emp.razonSocial || emp.nombre }} ({{ emp.ruc }})</option>
+          }
+        </select>
+        @if (form.get('ruc')?.invalid && form.get('ruc')?.touched) {
+          <div class="invalid-feedback">Empresa requerida</div>
+        }
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Nombre *</label>
+        <input type="text" class="form-control" formControlName="nombre" 
+          [class.is-invalid]="form.get('nombre')?.invalid && form.get('nombre')?.touched">
+        @if (form.get('nombre')?.invalid && form.get('nombre')?.touched) {
+          <div class="invalid-feedback">Nombre requerido</div>
+        }
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Descripción *</label>
+        <textarea class="form-control" formControlName="descripcion" rows="2"
+          [class.is-invalid]="form.get('descripcion')?.invalid && form.get('descripcion')?.touched"></textarea>
+        @if (form.get('descripcion')?.invalid && form.get('descripcion')?.touched) {
+          <div class="invalid-feedback">Descripción requerida</div>
+        }
+      </div>
+
+      <div class="row">
+        <div class="col-6">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="chkEstado" formControlName="estado">
+            <label class="form-check-label" for="chkEstado">Área activa</label>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="chkAdmision" formControlName="mostrarAdmision">
+            <label class="form-check-label" for="chkAdmision">Mostrar en admisión</label>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="guardar()">
+          <i class="bx bx-save me-2"></i>{{ isEditing() ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </ng-template>
+  </p-dialog>
+</div>

@@ -17,6 +17,9 @@ export interface UsuarioLogistica {
   rol: string;
   activo: boolean;
   idempresa: string;
+  ruc?: string;
+  nrodocumento?: string;
+  documentoidentidad?: string;
   fechaCreacion: string;
 }
 
@@ -49,7 +52,8 @@ export class UsuariosComponent implements OnInit {
     email: ['', [Validators.required, Validators.email]],
     idrol: ['', [Validators.required]],
     clave: ['', []],
-    activo: [true]
+    activo: [true],
+    nrodocumento: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(20)]]
   });
 
   roles = this.authService.getAvailableRoles();
@@ -91,7 +95,8 @@ export class UsuariosComponent implements OnInit {
       nombre: usuario.nombre,
       email: usuario.email,
       idrol: usuario.idrol,
-      activo: usuario.activo
+      activo: usuario.activo,
+      nrodocumento: usuario.nrodocumento || usuario.documentoidentidad || ''
     });
     this.form.get('clave')?.clearValidators();
     this.form.get('clave')?.setValue('');
@@ -109,7 +114,16 @@ export class UsuariosComponent implements OnInit {
       return;
     }
 
-    const data = this.form.value;
+    const formData = this.form.value;
+    
+    // Preparar datos para el backend con mapeo de campos
+    const data = {
+      ...formData,
+      documentoidentidad: formData.nrodocumento,  // Mapear a nombre esperado por SP
+      idempresa: this.user()?.idempresa || '',
+      ruc: this.user()?.ruc || '',
+      creadoPor: this.user()?.usuario || ''
+    };
     
     if (this.isEditing()) {
       this.usuariosService.actualizarUsuario(data.id, data).subscribe({

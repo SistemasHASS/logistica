@@ -84,6 +84,7 @@ export class KardexComponent implements OnInit {
     fechaInicio: null as Date | null,
     fechaFin: null as Date | null,
     tipoMovimiento: '',
+    fuente: '' as '' | 'SPRING' | 'LOCAL',
   };
 
   // Transacciones
@@ -94,6 +95,7 @@ export class KardexComponent implements OnInit {
     fechaFin: null as Date | null,
     tipoTransaccion: '',
     estado: '',
+    fuente: '' as '' | 'SPRING' | 'LOCAL',
   };
 
   // Nueva transacción
@@ -123,10 +125,15 @@ export class KardexComponent implements OnInit {
       valorTotal: 0,
       itemsBajoStock: 0,
       itemsAltoStock: 0,
+      recepcionesPendientesIngreso: 0,
+      nisGeneradasUltimos30dias: 0,
+      nssGeneradasUltimos30dias: 0,
+      movimientosLocalesUltimos30dias: 0,
     },
     itemsBajoStock: [],
     itemsMayorValor: [],
     movimientosRecientes: [],
+    recepcionesPendientes: [],
   };
 
   // Reporte valorización
@@ -148,6 +155,12 @@ export class KardexComponent implements OnInit {
     { label: 'SALIDA', value: 'SALIDA' },
     { label: 'TRANSFERENCIA', value: 'TRANSFERENCIA' },
     { label: 'AJUSTE', value: 'AJUSTE' },
+  ];
+
+  fuentesDato = [
+    { label: 'Todas las fuentes', value: '' },
+    { label: 'SPRING (real)', value: 'SPRING' },
+    { label: 'BD Local', value: 'LOCAL' },
   ];
 
   tiposTransaccion = [
@@ -352,7 +365,9 @@ export class KardexComponent implements OnInit {
 
   async consultarStock() {
     try {
-      this.stock = await this.kardexService.consultarStock(this.filtroStock);
+      const filtros: any = { ...this.filtroStock };
+      if (this.usuario?.idempresa) filtros.companiaSocio = this.usuario.idempresa.padStart(6,'0') + '00';
+      this.stock = await this.kardexService.consultarStock(filtros);
       this.stockFiltrado = [...this.stock];
     } catch (error) {
       console.error('Error al consultar stock:', error);
@@ -430,22 +445,16 @@ export class KardexComponent implements OnInit {
         codigoItem: this.filtroKardex.codigoItem,
       };
 
-      if (this.filtroKardex.almacen) {
-        filtros.almacen = this.filtroKardex.almacen;
-      }
+      if (this.usuario?.idempresa) filtros.companiaSocio = this.usuario.idempresa.padStart(6,'0') + '00';
+      if (this.filtroKardex.almacen) filtros.almacen = this.filtroKardex.almacen;
+      if (this.filtroKardex.tipoMovimiento) filtros.tipoMovimiento = this.filtroKardex.tipoMovimiento;
+      if (this.filtroKardex.fuente) filtros.fuente = this.filtroKardex.fuente;
 
       if (this.filtroKardex.fechaInicio) {
-        filtros.fechaInicio = this.formatearFechaSQL(
-          this.filtroKardex.fechaInicio,
-        );
+        filtros.fechaInicio = this.formatearFechaSQL(this.filtroKardex.fechaInicio);
       }
-
       if (this.filtroKardex.fechaFin) {
         filtros.fechaFin = this.formatearFechaSQL(this.filtroKardex.fechaFin);
-      }
-
-      if (this.filtroKardex.tipoMovimiento) {
-        filtros.tipoMovimiento = this.filtroKardex.tipoMovimiento;
       }
 
       this.movimientosKardex =
@@ -469,6 +478,7 @@ export class KardexComponent implements OnInit {
       fechaInicio: null,
       fechaFin: null,
       tipoMovimiento: '',
+      fuente: '',
     };
     this.movimientosKardex = [];
   }
@@ -496,24 +506,16 @@ export class KardexComponent implements OnInit {
     try {
       const filtros: any = {};
 
+      if (this.usuario?.idempresa) filtros.companiaSocio = this.usuario.idempresa.padStart(6,'0') + '00';
+      if (this.filtroTransacciones.tipoTransaccion) filtros.tipoTransaccion = this.filtroTransacciones.tipoTransaccion;
+      if (this.filtroTransacciones.estado)          filtros.estado          = this.filtroTransacciones.estado;
+      if (this.filtroTransacciones.fuente)          filtros.fuente          = this.filtroTransacciones.fuente;
+
       if (this.filtroTransacciones.fechaInicio) {
-        filtros.fechaInicio = this.formatearFechaSQL(
-          this.filtroTransacciones.fechaInicio,
-        );
+        filtros.fechaInicio = this.formatearFechaSQL(this.filtroTransacciones.fechaInicio);
       }
-
       if (this.filtroTransacciones.fechaFin) {
-        filtros.fechaFin = this.formatearFechaSQL(
-          this.filtroTransacciones.fechaFin,
-        );
-      }
-
-      if (this.filtroTransacciones.tipoTransaccion) {
-        filtros.tipoTransaccion = this.filtroTransacciones.tipoTransaccion;
-      }
-
-      if (this.filtroTransacciones.estado) {
-        filtros.estado = this.filtroTransacciones.estado;
+        filtros.fechaFin = this.formatearFechaSQL(this.filtroTransacciones.fechaFin);
       }
 
       this.transacciones =
@@ -614,6 +616,7 @@ export class KardexComponent implements OnInit {
       fechaFin: null,
       tipoTransaccion: '',
       estado: '',
+      fuente: '',
     };
     this.listarTransacciones();
   }

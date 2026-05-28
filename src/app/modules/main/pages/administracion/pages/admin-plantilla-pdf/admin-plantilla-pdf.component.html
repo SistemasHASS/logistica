@@ -1,5 +1,10 @@
 <div class="admin-page">
 
+  <!-- MENSAJE DE ÉXITO -->
+  <div *ngIf="mensajeGuardado" style="background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;padding:10px 16px;border-radius:6px;margin-bottom:12px;font-size:13px">
+    ✔ {{ mensajeGuardado }}
+  </div>
+
   <!-- HEADER -->
   <div class="page-header">
     <div>

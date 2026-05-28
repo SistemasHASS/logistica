@@ -156,6 +156,7 @@
           <tr>
             <th>#</th>
             <th>Número Recepción</th>
+            <th>NI SPRING</th>
             <th>Fecha</th>
             <th>Orden Compra</th>
             <th>Almacén</th>
@@ -170,6 +171,17 @@
             <td>{{ i + 1 }}</td>
             <td>
               <strong>{{ recep.numeroRecepcion }}</strong>
+            </td>
+            <td>
+              @if (recep.numeroNI) {
+                <span class="badge badge-success" title="Nota de Ingreso en SPRING">
+                  <i class="bx bx-link"></i> NI-{{ recep.numeroNI }}
+                </span>
+              } @else if (recep.ingresadoKardex) {
+                <span class="badge badge-warning" title="Ingresado sin NI registrada">Sin NI</span>
+              } @else {
+                <span class="text-muted" style="font-size:0.8rem">-</span>
+              }
             </td>
             <td>{{ formatearFecha(recep.fecha) }}</td>
             <td>{{ recep.numeroOrden }}</td>
@@ -487,6 +499,19 @@
         <div class="info-item full-width" *ngIf="recepcionDetalle.observaciones">
           <label>Observaciones:</label>
           <span>{{ recepcionDetalle.observaciones }}</span>
+        </div>
+        <div class="info-item full-width">
+          <label>Nota de Ingreso SPRING (NI):</label>
+          @if (recepcionDetalle.numeroNI) {
+            <span class="badge badge-success" style="font-size:0.9rem; padding:4px 10px">
+              <i class="bx bx-check-circle"></i> NI-{{ recepcionDetalle.numeroNI }}
+            </span>
+            <small class="text-muted ms-2">Documento registrado en SPRING que actualiza el stock.</small>
+          } @else if (recepcionDetalle.ingresadoKardex) {
+            <span class="badge badge-warning">Ingresado - NI no registrada</span>
+          } @else {
+            <span class="text-muted">Pendiente de ingreso a almacén</span>
+          }
         </div>
       </div>
 

@@ -71,6 +71,10 @@ export const adminLogisticaRoutes: Routes = [
         path: 'usuario-area', 
         loadComponent: () => import('./configuracion/usuario-area/usuario-area.component').then(m => m.UsuarioAreaComponent) 
       },
+      { 
+        path: 'flujo-aprobacion-area', 
+        loadComponent: () => import('./configuracion/flujo-aprobacion-area/flujo-aprobacion-area.component').then(m => m.FlujoAprobacionAreaComponent) 
+      },
     ]
   }
 ];

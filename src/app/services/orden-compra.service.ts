@@ -144,6 +144,20 @@ export class OrdenCompraService {
   }
 
   /**
+   * Listar Incoterms activos desde SPRING (WH_ImportacionIncoterm)
+   */
+  async listarIncoterms(): Promise<any[]> {
+    try {
+      const url = `${this.baseUrl}/api/logistica/listar-incoterms`;
+      const response = await firstValueFrom(this.http.post<any>(url, {}));
+      return Array.isArray(response) ? response : [];
+    } catch (error) {
+      console.error('Error al listar incoterms:', error);
+      return [];
+    }
+  }
+
+  /**
    * Sincronizar OC de consolidación con SPRING (flujo nuevo)
    * Usa el endpoint específico para OCs creadas desde el módulo de consolidación
    * @param idOrden ID de la orden de compra

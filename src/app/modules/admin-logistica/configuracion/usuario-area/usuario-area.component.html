@@ -1,17 +1,53 @@
 <div class="container-fluid py-3">
   <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h5 class="fw-bold mb-0 text-primary"><i class="bx bx-user-check me-2"></i>Usuarios por Área</h5>
+      <h4 class="m-0 fw-bold">Usuarios por Área</h4>
       <small class="text-muted">Asignar usuarios a áreas y definir roles</small>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" (click)="sincronizarDesdeERP()">
-        <i class="bx bx-refresh me-1"></i>Sincronizar ERP
+      <button class="btn btn-outline-secondary" (click)="sincronizarDesdeERP()">
+        <i class="bx bx-refresh me-2"></i>Sincronizar ERP
       </button>
-      <button class="btn btn-primary btn-sm" (click)="abrirCrear()">
-        <i class="bx bx-plus me-1"></i>Nueva Asignación
+      <button class="btn btn-primary" (click)="abrirCrear()">
+        <i class="bx bx-plus me-2"></i>Nueva Asignación
       </button>
+    </div>
+  </div>
+
+  <!-- Filtro Empresa -->
+  <div class="card mb-3">
+    <div class="card-body py-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1">
+          <label class="fw-semibold mb-2 d-block">
+            <i class="bx bx-buildings me-1 text-success"></i>Empresa
+          </label>
+          <div class="empresa-selector d-flex gap-2 flex-wrap">
+            @if (empresas().length === 0) {
+              <div class="text-muted py-2">
+                <i class="bx bx-building-x me-1"></i>
+                No hay empresas disponibles
+              </div>
+            } @else {
+              @for (emp of empresas(); track emp.ruc) {
+                <button
+                  class="btn empresa-pill"
+                  [class.btn-success]="rucSeleccionado() === emp.ruc"
+                  [class.btn-outline-secondary]="rucSeleccionado() !== emp.ruc"
+                  (click)="onEmpresaChange(emp.ruc)">
+                  <i class="bx bx-buildings me-1"></i>
+                  <span class="fw-semibold">{{ emp.razonSocial || emp.nombre }}</span>
+                  <small class="ms-1 opacity-75">({{ emp.ruc }})</small>
+                </button>
+              }
+            }
+          </div>
+        </div>
+        <button class="btn btn-outline-primary btn-sm mt-4" (click)="refresh()">
+          <i class="bx bx-refresh"></i>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -21,16 +57,16 @@
       <div class="row g-2 align-items-end">
         <div class="col-md-4">
           <label class="form-label small mb-1">Área</label>
-          <select class="form-select form-select-sm" [(ngModel)]="filtroArea" (ngModelChange)="aplicarFiltros()">
+          <select class="form-select form-select-sm" [ngModel]="filtroArea()" (ngModelChange)="filtroArea.set($event); aplicarFiltros()">
             <option value="">Todas las áreas</option>
-            @for (area of areas; track area.idarea) {
-              <option [value]="area.idarea">{{ area.descripcion }}</option>
+            @for (area of areas(); track area.idarea) {
+              <option [value]="area.idarea">{{ area.nombre }}</option>
             }
           </select>
         </div>
         <div class="col-md-3">
           <label class="form-label small mb-1">Rol</label>
-          <select class="form-select form-select-sm" [(ngModel)]="filtroRol" (ngModelChange)="aplicarFiltros()">
+          <select class="form-select form-select-sm" [ngModel]="filtroRol()" (ngModelChange)="filtroRol.set($event); aplicarFiltros()">
             <option value="">Todos los roles</option>
             @for (rol of roles; track rol.id) {
               <option [value]="rol.id">{{ rol.nombre }}</option>
@@ -46,93 +82,107 @@
     </div>
   </div>
 
-  <!-- Tabla -->
-  <div class="card shadow-sm border-0">
+  <!-- Tabla PrimeNG -->
+  <div class="card">
     <div class="card-body p-0">
-      @if (loading) {
-        <div class="text-center py-4 text-muted">
-          <div class="spinner-border spinner-border-sm me-2"></div>Cargando usuarios...
-        </div>
-      } @else if (usuarios.length === 0) {
-        <div class="text-center py-4 text-muted">
-          <i class="bx bx-user-x fs-3 d-block mb-2"></i>No hay usuarios asignados a áreas
-        </div>
-      } @else {
-        <div class="table-responsive">
-          <table class="table table-hover table-sm mb-0 align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>DNI</th>
-                <th>Nombre</th>
-                <th>Área</th>
-                <th>Rol</th>
-                <th class="text-center">Jefe</th>
-                <th class="text-center">Aprobador</th>
-                <th class="text-center">Estado</th>
-                <th class="text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (u of usuarios; track u.idUsuarioArea) {
-                <tr>
-                  <td class="text-muted small">{{ u.documentoidentidad }}</td>
-                  <td class="fw-semibold">{{ u.nombreCompleto }}</td>
-                  <td>{{ getNombreArea(u.idarea) }}</td>
-                  <td>
-                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
-                      {{ getNombreRol(u.rol) }}
-                    </span>
-                  </td>
-                  <td class="text-center">
-                    @if (u.esJefeArea) {
-                      <i class="bx bx-check-circle text-success"></i>
-                    } @else {
-                      <span class="text-muted">-</span>
-                    }
-                  </td>
-                  <td class="text-center">
-                    @if (u.esAprobador) {
-                      <i class="bx bx-check-circle text-success"></i>
-                    } @else {
-                      <span class="text-muted">-</span>
-                    }
-                  </td>
-                  <td class="text-center">
-                    <span [class]="u.activo ? 'badge bg-success' : 'badge bg-secondary'">
-                      {{ u.activo ? 'Activo' : 'Inactivo' }}
-                    </span>
-                  </td>
-                  <td class="text-center">
-                    <button class="btn btn-outline-primary btn-sm me-1" title="Editar" (click)="abrirEditar(u)">
-                      <i class="bx bx-edit"></i>
-                    </button>
-                    <button class="btn btn-outline-danger btn-sm" title="Eliminar" (click)="eliminar(u)">
-                      <i class="bx bx-trash"></i>
-                    </button>
-                  </td>
-                </tr>
+      <p-table 
+        [value]="usuarios()" 
+        [loading]="loading()"
+        [paginator]="true" 
+        [rows]="10"
+        [showCurrentPageReport]="true"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        styleClass="p-datatable-sm"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>DNI</th>
+            <th>Nombre</th>
+            <th>Área</th>
+            <th>Rol</th>
+            <th class="text-center">Jefe</th>
+            <th class="text-center">Aprobador</th>
+            <th class="text-center">Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-u>
+          <tr>
+            <td class="text-muted small">{{ u.documentoidentidad }}</td>
+            <td class="fw-semibold">{{ u.nombreCompleto }}</td>
+            <td>{{ getNombreArea(u.idarea) }}</td>
+            <td>
+              <p-tag [value]="getNombreRol(u.rol)" severity="info"></p-tag>
+            </td>
+            <td class="text-center">
+              @if (u.esJefeArea) {
+                <i class="bx bx-check-circle text-success fs-5"></i>
+              } @else {
+                <span class="text-muted">-</span>
               }
-            </tbody>
-          </table>
-        </div>
-      }
+            </td>
+            <td class="text-center">
+              @if (u.esAprobador) {
+                <i class="bx bx-check-circle text-success fs-5"></i>
+              } @else {
+                <span class="text-muted">-</span>
+              }
+            </td>
+            <td class="text-center">
+              <p-tag [value]="u.activo ? 'Activo' : 'Inactivo'" [severity]="u.activo ? 'success' : 'danger'"></p-tag>
+            </td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-primary me-2" (click)="abrirEditar(u)">
+                <i class="bx bx-edit"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="eliminar(u)">
+                <i class="bx bx-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8" class="text-center py-4">
+              <div class="empty-state">
+                <i class="bx bx-user-x text-muted" style="font-size: 48px;"></i>
+                <p class="text-muted mt-2">No hay usuarios asignados a áreas</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
     </div>
   </div>
 </div>
 
-<!-- Modal -->
-@if (modalVisible) {
-  <div class="modal-backdrop" (click)="cerrarModal()">
-    <div class="modal-content" style="max-width: 600px;" (click)="$event.stopPropagation()">
-      <div class="modal-header py-2 bg-primary text-white">
-        <h6 class="modal-title mb-0">
-          <i class="bx me-2" [class.bx-plus]="!isEditing" [class.bx-edit]="isEditing"></i>
-          {{ isEditing ? 'Editar Asignación' : 'Nueva Asignación' }}
-        </h6>
-        <button type="button" class="btn-close btn-close-white btn-sm" (click)="cerrarModal()"></button>
-      </div>
+<!-- Modal PrimeNG -->
+<p-dialog 
+  [header]="isEditing() ? 'Editar Asignación' : 'Nueva Asignación'"
+  [(visible)]="modalVisible"
+  [modal]="true"
+  [style]="{width: '600px'}"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <form [formGroup]="form">
+        <!-- Empresa -->
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label class="form-label small fw-semibold">Empresa <span class="text-danger">*</span></label>
+            <select class="form-select form-select-sm" formControlName="ruc"
+              [class.is-invalid]="form.get('ruc')?.invalid && form.get('ruc')?.touched">
+              <option value="">Seleccione empresa</option>
+              @for (emp of empresas(); track emp.ruc) {
+                <option [value]="emp.ruc">{{ emp.razonSocial || emp.nombre }} ({{ emp.ruc }})</option>
+              }
+            </select>
+            @if (form.get('ruc')?.invalid && form.get('ruc')?.touched) {
+              <div class="invalid-feedback">Empresa requerida</div>
+            }
+          </div>
+        </div>
 
-      <div class="modal-body" [formGroup]="form">
         <div class="row">
           <div class="col-md-6 mb-3">
             <label class="form-label small fw-semibold">DNI <span class="text-danger">*</span></label>
@@ -167,8 +217,8 @@
             <select class="form-select form-select-sm" formControlName="idarea" (change)="onAreaChange()"
               [class.is-invalid]="form.get('idarea')?.invalid && form.get('idarea')?.touched">
               <option value="">Seleccione área</option>
-              @for (area of areas; track area.idarea) {
-                <option [value]="area.idarea">{{ area.descripcion }}</option>
+              @for (area of areas(); track area.idarea) {
+                <option [value]="area.idarea">{{ area.nombre }}</option>
               }
             </select>
           </div>
@@ -176,7 +226,7 @@
             <label class="form-label small fw-semibold">Subárea</label>
             <select class="form-select form-select-sm" formControlName="idsubarea">
               <option value="">Seleccione subárea (opcional)</option>
-              @for (sub of subAreas; track sub.idsubarea) {
+              @for (sub of subAreas(); track sub.idsubarea) {
                 <option [value]="sub.idsubarea">{{ sub.nombre }}</option>
               }
             </select>
@@ -221,14 +271,14 @@
             </div>
           </div>
         </div>
-      </div>
+  </form>
 
-      <div class="modal-footer py-2">
-        <button type="button" class="btn btn-secondary btn-sm" (click)="cerrarModal()">Cancelar</button>
-        <button type="button" class="btn btn-primary btn-sm" (click)="guardar()">
-          <i class="bx bx-save me-1"></i>{{ isEditing ? 'Actualizar' : 'Guardar' }}
-        </button>
-      </div>
+  <ng-template pTemplate="footer">
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-outline-secondary" (click)="cerrarModal()">Cancelar</button>
+      <button type="button" class="btn btn-primary" (click)="guardar()">
+        <i class="bx bx-save me-2"></i>{{ isEditing() ? 'Actualizar' : 'Guardar' }}
+      </button>
     </div>
-  </div>
-}
+  </ng-template>
+</p-dialog>

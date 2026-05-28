@@ -1,7 +1,11 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
 import { AdminPlantillaPdfService } from '../../services/admin-plantilla-pdf.service';
+import { OrdenPdfService } from '../../../consolidacion-compras/orden-pdf.service';
+import { environment } from 'src/environments/environment';
 
 interface PlantillaPdf {
   id?: number;
@@ -92,9 +96,35 @@ export class AdminPlantillaPdfComponent implements OnInit {
     estado: 'ACTIVO', esDefault: false
   };
 
+  private http = inject(HttpClient);
+  private pdfService = inject(OrdenPdfService);
+  private baseUrl = environment.baseUrl;
+
+  guardando = false;
+  mensajeGuardado = '';
+
   constructor(private svc: AdminPlantillaPdfService, private cdr: ChangeDetectorRef) {}
 
-  ngOnInit(): void {}
+  async ngOnInit(): Promise<void> {
+    await this.cargarLogosDesdeBackend();
+  }
+
+  private async cargarLogosDesdeBackend(): Promise<void> {
+    try {
+      const empresa: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/obtener-config-empresa`, {})
+      );
+      if (empresa?.logoBase64) {
+        this.plantillas.forEach(p => {
+          if (!p.logoBase64) p.logoBase64 = empresa.logoBase64;
+        });
+        this.pdfService.saveEmpresa(empresa);
+        this.cdr.detectChanges();
+      }
+    } catch {
+      // silencioso
+    }
+  }
 
   openCreate() {
     this.isEdit = false;
@@ -178,6 +208,20 @@ export class AdminPlantillaPdfComponent implements OnInit {
       this.form.id = Date.now();
       this.plantillas.push({ ...this.form });
     }
+    // Persistir config OC/OS en localStorage para que el PDF la use
+    if (this.form.logoBase64) {
+      const empresaActual = this.pdfService.getEmpresa();
+      this.pdfService.saveEmpresa({ ...empresaActual, logoBase64: this.form.logoBase64 });
+    }
+    if (this.form.tipoDocumento === 'OC') {
+      const cfgOC = this.pdfService.getCfgOC();
+      this.pdfService.saveCfgOC({ ...cfgOC, tituloDocumento: this.form.tituloDocumento, notaPie: this.form.textoPie });
+    } else if (this.form.tipoDocumento === 'OS') {
+      const cfgOS = this.pdfService.getCfgOS();
+      this.pdfService.saveCfgOS({ ...cfgOS, tituloDocumento: this.form.tituloDocumento, notaPie: this.form.textoPie });
+    }
+    this.mensajeGuardado = 'Configuración guardada correctamente.';
+    setTimeout(() => this.mensajeGuardado = '', 3000);
     this.closeModal();
   }
 

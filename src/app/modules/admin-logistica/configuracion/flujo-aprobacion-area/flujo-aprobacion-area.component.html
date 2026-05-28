@@ -1,0 +1,202 @@
+<div class="container-fluid py-3">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="m-0 fw-bold">Flujo de Aprobaciones por Área</h4>
+      <small class="text-muted">Configurar reglas de aprobación por área y tipo de requerimiento</small>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-primary" (click)="abrirCrear()">
+        <i class="bx bx-plus me-2"></i>Nueva Regla
+      </button>
+      <button class="btn btn-outline-secondary" (click)="refresh()">
+        <i class="bx bx-refresh"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card mb-3">
+    <div class="card-body py-3">
+      <!-- Selector de Empresa estilo empresa component -->
+      <div class="mb-3">
+        <label class="fw-semibold mb-2 d-block">
+          <i class="bx bx-buildings me-1 text-success"></i>Empresa
+        </label>
+        <div class="empresa-selector d-flex gap-2 flex-wrap">
+          @if (empresas().length === 0) {
+            <div class="text-muted py-2">
+              <i class="bx bx-building-x me-1"></i>
+              No hay empresas disponibles
+            </div>
+          } @else {
+            @for (emp of empresas(); track emp.ruc) {
+              <button
+                class="btn empresa-pill"
+                [class.btn-success]="rucSeleccionado() === emp.ruc"
+                [class.btn-outline-secondary]="rucSeleccionado() !== emp.ruc"
+                (click)="onEmpresaChange(emp.ruc)">
+                <i class="bx bx-buildings me-1"></i>
+                <span class="fw-semibold">{{ emp.razonSocial || emp.nombre }}</span>
+                <small class="ms-1 opacity-75">({{ emp.ruc }})</small>
+              </button>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Filtro de Área -->
+      <div class="d-flex align-items-center gap-3">
+        <label class="fw-semibold mb-0">
+          <i class="bx bx-map-pin me-1 text-primary"></i>Área:
+        </label>
+        <select class="form-select w-auto" [ngModel]="idareaSeleccionado()" (ngModelChange)="onAreaChange($event)">
+          <option [value]="undefined">Todas las áreas</option>
+          @for (area of areas(); track area.idarea) {
+            <option [value]="area.idarea">{{ area.nombre }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="card">
+    <div class="card-body p-0">
+      <p-table
+        [value]="flujos()"
+        [loading]="loading()"
+        [paginator]="true"
+        [rows]="10"
+        [showCurrentPageReport]="true"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        styleClass="p-datatable-sm">
+    
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Área</th>
+        <th>Tipo Requerimiento</th>
+        <th>Rol Aprobador</th>
+        <th>Estado</th>
+        <th>Fecha Creación</th>
+        <th class="text-end">Acciones</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-flujo>
+      <tr>
+        <td>{{ flujo.nombreArea || flujo.idarea }}</td>
+        <td>
+          <p-tag [value]="flujo.tipoRequerimiento" [severity]="'info'"></p-tag>
+        </td>
+        <td>{{ flujo.rolAprobador }}</td>
+        <td>
+          <p-tag [value]="flujo.activo ? 'Activo' : 'Inactivo'" [severity]="flujo.activo ? 'success' : 'danger'"></p-tag>
+        </td>
+        <td>{{ flujo.fechaCreacion || '-' }}</td>
+        <td class="text-center">
+          <button class="btn btn-sm btn-outline-primary me-2" (click)="abrirEditar(flujo)">
+            <i class="bx bx-edit"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger" (click)="eliminar(flujo)">
+            <i class="bx bx-trash"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="6" class="text-center py-4">
+          <div class="empty-state">
+            <i class="bx bx-check-shield text-muted" style="font-size: 48px;"></i>
+            <p class="text-muted mt-2">No hay reglas de aprobación configuradas</p>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Modal Crear/Editar -->
+  <p-dialog
+    [header]="isEditing() ? 'Editar Regla de Aprobación' : 'Nueva Regla de Aprobación'"
+    [(visible)]="modalVisible"
+    [modal]="true"
+    [style]="{width: '500px'}"
+    [draggable]="false"
+    [resizable]="false"
+  >
+    <form [formGroup]="form">
+      <div class="mb-3">
+        <label class="form-label">Empresa *</label>
+        <select class="form-select" formControlName="ruc"
+          [class.is-invalid]="form.get('ruc')?.invalid && form.get('ruc')?.touched">
+          @for (emp of empresas(); track emp.ruc) {
+            <option [value]="emp.ruc">{{ emp.razonSocial || emp.nombre }} ({{ emp.ruc }})</option>
+          }
+        </select>
+        @if (form.get('ruc')?.invalid && form.get('ruc')?.touched) {
+          <div class="invalid-feedback">Empresa requerida</div>
+        }
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Área *</label>
+        <select class="form-select" formControlName="idarea"
+          [class.is-invalid]="form.get('idarea')?.invalid && form.get('idarea')?.touched">
+          <option value="">Seleccionar área</option>
+          @for (area of areas(); track area.idarea) {
+            <option [value]="area.idarea">{{ area.nombre }}</option>
+          }
+        </select>
+        @if (form.get('idarea')?.invalid && form.get('idarea')?.touched) {
+          <div class="invalid-feedback">Área requerida</div>
+        }
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Tipo de Requerimiento *</label>
+        <select class="form-select" formControlName="tipoRequerimiento"
+          [class.is-invalid]="form.get('tipoRequerimiento')?.invalid && form.get('tipoRequerimiento')?.touched">
+          <option value="">Seleccionar tipo</option>
+          @for (tipo of tiposRequerimiento; track tipo.value) {
+            <option [value]="tipo.value">{{ tipo.label }}</option>
+          }
+        </select>
+        @if (form.get('tipoRequerimiento')?.invalid && form.get('tipoRequerimiento')?.touched) {
+          <div class="invalid-feedback">Tipo requerido</div>
+        }
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Rol Aprobador *</label>
+        <select class="form-select" formControlName="rolAprobador"
+          [class.is-invalid]="form.get('rolAprobador')?.invalid && form.get('rolAprobador')?.touched">
+          <option value="">Seleccionar rol</option>
+          @for (rol of rolesAprobador; track rol.value) {
+            <option [value]="rol.value">{{ rol.label }}</option>
+          }
+        </select>
+        @if (form.get('rolAprobador')?.invalid && form.get('rolAprobador')?.touched) {
+          <div class="invalid-feedback">Rol requerido</div>
+        }
+      </div>
+
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="chkActivo" formControlName="activo">
+        <label class="form-check-label" for="chkActivo">Regla activa</label>
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="guardar()">
+          <i class="bx bx-save me-2"></i>{{ isEditing() ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </ng-template>
+  </p-dialog>
+</div>

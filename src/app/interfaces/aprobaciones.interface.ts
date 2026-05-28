@@ -32,6 +32,7 @@ export interface RequerimientoPendiente {
   ruc?: string;
   idarea: string | number;  // Puede ser string o number
   tipoRequerimiento?: string;
+  itemtipo?: string;  // Campo que viene de la API
   descripcion?: string;
   glosa?: string;
   documentoidentidad_creador?: string;
@@ -55,6 +56,10 @@ export interface RequerimientoPendiente {
   puedeAprobar?: number;  // Agregado
   detalles?: any[];  // Agregado - Detalles de ítems
   detalle?: any[];  // Agregado - Para compatibilidad con Mis Requerimientos
+  idclasificacion?: string;  // Agregado - Necesario para sincronización SPRING
+  idalmacen?: string;  // Agregado
+  idfundo?: string;    // Agregado
+  prioridad?: string;  // Agregado
 }
 
 export interface RequerimientoConAprobacion {

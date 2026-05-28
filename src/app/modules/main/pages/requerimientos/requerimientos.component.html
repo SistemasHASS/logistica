@@ -58,6 +58,7 @@
       (eliminarSelectEvt)="eliminarRequerimientoSelect($event)"
       (checkChangeEvt)="onCheckChange($event.event, $event.row)"
       (sincronizarEvt)="sincronizarPendientes()"
+      (areaDetectadaEvt)="maestrasSvc.areaSeleccionada = $event"
       [requerimientos]="requerimientos"
       [loading]="loading"
       [sinenviar]="sinenviar"

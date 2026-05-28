@@ -92,13 +92,13 @@
                 <td>{{ req.fecha | date: 'dd/MM/yyyy' }}</td>
                 <td>{{ req.nombreSolicitante }}</td>
                 <td>{{ req.nombreArea }}</td>
-                <td>{{ req.tipoRequerimiento }}</td>
+                <td>{{ req.itemtipo || req.tipoRequerimiento || '-' }}</td>
                 <td>{{ req.glosa || 'Sin descripción' }}</td>
                 <!-- <td>{{ req.estados }}</td> -->
                 <!-- <td>{{ formatMoneda(req.montoTotal) }}</td> -->
                 <td>
-                  <p-tag [severity]="'warn'">
-                    {{ req.estados }}
+                  <p-tag [severity]="req.estado === 'APROBADO' ? 'success' : req.estado === 'RECHAZADO' ? 'danger' : 'warn'">
+                    {{ req.estado || req.estados || 'PENDIENTE' }}
                   </p-tag>
                 </td>
                 <!-- <td>-</td> -->
@@ -342,7 +342,8 @@
 <p-dialog [(visible)]="displayDetallePendientesModal" [modal]="true"
           [style]="{width: '95vw', maxWidth: '1000px'}"
           [breakpoints]="{'960px': '95vw', '640px': '100vw'}"
-          header="Detalle del Requerimiento" (onHide)="cerrarDetallePendientes()"
+          [header]="'Detalle del Requerimiento - ' + ((requerimientoDetallePendientes?.itemtipo === 'CONSUMO' || requerimientoDetallePendientes?.tipoRequerimiento === 'CONSUMO') ? 'CONSUMO' : 'COMPRA')"
+          (onHide)="cerrarDetallePendientes()"
           styleClass="modal-detalle-pendientes">
   <div *ngIf="requerimientoDetallePendientes" class="p-2">
     <!-- Cabecera -->
@@ -401,7 +402,7 @@
 
     <!-- Ítems -->
     <div *ngIf="detallePendientesTab === 'items'" class="table-responsive">
-      <p-table [value]="getDetallesPendientes()" [paginator]="true" [rows]="5"
+      <p-table [value]="getDetallesItemsPendientes()" [paginator]="true" [rows]="5"
                responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped">
         <ng-template pTemplate="header">
           <tr>
@@ -429,8 +430,8 @@
                           (onChange)="toggleSeleccionDetallePendiente(i, $event.checked)">
               </p-checkbox>
             </td>
-            <!-- <td>{{ det.codigo }}</td> -->
-            <td>{{ det.idproducto || det.producto || det.codigo }}</td>
+            <td>{{ det.codigo }}</td>
+            <!-- <td>{{ det.idproducto || det.producto || det.codigo }}</td> -->
             <td>{{ det.descripcionItem || det.descripcion || 'Sin descripción' }}</td>
             <td>{{ det.cantidad }}</td>
             <td>{{ det.idproyecto || det.proyecto }}</td>
@@ -455,8 +456,57 @@
     </div>
 
     <!-- Servicios -->
-    <div *ngIf="detallePendientesTab === 'servicios'" class="text-center text-muted p-3">
-      Sin servicios asociados
+    <div *ngIf="detallePendientesTab === 'servicios'" class="table-responsive">
+      <p-table [value]="getDetallesServiciosPendientes()" [paginator]="true" [rows]="5"
+               responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width:40px">
+              <p-checkbox [binary]="true"
+                          [ngModel]="isTodosDetallesPendientesSeleccionados()"
+                          (onChange)="toggleSeleccionTodosDetallesPendientes($event.checked)">
+              </p-checkbox>
+            </th>
+            <th>Código</th>
+            <th>Servicio</th>
+            <th>Cantidad</th>
+            <th>Proyecto</th>
+            <th>CECO</th>
+            <th>Labor</th>
+            <th>Área</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-det let-i="rowIndex">
+          <tr>
+            <td>
+              <p-checkbox [binary]="true"
+                          [ngModel]="isDetallePendienteSeleccionado(i)"
+                          (onChange)="toggleSeleccionDetallePendiente(i, $event.checked)">
+              </p-checkbox>
+            </td>
+            <td>{{ det.codigo }}</td>
+            <td>{{ det.descripcion || 'Sin descripción' }}</td>
+            <td>{{ det.cantidad }}</td>
+            <td>{{ det.idproyecto || det.proyecto }}</td>
+            <td>{{ det.idcentrocosto || det.ceco }}</td>
+            <td>{{ det.idlabor || det.labor }}</td>
+            <td>{{ requerimientoDetallePendientes.nombreArea }}</td>
+            <td>
+              <button pButton type="button" icon="bx bx-check"
+                      class="p-button-sm"
+                      [class.p-button-success]="!detallesPendientesAprobados.has(i)"
+                      [class.p-button-outlined]="detallesPendientesAprobados.has(i)"
+                      (click)="aprobarDetallePendienteIndividual(i)"
+                      [label]="detallesPendientesAprobados.has(i) ? 'Aprobado' : 'Aprobar'">
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="10" class="text-center">No hay servicios</td></tr>
+        </ng-template>
+      </p-table>
     </div>
 
     <!-- Adjuntos -->

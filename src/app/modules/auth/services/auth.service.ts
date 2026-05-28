@@ -57,13 +57,15 @@ export class AuthService {
   //Perfil Aprobador
   async isAprobador() {
     const user = await this.getUser();
-    return user?.idrol === 'APLOGIST';
+    const rol = user?.idrol ?? '';
+    return rol.includes('APLOGIST') || rol.includes('JLOLOGIST') || rol.includes('LOLOGIST');
   }
 
   //Perfil Almacen
   async isAlmacen() {
     const user = await this.getUser();
-    return user?.idrol === 'ALLOGIST';
+    const rol = user?.idrol ?? '';
+    return rol.includes('ALLOGIST') || rol.includes('JLOLOGIST') || rol.includes('LOLOGIST');
   }
 
   //Perfil Usuario

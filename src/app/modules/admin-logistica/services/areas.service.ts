@@ -8,7 +8,7 @@ export interface Area {
   ruc: string;
   nombre?: string;
   descripcion: string;
-  estado: boolean;
+  activo: boolean;  // El backend retorna 'activo', no 'estado'
   mostrarAdmision: boolean;
   fechaCreacion: string;
   usuarioCreacion?: string;

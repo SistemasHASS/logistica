@@ -819,6 +819,13 @@ export class AprobacionesAreaComponent implements OnInit {
     
     try {
 
+      // DEBUG: Ver qué datos tiene el objeto req
+      console.log('🔍 DEBUG - req completo:', req);
+      console.log('🔍 DEBUG - req.idClasificacion:', req.idClasificacion);
+      console.log('🔍 DEBUG - req.idclasificacion:', req.idclasificacion);
+      console.log('🔍 DEBUG - req.itemtipo:', req.itemtipo);
+      console.log('🔍 DEBUG - req.tipoRequerimiento:', req.tipoRequerimiento);
+
       // Verificar si el objeto ya tiene el detalle (puede venir como array directo o como propiedad detalle)
       let requerimientoCompleto = null;
 
@@ -990,15 +997,34 @@ export class AprobacionesAreaComponent implements OnInit {
       // ✅ CORRECCIÓN: Para COMPRA, usar código de empresa si no hay turno
       const turno = turnos?.idturno ?? this.usuario.idempresa.substring(this.usuario.idempresa.length - 4);
 
-      // ✅ Determinar si es ITEM o COMMODITY
-      // ✅ CORRECCIÓN: Determinar tipo basado en idClasificacion
-      // Si es 'SER' (servicio) o 'COM' (commodity), usar Commodity, sino usar Item
-      const clasificacion = requerimientoCompleto.idClasificacion || req.idclasificacion || '';
+      // ✅ Determinar clasificación usando todos los nombres de campo posibles
+      // El SP ahora devuelve idclasificacion (lowercase). También soportar variantes legacy.
+      const clasificacionRaw = (
+        requerimientoCompleto.idclasificacion ||
+        requerimientoCompleto.idClasificacion ||
+        req.idclasificacion ||
+        (req as any).idClasificacion ||
+        ''
+      );
+      const itemtipo = (requerimientoCompleto.itemtipo || req.itemtipo || '').toUpperCase();
+
+      // Determinar clasificación: priorizar valor real de BD; derivar de itemtipo solo para SER/COM
+      let clasificacion = clasificacionRaw;
+      if (!clasificacion) {
+        if (itemtipo === 'SERVICIO') {
+          clasificacion = 'SER';
+        } else if (itemtipo === 'COMMODITY') {
+          clasificacion = 'COM';
+        }
+        // Sin fallback a 'STK' — si no hay valor, dejar vacío y que el SP lo resuelva
+      }
+
       const tipoReq = (clasificacion === 'SER' || clasificacion === 'COM') ? 'COMMODITY' : 'ITEM';
 
       console.log('🏪 DEBUG - AlmacenCodigo FINAL antes de enviar a SPRING:', almacenCodigo);
       console.log('🏪 DEBUG - AlmacenCodigo truncado (max 20 chars):', almacenCodigo.substring(0, 20));
-      
+      console.log('🏪 DEBUG - Clasificación FINAL:', clasificacion, '(itemtipo:', itemtipo, ')');
+
       const requerimiento = [
         {
           // ✅ Corregido: CompaniaSocio con "00" como espera el SP
@@ -1008,8 +1034,8 @@ export class AprobacionesAreaComponent implements OnInit {
           DEBUG_CompaniaSocio_final: this.usuario.idempresa + '00',
           DEBUG_AlmacenOriginal: requerimientoCompleto.idalmacen,
           DEBUG_AlmacenFinal: almacenCodigo,
-          // ✅ Corregido: Clasificación debe venir del requerimiento (Stock Almacen para consumo)
-          Clasificacion: requerimientoCompleto.idClasificacion,
+          // ✅ Corregido: Clasificación determinada por itemtipo si no viene explícita
+          Clasificacion: clasificacion,
           // ✅ Corregido: Calcular según itemtipo
           ComprasAlmacenFlag:
             requerimientoCompleto.itemtipo === 'TRANSFERENCIA' ||
@@ -1605,7 +1631,10 @@ export class AprobacionesAreaComponent implements OnInit {
   //================================================
   verDetallePendientes(requerimiento: any) {
     this.requerimientoDetallePendientes = requerimiento;
-    this.detallePendientesTab = 'items';
+    // Detectar si es servicio y abrir el tab correspondiente
+    const clas = (requerimiento?.idClasificacion || requerimiento?.idclasificacion || '').toString().toUpperCase();
+    const esServicio = clas === 'SER' || clas === 'COM' || clas === 'ACT' || clas === 'ACM';
+    this.detallePendientesTab = esServicio ? 'servicios' : 'items';
     this.detallesPendientesSeleccionados = new Set<number>();
     this.detallesPendientesAprobados = new Set<number>();
     // Seleccionar todos por defecto
@@ -1618,6 +1647,18 @@ export class AprobacionesAreaComponent implements OnInit {
     const r = this.requerimientoDetallePendientes;
     if (!r) return [];
     return r.detalles || r.detalle || [];
+  }
+
+  /** Devuelve solo los detalles de tipo ítem (si es requerimiento de ítems). */
+  getDetallesItemsPendientes(): any[] {
+    if (this.esRequerimientoServicio) return [];
+    return this.getDetallesPendientes();
+  }
+
+  /** Devuelve solo los detalles de tipo servicio (si es requerimiento de servicios). */
+  getDetallesServiciosPendientes(): any[] {
+    if (!this.esRequerimientoServicio) return [];
+    return this.getDetallesPendientes();
   }
 
   /** Devuelve true si el requerimiento pendiente es de tipo servicio (COMMODITY / ACTIVO FIJO / ACTIVO MENOR). */

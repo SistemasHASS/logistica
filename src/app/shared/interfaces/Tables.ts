@@ -857,6 +857,8 @@ export interface OrdenCompra {
   usuarioAprueba?: string;
   fechaAprobacion?: string;
   archivoAdjunto?: string;
+  clasificacion?: string;
+  incoterm?: string;
 }
 
 export interface DetalleOrdenCompra {
@@ -994,6 +996,7 @@ export interface DetalleExcelPreview {
   turno: string;
   proyecto: string;
   ceco: string;
+  labor: string;
   activofijo: string;
   errores: ErrorExcel[];
   error: boolean;

@@ -1,14 +1,17 @@
 <div class="modal-overlay-carga" *ngIf="visible">
   <div class="modal-content modal-carga-masiva">
     <div class="modal-header">
-      <h5 class="modal-title">Vista previa carga masiva</h5>
+      <h5 class="modal-title">Vista previa carga masiva {{ tipoRequerimiento ? '(' + tipoRequerimiento + ')' : '' }}</h5>
       <button class="btn-close" (click)="cerrar()"></button>
     </div>
 
-    <div class="alert alert-light d-flex justify-content-between mb-0 resumen-carga">
+    <div class="alert alert-light d-flex justify-content-between align-items-center mb-0 resumen-carga">
       <span>Total líneas: <b>{{ lineasPreview.length }}</b></span>
       <span class="text-success">✔ Correctas: {{ contarSinError() }}</span>
       <span class="text-danger">❌ Con errores: {{ contarConError() }}</span>
+      <button *ngIf="contarConError() > 0" class="btn btn-outline-danger btn-sm" (click)="eliminarFilasConError()">
+        <i class="bi bi-trash me-1"></i> Eliminar todas con error ({{ contarConError() }})
+      </button>
     </div>
 
     <div class="modal-body">
@@ -20,9 +23,13 @@
               <th>Código</th>
               <th>Descripción</th>
               <th>Cantidad</th>
-              <th>Turno</th>
-              <th>Activo Fijo</th>
+              <th>UM</th>
+              <th *ngIf="mostrarColumnaTurno()">Turno</th>
+              <th *ngIf="!mostrarColumnaTurno()">CECO</th>
+              <th *ngIf="!mostrarColumnaTurno()">Proyecto</th>
+              <th *ngIf="!mostrarColumnaTurno()">Labor</th>
               <th>Estado</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -62,6 +69,10 @@
               </td>
 
               <td>
+                <input class="form-control form-control-sm" [(ngModel)]="row.unidadMedida" placeholder="UM" />
+              </td>
+
+              <td *ngIf="mostrarColumnaTurno()">
                 <select
                   class="form-select form-select-sm"
                   [class.is-invalid]="tieneError(row, 'Turno')"
@@ -75,25 +86,26 @@
                 </div>
               </td>
 
-              <td>
-                <app-dropdown
-                  class="w-100"
-                  [data]="activosFijosFiltrados"
-                  optionLabel="activo_descripcion"
-                  valueField="activo"
-                  [(ngModel)]="row.activofijo"
-                  (ngModelChange)="onValidarFila(row)"
-                  [editable]="true"
-                  [required]="false">
-                </app-dropdown>
-                <div *ngIf="tieneError(row, 'ActivoFijo')" class="text-danger small">
-                  {{ getMensajeError(row, 'ActivoFijo') }}
-                </div>
+              <td *ngIf="!mostrarColumnaTurno()">
+                <input class="form-control form-control-sm" [(ngModel)]="row.ceco" placeholder="CECO" />
+              </td>
+
+              <td *ngIf="!mostrarColumnaTurno()">
+                <input class="form-control form-control-sm" [(ngModel)]="row.proyecto" placeholder="Proyecto" />
+              </td>
+
+              <td *ngIf="!mostrarColumnaTurno()">
+                <input class="form-control form-control-sm" [(ngModel)]="row.labor" placeholder="Labor" />
               </td>
 
               <td>
                 <span *ngIf="!filaConError(row)" class="text-success">✔ OK</span>
                 <span *ngIf="filaConError(row)" class="text-danger">❌ Error</span>
+              </td>
+              <td>
+                <button *ngIf="filaConError(row)" class="btn btn-outline-danger btn-sm p-0 px-1" title="Eliminar fila" (click)="eliminarFila(i)">
+                  <i class="bi bi-x-lg"></i>
+                </button>
               </td>
             </tr>
           </tbody>

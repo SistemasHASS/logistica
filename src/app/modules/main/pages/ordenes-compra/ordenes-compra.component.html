@@ -511,6 +511,24 @@
         </div>
 
         <div class="form-group">
+          <label>Clasificación: <span class="required">*</span></label>
+          <select [(ngModel)]="ordenCompra.clasificacion" class="form-control"
+                  (ngModelChange)="onClasificacionChange()">
+            <option *ngFor="let op of clasificacionOpciones" [value]="op.value">{{ op.label }}</option>
+          </select>
+        </div>
+
+        <div class="form-group" *ngIf="ordenCompra.clasificacion === 'IMP'">
+          <label>Incoterm: <span class="required">*</span></label>
+          <select [(ngModel)]="ordenCompra.incoterm" class="form-control">
+            <option value="">-- Seleccione --</option>
+            <option *ngFor="let inc of incoterms" [value]="inc.incoterm">
+              {{ inc.incoterm }} - {{ inc.descripcionLocal }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label>Forma de Pago:</label>
           <select [(ngModel)]="ordenCompra.formaPago" class="form-control">
             <option value="CONTADO">Contado</option>
@@ -571,6 +589,11 @@
       <div class="detalle-section" *ngIf="!mostrarTabDistribucion">
         <div class="section-header">
           <h4>Detalle de Items</h4>
+          @if (esFlujoDirecto) {
+            <button class="btn btn-sm btn-primary" (click)="agregarItemManual()">
+              <i class="bx bx-plus"></i> Agregar Item
+            </button>
+          }
         </div>
 
         <div class="table-wrapper">
@@ -587,14 +610,42 @@
                 <th>IGV</th>
                 <th>Total</th>
                 <th>Estado</th>
+                @if (esFlujoDirecto) {
+                  <th>Acciones</th>
+                }
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let det of detalleOrden; let i = index">
                 <td>{{ i + 1 }}</td>
-                <td>{{ det.codigo }}</td>
-                <td>{{ det.descripcion }}</td>
-                <td class="text-right">{{ det.cantidad }}</td>
+                <td>
+                  @if (esFlujoDirecto) {
+                    <div class="input-group">
+                      <input type="text" class="form-control" [(ngModel)]="det.codigo" placeholder="Código">
+                      <button class="btn btn-secondary" (click)="abrirModalBuscarItem(i)" title="Buscar en maestro de items">
+                        <i class="bx bx-search"></i>
+                      </button>
+                    </div>
+                  } @else {
+                    {{ det.codigo }}
+                  }
+                </td>
+                <td>
+                  @if (esFlujoDirecto) {
+                    <input type="text" class="form-control" [(ngModel)]="det.descripcion" placeholder="Descripción">
+                  } @else {
+                    {{ det.descripcion }}
+                  }
+                </td>
+                <td class="text-right">
+                  @if (esFlujoDirecto) {
+                    <input type="number" class="form-control input-precio" min="0" step="0.01"
+                      [(ngModel)]="det.cantidad"
+                      (ngModelChange)="recalcularItemOC(det)">
+                  } @else {
+                    {{ det.cantidad }}
+                  }
+                </td>
                 <td class="text-right">
                   @if (esFlujoDirecto) {
                     <input type="number" class="form-control input-precio" min="0" step="0.01"
@@ -619,18 +670,25 @@
                 <td>
                   <span class="badge badge-secondary">{{ det.estado }}</span>
                 </td>
+                @if (esFlujoDirecto) {
+                  <td class="actions">
+                    <button class="btn btn-sm btn-danger" (click)="eliminarItem(i)" title="Eliminar">
+                      <i class="icon-trash"></i>
+                    </button>
+                  </td>
+                }
               </tr>
               <tr *ngIf="detalleOrden.length === 0">
-                <td colspan="10" class="text-center">
+                <td [attr.colspan]="esFlujoDirecto ? 11 : 10" class="text-center">
                   <p class="no-data">No hay items agregados.</p>
                 </td>
               </tr>
               <tr *ngIf="detalleOrden.length > 0" class="total-row">
-                <td colspan="8" class="text-right"><strong>TOTAL:</strong></td>
+                <td [attr.colspan]="esFlujoDirecto ? 9 : 8" class="text-right"><strong>TOTAL:</strong></td>
                 <td class="text-right">
                   <strong class="total-amount">{{ formatearMoneda(ordenCompra.montoTotal, ordenCompra.moneda) }}</strong>
                 </td>
-                <td></td>
+                <td [attr.colspan]="esFlujoDirecto ? 2 : 1"></td>
               </tr>
             </tbody>
           </table>
@@ -1179,7 +1237,7 @@
 </div>
 
 <!-- ================================================================
-     MODAL BUSCADOR DE PROVEEDOR — Flujo Directo SC ENVIADAS
+     MODAL BUSCADOR DE PROVEEDOR — Flujo Directo SC ENVIADAS y OC Directa
      ================================================================ -->
 <div class="modal-overlay" *ngIf="modalBuscarProveedorAbierto" (click)="cerrarModalBuscarProveedor()">
   <div class="modal-container modal-proveedor" (click)="$event.stopPropagation()">
@@ -1190,9 +1248,15 @@
     </div>
 
     <div class="modal-body">
-      <p class="modal-subtitle">
-        Solicitud: <strong>{{ solicitudPendienteOC?.numeroSolicitud }}</strong>
-      </p>
+      @if (solicitudPendienteOC) {
+        <p class="modal-subtitle">
+          Solicitud: <strong>{{ solicitudPendienteOC.numeroSolicitud }}</strong>
+        </p>
+      } @else {
+        <p class="modal-subtitle">
+          Orden de Compra Directa
+        </p>
+      }
 
       <div class="buscador-proveedor">
         <input
@@ -1230,6 +1294,60 @@
         [attr.disabled]="!proveedorSeleccionado ? true : null"
         (click)="confirmarProveedorYGenerarOC()">
         <i class="icon-arrow-right"></i> Continuar con este proveedor
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================================================================
+     MODAL BUSCADOR DE ITEMS — OC Directa
+     ================================================================ -->
+<div class="modal-overlay" *ngIf="modalBuscarItemAbierto" (click)="cerrarModalBuscarItem()">
+  <div class="modal-container modal-item" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h3><i class="icon-search"></i> Seleccionar Item del Maestro</h3>
+      <button class="btn-close" (click)="cerrarModalBuscarItem()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="buscador-item">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Buscar por código o descripción del item..."
+          [(ngModel)]="busquedaItem"
+          (ngModelChange)="filtrarItems()">
+      </div>
+
+      <div class="lista-items">
+        @if (itemsFiltrados.length === 0) {
+          <div class="no-data">No se encontraron items. Verifique la conexión o sincronice maestros.</div>
+        }
+        @for (item of itemsFiltrados; track item.item || item.codigo) {
+          <div
+            class="item-item"
+            [class.selected]="itemSeleccionado?.item === item.item || itemSeleccionado?.codigo === item.codigo"
+            (click)="seleccionarItem(item)">
+            <div class="item-codigo">{{ item.item || item.codigo }}</div>
+            <div class="item-descripcion">{{ item.descripcion || item.descripcionLocal || item.descripcionCompleta }}</div>
+            <div class="item-meta">
+              <span>UM: {{ item.unidadMedida || item.unidad || 'UND' }}</span>
+              @if (item.precio || item.precioUnitario) { <span>Precio: {{ item.precio || item.precioUnitario }}</span> }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalBuscarItem()">Cancelar</button>
+      <button
+        class="btn-primary"
+        [attr.disabled]="!itemSeleccionado ? true : null"
+        (click)="confirmarSeleccionItem()">
+        <i class="icon-check"></i> Seleccionar Item
       </button>
     </div>
 

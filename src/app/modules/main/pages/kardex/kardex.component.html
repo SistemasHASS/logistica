@@ -138,77 +138,109 @@
       </div>
       <div class="card-body">
         <!-- Filtros -->
-        <div class="row mb-3">
+        <div class="row mb-2">
           <div class="col-md-2">
             <label>Código Item <span class="texto-error">*</span></label>
-            <input type="text" class="form-control" [(ngModel)]="filtroKardex.codigoItem" 
-                   placeholder="Ej: ITEM-001">
+            <input type="text" class="form-control" [(ngModel)]="filtroKardex.codigoItem"
+                   placeholder="Ej: 000886">
           </div>
           <div class="col-md-2">
             <label>Almacén</label>
             <select class="form-control" [(ngModel)]="filtroKardex.almacen">
-              <option value="">Todos</option>
-              <option value="ALM-PRINCIPAL">ALM-PRINCIPAL</option>
-              <option value="ALM-SUCURSAL">ALM-SUCURSAL</option>
+              @for (alm of almacenes; track alm.value) {
+                <option [value]="alm.value">{{ alm.label }}</option>
+              }
             </select>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-2">
+            <label>Tipo Movimiento</label>
+            <select class="form-control" [(ngModel)]="filtroKardex.tipoMovimiento">
+              @for (tm of tiposMovimiento; track tm.value) {
+                <option [value]="tm.value">{{ tm.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label>Fuente</label>
+            <select class="form-control" [(ngModel)]="filtroKardex.fuente">
+              @for (f of fuentesDato; track f.value) {
+                <option [value]="f.value">{{ f.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-2">
             <label>Fecha Inicio</label>
             <input type="date" class="form-control" [(ngModel)]="filtroKardex.fechaInicio">
           </div>
-          <div class="col-md-3">
+          <div class="col-md-2">
             <label>Fecha Fin</label>
             <input type="date" class="form-control" [(ngModel)]="filtroKardex.fechaFin">
           </div>
-          <div class="col-md-2">
-            <label>&nbsp;</label>
-            <div class="d-grid gap-1">
-              <button class="btn btn-accion-primaria" (click)="buscarKardex()">
-                <i class="bi bi-search"></i> Buscar
-              </button>
-              <button class="btn btn-accion-secundaria" (click)="limpiarKardex()">
-                <i class="bi bi-x-circle"></i> Limpiar
-              </button>
-            </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-12 d-flex gap-2">
+            <button class="btn btn-accion-primaria" (click)="buscarKardex()">
+              <i class="bi bi-search"></i> Buscar
+            </button>
+            <button class="btn btn-accion-secundaria" (click)="limpiarKardex()">
+              <i class="bi bi-x-circle"></i> Limpiar
+            </button>
+            <small class="text-muted align-self-center">
+              <i class="bi bi-info-circle"></i> SPRING: movimientos reales &nbsp;|&nbsp; LOCAL: registros internos
+            </small>
           </div>
         </div>
 
         <!-- Tabla de kardex -->
         <p-table [value]="movimientosKardex" [paginator]="true" [rows]="15" [loading]="loading"
-                 styleClass="p-datatable-sm">
+                 styleClass="p-datatable-sm" [rowsPerPageOptions]="[15,30,50]">
           <ng-template pTemplate="header">
             <tr>
               <th>Fecha</th>
+              <th>Fuente</th>
               <th>Tipo</th>
-              <th>Documento</th>
+              <th>Documento Local</th>
+              <th>NI / NS SPRING</th>
               <th>Almacén Origen</th>
               <th>Almacén Destino</th>
-              <th>Entrada</th>
-              <th>Salida</th>
-              <th>Saldo</th>
-              <th *ngIf="puedeVerPrecios">Costo Unit.</th>
-              <th *ngIf="puedeVerPrecios">Costo Total</th>
+              <th class="text-end">Entrada</th>
+              <th class="text-end">Salida</th>
+              <th class="text-end">Saldo</th>
+              <th *ngIf="puedeVerPrecios" class="text-end">Costo Unit.</th>
+              <th *ngIf="puedeVerPrecios" class="text-end">Costo Total</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-mov>
             <tr>
               <td>{{ formatearFecha(mov.fecha) }}</td>
               <td>
+                <span [class]="mov.fuenteDato === 'SPRING' ? 'badge bg-success' : 'badge bg-secondary'">
+                  {{ mov.fuenteDato }}
+                </span>
+              </td>
+              <td>
                 <p-tag [value]="mov.tipoMovimiento" [severity]="getSeverityMovimiento(mov.tipoMovimiento)"></p-tag>
               </td>
-              <td>{{ mov.tipoDocumento }} - {{ mov.numeroDocumento }}</td>
+              <td><small>{{ mov.tipoDocumento }} {{ mov.numeroDocumento }}</small></td>
+              <td>
+                @if (mov.numeroDocumentoSpring) {
+                  <span class="badge bg-primary">{{ mov.transaccionSpring }} {{ mov.numeroDocumentoSpring }}</span>
+                } @else {
+                  <small class="text-muted">-</small>
+                }
+              </td>
               <td>{{ mov.almacenOrigen || '-' }}</td>
               <td>{{ mov.almacenDestino || '-' }}</td>
               <td class="text-end texto-confirmacion"><strong>{{ mov.cantidadEntrada > 0 ? formatearNumero(mov.cantidadEntrada) : '-' }}</strong></td>
               <td class="text-end texto-error"><strong>{{ mov.cantidadSalida > 0 ? formatearNumero(mov.cantidadSalida) : '-' }}</strong></td>
-              <td class="text-end"><strong>{{ formatearNumero(mov.saldo) }}</strong></td>
+              <td class="text-end">{{ mov.saldo != null ? formatearNumero(mov.saldo) : '-' }}</td>
               <td *ngIf="puedeVerPrecios" class="text-end">{{ formatearMoneda(mov.costoUnitario) }}</td>
               <td *ngIf="puedeVerPrecios" class="text-end">{{ formatearMoneda(mov.costoTotal) }}</td>
             </tr>
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="10" class="text-center">Ingrese un código de item y presione buscar</td>
+              <td colspan="12" class="text-center">Ingrese un código de item y presione buscar</td>
             </tr>
           </ng-template>
         </p-table>
@@ -227,23 +259,31 @@
       </div>
       <div class="card-body">
         <!-- Filtros -->
-        <div class="row mb-3">
-          <div class="col-md-3">
+        <div class="row mb-2">
+          <div class="col-md-2">
             <label>Tipo Transacción</label>
             <select class="form-control" [(ngModel)]="filtroTransacciones.tipoTransaccion" (change)="listarTransacciones()">
               <option value="">Todos</option>
-              <option value="INGRESO">INGRESO</option>
-              <option value="SALIDA">SALIDA</option>
+              <option value="INGRESO">INGRESO (NI)</option>
+              <option value="SALIDA">SALIDA (NS)</option>
               <option value="AJUSTE">AJUSTE</option>
             </select>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-2">
             <label>Estado</label>
             <select class="form-control" [(ngModel)]="filtroTransacciones.estado" (change)="listarTransacciones()">
               <option value="">Todos</option>
-              <option value="PENDIENTE">PENDIENTE</option>
               <option value="PROCESADO">PROCESADO</option>
+              <option value="PENDIENTE">PENDIENTE</option>
               <option value="ANULADO">ANULADO</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label>Fuente</label>
+            <select class="form-control" [(ngModel)]="filtroTransacciones.fuente" (change)="listarTransacciones()">
+              @for (f of fuentesDato; track f.value) {
+                <option [value]="f.value">{{ f.label }}</option>
+              }
             </select>
           </div>
           <div class="col-md-2">
@@ -256,9 +296,14 @@
           </div>
           <div class="col-md-2">
             <label>&nbsp;</label>
-            <button class="btn btn-accion-secundaria w-100" (click)="limpiarFiltrosTransacciones()">
-              <i class="bi bi-x-circle"></i> Limpiar
-            </button>
+            <div class="d-grid gap-1">
+              <button class="btn btn-accion-primaria" (click)="listarTransacciones()">
+                <i class="bi bi-search"></i> Buscar
+              </button>
+              <button class="btn btn-accion-secundaria" (click)="limpiarFiltrosTransacciones()">
+                <i class="bi bi-x-circle"></i> Limpiar
+              </button>
+            </div>
           </div>
         </div>
 
@@ -267,24 +312,43 @@
                  styleClass="p-datatable-sm">
           <ng-template pTemplate="header">
             <tr>
-              <th>Número</th>
+              <th>Fuente</th>
+              <th>N° Transacción Local</th>
+              <th>NI / NS SPRING</th>
               <th>Fecha</th>
               <th>Tipo</th>
-              <th>Documento Origen</th>
               <th>Almacén</th>
-              <th>Items</th>
-              <th *ngIf="puedeVerPrecios">Valor Total</th>
-              <th>Estado</th>
+              <th>Centro Costo</th>
+              <th class="text-center">Items</th>
+              <th *ngIf="puedeVerPrecios" class="text-end">Valor Total</th>
+              <th>Estado SPRING</th>
               <th>Acciones</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-trans>
             <tr>
-              <td><strong>{{ trans.numeroTransaccion }}</strong></td>
+              <td>
+                <span [class]="trans.fuenteDato === 'SPRING' ? 'badge bg-success' : 'badge bg-secondary'">
+                  {{ trans.fuenteDato }}
+                </span>
+              </td>
+              <td><strong>{{ trans.numeroTransaccion || '-' }}</strong></td>
+              <td>
+                @if (trans.numeroNI_NS_SPRING) {
+                  <span class="badge bg-primary" pTooltip="Confirmado en SPRING">
+                    {{ trans.tipoDocumentoSpring }} {{ trans.numeroNI_NS_SPRING }}
+                  </span>
+                  @if (trans.estadoIntegracionSpring === 'CONFIRMADO_SPRING') {
+                    <i class="bi bi-check-circle-fill text-success ms-1" pTooltip="Verificado en SPRING"></i>
+                  }
+                } @else {
+                  <small class="text-muted">Sin NI/NS</small>
+                }
+              </td>
               <td>{{ formatearFecha(trans.fecha) }}</td>
               <td>{{ trans.tipoTransaccion }}</td>
-              <td>{{ trans.tipoDocumentoOrigen }} - {{ trans.numeroDocumentoOrigen }}</td>
-              <td>{{ trans.almacenDestino || trans.almacenOrigen }}</td>
+              <td>{{ trans.almacenSpring || trans.almacenDestino || trans.almacenOrigen || '-' }}</td>
+              <td><small>{{ trans.centroCosto || '-' }}</small></td>
               <td class="text-center">{{ trans.totalItems }}</td>
               <td *ngIf="puedeVerPrecios" class="text-end">{{ formatearMoneda(trans.valorTotal) }}</td>
               <td>
@@ -318,18 +382,26 @@
 
   <!-- TAB 4: DASHBOARD -->
   <div *ngIf="tabActiva === 3" class="tab-content">
+    <!-- Fuente de datos -->
+    <div class="alert alert-info py-2 mb-3">
+      <i class="bi bi-database"></i>
+      <strong> Fuente de datos:</strong>
+      Stock e indicadores desde <span class="badge bg-success">SPRING</span>
+      &nbsp;&bull;&nbsp; Movimientos y transacciones desde <span class="badge bg-success">SPRING</span> + <span class="badge bg-secondary">BD Local</span>
+    </div>
+
+    <!-- Fila 1: Indicadores de stock (SPRING) -->
     <div class="row">
-      <!-- Indicadores -->
       <div class="col-md-3 mb-3">
         <div class="status-card status-card-primary">
           <div class="status-card-number">{{ dashboard.indicadores.totalItems || 0 }}</div>
-          <div class="status-card-label">Total Items</div>
+          <div class="status-card-label">Items en SPRING</div>
         </div>
       </div>
       <div class="col-md-3 mb-3">
         <div class="status-card status-card-success">
           <div class="status-card-number">{{ dashboard.indicadores.totalAlmacenes || 0 }}</div>
-          <div class="status-card-label">Almacenes</div>
+          <div class="status-card-label">Almacenes activos</div>
         </div>
       </div>
       <div class="col-md-3 mb-3">
@@ -341,7 +413,35 @@
       <div class="col-md-3 mb-3">
         <div class="status-card status-card-info">
           <div class="status-card-number">{{ puedeVerPrecios ? formatearMoneda(dashboard.indicadores.valorTotal || 0) : '---' }}</div>
-          <div class="status-card-label">Valor Total</div>
+          <div class="status-card-label">Valor Total Inventario</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fila 2: Indicadores de trazabilidad -->
+    <div class="row">
+      <div class="col-md-3 mb-3">
+        <div class="status-card status-card-success">
+          <div class="status-card-number">{{ dashboard.indicadores.nisGeneradasUltimos30dias || 0 }}</div>
+          <div class="status-card-label">NIs generadas (30 días)</div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="status-card status-card-info">
+          <div class="status-card-number">{{ dashboard.indicadores.nssGeneradasUltimos30dias || 0 }}</div>
+          <div class="status-card-label">NSs generadas (30 días)</div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="status-card status-card-secondary">
+          <div class="status-card-number">{{ dashboard.indicadores.movimientosLocalesUltimos30dias || 0 }}</div>
+          <div class="status-card-label">Mov. locales (30 días)</div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="status-card" [class]="(dashboard.indicadores.recepcionesPendientesIngreso || 0) > 0 ? 'status-card-warning' : 'status-card-success'">
+          <div class="status-card-number">{{ dashboard.indicadores.recepcionesPendientesIngreso || 0 }}</div>
+          <div class="status-card-label">Recepciones pendientes</div>
         </div>
       </div>
     </div>
@@ -397,8 +497,94 @@
                   <td>{{ item.almacen }}</td>
                   <td>{{ formatearNumero(item.stockActual) }}</td>
                   <td *ngIf="puedeVerPrecios" class="texto-confirmacion"><strong>{{ formatearMoneda(item.valorInventario) }}</strong></td>
-                  <!-- <td class="text-end"><strong>{{ formatearMoneda(item.valorTotal) }}</strong></td> -->
                 </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fila 3: NIs/NSs recientes SPRING + Recepciones pendientes -->
+    <div class="row">
+      <!-- NIs y NSs recientes de SPRING -->
+      <div class="col-md-8 mb-3">
+        <div class="card">
+          <div class="card-header">
+            <h6><i class="bi bi-box-arrow-in-down"></i> Movimientos Recientes en SPRING <span class="badge bg-success ms-1">NI / NS</span></h6>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>N° Documento</th>
+                  <th>Fecha</th>
+                  <th>Almacén</th>
+                  <th>Referencia</th>
+                  <th class="text-end">Cantidad</th>
+                  <th>Local</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (mov of dashboard.movimientosRecientes; track mov.numeroDocumento) {
+                  <tr>
+                    <td>
+                      <span [class]="mov.tipoDocumento === 'NI' ? 'badge bg-success' : 'badge bg-danger'">
+                        {{ mov.tipoDocumento }}
+                      </span>
+                    </td>
+                    <td><strong>{{ mov.numeroDocumento }}</strong></td>
+                    <td>{{ formatearFecha(mov.fecha) }}</td>
+                    <td>{{ mov.almacen }}</td>
+                    <td><small>{{ mov.referencia || '-' }}</small></td>
+                    <td class="text-end">{{ formatearNumero(mov.cantidadTotal) }}</td>
+                    <td>
+                      @if (mov.confirmadoLocal) {
+                        <i class="bi bi-check-circle-fill text-success" pTooltip="Registrado en BD Local: {{ mov.numeroRecepcionLogistica }}"></i>
+                      } @else {
+                        <i class="bi bi-dash-circle text-muted" pTooltip="Sin registro local"></i>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="7" class="text-center text-muted py-2">Sin movimientos recientes</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recepciones pendientes de ingresar a kardex -->
+      <div class="col-md-4 mb-3">
+        <div class="card" [class.border-warning]="(dashboard.indicadores.recepcionesPendientesIngreso || 0) > 0">
+          <div class="card-header">
+            <h6><i class="bi bi-hourglass-split"></i> Recepciones Pendientes de Ingresar</h6>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>N° Recepción</th>
+                  <th>Fecha</th>
+                  <th>Días</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (rec of dashboard.recepcionesPendientes; track rec.idRecepcion) {
+                  <tr>
+                    <td><small><strong>{{ rec.numeroRecepcion }}</strong></small></td>
+                    <td><small>{{ formatearFecha(rec.fecha) }}</small></td>
+                    <td>
+                      <span [class]="rec.diasPendiente > 3 ? 'badge bg-danger' : 'badge bg-warning text-dark'">
+                        {{ rec.diasPendiente }}d
+                      </span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="3" class="text-center text-success py-2"><i class="bi bi-check-circle"></i> Al día</td></tr>
+                }
               </tbody>
             </table>
           </div>

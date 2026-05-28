@@ -517,8 +517,8 @@ ${this.firmasHtml(
       subtotal: 5000.00,
       igv: 900.00,
       totalOrden: 5900.00,
-      preparadoPor: 'María García',
-      aprobadoPor: 'Carlos López',
+      preparadoPor: 'Fernando Lamela',
+      aprobadoPor: 'Marco Macedo',
       items: [
         { commodity: 'ITEM-001', cnd: 'A1', descripcion: 'Fertilizante NPK 20-20-20 x 50kg', unidadMedida: 'SAC', cantidad: 50, precioUnitario: 60.00, total: 3000.00 },
         { commodity: 'ITEM-002', cnd: 'B2', descripcion: 'Sulfato de Potasio Granulado x 25kg', unidadMedida: 'SAC', cantidad: 40, precioUnitario: 50.00, total: 2000.00 },

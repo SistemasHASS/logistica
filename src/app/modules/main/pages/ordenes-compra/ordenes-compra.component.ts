@@ -152,7 +152,7 @@ export class OrdenesCompraComponent implements OnInit {
   modalGenerarOCAbierto = false;
   solicitudSeleccionada: SolicitudCompra | null = null;
 
-  // Modal buscador de proveedor (flujo directo SC ENVIADAS)
+  // Modal buscador de proveedor (flujo directo SC ENVIADAS y OC directa)
   modalBuscarProveedorAbierto = false;
   busquedaProveedor = '';
   proveedoresFiltrados: Proveedor[] = [];
@@ -160,6 +160,15 @@ export class OrdenesCompraComponent implements OnInit {
   proveedorSeleccionado: Proveedor | null = null;
   solicitudPendienteOC: SolicitudCompra | null = null; // SC que espera proveedor para generar OC
   esFlujoDirecto = false; // indica que el detalle tiene precios editables
+  esOCDirecta = false; // indica que es OC directa (sin solicitud asociada)
+
+  // Modal buscador de items (OC directa)
+  modalBuscarItemAbierto = false;
+  busquedaItem = '';
+  itemsFiltrados: any[] = [];
+  itemsTodos: any[] = [];
+  itemSeleccionado: any = null;
+  indiceItemEdicion = -1; // índice del item en detalleOrden que se está editando
   datosProveedor = {
     proveedor: '',
     nombreProveedor: '',
@@ -175,6 +184,14 @@ export class OrdenesCompraComponent implements OnInit {
     formaPago: '001',
     observaciones: ''
   };
+
+  // Clasificacion e Incoterms
+  incoterms: any[] = [];
+  clasificacionOpciones = [
+    { value: 'IMP', label: 'IMP - Importación' },
+    { value: 'LOC', label: 'LOC - Compras Locales' },
+    { value: 'NAC', label: 'NAC - Compras Nacionales' }
+  ];
 
   // Sistema Híbrido
   estaConectado = true;
@@ -204,6 +221,21 @@ export class OrdenesCompraComponent implements OnInit {
     await this.cargarAlmacenes();
     this.actualizarContadores();
     await this.cargarCatalogosDistribucion();
+    this.cargarIncoterms();
+  }
+
+  async cargarIncoterms() {
+    try {
+      this.incoterms = await this.ordenCompraService.listarIncoterms();
+    } catch {
+      this.incoterms = [];
+    }
+  }
+
+  onClasificacionChange() {
+    if (this.ordenCompra && (this.ordenCompra as any).clasificacion !== 'IMP') {
+      (this.ordenCompra as any).incoterm = '';
+    }
   }
 
   async cargarUsuario() {
@@ -535,15 +567,37 @@ export class OrdenesCompraComponent implements OnInit {
       detalle: [],
       estado: 'GENERADA',
       usuarioGenera: this.usuario.documentoidentidad || '',
+      clasificacion: 'LOC',
+      incoterm: '',
     };
   }
 
-  nuevaOrdenCompraForm() {
-    this.ordenCompra = this.nuevaOrdenCompra();
-    this.detalleOrden = [];
-    this.cotizacionSeleccionada = null;
-    this.mostrarFormulario = true;
-    this.modoEdicion = false;
+  async nuevaOrdenCompraForm() {
+    // Abrir modal de búsqueda de proveedor para OC directa
+    this.esOCDirecta = true;
+    this.solicitudPendienteOC = null;
+    this.busquedaProveedor = '';
+    this.proveedorSeleccionado = null;
+
+    // Cargar proveedores desde Dexie
+    this.proveedoresTodos = await this.dexieService.showProveedores();
+    this.proveedoresFiltrados = [...this.proveedoresTodos];
+
+    // Si Dexie está vacío, intentar desde la API
+    if (this.proveedoresTodos.length === 0) {
+      try {
+        const resp = await lastValueFrom(
+          this.maestrasService.getProveedores({ empresa: this.usuario.ruc || '' })
+        );
+        if (Array.isArray(resp) && resp.length) {
+          await this.dexieService.saveProveedores(resp);
+          this.proveedoresTodos = resp;
+          this.proveedoresFiltrados = [...resp];
+        }
+      } catch { /* sin conexión: continuar con lista vacía */ }
+    }
+
+    this.modalBuscarProveedorAbierto = true;
   }
 
   async generarDesdeCotizacion(cotizacion: Cotizacion) {
@@ -733,93 +787,136 @@ export class OrdenesCompraComponent implements OnInit {
 
   /** PASO 2: con proveedor elegido, precargar formulario OC completo */
   async confirmarProveedorYGenerarOC() {
-    if (!this.proveedorSeleccionado || !this.solicitudPendienteOC) return;
+    if (!this.proveedorSeleccionado) return;
 
-    const solicitud = this.solicitudPendienteOC;
     const prov = this.proveedorSeleccionado as any;
     this.modalBuscarProveedorAbierto = false;
 
     try {
       this.alertService.mostrarModalCarga();
 
-      // Obtener detalle: objeto mapeado → Dexie fallback
-      let detalleSC: any[] = Array.isArray((solicitud as any).detalle) ? (solicitud as any).detalle : [];
-      if (detalleSC.length === 0 && solicitud.idSolicitud) {
-        const todasLocal = await this.dexieService.solicitudesCompra.toArray();
-        const local = todasLocal.find(
-          (s: any) => s.idSolicitud === solicitud.idSolicitud || s.id === solicitud.id
-        );
-        detalleSC = Array.isArray(local?.detalle) ? local!.detalle : [];
-      }
-
-      // Precargar cabecera de OC con datos del proveedor seleccionado
-      this.ordenCompra = {
-        numeroOrden: this.generarNumeroOrden(),
-        solicitudCompraId: solicitud.idSolicitud || solicitud.id || 0,
-        fecha: new Date().toISOString().split('T')[0],
-        fechaEntrega: solicitud.fechaRequerida || this.calcularFechaEntrega(7),
-        proveedor: prov.documento || prov.ruc || '',
-        nombreProveedor: prov.proveedor || prov.nombreProveedor || prov.nombre || '',
-        rucProveedor: prov.ruc || prov.documento || '',
-        direccionEntrega: prov.direccion || solicitud.almacen || '',
-        contactoProveedor: prov.contacto || '',
-        telefonoProveedor: prov.telefono || '',
-        correoProveedor: prov.correo || prov.email || '',
-        montoTotal: 0,
-        moneda: this.normalizarMonedaParaSP(solicitud.moneda || 'LO'),
-        formaPago: 'CONTADO',
-        condicionesPago: '',
-        plazoEntrega: 7,
-        observaciones: solicitud.observaciones || '',
-        detalle: [],
-        estado: 'GENERADA',
-        usuarioGenera: this.usuario.documentoidentidad || '',
-      };
-
-      // Convertir detalle SC → detalle OC con precios editables (precioUnitario puede ser 0)
-      this.detalleOrden = detalleSC.map((det: any) => {
-        const precio = det.preciounitario || det.precioUnitario || 0;
-        const cant = det.cantidadpedida || det.cantidad || det.cantidadAprobada || 0;
-        const desc = det.descuento || 0;
-        const subtotal = +(cant * precio * (1 - desc / 100)).toFixed(2);
-        const igv = +(subtotal * 0.18).toFixed(2);
-        return {
-          ordenCompraId: 0,
-          codigo: det.codigo || det.idproducto || '',
-          descripcion: det.descripcion || det.producto || det.iddescripcion || '',
-          cantidad: cant,
-          cantidadRecibida: 0,
-          cantidadPendiente: cant,
-          unidadMedida: det.unidadmedida || det.unidadMedida || det.unidad || 'UND',
-          precioUnitario: precio,
-          descuento: desc,
-          subtotal,
-          impuesto: igv,
-          total: +(subtotal + igv).toFixed(2),
-          marca: det.marca || '',
-          modelo: det.modelo || '',
-          especificaciones: det.especificaciones || '',
-          estado: 'PENDIENTE',
-          // campos para distribución contable — vienen del SP
-          centrocosto: det.centrocosto || det.ceco || det.idcentrocosto || '',
-          proyecto: det.proyecto || det.idproyecto || '',
+      if (this.esOCDirecta) {
+        // OC DIRECTA: precargar solo cabecera con datos del proveedor, sin detalle
+        this.ordenCompra = {
+          numeroOrden: this.generarNumeroOrden(),
+          solicitudCompraId: 0,
+          fecha: new Date().toISOString().split('T')[0],
+          fechaEntrega: this.calcularFechaEntrega(7),
+          proveedor: prov.documento || prov.ruc || '',
+          nombreProveedor: prov.proveedor || prov.nombreProveedor || prov.nombre || '',
+          rucProveedor: prov.ruc || prov.documento || '',
+          direccionEntrega: prov.direccion || '',
+          contactoProveedor: prov.contacto || '',
+          telefonoProveedor: prov.telefono || '',
+          correoProveedor: prov.correo || prov.email || '',
+          montoTotal: 0,
+          moneda: this.normalizarMonedaParaSP(prov.moneda || 'PEN'),
+          formaPago: prov.TipoPago === 'CREDITO' ? 'CREDITO_30' : 'CONTADO',
+          condicionesPago: prov.condicionesPago || '',
+          plazoEntrega: 7,
+          observaciones: '',
+          detalle: [],
+          estado: 'GENERADA',
+          usuarioGenera: this.usuario.documentoidentidad || '',
+          clasificacion: 'LOC',
+          incoterm: '',
         };
-      });
 
-      // Recalcular total de cabecera
-      this.ordenCompra.montoTotal = +this.detalleOrden
-        .reduce((s, d) => s + d.total, 0).toFixed(2);
+        this.detalleOrden = [];
+        this.esFlujoDirecto = true;
+        this.cotizacionSeleccionada = null;
+        this.distribucionContable = [];
+        this.mostrarFormulario = true;
+        this.modoEdicion = false;
+        this.esOCDirecta = false;
 
-      this.esFlujoDirecto = true;
-      this.cotizacionSeleccionada = null;
-      await this.generarDistribucionContable();
-      this.mostrarFormulario = true;
-      this.modoEdicion = false;
-      this.solicitudPendienteOC = null;
+        this.alertService.cerrarModalCarga();
+        this.alertService.showAlert('Éxito', 'Proveedor seleccionado. Agregue items a la orden de compra.', 'success');
+      } else if (this.solicitudPendienteOC) {
+        // OC DESDE SOLICITUD: flujo existente
+        const solicitud = this.solicitudPendienteOC;
 
-      this.alertService.cerrarModalCarga();
+        // Obtener detalle: objeto mapeado → Dexie fallback
+        let detalleSC: any[] = Array.isArray((solicitud as any).detalle) ? (solicitud as any).detalle : [];
+        if (detalleSC.length === 0 && solicitud.idSolicitud) {
+          const todasLocal = await this.dexieService.solicitudesCompra.toArray();
+          const local = todasLocal.find(
+            (s: any) => s.idSolicitud === solicitud.idSolicitud || s.id === solicitud.id
+          );
+          detalleSC = Array.isArray(local?.detalle) ? local!.detalle : [];
+        }
+
+        // Precargar cabecera de OC con datos del proveedor seleccionado
+        this.ordenCompra = {
+          numeroOrden: this.generarNumeroOrden(),
+          solicitudCompraId: solicitud.idSolicitud || solicitud.id || 0,
+          fecha: new Date().toISOString().split('T')[0],
+          fechaEntrega: solicitud.fechaRequerida || this.calcularFechaEntrega(7),
+          proveedor: prov.documento || prov.ruc || '',
+          nombreProveedor: prov.proveedor || prov.nombreProveedor || prov.nombre || '',
+          rucProveedor: prov.ruc || prov.documento || '',
+          direccionEntrega: prov.direccion || solicitud.almacen || '',
+          contactoProveedor: prov.contacto || '',
+          telefonoProveedor: prov.telefono || '',
+          correoProveedor: prov.correo || prov.email || '',
+          montoTotal: 0,
+          moneda: this.normalizarMonedaParaSP(solicitud.moneda || 'LO'),
+          formaPago: 'CONTADO',
+          condicionesPago: '',
+          plazoEntrega: 7,
+          observaciones: solicitud.observaciones || '',
+          detalle: [],
+          estado: 'GENERADA',
+          usuarioGenera: this.usuario.documentoidentidad || '',
+          clasificacion: 'LOC',
+          incoterm: '',
+        };
+
+        // Convertir detalle SC → detalle OC con precios editables (precioUnitario puede ser 0)
+        this.detalleOrden = detalleSC.map((det: any) => {
+          const precio = det.preciounitario || det.precioUnitario || 0;
+          const cant = det.cantidadpedida || det.cantidad || det.cantidadAprobada || 0;
+          const desc = det.descuento || 0;
+          const subtotal = +(cant * precio * (1 - desc / 100)).toFixed(2);
+          const igv = +(subtotal * 0.18).toFixed(2);
+          return {
+            ordenCompraId: 0,
+            codigo: det.codigo || det.idproducto || '',
+            descripcion: det.descripcion || det.producto || det.iddescripcion || '',
+            cantidad: cant,
+            cantidadRecibida: 0,
+            cantidadPendiente: cant,
+            unidadMedida: det.unidadmedida || det.unidadMedida || det.unidad || 'UND',
+            precioUnitario: precio,
+            descuento: desc,
+            subtotal,
+            impuesto: igv,
+            total: +(subtotal + igv).toFixed(2),
+            marca: det.marca || '',
+            modelo: det.modelo || '',
+            especificaciones: det.especificaciones || '',
+            estado: 'PENDIENTE',
+            // campos para distribución contable — vienen del SP
+            centrocosto: det.centrocosto || det.ceco || det.idcentrocosto || '',
+            proyecto: det.proyecto || det.idproyecto || '',
+          };
+        });
+
+        // Recalcular total de cabecera
+        this.ordenCompra.montoTotal = +this.detalleOrden
+          .reduce((s, d) => s + d.total, 0).toFixed(2);
+
+        this.esFlujoDirecto = true;
+        this.cotizacionSeleccionada = null;
+        await this.generarDistribucionContable();
+        this.mostrarFormulario = true;
+        this.modoEdicion = false;
+        this.solicitudPendienteOC = null;
+
+        this.alertService.cerrarModalCarga();
+      }
     } catch (error) {
-      console.error('Error al preparar OC desde solicitud:', error);
+      console.error('Error al preparar OC:', error);
       this.alertService.cerrarModalCarga();
       this.alertService.showAlert('Error', 'No se pudo preparar la orden de compra.', 'error');
     }
@@ -834,6 +931,114 @@ export class OrdenesCompraComponent implements OnInit {
     det.impuesto = +(det.subtotal * 0.18).toFixed(2);
     det.total = +(det.subtotal + det.impuesto).toFixed(2);
     // Actualizar total de cabecera
+    this.ordenCompra!.montoTotal = +this.detalleOrden
+      .reduce((s, d) => s + d.total, 0).toFixed(2);
+  }
+
+  /** Agrega un item vacío al detalle para OC directa */
+  agregarItemManual() {
+    const nuevoItem: DetalleOrdenCompra = {
+      ordenCompraId: 0,
+      codigo: '',
+      descripcion: '',
+      cantidad: 1,
+      cantidadRecibida: 0,
+      cantidadPendiente: 1,
+      unidadMedida: 'UND',
+      precioUnitario: 0,
+      descuento: 0,
+      subtotal: 0,
+      impuesto: 0,
+      total: 0,
+      estado: 'PENDIENTE',
+    };
+    this.detalleOrden.push(nuevoItem);
+  }
+
+  /** Abre el modal de búsqueda de items para un índice específico */
+  async abrirModalBuscarItem(indice: number) {
+    this.indiceItemEdicion = indice;
+    this.busquedaItem = '';
+    this.itemSeleccionado = null;
+
+    try {
+      this.alertService.mostrarModalCarga();
+
+      // Cargar items desde la API de maestros filtrando por tipoclasificacion: "I"
+      const resp = await lastValueFrom(
+        this.maestrasService.getItems([
+          { ruc: this.usuario?.ruc, tipoclasificacion: 'I' }
+        ])
+      );
+
+      if (Array.isArray(resp) && resp.length) {
+        this.itemsTodos = resp;
+        this.itemsFiltrados = [...resp];
+      } else {
+        this.itemsTodos = [];
+        this.itemsFiltrados = [];
+      }
+
+      this.alertService.cerrarModalCarga();
+      this.modalBuscarItemAbierto = true;
+    } catch (error) {
+      console.error('Error al cargar items del maestro:', error);
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert('Error', 'No se pudo cargar los items del maestro.', 'error');
+    }
+  }
+
+  /** Filtra items del maestro según búsqueda */
+  filtrarItems() {
+    const q = this.busquedaItem.toLowerCase().trim();
+    if (!q) {
+      this.itemsFiltrados = [...this.itemsTodos];
+      return;
+    }
+    this.itemsFiltrados = this.itemsTodos.filter(
+      (item: any) =>
+        (item.item || item.codigo || '').toLowerCase().includes(q) ||
+        (item.descripcion || item.descripcionLocal || item.descripcionCompleta || '').toLowerCase().includes(q)
+    );
+  }
+
+  /** Selecciona un item del maestro */
+  seleccionarItem(item: any) {
+    this.itemSeleccionado = item;
+  }
+
+  /** Cierra el modal de búsqueda de items */
+  cerrarModalBuscarItem() {
+    this.modalBuscarItemAbierto = false;
+    this.itemSeleccionado = null;
+    this.indiceItemEdicion = -1;
+  }
+
+  /** Confirma la selección del item y llena los campos */
+  confirmarSeleccionItem() {
+    if (!this.itemSeleccionado || this.indiceItemEdicion < 0) return;
+
+    const item = this.itemSeleccionado;
+    const det = this.detalleOrden[this.indiceItemEdicion];
+
+    // Mapeo de campos desde la API de maestros
+    det.codigo = item.item || item.codigo || '';
+    det.descripcion = item.descripcion || item.descripcionLocal || item.descripcionCompleta || '';
+    det.unidadMedida = item.unidadMedida || item.unidad || 'UND';
+    det.precioUnitario = item.precio || item.precioUnitario || 0;
+
+    // Recalcular totales
+    this.recalcularItemOC(det);
+
+    this.modalBuscarItemAbierto = false;
+    this.itemSeleccionado = null;
+    this.indiceItemEdicion = -1;
+  }
+
+  /** Elimina un item del detalle */
+  eliminarItem(index: number) {
+    this.detalleOrden.splice(index, 1);
+    // Recalcular total de cabecera
     this.ordenCompra!.montoTotal = +this.detalleOrden
       .reduce((s, d) => s + d.total, 0).toFixed(2);
   }
@@ -926,6 +1131,8 @@ export class OrdenesCompraComponent implements OnInit {
         idlabor: ord.labor || '',
         idestado: 'PE',
         idaprobacion: '',
+        clasificacion: orden.clasificacion || 'LOC',
+        incoterm: orden.clasificacion === 'IMP' ? (orden.incoterm || '') : '',
         dniusuario: this.usuario.documentoidentidad || '',
         detalle: (orden.detalle || []).map((det, index) => {
           const detAny: any = det;

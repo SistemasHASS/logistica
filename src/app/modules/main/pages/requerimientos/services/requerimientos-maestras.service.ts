@@ -225,6 +225,16 @@ export class RequerimientosMaestrasService {
     return f ? f.nombreFundo : idfundo;
   }
 
+  resolverAreaDesdeTexto(textoArea: string): string {
+    if (!textoArea) return '';
+    const texto = textoArea.trim().toUpperCase();
+    const encontrada = this.areas.find((a: any) =>
+      (a.descripcion ?? '').toString().toUpperCase().trim() === texto ||
+      (a.nombre ?? '').toString().toUpperCase().trim() === texto
+    );
+    return encontrada ? String(encontrada.idarea) : '';
+  }
+
   getDescripcionArea(idarea: any): string {
     const usuarioArea = (this.usuario as any)?.nombreArea;
     const usuarioIdArea = (this.usuario as any)?.idarea;

@@ -275,7 +275,7 @@
 
             <!-- Acciones: carga masiva y agregar línea -->
             <div class="d-flex justify-content-end gap-3 acciones-movil">
-              <button type="button" class="btn btn-success" (click)="fileInput.click()">
+              <button *ngIf="itemSvc.usuario?.idrol?.includes('JLOLOGIST')" type="button" class="btn btn-success" (click)="fileInput.click()">
                 <i class="bi bi-upload me-1"></i> Carga masiva
               </button>
               <input #fileInput type="file" hidden accept=".xlsx,.xls" (change)="onExcelUpload($event)" />
@@ -394,7 +394,9 @@
   [puedeGuardar]="puedeGuardar"
   [turnos]="turnosParaCarga"
   [activosFijosFiltrados]="activosFijosFiltrados"
+  [tipoRequerimiento]="TipoSelecionado"
   (cerrarEvt)="cerrarModalCargaMasiva()"
   (guardarEvt)="guardarDetalleMasivo()"
   (validarFilaEvt)="validarFila($event)"
+  (lineasCambiadasEvt)="onLineasCambiadas($event)"
 ></app-modal-carga-masiva>

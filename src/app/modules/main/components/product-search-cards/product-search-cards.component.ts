@@ -62,16 +62,16 @@ export class ProductSearchCardsComponent implements ControlValueAccessor {
   }
 
   get filteredItems() {
-    if (!this.searchText) return [];
+    if (!this.searchText || this.searchText.length < 1) return [];
     const text = this.searchText.toLowerCase();
     return this.data.filter(item =>
-      item[this.optionLabel]?.toLowerCase()?.includes(text) ||
-      item[this.valueField]?.toString().toLowerCase()?.includes(text)
-    );
+      (item[this.optionLabel] || item['descripcion'] || item['descripcionLocal'] || '')?.toLowerCase()?.includes(text) ||
+      (item[this.valueField] || item['codigo'] || item['item'] || '')?.toString().toLowerCase()?.includes(text)
+    ).slice(0, 15);
   }
 
   onTyping() {
-    this.showList = this.searchText.length > 0;
+    this.showList = this.searchText.length > 0 && this.filteredItems.length > 0;
   }
 
   selectItem(item: any) {
