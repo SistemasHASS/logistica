@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import { OrdenServicioService } from '@/app/services/orden-servicio.service';
 import { SolicitudServicioService } from '@/app/services/solicitud-servicio.service';
 import { SeguimientoOSService } from '@/app/services/seguimiento-os.service';
@@ -18,12 +20,40 @@ import {
 } from '@/app/shared/interfaces/Tables';
 import { TableModule } from 'primeng/table';
 
+export interface FilaOSImport {
+  grupoOs: string;
+  proveedorCodigo: string;
+  nombreProveedor: string;
+  rucProveedor: string;
+  descripcion: string;
+  moneda: string;
+  tipoPago: string;
+  fechaEntrega: string;
+  diasPago: number;
+  tipoServicio: string;
+  tipoCotizacion: string;
+  montoNeto: number;
+  montoIgv: number;
+  centroCosto: string;
+  proyecto: string;
+  formaPago: string;
+  lineaDetalle: number;
+  descripcionDetalle: string;
+  montoDetalle: number;
+  commodity: string;
+  cuentaContable: string;
+  ccDestino: string;
+  cantidad: number;
+  sucursal: string;
+  campoReferencia: string;
+}
+
 @Component({
   selector: 'app-ordenes-servicio',
-  standalone: true,
   imports: [CommonModule, FormsModule, TableModule],
   templateUrl: './ordenes-servicio.component.html',
   styleUrls: ['./ordenes-servicio.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrdenesServicioComponent implements OnInit {
   usuario: Usuario = {
@@ -141,6 +171,15 @@ export class OrdenesServicioComponent implements OnInit {
   // Tipo de orden (DIRECTA o DESDE_SOLICITUD)
   tipoOrden: 'DIRECTA' | 'DESDE_SOLICITUD' = 'DESDE_SOLICITUD';
 
+  // ============================================
+  // CARGA MASIVA DESDE EXCEL
+  // ============================================
+  modalCargaMasivaAbierto = false;
+  filasImportadas: FilaOSImport[] = [];
+  filasConError: { fila: number; error: string }[] = [];
+  procesandoCargaMasiva = false;
+  resultadoCargaMasiva: { exitosas: number; fallidas: number; detalles: string[] } | null = null;
+
   constructor(
     private ordenServicioService: OrdenServicioService,
     private solicitudServicioService: SolicitudServicioService,
@@ -148,7 +187,8 @@ export class OrdenesServicioComponent implements OnInit {
     private alertService: AlertService,
     private userService: UserService,
     private dexieService: DexieService,
-    private maestrasService: MaestrasService
+    private maestrasService: MaestrasService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -1006,6 +1046,309 @@ export class OrdenesServicioComponent implements OnInit {
    */
   obtenerTextoEstado(estado: EstadoSeguimientoOS | string): string {
     return this.seguimientoOSService.obtenerTextoEstado(estado as EstadoSeguimientoOS);
+  }
+
+  // ============================================
+  // MÉTODOS DE CARGA MASIVA EXCEL
+  // ============================================
+
+  /**
+   * Descarga la plantilla Excel para carga masiva de OS
+   */
+  descargarPlantillaOSMasivo(): void {
+    const wb = XLSX.utils.book_new();
+
+    const encabezados = [
+      'GRUPO_OS', 'PROVEEDOR_CODIGO', 'NOMBRE_PROVEEDOR', 'RUC_PROVEEDOR',
+      'DESCRIPCION_OS', 'MONEDA', 'TIPO_PAGO', 'FECHA_ENTREGA', 'DIAS_PAGO',
+      'TIPO_SERVICIO', 'TIPO_COTIZACION', 'MONTO_NETO', 'MONTO_IGV',
+      'CENTRO_COSTO', 'PROYECTO', 'FORMA_PAGO',
+      'LINEA_DETALLE', 'DESCRIPCION_DETALLE', 'MONTO_DETALLE',
+      'COMMODITY', 'CUENTA_CONTABLE', 'CC_DESTINO', 'CANTIDAD',
+      'SUCURSAL', 'CAMPO_REFERENCIA'
+    ];
+
+    const ejemplo = [
+      'OS-001', '10', 'PROVEEDOR EJEMPLO S.A.C.', '20123456789',
+      'CONTRATOS ADMIN', 'LO', 'TB', '2026-05-15', 0,
+      '0702', '01', 80.00, 14.40,
+      '10010', 'ARANDANO 26', 'CONTADO',
+      1, 'CONTRATOS PERSONAL OFICINA', 80.00,
+      '0702', '13213002', '4502', 1.00,
+      '0801', 'GA'
+    ];
+
+    const instrucciones = [
+      ['INSTRUCCIONES DE USO'],
+      [''],
+      ['1. Cada fila representa UNA línea de detalle de una OS.'],
+      ['2. Para crear una OS con múltiples detalles, use el mismo GRUPO_OS en varias filas.'],
+      ['3. Los campos de cabecera (GRUPO_OS hasta FORMA_PAGO) se toman de la primera fila del grupo.'],
+      ['4. MONEDA: LO=Soles, DO=Dólares'],
+      ['5. TIPO_PAGO: TB=Transferencia Bancaria, EF=Efectivo'],
+      ['6. MONTO_NETO: sin IGV. MONTO_IGV: importe del impuesto.'],
+      ['7. FECHA_ENTREGA: formato YYYY-MM-DD'],
+      ['8. El sistema creará la OS y la enviará a SPRING automáticamente.'],
+    ];
+
+    const wsData = [encabezados, ejemplo];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = encabezados.map(() => ({ wch: 22 }));
+    XLSX.utils.book_append_sheet(wb, ws, 'OS_MASIVO');
+
+    const wsInstrucciones = XLSX.utils.aoa_to_sheet(instrucciones);
+    wsInstrucciones['!cols'] = [{ wch: 70 }];
+    XLSX.utils.book_append_sheet(wb, wsInstrucciones, 'INSTRUCCIONES');
+
+    const wbOut = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([wbOut], { type: 'application/octet-stream' }), 'plantilla_os_masivo.xlsx');
+  }
+
+  /**
+   * Maneja la selección del archivo Excel y parsea las filas
+   */
+  onArchivoExcelSeleccionado(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const archivo = input.files[0];
+    input.value = '';
+
+    const reader = new FileReader();
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      try {
+        const data = new Uint8Array(e.target!.result as ArrayBuffer);
+        const wb = XLSX.read(data, { type: 'array', cellDates: true });
+        const ws = wb.Sheets['OS_MASIVO'] || wb.Sheets[wb.SheetNames[0]];
+        const filas: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+        if (filas.length < 2) {
+          this.alertService.showAlert('Error', 'El archivo no contiene datos (mínimo 1 fila de datos más encabezado).', 'error');
+          return;
+        }
+
+        this.filasImportadas = [];
+        this.filasConError = [];
+
+        for (let i = 1; i < filas.length; i++) {
+          const f = filas[i];
+          if (!f[0] && !f[4]) continue;
+
+          const grupoOs = String(f[0] || '').trim();
+          if (!grupoOs) {
+            this.filasConError.push({ fila: i + 1, error: 'GRUPO_OS es obligatorio' });
+            continue;
+          }
+
+          const montoNeto = parseFloat(String(f[11] || '0').replace(',', '.')) || 0;
+          const montoIgv = parseFloat(String(f[12] || '0').replace(',', '.')) || 0;
+
+          const fila: FilaOSImport = {
+            grupoOs,
+            proveedorCodigo: String(f[1] || '').trim(),
+            nombreProveedor: String(f[2] || '').trim(),
+            rucProveedor: String(f[3] || '').trim(),
+            descripcion: String(f[4] || '').trim(),
+            moneda: String(f[5] || 'LO').trim(),
+            tipoPago: String(f[6] || 'TB').trim(),
+            fechaEntrega: this.parsearFechaExcel(f[7]),
+            diasPago: parseInt(String(f[8] || '0'), 10) || 0,
+            tipoServicio: String(f[9] || '').trim(),
+            tipoCotizacion: String(f[10] || '01').trim(),
+            montoNeto,
+            montoIgv,
+            centroCosto: String(f[13] || '').trim(),
+            proyecto: String(f[14] || '').trim(),
+            formaPago: String(f[15] || 'CONTADO').trim(),
+            lineaDetalle: parseInt(String(f[16] || '1'), 10) || 1,
+            descripcionDetalle: String(f[17] || '').trim(),
+            montoDetalle: parseFloat(String(f[18] || '0').replace(',', '.')) || 0,
+            commodity: String(f[19] || '').trim(),
+            cuentaContable: String(f[20] || '').trim(),
+            ccDestino: String(f[21] || '').trim(),
+            cantidad: parseFloat(String(f[22] || '1').replace(',', '.')) || 1,
+            sucursal: String(f[23] || '').trim(),
+            campoReferencia: String(f[24] || '').trim(),
+          };
+
+          if (!fila.descripcion) {
+            this.filasConError.push({ fila: i + 1, error: 'DESCRIPCION_OS es obligatoria' });
+            continue;
+          }
+
+          this.filasImportadas.push(fila);
+        }
+
+        if (this.filasImportadas.length === 0 && this.filasConError.length > 0) {
+          this.alertService.showAlert('Error', 'Ninguna fila válida encontrada. Revise los errores.', 'error');
+          return;
+        }
+
+        this.resultadoCargaMasiva = null;
+        this.modalCargaMasivaAbierto = true;
+        this.cdr.markForCheck();
+      } catch (err) {
+        console.error('Error al parsear Excel:', err);
+        this.alertService.showAlert('Error', 'No se pudo leer el archivo Excel. Verifique el formato.', 'error');
+      }
+    };
+    reader.readAsArrayBuffer(archivo);
+  }
+
+  private parsearFechaExcel(valor: unknown): string {
+    if (!valor) return new Date().toISOString().split('T')[0];
+    if (valor instanceof Date) return valor.toISOString().split('T')[0];
+    const str = String(valor).trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.substring(0, 10);
+    const partes = str.split('/');
+    if (partes.length === 3) {
+      const [d, m, y] = partes;
+      return `${y.padStart(4,'0')}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+    }
+    return new Date().toISOString().split('T')[0];
+  }
+
+  /**
+   * Agrupa las filas importadas por GRUPO_OS y devuelve payloads de OS
+   */
+  agruparFilasPorOS(): Map<string, { cabecera: FilaOSImport; detalles: FilaOSImport[] }> {
+    const mapa = new Map<string, { cabecera: FilaOSImport; detalles: FilaOSImport[] }>();
+    for (const fila of this.filasImportadas) {
+      if (!mapa.has(fila.grupoOs)) {
+        mapa.set(fila.grupoOs, { cabecera: fila, detalles: [] });
+      }
+      mapa.get(fila.grupoOs)!.detalles.push(fila);
+    }
+    return mapa;
+  }
+
+  get gruposOSAgrupados(): { grupoOs: string; cabecera: FilaOSImport; detalles: FilaOSImport[]; montoTotal: number }[] {
+    const grupos: { grupoOs: string; cabecera: FilaOSImport; detalles: FilaOSImport[]; montoTotal: number }[] = [];
+    this.agruparFilasPorOS().forEach((val, key) => {
+      const montoTotal = val.cabecera.montoNeto + val.cabecera.montoIgv;
+      grupos.push({ grupoOs: key, cabecera: val.cabecera, detalles: val.detalles, montoTotal });
+    });
+    return grupos;
+  }
+
+  cerrarModalCargaMasiva(): void {
+    if (this.procesandoCargaMasiva) return;
+    this.modalCargaMasivaAbierto = false;
+    this.filasImportadas = [];
+    this.filasConError = [];
+    this.resultadoCargaMasiva = null;
+  }
+
+  /**
+   * Procesa la carga masiva: crea una OS por cada grupo y la sincroniza con SPRING
+   */
+  async procesarCargaMasivaOS(): Promise<void> {
+    const grupos = this.agruparFilasPorOS();
+    if (grupos.size === 0) return;
+
+    const confirmacion = await this.alertService.showConfirm(
+      'Confirmar Carga Masiva',
+      `Se crearán y enviarán a SPRING <strong>${grupos.size} Orden(es) de Servicio</strong>. ¿Desea continuar?`,
+      'info'
+    );
+    if (!confirmacion) return;
+
+    this.procesandoCargaMasiva = true;
+    const detalles: string[] = [];
+    let exitosas = 0;
+    let fallidas = 0;
+
+    for (const [grupoOs, { cabecera, detalles: lineas }] of grupos) {
+      try {
+        const montoTotal = cabecera.montoNeto + cabecera.montoIgv;
+
+        const detalleOS = lineas.map(l => ({
+          lineaDetalle: l.lineaDetalle,
+          descripcion: l.descripcionDetalle || cabecera.descripcion,
+          montoTotal: l.montoDetalle,
+          commodity: l.commodity,
+          cuentaContable: l.cuentaContable,
+          centroCosto: l.centroCosto || cabecera.centroCosto,
+          ccDestino: l.ccDestino,
+          proyecto: l.proyecto || cabecera.proyecto,
+          cantidad: l.cantidad,
+          sucursal: l.sucursal,
+          campoReferencia: l.campoReferencia,
+          precioUnitario: l.cantidad > 0 ? l.montoDetalle / l.cantidad : l.montoDetalle,
+        }));
+
+        const payloadOS = {
+          tipoServicio: cabecera.tipoServicio,
+          descripcion: cabecera.descripcion,
+          proveedor: cabecera.proveedorCodigo,
+          nombreProveedor: cabecera.nombreProveedor,
+          rucProveedor: cabecera.rucProveedor,
+          montoTotal,
+          moneda: cabecera.moneda,
+          formaPago: cabecera.formaPago,
+          fechaInicioServicio: new Date().toISOString().split('T')[0],
+          fechaFinServicio: cabecera.fechaEntrega,
+          plazoEjecucion: cabecera.diasPago,
+          centroCosto: cabecera.centroCosto,
+          proyecto: cabecera.proyecto,
+          estado: 'GENERADA' as const,
+          usuarioGenera: this.usuario.documentoidentidad || '',
+          detalle: detalleOS,
+        };
+
+        const respOS = await this.ordenServicioService.generarOrdenServicio(payloadOS).toPromise();
+
+        if (respOS?.status !== 'success') {
+          fallidas++;
+          detalles.push(`${grupoOs}: ERROR al crear OS — ${respOS?.mensaje || 'Error desconocido'}`);
+          continue;
+        }
+
+        const idOS = respOS.id;
+
+        const payloadSpring = {
+          idordenservicio: idOS,
+          idempresa: this.usuario.idempresa,
+          ruc: this.usuario.ruc,
+          serie: 'APSO',
+          rucproveedor: cabecera.rucProveedor,
+          moneda: cabecera.moneda,
+          tiposervicio: cabecera.tipoServicio,
+          descripcion: cabecera.descripcion,
+          fechainicioservicio: new Date().toISOString().split('T')[0],
+          fechafinservicio: cabecera.fechaEntrega,
+          plazoejecucion: cabecera.diasPago,
+          montototal: cabecera.montoNeto,
+          montoigv: cabecera.montoIgv,
+          formapago: cabecera.formaPago,
+          centrocosto: cabecera.centroCosto,
+          proyecto: cabecera.proyecto,
+          usuariogenera: this.usuario.documentoidentidad,
+          tipopago: cabecera.tipoPago,
+          tipocotizacion: cabecera.tipoCotizacion,
+          detalle: detalleOS,
+        };
+
+        const respSpring = await this.ordenServicioService.sincronizarOrdenServicio(payloadSpring).toPromise();
+
+        if (respSpring?.errorgeneral === 0) {
+          exitosas++;
+          detalles.push(`${grupoOs}: OK — N° SPRING: ${respSpring.numeroOrden || ''}`);
+        } else {
+          fallidas++;
+          detalles.push(`${grupoOs}: OS creada (id=${idOS}) pero ERROR en SPRING — ${respSpring?.mensaje || 'Error desconocido'}`);
+        }
+      } catch (err: any) {
+        fallidas++;
+        detalles.push(`${grupoOs}: EXCEPCIÓN — ${err?.message || String(err)}`);
+      }
+    }
+
+    this.resultadoCargaMasiva = { exitosas, fallidas, detalles };
+    this.procesandoCargaMasiva = false;
+    this.cdr.markForCheck();
+
+    await this.cargarOrdenes();
   }
 
   /**

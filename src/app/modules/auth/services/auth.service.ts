@@ -58,14 +58,14 @@ export class AuthService {
   async isAprobador() {
     const user = await this.getUser();
     const rol = user?.idrol ?? '';
-    return rol.includes('APLOGIST') || rol.includes('JLOLOGIST') || rol.includes('LOLOGIST');
+    return rol.includes('ADLOGIST') || rol.includes('APLOGIST') || rol.includes('JLOLOGIST');
   }
 
   //Perfil Almacen
   async isAlmacen() {
     const user = await this.getUser();
     const rol = user?.idrol ?? '';
-    return rol.includes('ALLOGIST') || rol.includes('JLOLOGIST') || rol.includes('LOLOGIST');
+    return rol.includes('ALLOGIST') || rol.includes('LOLOGIST');
   }
 
   //Perfil Usuario
@@ -91,7 +91,7 @@ export class AuthService {
     const user = await this.getUser();
     const rol = user?.idrol ?? '';
     return rol.includes('LOLOGIST') || rol.includes('TILOGIST') || 
-           rol.includes('ADLOGIST') || rol.includes('JLOLOGIST');
+           rol.includes('ADLOGIST');
   }
 
   // ============================

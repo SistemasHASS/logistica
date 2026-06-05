@@ -3,7 +3,7 @@ import {
   input,
   Output,
   EventEmitter,
-  signal,
+  model,
   computed,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -23,13 +23,13 @@ import { FormsModule } from '@angular/forms';
           type="text"
           class="form-control form-control-sm"
           [placeholder]="placeholder()"
-          [(ngModel)]="busqueda"
-          (ngModelChange)="onBusquedaChange($event)"
+          [value]="busqueda()"
+          (input)="onBusquedaChange($any($event).target.value)"
           (focus)="onFocus()"
           (blur)="onBlur()"
           autocomplete="off"
         />
-        @if (busqueda) {
+        @if (busqueda()) {
           <button class="btn btn-outline-secondary btn-sm" type="button" (click)="limpiar()">
             <i class="bx bx-x"></i>
           </button>
@@ -53,9 +53,9 @@ import { FormsModule } from '@angular/forms';
         </div>
       }
 
-      @if (mostrarLista() && busqueda.length >= 2 && sugerencias().length === 0) {
+      @if (mostrarLista() && busqueda().length >= 2 && sugerencias().length === 0) {
         <div class="item-search-dropdown">
-          <div class="text-muted small p-2 text-center">Sin resultados para "{{ busqueda }}"</div>
+          <div class="text-muted small p-2 text-center">Sin resultados para "{{ busqueda() }}"</div>
         </div>
       }
     </div>
@@ -101,39 +101,58 @@ export class ItemSearchComponent {
 
   private cdr = inject(ChangeDetectorRef);
 
-  busqueda = '';
-  mostrarLista = signal(false);
+  busqueda = model('');
+  mostrarLista = model(false);
 
   itemsFiltradosPorTipo = computed(() => {
     const all = this.items();
     const t = this.tipo().toUpperCase();
-    const clasificacion = t === 'ITEM' ? 'I' : 'C';
+    // Los items de maestro tienen itemTipo como 'A' (Artículo), no 'I'
+    // Filtramos por la presencia del campo item (para ITEM) o codigo (para COMMODITY)
     return all.filter((i: any) => {
-      const tc = (i.itemTipo || i.tipoclasificacion || '').toString().trim().toUpperCase();
-      return tc === clasificacion;
+      if (t === 'ITEM') {
+        // Items tienen campo 'item' (código del item)
+        return !!(i.item || i.codigo);
+      } else {
+        // Commodities tienen campo 'codigo' pero no 'item' con el mismo formato
+        return !!(i.codigo || i.commodity);
+      }
     });
   });
 
   sugerencias = computed(() => {
-    const q = this.busqueda?.trim().toLowerCase();
+    const q = this.busqueda()?.trim().toLowerCase();
     if (!q || q.length < 1) return [];
     return this.itemsFiltradosPorTipo()
-      .filter(
-        (i: any) =>
-          (i.item || i.codigo || '').toLowerCase().includes(q) ||
-          (i.descripcionLocal || i.descripcion || '').toLowerCase().includes(q)
-      )
+      .filter((i: any) => {
+        // Buscar en múltiples campos de código
+        const codigoMatch = [
+          i.item,
+          i.codigo,
+          i.codigoArticulo,
+          i.codigoItem
+        ].some(c => c && c.toString().toLowerCase().includes(q));
+
+        // Buscar en múltiples campos de descripción
+        const descMatch = [
+          i.descripcionLocal,
+          i.descripcion,
+          i.descripcionCompleta,
+          i.descripcionIngles
+        ].some(d => d && d.toString().toLowerCase().includes(q));
+
+        return codigoMatch || descMatch;
+      })
       .slice(0, 12);
   });
 
   onBusquedaChange(val: string) {
-    this.busqueda = val;
+    this.busqueda.set(val);
     this.mostrarLista.set(val.length >= 1);
-    this.cdr.markForCheck();
   }
 
   onFocus() {
-    if (this.busqueda.length >= 1) {
+    if (this.busqueda().length >= 1) {
       this.mostrarLista.set(true);
     }
   }
@@ -142,20 +161,17 @@ export class ItemSearchComponent {
     // pequeño delay para permitir el click en la opción
     setTimeout(() => {
       this.mostrarLista.set(false);
-      this.cdr.markForCheck();
     }, 180);
   }
 
   seleccionar(item: any) {
-    this.busqueda = '';
+    this.busqueda.set('');
     this.mostrarLista.set(false);
     this.itemSelected.emit(item);
-    this.cdr.markForCheck();
   }
 
   limpiar() {
-    this.busqueda = '';
+    this.busqueda.set('');
     this.mostrarLista.set(false);
-    this.cdr.markForCheck();
   }
 }

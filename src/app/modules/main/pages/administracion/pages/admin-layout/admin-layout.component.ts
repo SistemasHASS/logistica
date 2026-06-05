@@ -129,6 +129,8 @@ export class AdminLayoutComponent implements OnInit {
       'admin-plantilla-correo': 'Plantillas de Correo',
       'admin-plantilla-pdf': 'Plantillas PDF',
       'configuracion-colores': 'Configuracion del Sistema',
+      'admin-permisos-roles': 'Permisos por Rol',
+      'admin-menus-layout': 'Menús del Layout Principal',
       'admin-version-api': 'API Versionado',
     };
 

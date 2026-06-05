@@ -198,4 +198,50 @@ export class AprobacionesAreaService {
   }): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/logistica/obtener-area-usuario`, data);
   }
+
+  // =============================================
+  // ANULACIONES DE REQUERIMIENTOS
+  // =============================================
+
+  /**
+   * Valida si se puede anular un requerimiento
+   */
+  validarAnulacionRequerimiento(data: {
+    idRequerimiento: string;
+    usuario: string;
+    ruc: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/validar-anulacion-requerimiento`, data);
+  }
+
+  /**
+   * Anula un requerimiento
+   */
+  anularRequerimiento(data: {
+    idRequerimiento: string;
+    usuario: string;
+    ruc: string;
+    motivo: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/anular-requerimiento`, data);
+  }
+
+  /**
+   * Obtiene el historial de anulaciones de un requerimiento
+   */
+  listarHistorialAnulaciones(data: {
+    idRequerimiento: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/listar-historial-anulaciones`, data);
+  }
+
+  /**
+   * Obtiene los requerimientos que se pueden anular
+   */
+  obtenerRequerimientosAnulables(data: {
+    documentoidentidad: string;
+    ruc: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/obtener-requerimientos-anulables`, data);
+  }
 }

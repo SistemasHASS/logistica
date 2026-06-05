@@ -255,6 +255,7 @@ export class RecepcionMercaderiaComponent implements OnInit {
           plazoEntrega: 0,
           usuarioGenera: '',
           estado: oc.estado || 'ENVIADA',
+          almacen: oc.almacen || '',  // NUEVO: Almacén de la OC
           detalle: itemsArr.map((i: any) => ({
             id: i.idDetalle || i.id || 0,
             ordenCompraId: oc.idOrden,
@@ -269,6 +270,8 @@ export class RecepcionMercaderiaComponent implements OnInit {
             subtotal: 0,
             impuesto: 0,
             total: 0,
+            ceco: i.ceco || i.centroCosto || '',
+            proyecto: i.proyecto || '',
             estado: (i.estado || 'PENDIENTE') as 'PENDIENTE' | 'PARCIAL' | 'COMPLETO' | 'CANCELADO'
           }))
         } as OrdenCompra;
@@ -298,6 +301,15 @@ export class RecepcionMercaderiaComponent implements OnInit {
     }
   }
 
+  getNombreAlmacen(codigo: string): string {
+    if (!codigo) return 'No especificado';
+    const found = (this.almacenes as any[]).find(
+      (a) => a.almacen === codigo || a.idalmacen === codigo
+    );
+    const nombre = found?.descripcion || found?.almacen || '';
+    return nombre ? `${codigo} - ${nombre}` : codigo;
+  }
+
   actualizarContadores() {
     this.totalParciales   = this.recepciones.filter((r) => r.estado === 'PARCIAL').length;
     this.totalCompletas   = this.recepciones.filter((r) => r.estado === 'COMPLETA').length;
@@ -307,16 +319,19 @@ export class RecepcionMercaderiaComponent implements OnInit {
   }
 
   nuevaRecepcion(): RecepcionOrdenCompra {
+    const hoy = new Date();
+    const fechaLocal = hoy.toISOString().split('T')[0]; // Formato YYYY-MM-DD
     return {
       numeroRecepcion: '',
       ordenCompraId: 0,
       numeroOrden: '',
-      fecha: new Date().toISOString(),
+      fecha: fechaLocal,
       almacen: '',
       detalle: [],
       conformidad: true,
       usuarioRecibe: this.usuario.documentoidentidad || '',
       estado: 'PARCIAL',
+      guiaProveedor: '',
     };
   }
 
@@ -347,38 +362,50 @@ export class RecepcionMercaderiaComponent implements OnInit {
     if (orden) {
       this.ordenSeleccionada = orden;
       this.recepcion!.numeroOrden = orden.numeroOrden;
-      // Auto-seleccionar almacen si la orden lo tiene definido
+      // Asignar almacen desde la orden (viene por defecto de la OC)
       const ordenAny = orden as any;
-      if (ordenAny.almacen && !this.recepcion!.almacen) {
+      if (ordenAny.almacen) {
         this.recepcion!.almacen = ordenAny.almacen;
       }
 
-      // Cargar items pendientes de la orden
-      this.detalleRecepcion = orden.detalle.map((item) => ({
-        recepcionId: 0,
-        detalleOrdenCompraId: item.id || 0,
-        item: item.item || 0,
-        codigo: item.codigo,
-        descripcion: item.descripcion,
-        cantidadOrdenada: item.cantidad,
-        cantidadRecibida: 0,
-        cantidadAceptada: 0,
-        cantidadRechazada: 0,
-        estadoItem: 'CONFORME',
-        // ✅ AGREGAR ESTOS CAMPOS:
-        proyecto: item.proyecto || '',
-        ceco: item.ceco || '',
-        precioUnitario: item.precioUnitario || 0,
-        unidadMedida: item.unidadMedida || 'UND'
-      }));
+      // Cargar solo items con cantidad pendiente (recepción parcial o nueva)
+      this.detalleRecepcion = orden.detalle
+        .filter((item) => (item.cantidadPendiente ?? item.cantidad) > 0)
+        .map((item) => ({
+          recepcionId: 0,
+          detalleOrdenCompraId: item.id || 0,
+          item: item.item || 0,
+          codigo: item.codigo,
+          descripcion: item.descripcion,
+          cantidadOrdenada: item.cantidadPendiente ?? item.cantidad,
+          cantidadRecibida: 0,
+          cantidadAceptada: 0,
+          cantidadRechazada: 0,
+          lote: '00',
+          estadoItem: 'CONFORME' as const,
+          proyecto: item.proyecto || '',
+          ceco: item.ceco || '',
+          precioUnitario: item.precioUnitario || 0,
+          unidadMedida: item.unidadMedida || 'UND'
+        }));
     }
   }
 
   actualizarCantidades(detalle: DetalleRecepcion) {
+    // Convertir a número si viene como string (inputs type="text")
+    detalle.cantidadRecibida = Number(detalle.cantidadRecibida) || 0;
+    detalle.cantidadAceptada = Number(detalle.cantidadAceptada) || 0;
+    detalle.cantidadRechazada = Number(detalle.cantidadRechazada) || 0;
+
     // Validar que cantidades sean coherentes
     if (detalle.cantidadRecibida < 0) detalle.cantidadRecibida = 0;
     if (detalle.cantidadAceptada < 0) detalle.cantidadAceptada = 0;
     if (detalle.cantidadRechazada < 0) detalle.cantidadRechazada = 0;
+
+    // ✅ VALIDAR: cantidad recibida no puede ser mayor que la ordenada
+    if (detalle.cantidadRecibida > detalle.cantidadOrdenada) {
+      detalle.cantidadRecibida = detalle.cantidadOrdenada;
+    }
 
     // Calcular cantidades automáticamente
     const total = detalle.cantidadAceptada + detalle.cantidadRechazada;
@@ -600,6 +627,12 @@ export class RecepcionMercaderiaComponent implements OnInit {
   cerrarModalDetalleRecepcion() {
     this.modalDetalleRecepcionAbierto = false;
     this.recepcionDetalle = null;
+  }
+
+  get ocDetalleNoSincronizada(): boolean {
+    if (!this.recepcionDetalle) return false;
+    const oc = this.ordenesCompra.find(o => o.id === this.recepcionDetalle!.ordenCompraId) as any;
+    return !(oc?.numeroOrdenSpring);
   }
 
   private mapearFormaPago(formaPago: string): string {
@@ -1102,7 +1135,7 @@ export class RecepcionMercaderiaComponent implements OnInit {
         this.usuario.documentoidentidad
       ).toPromise();
 
-      if (respuesta?.success) {
+      if (respuesta?.numeroNI && !respuesta?.error) {
         // Actualizar local
         recepcion.ingresadoKardex = true;
         recepcion.fechaIngresoKardex = new Date().toISOString();
@@ -1119,7 +1152,7 @@ export class RecepcionMercaderiaComponent implements OnInit {
 
         await this.cargarRecepciones();
       } else {
-        throw new Error(respuesta?.mensaje || 'Error al ingresar a Kardex');
+        throw new Error(respuesta?.error || respuesta?.mensaje || 'Error al ingresar a Kardex');
       }
     } catch (error: any) {
       this.alertService.cerrarModalCarga();

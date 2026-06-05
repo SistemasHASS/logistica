@@ -2,98 +2,183 @@
 
   <!-- HEADER -->
   <div class="page-header">
-    <h2>Lista de Usuarios</h2>
-    <button class="btn-primary" (click)="openCreate()">
-      <i class="icon icon-plus"></i> Nuevo Usuario
+    <h2>Usuarios del Sistema</h2>
+    <button class="btn-primary" (click)="abrirCrear()">
+      <i class="bx bx-plus"></i> Nuevo Usuario
     </button>
   </div>
 
+  <!-- ERROR -->
+  @if (errorMsg()) {
+    <div class="alert-error">{{ errorMsg() }}</div>
+  }
+
   <!-- TABLA -->
   <div class="table-wrapper">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Nombre</th>
-          <th>Email</th>
-          <th>Perfil</th>
-          <th>Área</th>
-          <th>Estado</th>
-          <th style="width: 120px">Acciones</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr *ngFor="let usuario of usuarios; index as i">
-          <td>{{ i + 1 }}</td>
-          <td>{{ usuario.nombre }}</td>
-          <td>{{ usuario.email }}</td>
-          <td>{{ usuario.perfil }}</td>
-          <td>{{ usuario.area }}</td>
-          <td>
-            <span [class.activo]="usuario.estado === 'ACTIVO'" [class.inactivo]="usuario.estado === 'INACTIVO'">
-              {{ usuario.estado }}
-            </span>
-          </td>
-          <td class="actions">
-            <button class="btn btn-sm btn-warning me-2" (click)="openEdit(usuario)">
-              <i class="icon-pencil"></i>
-            </button>
-          </td>
-        </tr>
-
-        <tr *ngIf="!usuarios.length">
-          <td colspan="7" class="empty">
-            No hay usuarios registrados
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    @if (loading()) {
+      <div class="loading-row">Cargando usuarios...</div>
+    } @else {
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>DNI</th>
+            <th>Nombre completo</th>
+            <th>Email</th>
+            <th>Teléfono</th>
+            <th>RUC</th>
+            <th>Estado</th>
+            <th style="width: 110px">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (u of usuarios(); track u.idUsuario; let i = $index) {
+            <tr>
+              <td>{{ i + 1 }}</td>
+              <td><code>{{ u.documentoidentidad || '—' }}</code></td>
+              <td>{{ u.nombreCompleto || '—' }}</td>
+              <td>{{ u.email || '—' }}</td>
+              <td>{{ u.telefono || '—' }}</td>
+              <td>{{ u.ruc || '—' }}</td>
+              <td>
+                <span [class]="u.activo ? 'activo' : 'inactivo'">
+                  {{ u.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button class="btn btn-sm btn-warning" title="Editar" (click)="abrirEditar(u)">
+                  <i class="bx bx-edit"></i>
+                </button>
+                <button
+                  class="btn btn-sm"
+                  [class]="u.activo ? 'btn-danger' : 'btn-success'"
+                  [title]="u.activo ? 'Desactivar' : 'Activar'"
+                  (click)="toggleEstado(u)">
+                  <i [class]="u.activo ? 'bx bx-block' : 'bx bx-check'"></i>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty">No hay usuarios registrados</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
   </div>
 
 </div>
 
-<!-- MODAL -->
-<div class="modal-backdrop" *ngIf="showModal">
-  <div class="modal" [class.show]="showModal">
-    <div class="modal-header">
-      <h3>{{ isEdit ? 'Editar Usuario' : 'Nuevo Usuario' }}</h3>
-      <button class="close" (click)="closeModal()">×</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="form-group">
-        <label>Nombre Completo</label>
-        <input type="text" [(ngModel)]="form.nombre" />
+<!-- MODAL CREAR / EDITAR -->
+@if (showModal()) {
+  <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal show">
+      <div class="modal-header">
+        <h3 id="modal-title">{{ isEdit() ? 'Editar Usuario' : 'Nuevo Usuario' }}</h3>
+        <button class="close" (click)="cerrarModal()" aria-label="Cerrar">×</button>
       </div>
 
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" [(ngModel)]="form.email" />
-      </div>
+      <form [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="modal-body">
 
-      <div class="form-group">
-        <label>Perfil</label>
-        <input type="text" [(ngModel)]="form.perfil" />
-      </div>
+          @if (errorMsg()) {
+            <div class="alert-error mb-2">{{ errorMsg() }}</div>
+          }
 
-      <div class="form-group">
-        <label>Área</label>
-        <input type="text" [(ngModel)]="form.area" />
-      </div>
+          <!-- BUSCAR EN ERP (solo creación) -->
+          @if (!isEdit()) {
+            <div class="form-group">
+              <label for="buscarErp">Buscar en ERP (nombre o DNI)</label>
+              <input
+                id="buscarErp"
+                type="text"
+                placeholder="Mín. 3 caracteres..."
+                (input)="onBuscarErp($event)"
+                autocomplete="off" />
+              @if (erpBuscando()) {
+                <small class="hint">Buscando en ERP...</small>
+              }
+              @if (erpResultados().length > 0) {
+                <ul class="erp-lista" role="listbox">
+                  @for (erp of erpResultados(); track erp.nrodocumento) {
+                    <li role="option" tabindex="0"
+                        (click)="seleccionarErp(erp)"
+                        (keydown.enter)="seleccionarErp(erp)">
+                      <strong>{{ erp.nombre }}</strong>
+                      <small>{{ erp.nrodocumento }} · {{ erp.usuario }}</small>
+                    </li>
+                  }
+                </ul>
+              }
+              @if (erpSeleccionado()) {
+                <div class="erp-seleccionado">
+                  <i class="bx bx-check-circle"></i>
+                  {{ erpSeleccionado()!.nombre }} ({{ erpSeleccionado()!.nrodocumento }})
+                </div>
+              }
+            </div>
+          }
 
-      <div class="form-group">
-        <label>Estado</label>
-        <select [(ngModel)]="form.estado">
-          <option value="ACTIVO">Activo</option>
-          <option value="INACTIVO">Inactivo</option>
-        </select>
-      </div>
-    </div>
+          <!-- DNI -->
+          <div class="form-group">
+            <label for="fDni">Documento de identidad <span class="req">*</span></label>
+            <input id="fDni" type="text" formControlName="documentoidentidad"
+              [attr.readonly]="isEdit() ? true : null" />
+            @if (form.get('documentoidentidad')?.invalid && form.get('documentoidentidad')?.touched) {
+              <small class="field-error">Campo obligatorio</small>
+            }
+          </div>
 
-    <div class="modal-footer">
-      <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
-      <button class="btn-primary" (click)="save()">Guardar</button>
+          <!-- NOMBRE COMPLETO -->
+          <div class="form-group">
+            <label for="fNombre">Nombre completo <span class="req">*</span></label>
+            <input id="fNombre" type="text" formControlName="nombreCompleto" />
+            @if (form.get('nombreCompleto')?.invalid && form.get('nombreCompleto')?.touched) {
+              <small class="field-error">Campo obligatorio</small>
+            }
+          </div>
+
+          <!-- EMAIL -->
+          <div class="form-group">
+            <label for="fEmail">Email</label>
+            <input id="fEmail" type="email" formControlName="email" />
+            @if (form.get('email')?.invalid && form.get('email')?.touched) {
+              <small class="field-error">Email inválido</small>
+            }
+          </div>
+
+          <!-- TELÉFONO -->
+          <div class="form-group">
+            <label for="fTel">Teléfono</label>
+            <input id="fTel" type="text" formControlName="telefono" />
+          </div>
+
+          <!-- RUC (solo creación) -->
+          @if (!isEdit()) {
+            <div class="form-group">
+              <label for="fRuc">RUC empresa</label>
+              <input id="fRuc" type="text" formControlName="ruc" placeholder="Ej: 20481121966" />
+            </div>
+          }
+
+          <!-- ACTIVO (solo edición) -->
+          @if (isEdit()) {
+            <div class="form-group form-check">
+              <input id="fActivo" type="checkbox" formControlName="activo" />
+              <label for="fActivo">Usuario activo</label>
+            </div>
+          }
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="guardando()">
+            {{ guardando() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
-</div>
+}

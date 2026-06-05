@@ -61,6 +61,12 @@
             Todos los Requerimientos
           </a>
         </li>
+        <li class="nav-item" *ngIf="usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('APLOGIST') || usuario?.idrol.includes('JLOLOGIST') || usuario?.idrol.includes('LOLOGIST')">
+          <a class="nav-link" [class.active]="activeTabIndex === 3" (click)="activeTabIndex = 3; cargarRequerimientosAnulados()">
+            Anulados
+            <span class="badge bg-danger ms-2">{{ requerimientosAnulados.length }}</span>
+          </a>
+        </li>
       </ul>
 
       <!-- Tab Content -->
@@ -107,6 +113,12 @@
                           class="p-button-sm p-button-info me-2"
                           (click)="verDetallePendientes(req)"
                           label="Ver">
+                  </button>
+                  <button pButton type="button" icon="bx bx-x-circle" 
+                          class="p-button-sm p-button-danger"
+                          (click)="abrirModalAnulacion(req)"
+                          label="Anular"
+                          *ngIf="puedeAnular(req)">
                   </button>
                   <!-- <button pButton type="button" icon="bx bx-eye" 
                           class="p-button-sm p-button-info me-2"
@@ -210,6 +222,55 @@
             </ng-template>
           </p-table>
         </div>
+
+        <!-- Tab 4: Anulados -->
+        <div *ngIf="activeTabIndex === 3">
+          <p-table [value]="requerimientosAnulados" [loading]="loadingAnulados"
+                   [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+                   currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} requerimientos"
+                   [rowsPerPageOptions]="[10,25,50]" styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Número</th>
+                <th>Fecha</th>
+                <th>Solicitante</th>
+                <th>Área</th>
+                <th>Tipo</th>
+                <th>Descripción</th>
+                <th>Estado Anterior</th>
+                <th>Fecha Anulación</th>
+                <th>Anulado Por</th>
+                <th>Motivo</th>
+                <th>Acciones</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-req>
+              <tr>
+                <td>{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</td>
+                <td>{{ req.fecha | date: 'dd/MM/yyyy' }}</td>
+                <td>{{ req.nombreSolicitante }}</td>
+                <td>{{ req.nombreArea }}</td>
+                <td>{{ req.itemtipo || req.tipoRequerimiento || '-' }}</td>
+                <td>{{ req.glosa || 'Sin descripción' }}</td>
+                <td>
+                  <p-tag [severity]="'warn'">{{ req.estadoAnterior }}</p-tag>
+                </td>
+                <td>{{ req.fechaAnulacion }}</td>
+                <td>{{ req.usuarioAnula }}</td>
+                <td>
+                  <small>{{ req.motivoAnulacion }}</small>
+                </td>
+                <td>
+                  <button pButton type="button" icon="bx bx-history" 
+                          class="p-button-sm p-button-info me-2"
+                          (click)="verHistorialAnulacion(req)"
+                          label="Historial">
+                  </button>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
       </div>
     </div>
   </p-card>
@@ -300,7 +361,10 @@
     
     <!-- Tabla de detalles -->
     <div class="mt-4">
-      <h5>Ítems del Requerimiento</h5>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Ítems del Requerimiento</h5>
+        <span class="badge bg-info">{{ (requerimientoDetalle.detalles || requerimientoDetalle.detalle)?.length || 0 }} líneas</span>
+      </div>
       <p-table [value]="requerimientoDetalle.detalles || requerimientoDetalle.detalle" [paginator]="true" [rows]="5" styleClass="p-datatable-sm">
         <ng-template pTemplate="header">
           <tr>
@@ -335,6 +399,39 @@
   <ng-template pTemplate="footer">
     <button pButton type="button" label="Cerrar" icon="pi pi-times" 
             (click)="displayDetalleModal = false"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal de Anulación -->
+<p-dialog [(visible)]="displayAnulacionModal" [modal]="true" [style]="{width: '600px'}"
+          header="Anular Requerimiento">
+  <div *ngIf="requerimientoParaAnular">
+    <div class="mb-3">
+      <strong>Número:</strong> {{ requerimientoParaAnular.idrequerimiento | numeroRequerimiento : requerimientoParaAnular.RequisicionNumero }}
+    </div>
+    <div class="mb-3">
+      <strong>Solicitante:</strong> {{ requerimientoParaAnular.nombreSolicitante }}
+    </div>
+    <div class="mb-3">
+      <strong>Área:</strong> {{ requerimientoParaAnular.nombreArea }}
+    </div>
+    <div class="mb-3">
+      <strong>Estado Actual:</strong> {{ requerimientoParaAnular.estado || requerimientoParaAnular.estados }}
+    </div>
+    <div class="mb-3">
+      <label for="motivoAnulacion" class="form-label">Motivo de Anulación <span class="text-danger">*</span></label>
+      <textarea id="motivoAnulacion" class="form-control" rows="4" 
+                [(ngModel)]="motivoAnulacion" 
+                placeholder="Ingrese el motivo de anulación (mínimo 10 caracteres)..."></textarea>
+      <small class="text-muted">Mínimo 10 caracteres</small>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Cancelar" icon="pi pi-times" 
+            class="p-button-secondary" (click)="displayAnulacionModal = false"></button>
+    <button pButton type="button" label="Anular" icon="bx bx-x-circle" 
+            class="p-button-danger" (click)="confirmarAnulacion()"
+            [disabled]="!motivoAnulacion || motivoAnulacion.length < 10"></button>
   </ng-template>
 </p-dialog>
 
@@ -398,10 +495,20 @@
           <i class="bx bx-paperclip"></i> Adjuntos
         </a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="detallePendientesTab === 'historial-anulaciones'"
+           (click)="detallePendientesTab = 'historial-anulaciones'; cargarHistorialAnulaciones()" style="cursor:pointer;">
+          <i class="bx bx-history"></i> Historial Anulaciones
+        </a>
+      </li>
     </ul>
 
     <!-- Ítems -->
     <div *ngIf="detallePendientesTab === 'items'" class="table-responsive">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="mb-0">Ítems</h6>
+        <span class="badge bg-info">{{ getDetallesItemsPendientes().length || 0 }} líneas</span>
+      </div>
       <p-table [value]="getDetallesItemsPendientes()" [paginator]="true" [rows]="5"
                responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped">
         <ng-template pTemplate="header">
@@ -457,6 +564,10 @@
 
     <!-- Servicios -->
     <div *ngIf="detallePendientesTab === 'servicios'" class="table-responsive">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="mb-0">Servicios</h6>
+        <span class="badge bg-info">{{ getDetallesServiciosPendientes().length || 0 }} líneas</span>
+      </div>
       <p-table [value]="getDetallesServiciosPendientes()" [paginator]="true" [rows]="5"
                responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped">
         <ng-template pTemplate="header">
@@ -510,8 +621,106 @@
     </div>
 
     <!-- Adjuntos -->
-    <div *ngIf="detallePendientesTab === 'adjuntos'" class="text-center text-muted p-3">
-      Sin adjuntos
+    <div *ngIf="detallePendientesTab === 'adjuntos'">
+      <div class="mb-3">
+        <input type="file" #fileInput (change)="onFileSelected($event)" 
+               class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
+      </div>
+      <div *ngIf="selectedFile" class="mb-3">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-info">{{ selectedFile.name }}</span>
+          <span class="text-muted small">({{ adjuntosService.getFileSizeKB(selectedFile) }} KB)</span>
+          <button pButton type="button" icon="bx bx-upload" 
+                  class="p-button-sm p-button-success"
+                  (click)="subirAdjunto()"
+                  label="Subir"
+                  [disabled]="subiendoAdjunto">
+          </button>
+          <button pButton type="button" icon="bx bx-x" 
+                  class="p-button-sm p-button-secondary"
+                  (click)="cancelarSeleccionArchivo()">
+          </button>
+        </div>
+      </div>
+      <div *ngIf="loadingAdjuntos" class="text-center text-muted p-3">
+        <i class="bx bx-loader-alt bx-spin"></i> Cargando adjuntos...
+      </div>
+      <div *ngIf="!loadingAdjuntos && adjuntosRequerimiento.length === 0" class="text-center text-muted p-3">
+        Sin adjuntos
+      </div>
+      <div *ngIf="!loadingAdjuntos && adjuntosRequerimiento.length > 0" class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Archivo</th>
+              <th>Tipo</th>
+              <th>Tamaño</th>
+              <th>Fecha</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let adj of adjuntosRequerimiento">
+              <td>{{ adj.nombreArchivo }}</td>
+              <td>{{ adj.tipoArchivo || '-' }}</td>
+              <td>{{ adj.tamanoArchivo ? (adj.tamanoArchivo / 1024).toFixed(2) + ' KB' : '-' }}</td>
+              <td>{{ adj.fechaCreacion }}</td>
+              <td>
+                <button pButton type="button" icon="bx bx-download" 
+                        class="p-button-sm p-button-info me-2"
+                        (click)="descargarAdjunto(adj)"
+                        label="Descargar">
+                </button>
+                <button pButton type="button" icon="bx bx-trash" 
+                        class="p-button-sm p-button-danger"
+                        (click)="eliminarAdjunto(adj.idAdjunto)"
+                        label="Eliminar">
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Historial de Anulaciones -->
+    <div *ngIf="detallePendientesTab === 'historial-anulaciones'">
+      <div *ngIf="loadingHistorialAnulaciones" class="text-center text-muted p-3">
+        <i class="bx bx-loader-alt bx-spin"></i> Cargando historial...
+      </div>
+      <div *ngIf="!loadingHistorialAnulaciones && historialAnulaciones.length === 0" class="text-center text-muted p-3">
+        Sin historial de anulaciones
+      </div>
+      <div *ngIf="!loadingHistorialAnulaciones && historialAnulaciones.length > 0" class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Estado Anterior</th>
+              <th>Estado Nuevo</th>
+              <th>Usuario Anula</th>
+              <th>Rol</th>
+              <th>Motivo</th>
+              <th>Fecha Anulación</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let hist of historialAnulaciones">
+              <td>
+                <p-tag [severity]="'warn'">{{ hist.estadoAnterior }}</p-tag>
+              </td>
+              <td>
+                <p-tag [severity]="'danger'">{{ hist.estadoNuevo }}</p-tag>
+              </td>
+              <td>{{ hist.usuarioAnula }}</td>
+              <td>{{ hist.rolUsuario }}</td>
+              <td>
+                <small>{{ hist.motivoAnulacion }}</small>
+              </td>
+              <td>{{ hist.fechaAnulacion }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 

@@ -17,6 +17,7 @@ import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import { ItemService } from '@/app/modules/main/services/items.service';
 import { CommodityService } from '@/app/modules/main/services/commoditys.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
+import { AdjuntosService } from '@/app/modules/main/services/adjuntos.service';
 import Swal from 'sweetalert2';
 import { environment } from '@/environments/environment';
 import {
@@ -92,9 +93,24 @@ export class AprobacionesAreaComponent implements OnInit {
   // Modal de detalle de requerimientos pendientes (con selección)
   displayDetallePendientesModal = false;
   requerimientoDetallePendientes: any = null;
-  detallePendientesTab: 'items' | 'servicios' | 'adjuntos' = 'items';
+  detallePendientesTab: 'items' | 'servicios' | 'adjuntos' | 'historial-anulaciones' = 'items';
   detallesPendientesSeleccionados: Set<number> = new Set<number>();
   detallesPendientesAprobados: Set<number> = new Set<number>();
+
+  // Adjuntos
+  adjuntosRequerimiento: any[] = [];
+  selectedFile: File | null = null;
+  loadingAdjuntos = false;
+  subiendoAdjunto = false;
+
+  // Anulaciones
+  requerimientosAnulados: any[] = [];
+  loadingAnulados = false;
+  displayAnulacionModal = false;
+  requerimientoParaAnular: any = null;
+  motivoAnulacion = '';
+  historialAnulaciones: any[] = [];
+  loadingHistorialAnulaciones = false;
 
   // Tab activo
   activeTabIndex = 0;
@@ -108,6 +124,7 @@ export class AprobacionesAreaComponent implements OnInit {
     private ItemService: ItemService,
     private commodityService: CommodityService,
     private alertService: AlertService,
+    public adjuntosService: AdjuntosService,
   ) {}
 
   ngOnInit() {
@@ -117,10 +134,16 @@ export class AprobacionesAreaComponent implements OnInit {
         return;
       }
 
-      // Validar que el usuario tenga área y sea jefe de área
+      // Validar que el usuario tenga área y sea jefe de área, o sea ADLOGIST, o sea JLOLOGIST
+      const esAdminLogistica = this.usuario.idrol?.includes('ADLOGIST');
+      const esJefeLogistica = this.usuario.idrol?.includes('JLOLOGIST');
+
+      // JLOLOGIST puede acceder sin ser jefe de área y sin área asignada (el SP maneja la lógica)
       if (
-        !this.usuario.idarea ||
-        (this.usuario.esJefeArea !== 1 && this.usuario.esJefeArea !== true)
+        !esAdminLogistica &&
+        !esJefeLogistica &&
+        (!this.usuario.idarea ||
+        (this.usuario.esJefeArea !== 1 && this.usuario.esJefeArea !== true))
       ) {
         Swal.fire({
           icon: 'warning',
@@ -1641,6 +1664,8 @@ export class AprobacionesAreaComponent implements OnInit {
     const dets = this.getDetallesPendientes();
     dets.forEach((_, i) => this.detallesPendientesSeleccionados.add(i));
     this.displayDetallePendientesModal = true;
+    // Cargar adjuntos
+    this.cargarAdjuntos();
   }
 
   getDetallesPendientes(): any[] {
@@ -1866,15 +1891,246 @@ export class AprobacionesAreaComponent implements OnInit {
       if (typeof requerimiento['detalle'] === 'string') {
         return JSON.parse(requerimiento['detalle']);
       }
-      // Si ya es un array, devolverlo directamente
-      else if (Array.isArray(requerimiento['detalle'])) {
-        return requerimiento['detalle'];
-      }
-      // Si no hay detalle, devolver array vacío
-      return [];
-    } catch (error) {
-      console.error('Error parseando detalle:', error);
+      return requerimiento['detalle'] || [];
+    } catch (e) {
+      console.error('Error al parsear detalle:', e);
       return [];
     }
+  }
+
+  // =============================================
+  // ADJUNTOS DE REQUERIMIENTOS
+  // =============================================
+
+  cargarAdjuntos() {
+    if (!this.requerimientoDetallePendientes?.idrequerimiento) {
+      this.adjuntosRequerimiento = [];
+      return;
+    }
+
+    this.loadingAdjuntos = true;
+    this.adjuntosService.listarAdjuntosRequerimiento(
+      this.requerimientoDetallePendientes.idrequerimiento
+    ).subscribe({
+      next: (response: any) => {
+        const resultado = response.resultado;
+        this.adjuntosRequerimiento = Array.isArray(resultado) ? resultado : [];
+        this.loadingAdjuntos = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar adjuntos:', error);
+        this.adjuntosRequerimiento = [];
+        this.loadingAdjuntos = false;
+      }
+    });
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFile = file;
+    }
+  }
+
+  async subirAdjunto() {
+    if (!this.selectedFile || !this.requerimientoDetallePendientes?.idrequerimiento) {
+      return;
+    }
+
+    this.subiendoAdjunto = true;
+
+    try {
+      const base64 = await this.adjuntosService.fileToBase64(this.selectedFile);
+      const tipoArchivo = this.adjuntosService.getFileType(this.selectedFile);
+      const tamanoArchivo = this.selectedFile.size;
+
+      const data = {
+        idRequerimiento: this.requerimientoDetallePendientes.idrequerimiento,
+        nombreArchivo: this.selectedFile.name,
+        tipoArchivo: tipoArchivo,
+        tamanoArchivo: tamanoArchivo,
+        contenidoBase64: base64,
+        descripcion: '',
+        usuarioCreacion: this.usuario?.documentoidentidad || this.usuario?.dni || ''
+      };
+
+      this.adjuntosService.guardarAdjuntoRequerimiento(data).subscribe({
+        next: (response: any) => {
+          if (response.success) {
+            Swal.fire('Éxito', 'Archivo adjuntado correctamente', 'success');
+            this.selectedFile = null;
+            this.cargarAdjuntos();
+          } else {
+            Swal.fire('Error', response.mensaje || 'Error al adjuntar archivo', 'error');
+          }
+          this.subiendoAdjunto = false;
+        },
+        error: (error) => {
+          console.error('Error al subir adjunto:', error);
+          Swal.fire('Error', 'Error al adjuntar archivo', 'error');
+          this.subiendoAdjunto = false;
+        }
+      });
+    } catch (error) {
+      console.error('Error al procesar archivo:', error);
+      Swal.fire('Error', 'Error al procesar archivo', 'error');
+      this.subiendoAdjunto = false;
+    }
+  }
+
+  cancelarSeleccionArchivo() {
+    this.selectedFile = null;
+  }
+
+  descargarAdjunto(adjunto: any) {
+    if (!adjunto.contenidoBase64) {
+      Swal.fire('Error', 'No hay contenido del archivo para descargar', 'error');
+      return;
+    }
+
+    try {
+      const base64 = adjunto.contenidoBase64;
+      const byteCharacters = atob(base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: adjunto.tipoArchivo || 'application/octet-stream' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = adjunto.nombreArchivo;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error al descargar archivo:', error);
+      Swal.fire('Error', 'Error al descargar archivo', 'error');
+    }
+  }
+
+  eliminarAdjunto(idAdjunto: number) {
+    Swal.fire({
+      title: '¿Eliminar adjunto?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.adjuntosService.eliminarAdjuntoRequerimiento(idAdjunto).subscribe({
+          next: (response: any) => {
+            if (response.success) {
+              Swal.fire('Eliminado', 'Adjunto eliminado correctamente', 'success');
+              this.cargarAdjuntos();
+            } else {
+              Swal.fire('Error', response.mensaje || 'Error al eliminar adjunto', 'error');
+            }
+          },
+          error: (error) => {
+            console.error('Error al eliminar adjunto:', error);
+            Swal.fire('Error', 'Error al eliminar adjunto', 'error');
+          }
+        });
+      }
+    });
+  }
+
+  // =============================================
+  // ANULACIONES DE REQUERIMIENTOS
+  // =============================================
+
+  cargarRequerimientosAnulados() {
+    this.loadingAnulados = true;
+    this.aprobacionesAreaService.obtenerRequerimientosAnulables({
+      documentoidentidad: this.usuario?.documentoidentidad || this.usuario?.dni || '',
+      ruc: this.usuario?.ruc || ''
+    }).subscribe({
+      next: (response: any) => {
+        const resultado = response.resultado;
+        this.requerimientosAnulados = Array.isArray(resultado) ? resultado : [];
+        this.loadingAnulados = false;
+      },
+      error: (error: any) => {
+        console.error('Error al cargar requerimientos anulados:', error);
+        this.requerimientosAnulados = [];
+        this.loadingAnulados = false;
+      }
+    });
+  }
+
+  puedeAnular(req: any): boolean {
+    const estado = req.estado || req.estados;
+    return estado === 'PENDIENTE' || estado === 'EN APROBACION' || estado === 'APROBADO';
+  }
+
+  abrirModalAnulacion(req: any) {
+    this.requerimientoParaAnular = req;
+    this.motivoAnulacion = '';
+    this.displayAnulacionModal = true;
+  }
+
+  async confirmarAnulacion() {
+    if (!this.requerimientoParaAnular || !this.motivoAnulacion || this.motivoAnulacion.length < 10) {
+      return;
+    }
+
+    const data = {
+      idRequerimiento: this.requerimientoParaAnular.idrequerimiento,
+      usuario: this.usuario?.documentoidentidad || this.usuario?.dni || '',
+      ruc: this.usuario?.ruc || '',
+      motivo: this.motivoAnulacion
+    };
+
+    this.aprobacionesAreaService.anularRequerimiento(data).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          Swal.fire('Éxito', 'Requerimiento anulado correctamente', 'success');
+          this.displayAnulacionModal = false;
+          this.motivoAnulacion = '';
+          this.requerimientoParaAnular = null;
+          this.cargarRequerimientosPendientes();
+        } else {
+          Swal.fire('Error', response.mensaje || 'Error al anular requerimiento', 'error');
+        }
+      },
+      error: (error: any) => {
+        console.error('Error al anular requerimiento:', error);
+        Swal.fire('Error', 'Error al anular requerimiento', 'error');
+      }
+    });
+  }
+
+  cargarHistorialAnulaciones() {
+    if (!this.requerimientoDetallePendientes?.idrequerimiento) {
+      this.historialAnulaciones = [];
+      return;
+    }
+
+    this.loadingHistorialAnulaciones = true;
+    this.aprobacionesAreaService.listarHistorialAnulaciones({
+      idRequerimiento: this.requerimientoDetallePendientes.idrequerimiento
+    }).subscribe({
+      next: (response: any) => {
+        const resultado = response.resultado;
+        this.historialAnulaciones = Array.isArray(resultado) ? resultado : [];
+        this.loadingHistorialAnulaciones = false;
+      },
+      error: (error: any) => {
+        console.error('Error al cargar historial de anulaciones:', error);
+        this.historialAnulaciones = [];
+        this.loadingHistorialAnulaciones = false;
+      }
+    });
+  }
+
+  verHistorialAnulacion(req: any) {
+    this.requerimientoDetallePendientes = req;
+    this.detallePendientesTab = 'historial-anulaciones';
+    this.displayDetallePendientesModal = true;
+    this.cargarHistorialAnulaciones();
   }
 }

@@ -284,8 +284,12 @@ export class ConsolidacionServiciosComponent implements OnInit {
     } catch { this.adjuntos.set([]); }
   }
 
+  rutaLocalArchivo: string | null = null;
+
   onFileSelected(event: Event) {
-    this.archivoSeleccionado = (event.target as HTMLInputElement).files?.[0] || null;
+    const input = event.target as HTMLInputElement;
+    this.archivoSeleccionado = input.files?.[0] || null;
+    this.rutaLocalArchivo = input.value || null;
   }
 
   async subirAdjunto() {
@@ -293,16 +297,27 @@ export class ConsolidacionServiciosComponent implements OnInit {
     this.subiendoAdjunto.set(true);
     try {
       const b64 = await this.fileToBase64(this.archivoSeleccionado);
+      const numeroOrdenSpring = this.osActual()?.numeroOrdenSpring;
+      const companiaSocio = this.osActual()?.companiaSocioSpring;
+      const rutaServidor = `\\\\172.16.20.24\\SpringGestionDoc\\TEMPORAL\\WH\\${this.archivoSeleccionado.name}`;
+      const payload: any = {
+        idOrden: this.osActual()?.idOS, tipoOrden: 'OS',
+        nombreArchivo: this.archivoSeleccionado.name,
+        tipoArchivo: this.archivoSeleccionado.type,
+        tamano: this.archivoSeleccionado.size,
+        contenidoB64: b64,
+        descripcion: this.adjuntoDescripcion,
+        usuarioSube: this.usuario?.documentoidentidad,
+        idempresa: this.usuario?.idempresa,
+        companiaSocio: companiaSocio,
+        urlArchivo: rutaServidor,
+        rutaLocal: this.rutaLocalArchivo || this.archivoSeleccionado.name
+      };
+      if (numeroOrdenSpring) {
+        payload.numeroOrdenSpring = numeroOrdenSpring;
+      }
       const resp: any = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/logistica/guardar-adjunto-oc`, {
-          idOrden: this.osActual()?.idOS, tipoOrden: 'OS',
-          nombreArchivo: this.archivoSeleccionado.name,
-          tipoArchivo: this.archivoSeleccionado.type,
-          tamano: this.archivoSeleccionado.size,
-          contenidoB64: b64,
-          descripcion: this.adjuntoDescripcion,
-          usuarioSube: this.usuario?.documentoidentidad
-        })
+        this.http.post(`${this.baseUrl}/api/logistica/guardar-adjunto-oc`, payload)
       );
       if (resp?.success) {
         this.archivoSeleccionado = null;

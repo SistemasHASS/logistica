@@ -249,6 +249,159 @@
 }
 
 /* ===========================
+   BADGE ROL
+=========================== */
+.badge-rol {
+  display: inline-block;
+  background-color: #e0e7ff;
+  color: #3730a3;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* ===========================
+   ERP BUSCADOR
+=========================== */
+.erp-lista {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
+  li {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: background 0.15s;
+
+    &:hover, &:focus {
+      background-color: #eef2ff;
+      outline: none;
+    }
+
+    strong { font-size: 13px; color: #1f2937; }
+    small { font-size: 11px; color: #6b7280; }
+  }
+}
+
+.erp-seleccionado {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #15803d;
+  font-weight: 500;
+
+  i { font-size: 16px; }
+}
+
+/* ===========================
+   ALERTAS
+=========================== */
+.alert-error {
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.loading-row {
+  text-align: center;
+  padding: 32px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* ===========================
+   FORM EXTRAS
+=========================== */
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+  }
+
+  label {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+.field-error {
+  color: #dc2626;
+  font-size: 11px;
+  margin-top: -6px;
+  display: block;
+}
+
+.req { color: #dc2626; }
+
+.hint {
+  color: #6b7280;
+  font-size: 11px;
+  display: block;
+  margin-top: 2px;
+}
+
+.mb-2 { margin-bottom: 8px; }
+
+/* ===========================
+   BOTONES EXTRA
+=========================== */
+.btn {
+  border: none;
+  padding: 6px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 0.85; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn-sm { padding: 4px 8px; font-size: 12px; }
+.btn-warning { background-color: #f59e0b; color: #fff; }
+.btn-success { background-color: #16a34a; color: #fff; }
+.btn-danger  { background-color: #dc2626; color: #fff; }
+
+.actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+code {
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #374151;
+}
+
+/* ===========================
    RESPONSIVE
 =========================== */
 @media (max-width: 768px) {

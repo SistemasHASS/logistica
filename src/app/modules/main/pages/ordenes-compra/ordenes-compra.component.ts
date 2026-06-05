@@ -169,6 +169,11 @@ export class OrdenesCompraComponent implements OnInit {
   itemsTodos: any[] = [];
   itemSeleccionado: any = null;
   indiceItemEdicion = -1; // índice del item en detalleOrden que se está editando
+
+  // Maestros para dropdowns en detalle (OC directa)
+  cecosData: any[] = [];
+  proyectosData: any[] = [];
+
   datosProveedor = {
     proveedor: '',
     nombreProveedor: '',
@@ -383,6 +388,41 @@ export class OrdenesCompraComponent implements OnInit {
     }
   }
 
+  async cargarMaestrosDetalle(): Promise<void> {
+    try {
+      // Cargar CECOs
+      let cecos = await this.dexieService.showCecos();
+      if (!cecos || cecos.length === 0) {
+        const resp: any = await lastValueFrom(
+          this.maestrasService.getCecos([{ aplicacion: 'LOGISTICA', esadmin: 0 }])
+        );
+        cecos = Array.isArray(resp) ? resp : [];
+        if (cecos.length > 0) await this.dexieService.saveCecos(cecos);
+      }
+      // Deduplicar por costcenter
+      const vistos = new Set<string>();
+      this.cecosData = cecos.filter((c: any) => {
+        const key = c.costcenter || c.id;
+        if (vistos.has(key)) return false;
+        vistos.add(key);
+        return true;
+      });
+
+      // Cargar Proyectos
+      let proyectos = await this.dexieService.showProyectos();
+      if (!proyectos || proyectos.length === 0) {
+        const resp: any = await lastValueFrom(
+          this.maestrasService.getProyectos([{ aplicacion: 'LOGISTICA', esadmin: 0 }])
+        );
+        proyectos = Array.isArray(resp) ? resp : [];
+        if (proyectos.length > 0) await this.dexieService.saveProyectos(proyectos);
+      }
+      this.proyectosData = proyectos;
+    } catch (error) {
+      console.error('Error al cargar maestros para detalle:', error);
+    }
+  }
+
   async generarDistribucionContable() {
     try {
       this.distribucionContable = [];
@@ -435,7 +475,7 @@ export class OrdenesCompraComponent implements OnInit {
         const det = detalleItem as any;
         const subtotal = this.calcularSubtotalSinIgv(detalleItem);
 
-        // Buscar ceco y proyecto: cotización Dexie → solicitud Dexie → consolidación backend (SP)
+        // Buscar ceco y proyecto: cotización Dexie → solicitud Dexie → consolidación backend (SP) → valor del detalle
         const detCot = detallesCotizacion.find(
           (d: any) => d.codigo === detalleItem.codigo
         );
@@ -478,14 +518,16 @@ export class OrdenesCompraComponent implements OnInit {
           descripcion = itemData.subFamilia || itemData.familia || itemData.descripcionLocal || descripcion;
         }
 
-        const cuentaKey = `${cuenta || detalleItem.codigo}-${centrocosto}-${proyecto}`;
+        // Generar distribución aunque no tenga ceco/proyecto (flujo directo)
+        // Usar código como fallback para cuentaKey si no hay cuenta
+        const cuentaKey = `${cuenta || detalleItem.codigo || 'SIN_CUENTA'}-${centrocosto || 'SIN_CECO'}-${proyecto || 'SIN_PROYECTO'}`;
 
         if (distribucionesMap.has(cuentaKey)) {
           distribucionesMap.get(cuentaKey).monto += subtotal;
         } else {
           distribucionesMap.set(cuentaKey, {
             id: `DIST-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-            cuenta,
+            cuenta: cuenta || '',
             descripcion,
             centrocosto,
             proyecto,
@@ -536,6 +578,17 @@ export class OrdenesCompraComponent implements OnInit {
       }
     }
     return this.referenciaControls.get(item.id)!;
+  }
+
+  getLaboresPorCeco(centrocosto: string): any[] {
+    const vistas = new Set<string>();
+    return this.laborData
+      .filter(l => !centrocosto || l.ceco?.trim() === centrocosto.trim())
+      .filter(l => {
+        if (vistas.has(l.idlabor)) return false;
+        vistas.add(l.idlabor);
+        return true;
+      });
   }
 
   calcularSubtotalSinIgv(detalle: DetalleOrdenCompra): number {
@@ -830,6 +883,9 @@ export class OrdenesCompraComponent implements OnInit {
         this.modoEdicion = false;
         this.esOCDirecta = false;
 
+        // Cargar maestros para dropdowns
+        await this.cargarMaestrosDetalle();
+
         this.alertService.cerrarModalCarga();
         this.alertService.showAlert('Éxito', 'Proveedor seleccionado. Agregue items a la orden de compra.', 'success');
       } else if (this.solicitudPendienteOC) {
@@ -933,6 +989,8 @@ export class OrdenesCompraComponent implements OnInit {
     // Actualizar total de cabecera
     this.ordenCompra!.montoTotal = +this.detalleOrden
       .reduce((s, d) => s + d.total, 0).toFixed(2);
+    // Regenerar distribución contable (async sin await para no bloquear UI)
+    this.generarDistribucionContable();
   }
 
   /** Agrega un item vacío al detalle para OC directa */
@@ -958,6 +1016,8 @@ export class OrdenesCompraComponent implements OnInit {
   /** Abre el modal de búsqueda de items para un índice específico */
   async abrirModalBuscarItem(indice: number) {
     this.indiceItemEdicion = indice;
+    // Cargar maestros para dropdowns
+    await this.cargarMaestrosDetalle();
     this.busquedaItem = '';
     this.itemSeleccionado = null;
 
@@ -1015,7 +1075,7 @@ export class OrdenesCompraComponent implements OnInit {
   }
 
   /** Confirma la selección del item y llena los campos */
-  confirmarSeleccionItem() {
+  async confirmarSeleccionItem() {
     if (!this.itemSeleccionado || this.indiceItemEdicion < 0) return;
 
     const item = this.itemSeleccionado;
@@ -1030,17 +1090,22 @@ export class OrdenesCompraComponent implements OnInit {
     // Recalcular totales
     this.recalcularItemOC(det);
 
+    // Regenerar distribución contable
+    await this.generarDistribucionContable();
+
     this.modalBuscarItemAbierto = false;
     this.itemSeleccionado = null;
     this.indiceItemEdicion = -1;
   }
 
   /** Elimina un item del detalle */
-  eliminarItem(index: number) {
+  async eliminarItem(index: number) {
     this.detalleOrden.splice(index, 1);
     // Recalcular total de cabecera
     this.ordenCompra!.montoTotal = +this.detalleOrden
       .reduce((s, d) => s + d.total, 0).toFixed(2);
+    // Regenerar distribución contable
+    await this.generarDistribucionContable();
   }
 
   async confirmarGenerarOC() {
@@ -1266,22 +1331,35 @@ export class OrdenesCompraComponent implements OnInit {
       // Guardar localmente primero
       await this.dexieService.saveOrdenCompra(this.ordenCompra);
 
-      // Si está conectado, asignar aprobadores automáticamente
+      // Si está conectado, guardar OC en BD SQL y registrar en flujo de aprobación unificado
       if (this.estaConectado && !this.modoEdicion) {
         try {
-          const respuesta = await this.ordenCompraService
-            .asignarAprobadores(this.ordenCompra.id!, this.ordenCompra.montoTotal)
-            .toPromise();
+          const payload = {
+            numeroOrden:      this.ordenCompra.numeroOrden,
+            rucProveedor:     this.ordenCompra.rucProveedor,
+            idproveedor:      this.ordenCompra.rucProveedor,
+            idalmacen:        this.ordenCompra.almacen || '',
+            idmoneda:         this.ordenCompra.moneda || 'PEN',
+            montototal:       this.ordenCompra.montoTotal,
+            montoigv:         this.ordenCompra.igv || 0,
+            plazoentrega:     this.ordenCompra.plazoEntrega || 7,
+            tipocambio:       this.ordenCompra.tipoCambio || 3.00,
+            idformapago:      this.ordenCompra.formaPago || '001',
+            observaciones:    this.ordenCompra.observaciones || '',
+            idproyecto:       this.ordenCompra.proyecto || '',
+            usuarioGenera:    this.usuario.documentoidentidad,
+            fechaprometida:   this.ordenCompra.fechaEntrega || null,
+          };
+          const respuesta = await this.ordenCompraService.guardarOCDirecta(payload);
 
-          if (respuesta?.status === 'success') {
-            console.log('Aprobadores asignados:', respuesta);
+          if (respuesta?.success === 1 || respuesta?.success === true) {
             this.ordenCompra.estadoAprobacion = 'PENDIENTE';
             this.ordenCompra.requiereAprobacion = true;
             await this.dexieService.saveOrdenCompra(this.ordenCompra);
           }
         } catch (errorAprobacion) {
-          console.warn('Error al asignar aprobadores:', errorAprobacion);
-          // Continuar aunque falle la asignación de aprobadores
+          console.warn('Error al registrar OC en BD:', errorAprobacion);
+          // Continuar aunque falle — la OC queda en Dexie igual
         }
       }
 

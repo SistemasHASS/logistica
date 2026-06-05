@@ -87,6 +87,10 @@ export class AprobacionesOCComponent implements OnInit {
   motivoTexto = '';
   ocAccionPendiente: any = null;
 
+  // Pagination
+  rowsPerPageOptions = [10, 25, 50, 100];
+  rows = 10;
+
   constructor(
     private aprobacionOCService: AprobacionOCService,
     private aprobacionOrdenService: AprobacionOrdenService,
@@ -318,36 +322,39 @@ export class AprobacionesOCComponent implements OnInit {
 
     if (!confirmacion) return;
 
+    if (!oc.idAprobacion && !oc.IdAprobacion) {
+      this.alertService.showAlert(
+        'Sin registro de aprobación',
+        'Esta OC no tiene un registro de aprobación activo. Verifique que fue guardada correctamente desde el módulo de Órdenes de Compra.',
+        'warning'
+      );
+      return;
+    }
+
     try {
       this.alertService.mostrarModalCarga();
 
-      const respuesta = await this.aprobacionOCService
-        .aprobarRechazar(
-          oc.idAprobacion || null,
-          'APROBAR',
-          this.usuario.documentoidentidad,
-          this.usuario.nombre,
-          '',
-          oc.numeroOrden
-        )
-        .toPromise();
+      // Ambos flujos (ANTIGUO y NUEVO) usan LOGISTICA_AprobacionOrden → mismo endpoint
+      const respuesta = await lastValueFrom(
+        this.aprobacionOrdenService.aprobar({
+          idAprobacion: oc.idAprobacion || oc.IdAprobacion,
+          dniAprobador: this.usuario.documentoidentidad,
+          nombreAprobador: this.usuario.nombre,
+          observacion: '',
+        })
+      );
 
       this.alertService.cerrarModalCarga();
 
-      if (respuesta?.errorgeneral === 0 || respuesta?.errorgeneral === '0' || respuesta?.status === 'success') {
+      if (respuesta?.errorgeneral === 0 || respuesta?.errorgeneral === '0' || respuesta?.success) {
         this.alertService.showAlert(
           'Éxito',
           respuesta?.mensaje || respuesta?.message || 'Orden de compra aprobada correctamente',
           'success'
         );
-
-        // Recargar datos
         await this.cargarContadores();
         await this.cargarOCPendientes();
-
-        if (this.modalDetalleOC) {
-          this.cerrarModalDetalleOC();
-        }
+        if (this.modalDetalleOC) this.cerrarModalDetalleOC();
       } else {
         this.alertService.showAlert(
           'Error',
@@ -791,5 +798,63 @@ export class AprobacionesOCComponent implements OnInit {
     if (dias <= 1) return 'text-success';
     if (dias <= 3) return 'text-warning';
     return 'text-danger';
+  }
+
+  esImagen(tipoArchivo: string): boolean {
+    if (!tipoArchivo) return false;
+    const tiposImagen = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+    return tiposImagen.includes(tipoArchivo.toLowerCase());
+  }
+
+  async descargarAdjunto(adj: any) {
+    try {
+      this.alertService.mostrarModalCarga();
+      const resp: any = await lastValueFrom(
+        this.aprobacionOrdenService.obtenerAdjuntoOC(adj.idAdjunto)
+      );
+      this.alertService.cerrarModalCarga();
+
+      if (resp?.contenidoB64) {
+        const binaryString = atob(resp.contenidoB64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: resp.tipoArchivo || 'application/octet-stream' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = adj.nombreArchivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } else {
+        this.alertService.showAlert('Error', 'No se pudo obtener el contenido del archivo', 'error');
+      }
+    } catch (error: any) {
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert('Error', error.message || 'Error al descargar el archivo', 'error');
+    }
+  }
+
+  async previsualizarAdjunto(adj: any) {
+    try {
+      this.alertService.mostrarModalCarga();
+      const resp: any = await lastValueFrom(
+        this.aprobacionOrdenService.obtenerAdjuntoOC(adj.idAdjunto)
+      );
+      this.alertService.cerrarModalCarga();
+
+      if (resp?.contenidoB64) {
+        const url = `data:${resp.tipoArchivo};base64,${resp.contenidoB64}`;
+        window.open(url, '_blank');
+      } else {
+        this.alertService.showAlert('Error', 'No se pudo obtener el contenido del archivo', 'error');
+      }
+    } catch (error: any) {
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert('Error', error.message || 'Error al previsualizar el archivo', 'error');
+    }
   }
 }

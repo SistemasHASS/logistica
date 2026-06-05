@@ -228,11 +228,31 @@ export class RequerimientosMaestrasService {
   resolverAreaDesdeTexto(textoArea: string): string {
     if (!textoArea) return '';
     const texto = textoArea.trim().toUpperCase();
-    const encontrada = this.areas.find((a: any) =>
-      (a.descripcion ?? '').toString().toUpperCase().trim() === texto ||
-      (a.nombre ?? '').toString().toUpperCase().trim() === texto
+
+    // Función para normalizar texto (quitar tildes)
+    const normalizarTexto = (str: string): string => {
+      return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+    };
+
+    const textoNormalizado = normalizarTexto(texto);
+
+    // 1. Coincidencia exacta (con normalización de tildes)
+    const encontradaExacta = this.areas.find((a: any) =>
+      normalizarTexto(a.descripcion ?? '') === textoNormalizado ||
+      normalizarTexto(a.nombre ?? '') === textoNormalizado
     );
-    return encontrada ? String(encontrada.idarea) : '';
+    if (encontradaExacta) return String(encontradaExacta.idarea);
+
+    // 2. Coincidencia parcial (el texto del Excel está contenido en el nombre del área o viceversa)
+    const encontradaParcial = this.areas.find((a: any) => {
+      const descripcionNormalizada = normalizarTexto(a.descripcion ?? '');
+      const nombreNormalizado = normalizarTexto(a.nombre ?? '');
+      return descripcionNormalizada.includes(textoNormalizado) ||
+             textoNormalizado.includes(descripcionNormalizada) ||
+             nombreNormalizado.includes(textoNormalizado) ||
+             textoNormalizado.includes(nombreNormalizado);
+    });
+    return encontradaParcial ? String(encontradaParcial.idarea) : '';
   }
 
   getDescripcionArea(idarea: any): string {

@@ -9,6 +9,17 @@
       <button class="btn-primary" (click)="nuevaOrdenServicioDirecta()">
         <i class="bx bx-plus"></i> Orden Directa
       </button>
+      <button class="btn-excel" (click)="descargarPlantillaOSMasivo()" title="Descargar plantilla Excel">
+        <i class="bx bx-download"></i> Plantilla Excel
+      </button>
+      <label class="btn-excel-upload" title="Cargar OS masivo desde Excel">
+        <i class="bx bx-upload"></i> Carga Masiva
+        <input
+          type="file"
+          accept=".xlsx,.xls"
+          style="display:none"
+          (change)="onArchivoExcelSeleccionado($event)">
+      </label>
     </div>
   </div>
 
@@ -841,3 +852,138 @@
     </div>
   </div>
 </div>
+
+<!-- ============================================================ -->
+<!-- MODAL CARGA MASIVA OS DESDE EXCEL -->
+<!-- ============================================================ -->
+@if (modalCargaMasivaAbierto) {
+<div class="modal-overlay" (click)="cerrarModalCargaMasiva()">
+  <div class="modal-container modal-carga-masiva" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h3><i class="bx bx-upload"></i> Carga Masiva de Órdenes de Servicio</h3>
+      <button class="btn-close-modal" (click)="cerrarModalCargaMasiva()" [disabled]="procesandoCargaMasiva">
+        <i class="bx bx-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- ERRORES DE VALIDACIÓN -->
+      @if (filasConError.length > 0) {
+        <div class="alert-warning-box">
+          <strong><i class="bx bx-error"></i> Filas con errores ({{ filasConError.length }}):</strong>
+          <ul class="error-list">
+            @for (err of filasConError; track err.fila) {
+              <li>Fila {{ err.fila }}: {{ err.error }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- RESULTADO FINAL -->
+      @if (resultadoCargaMasiva) {
+        <div class="resultado-carga">
+          <div class="resultado-stats">
+            <div class="stat-ok">
+              <i class="bx bx-check-circle"></i>
+              <span>{{ resultadoCargaMasiva.exitosas }} exitosa(s)</span>
+            </div>
+            <div class="stat-fail" [class.hidden]="resultadoCargaMasiva.fallidas === 0">
+              <i class="bx bx-x-circle"></i>
+              <span>{{ resultadoCargaMasiva.fallidas }} fallida(s)</span>
+            </div>
+          </div>
+          <div class="resultado-detalles">
+            @for (det of resultadoCargaMasiva.detalles; track det) {
+              <div class="detalle-item" [class.detalle-ok]="det.includes('OK')" [class.detalle-err]="!det.includes('OK')">
+                <i class="bx" [class.bx-check]="det.includes('OK')" [class.bx-x]="!det.includes('OK')"></i>
+                {{ det }}
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- PREVIEW DE OS A CREAR -->
+      @if (!resultadoCargaMasiva) {
+        <div class="preview-section">
+          <p class="preview-info">
+            <i class="bx bx-info-circle"></i>
+            Se procesarán <strong>{{ gruposOSAgrupados.length }} Orden(es) de Servicio</strong>
+            con <strong>{{ filasImportadas.length }} línea(s) de detalle</strong> en total.
+            Cada OS se creará y sincronizará automáticamente con <strong>SPRING (serie APSO)</strong>.
+          </p>
+
+          <div class="table-wrapper" style="max-height:360px;overflow-y:auto">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>GRUPO OS</th>
+                  <th>Proveedor</th>
+                  <th>Descripción</th>
+                  <th>Tipo Servicio</th>
+                  <th>Moneda</th>
+                  <th class="text-right">Neto</th>
+                  <th class="text-right">IGV</th>
+                  <th class="text-right">Total</th>
+                  <th>Centro Costo</th>
+                  <th>Proyecto</th>
+                  <th>Detalles</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (g of gruposOSAgrupados; track g.grupoOs; let i = $index) {
+                  <tr>
+                    <td>{{ i + 1 }}</td>
+                    <td><strong>{{ g.grupoOs }}</strong></td>
+                    <td>
+                      <div>{{ g.cabecera.nombreProveedor }}</div>
+                      <small>RUC: {{ g.cabecera.rucProveedor }}</small>
+                    </td>
+                    <td>{{ g.cabecera.descripcion }}</td>
+                    <td>{{ g.cabecera.tipoServicio }}</td>
+                    <td>{{ g.cabecera.moneda }}</td>
+                    <td class="text-right">{{ g.cabecera.montoNeto | number:'1.2-2' }}</td>
+                    <td class="text-right">{{ g.cabecera.montoIgv | number:'1.2-2' }}</td>
+                    <td class="text-right"><strong>{{ g.montoTotal | number:'1.2-2' }}</strong></td>
+                    <td>{{ g.cabecera.centroCosto }}</td>
+                    <td>{{ g.cabecera.proyecto }}</td>
+                    <td class="text-center">
+                      <span class="badge badge-info">{{ g.detalles.length }} línea(s)</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+    </div>
+
+    <div class="modal-footer">
+      @if (!resultadoCargaMasiva) {
+        <button
+          class="btn btn-success"
+          (click)="procesarCargaMasivaOS()"
+          [disabled]="procesandoCargaMasiva || gruposOSAgrupados.length === 0">
+          @if (procesandoCargaMasiva) {
+            <i class="bx bx-loader-alt bx-spin"></i> Procesando...
+          } @else {
+            <i class="bx bx-cloud-upload"></i> Crear y Enviar a SPRING ({{ gruposOSAgrupados.length }} OS)
+          }
+        </button>
+      }
+      <button
+        class="btn btn-secondary"
+        (click)="cerrarModalCargaMasiva()"
+        [disabled]="procesandoCargaMasiva">
+        {{ resultadoCargaMasiva ? 'Cerrar' : 'Cancelar' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+}

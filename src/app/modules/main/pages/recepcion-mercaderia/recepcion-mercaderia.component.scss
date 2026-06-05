@@ -237,6 +237,10 @@
 
             &.actions {
               white-space: nowrap;
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              flex-wrap: nowrap;
             }
 
             &.text-center {
@@ -853,4 +857,17 @@
       height: 100vh;
     }
   }
+}
+
+// Estilos específicos para PrimeNG Table
+::ng-deep .p-datatable .p-datatable-tbody > tr > td.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+::ng-deep .p-datatable .p-datatable-tbody > tr > td.actions .btn {
+  margin: 0;
 }

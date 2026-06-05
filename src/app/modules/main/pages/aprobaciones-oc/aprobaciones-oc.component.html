@@ -95,62 +95,70 @@
 
       <!-- TABLA APROBADAS / RECHAZADAS -->
       @if (tabVistaActiva !== 'PENDIENTES') {
-        <div class="table-container">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Nro. Orden</th>
-                <th>Fecha</th>
-                <th>Proveedor</th>
-                <th>Monto Total</th>
-                <th>Estado</th>
-                <th>SPRING</th>
-                <th>Fecha Acción</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let oc of ocAprobadas">
-                <td><strong>{{ oc.numeroOrden }}</strong></td>
-                <td>{{ formatearFecha(oc.fechaOrden) }}</td>
-                <td>{{ oc.nombreProveedor }}</td>
-                <td class="text-right">
-                  <strong>S/ {{ formatearMoneda(oc.montoTotal) }}</strong>
-                </td>
-                <td>
-                  <span class="badge" [ngClass]="obtenerClaseEstado(oc.estado)">
-                    {{ oc.estado }}
-                  </span>
-                </td>
-                <td>
-                  @if (oc.estadoSpring === 'SINCRONIZADO') {
-                    <span class="badge bg-success" title="Sincronizado con SPRING"><i class="bx bx-check"></i> SPRING</span>
-                  } @else if (oc.estadoSpring === 'PENDIENTE_SYNC' || oc.estadoSpring === 'ERROR_SYNC') {
-                    <span class="badge bg-warning text-dark" title="Pendiente de sincronizar con SPRING"><i class="bx bx-time"></i> Pendiente</span>
-                  } @else {
-                    <span class="badge bg-secondary">-</span>
-                  }
-                </td>
-                <td>{{ (oc.fechaAccion || oc.FechaAccion) ? formatearFecha(oc.fechaAccion || oc.FechaAccion) : '-' }}</td>
-                <td style="display:flex;gap:4px;">
-                  <button class="btn btn-sm btn-info" (click)="verDetalleOC(oc)" title="Ver Detalle">
-                    <i class="bx bx-show"></i>
+        <p-table
+          [value]="ocAprobadas"
+          [rows]="rows"
+          [rowsPerPageOptions]="rowsPerPageOptions"
+          [paginator]="true"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+          [tableStyle]="{'min-width': '100%'}"
+          styleClass="p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Nro. Orden</th>
+              <th>Fecha</th>
+              <th>Proveedor</th>
+              <th>Monto Total</th>
+              <th>Estado</th>
+              <th>SPRING</th>
+              <th>Fecha Acción</th>
+              <th>Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-oc>
+            <tr>
+              <td><strong>{{ oc.numeroOrden }}</strong></td>
+              <td>{{ formatearFecha(oc.fechaOrden) }}</td>
+              <td>{{ oc.nombreProveedor }}</td>
+              <td class="text-right">
+                <strong>S/ {{ formatearMoneda(oc.montoTotal) }}</strong>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="obtenerClaseEstado(oc.estado)">
+                  {{ oc.estado }}
+                </span>
+              </td>
+              <td>
+                @if (oc.estadoSpring === 'SINCRONIZADO') {
+                  <span class="badge bg-success" title="Sincronizado con SPRING"><i class="bx bx-check"></i> SPRING</span>
+                } @else if (oc.estadoSpring === 'PENDIENTE_SYNC' || oc.estadoSpring === 'ERROR_SYNC') {
+                  <span class="badge bg-warning text-dark" title="Pendiente de sincronizar con SPRING"><i class="bx bx-time"></i> Pendiente</span>
+                } @else {
+                  <span class="badge bg-secondary">-</span>
+                }
+              </td>
+              <td>{{ (oc.fechaAccion || oc.FechaAccion) ? formatearFecha(oc.fechaAccion || oc.FechaAccion) : '-' }}</td>
+              <td style="display:flex;gap:4px;">
+                <button class="btn btn-sm btn-info" (click)="verDetalleOC(oc)" title="Ver Detalle">
+                  <i class="bx bx-show"></i>
+                </button>
+                @if (tabVistaActiva === 'APROBADAS' && (oc.estadoSpring === 'PENDIENTE_SYNC' || oc.estadoSpring === 'ERROR_SYNC')) {
+                  <button class="btn btn-sm btn-warning" (click)="reintentarSyncSpring(oc)" title="Reintentar sincronización con SPRING">
+                    <i class="bx bx-refresh"></i>
                   </button>
-                  @if (tabVistaActiva === 'APROBADAS' && (oc.estadoSpring === 'PENDIENTE_SYNC' || oc.estadoSpring === 'ERROR_SYNC')) {
-                    <button class="btn btn-sm btn-warning" (click)="reintentarSyncSpring(oc)" title="Reintentar sincronización con SPRING">
-                      <i class="bx bx-refresh"></i>
-                    </button>
-                  }
-                </td>
-              </tr>
-              <tr *ngIf="ocAprobadas.length === 0">
-                <td colspan="8" class="text-center">
-                  <p class="no-data">No hay órdenes {{ tabVistaActiva === 'APROBADAS' ? 'aprobadas' : 'rechazadas' }}.</p>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                }
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="8" class="text-center">
+                <p class="no-data">No hay órdenes {{ tabVistaActiva === 'APROBADAS' ? 'aprobadas' : 'rechazadas' }}.</p>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
       }
 
       <!-- FILTROS (solo para pendientes) -->
@@ -194,87 +202,95 @@
       </div>
 
       <!-- TABLA OC PENDIENTES -->
-      <div class="table-container">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Nro. Orden</th>
-              <th>Nro. SPRING</th>
-              <th>Fecha</th>
-              <th>Proveedor</th>
-              <th>Monto Total</th>
-              <th>Nivel</th>
-              <th>Días Pendiente</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let oc of ocPendientesFiltradas">
-              <td><strong>{{ oc.numeroOrden }}</strong></td>
-              <td>
-                @if (oc.numeroOrdenSpring) {
-                  <span class="badge bg-primary" title="Número en SPRING">{{ oc.numeroOrdenSpring }}</span>
-                } @else {
-                  <span class="text-muted">-</span>
-                }
-              </td>
-              <td>{{ formatearFecha(oc.fechaOrden) }}</td>
-              <td>
-                <div>{{ oc.nombreProveedor }}</div>
-                <small class="text-muted">{{ oc.proveedor }}</small>
-              </td>
-              <td class="text-right">
-                <strong>S/ {{ formatearMoneda(oc.montoTotal) }}</strong>
-              </td>
-              <td class="text-center">
-                <span class="badge badge-info">
-                  Nivel {{ oc.nivel }} de {{ oc.nivelesAprobacionTotal }}
-                </span>
-              </td>
-              <td class="text-center" [ngClass]="obtenerClaseDiasPendiente(oc.diasPendiente)">
-                <strong>{{ oc.diasPendiente }}</strong> días
-              </td>
-              <td>
-                <span class="badge" [ngClass]="obtenerClaseEstado(oc.estado)">
-                  {{ oc.estado }}
-                </span>
-              </td>
-              <td class="actions">
-                <button 
-                  class="btn btn-sm btn-info" 
-                  (click)="verDetalleOC(oc)"
-                  title="Ver Detalle">
-                  <i class="bx bx-show"></i>
-                </button>
-                <button 
-                  class="btn btn-sm btn-success" 
-                  (click)="aprobarOC(oc)"
-                  title="Aprobar">
-                  <i class="bx bx-check"></i>
-                </button>
-                <button 
-                  class="btn btn-sm btn-danger" 
-                  (click)="rechazarOC(oc)"
-                  title="Rechazar">
-                  <i class="bx bx-x"></i>
-                </button>
-                <button 
-                  class="btn btn-sm btn-warning" 
-                  (click)="anularOC(oc)"
-                  title="Anular (libera consolidación)">
-                  <i class="bx bx-block"></i>
-                </button>
-              </td>
-            </tr>
-            <tr *ngIf="ocPendientesFiltradas.length === 0">
-              <td colspan="8" class="text-center">
-                <p class="no-data">No hay órdenes de compra pendientes de aprobación.</p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <p-table
+        [value]="ocPendientesFiltradas"
+        [rows]="rows"
+        [rowsPerPageOptions]="rowsPerPageOptions"
+        [paginator]="true"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+        [tableStyle]="{'min-width': '100%'}"
+        styleClass="p-datatable-striped">
+        <ng-template pTemplate="header">
+          <tr>
+            <!-- <th>Nro. Orden</th> -->
+            <th>Nro. SPRING</th>
+            <th>Fecha</th>
+            <th>Proveedor</th>
+            <th>Monto Total</th>
+            <!-- <th>Nivel</th> -->
+            <th>Días Pendiente</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-oc>
+          <tr>
+            <!-- <td><strong>{{ oc.numeroOrden }}</strong></td> -->
+            <td>
+              @if (oc.numeroOrdenSpring) {
+                <span class="badge bg-primary" title="Número en SPRING">{{ oc.numeroOrdenSpring }}</span>
+              } @else {
+                <span class="text-muted">-</span>
+              }
+            </td>
+            <td>{{ formatearFecha(oc.fechaCreacion) }}</td>
+            <td>
+              <div>{{ oc.nombreProveedor }}</div>
+              <small class="text-muted">{{ oc.proveedor }}</small>
+            </td>
+            <td class="text-right">
+              <strong>S/ {{ formatearMoneda(oc.montoTotal) }}</strong>
+            </td>
+            <!-- <td class="text-center">
+              <span class="badge badge-info">
+                Nivel {{ oc.nivel }} de {{ oc.nivelesAprobacionTotal }}
+              </span>
+            </td> -->
+            <td class="text-center" [ngClass]="obtenerClaseDiasPendiente(oc.diasPendiente)">
+              <strong>{{ oc.diasPendiente }}</strong> días
+            </td>
+            <td>
+              <span class="badge" [ngClass]="obtenerClaseEstado(oc.estado)">
+                {{ oc.estado }}
+              </span>
+            </td>
+            <td class="actions">
+              <button
+                class="btn btn-sm btn-info"
+                (click)="verDetalleOC(oc)"
+                title="Ver Detalle">
+                <i class="bx bx-show"></i>
+              </button>
+              <!-- <button
+                class="btn btn-sm btn-success"
+                (click)="aprobarOC(oc)"
+                title="Aprobar">
+                <i class="bx bx-check"></i>
+              </button>
+              <button
+                class="btn btn-sm btn-danger"
+                (click)="rechazarOC(oc)"
+                title="Rechazar">
+                <i class="bx bx-x"></i>
+              </button>
+              <button
+                class="btn btn-sm btn-warning"
+                (click)="anularOC(oc)"
+                title="Anular (libera consolidación)">
+                <i class="bx bx-block"></i>
+              </button> -->
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="9" class="text-center">
+              <p class="no-data">No hay órdenes de compra pendientes de aprobación.</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
       } <!-- fin @if tabVistaActiva === 'PENDIENTES' -->
     </div>
 
@@ -288,56 +304,64 @@
           </button>
         </div>
 
-        <div class="table-container">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Documento</th>
-                <th>Nombre Completo</th>
-                <th>Rol</th>
-                <th>Monto Mínimo</th>
-                <th>Monto Máximo</th>
-                <th>Nivel</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let usuario of usuariosAprobadores">
-                <td>{{ usuario.documentoIdentidad }}</td>
-                <td>{{ usuario.nombreCompleto }}</td>
-                <td><span class="badge badge-info">{{ usuario.rol }}</span></td>
-                <td class="text-right">S/ {{ formatearMoneda(usuario.montoMinimo) }}</td>
-                <td class="text-right">S/ {{ formatearMoneda(usuario.montoMaximo) }}</td>
-                <td class="text-center">{{ usuario.nivel }}</td>
-                <td>
-                  <span class="badge" [ngClass]="usuario.activo ? 'badge-success' : 'badge-secondary'">
-                    {{ usuario.activo ? 'ACTIVO' : 'INACTIVO' }}
-                  </span>
-                </td>
-                <td class="actions">
-                  <button 
-                    class="btn btn-sm btn-warning" 
-                    (click)="editarUsuarioAprobador(usuario)"
-                    title="Editar">
-                    <i class="bx bx-edit"></i>
-                  </button>
-                  <button 
-                    class="btn btn-sm btn-danger" 
-                    (click)="eliminarUsuarioAprobador(usuario)"
-                    title="Eliminar">
-                    <i class="bx bx-trash"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr *ngIf="usuariosAprobadores.length === 0">
-                <td colspan="8" class="text-center">
-                  <p class="no-data">No hay usuarios aprobadores configurados.</p>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <p-table
+          [value]="usuariosAprobadores"
+          [rows]="rows"
+          [rowsPerPageOptions]="rowsPerPageOptions"
+          [paginator]="true"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+          [tableStyle]="{'min-width': '100%'}"
+          styleClass="p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Documento</th>
+              <th>Nombre Completo</th>
+              <th>Rol</th>
+              <th>Monto Mínimo</th>
+              <th>Monto Máximo</th>
+              <th>Nivel</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-usuario>
+            <tr>
+              <td>{{ usuario.documentoIdentidad }}</td>
+              <td>{{ usuario.nombreCompleto }}</td>
+              <td><span class="badge badge-info">{{ usuario.rol }}</span></td>
+              <td class="text-right">S/ {{ formatearMoneda(usuario.montoMinimo) }}</td>
+              <td class="text-right">S/ {{ formatearMoneda(usuario.montoMaximo) }}</td>
+              <td class="text-center">{{ usuario.nivel }}</td>
+              <td>
+                <span class="badge" [ngClass]="usuario.activo ? 'badge-success' : 'badge-secondary'">
+                  {{ usuario.activo ? 'ACTIVO' : 'INACTIVO' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button
+                  class="btn btn-sm btn-warning"
+                  (click)="editarUsuarioAprobador(usuario)"
+                  title="Editar">
+                  <i class="bx bx-edit"></i>
+                </button>
+                <button
+                  class="btn btn-sm btn-danger"
+                  (click)="eliminarUsuarioAprobador(usuario)"
+                  title="Eliminar">
+                  <i class="bx bx-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="8" class="text-center">
+                <p class="no-data">No hay usuarios aprobadores configurados.</p>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
       </div>
     </div>
 
@@ -351,54 +375,62 @@
           </button>
         </div>
 
-        <div class="table-container">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Descripción</th>
-                <th>Monto Mínimo</th>
-                <th>Monto Máximo</th>
-                <th>Niveles</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let flujo of flujosAprobacion">
-                <td><strong>{{ flujo.nombre }}</strong></td>
-                <td>{{ flujo.descripcion || '-' }}</td>
-                <td class="text-right">S/ {{ formatearMoneda(flujo.montoMinimo) }}</td>
-                <td class="text-right">S/ {{ formatearMoneda(flujo.montoMaximo) }}</td>
-                <td class="text-center">{{ flujo.niveles }}</td>
-                <td>
-                  <span class="badge" [ngClass]="flujo.activo ? 'badge-success' : 'badge-secondary'">
-                    {{ flujo.activo ? 'ACTIVO' : 'INACTIVO' }}
-                  </span>
-                </td>
-                <td class="actions">
-                  <button 
-                    class="btn btn-sm btn-warning" 
-                    (click)="editarFlujoAprobacion(flujo)"
-                    title="Editar">
-                    <i class="bx bx-edit"></i>
-                  </button>
-                  <button 
-                    class="btn btn-sm btn-danger" 
-                    (click)="eliminarFlujoAprobacion(flujo)"
-                    title="Eliminar">
-                    <i class="bx bx-trash"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr *ngIf="flujosAprobacion.length === 0">
-                <td colspan="7" class="text-center">
-                  <p class="no-data">No hay flujos de aprobación configurados.</p>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <p-table
+          [value]="flujosAprobacion"
+          [rows]="rows"
+          [rowsPerPageOptions]="rowsPerPageOptions"
+          [paginator]="true"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+          [tableStyle]="{'min-width': '100%'}"
+          styleClass="p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Monto Mínimo</th>
+              <th>Monto Máximo</th>
+              <th>Niveles</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-flujo>
+            <tr>
+              <td><strong>{{ flujo.nombre }}</strong></td>
+              <td>{{ flujo.descripcion || '-' }}</td>
+              <td class="text-right">S/ {{ formatearMoneda(flujo.montoMinimo) }}</td>
+              <td class="text-right">S/ {{ formatearMoneda(flujo.montoMaximo) }}</td>
+              <td class="text-center">{{ flujo.niveles }}</td>
+              <td>
+                <span class="badge" [ngClass]="flujo.activo ? 'badge-success' : 'badge-secondary'">
+                  {{ flujo.activo ? 'ACTIVO' : 'INACTIVO' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button
+                  class="btn btn-sm btn-warning"
+                  (click)="editarFlujoAprobacion(flujo)"
+                  title="Editar">
+                  <i class="bx bx-edit"></i>
+                </button>
+                <button
+                  class="btn btn-sm btn-danger"
+                  (click)="eliminarFlujoAprobacion(flujo)"
+                  title="Eliminar">
+                  <i class="bx bx-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="7" class="text-center">
+                <p class="no-data">No hay flujos de aprobación configurados.</p>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
       </div>
     </div>
   </div>
@@ -464,9 +496,17 @@
       <!-- Items de la OC -->
       <div class="items-section">
         <h4>Items de la Orden de Compra</h4>
-        <div class="table-container" *ngIf="ocDetalle.items && ocDetalle.items.length > 0">
-          <table class="table table-sm">
-            <thead>
+        @if (ocDetalle.items && ocDetalle.items.length > 0) {
+          <p-table
+            [value]="ocDetalle.items"
+            [rows]="rows"
+            [rowsPerPageOptions]="rowsPerPageOptions"
+            [paginator]="true"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+            [tableStyle]="{'min-width': '100%'}"
+            styleClass="p-datatable-striped p-datatable-sm">
+            <ng-template pTemplate="header">
               <tr>
                 <th>Item</th>
                 <th>Código</th>
@@ -477,9 +517,9 @@
                 <th>Descuento</th>
                 <th>Total</th>
               </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of ocDetalle.items">
+            </ng-template>
+            <ng-template pTemplate="body" let-item>
+              <tr>
                 <td>{{ item.codigo }}</td>
                 <td>{{ item.codigo }}</td>
                 <td>{{ item.descripcion }}</td>
@@ -489,16 +529,17 @@
                 <td class="text-right">S/ {{ formatearMoneda(item.descuento || 0) }}</td>
                 <td class="text-right"><strong>S/ {{ formatearMoneda(item.total || (item.cantidad * item.precioUnitario - (item.descuento || 0))) }}</strong></td>
               </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="no-data" *ngIf="!ocDetalle.items || ocDetalle.items.length === 0">
-          <p>No hay items disponibles.</p>
-        </div>
+            </ng-template>
+          </p-table>
+        } @else {
+          <div class="no-data">
+            <p>No hay items disponibles.</p>
+          </div>
+        }
       </div>
 
       <!-- Historial de Aprobaciones -->
-      <div class="historial-section">
+      <!-- <div class="historial-section">
         <h4>Historial de Aprobaciones</h4>
         <div class="timeline" *ngIf="historialOC && historialOC.length > 0">
           <div class="timeline-item" *ngFor="let item of historialOC">
@@ -524,7 +565,7 @@
         <div class="no-data" *ngIf="!historialOC || historialOC.length === 0">
           <p>No hay historial de aprobaciones disponible.</p>
         </div>
-      </div>
+      </div> -->
 
       <!-- Adjuntos -->
       <div class="historial-section">
@@ -532,26 +573,43 @@
         @if (adjuntosOC.length === 0) {
           <div class="alert alert-info">No hay adjuntos.</div>
         } @else {
-          <table class="table table-sm table-bordered">
-            <thead class="table-light">
+          <p-table
+            [value]="adjuntosOC"
+            [rows]="rows"
+            [rowsPerPageOptions]="rowsPerPageOptions"
+            [paginator]="true"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+            [tableStyle]="{'min-width': '100%'}"
+            styleClass="p-datatable-striped p-datatable-sm p-datatable-bordered">
+            <ng-template pTemplate="header">
               <tr>
                 <th>Archivo</th>
                 <th>Descripción</th>
                 <th>Fecha</th>
                 <th>Tamaño</th>
+                <th>Acciones</th>
               </tr>
-            </thead>
-            <tbody>
-              @for (adj of adjuntosOC; track adj.id) {
-                <tr>
-                  <td><i class="bx bx-file me-1 text-primary"></i>{{ adj.nombreArchivo }}</td>
-                  <td><small>{{ adj.descripcion || '-' }}</small></td>
-                  <td><small>{{ formatearFecha(adj.fechaSubida) }}</small></td>
-                  <td><small>{{ (adj.tamano / 1024) | number:'1.0-0' }} KB</small></td>
-                </tr>
-              }
-            </tbody>
-          </table>
+            </ng-template>
+            <ng-template pTemplate="body" let-adj>
+              <tr>
+                <td><i class="bx bx-file me-1 text-primary"></i>{{ adj.nombreArchivo }}</td>
+                <td><small>{{ adj.descripcion || '-' }}</small></td>
+                <td><small>{{ formatearFecha(adj.fechaSubida) }}</small></td>
+                <td><small>{{ (adj.tamano / 1024) | number:'1.0-0' }} KB</small></td>
+                <td style="display:flex;gap:4px;">
+                  <button class="btn btn-sm btn-primary" (click)="descargarAdjunto(adj)" title="Descargar">
+                    <i class="bx bx-download"></i>
+                  </button>
+                  @if (esImagen(adj.tipoArchivo)) {
+                    <button class="btn btn-sm btn-info" (click)="previsualizarAdjunto(adj)" title="Previsualizar">
+                      <i class="bx bx-show"></i>
+                    </button>
+                  }
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
         }
       </div>
     </div>

@@ -110,6 +110,24 @@
           </li>
           <li *ngIf="adminUser?.idPerfil.includes('TI')"
             class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-permisos-roles" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='bx bx-shield-quarter'></i>
+              </span>
+              <span class="hide-menu"> Permisos por Rol</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-menus-layout" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='bx bx-layout'></i>
+              </span>
+              <span class="hide-menu"> Menús del Layout</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
             <a routerLink="./admin-version-api" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class='icon icon-git-merge'></i>

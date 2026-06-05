@@ -215,4 +215,26 @@ export class AprobacionOrdenService {
       { headers: this.headers }
     );
   }
+
+  /**
+   * Obtener adjunto de OC por ID con contenido base64 para descarga/previsualización.
+   */
+  obtenerAdjuntoOC(idAdjunto: number): Observable<any> {
+    return this.http.post(
+      `${environment.baseUrl}/api/logistica/obtener-adjunto-oc`,
+      { idAdjunto },
+      { headers: this.headers }
+    );
+  }
+
+  /**
+   * Actualiza contenidoB64 y/o urlArchivo de un adjunto existente.
+   */
+  actualizarAdjuntoOC(idAdjunto: number, contenidoB64: string, urlArchivo: string): Observable<any> {
+    return this.http.post(
+      `${environment.baseUrl}/api/logistica/actualizar-adjunto-oc`,
+      { idAdjunto, contenidoB64, urlArchivo },
+      { headers: this.headers }
+    );
+  }
 }

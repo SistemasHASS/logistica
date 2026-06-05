@@ -63,9 +63,9 @@ export class DevolucionConsumoGuard implements CanActivate {
       return false;
     }
 
-    // Roles permitidos: JEFE_ALMACEN, PERSONAL_ALMACEN, JEFE_AREA
+    // Roles permitidos: JEFE_ALMACEN, PERSONAL_ALMACEN
     // Mapeo de roles del frontend a roles del backend
-    const rolesPermitidos = ['ALLOGIST', 'ADLOGIST', 'OPLOGIST', 'EMLOGIST', 'LOLOGIST', 'APLOGIST', 'JLOLOGIST'];
+    const rolesPermitidos = ['ALLOGIST', 'ADLOGIST', 'OPLOGIST', 'EMLOGIST', 'LOLOGIST', 'APLOGIST'];
     console.log('DevolucionConsumoGuard - Roles permitidos:', rolesPermitidos);
     console.log('DevolucionConsumoGuard - Tiene rol permitido:', tieneRolPermitido(usuario.idrol, rolesPermitidos));
     
@@ -103,7 +103,7 @@ export class ReingresoGuard implements CanActivate {
 
     // Roles permitidos: JEFE_AREA, JEFE_ALMACEN, PERSONAL_ALMACEN
     // Mapeo de roles del frontend a roles del backend
-    const rolesPermitidos = ['APLOGIST', 'ALLOGIST', 'ADLOGIST', 'OPLOGIST', 'EMLOGIST', 'LOLOGIST', 'JLOLOGIST'];
+    const rolesPermitidos = ['APLOGIST', 'ALLOGIST', 'ADLOGIST', 'OPLOGIST', 'EMLOGIST', 'LOLOGIST'];
     console.log('ReingresoGuard - Roles permitidos:', rolesPermitidos);
     console.log('ReingresoGuard - Tiene rol permitido:', tieneRolPermitido(usuario.idrol, rolesPermitidos));
     

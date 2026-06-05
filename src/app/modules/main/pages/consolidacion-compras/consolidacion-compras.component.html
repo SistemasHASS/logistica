@@ -96,7 +96,7 @@
               <th style="min-width:140px">Fecha Aprobación</th>
               <th style="min-width:140px">Usuario Creador</th>
               <th style="min-width:80px" class="text-end">Total Ítems</th>
-              <th style="min-width:100px" class="text-end">Cantidad Total</th>
+              <!-- <th style="min-width:100px" class="text-end">Cantidad Total</th> -->
               <th style="min-width:130px">Consolidación</th>
               <th style="width:80px">Acciones</th>
             </tr>
@@ -110,7 +110,7 @@
               <td><small>{{ req.fechaAprobacion | date:'dd/MM/yyyy' }}</small></td>
               <td><small>{{ req.usuarioCreador }}</small></td>
               <td class="text-end fw-bold">{{ req.totalItems }}</td>
-              <td class="text-end fw-bold">{{ req.cantidadTotal | number:'1.2-2' }}</td>
+              <!-- <td class="text-end fw-bold">{{ req.cantidadTotal | number:'1.2-2' }}</td> -->
               <td>
                 @if (req.codigoConsolidacion) {
                   <span class="badge bg-success">{{ req.codigoConsolidacion }}</span>
@@ -327,7 +327,16 @@
           <button class="btn btn-success btn-sm" (click)="abrirModalOCDirecta()" title="Crear Orden de Compra directa sin requerimiento">
             <i class="bx bx-plus me-1"></i>OC Directa
           </button>
-          <button class="btn btn-outline-success btn-sm ms-auto" (click)="exportarExcelOC()"
+          <button class="btn btn-outline-info btn-sm ms-auto" (click)="sincronizarOCsMasivo()"
+                  [disabled]="sincronizandoMasivo()"
+                  title="Sincronizar todas las OCs PENDIENTE sin número SPRING">
+            @if (sincronizandoMasivo()) {
+              <span class="spinner-border spinner-border-sm me-1"></span> Sincronizando...
+            } @else {
+              <i class="bx bx-sync me-1"></i> Sync SPRING masivo
+            }
+          </button>
+          <button class="btn btn-outline-success btn-sm" (click)="exportarExcelOC()"
                   [disabled]="ordenesCompra().length === 0" title="Exportar a Excel">
             <i class="bx bx-download me-1"></i>Exportar Excel
           </button>
@@ -343,7 +352,7 @@
               <tr>
                 <!-- <th style="width:40px"></th> -->
                 <th style="width:20px">#</th>
-                <th>Número OC</th>
+                <!-- <th>Número OC</th> -->
                 <th>Número SPRING</th>
                 <th>Proveedor</th>
                 <th>RUC</th>
@@ -360,7 +369,7 @@
                   [class.table-primary]="oc.estado==='ENVIADA'">
                 <!-- <td></td> -->
                 <td>{{ rowIndex + 1 }}</td>
-                <td><strong>{{ oc.numeroOrden }}</strong></td>
+                <!-- <td><strong>{{ oc.numeroOrden }}</strong></td> -->
                 <td>
                   @if (oc.numeroOrdenSpring) {
                     <span class="badge bg-primary">{{ oc.numeroOrdenSpring }}</span>
@@ -373,46 +382,57 @@
                 <td>{{ oc.moneda }} {{ oc.totalOrden | number:'1.2-2' }}</td>
                 <td>{{ oc.fechaCreacion }}</td>
                 <td><span class="badge" [class]="badgeEstadoOC(oc.estado)">{{ oc.estado }}</span></td>
-                <td>
-                  <div class="d-flex gap-1 align-items-center">
-                    <button class="btn btn-sm btn-outline-secondary" (click)="abrirAdjuntos(oc, 'OC')" title="Ver adjuntos">
-                      <i class="bx bx-paperclip"></i> {{ oc.cantAdjuntos ?? 0 }}
-                    </button>
-                    <button class="btn btn-sm btn-outline-primary" (click)="verDetalleOC(oc)" title="Ver detalle">
-                      <i class="bx bx-show"></i>
+                <td class="text-center">
+                  <div class="d-flex justify-content-center align-items-center gap-1 flex-wrap">
+                    <!-- <button class="btn btn-outline-secondary btn-sm rounded-circle p-1 position-relative" style="width:30px;height:30px;line-height:1"
+                            (click)="abrirAdjuntos(oc, 'OC')" title="Ver adjuntos">
+                      <i class="bx bx-paperclip" style="font-size:0.85rem"></i>
+                      @if ((oc.cantAdjuntos ?? 0) > 0) {
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem;min-width:16px">{{ oc.cantAdjuntos }}</span>
+                      }
+                    </button> -->
+                    <button class="btn btn-outline-primary btn-sm rounded-circle p-1 position-relative" style="width:30px;height:30px;line-height:1"
+                            (click)="verDetalleOC(oc)" title="Ver detalle">
+                      <i class="bx bx-show" style="font-size:0.85rem"></i>
+                      @if ((oc.cantAdjuntos ?? 0) > 0) {
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary" style="font-size:0.6rem;min-width:16px">{{ oc.cantAdjuntos }}</span>
+                      }
                     </button>
                     @if (oc.estado === 'PENDIENTE') {
-                      <button class="btn btn-sm btn-outline-secondary" (click)="abrirAdjuntos(oc, 'OC')" title="Adjuntar">
-                        <i class="bx bx-paperclip"></i>
-                      </button>
-                      <button class="btn btn-sm btn-outline-success" (click)="sincronizarOCConSpring(oc)" title="Sincronizar con SPRING">
-                        <i class="bx bx-sync"></i>
-                      </button>
-                      <button class="btn btn-sm btn-warning"
-                              [disabled]="!ocsConPdfYExcel().has(oc.idOrden)"
-                              (click)="enviarOCAprobacion(oc)"
-                              [title]="!ocsConPdfYExcel().has(oc.idOrden) ? 'Debe adjuntar un PDF y un Excel' : 'Enviar a aprobación'">
-                        <i class="bx bx-send"></i>
+                      <button class="btn btn-outline-warning btn-sm rounded-circle p-1" style="width:30px;height:30px;line-height:1"
+                              (click)="editarOC(oc)" title="Editar OC">
+                        <i class="bx bx-edit" style="font-size:0.85rem"></i>
                       </button>
                     }
-                    @if (oc.estado === 'APROBADA' || oc.estado === 'ENVIADA') {
-                      <!-- PDF con formato configurable (solo cuando está aprobada/enviada) -->
-                      <button class="btn btn-sm btn-outline-danger" title="Ver / Imprimir PDF (Formato oficial)" (click)="verPdfOCFormateado(oc)">
-                        <i class="bx bx-file-pdf"></i> PDF
+                    <!-- @if (oc.estado === 'PENDIENTE' || oc.estado === 'PENDIENTE_APROBACION') {
+                      <button class="btn btn-outline-secondary btn-sm rounded-circle p-1" style="width:30px;height:30px;line-height:1"
+                              (click)="verPdfOC(oc)" title="Vista previa borrador">
+                        <i class="bx bx-file-blank" style="font-size:0.85rem"></i>
                       </button>
-                    } @else {
-                      <!-- Vista previa simple para estados previos -->
-                      <button class="btn btn-sm btn-outline-secondary" title="Vista previa borrador" (click)="verPdfOC(oc)">
-                        <i class="bx bx-file-blank"></i> Borrador
+                    } -->
+                    @if (oc.estado === 'APROBADA' || oc.estado === 'ENVIADA' || oc.estado === 'ANULADA' || oc.estado === 'RECIBIDA_TOTAL' || oc.estado === 'RECIBIDA_PARCIAL') {
+                      <button class="btn btn-outline-danger btn-sm px-2" style="height:30px;line-height:1;font-size:0.78rem"
+                              (click)="verPdfOCFormateado(oc)" title="Ver PDF oficial">
+                        <i class="bx bx-file-pdf me-1" style="font-size:0.85rem"></i>PDF
+                      </button>
+                    }
+                    @if (oc.estado === 'PENDIENTE') {
+                      <button class="btn btn-warning btn-sm rounded-circle p-1" style="width:30px;height:30px;line-height:1"
+                              (click)="enviarOCAprobacion(oc)"
+                              title="Enviar a aprobación">
+                        <i class="bx bx-send" style="font-size:0.85rem"></i>
                       </button>
                     }
                     @if (oc.estado === 'APROBADA' && !oc.correoEnviado) {
-                      <button class="btn btn-sm btn-success" (click)="confirmarEnvioOC(oc)" title="Confirmar y Enviar">
-                        <i class="bx bx-envelope"></i>
+                      <button class="btn btn-success btn-sm rounded-circle p-1" style="width:30px;height:30px;line-height:1"
+                              (click)="confirmarEnvioOC(oc)" title="Confirmar y enviar correo">
+                        <i class="bx bx-envelope" style="font-size:0.85rem"></i>
                       </button>
                     }
                     @if (oc.correoEnviado) {
-                      <span class="badge bg-success"><i class="bx bx-check-double"></i></span>
+                      <span class="badge bg-success rounded-pill" title="Correo enviado" style="font-size:0.7rem">
+                        <i class="bx bx-check-double"></i>
+                      </span>
                     }
                   </div>
                 </td>
@@ -436,16 +456,34 @@
   <div class="modal-overlay" (click)="cerrarModalOC()">
     <div class="modal-box modal-xl" (click)="$event.stopPropagation()">
       <div class="modal-header bg-primary text-white">
-        <h5 class="mb-0 text-white"><i class="bx bx-file-blank me-2"></i>Emitir Orden de Compra</h5>
+        <h5 class="mb-0 text-white"><i class="bx bx-file-blank me-2"></i>{{ modoEdicion() ? 'Editar Orden de Compra' : 'Emitir Orden de Compra' }}</h5>
         <button class="btn-close btn-close-white" (click)="cerrarModalOC()"></button>
       </div>
       <div class="modal-body" style="max-height:75vh;overflow-y:auto">
-        <!-- Datos proveedor -->
-        <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Datos del Proveedor</h6>
-
-        <!-- Buscador de proveedores -->
+        <!-- Clasificacion OC + Buscador Proveedor -->
+        <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Clasificacion de Orden de Compra</h6>
         <div class="row g-2 mb-3">
-          <div class="col-md-12 position-relative">
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Clasificación *</label>
+            <select class="form-select form-select-sm" [(ngModel)]="ocForm.clasificacion"
+                    (ngModelChange)="onClasificacionChange(ocForm)">
+              @for (op of clasificacionOpciones; track op.value) {
+                <option [value]="op.value">{{ op.label }}</option>
+              }
+            </select>
+          </div>
+          @if (ocForm.clasificacion === 'IMP') {
+            <div class="col-md-3">
+              <label class="form-label small fw-bold">Incoterm *</label>
+              <select class="form-select form-select-sm" [(ngModel)]="ocForm.incoterm">
+                <option value="">-- Seleccione --</option>
+                @for (inc of incoterms(); track inc.incoterm) {
+                  <option [value]="inc.incoterm">{{ inc.incoterm }} - {{ inc.descripcionLocal }}</option>
+                }
+              </select>
+            </div>
+          }
+          <div [class]="ocForm.clasificacion === 'IMP' ? 'col-md-6' : 'col-md-9'" class="position-relative">
             <label class="form-label small fw-bold">Buscar Proveedor (RUC o Nombre)</label>
             <div class="input-group input-group-sm">
               <span class="input-group-text"><i class="bx bx-search"></i></span>
@@ -464,7 +502,6 @@
                 </button>
               }
             </div>
-
             <!-- Dropdown de sugerencias -->
             @if (mostrarSugerenciasProveedor() && proveedoresSugeridos().length > 0) {
               <div class="dropdown-menu show w-100 position-absolute" style="z-index: 1050; max-height: 300px; overflow-y: auto;">
@@ -473,12 +510,8 @@
                     <div class="d-flex flex-column">
                       <div class="d-flex justify-content-between align-items-center">
                         <div>
-                          <strong class="text-primary">
-                            {{ prov.proveedor || 'Sin nombre' }}
-                          </strong>
-                          <div class="small text-muted">
-                            RUC: {{ prov.ruc || prov.documento || 'Sin RUC' }}
-                          </div>
+                          <strong class="text-primary">{{ prov.proveedor || 'Sin nombre' }}</strong>
+                          <div class="small text-muted">RUC: {{ prov.ruc || prov.documento || 'Sin RUC' }}</div>
                         </div>
                         <span class="badge bg-success">Seleccionar</span>
                       </div>
@@ -487,7 +520,6 @@
                 }
               </div>
             }
-
             @if (proveedorSeleccionado()) {
               <div class="alert alert-success mt-2 py-2">
                 <i class="bx bx-check-circle me-1"></i>
@@ -496,6 +528,9 @@
             }
           </div>
         </div>
+
+        <!-- Datos proveedor -->
+        <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Datos del Proveedor</h6>
 
         <div class="row g-2 mb-3">
           <div class="col-md-3">
@@ -524,19 +559,28 @@
         <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Condiciones de la Orden</h6>
         <div class="row g-2 mb-3">
           <div class="col-md-3">
-            <label class="form-label small fw-bold">Moneda *</label>
-            <select class="form-select form-select-sm" [(ngModel)]="ocForm.moneda">
+            <label class="form-label small fw-bold">
+              Moneda * <span class="badge ms-1" [class]="ocForm.moneda === 'USD' ? 'bg-success' : 'bg-primary'">{{ simboloMoneda(ocForm.moneda) }} {{ ocForm.moneda }}</span>
+            </label>
+            <select class="form-select form-select-sm fw-bold" [(ngModel)]="ocForm.moneda">
               <option value="PEN">PEN - Soles</option>
               <option value="USD">USD - Dólares</option>
             </select>
           </div>
           <div class="col-md-3">
-            <label class="form-label small fw-bold">Tipo de Cambio</label>
-            <input class="form-control form-control-sm" type="number" [(ngModel)]="ocForm.tipoCambio" step="0.01">
+            <label class="form-label small fw-bold">Tipo de Cambio <small class="text-muted fw-normal">(SPRING)</small></label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text" title="Cargado desde SPRING"><i class="bx bx-link-external"></i></span>
+              <input class="form-control form-control-sm bg-light" type="number" [(ngModel)]="ocForm.tipoCambio" step="0.0001" min="0" readonly>
+            </div>
           </div>
           <div class="col-md-3">
-            <label class="form-label small fw-bold">Tiempo de Entrega *</label>
-            <input class="form-control form-control-sm" type="date" [(ngModel)]="ocForm.fechaEntregaEstimada">
+            <label class="form-label small fw-bold">Días de Entrega *</label>
+            <input class="form-control form-control-sm" type="number" [(ngModel)]="ocForm.diasEntrega" (ngModelChange)="calcularFechaEntrega()" min="1">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Fecha de Entrega Estimada</label>
+            <input class="form-control form-control-sm" type="date" [(ngModel)]="ocForm.fechaEntregaEstimada" readonly>
           </div>
           <div class="col-md-3">
             <label class="form-label small fw-bold">Condiciones de Pago</label>
@@ -556,40 +600,36 @@
             </select>
           </div>
           <div class="col-md-3">
-            <label class="form-label small fw-bold">Clasificación *</label>
-            <select class="form-select form-select-sm" [(ngModel)]="ocForm.clasificacion"
-                    (ngModelChange)="onClasificacionChange(ocForm)">
-              @for (op of clasificacionOpciones; track op.value) {
-                <option [value]="op.value">{{ op.label }}</option>
+            <label class="form-label small fw-bold">Empresa</label>
+            <select class="form-select form-select-sm" [(ngModel)]="ocForm.rucEmpresaOC"
+                    (ngModelChange)="onEmpresaOCChange($event)">
+              <option value="">-- Todas las empresas --</option>
+              @for (emp of empresas(); track emp.ruc) {
+                <option [value]="emp.ruc">{{ emp.razonsocial }}</option>
               }
             </select>
           </div>
-          @if (ocForm.clasificacion === 'IMP') {
-            <div class="col-md-3">
-              <label class="form-label small fw-bold">Incoterm *</label>
-              <select class="form-select form-select-sm" [(ngModel)]="ocForm.incoterm">
-                <option value="">-- Seleccione --</option>
-                @for (inc of incoterms(); track inc.incoterm) {
-                  <option [value]="inc.incoterm">{{ inc.incoterm }} - {{ inc.descripcionLocal }}</option>
-                }
-              </select>
-            </div>
-          }
           <div class="col-md-3">
             <label class="form-label small fw-bold">Almacén *</label>
             <app-dropdown
-              [data]="almacenes()"
+              [data]="ocForm.rucEmpresaOC ? almacenesOC() : almacenes()"
               optionLabel="almacen"
               valueField="idalmacen"
               [(ngModel)]="ocForm.almacen"
               [required]="true"
-              [editable]="false"
+              [editable]="true"
               textShow2="un almacén"
             ></app-dropdown>
           </div>
           <div class="col-md-6">
             <label class="form-label small fw-bold">Lugar de Entrega *</label>
-            <input class="form-control form-control-sm" [(ngModel)]="ocForm.lugarEntrega" placeholder="Almacén central / Fundo X">
+            <select class="form-select form-select-sm" [(ngModel)]="ocForm.lugarEntrega">
+              <option value="">-- Seleccione lugar de entrega --</option>
+              <option value="AGENCIA DE TRANSPORTE">AGENCIA DE TRANSPORTE</option>
+              <option value="OFICINA DIEGO DE ALMAGRO">OFICINA DIEGO DE ALMAGRO</option>
+              <option value="FUNDO">FUNDO</option>
+              <option value="ALMACEN DE PROVEEDOR">ALMACEN DE PROVEEDOR</option>
+            </select>
           </div>
           <div class="col-md-12">
             <label class="form-label small fw-bold">Observaciones</label>
@@ -607,9 +647,9 @@
                 <th>Descripción</th>
                 <th class="text-end">Cantidad</th>
                 <th>UM</th>
-                <th class="text-end" style="min-width:120px">Precio Unit. *</th>
-                <th class="text-end">Descuento</th>
-                <th class="text-end">Subtotal</th>
+                <th class="text-end" style="min-width:130px">Precio Unit. ({{ simboloMoneda(ocForm.moneda) }}) *</th>
+                <th class="text-end" style="min-width:90px">Dto. %</th>
+                <th class="text-end">Subtotal ({{ simboloMoneda(ocForm.moneda) }})</th>
                 <th>CECO</th>
               </tr>
             </thead>
@@ -618,20 +658,26 @@
                 <tr>
                   <td><code>{{ item.codigo }}</code></td>
                   <td><small>{{ item.descripcion }}</small></td>
-                  <td class="text-end">{{ item.cantidad | number:'1.2-2' }}</td>
+                  <td class="text-end">{{ item.cantidad | number:'1.3-3' }}</td>
                   <td>{{ item.unidadMedida }}</td>
                   <td>
-                    <input type="number" class="form-control form-control-sm text-end"
-                           [(ngModel)]="item.precioUnitario" min="0" step="0.01"
+                    <input type="text" class="form-control form-control-sm text-end"
+                           [(ngModel)]="item.precioUnitario" min="0" step="0.001"
                            style="min-width:100px"
-                           (ngModelChange)="calcularTotalesOC()">
+                           (click)="calcularTotalesOC()"
+                           (ngModelChange)="calcularTotalesOC()"
+                           (blur)="item.precioUnitario = (+item.precioUnitario).toFixed(3); calcularTotalesOC()">
                   </td>
                   <td>
-                    <input type="number" class="form-control form-control-sm text-end"
-                           [(ngModel)]="item.descuento" min="0" step="0.01"
-                           (ngModelChange)="calcularTotalesOC()">
+                    <div class="input-group input-group-sm">
+                      <input type="text" class="form-control form-control-sm text-end"
+                             [(ngModel)]="item.descuento" min="0" max="100" step="0.001"
+                             (ngModelChange)="calcularTotalesOC()"
+                             (blur)="item.descuento = (+item.descuento).toFixed(3); calcularTotalesOC()">
+                      <span class="input-group-text">%</span>
+                    </div>
                   </td>
-                  <td class="text-end fw-bold">{{ subtotalItem(item) | number:'1.2-2' }}</td>
+                  <td class="text-end fw-bold">{{ subtotalItem(item) | number:'1.3-3' }}</td>
                   <td><small>{{ item.ceco }}</small></td>
                 </tr>
               }
@@ -639,17 +685,17 @@
             <tfoot class="table-light">
               <tr>
                 <td colspan="6" class="text-end fw-bold">Subtotal:</td>
-                <td class="text-end fw-bold">{{ ocForm.subtotal | number:'1.2-2' }}</td>
+                <td class="text-end fw-bold">{{ simboloMoneda(ocForm.moneda) }} {{ ocForm.subtotal | number:'1.3-3' }}</td>
                 <td></td>
               </tr>
               <tr>
                 <td colspan="6" class="text-end fw-bold">IGV (18%):</td>
-                <td class="text-end fw-bold">{{ ocForm.igv | number:'1.2-2' }}</td>
+                <td class="text-end fw-bold">{{ simboloMoneda(ocForm.moneda) }} {{ ocForm.igv | number:'1.3-3' }}</td>
                 <td></td>
               </tr>
               <tr class="table-primary">
                 <td colspan="6" class="text-end fw-bold fs-6">TOTAL {{ ocForm.moneda }}:</td>
-                <td class="text-end fw-bold fs-6">{{ ocForm.totalOrden | number:'1.2-2' }}</td>
+                <td class="text-end fw-bold fs-6">{{ simboloMoneda(ocForm.moneda) }} {{ ocForm.totalOrden | number:'1.3-3' }}</td>
                 <td></td>
               </tr>
             </tfoot>
@@ -678,10 +724,17 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline-secondary" (click)="cerrarModalOC()">Cancelar</button>
-        <button class="btn btn-primary" (click)="crearOCBorrador()" [disabled]="guardandoOC()">
-          @if (guardandoOC()) { <span class="spinner-border spinner-border-sm me-1"></span> }
-          <i class="bx bx-save me-1"></i> Crear OC (Borrador)
-        </button>
+        @if (modoEdicion()) {
+          <button class="btn btn-warning" (click)="guardarEdicionOC()" [disabled]="guardandoOC()">
+            @if (guardandoOC()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+            <i class="bx bx-save me-1"></i> Guardar Cambios
+          </button>
+        } @else {
+          <button class="btn btn-primary" (click)="crearOCBorrador()" [disabled]="guardandoOC()">
+            @if (guardandoOC()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+            <i class="bx bx-save me-1"></i> Crear OC (Borrador)
+          </button>
+        }
       </div>
     </div>
   </div>
@@ -713,14 +766,39 @@
           <div class="alert alert-warning">No hay adjuntos. Debe adjuntar al menos un documento para enviar a aprobación.</div>
         } @else {
           <table class="table table-sm">
-            <thead><tr><th>Archivo</th><th>Descripción</th><th>Fecha</th><th>Tamaño</th></tr></thead>
+            <thead><tr><th>Archivo</th><th>Descripción</th><th>Fecha</th><th>Tamaño</th><th>Estado</th><th></th></tr></thead>
             <tbody>
               @for (adj of adjuntos(); track adj.id) {
-                <tr>
+                <tr [class.table-warning]="!adj.contenidoB64 || !adj.urlArchivo">
                   <td><i class="bx bx-file me-1 text-primary"></i>{{ adj.nombreArchivo }}</td>
                   <td><small>{{ adj.descripcion }}</small></td>
                   <td><small>{{ adj.fechaSubida }}</small></td>
                   <td><small>{{ (adj.tamano / 1024) | number:'1.0-0' }} KB</small></td>
+                  <td>
+                    @if (!adj.contenidoB64 || !adj.urlArchivo) {
+                      <span class="badge bg-warning text-dark"><i class="bx bx-error-circle me-1"></i>Sin contenido</span>
+                    } @else {
+                      <span class="badge bg-success"><i class="bx bx-check me-1"></i>OK</span>
+                    }
+                  </td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      @if (adj.contenidoB64) {
+                        <button class="btn btn-xs btn-outline-primary py-0 px-1" style="font-size:0.75rem" title="Descargar" (click)="descargarAdjunto(adj)">
+                          <i class="bx bx-download"></i>
+                        </button>
+                        <button class="btn btn-xs btn-outline-info py-0 px-1" style="font-size:0.75rem" title="Visualizar" (click)="visualizarAdjunto(adj)">
+                          <i class="bx bx-show"></i>
+                        </button>
+                      }
+                      @if (!adj.contenidoB64 || !adj.urlArchivo) {
+                        <label class="btn btn-xs btn-outline-warning py-0 px-1" style="font-size:0.75rem;cursor:pointer" title="Subir archivo para completar el registro">
+                          <i class="bx bx-upload"></i> Actualizar
+                          <input type="file" class="d-none" (change)="actualizarContenidoAdjunto($event, adj.idAdjunto, adj.origen)">
+                        </label>
+                      }
+                    </div>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -1081,7 +1159,7 @@
   <div class="modal-overlay" (click)="cerrarModalDetalleReq()">
     <div class="modal-box modal-xl" (click)="$event.stopPropagation()">
       <div class="modal-header bg-primary text-white">
-        <h5 class="mb-0"><i class="bx bx-file me-2"></i>Detalle del Requerimiento {{ requerimientoDetalleActual()?.numeroRequerimiento }}</h5>
+        <h5 class="mb-0 text-white"><i class="bx bx-file me-2"></i>Detalle del Requerimiento {{ requerimientoDetalleActual()?.numeroRequerimiento }}</h5>
         <button class="btn-close btn-close-white" (click)="cerrarModalDetalleReq()"></button>
       </div>
       <div class="modal-body" style="max-height:75vh;overflow-y:auto">
@@ -1150,7 +1228,7 @@
   <div class="modal-overlay" (click)="cerrarModalDetalleOC()">
     <div class="modal-box modal-xl" (click)="$event.stopPropagation()">
       <div class="modal-header bg-primary text-white">
-        <h5 class="mb-0"><i class="bx bx-file-blank me-2"></i>Detalle de Orden de Compra</h5>
+        <h5 class="mb-0 text-white"><i class="bx bx-file-blank me-2"></i>Detalle de Orden de Compra</h5>
         <button class="btn-close btn-close-white" (click)="cerrarModalDetalleOC()"></button>
       </div>
       <div class="modal-body" style="max-height:75vh;overflow-y:auto">
@@ -1165,7 +1243,7 @@
                 <tr><td class="fw-bold">Fecha de Creación:</td><td>{{ ordenActual().fechaCreacion }}</td></tr>
                 <tr><td class="fw-bold">Moneda:</td><td>{{ ordenActual().moneda }}</td></tr>
                 <tr><td class="fw-bold">Total:</td><td class="fw-bold text-primary">{{ ordenActual().totalOrden | number:'1.2-2' }}</td></tr>
-                <tr><td class="fw-bold">Estado:</td><td><span class="badge" [class]="badgeEstadoOC(ordenActual().estado)">{{ ordenActual().estado }}</span></td></tr>
+                <tr><td class="fw-bold">Estado:</td><td><span class="badge text-white" [class]="badgeEstadoOC(ordenActual().estado)">{{ ordenActual().estado }}</span></td></tr>
               </table>
             </div>
             <div class="col-md-6">
@@ -1190,17 +1268,40 @@
               </button>
               <div class="list-group">
                 @for (adj of adjuntos(); track adj.idAdjunto) {
-                  <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                      <i class="bx bx-file me-2"></i>
-                      <span class="small">{{ adj.descripcion || adj.nombreArchivo }}</span>
-                      @if (adj.tipoArchivo) {
-                        <span class="badge bg-secondary ms-2">{{ adj.tipoArchivo }}</span>
-                      }
+                  <div class="list-group-item" [class.list-group-item-warning]="!adj.contenidoB64 || !adj.urlArchivo">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <i class="bx bx-file me-2"></i>
+                        <span class="small">{{ adj.descripcion || adj.nombreArchivo }}</span>
+                        @if (adj.tipoArchivo) {
+                          <span class="badge bg-secondary ms-2">{{ adj.tipoArchivo }}</span>
+                        }
+                        @if (!adj.contenidoB64 || !adj.urlArchivo) {
+                          <span class="badge bg-warning text-dark ms-2"><i class="bx bx-error-circle me-1"></i>Sin contenido</span>
+                        } @else {
+                          <span class="badge bg-success ms-2"><i class="bx bx-check me-1"></i>OK</span>
+                        }
+                      </div>
+                      <div class="d-flex gap-1">
+                        @if (adj.contenidoB64) {
+                          <button class="btn btn-sm btn-outline-primary py-0 px-2" title="Descargar" (click)="descargarAdjunto(adj)">
+                            <i class="bx bx-download"></i>
+                          </button>
+                          <button class="btn btn-sm btn-outline-info py-0 px-2" title="Visualizar" (click)="visualizarAdjunto(adj)">
+                            <i class="bx bx-show"></i>
+                          </button>
+                        }
+                        @if (!adj.contenidoB64 || !adj.urlArchivo) {
+                          <label class="btn btn-sm btn-outline-warning py-0 px-2" style="cursor:pointer" title="Subir archivo para completar el registro">
+                            <i class="bx bx-upload me-1"></i>Actualizar
+                            <input type="file" class="d-none" (change)="actualizarContenidoAdjunto($event, adj.idAdjunto, adj.origen)">
+                          </label>
+                        }
+                        <button class="btn btn-sm btn-outline-danger" (click)="eliminarAdjunto(adj.idAdjunto)">
+                          <i class="bx bx-trash"></i>
+                        </button>
+                      </div>
                     </div>
-                    <button class="btn btn-sm btn-outline-danger" (click)="eliminarAdjunto(adj.idAdjunto)">
-                      <i class="bx bx-trash"></i>
-                    </button>
                   </div>
                 }
               </div>
@@ -1210,6 +1311,11 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="cerrarModalDetalleOC()">Cerrar</button>
+        @if (ordenActual() && (ordenActual().estado !== 'APROBADA' && ordenActual().estado !== 'ENVIADA')) {
+          <button class="btn btn-outline-secondary" title="Vista previa borrador" (click)="verPdfOC(ordenActual())">
+            <i class="bx bx-file-blank me-1"></i> Borrador
+          </button>
+        }
         @if (ordenActual() && ordenActual().estado === 'PENDIENTE') {
           <button class="btn btn-warning"
                   [disabled]="!tienePdfYExcel()"
@@ -1218,6 +1324,30 @@
             <i class="bx bx-send me-1"></i> Enviar Aprobación
           </button>
         }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ===================== MODAL VISUALIZADOR PDF ===================== -->
+@if (adjuntoVisualizando()) {
+  <div class="modal fade show d-block" style="background:rgba(0,0,0,0.7);z-index:1060">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width:90vw">
+      <div class="modal-content">
+        <div class="modal-header py-2">
+          <h6 class="modal-title mb-0">
+            <i class="bx bx-file me-2"></i>{{ adjuntoVisualizando()!.nombre }}
+          </h6>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-primary" (click)="descargarAdjunto(adjuntoVisualizando())" title="Descargar">
+              <i class="bx bx-download"></i>
+            </button>
+            <button type="button" class="btn-close" (click)="cerrarVisualizador()" aria-label="Cerrar"></button>
+          </div>
+        </div>
+        <div class="modal-body p-0" style="height:80vh">
+          <iframe [src]="adjuntoVisualizando()!.safeUrl" style="width:100%;height:100%;border:none" title="Vista previa"></iframe>
+        </div>
       </div>
     </div>
   </div>

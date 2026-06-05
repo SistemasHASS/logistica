@@ -353,9 +353,9 @@ export class OrdenPdfService {
 ${cfg.notaPie ? `<div style="margin-top:8px;font-size:10.5px">${cfg.notaPie}</div>` : ''}
 
 ${this.firmasHtml(
-  oc.preparadoPor || '',
+  oc.nombreUsuarioRegistra || oc.preparadoPor || oc.usuarioRegistra || '',
   oc.fechaPreparacion || fecha,
-  oc.aprobadoPor || '',
+  oc.nombreAprobador || oc.aprobadoPor || oc.usuarioAprueba || '',
   oc.fechaAprobacion || ''
 )}
 

@@ -1,4 +1,5 @@
-﻿import { Component, OnInit, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+﻿import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, signal, computed, inject } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { lastValueFrom } from 'rxjs';
@@ -13,6 +14,7 @@ import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import { OrdenCompraService } from '@/app/services/orden-compra.service';
 import { DropdownComponent } from '@/app/modules/main/components/dropdown/dropdown.component';
 import { ItemSearchComponent } from './item-search/item-search.component';
+import { TipoCambioService } from '@/app/services/tipo-cambio.service';
 import * as XLSX from 'xlsx';
 import FileSaver from 'file-saver';
 
@@ -39,6 +41,8 @@ export class ConsolidacionComprasComponent implements OnInit {
   modalDetalleOCAbierto = signal(false);
   modalOCDirectaAbierto = signal(false);
   guardandoOCDirecta = signal(false);
+  modoEdicion = signal(false);
+  ocIdEdicion = signal<number | null>(null);
 
   // Datos
   requerimientos = signal<any[]>([]);
@@ -53,6 +57,8 @@ export class ConsolidacionComprasComponent implements OnInit {
   itemsMaestra = signal<any[]>([]);
   filasExpandidas = signal<Set<string>>(new Set());
   almacenes = signal<any[]>([]);
+  almacenesOC = signal<any[]>([]);
+  empresas = signal<any[]>([]);
   itemsMaestroDirecta = signal<any[]>([]);
   cecosDirecta = signal<any[]>([]);
   proyectosDirecta = signal<any[]>([]);
@@ -69,17 +75,22 @@ export class ConsolidacionComprasComponent implements OnInit {
   itemsConsolidados = computed(() => this.requerimientos().filter(r => !!r.codigoConsolidacion).length);
 
   // Distribucion contable calculada
+  distribucionEdicion = signal<any[]>([]);
+
   distribucionContable = computed(() => {
+    if (this.modoEdicion()) {
+      return this.distribucionEdicion();
+    }
     const mapa = new Map<string, { area: string; ceco: string; proyecto: string; cantidad: number }>();
     for (const item of this.itemsSeleccionados()) {
       const key = `${item.ceco}`;
       if (!mapa.has(key)) {
-        mapa.set(key, { area: item.area, ceco: item.ceco, proyecto: item.proyecto || '', cantidad: item.cantidadPendiente });
+        mapa.set(key, { area: item.area || item.ceco, ceco: item.ceco, proyecto: item.proyecto || '', cantidad: item.cantidadPendiente });
       } else {
         mapa.get(key)!.cantidad += item.cantidadPendiente;
       }
     }
-    const total = this.itemsSeleccionados().reduce((s, i) => s + i.cantidadPendiente, 0) || 1;
+    const total = this.itemsSeleccionados().reduce((s: number, i: any) => s + i.cantidadPendiente, 0) || 1;
     return Array.from(mapa.values()).map(d => ({
       ...d,
       porcentaje: (d.cantidad / total) * 100
@@ -126,9 +137,9 @@ export class ConsolidacionComprasComponent implements OnInit {
   ocForm: any = {
     rucProveedor: '', nombreProveedor: '', emailProveedor: '',
     telefonoProveedor: '', direccionProveedor: '',
-    moneda: 'PEN', tipoCambio: 1, fechaEntregaEstimada: '',
+    moneda: 'PEN', tipoCambio: 1, diasEntrega: 1, fechaEntregaEstimada: '',
     condicionesPago: 'Contado', formaPago: 'Transferencia',
-    almacen: '', lugarEntrega: '', observaciones: '',
+    rucEmpresaOC: '', almacen: '', lugarEntrega: '', observaciones: '',
     clasificacion: 'LOC', incoterm: '',
     items: [], subtotal: 0, igv: 0, totalOrden: 0
   };
@@ -169,7 +180,9 @@ export class ConsolidacionComprasComponent implements OnInit {
     private alertService: AlertService,
     private pdfService: OrdenPdfService,
     private maestrasService: MaestrasService,
-    private ordenCompraService: OrdenCompraService
+    private ordenCompraService: OrdenCompraService,
+    private tipoCambioService: TipoCambioService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -177,6 +190,7 @@ export class ConsolidacionComprasComponent implements OnInit {
     await this.cargarRequerimientos();
     await this.cargarRequerimientosCompletos();
     await this.cargarAlmacenes();
+    await this.cargarEmpresas();
     this.cargarItemsMaestroDirecta();
     this.cargarCecosDirecta();
     this.cargarProyectosDirecta();
@@ -332,6 +346,44 @@ export class ConsolidacionComprasComponent implements OnInit {
     }
   }
 
+  async cargarEmpresas() {
+    try {
+      const resp = await this.maestrasService.getEmpresas([]);
+      this.empresas.set(Array.isArray(resp) ? resp : []);
+    } catch {
+      this.empresas.set([]);
+    }
+  }
+
+  async onEmpresaOCChange(ruc: string) {
+    this.ocForm.rucEmpresaOC = ruc;
+    this.ocForm.almacen = '';
+    if (!ruc) {
+      this.almacenesOC.set(this.almacenes());
+      return;
+    }
+    try {
+      const resp: any = await lastValueFrom(
+        this.maestrasService.getAlmacenes([{ ruc, aplicacion: 'LOGISTICA' }])
+      );
+      this.almacenesOC.set(Array.isArray(resp) ? resp : []);
+    } catch {
+      this.almacenesOC.set([]);
+    }
+  }
+
+  calcularFechaEntrega(): void {
+    const dias = parseInt(this.ocForm.diasEntrega, 10) || 0;
+    if (dias <= 0) {
+      this.ocForm.fechaEntregaEstimada = '';
+      return;
+    }
+    const hoy = new Date();
+    const fechaEntrega = new Date(hoy);
+    fechaEntrega.setDate(hoy.getDate() + dias + 1);
+    this.ocForm.fechaEntregaEstimada = fechaEntrega.toISOString().split('T')[0];
+  }
+
   async cargarOrdenesCompra() {
     this.cargandoOCs.set(true);
     try {
@@ -427,10 +479,6 @@ export class ConsolidacionComprasComponent implements OnInit {
     return this.filasExpandidas().has(codigo);
   }
 
-  simboloMoneda(moneda: string): string {
-    return moneda === 'EX' ? '$' : 'S/';
-  }
-
   getNombreAlmacen(codigo: string): string {
     if (!codigo) return '';
     const almacen = this.almacenes().find((a: any) => a.codigo === codigo || a.AlmacenCodigo === codigo);
@@ -471,22 +519,156 @@ export class ConsolidacionComprasComponent implements OnInit {
       incoterm: '',
       subtotal: 0, igv: 0, totalOrden: 0
     };
+    this.calcularFechaEntrega();
+    this.calcularTotalesOC();
     this.modalOCAbierto.set(true);
+    this.cargarTipoCambio();
+  }
+
+  async editarOC(oc: any) {
+    this.cargandoOCs.set(true);
+    try {
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/obtener-detalle-oc`, { idOrden: oc.idOrden })
+      );
+      if (!resp || resp.error) {
+        this.alertService.showAlert('Error', resp?.error || 'No se pudo cargar la OC.', 'error');
+        return;
+      }
+      const items = Array.isArray(resp.itemsJson)
+        ? resp.itemsJson
+        : (resp.itemsJson ? JSON.parse(resp.itemsJson) : []);
+      this.ocForm = {
+        rucProveedor: resp.rucProveedor || '',
+        nombreProveedor: resp.nombreProveedor || '',
+        emailProveedor: resp.emailProveedor || '',
+        telefonoProveedor: resp.telefonoProveedor || '',
+        direccionProveedor: resp.direccionProveedor || '',
+        moneda: resp.moneda || 'PEN',
+        tipoCambio: resp.tipoCambio || 1,
+        fechaEntregaEstimada: resp.fechaEntregaEstimada ? resp.fechaEntregaEstimada.substring(0, 10) : '',
+        diasEntrega: 0,
+        condicionesPago: resp.condicionesPago || 'Contado',
+        formaPago: resp.formaPago || 'Transferencia',
+        almacen: resp.almacen || '',
+        rucEmpresaOC: '',
+        lugarEntrega: resp.lugarEntrega || '',
+        observaciones: resp.observaciones || '',
+        clasificacion: resp.clasificacion || 'LOC',
+        incoterm: resp.incoterm || '',
+        items: items.map((i: any) => ({
+          idDetalle: i.idDetalle,
+          codigo: i.codigo,
+          descripcion: i.descripcion,
+          cantidad: i.cantidad,
+          unidadMedida: i.unidadMedida,
+          precioUnitario: i.precioUnitario,
+          descuento: i.descuento || 0,
+          ceco: i.ceco,
+          proyecto: i.proyecto,
+          idConsolidacion: i.idConsolidacion
+        })),
+        subtotal: resp.subtotal || 0,
+        igv: resp.igv || 0,
+        totalOrden: resp.totalOrden || 0
+      };
+      this.modoEdicion.set(true);
+      this.ocIdEdicion.set(oc.idOrden);
+      this.calcularTotalesOC();
+      // Calcular distribución contable desde los items cargados
+      const mapaEdicion = new Map<string, any>();
+      for (const it of items) {
+        const key = it.ceco || '';
+        if (!mapaEdicion.has(key)) {
+          mapaEdicion.set(key, { area: it.ceco, ceco: it.ceco, proyecto: it.proyecto || '', cantidad: it.cantidad });
+        } else {
+          mapaEdicion.get(key).cantidad += it.cantidad;
+        }
+      }
+      const totalEdicion = items.reduce((s: number, i: any) => s + i.cantidad, 0) || 1;
+      this.distribucionEdicion.set(Array.from(mapaEdicion.values()).map(d => ({
+        ...d, porcentaje: (d.cantidad / totalEdicion) * 100
+      })));
+      this.modalOCAbierto.set(true);
+    } catch (e: any) {
+      this.alertService.showAlert('Error', e?.message || 'Error inesperado.', 'error');
+    } finally {
+      this.cargandoOCs.set(false);
+    }
+  }
+
+  async guardarEdicionOC() {
+    if (!this.ocForm.nombreProveedor || !this.ocForm.rucProveedor || !this.ocForm.emailProveedor) {
+      this.alertService.showAlert('Atención', 'Complete los datos del proveedor (RUC, Nombre, Email).', 'warning');
+      return;
+    }
+    if (!this.ocForm.lugarEntrega || !this.ocForm.fechaEntregaEstimada) {
+      this.alertService.showAlert('Atención', 'Indique el lugar de entrega y la fecha estimada.', 'warning');
+      return;
+    }
+    if (this.ocForm.items.some((i: any) => !i.precioUnitario || parseFloat(i.precioUnitario) <= 0)) {
+      this.alertService.showAlert('Atención', 'Todos los ítems deben tener precio unitario mayor a 0.', 'warning');
+      return;
+    }
+    this.guardandoOC.set(true);
+    try {
+      const payload = {
+        ...this.ocForm,
+        idOrden: this.ocIdEdicion(),
+        usuarioModifica: this.usuario?.documentoidentidad
+      };
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/actualizar-oc-borrador`, payload)
+      );
+      if (resp?.success) {
+        this.alertService.showAlert('OC Actualizada', 'La orden de compra fue actualizada correctamente.', 'success');
+        this.modoEdicion.set(false);
+        this.ocIdEdicion.set(null);
+        this.cerrarModalOC();
+        await this.cargarOrdenesCompra();
+      } else {
+        this.alertService.showAlert('Error', resp?.error || resp?.mensaje || 'Error al actualizar OC.', 'error');
+      }
+    } catch (e: any) {
+      this.alertService.showAlert('Error', e?.message || 'Error inesperado.', 'error');
+    } finally {
+      this.guardandoOC.set(false);
+    }
+  }
+
+  async cargarTipoCambio() {
+    const fecha = this.tipoCambioService.fechaHoyString();
+    const resp = await this.tipoCambioService.obtenerTipoCambio(fecha);
+    if (resp?.tipoCambio) {
+      this.ocForm.tipoCambio = resp.tipoCambio;
+      this.cdr.markForCheck();
+    }
   }
 
   cerrarModalOC() {
     this.modalOCAbierto.set(false);
+    this.modoEdicion.set(false);
+    this.ocIdEdicion.set(null);
+    this.distribucionEdicion.set([]);
+  }
+
+  simboloMoneda(moneda: string): string {
+    return moneda === 'USD' ? 'US$' : 'S/';
   }
 
   subtotalItem(item: any): number {
-    return Math.round((item.cantidad * item.precioUnitario - (item.descuento || 0)) * 100) / 100;
+    const precio = parseFloat(item.precioUnitario) || 0;
+    const bruto = item.cantidad * precio;
+    const descPct = parseFloat(item.descuento) || 0;
+    const neto = bruto - (bruto * descPct / 100);
+    return Math.round(neto * 1000) / 1000;
   }
 
   calcularTotalesOC() {
     const subtotal = this.ocForm.items.reduce((s: number, i: any) => s + this.subtotalItem(i), 0);
-    this.ocForm.subtotal = Math.round(subtotal * 100) / 100;
-    this.ocForm.igv = Math.round(subtotal * 0.18 * 100) / 100;
-    this.ocForm.totalOrden = Math.round((subtotal + this.ocForm.igv) * 100) / 100;
+    this.ocForm.subtotal = Math.round(subtotal * 1000) / 1000;
+    this.ocForm.igv = Math.round(subtotal * 0.18 * 1000) / 1000;
+    this.ocForm.totalOrden = Math.round((subtotal + this.ocForm.igv) * 1000) / 1000;
   }
 
   /**
@@ -584,6 +766,7 @@ export class ConsolidacionComprasComponent implements OnInit {
         ...this.ocForm,
         idConsolidacion: this.ocForm.items[0]?.idConsolidacion,
         usuarioGenera: this.usuario?.documentoidentidad,
+        nombreRegistra: this.usuario?.nombre,
         rucEmpresa: this.usuario?.ruc
       };
       const resp: any = await lastValueFrom(
@@ -605,6 +788,60 @@ export class ConsolidacionComprasComponent implements OnInit {
     } finally {
       this.guardandoOC.set(false);
     }
+  }
+
+  sincronizandoMasivo = signal(false);
+
+  async sincronizarOCsMasivo() {
+    const pendientes = this.ordenesCompra().filter(o => o.estado === 'PENDIENTE' && !o.numeroOrdenSpring);
+    if (pendientes.length === 0) {
+      this.alertService.showAlert('Sin pendientes', 'Todas las OCs PENDIENTE ya están sincronizadas con SPRING.', 'info');
+      return;
+    }
+    const ok = await this.alertService.showConfirm(
+      'Sincronización masiva SPRING',
+      `Se sincronizarán ${pendientes.length} OC(s) PENDIENTE sin número SPRING. ¿Continuar?`,
+      'question'
+    );
+    if (!ok) return;
+
+    this.sincronizandoMasivo.set(true);
+    this.alertService.mostrarModalCarga();
+    let exitosas = 0;
+    let fallidas = 0;
+
+    for (const oc of pendientes) {
+      try {
+        const companiaCodigo = this.usuario?.idempresa || '000008';
+        const companiaSocio = (companiaCodigo || '000008').padStart(6, '0') + '00';
+        const tipoComprobante = 'SY';
+
+        const detalleResp: any = await lastValueFrom(
+          this.http.post(`${this.baseUrl}/api/logistica/obtener-oc-para-sincronizar`, {
+            idOrden: oc.idOrden, companiaCodigo, companiaSocio, tipoComprobante
+          })
+        );
+        const ocCompleta = detalleResp?.jsonSincronizacion || detalleResp;
+        if (!ocCompleta || typeof ocCompleta !== 'object') { fallidas++; continue; }
+
+        const distribucion = this.generarDistribucionContable(ocCompleta);
+        const idEmpresa = this.usuario?.idempresa || '000008';
+        const syncResp = await this.ordenCompraService.sincronizarOCConsolidacion(
+          oc.idOrden, idEmpresa, distribucion, ocCompleta
+        );
+
+        if (syncResp?.errorgeneral === 0) { exitosas++; } else { fallidas++; }
+      } catch { fallidas++; }
+    }
+
+    this.alertService.cerrarModalCarga();
+    this.sincronizandoMasivo.set(false);
+    await this.cargarOrdenesCompra();
+    this.alertService.showAlert(
+      'Sincronización completada',
+      `✔ ${exitosas} sincronizada(s) correctamente.${fallidas > 0 ? `  ✘ ${fallidas} con error.` : ''}`,
+      exitosas > 0 && fallidas === 0 ? 'success' : 'warning'
+    );
   }
 
   async sincronizarOCConSpring(oc: any) {
@@ -672,6 +909,55 @@ export class ConsolidacionComprasComponent implements OnInit {
 
   async enviarOCAprobacion(oc: any) {
     console.log('DEBUG enviarOCAprobacion - oc:', oc, 'idOrden:', oc.idOrden, 'tipo:', typeof oc.idOrden);
+
+    // Verificar si el rol del usuario tiene permiso para omitir la validación de adjuntos
+    let skipAdjuntos = false;
+    try {
+      const idrol = this.usuario?.idrol || '';
+      if (idrol) {
+        const respPerm: any = await lastValueFrom(
+          this.http.post(`${this.baseUrl}/api/logistica/verificar-permiso`, { idrol, clave: 'SKIP_ADJUNTOS_OC' })
+        );
+        skipAdjuntos = respPerm?.valor === '1';
+      }
+    } catch { skipAdjuntos = false; }
+
+    // Validar adjuntos antes de confirmar (se omite si el rol tiene permiso)
+    if (!skipAdjuntos) {
+      try {
+        const respAdj: any = await lastValueFrom(
+          this.http.post(`${this.baseUrl}/api/logistica/listar-adjuntos-oc`, { idOrden: oc.idOrden, tipoOrden: 'OC' })
+        );
+        const adjuntos = Array.isArray(respAdj) ? respAdj : [];
+        const tienePdf = adjuntos.some((a: any) => {
+          const tipo = (a.tipoArchivo || '').toLowerCase();
+          const nombre = (a.nombreArchivo || '').toLowerCase();
+          return tipo === 'pdf' || tipo === 'application/pdf' || nombre.endsWith('.pdf');
+        });
+        const tieneExcel = adjuntos.some((a: any) => {
+          const tipo = (a.tipoArchivo || '').toLowerCase();
+          const nombre = (a.nombreArchivo || '').toLowerCase();
+          return tipo === 'excel' || tipo.includes('excel') || tipo.includes('spreadsheet') ||
+                 nombre.endsWith('.xlsx') || nombre.endsWith('.xls');
+        });
+
+        if (!tienePdf || !tieneExcel) {
+          const faltantes: string[] = [];
+          if (!tienePdf) faltantes.push('📄 PDF de la orden de compra');
+          if (!tieneExcel) faltantes.push('📊 Excel del cuadro comparativo de proveedores');
+          this.alertService.showAlert(
+            'Adjuntos requeridos',
+            `Para enviar a aprobación debe adjuntar:\n\n${faltantes.join('\n')}\n\nAbre el detalle de la OC y sube los archivos correspondientes.`,
+            'warning'
+          );
+          return;
+        }
+      } catch {
+        this.alertService.showAlert('Error', 'No se pudo verificar los adjuntos. Intente nuevamente.', 'error');
+        return;
+      }
+    }
+
     const ok = await this.alertService.showConfirm('Enviar a Aprobación',
       `¿Confirma enviar la OC ${oc.numeroOrden} a aprobación? Monto: ${oc.moneda} ${oc.totalOrden}`, 'question');
     if (!ok) return;
@@ -821,9 +1107,87 @@ export class ConsolidacionComprasComponent implements OnInit {
     }
   }
 
+  rutaLocalArchivo: string | null = null;
+
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     this.archivoSeleccionado = input.files?.[0] || null;
+    this.rutaLocalArchivo = input.value || null;
+  }
+
+  private sanitizer = inject(DomSanitizer);
+  adjuntoVisualizando = signal<{ nombre: string; url: string; tipo: string; safeUrl: SafeResourceUrl } | null>(null);
+
+  descargarAdjunto(adj: any) {
+    const mime = adj.tipoArchivo === 'pdf' ? 'application/pdf'
+               : adj.tipoArchivo === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+               : adj.tipoArchivo === 'xls'  ? 'application/vnd.ms-excel'
+               : 'application/octet-stream';
+    const byteStr = atob(adj.contenidoB64);
+    const arr = new Uint8Array(byteStr.length);
+    for (let i = 0; i < byteStr.length; i++) arr[i] = byteStr.charCodeAt(i);
+    const blob = new Blob([arr], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = adj.nombreArchivo;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  visualizarAdjunto(adj: any) {
+    const mime = adj.tipoArchivo === 'pdf' ? 'application/pdf' : `application/${adj.tipoArchivo || 'octet-stream'}`;
+    const byteStr = atob(adj.contenidoB64);
+    const arr = new Uint8Array(byteStr.length);
+    for (let i = 0; i < byteStr.length; i++) arr[i] = byteStr.charCodeAt(i);
+    const blob = new Blob([arr], { type: mime });
+    const url = URL.createObjectURL(blob);
+    if (adj.tipoArchivo === 'pdf') {
+      const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      this.adjuntoVisualizando.set({ nombre: adj.nombreArchivo, url, tipo: adj.tipoArchivo, safeUrl });
+    } else {
+      window.open(url, '_blank');
+    }
+  }
+
+  cerrarVisualizador() {
+    const actual = this.adjuntoVisualizando();
+    if (actual?.url) URL.revokeObjectURL(actual.url);
+    this.adjuntoVisualizando.set(null);
+  }
+
+  async actualizarContenidoAdjunto(event: Event, idAdjunto: number, origen: string = 'NUEVO') {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const b64 = await this.fileToBase64(file);
+      const urlArchivo = `\\\\172.16.20.24\\SpringGestionDoc\\TEMPORAL\\WH\\${file.name}`;
+      const oc = this.ordenActual();
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/actualizar-adjunto-oc`, {
+          idAdjunto,
+          contenidoB64: b64,
+          urlArchivo,
+          nombreArchivo: file.name,
+          tipoOrden: this.tipoOrdenActual(),
+          usuarioSube: this.usuario?.documentoidentidad,
+          idempresa: this.usuario?.idempresa,
+          companiaSocio: oc?.companiaSocioSpring,
+          numeroOrdenSpring: oc?.numeroOrdenSpring,
+          rutaLocal: file.name
+        })
+      );
+      if (resp?.success) {
+        await this.cargarAdjuntos(this.ordenActual()?.idOrden, this.tipoOrdenActual());
+        this.alertService.showAlert('Éxito', 'Archivo actualizado correctamente.', 'success');
+      } else {
+        this.alertService.showAlert('Error', resp?.mensaje || 'Error al actualizar.', 'error');
+      }
+    } catch (e: any) {
+      this.alertService.showAlert('Error', e?.message || 'Error al actualizar el adjunto.', 'error');
+    }
+    input.value = '';
   }
 
   async subirAdjunto() {
@@ -833,18 +1197,29 @@ export class ConsolidacionComprasComponent implements OnInit {
       const b64 = await this.fileToBase64(this.archivoSeleccionado);
       const tipoArchivo = this.obtenerTipoArchivo(this.archivoSeleccionado.name);
       const idOrden = this.ordenActual()?.idOrden;
+      const numeroOrdenSpring = this.ordenActual()?.numeroOrdenSpring;
+      const companiaSocio = this.ordenActual()?.companiaSocioSpring;
       console.log('DEBUG subirAdjunto - idOrden:', idOrden, 'tipo:', typeof idOrden, 'ordenActual:', this.ordenActual());
+      const rutaServidor = `\\\\172.16.20.24\\SpringGestionDoc\\TEMPORAL\\WH\\${this.archivoSeleccionado.name}`;
+      const payload: any = {
+        idOrden: idOrden,
+        tipoOrden: this.tipoOrdenActual(),
+        nombreArchivo: this.archivoSeleccionado.name,
+        tipoArchivo: tipoArchivo,
+        tamano: this.archivoSeleccionado.size,
+        contenidoB64: b64,
+        descripcion: this.adjuntoDescripcion,
+        usuarioSube: this.usuario?.documentoidentidad,
+        idempresa: this.usuario?.idempresa,
+        companiaSocio: companiaSocio,
+        urlArchivo: rutaServidor,
+        rutaLocal: this.rutaLocalArchivo || this.archivoSeleccionado.name
+      };
+      if (numeroOrdenSpring) {
+        payload.numeroOrdenSpring = numeroOrdenSpring;
+      }
       const resp: any = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/logistica/guardar-adjunto-oc`, {
-          idOrden: idOrden,
-          tipoOrden: this.tipoOrdenActual(),
-          nombreArchivo: this.archivoSeleccionado.name,
-          tipoArchivo: tipoArchivo,
-          tamano: this.archivoSeleccionado.size,
-          contenidoB64: b64,
-          descripcion: this.adjuntoDescripcion,
-          usuarioSube: this.usuario?.documentoidentidad
-        })
+        this.http.post(`${this.baseUrl}/api/logistica/guardar-adjunto-oc`, payload)
       );
       if (resp?.success) {
         this.archivoSeleccionado = null;
@@ -1330,6 +1705,7 @@ export class ConsolidacionComprasComponent implements OnInit {
         idConsolidacion: null,
         esocdirecta: true,
         usuarioGenera: this.usuario?.documentoidentidad,
+        nombreRegistra: this.usuario?.nombre,
         distribucionContable: distribucion
       };
       const resp: any = await lastValueFrom(

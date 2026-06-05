@@ -603,6 +603,10 @@
                 <th>#</th>
                 <th>Código</th>
                 <th>Descripción</th>
+                @if (esFlujoDirecto) {
+                  <th>C.Costos</th>
+                  <th>Proyecto</th>
+                }
                 <th>Cantidad</th>
                 <th>P. Unit.</th>
                 <th>Desc.</th>
@@ -637,6 +641,30 @@
                     {{ det.descripcion }}
                   }
                 </td>
+                @if (esFlujoDirecto) {
+                  <td>
+                    <select class="form-control" [(ngModel)]="$any(det).centrocosto"
+                            (ngModelChange)="generarDistribucionContable()">
+                      <option value="">Seleccione C.Costos</option>
+                      @for (ceco of cecosData; track ceco.costcenter || ceco.id) {
+                        <option [value]="ceco.costcenter || ceco.id">
+                          {{ ceco.descripcion || ceco.costcenter || ceco.id }}
+                        </option>
+                      }
+                    </select>
+                  </td>
+                  <td>
+                    <select class="form-control" [(ngModel)]="det.proyecto"
+                            (ngModelChange)="generarDistribucionContable()">
+                      <option value="">Seleccione Proyecto</option>
+                      @for (proy of proyectosData; track proy.idproyecto || proy.id) {
+                        <option [value]="proy.idproyecto || proy.id">
+                          {{ proy.descripcion || proy.nombre || proy.idproyecto || proy.id }}
+                        </option>
+                      }
+                    </select>
+                  </td>
+                }
                 <td class="text-right">
                   @if (esFlujoDirecto) {
                     <input type="number" class="form-control input-precio" min="0" step="0.01"
@@ -679,12 +707,12 @@
                 }
               </tr>
               <tr *ngIf="detalleOrden.length === 0">
-                <td [attr.colspan]="esFlujoDirecto ? 11 : 10" class="text-center">
+                <td [attr.colspan]="esFlujoDirecto ? 13 : 10" class="text-center">
                   <p class="no-data">No hay items agregados.</p>
                 </td>
               </tr>
               <tr *ngIf="detalleOrden.length > 0" class="total-row">
-                <td [attr.colspan]="esFlujoDirecto ? 9 : 8" class="text-right"><strong>TOTAL:</strong></td>
+                <td [attr.colspan]="esFlujoDirecto ? 11 : 8" class="text-right"><strong>TOTAL:</strong></td>
                 <td class="text-right">
                   <strong class="total-amount">{{ formatearMoneda(ordenCompra.montoTotal, ordenCompra.moneda) }}</strong>
                 </td>
@@ -730,7 +758,7 @@
                 <td>
                   <select class="form-control form-control-sm" [formControl]="getCCDestinoControl(dist)">
                     <option value="">Seleccione una labor</option>
-                    <option *ngFor="let labor of laborData" [value]="labor.idlabor">{{ labor.labor }}</option>
+                    <option *ngFor="let labor of getLaboresPorCeco(dist.centrocosto)" [value]="labor.idlabor">{{ labor.labor }}</option>
                   </select>
                 </td>
               </tr>
@@ -1328,7 +1356,7 @@
         @for (item of itemsFiltrados; track item.item || item.codigo) {
           <div
             class="item-item"
-            [class.selected]="itemSeleccionado?.item === item.item || itemSeleccionado?.codigo === item.codigo"
+            [class.selected]="itemSeleccionado === item"
             (click)="seleccionarItem(item)">
             <div class="item-codigo">{{ item.item || item.codigo }}</div>
             <div class="item-descripcion">{{ item.descripcion || item.descripcionLocal || item.descripcionCompleta }}</div>

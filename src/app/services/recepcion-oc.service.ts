@@ -159,6 +159,7 @@ export class RecepcionOCService {
     return {
       idOrden: recepcion.ordenCompraId,
       guiaRemision: recepcion.guiaRemision || '',
+      guiaProveedor: recepcion.guiaProveedor || '',
       fechaGuiaRemision: recepcion.fechaGuiaRemision || null,
       transportista: recepcion.transportista || '',
       placaVehiculo: recepcion.placaVehiculo || '',

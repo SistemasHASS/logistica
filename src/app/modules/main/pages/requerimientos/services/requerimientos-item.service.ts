@@ -1007,6 +1007,7 @@ export class RequerimientosItemService {
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
     const lineasPreview: DetalleExcelPreview[] = [];
+    const lineasAgrupadas = new Map<string, DetalleExcelPreview>();
     let areaDetectada = '';
     let idAreaDetectada = '';
     let responsableDetectado = '';
@@ -1083,9 +1084,19 @@ export class RequerimientosItemService {
         errores: [],
         error: false,
       };
-      this.validarFilaCompra(fila);
-      lineasPreview.push(fila);
+
+      // Agrupar por código: si ya existe, sumar cantidad
+      if (lineasAgrupadas.has(codigoPadded)) {
+        const filaExistente = lineasAgrupadas.get(codigoPadded)!;
+        filaExistente.cantidad += fila.cantidad;
+      } else {
+        this.validarFilaCompra(fila);
+        lineasAgrupadas.set(codigoPadded, fila);
+      }
     }
+
+    // Convertir Map a array
+    lineasPreview.push(...lineasAgrupadas.values());
     if (idAreaDetectada) {
       this.maestras.areaSeleccionada = idAreaDetectada;
     }
@@ -1105,6 +1116,7 @@ export class RequerimientosItemService {
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
     const lineasPreview: DetalleExcelPreview[] = [];
+    const lineasAgrupadas = new Map<string, DetalleExcelPreview>();
     for (const r of rows) {
       const rawCodigo = r['Cod. Item'];
       const codigoPadded = rawCodigo !== undefined && rawCodigo !== ''
@@ -1167,9 +1179,19 @@ export class RequerimientosItemService {
         errores: [],
         error: false,
       };
-      this.validarFila(fila, lineasPreview, activosFijos);
-      lineasPreview.push(fila);
+
+      // Agrupar por código: si ya existe, sumar cantidad
+      if (lineasAgrupadas.has(codigoPadded)) {
+        const filaExistente = lineasAgrupadas.get(codigoPadded)!;
+        filaExistente.cantidad += fila.cantidad;
+      } else {
+        this.validarFila(fila, lineasPreview, activosFijos);
+        lineasAgrupadas.set(codigoPadded, fila);
+      }
     }
+
+    // Convertir Map a array
+    lineasPreview.push(...lineasAgrupadas.values());
     const tieneErrores = lineasPreview.some((r) => r.errores.length > 0);
     const puedeGuardar = !lineasPreview.some((l) => l.error);
     return { lineasPreview, tieneErrores, puedeGuardar };

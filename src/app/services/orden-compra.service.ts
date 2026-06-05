@@ -94,6 +94,21 @@ export class OrdenCompraService {
   }
 
   /**
+   * Guardar OC del flujo antiguo en BD SQL y registrar en flujo de aprobación unificado.
+   * Reemplaza la lógica de asignarAprobadores que dependía de tablas vacías.
+   */
+  async guardarOCDirecta(payload: any): Promise<any> {
+    try {
+      const url = `${this.baseUrl}/api/logistica/guardar-oc-directa`;
+      const response = await firstValueFrom(this.http.post<any>(url, payload));
+      return response;
+    } catch (error) {
+      console.error('Error al guardar OC directa en BD:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Asignar aprobadores a una orden de compra
    */
   asignarAprobadores(idOrdenCompra: number, montoTotal: number): any {

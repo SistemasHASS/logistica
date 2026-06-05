@@ -1,5 +1,5 @@
-import { Component, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, inject, effect, untracked } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import Swal from 'sweetalert2';
 import moment from 'moment';
 import { CommonModule } from '@angular/common';
@@ -15,6 +15,10 @@ import { NotificationService } from '@/app/shared/services/notification.service'
 import { DebugNotificationsService } from '@/app/shared/debug-notifications';
 import { APP_VERSION, APP_INFO } from 'src/environments/version';
 import { environment } from 'src/environments/environment';
+import { LayoutConfigService } from '../../services/layout-config.service';
+import { HttpClient } from '@angular/common/http';
+
+type AccordionGroup = 'panel' | 'config' | 'requerimientos' | 'compras' | 'almacen' | 'aprobaciones' | 'reportes';
 
 @Component({
   selector: 'app-layout',
@@ -35,6 +39,83 @@ export class LayoutComponent {
   contadorNotificaciones: number = 0;
   private ultimaNotificacion: number = 0;
 
+  // ── Accordion nav (JLOLOGIST) ──────────────────────────────────
+  readonly ACCORDION_GROUPS: AccordionGroup[] = ['panel', 'config', 'requerimientos', 'compras', 'almacen', 'aprobaciones', 'reportes'];
+
+  private readonly ROUTE_GROUP_MAP: Record<string, string> = {
+    'dashboard-jlologist': 'panel',
+    'dashboard-oplogist': 'panel',
+    'dashboard-logistica': 'panel',
+    'notificaciones': 'config',
+    'parametros': 'config',
+    'requerimientos': 'requerimientos',
+    'saldo-requerimiento': 'requerimientos',
+    'solicitudes-compra': 'compras',
+    'ordenes-compra': 'compras',
+    'consolidacion-compras': 'compras',
+    'solicitudes-servicio': 'compras',
+    'ordenes-servicio': 'compras',
+    'cotizaciones': 'compras',
+    'despachos': 'almacen',
+    'recepcion-mercaderia': 'almacen',
+    'kardex': 'almacen',
+    'devoluciones-consumo': 'almacen',
+    'reingresos': 'almacen',
+    'aprobaciones-oc': 'aprobaciones',
+    'aprobaciones-os': 'aprobaciones',
+    'aprobaciones-area': 'aprobaciones',
+    'aprobaciones': 'aprobaciones',
+    'dashboard-aprobaciones-area': 'aprobaciones',
+    'reportes-compras': 'reportes',
+    'reporte-requerimientos': 'reportes',
+    'reporte-despachos': 'reportes',
+    'reporte-aprobaciones-area': 'reportes',
+    'reporte-saldos': 'reportes',
+    'reporte-aprobados': 'reportes',
+  };
+
+  accordionOpen: Record<string, boolean> = {
+    panel: true,
+    config: false,
+    requerimientos: false,
+    compras: false,
+    almacen: false,
+    aprobaciones: false,
+    reportes: false,
+  };
+
+  private loadAccordionState(): void {
+    try {
+      const saved = localStorage.getItem('jlo_accordion');
+      if (saved) {
+        const parsed = JSON.parse(saved) as Record<string, boolean>;
+        Object.keys(parsed).forEach(g => {
+          if (typeof parsed[g] === 'boolean') this.accordionOpen[g] = parsed[g];
+        });
+      }
+    } catch { /* ignore */ }
+  }
+
+  private saveAccordionState(): void {
+    localStorage.setItem('jlo_accordion', JSON.stringify(this.accordionOpen));
+  }
+
+  private openActiveGroup(): void {
+    const segments = this.router.url.split('/').filter(Boolean);
+    const lastSegment = segments[segments.length - 1];
+    // Buscar en ROUTE_GROUP_MAP estático
+    const group = this.ROUTE_GROUP_MAP[lastSegment];
+    if (group) {
+      this.accordionOpen[group] = true;
+      this.saveAccordionState();
+    }
+  }
+
+  toggleAccordion(group: string): void {
+    this.accordionOpen[group] = !this.accordionOpen[group];
+    this.saveAccordionState();
+  }
+
   constructor(
     private router: Router,
     private connectivityService: ConnectivityService,
@@ -45,7 +126,15 @@ export class LayoutComponent {
     private notificacionApi: NotificacionApiService,
     private notificationService: NotificationService,
     private debugNotifications: DebugNotificationsService,
-  ) {}
+    public layoutConfig: LayoutConfigService,
+  ) {
+    // Recargar menú automáticamente cuando el admin invalide la config
+    effect(() => {
+      if (!this.layoutConfig.cargado()) {
+        untracked(() => this.layoutConfig.cargar());
+      }
+    });
+  }
 
   async ngOnInit() {
     this.usuario = await this.dexieService.showUsuario();
@@ -65,9 +154,21 @@ export class LayoutComponent {
       await this.cargarNotificaciones();
     }, 30000);
 
+    await this.layoutConfig.cargar();
+    this.loadAccordionState();
+    this.openActiveGroup();
+
     this.updateCurrentPath();
     this.router.events.subscribe(() => {
       this.updateCurrentPath();
+      this.openActiveGroup();
+    });
+
+    // Recargar menú si el admin guardó cambios en otra pestaña
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'LAYOUT_CONFIG_INVALIDADO') {
+        this.layoutConfig.invalidar();
+      }
     });
     this.fechaHoy = this.getDate();
     this.usuario = await this.dexieService.showUsuario();

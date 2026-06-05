@@ -859,6 +859,10 @@ export interface OrdenCompra {
   archivoAdjunto?: string;
   clasificacion?: string;
   incoterm?: string;
+  almacen?: string;
+  igv?: number;
+  tipoCambio?: number;
+  proyecto?: string;
 }
 
 export interface DetalleOrdenCompra {
@@ -906,6 +910,7 @@ export interface RecepcionOrdenCompra {
   proveedor?: string;
   nombreProveedor?: string;
   guiaRemision?: string;
+  guiaProveedor?: string;
 }
 
 export interface DetalleRecepcion {
@@ -924,6 +929,10 @@ export interface DetalleRecepcion {
   lote?: string;
   fechaVencimiento?: string;
   estadoItem: 'CONFORME' | 'NO_CONFORME';
+  unidadMedida?: string;
+  precioUnitario?: number;
+  ceco?: string;
+  proyecto?: string;
 }
 
 export interface Nivel {

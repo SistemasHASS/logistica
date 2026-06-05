@@ -15,6 +15,8 @@ import { AdminConfigSmtpComponent } from './pages/admin-config-smtp/admin-config
 import { AdminPlantillaCorreoComponent } from './pages/admin-plantilla-correo/admin-plantilla-correo.component';
 import { AdminPlantillaPdfComponent } from './pages/admin-plantilla-pdf/admin-plantilla-pdf.component';
 import { ConfiguracionColoresComponent } from './pages/configuracion-colores/configuracion-colores.component';
+import { AdminPermisosRolesComponent } from './pages/admin-permisos-roles/admin-permisos-roles.component';
+import { AdminMenusLayoutComponent } from './pages/admin-menus-layout/admin-menus-layout.component';
 
 const routes: Routes = [
   {
@@ -35,6 +37,8 @@ const routes: Routes = [
       { path: 'admin-plantilla-correo', component: AdminPlantillaCorreoComponent },
       { path: 'admin-plantilla-pdf', component: AdminPlantillaPdfComponent },
       { path: 'configuracion-colores', component: ConfiguracionColoresComponent },
+      { path: 'admin-permisos-roles', component: AdminPermisosRolesComponent },
+      { path: 'admin-menus-layout', component: AdminMenusLayoutComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }
