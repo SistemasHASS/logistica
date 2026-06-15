@@ -994,16 +994,6 @@
             placeholder="RUC del proveedor">
         </div>
         <div class="form-group">
-          <label>Dirección</label>
-          <input type="text" class="form-control" [(ngModel)]="datosProveedor.direccionProveedor"
-            placeholder="Dirección del proveedor">
-        </div>
-        <div class="form-group">
-          <label>Teléfono</label>
-          <input type="text" class="form-control" [(ngModel)]="datosProveedor.telefonoProveedor"
-            placeholder="Teléfono de contacto">
-        </div>
-        <div class="form-group">
           <label>Email</label>
           <input type="email" class="form-control" [(ngModel)]="datosProveedor.emailProveedor"
             placeholder="Email del proveedor">
@@ -1020,10 +1010,6 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Tipo de Cambio</label>
-          <input type="number" step="0.001" class="form-control" [(ngModel)]="datosProveedor.tipoCambio">
-        </div>
-        <div class="form-group">
           <label>Fecha Entrega Estimada <span class="required">*</span></label>
           <input type="date" class="form-control" [(ngModel)]="datosProveedor.fechaEntregaEstimada">
         </div>
@@ -1033,19 +1019,16 @@
             placeholder="Almacén o dirección de entrega">
         </div>
         <div class="form-group">
-          <label>Forma de Pago</label>
-          <select class="form-control" [(ngModel)]="datosProveedor.formaPago">
-            <option value="001">Contado</option>
-            <option value="002">Crédito 30 días</option>
-            <option value="003">Crédito 60 días</option>
-            <option value="004">Crédito 90 días</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label>Condiciones de Pago</label>
           <input type="text" class="form-control" [(ngModel)]="datosProveedor.condicionesPago"
             placeholder="Ej: 50% adelanto, 50% contra entrega">
         </div>
+      </div>
+      <div style="position:absolute;width:0;height:0;overflow:hidden;pointer-events:none">
+        <input type="number" [(ngModel)]="datosProveedor.tipoCambio">
+        <input type="text" [(ngModel)]="datosProveedor.direccionProveedor">
+        <input type="text" [(ngModel)]="datosProveedor.telefonoProveedor">
+        <input type="text" [(ngModel)]="datosProveedor.formaPago">
       </div>
 
       <div class="form-group mt-3">

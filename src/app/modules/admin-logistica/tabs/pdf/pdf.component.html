@@ -174,9 +174,16 @@
           <div class="col-12"><strong class="form-label">Columnas visibles en tabla de ítems:</strong></div>
           <div class="col-auto">
             <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="oc-item"
+                [ngModel]="cfgOC().mostrarItem" (ngModelChange)="patchOC({mostrarItem: $event})">
+              <label class="form-check-label" for="oc-item">Código (OC tipo Item)</label>
+            </div>
+          </div>
+          <div class="col-auto">
+            <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" id="oc-commodity"
                 [ngModel]="cfgOC().mostrarCommodity" (ngModelChange)="patchOC({mostrarCommodity: $event})">
-              <label class="form-check-label" for="oc-commodity">Commodity</label>
+              <label class="form-check-label" for="oc-commodity">Código (OC tipo Commodity)</label>
             </div>
           </div>
           <div class="col-auto">
@@ -221,6 +228,8 @@
       <div class="config-section">
         <div class="section-title"><i class="bx bx-text me-2"></i>Etiquetas de Columnas</div>
         <div class="row g-2">
+          <div class="col-md-3"><label class="form-label">Item</label>
+            <input class="form-control form-control-sm" [ngModel]="cfgOC().etiquetaItem" (ngModelChange)="patchOC({etiquetaItem: $event})"></div>
           <div class="col-md-3"><label class="form-label">Commodity</label>
             <input class="form-control form-control-sm" [ngModel]="cfgOC().etiquetaCommodity" (ngModelChange)="patchOC({etiquetaCommodity: $event})"></div>
           <div class="col-md-3"><label class="form-label">Cnd</label>
@@ -495,7 +504,23 @@
       <div class="preview-sticky">
         <div class="preview-header-bar">
           <i class="bx bx-file-blank me-1"></i>Vista Previa
-          <div class="ms-auto d-flex gap-1">
+          <div class="ms-auto d-flex gap-1 align-items-center">
+            @if (tabActivo() === 'oc') {
+              <div class="btn-group btn-group-sm" role="group" aria-label="Tipo de OC para preview">
+                <button type="button" class="btn btn-sm"
+                  [class.btn-primary]="previewTipoOC() === 'ITEM'"
+                  [class.btn-outline-secondary]="previewTipoOC() !== 'ITEM'"
+                  (click)="previewTipoOC.set('ITEM'); refreshPreview()" title="Vista previa OC con Items">
+                  Item
+                </button>
+                <button type="button" class="btn btn-sm"
+                  [class.btn-primary]="previewTipoOC() === 'COMMODITY'"
+                  [class.btn-outline-secondary]="previewTipoOC() !== 'COMMODITY'"
+                  (click)="previewTipoOC.set('COMMODITY'); refreshPreview()" title="Vista previa OC con Commodities">
+                  Commodity
+                </button>
+              </div>
+            }
             <button class="btn btn-outline-secondary btn-sm" (click)="refreshPreview()" title="Actualizar">
               <i class="bx bx-refresh"></i>
             </button>

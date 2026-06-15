@@ -280,7 +280,7 @@
 
             <!-- Acciones: carga masiva y agregar línea -->
             <div class="d-flex justify-content-end gap-3 acciones-movil">
-              <button *ngIf="itemSvc.usuario?.idrol?.includes('JLOLOGIST')" type="button" class="btn btn-success" (click)="fileInput.click()">
+              <button *ngIf="TipoSelecionado === 'COMPRA' || TipoSelecionado === 'CONSUMO'" type="button" class="btn btn-success" (click)="fileInput.click()">
                 <i class="bi bi-upload me-1"></i> Carga masiva
               </button>
               <input #fileInput type="file" hidden accept=".xlsx,.xls" (change)="onExcelUpload($event)" />
@@ -289,58 +289,196 @@
               </button>
             </div>
 
-            <!-- Contador de líneas de detalle -->
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <span class="text-muted">Líneas de detalle: <strong>{{ detalles.length }}</strong></span>
-            </div>
+            <!-- Sub-tabs: Líneas de Detalle + Adjuntar Archivos (solo COMPRA) -->
+            <ng-container *ngIf="TipoSelecionado === 'COMPRA'; else sinSubTabs">
+              <ul class="nav nav-tabs mb-2 mt-1">
+                <li class="nav-item">
+                  <button class="nav-link" [class.active]="subTabActivo === 'detalles'"
+                    type="button" (click)="subTabActivo = 'detalles'">
+                    <i class="bi bi-list-ul me-1"></i> Líneas de detalle
+                    <span class="badge bg-primary ms-1">{{ detalles.length }}</span>
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button class="nav-link" [class.active]="subTabActivo === 'adjuntos'"
+                    type="button" (click)="subTabActivo = 'adjuntos'">
+                    <i class="bi bi-paperclip me-1"></i> Adjuntar archivos
+                    <span class="badge bg-secondary ms-1" *ngIf="adjuntosCompra.length > 0">{{ adjuntosCompra.length }}</span>
+                  </button>
+                </li>
+              </ul>
 
-            <!-- Tabla de detalle -->
-            <div class="table-responsive" style="max-height: 25vh; overflow: auto">
-              <table class="table table-bordered table-striped align-middle text-center">
-                <thead class="table-light">
-                  <tr>
-                    <th>Editar</th>
-                    <th>Código</th>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Proyecto</th>
-                    <th>CECO</th>
-                    <th>Turno</th>
-                    <th>Labor</th>
-                    <th>Activo Fijo</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let item of detalles; let i = index">
-                    <td>
-                      <button class="btn btn-sm btn-warning me-2" (click)="editarLinea(i)" title="editar línea">
-                        <i class="icon-pencil"></i>
-                      </button>
-                    </td>
-                    <td>{{ item.codigo }}</td>
-                    <td>{{ item.producto }}</td>
-                    <td>{{ item.cantidad }}</td>
-                    <td>{{ item.proyecto }}</td>
-                    <td>{{ item.ceco }}</td>
-                    <td>{{ item.turno }}</td>
-                    <td>{{ item.labor }}</td>
-                    <td>{{ item.activoFijo ? item.activoFijo : "N/A" }}</td>
-                    <td>
-                      <button class="btn btn-sm btn-info me-1" (click)="copiarLinea(i)" title="Copiar línea">
-                        <i class="icon-copy"></i>
-                      </button>
-                      <button class="btn btn-sm btn-danger" (click)="eliminarLinea(i)" title="eliminar línea">
-                        <i class="icon-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                  <tr *ngIf="detalles.length === 0">
-                    <td colspan="10" class="text-muted">No hay detalles agregados</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+              <!-- Sub-tab: Líneas de detalle -->
+              <div *ngIf="subTabActivo === 'detalles'">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="text-muted">Líneas de detalle: <strong>{{ detalles.length }}</strong></span>
+                </div>
+                <div class="table-responsive" style="max-height: 25vh; overflow: auto">
+                  <table class="table table-bordered table-striped align-middle text-center">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Editar</th>
+                        <th>Código</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Proyecto</th>
+                        <th>CECO</th>
+                        <th>Turno</th>
+                        <th>Labor</th>
+                        <th>Activo Fijo</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let item of detalles; let i = index">
+                        <td>
+                          <button class="btn btn-sm btn-warning me-2" (click)="editarLinea(i)" title="editar línea">
+                            <i class="icon-pencil"></i>
+                          </button>
+                        </td>
+                        <td>{{ item.codigo }}</td>
+                        <td>{{ item.producto }}</td>
+                        <td>{{ item.cantidad }}</td>
+                        <td>{{ item.proyecto }}</td>
+                        <td>{{ item.ceco }}</td>
+                        <td>{{ item.turno }}</td>
+                        <td>{{ item.labor }}</td>
+                        <td>{{ item.activoFijo ? item.activoFijo : "N/A" }}</td>
+                        <td>
+                          <button class="btn btn-sm btn-info me-1" (click)="copiarLinea(i)" title="Copiar línea">
+                            <i class="icon-copy"></i>
+                          </button>
+                          <button class="btn btn-sm btn-danger" (click)="eliminarLinea(i)" title="eliminar línea">
+                            <i class="icon-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                      <tr *ngIf="detalles.length === 0">
+                        <td colspan="10" class="text-muted">No hay detalles agregados</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Sub-tab: Adjuntar archivos -->
+              <div *ngIf="subTabActivo === 'adjuntos'">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                  <span class="text-muted fw-semibold">
+                    Archivos adjuntos del requerimiento de compra
+                  </span>
+                  <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm" (click)="adjuntoFileInput.click()">
+                      <i class="bi bi-plus-circle me-1"></i> Agregar archivos
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm"
+                      *ngIf="adjuntosCompra.length > 0" (click)="limpiarAdjuntos()">
+                      <i class="bi bi-trash me-1"></i> Limpiar todo
+                    </button>
+                  </div>
+                  <input #adjuntoFileInput type="file" hidden multiple
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                    (change)="onAdjuntoSelected($event)" />
+                </div>
+
+                <div *ngIf="adjuntosCompra.length === 0" class="text-center text-muted py-4 border rounded">
+                  <i class="bi bi-paperclip fs-3 d-block mb-2"></i>
+                  No hay archivos adjuntos. Haz clic en <strong>Agregar archivos</strong> para adjuntar documentos.
+                  <div class="mt-2 small text-muted">Formatos permitidos: PDF, Word, Excel, Imágenes (máx. 10 MB c/u)</div>
+                </div>
+
+                <div class="table-responsive" *ngIf="adjuntosCompra.length > 0">
+                  <table class="table table-sm table-bordered align-middle">
+                    <thead class="table-light">
+                      <tr>
+                        <th style="width:40px"></th>
+                        <th>Nombre del archivo</th>
+                        <th>Tipo</th>
+                        <th>Tamaño</th>
+                        <th>Descripción</th>
+                        <th style="width:60px">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let adj of adjuntosCompra; let i = index">
+                        <td class="text-center">
+                          <i [class]="getAdjuntoIcon(adj.tipoArchivo)" style="font-size: 1.2rem;"></i>
+                        </td>
+                        <td>
+                          <span class="text-truncate d-inline-block" style="max-width: 220px;" [title]="adj.nombreArchivo">
+                            {{ adj.nombreArchivo }}
+                          </span>
+                        </td>
+                        <td class="text-muted small text-center">{{ (adj.tipoArchivo?.split('/') ?? [])[1]?.toUpperCase() }}</td>
+                        <td class="text-muted small text-center">{{ formatAdjuntoSize(adj.tamanoArchivo) }}</td>
+                        <td>
+                          <input type="text" class="form-control form-control-sm"
+                            [(ngModel)]="adj.descripcion" placeholder="Descripción opcional" />
+                        </td>
+                        <td class="text-center">
+                          <button type="button" class="btn btn-sm btn-danger" (click)="eliminarAdjunto(i)" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- Para CONSUMO y TRANSFERENCIA: tabla de detalle sin sub-tabs -->
+            <ng-template #sinSubTabs>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted">Líneas de detalle: <strong>{{ detalles.length }}</strong></span>
+              </div>
+              <div class="table-responsive" style="max-height: 25vh; overflow: auto">
+                <table class="table table-bordered table-striped align-middle text-center">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Editar</th>
+                      <th>Código</th>
+                      <th>Producto</th>
+                      <th>Cantidad</th>
+                      <th>Proyecto</th>
+                      <th>CECO</th>
+                      <th>Turno</th>
+                      <th>Labor</th>
+                      <th>Activo Fijo</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let item of detalles; let i = index">
+                      <td>
+                        <button class="btn btn-sm btn-warning me-2" (click)="editarLinea(i)" title="editar línea">
+                          <i class="icon-pencil"></i>
+                        </button>
+                      </td>
+                      <td>{{ item.codigo }}</td>
+                      <td>{{ item.producto }}</td>
+                      <td>{{ item.cantidad }}</td>
+                      <td>{{ item.proyecto }}</td>
+                      <td>{{ item.ceco }}</td>
+                      <td>{{ item.turno }}</td>
+                      <td>{{ item.labor }}</td>
+                      <td>{{ item.activoFijo ? item.activoFijo : "N/A" }}</td>
+                      <td>
+                        <button class="btn btn-sm btn-info me-1" (click)="copiarLinea(i)" title="Copiar línea">
+                          <i class="icon-copy"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" (click)="eliminarLinea(i)" title="eliminar línea">
+                          <i class="icon-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                    <tr *ngIf="detalles.length === 0">
+                      <td colspan="10" class="text-muted">No hay detalles agregados</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </ng-template>
 
             <!-- Botones guardar/cancelar -->
             <div class="mt-3 text-end">
@@ -370,6 +508,8 @@
   [modalProyectoData]="modalProyectoData"
   [activosFijosFiltrados]="activosFijosFiltrados"
   [items]="items"
+  [stockActualLineaTemp]="stockActualLineaTemp"
+  [consultandoStock]="consultandoStock"
   [modalTurnoValue]="modalTurnoValue"
   [modalTurnoEditable]="modalTurnoEditable"
   [modalTurnoDisabled]="modalTurnoDisabled"

@@ -795,6 +795,50 @@ export class DespachoComponent implements OnInit {
     return Math.max(0, Math.min(pendiente, stockDisponible));
   }
 
+  /**
+   * Valida y fuerza los límites de la cantidad a atender.
+   * - No puede atender más del pendiente (cantidad - atendida)
+   * - No puede atender más del stock disponible
+   * - No puede ser negativo
+   */
+  validarCantidadAtender(d: any): void {
+    const solicitada = Number(d.cantidad) || 0;
+    const atendida = Number(d.atendida) || 0;
+    const pendiente = Math.max(0, solicitada - atendida);
+    const stock = Number(d.stock) || 0;
+    let atender = Number(d.atender) || 0;
+
+    // Forzar mínimo 0
+    if (atender < 0) {
+      atender = 0;
+    }
+
+    // No puede atender más del pendiente
+    if (atender > pendiente) {
+      atender = pendiente;
+      this.notificationService.warning(
+        'Cantidad ajustada',
+        `Solo puede despachar ${pendiente} unidades pendientes.`,
+        3000
+      );
+    }
+
+    // No puede atender más del stock disponible
+    if (atender > stock) {
+      atender = stock;
+      this.notificationService.warning(
+        'Stock insuficiente',
+        `Solo hay ${stock} unidades disponibles en almacén.`,
+        3000
+      );
+    }
+
+    d.atender = atender;
+
+    // Recalcular pendiente de atención (compra)
+    const nuevoPendiente = Math.max(0, pendiente - atender);
+    d.compra = Math.max(0, nuevoPendiente - stock);
+  }
 
   // async registrarAtencion() {
   //   if (!this.detalle.length) {
@@ -957,6 +1001,28 @@ export class DespachoComponent implements OnInit {
     const detalleAtendido = this.detalle.filter(
       (d: any) => d.seleccionado && (d.atender || 0) > 0
     );
+
+    // 🔹 Validar que no se atienda más del pendiente (seguridad adicional)
+    const itemsExcedidos = detalleAtendido.filter((d: any) => {
+      const solicitada = Number(d.cantidad) || 0;
+      const atendida = Number(d.atendida) || 0;
+      const pendiente = Math.max(0, solicitada - atendida);
+      const atender = Number(d.atender) || 0;
+      return atender > pendiente;
+    });
+
+    if (itemsExcedidos.length > 0) {
+      const mensaje = itemsExcedidos.map((d: any) =>
+        `• ${d.codigo}: Intenta atender ${d.atender} pero solo hay ${Math.max(0, (Number(d.cantidad) || 0) - (Number(d.atendida) || 0))} pendientes`
+      ).join('\n');
+
+      this.alertService.showAlert(
+        'Cantidad excedida',
+        `Los siguientes ítems exceden la cantidad pendiente:\n${mensaje}`,
+        'warning'
+      );
+      return;
+    }
 
     // Si no hay ítems con stock (atender > 0), registrar como SIN_STOCK directamente
     const todosItemsSinStock = this.detalle.every((d: any) => (d.atender || 0) === 0);
@@ -1789,7 +1855,11 @@ export class DespachoComponent implements OnInit {
 
   async sincronizaAprobados() {
     try {
-      const requerimmientos = this.requerimientosService.getRequerimientosAprobados([]);
+      // Para usuarios ALLOGIST, filtrar por RUC de la empresa (multiempresa)
+      const filtros = this.usuario?.idrol?.includes('ALLOGIST') && this.usuario?.ruc 
+        ? { ruc: this.usuario.ruc } 
+        : {};
+      const requerimmientos = this.requerimientosService.getRequerimientosAprobados(filtros);
 
       requerimmientos.subscribe(async (resp: any) => {
 

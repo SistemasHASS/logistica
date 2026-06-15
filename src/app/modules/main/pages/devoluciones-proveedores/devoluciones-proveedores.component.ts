@@ -95,11 +95,16 @@ export class DevolucionesProveedoresComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
 
+      // Filtro multiempresa: ALLOGIST solo ve su empresa
+      const filtros = this.usuario?.idrol?.includes('ALLOGIST') && this.usuario?.ruc
+        ? { ruc: this.usuario.ruc }
+        : {};
+
       // Cargar recepciones no conformes desde backend
-      this.recepcionesNoConformes = await this.devolucionService.listarRecepcionesNoConformes();
+      this.recepcionesNoConformes = await this.devolucionService.listarRecepcionesNoConformes(filtros);
       
       // Cargar devoluciones desde backend
-      this.devoluciones = await this.devolucionService.listarDevoluciones();
+      this.devoluciones = await this.devolucionService.listarDevoluciones(filtros);
 
       this.alertService.cerrarModalCarga();
     } catch (error) {

@@ -43,6 +43,12 @@ export class GestionInventarioComponent implements OnInit {
     rol: '',
   };
 
+  // Getter para mostrar Valor Estimado (solo ADLOGIST, JLOLOGIST, LOLOGIST)
+  get puedeVerValorInventario(): boolean {
+    const rol = this.usuario?.idrol || '';
+    return rol.includes('ADLOGIST') || rol.includes('JLOLOGIST') || rol.includes('LOLOGIST');
+  }
+
   // Tabs
   tabActiva: 'stock' | 'kardex' | 'movimientos' = 'stock';
 

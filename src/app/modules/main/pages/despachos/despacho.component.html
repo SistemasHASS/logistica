@@ -94,7 +94,7 @@
         </p-datepicker>
       </div>
       <div class="col-12 col-md-3">
-        <button class="btn btn-accion-primaria btn-listar" type="button" (click)="buscar()">Buscar</button>
+        <button class="btn btn-accion-primaria btn-listar text-white" type="button" (click)="buscar()">Buscar</button>
         <!-- <button class="btn btn-outline-info btn-limpiar" type="button" (click)="limpiarFiltrosDespacho()">Limpiar</button>
         <button class="btn btn-success btn-excel" type="button" title="Exportar"
                 (click)="table.exportCSV()"><i class="bx bx-spreadsheet"></i>
@@ -336,11 +336,12 @@
               <td class="fw-semibold">{{ c.pendiente ?? (c.cantidad - (c.atendida || 0)) }}</td>
               <td>{{ c.stock || 0 }}</td>
               <td>
-                <input type="number" class="form-control form-control-sm text-center"
+                <input type="text" class="form-control form-control-sm text-center"
                   [(ngModel)]="c.atender"
-                  [max]="c.stock"
+                  [max]="Math.min(c.stock, c.pendiente)"
                   [min]="0"
                   [disabled]="c.estadoAtencion === 'SIN STOCK'"
+                  (change)="validarCantidadAtender(c)"
                   style="width: 80px;" />
               </td>
               <td>{{ c.compra || 0 }}</td>

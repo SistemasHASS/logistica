@@ -136,11 +136,16 @@ export class DevolucionesConsumoComponent implements OnInit {
     try {
       this.loading = true;
 
+      // Filtro multiempresa: ALLOGIST solo ve su empresa
+      const filtros = this.usuario?.idrol?.includes('ALLOGIST') && this.usuario?.ruc
+        ? { ruc: this.usuario.ruc }
+        : {};
+
       // Cargar despachos de consumo desde backend
-      this.despachosConsumo = await this.devolucionService.listarDespachosConsumo();
+      this.despachosConsumo = await this.devolucionService.listarDespachosConsumo(filtros);
       
       // Cargar devoluciones desde backend
-      this.devoluciones = await this.devolucionService.listarDevoluciones();
+      this.devoluciones = await this.devolucionService.listarDevoluciones(filtros);
 
       this.loading = false;
     } catch (error) {

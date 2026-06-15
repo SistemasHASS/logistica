@@ -223,11 +223,19 @@ export class KardexComponent implements OnInit {
   }
 
   async cargarUsuario() {
-    this.usuario = await this.userService.getUsuario();
+    this.usuario = await this.dexieService.getUsuarioLogueado();
+    if (!this.usuario) {
+      this.usuario = this.userService.getUsuario();
+    }
   }
 
   get puedeVerPrecios(): boolean {
     return !this.usuario?.idrol?.includes('ALLOGIST');
+  }
+
+  get companiaSocio(): string {
+    if (!this.usuario?.idempresa) return '00000800';
+    return this.usuario.idempresa.padStart(6, '0') + '00';
   }
 
   async cargarDatos() {
@@ -363,11 +371,24 @@ export class KardexComponent implements OnInit {
 
   // ==================== STOCK ====================
 
+  get almacenesDisponibles(): string[] {
+    const set = new Set(this.stock.map(i => (i.almacen ?? '').trim()).filter(Boolean));
+    return Array.from(set).sort();
+  }
+
   async consultarStock() {
     try {
-      const filtros: any = { ...this.filtroStock };
-      if (this.usuario?.idempresa) filtros.companiaSocio = this.usuario.idempresa.padStart(6,'0') + '00';
-      this.stock = await this.kardexService.consultarStock(filtros);
+      const filtros: any = { companiaSocio: this.companiaSocio };
+      if (this.filtroStock.almacen)    filtros.almacen    = this.filtroStock.almacen;
+      if (this.filtroStock.codigoItem) filtros.codigoItem = this.filtroStock.codigoItem;
+      const raw = await this.kardexService.consultarStock(filtros);
+      this.stock = raw.map(i => ({
+        ...i,
+        codigoItem:      (i.codigoItem      ?? '').trim(),
+        descripcionItem: (i.descripcionItem ?? '').trim(),
+        unidadMedida:    (i.unidadMedida    ?? '').trim(),
+        almacen:         (i.almacen         ?? '').trim(),
+      }));
       this.stockFiltrado = [...this.stock];
     } catch (error) {
       console.error('Error al consultar stock:', error);
@@ -380,15 +401,15 @@ export class KardexComponent implements OnInit {
 
       if (this.filtroStock.almacen) {
         cumpleFiltro =
-          cumpleFiltro && item.almacen === this.filtroStock.almacen;
+          cumpleFiltro && item.almacen.trim() === this.filtroStock.almacen.trim();
       }
 
       if (this.filtroStock.codigoItem) {
-        const busqueda = this.filtroStock.codigoItem.toLowerCase();
+        const busqueda = this.filtroStock.codigoItem.toLowerCase().trim();
         cumpleFiltro =
           cumpleFiltro &&
-          (item.codigoItem.toLowerCase().includes(busqueda) ||
-            item.descripcionItem.toLowerCase().includes(busqueda));
+          (item.codigoItem.toLowerCase().trim().includes(busqueda) ||
+            item.descripcionItem.toLowerCase().trim().includes(busqueda));
       }
 
       if (this.filtroStock.stockBajo) {
@@ -443,9 +464,9 @@ export class KardexComponent implements OnInit {
       this.loading = true;
       const filtros: any = {
         codigoItem: this.filtroKardex.codigoItem,
+        companiaSocio: this.companiaSocio,
       };
 
-      if (this.usuario?.idempresa) filtros.companiaSocio = this.usuario.idempresa.padStart(6,'0') + '00';
       if (this.filtroKardex.almacen) filtros.almacen = this.filtroKardex.almacen;
       if (this.filtroKardex.tipoMovimiento) filtros.tipoMovimiento = this.filtroKardex.tipoMovimiento;
       if (this.filtroKardex.fuente) filtros.fuente = this.filtroKardex.fuente;
@@ -504,9 +525,10 @@ export class KardexComponent implements OnInit {
 
   async listarTransacciones() {
     try {
-      const filtros: any = {};
+      const filtros: any = {
+        companiaSocio: this.companiaSocio,
+      };
 
-      if (this.usuario?.idempresa) filtros.companiaSocio = this.usuario.idempresa.padStart(6,'0') + '00';
       if (this.filtroTransacciones.tipoTransaccion) filtros.tipoTransaccion = this.filtroTransacciones.tipoTransaccion;
       if (this.filtroTransacciones.estado)          filtros.estado          = this.filtroTransacciones.estado;
       if (this.filtroTransacciones.fuente)          filtros.fuente          = this.filtroTransacciones.fuente;
@@ -1277,8 +1299,7 @@ export class KardexComponent implements OnInit {
   // Cargar items para el dropdown
   async cargarItems() {
     try {
-      this.loading = true;
-      const resultado = await this.kardexService.consultarStock({});
+      const resultado = await this.kardexService.consultarStock({ companiaSocio: this.companiaSocio });
 
       console.log('Items: ', resultado);
 

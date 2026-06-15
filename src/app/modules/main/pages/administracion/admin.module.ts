@@ -15,6 +15,11 @@ import { AdminProveedoresEmailComponent } from './pages/admin-proveedores-email/
 import { AdminConfigSmtpComponent } from './pages/admin-config-smtp/admin-config-smtp.component';
 import { AdminPlantillaCorreoComponent } from './pages/admin-plantilla-correo/admin-plantilla-correo.component';
 import { AdminPlantillaPdfComponent } from './pages/admin-plantilla-pdf/admin-plantilla-pdf.component';
+import { AdminMenusLayoutComponent } from './pages/admin-menus-layout/admin-menus-layout.component';
+import { AdminMenusDinamicosComponent } from './pages/admin-menus-dinamicos/admin-menus-dinamicos.component';
+import { AdminPermisosMenuDinamicoComponent } from './pages/admin-permisos-menu-dinamico/admin-permisos-menu-dinamico.component';
+import { AdminPlantillasMenuComponent } from './pages/admin-plantillas-menu/admin-plantillas-menu.component';
+import { AdminPlantillaAlmacenComponent } from './pages/admin-plantilla-almacen/admin-plantilla-almacen.component';
 
 @NgModule({
   imports: [
@@ -31,6 +36,11 @@ import { AdminPlantillaPdfComponent } from './pages/admin-plantilla-pdf/admin-pl
     AdminConfigSmtpComponent,
     AdminPlantillaCorreoComponent,
     AdminPlantillaPdfComponent,
+    AdminMenusLayoutComponent,
+    AdminMenusDinamicosComponent,
+    AdminPermisosMenuDinamicoComponent,
+    AdminPlantillasMenuComponent,
+    AdminPlantillaAlmacenComponent,
     RouterModule,       // ✅ OBLIGATORIO PARA routerLink
 
   ]

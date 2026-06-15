@@ -34,6 +34,7 @@ import { KardexComponent } from './modules/main/pages/kardex/kardex.component';
 import { CotizacionesComponent } from './modules/main/pages/cotizaciones/cotizaciones.component';
 import { OrdenesCompraComponent } from './modules/main/pages/ordenes-compra/ordenes-compra.component';
 import { RecepcionMercaderiaComponent } from './modules/main/pages/recepcion-mercaderia/recepcion-mercaderia.component';
+import { ConformidadAlmacenComponent } from './modules/main/pages/conformidad-almacen/conformidad-almacen.component';
 import { DashboardComprasComponent } from './modules/main/pages/dashboard-compras/dashboard-compras.component';
 import { GestionInventarioComponent } from './modules/main/pages/gestion-inventario/gestion-inventario.component';
 import { MaestroProveedoresComponent } from './modules/main/pages/maestro-proveedores/maestro-proveedores.component';
@@ -133,6 +134,7 @@ export const routes: Routes = [
       { path: 'cotizaciones', component: CotizacionesComponent, canActivate: [LogisticoGuard] },
       { path: 'ordenes-compra', component: OrdenesCompraComponent, canActivate: [LogisticoGuard] },
       { path: 'recepcion-mercaderia', component: RecepcionMercaderiaComponent, canActivate: [AlmacenGuard] },
+      { path: 'conformidad-almacen', component: ConformidadAlmacenComponent, canActivate: [DevolucionConsumoGuard] },
       { path: 'devoluciones-proveedores', component: DevolucionesProveedoresComponent, canActivate: [AlmacenGuard] },
       { path: 'devoluciones-consumo', component: DevolucionesConsumoComponent, canActivate: [DevolucionConsumoGuard] },
       { path: 'reingresos', component: ReingresosComponent, canActivate: [ReingresoGuard] },

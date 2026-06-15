@@ -186,7 +186,7 @@ export class OrdenesCompraComponent implements OnInit {
     fechaEntregaEstimada: '',
     lugarEntrega: '',
     condicionesPago: '',
-    formaPago: '001',
+    formaPago: 'Transferencia',
     observaciones: ''
   };
 
@@ -776,7 +776,7 @@ export class OrdenesCompraComponent implements OnInit {
       fechaEntregaEstimada: solicitud.fechaRequerida || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       lugarEntrega: solicitud.almacen || '',
       condicionesPago: '',
-      formaPago: '001',
+      formaPago: 'Transferencia',
       observaciones: solicitud.observaciones || ''
     };
     this.modalGenerarOCAbierto = true;

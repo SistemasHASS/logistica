@@ -1,0 +1,173 @@
+/* ══ Nota de Almacén - Preview ══════════════════════════════════════ */
+
+.nota-preview {
+  border: 2px solid #3b82f6;
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 11px;
+  color: #1f2937;
+  background: #fff;
+  font-family: 'Courier New', monospace;
+}
+
+.np-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+  font-size: 11px;
+
+  .np-empresa { font-size: 11px; }
+  .np-right {
+    text-align: right;
+    font-size: 10px;
+    color: #374151;
+    line-height: 1.5;
+  }
+}
+
+.np-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: #111827;
+  letter-spacing: 0.5px;
+}
+
+.np-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px 12px;
+  font-size: 10px;
+  color: #374151;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #d1d5db;
+
+  .np-label { font-weight: 600; }
+  .np-area-row { grid-column: 1 / -1; font-size: 10px; }
+}
+
+.np-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 4px;
+}
+
+.np-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9px;
+
+  th {
+    background: #f1f5f9;
+    border: 1px solid #d1d5db;
+    padding: 3px 5px;
+    text-align: center;
+    font-weight: 700;
+    color: #374151;
+    white-space: nowrap;
+  }
+
+  td {
+    border: 1px solid #e5e7eb;
+    padding: 2px 5px;
+    text-align: center;
+    color: #374151;
+    white-space: nowrap;
+  }
+
+  tbody tr:nth-child(even) td {
+    background: #f9fafb;
+  }
+}
+
+.np-area {
+  text-align: right;
+  font-size: 9px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 6px;
+  padding-right: 4px;
+}
+
+.np-ccostos {
+  font-size: 10px;
+  color: #374151;
+  margin-bottom: 6px;
+  font-style: italic;
+}
+
+.np-firmas {
+  display: flex;
+  gap: 24px;
+  padding: 12px 16px 6px;
+  border-top: 1px dashed #d1d5db;
+  margin-bottom: 4px;
+
+  .np-firma {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #374151;
+    min-height: 80px;
+    justify-content: flex-end;
+
+    img {
+      max-width: 110px;
+      max-height: 50px;
+      object-fit: contain;
+      margin-bottom: 2px;
+    }
+
+    .np-firma-linea {
+      width: 100%;
+      height: 1px;
+      background: #374151;
+      margin: 2px 0;
+    }
+
+    .np-firma-nombre {
+      font-size: 10px;
+      font-weight: 700;
+      color: #111;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .np-firma-dni {
+      font-size: 9px;
+      color: #555;
+      font-weight: 400;
+    }
+
+    .np-firma-rol {
+      font-size: 9px;
+      font-weight: 600;
+      color: #374151;
+      letter-spacing: 0.5px;
+    }
+  }
+}
+
+.np-pie {
+  font-size: 9px;
+  color: #9ca3af;
+  margin-top: 4px;
+  font-style: italic;
+  text-align: center;
+}
+
+.np-total {
+  text-align: right;
+  font-size: 10px;
+  font-weight: 700;
+  color: #374151;
+  border-top: 1px solid #d1d5db;
+  padding-top: 4px;
+  margin-top: 2px;
+}

@@ -131,6 +131,9 @@ export class AdminLayoutComponent implements OnInit {
       'configuracion-colores': 'Configuracion del Sistema',
       'admin-permisos-roles': 'Permisos por Rol',
       'admin-menus-layout': 'Menús del Layout Principal',
+      'admin-menus-dinamicos': 'Menús Dinámicos',
+      'admin-permisos-menu-dinamico': 'Permisos Menú Dinámico',
+      'admin-plantillas-menu': 'Plantillas de Menú',
       'admin-version-api': 'API Versionado',
     };
 

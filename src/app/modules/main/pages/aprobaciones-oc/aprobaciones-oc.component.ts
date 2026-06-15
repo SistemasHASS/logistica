@@ -259,7 +259,7 @@ export class AprobacionesOCComponent implements OnInit {
             // items y nivelesAprobacion pueden venir como string JSON (subquery FOR JSON)
             const items = typeof detalle.items === 'string' ? JSON.parse(detalle.items) : (detalle.items || []);
             const niveles = typeof detalle.nivelesAprobacion === 'string' ? JSON.parse(detalle.nivelesAprobacion) : (detalle.nivelesAprobacion || []);
-            this.ocDetalle = { ...oc, ...detalle, items };
+            this.ocDetalle = { ...oc, ...detalle, items, IdAprobacion: oc.IdAprobacion || oc.idAprobacion || detalle.IdAprobacion || detalle.idAprobacion };
             this.historialOC = niveles;
             await this.cargarAdjuntosOC(detalle.idOrden || oc.idOrden || oc.IdOrden);
             this.alertService.cerrarModalCarga();
@@ -314,6 +314,7 @@ export class AprobacionesOCComponent implements OnInit {
   }
 
   async aprobarOC(oc: any) {
+    console.log('[aprobarOC] oc.IdAprobacion=', oc.IdAprobacion, '| oc.idAprobacion=', oc.idAprobacion, '| oc.numeroOrden=', oc.numeroOrden);
     const confirmacion = await this.alertService.showConfirm(
       'Confirmar Aprobación',
       `¿Está seguro de aprobar la Orden de Compra ${oc.numeroOrden} por un monto de S/ ${this.formatearMoneda(oc.montoTotal)}?`,
@@ -337,7 +338,7 @@ export class AprobacionesOCComponent implements OnInit {
       // Ambos flujos (ANTIGUO y NUEVO) usan LOGISTICA_AprobacionOrden → mismo endpoint
       const respuesta = await lastValueFrom(
         this.aprobacionOrdenService.aprobar({
-          idAprobacion: oc.idAprobacion || oc.IdAprobacion,
+          idAprobacion: oc.IdAprobacion || oc.idAprobacion,
           dniAprobador: this.usuario.documentoidentidad,
           nombreAprobador: this.usuario.nombre,
           observacion: '',

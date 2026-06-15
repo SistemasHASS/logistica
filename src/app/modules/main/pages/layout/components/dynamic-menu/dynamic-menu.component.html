@@ -1,0 +1,185 @@
+<!-- ============================================
+     MENÚ DINÁMICO - Soporte por grupo y submenús
+     ============================================ -->
+<ul class="dynamic-menu-root">
+  @for (grupo of menuGroups; track trackGroup($index, grupo)) {
+    @if (grupo.activo) {
+      
+      <!-- ===== GRUPO TIPO ACCORDION ===== -->
+      @if (isGroupAccordion(grupo)) {
+        <li class="dm-group dm-accordion">
+          <button class="dm-group-header" 
+                  (click)="toggle(grupo.id)" 
+                  [class.open]="isOpen(grupo.id)">
+            <span class="dm-icon"><i [class]="grupo.icono"></i></span>
+            <span class="dm-label">{{ grupo.label }}</span>
+            <i class="dm-arrow bx" 
+               [class.bx-chevron-down]="!isOpen(grupo.id)" 
+               [class.bx-chevron-up]="isOpen(grupo.id)"></i>
+          </button>
+          @if (isOpen(grupo.id)) {
+            <ul class="dm-accordion-items">
+              @for (item of grupo.items; track trackItem($index, item)) {
+                @if (item.activo) {
+                  <ng-container *ngTemplateOutlet="renderItem; context: { $implicit: item, level: 0 }"></ng-container>
+                }
+              }
+            </ul>
+          }
+        </li>
+      }
+      
+      <!-- ===== GRUPO TIPO NAV ===== -->
+      @if (isGroupNav(grupo)) {
+        <li class="dm-group dm-nav">
+          <div class="dm-group-header" (click)="toggle(grupo.id)">
+            <span class="dm-icon"><i [class]="grupo.icono"></i></span>
+            <span class="dm-label">{{ grupo.label }}</span>
+            <i class="dm-arrow bx" 
+               [class.bx-chevron-right]="!isOpen(grupo.id)" 
+               [class.bx-chevron-down]="isOpen(grupo.id)"></i>
+          </div>
+          @if (isOpen(grupo.id)) {
+            <ul class="dm-nav-items">
+              @for (item of grupo.items; track trackItem($index, item)) {
+                @if (item.activo) {
+                  <ng-container *ngTemplateOutlet="renderItemNav; context: { $implicit: item, level: 0 }"></ng-container>
+                }
+              }
+            </ul>
+          }
+        </li>
+      }
+      
+      <!-- ===== GRUPO TIPO LIST ===== -->
+      @if (isGroupList(grupo)) {
+        <li class="dm-list-section">
+          <div class="dm-list-divider">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span>{{ grupo.label }}</span>
+          </div>
+          <ul class="dm-list-items">
+            @for (item of grupo.items; track trackItem($index, item)) {
+              @if (item.activo) {
+                <ng-container *ngTemplateOutlet="renderItemList; context: { $implicit: item }"></ng-container>
+              }
+            }
+          </ul>
+        </li>
+      }
+      
+    }
+  }
+</ul>
+
+<!-- ============================================
+     TEMPLATES RECURSIVOS
+     ============================================ -->
+
+<!-- Template para items en accordion -->
+<ng-template #renderItem let-item let-level="level">
+  <li class="dm-accordion-item" [class.has-submenu]="hasSubmenu(item)" [style.padding-left.px]="level * 16">
+    @if (hasSubmenu(item)) {
+      <!-- Item con submenú (contenedor) -->
+      <button class="dm-submenu-toggle" (click)="toggle(item.id); $event.stopPropagation()">
+        <i [class]="item.icono"></i>
+        <span>{{ item.nombre }}</span>
+        <i class="bx" [class.bx-chevron-down]="!isOpen(item.id)" [class.bx-chevron-up]="isOpen(item.id)"></i>
+      </button>
+      @if (isOpen(item.id)) {
+        <ul class="dm-submenu">
+          @for (sub of item.submenu; track trackItem($index, sub)) {
+            @if (sub.activo) {
+              <ng-container *ngTemplateOutlet="renderItem; context: { $implicit: sub, level: level + 1 }"></ng-container>
+            }
+          }
+        </ul>
+      }
+    } @else {
+      <!-- Item navegable -->
+      <a [routerLink]="item.ruta" routerLinkActive="active" class="dm-item-link" (click)="onItemClick()">
+        @if (item.id === 'notificaciones' && contadorNotificaciones > 0) {
+          <span class="position-relative">
+            <i [class]="item.icono"></i>
+            <span class="badge-count">{{ contadorNotificaciones }}</span>
+          </span>
+        } @else {
+          <i [class]="item.icono"></i>
+        }
+        <span>{{ item.nombre }}</span>
+      </a>
+    }
+  </li>
+</ng-template>
+
+<!-- Template para items en nav -->
+<ng-template #renderItemNav let-item let-level="level">
+  <li class="dm-nav-item" [class.has-submenu]="hasSubmenu(item)">
+    @if (hasSubmenu(item)) {
+      <!-- Item con submenú (contenedor) -->
+      <div class="dm-nav-submenu-header" (click)="toggle(item.id)">
+        <i [class]="item.icono"></i>
+        <span>{{ item.nombre }}</span>
+        <i class="bx" [class.bx-chevron-right]="!isOpen(item.id)" [class.bx-chevron-down]="isOpen(item.id)"></i>
+      </div>
+      @if (isOpen(item.id)) {
+        <ul class="dm-nav-submenu">
+          @for (sub of item.submenu; track trackItem($index, sub)) {
+            @if (sub.activo) {
+              <ng-container *ngTemplateOutlet="renderItemNav; context: { $implicit: sub, level: level + 1 }"></ng-container>
+            }
+          }
+        </ul>
+      }
+    } @else {
+      <!-- Item navegable -->
+      <a [routerLink]="item.ruta" routerLinkActive="active" class="dm-nav-link" (click)="onItemClick()">
+        @if (item.id === 'notificaciones' && contadorNotificaciones > 0) {
+          <span class="position-relative">
+            <i [class]="item.icono"></i>
+            <span class="badge-count">{{ contadorNotificaciones }}</span>
+          </span>
+        } @else {
+          <i [class]="item.icono"></i>
+        }
+        <span>{{ item.nombre }}</span>
+      </a>
+    }
+  </li>
+</ng-template>
+
+<!-- Template para items en list -->
+<ng-template #renderItemList let-item>
+  <li class="dm-list-item" [class.has-submenu]="hasSubmenu(item)">
+    @if (hasSubmenu(item)) {
+      <!-- Item con submenú (contenedor) -->
+      <button class="dm-list-submenu-toggle" (click)="toggle(item.id)">
+        <i [class]="item.icono"></i>
+        <span>{{ item.nombre }}</span>
+        <i class="bx" [class.bx-chevron-down]="!isOpen(item.id)" [class.bx-chevron-up]="isOpen(item.id)"></i>
+      </button>
+      @if (isOpen(item.id)) {
+        <ul class="dm-list-submenu">
+          @for (sub of item.submenu; track trackItem($index, sub)) {
+            @if (sub.activo) {
+              <ng-container *ngTemplateOutlet="renderItemList; context: { $implicit: sub }"></ng-container>
+            }
+          }
+        </ul>
+      }
+    } @else {
+      <!-- Item navegable -->
+      <a [routerLink]="item.ruta" routerLinkActive="active" class="dm-list-link" (click)="onItemClick()">
+        @if (item.id === 'notificaciones' && contadorNotificaciones > 0) {
+          <span class="position-relative">
+            <i [class]="item.icono"></i>
+            <span class="badge-count">{{ contadorNotificaciones }}</span>
+          </span>
+        } @else {
+          <i [class]="item.icono"></i>
+        }
+        <span>{{ item.nombre }}</span>
+      </a>
+    }
+  </li>
+</ng-template>

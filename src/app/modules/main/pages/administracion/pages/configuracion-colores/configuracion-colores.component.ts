@@ -5,7 +5,8 @@ import {
   ThemeConfigService, 
   ColorPalette, 
   SemanticColors, 
-  ModuloRegistrado 
+  ModuloRegistrado,
+  TypographyConfig
 } from '@/app/shared/services/theme-config.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { CardModule } from 'primeng/card';
@@ -30,6 +31,44 @@ export class ConfiguracionColoresComponent {
   palette: ColorPalette = { ...this.themeService.palette() };
   semantic: SemanticColors = { ...this.themeService.semantic() };
   
+  // Tipografía
+  typography: TypographyConfig = { ...this.themeService.typography() };
+
+  readonly FUENTES_DISPONIBLES = [
+    { value: 'inherit',          label: 'Predeterminada del sistema' },
+    { value: 'Arial, sans-serif',                label: 'Arial' },
+    { value: '\'Roboto\', sans-serif',           label: 'Roboto' },
+    { value: '\'Open Sans\', sans-serif',        label: 'Open Sans' },
+    { value: '\'Nunito\', sans-serif',           label: 'Nunito' },
+    { value: '\'Inter\', sans-serif',            label: 'Inter' },
+    { value: '\'Poppins\', sans-serif',          label: 'Poppins' },
+    { value: '\'Source Sans Pro\', sans-serif',  label: 'Source Sans Pro' },
+    { value: 'Georgia, serif',                   label: 'Georgia' },
+    { value: '\'Courier New\', monospace',       label: 'Courier New' },
+  ];
+
+  readonly COMPONENTES_TYPO: { key: keyof Omit<TypographyConfig, 'fontFamily' | 'fontSize' | 'colorTexto'>; label: string; icono: string }[] = [
+    { key: 'tablas',      label: 'Tablas',      icono: 'bx bx-table' },
+    { key: 'inputs',      label: 'Inputs',      icono: 'bx bx-text' },
+    { key: 'formularios', label: 'Formularios', icono: 'bx bx-list-ul' },
+    { key: 'cards',       label: 'Cards',       icono: 'bx bx-card' },
+    { key: 'botones',     label: 'Botones',     icono: 'bx bx-pointer' },
+    { key: 'badges',      label: 'Badges',      icono: 'bx bx-purchase-tag' },
+    { key: 'labels',      label: 'Labels',      icono: 'bx bx-label' },
+    { key: 'modales',     label: 'Modales',     icono: 'bx bx-window-alt' },
+  ];
+
+  guardarTypografia() {
+    this.themeService.updateTypography(this.typography);
+    this.alertService.showAlert('Tipografía guardada', 'Los cambios tipográficos se aplicaron en toda la app.', 'success');
+  }
+
+  restaurarTypografiaDefault() {
+    this.themeService.restaurarTypographyDefault();
+    this.typography = { ...this.themeService.typography() };
+    this.alertService.showAlert('Tipografía restaurada', 'Se restauraron los valores por defecto.', 'success');
+  }
+
   // Tab activo
   activeTab = signal(0);
   

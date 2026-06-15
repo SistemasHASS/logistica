@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DropdownComponent } from '../../../../components/dropdown/dropdown.component';
 import { ProductSearchCardsComponent } from '../../../../components/product-search-cards/product-search-cards.component';
+import { ModalSolicitudItemComponent } from '../modal-solicitud-item/modal-solicitud-item.component';
 
 @Component({
   selector: 'app-modal-detalle-item',
   standalone: true,
   styleUrls: ['../../requerimientos.component.scss'],
-  imports: [CommonModule, FormsModule, DropdownComponent, ProductSearchCardsComponent],
+  imports: [CommonModule, FormsModule, DropdownComponent, ProductSearchCardsComponent, ModalSolicitudItemComponent],
   templateUrl: './modal-detalle-item.component.html',
 })
 export class ModalDetalleItemComponent {
@@ -33,6 +34,8 @@ export class ModalDetalleItemComponent {
   @Input() modalProyectoData: any[] = [];
   @Input() activosFijosFiltrados: any[] = [];
   @Input() items: any[] = [];
+  @Input() stockActualLineaTemp: number | null = null;
+  @Input() consultandoStock = false;
   // Estados de campos del modal
   @Input() modalTurnoValue = '';
   @Input() modalTurnoEditable = false;
@@ -61,6 +64,27 @@ export class ModalDetalleItemComponent {
   @Output() laborChangeEvt = new EventEmitter<void>();
   @Output() productoSelectEvt = new EventEmitter<any>();
   @Output() permitirEditarParametrosChange = new EventEmitter<boolean>();
+
+  modalSolicitudVisible = false;
+  textoBusquedaItem = '';
+
+  get itemsEncontrados(): boolean {
+    if (!this.textoBusquedaItem || this.textoBusquedaItem.trim().length < 2) return true;
+    const q = this.textoBusquedaItem.trim().toLowerCase();
+    return this.itemsFiltrados.some(
+      (i: any) =>
+        i.descripcion?.toLowerCase().includes(q) ||
+        i.codigo?.toLowerCase().includes(q)
+    );
+  }
+
+  abrirSolicitudItem(): void {
+    this.modalSolicitudVisible = true;
+  }
+
+  cerrarSolicitudItem(): void {
+    this.modalSolicitudVisible = false;
+  }
 
   // Cierra el modal
   cerrar() {

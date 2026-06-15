@@ -9,6 +9,7 @@ import { RequerimientosItemService } from '../../services/requerimientos-item.se
 import { RequerimientosMaestrasService } from '../../services/requerimientos-maestras.service';
 import { UtilsService } from '@/app/shared/utils/utils.service';
 import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
+import { SolicitudCompraAdjunto } from '@/app/shared/interfaces/Tables';
 
 @Component({
   selector: 'app-tab-item',
@@ -62,6 +63,8 @@ export class TabItemComponent {
   @Input() itemsFiltrados: any[] = [];
   // unidadesMedidaFiltradas viene del maestrasSvc para reflejar cambios al seleccionar producto
   get unidadesMedidaFiltradas() { return this.maestrasSvc.unidadesMedidaFiltradas; }
+  get stockActualLineaTemp() { return this.itemSvc.stockActualLineaTemp; }
+  get consultandoStock() { return this.itemSvc.consultandoStock; }
   @Input() turnos: any[] = [];
   // modalCecoData/LaborData/ProyectoData: en edición usan los filtrados del service; si vacíos, todo
   get modalCecoData() {
@@ -105,6 +108,11 @@ export class TabItemComponent {
   lineasPreview: any[] = [];
   tieneErroresExcel = false;
   puedeGuardar = false;
+
+  // ─── Sub-tab state (Detalles / Adjuntar Archivos) ─────────────────────
+  subTabActivo: 'detalles' | 'adjuntos' = 'detalles';
+  adjuntosCompra: SolicitudCompraAdjunto[] = [];
+  @ViewChild('adjuntoInput') adjuntoInputRef!: ElementRef<HTMLInputElement>;
 
   // ─── @Output: acciones que necesitan sincronizar estado en el padre ─────
   @Output() tipoChange = new EventEmitter<string>();
@@ -213,8 +221,60 @@ export class TabItemComponent {
   scrollLeft() { this.itemSvc.scrollLeft?.(); }
   scrollRight() { this.itemSvc.scrollRight?.(); }
 
+  // ─── Adjuntos COMPRA ─────────────────────────────────────────────────────
+  onAdjuntoSelected(event: any): void {
+    const files: FileList = event.target.files;
+    if (!files || files.length === 0) return;
+    const permitidos = ['application/pdf', 'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'image/jpeg', 'image/png', 'image/jpg'];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!permitidos.includes(file.type)) continue;
+      if (file.size > 10 * 1024 * 1024) continue;
+      if (this.adjuntosCompra.find(a => a.nombreArchivo === file.name)) continue;
+      this.adjuntosCompra.push({
+        nombreArchivo: file.name,
+        rutaArchivo: '',
+        tipoArchivo: file.type,
+        tamanoArchivo: file.size,
+        descripcion: '',
+        file: file,
+        activo: true,
+      });
+    }
+    event.target.value = '';
+  }
+
+  eliminarAdjunto(i: number): void {
+    this.adjuntosCompra.splice(i, 1);
+  }
+
+  formatAdjuntoSize(bytes?: number): string {
+    if (!bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  getAdjuntoIcon(tipo?: string): string {
+    if (!tipo) return 'bi bi-file-earmark';
+    if (tipo.includes('pdf')) return 'bi bi-file-earmark-pdf text-danger';
+    if (tipo.includes('word')) return 'bi bi-file-earmark-word text-primary';
+    if (tipo.includes('excel') || tipo.includes('sheet')) return 'bi bi-file-earmark-excel text-success';
+    if (tipo.includes('image')) return 'bi bi-file-earmark-image text-info';
+    return 'bi bi-file-earmark';
+  }
+
+  limpiarAdjuntos(): void {
+    this.adjuntosCompra = [];
+  }
+
   // ─── Handlers ngModelChange ───────────────────────────────────────────────
-  onItemtipoChange(val: string) { if (this.requerimiento) this.requerimiento.itemtipo = val; this.tipoChange.emit(val); this.onTipoChange(); }
+  onItemtipoChange(val: string) { if (this.requerimiento) this.requerimiento.itemtipo = val; this.tipoChange.emit(val); this.onTipoChange(); this.subTabActivo = 'detalles'; this.limpiarAdjuntos(); }
   onPrioridadChange(val: string) { this.prioridadChange.emit(val); }
   onAlmacenChange(val: string) { this.almacenChange.emit(val); }
   onAlmacenOrigenChange(val: string) { this.almacenOrigenChange.emit(val); }

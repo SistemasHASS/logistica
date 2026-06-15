@@ -229,7 +229,8 @@
             <!-- <td><strong>{{ oc.numeroOrden }}</strong></td> -->
             <td>
               @if (oc.numeroOrdenSpring) {
-                <span class="badge bg-primary" title="Número en SPRING">{{ oc.numeroOrdenSpring }}</span>
+                <!-- <span class="badge bg-primary" title="Número en SPRING">{{ oc.numeroOrdenSpring }}</span> -->
+                 <span title="Número en SPRING">{{ oc.numeroOrdenSpring }}</span>
               } @else {
                 <span class="text-muted">-</span>
               }
@@ -456,7 +457,8 @@
         <div class="info-item">
           <label>Número SPRING:</label>
           @if (ocDetalle.numeroOrdenSpring) {
-            <span class="badge bg-primary fs-6">{{ ocDetalle.numeroOrdenSpring }}</span>
+            <!-- <span class="badge bg-primary fs-6">{{ ocDetalle.numeroOrdenSpring }}</span> -->
+            <strong>{{ ocDetalle.numeroOrdenSpring }}</strong>
           } @else {
             <span class="text-muted">No sincronizado con SPRING</span>
           }

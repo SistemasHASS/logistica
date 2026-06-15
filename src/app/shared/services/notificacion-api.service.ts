@@ -386,6 +386,48 @@ export class NotificacionApiService {
   }
 
   /**
+   * Enviar solicitud de creación de nuevo item al Jefe de Logística (JLOLOGIST)
+   * La imagen se sube como fichero multipart; la BD solo guarda la ruta.
+   */
+  async enviarSolicitudCreacionItem(data: {
+    nombreItem: string;
+    descripcion: string;
+    unidadMedida?: string;
+    areaSolicitante?: string;
+    imagen?: File | null;
+  }): Promise<{ success: boolean; mensaje: string; id_solicitud?: number }> {
+    try {
+      const usuario = await this.dexieService.showUsuario();
+      if (!usuario) return { success: false, mensaje: 'No hay usuario logueado' };
+
+      const formData = new FormData();
+      formData.append('nombreItem',        data.nombreItem.trim());
+      formData.append('descripcion',       data.descripcion.trim());
+      formData.append('dniSolicitante',    usuario.documentoidentidad);
+      formData.append('nombreSolicitante', usuario.nombre);
+      formData.append('unidadMedida',      data.unidadMedida ?? '');
+      formData.append('areaSolicitante',   data.areaSolicitante ?? (usuario as any).nombreArea ?? '');
+      if (data.imagen) {
+        formData.append('imagen', data.imagen, data.imagen.name);
+      }
+
+      const resp: any = await firstValueFrom(
+        this.http.post<any>(`${this.API_URL_LOGISTICA}/admin-logistica/solicitar-creacion-item`, formData)
+      );
+
+      const r = resp?.resultado;
+      return {
+        success:      r?.success === true || r?.success === 1,
+        mensaje:      r?.mensaje ?? 'Sin respuesta',
+        id_solicitud: r?.id_solicitud,
+      };
+    } catch (error) {
+      console.error('Error al enviar solicitud de creación de item:', error);
+      return { success: false, mensaje: 'Error de conexión con el servidor' };
+    }
+  }
+
+  /**
    * Obtener contador de notificaciones no leídas
    */
   async getContadorNoLeidas(): Promise<number> {

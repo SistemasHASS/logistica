@@ -18,14 +18,96 @@ html{
     scroll-behavior: smooth;
 }
 :root{
-    --tamaño-letra: .9rem;
+    --tamaño-letra: 9px;
+    /* Tipografía configurable desde Administración */
+    --typo-font-family:   inherit;
+    --typo-font-size:     9px;
+    --typo-color:         #212529;
+    --typo-tablas-size:   9px;
+    --typo-tablas-color:  #212529;
+    --typo-inputs-size:   9px;
+    --typo-inputs-color:  #495057;
+    --typo-forms-size:    9px;
+    --typo-forms-color:   #212529;
+    --typo-cards-size:    9px;
+    --typo-cards-color:   #212529;
+    --typo-btns-size:     9px;
+    --typo-btns-color:    #ffffff;
+    --typo-badges-size:   8px;
+    --typo-badges-color:  #ffffff;
+    --typo-labels-size:   9px;
+    --typo-labels-color:  #6c757d;
+    --typo-modales-size:  9px;
+    --typo-modales-color: #212529;
 }
 *{
     transition: background-color .3s ease-in-out;
     interpolate-size: allow-keywords;
 }
+/* Tipografía global */
+body {
+    font-family: var(--typo-font-family);
+    font-size: var(--typo-font-size);
+    color: var(--typo-color);
+}
 *:not(i):not(.sidebar-item span), * .btn{
-    font-size: var(--tamaño-letra);
+    font-size: var(--typo-font-size);
+    color: inherit;
+}
+/* Tipografía por componente */
+table, table td, table th {
+    font-size: var(--typo-tablas-size) !important;
+    color: var(--typo-tablas-color) !important;
+}
+input.form-control, select.form-select, textarea.form-control {
+    font-size: var(--typo-inputs-size) !important;
+    color: var(--typo-inputs-color) !important;
+}
+.form-group label, .form-label, label {
+    font-size: var(--typo-labels-size) !important;
+    color: var(--typo-labels-color) !important;
+}
+.card, .card-body, .card * {
+    font-size: var(--typo-cards-size);
+    color: var(--typo-cards-color);
+}
+.btn {
+    font-size: var(--typo-btns-size) !important;
+}
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary.active,
+.btn-primary:disabled,
+.btn-primary[disabled],
+.btn-danger,
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger:active,
+.btn-danger.active,
+.btn-danger:disabled,
+.btn-danger[disabled],
+.btn-success,
+.btn-success:hover,
+.btn-success:focus,
+.btn-success:active,
+.btn-success.active,
+.btn-success:disabled,
+.btn-success[disabled] {
+    color: #ffffff !important;
+}
+.badge {
+    font-size: var(--typo-badges-size) !important;
+}
+.modal-body, .modal-body * {
+    font-size: var(--typo-modales-size);
+    color: var(--typo-modales-color);
+}
+/* formularios (contenedores .form-group y .modal) */
+.form-group, .modal-content {
+    font-size: var(--typo-forms-size);
+    color: var(--typo-forms-color);
 }
 textarea{
     resize: none;
@@ -73,7 +155,7 @@ table tr button{
 }
 @media (max-width: 768px) {
     :root{
-        --tamaño-letra: 14px;
+        --tamaño-letra: 9px;
     }
 }
 @media (max-width: 500px) {
@@ -87,7 +169,7 @@ table tr button{
         left: 20px;
     }
     :root{
-        --tamaño-letra: 13px;
+        --tamaño-letra: 9px;
     }
 }
 .modal-open{

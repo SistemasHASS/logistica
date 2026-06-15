@@ -1,0 +1,233 @@
+<div class="empresas-container">
+  <div class="page-header">
+    <h2 class="page-title">
+      <i class="bx bx-building"></i>
+      Configuración de Empresas
+    </h2>
+    <button class="btn btn-primary" (click)="openCreate()" [disabled]="loading">
+      <i class="bx bx-plus"></i>
+      Nueva Empresa
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">Empresas Configuradas</h5>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive" *ngIf="!loading; else loadingTpl">
+        <table class="table table-striped table-hover" *ngIf="empresas.length > 0; else noDataTpl">
+          <thead>
+            <tr>
+              <th>Logo</th>
+              <th>RUC</th>
+              <th>Razón Social</th>
+              <th>Dirección</th>
+              <th>Teléfono</th>
+              <th>Email</th>
+              <th>Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let empresa of empresas">
+              <td>
+                <div class="logo-cell">
+                  <img *ngIf="empresa.logoBase64" [src]="empresa.logoBase64" alt="Logo" class="logo-img">
+                  <div *ngIf="!empresa.logoBase64" class="logo-placeholder">
+                    <i class="bx bx-building"></i>
+                  </div>
+                </div>
+              </td>
+              <td>{{ empresa.ruc }}</td>
+              <td>{{ empresa.razonSocial }}</td>
+              <td>{{ empresa.direccion || '-' }}</td>
+              <td>{{ empresa.telefono || '-' }}</td>
+              <td>{{ empresa.email || '-' }}</td>
+              <td>
+                <span class="badge" [class.badge-success]="empresa.activo" [class.badge-secondary]="!empresa.activo">
+                  {{ empresa.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-info mr-1" (click)="openEdit(empresa)" title="Editar">
+                  <i class="bx bx-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="eliminar(empresa)" title="Eliminar">
+                  <i class="bx bx-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <ng-template #noDataTpl>
+          <div class="empty-state">
+            <i class="bx bx-building-house"></i>
+            <p>No hay empresas configuradas</p>
+            <button class="btn btn-primary" (click)="openCreate()">
+              <i class="bx bx-plus"></i>
+              Agregar primera empresa
+            </button>
+          </div>
+        </ng-template>
+      </div>
+      <ng-template #loadingTpl>
+        <div class="loading-state">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p>Cargando empresas...</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5 class="modal-title">
+        <i class="bx" [class.bx-plus]="!isEdit" [class.bx-edit]="isEdit"></i>
+        {{ isEdit ? 'Editar Empresa' : 'Nueva Empresa' }}
+      </h5>
+      <button type="button" class="btn-close" (click)="closeModal()">
+        <i class="bx bx-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn" [class.active]="activeTab === 'general'" (click)="setTab('general')">
+          <i class="bx bx-info-circle"></i>
+          General
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'correo'" (click)="setTab('correo')">
+          <i class="bx bx-envelope"></i>
+          Correo
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'smtp'" (click)="setTab('smtp')">
+          <i class="bx bx-server"></i>
+          SMTP
+        </button>
+      </div>
+
+      <!-- Tab General -->
+      <div class="tab-content" *ngIf="activeTab === 'general'">
+        <div class="row">
+          <div class="col-md-8">
+            <div class="form-group">
+              <label for="ruc">RUC <span class="required">*</span></label>
+              <input type="text" id="ruc" class="form-control" [(ngModel)]="form.ruc" maxlength="11" placeholder="20123456789">
+            </div>
+            <div class="form-group">
+              <label for="razonSocial">Razón Social <span class="required">*</span></label>
+              <input type="text" id="razonSocial" class="form-control" [(ngModel)]="form.razonSocial" placeholder="Nombre de la empresa">
+            </div>
+            <div class="form-group">
+              <label for="direccion">Dirección</label>
+              <textarea id="direccion" class="form-control" [(ngModel)]="form.direccion" rows="2" placeholder="Dirección fiscal"></textarea>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="telefono">Teléfono</label>
+                  <input type="text" id="telefono" class="form-control" [(ngModel)]="form.telefono" placeholder="01 234 5678">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="email">Email</label>
+                  <input type="email" id="email" class="form-control" [(ngModel)]="form.email" placeholder="empresa@ejemplo.com">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group logo-upload">
+              <label>Logo de la Empresa</label>
+              <div class="logo-preview-container">
+                <img *ngIf="logoPreview" [src]="logoPreview" alt="Logo preview" class="logo-preview">
+                <div *ngIf="!logoPreview" class="logo-empty">
+                  <i class="bx bx-image"></i>
+                  <span>Sin logo</span>
+                </div>
+              </div>
+              <div class="logo-actions">
+                <input type="file" id="logoFile" accept="image/*" (change)="onFileSelected($event)" hidden>
+                <label for="logoFile" class="btn btn-outline-primary btn-sm">
+                  <i class="bx bx-upload"></i>
+                  {{ logoPreview ? 'Cambiar' : 'Subir' }}
+                </label>
+                <button *ngIf="logoPreview" class="btn btn-outline-danger btn-sm" (click)="removeLogo()">
+                  <i class="bx bx-trash"></i>
+                  Quitar
+                </button>
+              </div>
+              <small class="form-text text-muted">Máximo 2MB. PNG o JPG recomendado.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Correo -->
+      <div class="tab-content" *ngIf="activeTab === 'correo'">
+        <div class="form-group">
+          <label for="correoEnvio">Correo de Envío</label>
+          <input type="email" id="correoEnvio" class="form-control" [(ngModel)]="form.correoEnvio" placeholder="noreply@empresa.com">
+          <small class="form-text text-muted">Correo desde el cual se enviarán las notificaciones</small>
+        </div>
+        <div class="form-group">
+          <label for="correoNombre">Nombre de Remitente</label>
+          <input type="text" id="correoNombre" class="form-control" [(ngModel)]="form.correoNombre" placeholder="Hass Perú S.A.C.">
+          <small class="form-text text-muted">Nombre que aparecerá en los correos enviados</small>
+        </div>
+      </div>
+
+      <!-- Tab SMTP -->
+      <div class="tab-content" *ngIf="activeTab === 'smtp'">
+        <div class="row">
+          <div class="col-md-8">
+            <div class="form-group">
+              <label for="smtpHost">Servidor SMTP (Host)</label>
+              <input type="text" id="smtpHost" class="form-control" [(ngModel)]="form.smtpHost" placeholder="smtp.gmail.com">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label for="smtpPort">Puerto</label>
+              <input type="number" id="smtpPort" class="form-control" [(ngModel)]="form.smtpPort" placeholder="587">
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="smtpUser">Usuario SMTP</label>
+          <input type="text" id="smtpUser" class="form-control" [(ngModel)]="form.smtpUser" placeholder="usuario@empresa.com">
+        </div>
+        <div class="form-group">
+          <label for="smtpPassword">Contraseña SMTP</label>
+          <input type="password" id="smtpPassword" class="form-control" [(ngModel)]="form.smtpPassword" placeholder="••••••••">
+          <small class="form-text text-muted">Contraseña o token de aplicación del servidor SMTP</small>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="form.smtpSeguro">
+            <span>Usar conexión segura (SSL/TLS)</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeModal()">
+        <i class="bx bx-x"></i>
+        Cancelar
+      </button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="loading">
+        <i class="bx" [class.bx-save]="!loading" [class.bx-loader-alt]="loading" [class.spin]="loading"></i>
+        {{ isEdit ? 'Actualizar' : 'Guardar' }}
+      </button>
+    </div>
+  </div>
+</div>

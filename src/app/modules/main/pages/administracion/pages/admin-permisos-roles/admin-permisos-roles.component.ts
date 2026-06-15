@@ -166,7 +166,7 @@ export class AdminPermisosRolesComponent implements OnInit {
     this.cargando.set(true);
     try {
       const resp: any = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/logistica/listar-config-permisos`, {})
+        this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/listar-config-permisos`, {})
       );
       this.permisos = Array.isArray(resp) ? resp : [];
     } catch {
@@ -199,7 +199,7 @@ export class AdminPermisosRolesComponent implements OnInit {
 
     try {
       await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/logistica/guardar-config-permiso`, {
+        this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/guardar-config-permiso`, {
           idrol,
           clave,
           valor,

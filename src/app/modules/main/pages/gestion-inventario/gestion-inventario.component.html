@@ -54,7 +54,7 @@
         <span class="stat-label">Stock Bajo</span>
       </div>
     </div>
-    <div class="stat-card primary">
+    <div class="stat-card primary" *ngIf="puedeVerValorInventario">
       <div class="stat-icon"><i class="icon-dollar-sign"></i></div>
       <div class="stat-content">
         <span class="stat-value">S/ {{ valorInventario.toLocaleString() }}</span>

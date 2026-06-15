@@ -134,14 +134,12 @@ export class AprobacionesAreaComponent implements OnInit {
         return;
       }
 
-      // Validar que el usuario tenga área y sea jefe de área, o sea ADLOGIST, o sea JLOLOGIST
-      const esAdminLogistica = this.usuario.idrol?.includes('ADLOGIST');
-      const esJefeLogistica = this.usuario.idrol?.includes('JLOLOGIST');
+      // Roles globales: acceden sin ser jefe de área (el SP maneja la lógica de áreas)
+      const rolesGlobales = ['ADLOGIST', 'JLOLOGIST', 'JEMLOGIST', 'FINANZAS', 'GERENTE', 'TILOGIST', 'APLOGIST'];
+      const esRolGlobal = rolesGlobales.some(r => this.usuario.idrol?.includes(r));
 
-      // JLOLOGIST puede acceder sin ser jefe de área y sin área asignada (el SP maneja la lógica)
       if (
-        !esAdminLogistica &&
-        !esJefeLogistica &&
+        !esRolGlobal &&
         (!this.usuario.idarea ||
         (this.usuario.esJefeArea !== 1 && this.usuario.esJefeArea !== true))
       ) {
@@ -562,6 +560,14 @@ export class AprobacionesAreaComponent implements OnInit {
     console.log('🟢 Iniciando método aprobar()');
     if (!this.requerimientoSeleccionado || !this.usuario) {
       console.error('❌ Falta requerimiento seleccionado o usuario');
+      return;
+    }
+
+    // Prevenir auto-aprobación (salvo roles globales)
+    const rolesGlobalesAprob = ['ADLOGIST', 'JLOLOGIST', 'JEMLOGIST', 'FINANZAS', 'GERENTE', 'TILOGIST'];
+    const esRolGlobalAprob = rolesGlobalesAprob.some(r => this.usuario.idrol?.includes(r));
+    if (!esRolGlobalAprob && (this.requerimientoSeleccionado as any).dniregistra === this.usuario.documentoidentidad) {
+      Swal.fire('No permitido', 'No puede aprobar su propio requerimiento', 'warning');
       return;
     }
     
@@ -1721,6 +1727,15 @@ export class AprobacionesAreaComponent implements OnInit {
 
   async aprobarDetallesPendientes() {
     if (!this.requerimientoDetallePendientes || !this.usuario) return;
+
+    // Prevenir auto-aprobación (salvo roles globales)
+    const rolesGlobalesAprob2 = ['ADLOGIST', 'JLOLOGIST', 'JEMLOGIST', 'FINANZAS', 'GERENTE', 'TILOGIST'];
+    const esRolGlobalAprob2 = rolesGlobalesAprob2.some(r => this.usuario.idrol?.includes(r));
+    if (!esRolGlobalAprob2 && this.requerimientoDetallePendientes.dniregistra === this.usuario.documentoidentidad) {
+      Swal.fire('No permitido', 'No puede aprobar su propio requerimiento', 'warning');
+      return;
+    }
+
     if (this.detallesPendientesSeleccionados.size === 0) {
       Swal.fire('Advertencia', 'Debe seleccionar al menos un ítem para aprobar', 'warning');
       return;
@@ -1728,7 +1743,8 @@ export class AprobacionesAreaComponent implements OnInit {
     const dets = this.getDetallesPendientes();
     const seleccionados = Array.from(this.detallesPendientesSeleccionados).sort((a, b) => a - b);
     const codigosAprobados = seleccionados.map((i) => dets[i]?.codigo).filter(Boolean).join(', ');
-    const comentarios = `Aprobados ${seleccionados.length}/${dets.length} ítems: ${codigosAprobados}`;
+    const comentariosBase = `Aprobados ${seleccionados.length}/${dets.length} ítems: ${codigosAprobados}`;
+    const comentarios = comentariosBase.length > 1900 ? comentariosBase.substring(0, 1900) + '...' : comentariosBase;
     try {
       const response = await this.aprobacionesAreaService
         .aprobarRequerimientoArea({

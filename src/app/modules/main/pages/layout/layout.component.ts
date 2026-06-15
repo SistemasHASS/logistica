@@ -15,8 +15,9 @@ import { NotificationService } from '@/app/shared/services/notification.service'
 import { DebugNotificationsService } from '@/app/shared/debug-notifications';
 import { APP_VERSION, APP_INFO } from 'src/environments/version';
 import { environment } from 'src/environments/environment';
-import { LayoutConfigService } from '../../services/layout-config.service';
+import { LayoutConfigService, MenuType } from '../../services/layout-config.service';
 import { HttpClient } from '@angular/common/http';
+import { DynamicMenuComponent } from './components/dynamic-menu/dynamic-menu.component';
 
 type AccordionGroup = 'panel' | 'config' | 'requerimientos' | 'compras' | 'almacen' | 'aprobaciones' | 'reportes';
 
@@ -24,7 +25,7 @@ type AccordionGroup = 'panel' | 'config' | 'requerimientos' | 'compras' | 'almac
   selector: 'app-layout',
   standalone: true,
   // imports: [CommonModule, RouterModule, NotificationContainerComponent, TestNotificationsComponent],
-  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, NotificationContainerComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, NotificationContainerComponent, DynamicMenuComponent],
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss',
 })
@@ -38,6 +39,27 @@ export class LayoutComponent {
   isOnline: boolean = true;
   contadorNotificaciones: number = 0;
   private ultimaNotificacion: number = 0;
+
+  // Propiedades para menú dinámico
+  get menuType(): MenuType {
+    return this.layoutConfig.getMenuType(this.usuario?.idrol);
+  }
+
+  get menuGroups() {
+    return this.layoutConfig.getAccordionMenu(this.usuario?.idrol);
+  }
+
+  // Determina qué sistema de menú usar
+  get usaMenuRolesNuevo(): boolean {
+    const idrol = this.usuario?.idrol;
+    // JLOLOGIST usa sistema legacy (DynamicMenuComponent)
+    // Otros roles con configuración usan MenuRolesComponent
+    return idrol !== 'JLOLOGIST' && this.layoutConfig.tieneMenuConfigurado(idrol);
+  }
+
+  get usaMenuDinamico(): boolean {
+    return this.layoutConfig.tieneMenuConfigurado(this.usuario?.idrol);
+  }
 
   // ── Accordion nav (JLOLOGIST) ──────────────────────────────────
   readonly ACCORDION_GROUPS: AccordionGroup[] = ['panel', 'config', 'requerimientos', 'compras', 'almacen', 'aprobaciones', 'reportes'];
@@ -155,6 +177,15 @@ export class LayoutComponent {
     }, 30000);
 
     await this.layoutConfig.cargar();
+    
+    // Debug: verificar configuración de menú para el rol actual
+    const idrol = this.usuario?.idrol;
+    console.log('[Layout] Menu config para', idrol, ':');
+    console.log('  - usaMenuDinamico:', this.usaMenuDinamico);
+    console.log('  - menuType:', this.menuType);
+    console.log('  - menuGroups count:', this.menuGroups?.length);
+    console.log('  - tieneMenuConfigurado:', this.layoutConfig.tieneMenuConfigurado(idrol));
+    
     this.loadAccordionState();
     this.openActiveGroup();
 
@@ -534,5 +565,23 @@ export class LayoutComponent {
   // Método para verificar si estamos en desarrollo
   isDevelopment(): boolean {
     return environment.production === false;
+  }
+
+  // Debug: Recargar configuración del menú manualmente
+  async recargarConfigMenu() {
+    console.log('[Layout] Forzando recarga de config de menú...');
+    this.layoutConfig.invalidar();
+    await this.layoutConfig.cargar();
+    
+    const idrol = this.usuario?.idrol;
+    console.log('[Layout] Después de recargar - Config para', idrol, ':');
+    console.log('  - usaMenuDinamico:', this.usaMenuDinamico);
+    console.log('  - menuType:', this.menuType);
+    console.log('  - menuGroups count:', this.menuGroups?.length);
+    console.log('  - tieneMenuConfigurado:', this.layoutConfig.tieneMenuConfigurado(idrol));
+    console.log('  - config completa:', this.layoutConfig.getMenuConfig(idrol));
+    
+    // Forzar actualización de la vista
+    alert(`Config recargada. usaMenuDinamico: ${this.usaMenuDinamico}, menuType: ${this.menuType}`);
   }
 }

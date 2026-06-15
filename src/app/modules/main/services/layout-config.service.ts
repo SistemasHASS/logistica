@@ -3,13 +3,16 @@ import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
+export type MenuType = 'accordion' | 'nav' | 'list' | 'default';
+
 export interface AccordionItemConfig {
   id: string;
   nombre: string;
   icono: string;
-  ruta: string;
+  ruta?: string;
   activo: boolean;
   orden: number;
+  submenu?: AccordionItemConfig[];
 }
 
 export interface AccordionGroupConfig {
@@ -18,7 +21,16 @@ export interface AccordionGroupConfig {
   icono: string;
   activo: boolean;
   orden: number;
+  tipo?: MenuType;
   items: AccordionItemConfig[];
+}
+
+export interface MenuConfig {
+  idrol: string;
+  tipoMenu: MenuType;
+  usaAccordion: boolean;
+  menuConfig?: AccordionGroupConfig[];
+  ultimaModificacion?: Date;
 }
 
 /** Estructura por defecto — se usa como fallback si no hay config en BD */
@@ -85,6 +97,8 @@ export class LayoutConfigService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.baseUrl;
 
+  // Signals para el estado del menú
+  private menuConfigs = signal<Map<string, MenuConfig>>(new Map());
   private accordionRoles = signal<Set<string>>(new Set());
   private accordionMenus = signal<Map<string, AccordionGroupConfig[]>>(new Map());
 
@@ -94,31 +108,81 @@ export class LayoutConfigService {
   private cargando = false;
 
   async cargar(): Promise<void> {
-    if (untracked(this.cargado) || this.cargando) return;
+    console.log('[LayoutConfig] cargar() iniciado - cargado:', untracked(this.cargado), 'cargando:', this.cargando);
+    if (untracked(this.cargado) || this.cargando) {
+      console.log('[LayoutConfig] cargar() - ya cargado o cargando, retornando');
+      return;
+    }
     this.cargando = true;
     try {
+      console.log('[LayoutConfig] Llamando API:', `${this.baseUrl}/api/ConfiguracionPermiso/listar-config-permisos`);
+      // Enviar body vacío {} para listar todas las configuraciones
       const resp: any = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/logistica/listar-config-permisos`, {})
+        this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/listar-config-permisos`, {})
       );
+      console.log('[LayoutConfig] Respuesta API:', resp);
+      
       const permisos: { idrol: string; clave: string; valor: string }[] = Array.isArray(resp) ? resp : [];
+      
+      // Debug: ver todas las configs recibidas del API
+      console.log('[LayoutConfig] Total configs recibidas:', permisos.length);
+      console.log('[LayoutConfig] Todas las claves recibidas:', permisos.map(p => `${p.idrol}:${p.clave}`));
+      console.log('[LayoutConfig] Configs ALLOGIST recibidas:', permisos.filter(p => p.idrol === 'ALLOGIST').map(p => ({ clave: p.clave, valorLen: p.valor?.length })));
 
+      // Procesar roles con accordion
       const roles = new Set(
         permisos.filter(p => p.clave === 'LAYOUT_ACCORDION' && p.valor === '1').map(p => p.idrol)
       );
       this.accordionRoles.set(roles);
 
+      // Procesar configuraciones de menú por rol
+      const configs = new Map<string, MenuConfig>();
       const menus = new Map<string, AccordionGroupConfig[]>();
-      permisos
-        .filter(p => p.clave.startsWith('ACCORDION_MENU_'))
-        .forEach(p => {
-          try {
-            const idrol = p.clave.replace('ACCORDION_MENU_', '');
-            menus.set(idrol, JSON.parse(p.valor) as AccordionGroupConfig[]);
-          } catch { /* JSON inválido, ignorar */ }
+
+      // Agrupar por idrol
+      const porRol = new Map<string, { clave: string; valor: string }[]>();
+      permisos.forEach(p => {
+        if (!porRol.has(p.idrol)) porRol.set(p.idrol, []);
+        porRol.get(p.idrol)!.push(p);
+      });
+
+      // Procesar cada rol
+      porRol.forEach((items, idrol) => {
+        const config: MenuConfig = { idrol, tipoMenu: 'default', usaAccordion: false };
+        
+        items.forEach(item => {
+          switch (item.clave) {
+            case 'LAYOUT_ACCORDION':
+              config.usaAccordion = item.valor === '1';
+              break;
+            case 'LAYOUT_MENU_TYPE':
+              config.tipoMenu = (item.valor as MenuType) || 'default';
+              break;
+            case 'ACCORDION_MENU_CONFIG':
+            case `ACCORDION_MENU_${idrol}`:
+              try {
+                config.menuConfig = JSON.parse(item.valor) as AccordionGroupConfig[];
+                menus.set(idrol, config.menuConfig);
+                console.log(`[LayoutConfig] JSON parseado OK para ${idrol}, items:`, config.menuConfig?.length);
+              } catch (err) {
+                console.error(`[LayoutConfig] Error parsing JSON para ${idrol}:`, err);
+              }
+              break;
+          }
         });
+
+        configs.set(idrol, config);
+      });
+
+      this.menuConfigs.set(configs);
       this.accordionMenus.set(menus);
       this.cargado.set(true);
-    } catch {
+      
+      // Debug: mostrar roles cargados
+      console.log('[LayoutConfig] Roles cargados:', Array.from(configs.keys()));
+      console.log('[LayoutConfig] ALLOGIST config:', configs.get('ALLOGIST'));
+    } catch (err) {
+      console.error('[LayoutConfig] Error cargando:', err);
       this.accordionRoles.set(new Set());
       this.cargado.set(true);
     } finally {
@@ -126,15 +190,122 @@ export class LayoutConfigService {
     }
   }
 
-  usaAccordion(idrol: string): boolean {
-    return this.accordionRoles().has(idrol);
+  /** Obtiene la configuración completa del menú para un rol */
+  getMenuConfig(idrol: string): MenuConfig {
+    const config = this.menuConfigs().get(idrol);
+    if (config) return config;
+    
+    // Fallback: mantener compatibilidad con sistema anterior
+    const usaAccordion = this.accordionRoles().has(idrol);
+    return {
+      idrol,
+      tipoMenu: usaAccordion ? 'accordion' : 'default',
+      usaAccordion,
+      menuConfig: usaAccordion ? this.getAccordionMenu(idrol) : undefined
+    };
   }
 
-  /** Devuelve el menú accordion para un rol. Si no hay config en BD, devuelve el default. */
+  // Roles que SIEMPRE usan menú accordion (fallback sin depender de BD)
+  private readonly ROLES_ACCORDION_DEFAULT = new Set(['JLOLOGIST']);
+
+  /** Determina el tipo de menú a usar para un rol */
+  getMenuType(idrol: string): MenuType {
+    const config = this.menuConfigs().get(idrol);
+    if (config) return config.tipoMenu;
+    if (this.accordionRoles().has(idrol) || this.ROLES_ACCORDION_DEFAULT.has(idrol)) return 'accordion';
+    return 'default';
+  }
+
+  /** Verifica si un rol usa menú dinámico configurado */
+  tieneMenuConfigurado(idrol: string): boolean {
+    return this.menuConfigs().has(idrol) || this.accordionRoles().has(idrol) || this.ROLES_ACCORDION_DEFAULT.has(idrol);
+  }
+
+  /** Legacy: verifica si usa accordion */
+  usaAccordion(idrol: string): boolean {
+    const config = this.menuConfigs().get(idrol);
+    if (config) return config.usaAccordion || config.tipoMenu === 'accordion';
+    return this.accordionRoles().has(idrol) || this.ROLES_ACCORDION_DEFAULT.has(idrol);
+  }
+
+  /** Devuelve el menú configurado para un rol. Si no hay config en BD, devuelve el default. */
   getAccordionMenu(idrol: string): AccordionGroupConfig[] {
+    const config = this.menuConfigs().get(idrol);
+    // Devolver menuConfig para cualquier tipo (accordion, nav, list)
+    if (config?.menuConfig && config.menuConfig.length > 0) return config.menuConfig;
+    
     const custom = this.accordionMenus().get(idrol);
     if (custom && custom.length > 0) return custom;
     return ACCORDION_DEFAULT;
+  }
+
+  /** Guarda la configuración de menú para un rol */
+  async guardarMenuConfig(idrol: string, tipoMenu: MenuType, menuConfig?: AccordionGroupConfig[]): Promise<boolean> {
+    try {
+      const requests = [];
+      
+      // Guardar tipo de menú
+      requests.push(
+        lastValueFrom(this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/guardar-config-permiso`, {
+          idrol,
+          clave: 'LAYOUT_MENU_TYPE',
+          valor: tipoMenu,
+          descripcion: `Tipo de menú para ${idrol}`,
+          usuarioModifica: 'ADMIN'
+        }))
+      );
+
+      // Guardar flag de accordion
+      requests.push(
+        lastValueFrom(this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/guardar-config-permiso`, {
+          idrol,
+          clave: 'LAYOUT_ACCORDION',
+          valor: tipoMenu === 'accordion' ? '1' : '0',
+          descripcion: `Usa accordion: ${tipoMenu === 'accordion'}`,
+          usuarioModifica: 'ADMIN'
+        }))
+      );
+
+      // Guardar configuración del menú si es accordion
+      if (menuConfig && tipoMenu === 'accordion') {
+        requests.push(
+          lastValueFrom(this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/guardar-config-permiso`, {
+            idrol,
+            clave: 'ACCORDION_MENU_CONFIG',
+            valor: JSON.stringify(menuConfig),
+            descripcion: `Configuración de menú accordion para ${idrol}`,
+            usuarioModifica: 'ADMIN'
+          }))
+        );
+      }
+
+      await Promise.all(requests);
+      
+      // Actualizar signals locales
+      const newConfig: MenuConfig = {
+        idrol,
+        tipoMenu,
+        usaAccordion: tipoMenu === 'accordion',
+        menuConfig,
+        ultimaModificacion: new Date()
+      };
+      
+      const newConfigs = new Map(this.menuConfigs());
+      newConfigs.set(idrol, newConfig);
+      this.menuConfigs.set(newConfigs);
+      
+      if (tipoMenu === 'accordion' && menuConfig) {
+        const newMenus = new Map(this.accordionMenus());
+        newMenus.set(idrol, menuConfig);
+        this.accordionMenus.set(newMenus);
+        this.accordionRoles.set(new Set([...this.accordionRoles(), idrol]));
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error guardando configuración de menú:', error);
+      return false;
+    }
   }
 
   /** Fuerza recarga en el próximo ciclo (después de guardar cambios en admin) */
@@ -142,6 +313,7 @@ export class LayoutConfigService {
     this.cargando = false;
     this.accordionRoles.set(new Set());
     this.accordionMenus.set(new Map());
+    this.menuConfigs.set(new Map());
     this.cargado.set(false);   // dispara efecto en layout (misma pestaña)
     // Marca para comunicar a otras pestañas/instancias
     localStorage.setItem('LAYOUT_CONFIG_INVALIDADO', Date.now().toString());

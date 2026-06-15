@@ -1,0 +1,291 @@
+<div class="admin-page">
+
+  <!-- MENSAJE ÉXITO -->
+  <div *ngIf="mensajeGuardado" style="background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;padding:10px 16px;border-radius:6px;margin-bottom:12px;font-size:13px">
+    ✔ {{ mensajeGuardado }}
+  </div>
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <h2><i class="bx bx-store-alt"></i> Plantillas Notas de Almacén</h2>
+      <p class="subtitle">Configure el diseño de impresión para Nota de Ingreso (NI) y Nota de Salida (NS)</p>
+    </div>
+    <button class="btn-primary" (click)="openCreate()">
+      <i class="bx bx-plus"></i> Nueva Plantilla
+    </button>
+  </div>
+
+  <!-- GRID PLANTILLAS -->
+  <div class="plantillas-grid">
+
+    <div class="plantilla-card" *ngFor="let p of plantillas" [class.default-card]="p.esDefault">
+
+      <!-- HEADER CARD -->
+      <div class="card-header-row">
+        <div class="card-meta">
+          <span class="tipo-badge" [class]="p.tipoDocumento === 'NI' ? 'tipo-ni' : 'tipo-ns'">
+            {{ p.tipoDocumento }}
+          </span>
+          <span class="empresa-name">{{ p.empresa }}</span>
+          <span class="badge-default" *ngIf="p.esDefault">Por defecto</span>
+        </div>
+        <span [class]="p.estado === 'ACTIVO' ? 'activo' : 'inactivo'">{{ p.estado }}</span>
+      </div>
+
+      <!-- PREVIEW MINI NOTA -->
+      <div class="nota-mini-preview">
+        <div class="nota-preview-header">
+          <div class="nota-empresa">000008-00 &nbsp;<strong>Hass Perú S.A.</strong></div>
+          <div class="nota-fecha">Fecha: hoy &nbsp;&nbsp; Pág: 1 de 1</div>
+        </div>
+        <div class="nota-preview-title">
+          {{ p.tituloDocumento }} #000001
+        </div>
+        <div class="nota-preview-meta">
+          <span>Transacción: &nbsp; <strong>{{ p.tipoDocumento === 'NI' ? 'Recepción de O/C' : 'Despacho de Requisiciones' }}</strong></span>
+          <span>Almacén: ALMACEN PRINCIPAL</span>
+        </div>
+        <div class="nota-preview-cols">
+          <span *ngFor="let col of getColumnasBadge(p)" class="col-chip">{{ col }}</span>
+        </div>
+        <div class="nota-preview-firmas">
+          <div class="nota-firma">
+            <div class="firma-linea"></div>
+            <span>{{ p.firmante1 }}</span>
+          </div>
+          <div class="nota-firma">
+            <div class="firma-linea"></div>
+            <span>{{ p.firmante2 }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPCIONES -->
+      <div class="card-options">
+        <span class="option-tag" *ngIf="p.mostrarUbicacionFisica">Ubic. Física</span>
+        <span class="option-tag" *ngIf="p.mostrarCodInterno">Cód. Interno</span>
+        <span class="option-tag" *ngIf="p.mostrarStockActual">Stock Actual</span>
+        <span class="option-tag" *ngIf="p.mostrarCCostos">C. Costos</span>
+        <span class="option-tag" *ngIf="p.mostrarCantidadPendiente">Cant. Pendiente</span>
+      </div>
+
+      <!-- ACCIONES -->
+      <div class="card-footer">
+        <button class="btn btn-sm btn-outline-primary" (click)="setDefault(p)" *ngIf="!p.esDefault" title="Predeterminar">
+          <i class="bx bx-pin"></i> Predeterminar
+        </button>
+        <button class="btn btn-sm btn-warning" (click)="openEdit(p)">
+          <i class="bx bx-pencil"></i> Editar
+        </button>
+        <button class="btn btn-sm" [class]="p.estado === 'ACTIVO' ? 'btn-danger' : 'btn-success'" (click)="toggleEstado(p)">
+          {{ p.estado === 'ACTIVO' ? 'Desactivar' : 'Activar' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="empty-card" *ngIf="!plantillas.length">
+      <i class="bx bx-store-alt"></i>
+      <p>No hay plantillas registradas</p>
+      <button class="btn-primary" (click)="openCreate()">Crear primera plantilla</button>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ================================================ -->
+<!-- MODAL EDICIÓN -->
+<!-- ================================================ -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <h3><i class="bx bx-store-alt"></i> {{ isEdit ? 'Editar Plantilla de Almacén' : 'Nueva Plantilla de Almacén' }}</h3>
+      <button class="close" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-layout">
+
+        <!-- COLUMNA IZQUIERDA -->
+        <div class="form-left">
+
+          <!-- Empresa y tipo -->
+          <div class="form-section">
+            <div class="section-title">Empresa y Tipo de Documento</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Empresa <span class="required">*</span></label>
+                <select [(ngModel)]="form.empresa">
+                  <option *ngFor="let e of empresas" [value]="e">{{ e }}</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Tipo de Documento <span class="required">*</span></label>
+                <select [(ngModel)]="form.tipoDocumento" (change)="onTipoDocumentoChange()">
+                  <option *ngFor="let t of tiposDocumento" [value]="t.value">{{ t.label }}</option>
+                </select>
+              </div>
+              <div class="form-group full-span">
+                <label>Título del Documento <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="form.tituloDocumento" placeholder="Ej: Nota de Ingreso" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Columnas a mostrar -->
+          <div class="form-section">
+            <div class="section-title">Columnas Visibles en la Tabla</div>
+            <div class="options-list">
+              <label class="toggle-label">
+                <input type="checkbox" [(ngModel)]="form.mostrarUbicacionFisica" />
+                <span>Mostrar columna Ubicación Física</span>
+              </label>
+              <label class="toggle-label">
+                <input type="checkbox" [(ngModel)]="form.mostrarCodInterno" />
+                <span>Mostrar columna Código Interno (COD.INT.)</span>
+              </label>
+              <label class="toggle-label">
+                <input type="checkbox" [(ngModel)]="form.mostrarStockActual" />
+                <span>Mostrar columna Stock Actual</span>
+              </label>
+              <label class="toggle-label">
+                <input type="checkbox" [(ngModel)]="form.mostrarCantidadPendiente" />
+                <span>Mostrar columna Cantidad Pendiente</span>
+              </label>
+              <label class="toggle-label" *ngIf="form.tipoDocumento === 'NI'">
+                <input type="checkbox" [(ngModel)]="form.mostrarCantidadCompra" />
+                <span>Mostrar columna Cantidad Compra (solo NI)</span>
+              </label>
+              <label class="toggle-label">
+                <input type="checkbox" [(ngModel)]="form.mostrarCCostos" />
+                <span>Mostrar sección Centro de Costos</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Pie de página -->
+          <div class="form-section">
+            <div class="section-title">Pie de Página (opcional)</div>
+            <div class="form-group">
+              <textarea [(ngModel)]="form.piePagina" rows="2" placeholder="Texto al pie de la nota impresa..."></textarea>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- COLUMNA DERECHA -->
+        <div class="form-right">
+
+          <!-- Firmantes -->
+          <div class="form-section">
+            <div class="section-title">Líneas de Firma</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Firmante 1 <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="form.firmante1" placeholder="Ej: ALMACEN" />
+              </div>
+              <div class="form-group">
+                <label>Firmante 2 <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="form.firmante2" placeholder="Ej: AUTORIZA / RECIBI CONFORME" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Estado y default -->
+          <div class="form-section">
+            <div class="section-title">Estado y Configuración</div>
+            <div class="options-list">
+              <label class="toggle-label">
+                <input type="checkbox" [(ngModel)]="form.esDefault" />
+                <span>Usar como plantilla por defecto para {{ form.empresa }} - {{ form.tipoDocumento }}</span>
+              </label>
+            </div>
+            <div class="form-group" style="margin-top: 12px;">
+              <label>Estado</label>
+              <select [(ngModel)]="form.estado">
+                <option value="ACTIVO">Activo</option>
+                <option value="INACTIVO">Inactivo</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- PREVIEW VIVO -->
+          <div class="form-section">
+            <div class="section-title">Vista Previa</div>
+            <div class="nota-preview-live">
+              <div class="live-header">
+                <div>
+                  <span class="live-empresa">000008-00 &nbsp;<strong>Hass Perú S.A.</strong></span>
+                </div>
+                <div class="live-fecha">Fecha: hoy &nbsp;&nbsp; Pág: 1/1</div>
+              </div>
+              <div class="live-title">{{ form.tituloDocumento || 'Nota de Almacén' }} #000001</div>
+              <div class="live-meta-row">
+                <span>Transacción: <strong>{{ form.tipoDocumento === 'NI' ? 'Recepción O/C' : 'Despacho Req.' }}</strong></span>
+                <span>Almacén: ALMACEN PRINCIPAL</span>
+              </div>
+              <table class="live-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Ítem</th>
+                    <th>Descripción</th>
+                    <th *ngIf="form.mostrarUbicacionFisica">Ubic.</th>
+                    <th *ngIf="form.mostrarCodInterno">Cód.Int.</th>
+                    <th>Unidad</th>
+                    <th>{{ form.tipoDocumento === 'NI' ? 'Cant. Ingr.' : 'Cant. Sal.' }}</th>
+                    <th *ngIf="form.tipoDocumento === 'NI' && form.mostrarCantidadCompra">Cant. Comp.</th>
+                    <th *ngIf="form.tipoDocumento === 'NS'">Cant. Req.</th>
+                    <th *ngIf="form.mostrarCantidadPendiente">Pendiente</th>
+                    <th *ngIf="form.mostrarStockActual">Stock</th>
+                    <th>C.Costos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td>000001</td>
+                    <td>Producto ejemplo</td>
+                    <td *ngIf="form.mostrarUbicacionFisica">A-1</td>
+                    <td *ngIf="form.mostrarCodInterno">001234</td>
+                    <td>UND</td>
+                    <td>10.00</td>
+                    <td *ngIf="form.tipoDocumento === 'NI' && form.mostrarCantidadCompra">10.00</td>
+                    <td *ngIf="form.tipoDocumento === 'NS'">10.00</td>
+                    <td *ngIf="form.mostrarCantidadPendiente">0.00</td>
+                    <td *ngIf="form.mostrarStockActual">25.00</td>
+                    <td>AREA01</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="live-ccostos" *ngIf="form.mostrarCCostos && form.tipoDocumento === 'NS'">
+                <span>Centro Costo:</span>
+              </div>
+              <div class="live-firmas">
+                <div class="live-firma">
+                  <div class="firma-linea"></div>
+                  <span>{{ form.firmante1 || 'ALMACEN' }}</span>
+                </div>
+                <div class="live-firma">
+                  <div class="firma-linea"></div>
+                  <span>{{ form.firmante2 || 'AUTORIZA' }}</span>
+                </div>
+              </div>
+              <div class="live-total">Total Items: 1</div>
+              <div class="live-pie" *ngIf="form.piePagina">{{ form.piePagina }}</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" (click)="save()">
+        <i class="bx bx-save"></i> Guardar Plantilla
+      </button>
+    </div>
+  </div>
+</div>

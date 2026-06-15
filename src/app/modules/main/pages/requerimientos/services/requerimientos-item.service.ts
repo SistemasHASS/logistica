@@ -66,6 +66,8 @@ export class RequerimientosItemService {
   itemsStockValidacion: any[] = [];
   requerimientoValidandoStock: any = null;
   modalStockAbierto = false;
+  stockActualLineaTemp: number | null = null;
+  consultandoStock = false;
 
   constructor(
     private dexieService: DexieService,
@@ -410,6 +412,8 @@ export class RequerimientosItemService {
     this.filteredCecosModal = [];
     this.filteredLaboresModal = [];
     this.filteredProyectosModal = [];
+    this.stockActualLineaTemp = null;
+    this.consultandoStock = false;
   }
 
   cerrarModal() {
@@ -531,7 +535,27 @@ export class RequerimientosItemService {
       const unidadMedida = this.maestras.obtenerUnidadMedidaProducto(producto);
       this.lineaTemp.unidadMedida = unidadMedida;
       this.maestras.unidadesMedidaFiltradas = [{ label: unidadMedida, value: unidadMedida }];
+      this.consultarStockItem(producto);
     }
+  }
+
+  consultarStockItem(producto: any) {
+    const codigo = typeof producto === 'string' ? producto : (producto?.codigo ?? '');
+    const idalmacen = this.maestras.almacenSeleccionado ||
+                      this.maestras.configuracion?.idalmacen ||
+                      (typeof producto === 'object' ? producto?.almacen : '');
+    if (!codigo || !idalmacen) { this.stockActualLineaTemp = null; return; }
+    this.consultandoStock = true;
+    this.stockActualLineaTemp = null;
+    this.requerimientosService.validarStockItems(idalmacen, [{ codigo, producto: codigo, cantidad: 0 }])
+      .subscribe({
+        next: (resp: any[]) => {
+          const item = (resp || []).find((r: any) => r.codigo === codigo || r.iditem === codigo);
+          this.stockActualLineaTemp = item?.stockDisponible ?? null;
+          this.consultandoStock = false;
+        },
+        error: () => { this.stockActualLineaTemp = null; this.consultandoStock = false; },
+      });
   }
 
   // â”€â”€ Guardar requerimiento ITEM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1286,7 +1310,7 @@ export class RequerimientosItemService {
     const turno = this.TipoSelecionado === 'COMPRA' ? '' : (this.lineaTemp.turno || this.maestras.turnoSeleccionado || '');
     const descripcion = this.obtenerDescripcionProducto(this.lineaTemp.producto) || '';
     const codigoProducto = (typeof this.lineaTemp.producto === 'string' ? this.lineaTemp.producto : this.lineaTemp.producto?.codigo) || this.lineaTemp.codigo || '';
-    const nuevaLinea: DetalleRequerimiento = {
+    const nuevaLinea: any = {
       idrequerimiento: '',
       codigo: codigoProducto,
       producto: descripcion,
@@ -1297,6 +1321,7 @@ export class RequerimientosItemService {
       esActivoFijo: this.lineaTemp.esActivoFijo || false,
       activoFijo: this.lineaTemp.activoFijo || '',
       estado: 0,
+      stockDisponible: this.stockActualLineaTemp,
     };
     if (this.editingTempIndex >= 0) {
       this.lineasTemporales[this.editingTempIndex] = nuevaLinea;

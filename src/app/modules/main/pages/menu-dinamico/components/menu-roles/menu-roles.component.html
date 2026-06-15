@@ -1,0 +1,132 @@
+<!-- Menu Roles Component - Nuevo Sistema (excluye JLOLOGIST) -->
+<div class="menu-roles-container" [attr.data-menu-type]="menuType">
+  
+  <!-- TIPO: ACCORDION -->
+  @if (menuType === 'accordion') {
+    <div class="accordion-menu">
+      @for (group of menuGroups; track trackByGroupId($index, group)) {
+        @if (group.activo) {
+          <div class="accordion-group" [class.open]="isGroupOpen(group.id)">
+            <!-- Header del grupo -->
+            <div class="group-header" (click)="toggleGroup(group.id)">
+              <div class="group-title">
+                <i [class]="group.icono"></i>
+                <span>{{ group.label }}</span>
+              </div>
+              <i class="bx bx-chevron-down toggle-icon"></i>
+            </div>
+            
+            <!-- Items del grupo -->
+            <div class="group-content" @collapse *ngIf="isGroupOpen(group.id)">
+              @for (item of getActiveItems(group); track trackByItemId($index, item)) {
+                <div class="menu-item-wrapper">
+                  <!-- Item con o sin ruta -->
+                  <div class="menu-item" 
+                       [class.has-submenu]="hasSubmenu(item)"
+                       [class.has-route]="item.ruta"
+                       (click)="item.ruta ? navigateTo(item.ruta) : toggleSubmenu(group.id, item.id, $event)">
+                    <i [class]="item.icono"></i>
+                    <span>{{ item.nombre }}</span>
+                    @if (hasSubmenu(item)) {
+                      <i class="bx bx-chevron-right submenu-toggle" 
+                         [class.open]="isSubmenuOpen(group.id, item.id)"></i>
+                    }
+                  </div>
+                  
+                  <!-- Submenu recursivo -->
+                  @if (hasSubmenu(item) && isSubmenuOpen(group.id, item.id)) {
+                    <div class="submenu">
+                      @for (subitem of item.submenu; track subitem.id) {
+                        @if (subitem.activo) {
+                          <div class="submenu-item" (click)="navigateTo(subitem.ruta, $event)">
+                            <i [class]="subitem.icono"></i>
+                            <span>{{ subitem.nombre }}</span>
+                          </div>
+                        }
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- TIPO: NAV (menú de navegación horizontal/vertical) -->
+  @if (menuType === 'nav') {
+    <nav class="nav-menu">
+      @for (group of menuGroups; track trackByGroupId($index, group)) {
+        @if (group.activo) {
+          <div class="nav-group">
+            <div class="nav-group-header">
+              <i [class]="group.icono"></i>
+              <span>{{ group.label }}</span>
+            </div>
+            <div class="nav-items">
+              @for (item of getActiveItems(group); track trackByItemId($index, item)) {
+                <a [routerLink]="item.ruta" class="nav-item" routerLinkActive="active">
+                  <i [class]="item.icono"></i>
+                  <span>{{ item.nombre }}</span>
+                </a>
+              }
+            </div>
+          </div>
+        }
+      }
+    </nav>
+  }
+
+  <!-- TIPO: LIST (lista simple) -->
+  @if (menuType === 'list') {
+    <div class="list-menu">
+      @for (group of menuGroups; track trackByGroupId($index, group)) {
+        @if (group.activo) {
+          <div class="list-group">
+            <div class="list-group-title">
+              <i [class]="group.icono"></i>
+              <span>{{ group.label }}</span>
+            </div>
+            <ul class="list-items">
+              @for (item of getActiveItems(group); track trackByItemId($index, item)) {
+                <li>
+                  <a [routerLink]="item.ruta" routerLinkActive="active">
+                    <i [class]="item.icono"></i>
+                    <span>{{ item.nombre }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- TIPO: DEFAULT (igual que accordion) -->
+  @if (menuType === 'default' || !menuType) {
+    <div class="default-menu">
+      @for (group of menuGroups; track trackByGroupId($index, group)) {
+        @if (group.activo) {
+          <div class="default-group">
+            <div class="default-group-title">
+              <i [class]="group.icono"></i>
+              <span>{{ group.label }}</span>
+            </div>
+            <div class="default-items">
+              @for (item of getActiveItems(group); track trackByItemId($index, item)) {
+                <a [routerLink]="item.ruta" class="default-item" routerLinkActive="active">
+                  <i [class]="item.icono"></i>
+                  <span>{{ item.nombre }}</span>
+                </a>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+
+</div>

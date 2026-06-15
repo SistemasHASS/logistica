@@ -97,32 +97,61 @@
     </div>
   </div>
 
-  <!-- Botones de Acción Rápida -->
+  <!-- Botones de Acción Rápida / Accesos Directos -->
   <div class="row mb-4">
     <div class="col-12">
       <div class="card border-0 shadow-sm">
         <div class="card-body">
-          <h5 class="card-title mb-3">Acciones Rápidas</h5>
-          <div class="d-flex gap-2 flex-wrap">
-            <button pButton pRipple type="button" class="p-button-info" (click)="nuevaOrdenCompraDirecta()">
-              <i class="bx bx-shopping-bag me-2"></i> Orden de Compra
-            </button>
-            <button pButton pRipple type="button" class="p-button-success" (click)="nuevaSolicitudMateriales()">
-              <i class="bx bx-file-plus me-2"></i> Nuevo Requerimiento
-            </button>
-            <button pButton pRipple type="button" class="p-button-warning" (click)="nuevaOrdenServicio()">
-              <i class="bx bx-briefcase me-2"></i> Orden de Servicio
-            </button>
-            <button pButton pRipple type="button" class="p-button-secondary" (click)="irConsolidarRequerimientos()">
-              <i class="bx bx-layer me-2"></i> Consolidar Requerimientos
-            </button>
-            <button pButton pRipple type="button" class="p-button-help" (click)="irCotizaciones()">
-              <i class="bx bx-receipt me-2"></i> Cotizaciones
-            </button>
-            <button pButton pRipple type="button" style="background:#6c757d;border-color:#6c757d;" (click)="irKardex()">
-              <i class="bx bx-database me-2"></i> Kardex
-            </button>
-          </div>
+          <!-- Accesos Directos para JLOLOGIST y LOLOGIST (basado en menú layout) -->
+          @if (esJefeLogistica()) {
+            <h5 class="card-title mb-3">Accesos Directos</h5>
+            <div class="dashboard-shortcuts-grid">
+              @for (grupo of menuShortcuts; track grupo.id) {
+                <div class="shortcut-group">
+                  <h6 class="shortcut-group-title text-muted mb-2">
+                    <i [class]="grupo.icono" class="me-2"></i>{{ grupo.label }}
+                  </h6>
+                  <div class="shortcut-items">
+                    @for (item of grupo.items; track item.id) {
+                      <button
+                        pButton
+                        pRipple
+                        type="button"
+                        class="p-button-{{ item.color }}"
+                        (click)="navegarDesdeAccesoDirecto(item.ruta)">
+                        <i [class]="item.icono" class="me-1"></i> {{ item.nombre }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Acciones Rápidas para otros roles -->
+          @if (!esJefeLogistica()) {
+            <h5 class="card-title mb-3">Acciones Rápidas</h5>
+            <div class="d-flex gap-2 flex-wrap">
+              <button pButton pRipple type="button" class="p-button-info" (click)="nuevaOrdenCompraDirecta()">
+                <i class="bx bx-shopping-bag me-2"></i> Orden de Compra
+              </button>
+              <button pButton pRipple type="button" class="p-button-success" (click)="nuevaSolicitudMateriales()">
+                <i class="bx bx-file-plus me-2"></i> Nuevo Requerimiento
+              </button>
+              <button pButton pRipple type="button" class="p-button-warning" (click)="nuevaOrdenServicio()">
+                <i class="bx bx-briefcase me-2"></i> Orden de Servicio
+              </button>
+              <button pButton pRipple type="button" class="p-button-secondary" (click)="irConsolidarRequerimientos()">
+                <i class="bx bx-layer me-2"></i> Consolidar Requerimientos
+              </button>
+              <button pButton pRipple type="button" class="p-button-help" (click)="irCotizaciones()">
+                <i class="bx bx-receipt me-2"></i> Cotizaciones
+              </button>
+              <button pButton pRipple type="button" style="background:#6c757d;border-color:#6c757d;" (click)="irKardex()">
+                <i class="bx bx-database me-2"></i> Kardex
+              </button>
+            </div>
+          }
         </div>
       </div>
     </div>

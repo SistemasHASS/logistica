@@ -1,0 +1,361 @@
+// ============================================
+// ESTILOS COMPARTIDOS
+// ============================================
+
+:host {
+  display: block;
+}
+
+// Badges y utilidades
+.position-relative {
+  position: relative;
+}
+
+.badge-count {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  background: #dc3545;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 10px;
+  font-weight: 600;
+  min-width: 16px;
+  text-align: center;
+}
+
+// ============================================
+// MENÚ ROOT
+// ============================================
+
+.dynamic-menu-root {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+// ============================================
+// HEADER DE GRUPO (compartido entre tipos)
+// ============================================
+
+.dm-group {
+  margin: 2px 8px;
+  border-radius: 8px;
+  overflow: visible;
+}
+
+.dm-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #1a1a1a !important;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-align: left;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  &.open {
+    background: rgba(0, 0, 0, 0.1);
+    color: #1a1a1a !important;
+  }
+}
+
+.dm-icon {
+  font-size: 17px;
+  min-width: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a1a1a !important;
+}
+
+.dm-label {
+  flex: 1;
+  color: #1a1a1a !important;
+}
+
+.dm-arrow {
+  font-size: 16px;
+  color: #444444 !important;
+  transition: transform 0.2s ease;
+}
+
+// ============================================
+// ACCORDION STYLES
+// ============================================
+
+.dm-accordion-items {
+  list-style: none;
+  padding: 4px 0 6px 0;
+  margin: 0;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 0 0 8px 8px;
+}
+
+.dm-accordion-item {
+  list-style: none;
+}
+
+.dm-item-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 44px;
+  color: #1a1a1a !important;
+  font-size: 12.5px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  i {
+    font-size: 15px;
+    min-width: 18px;
+    color: #1a1a1a !important;
+  }
+
+  span.hide-menu {
+    color: #1a1a1a !important;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: #000000 !important;
+  }
+
+  &.active {
+    background: rgba(0, 0, 0, 0.14);
+    color: #000000 !important;
+    font-weight: 600;
+  }
+}
+
+// Submenús en accordion
+.dm-submenu-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  i:first-child {
+    font-size: 14px;
+    width: 18px;
+    text-align: center;
+  }
+
+  i:last-child {
+    margin-left: auto;
+    font-size: 12px;
+  }
+}
+
+.dm-submenu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+// ============================================
+// NAV STYLES
+// ============================================
+
+.dm-nav-items {
+  list-style: none;
+  padding: 4px 0 4px 20px;
+  margin: 0;
+  border-left: 2px solid rgba(255, 255, 255, 0.2);
+  margin-left: 26px;
+}
+
+.dm-nav-item {
+  list-style: none;
+  margin-bottom: 2px;
+}
+
+.dm-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.2);
+    font-weight: 600;
+  }
+
+  i {
+    font-size: 14px;
+    width: 18px;
+    text-align: center;
+  }
+}
+
+// Submenús en nav
+.dm-nav-submenu-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 4px;
+
+  &:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  i:first-child {
+    font-size: 14px;
+    width: 18px;
+    text-align: center;
+  }
+
+  i:last-child {
+    margin-left: auto;
+    font-size: 12px;
+  }
+}
+
+.dm-nav-submenu {
+  list-style: none;
+  padding: 4px 0 4px 16px;
+  margin: 0;
+}
+
+// ============================================
+// LIST STYLES
+// ============================================
+
+.dm-list-section {
+  margin-bottom: 8px;
+}
+
+.dm-list-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 16px 8px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  i {
+    font-size: 14px;
+  }
+}
+
+.dm-list-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dm-list-item {
+  list-style: none;
+}
+
+.dm-list-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  text-decoration: none;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  &.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+  }
+
+  i {
+    font-size: 14px;
+    width: 18px;
+    text-align: center;
+  }
+}
+
+// Submenús en list
+.dm-list-submenu-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  i:first-child {
+    font-size: 14px;
+    width: 18px;
+    text-align: center;
+  }
+
+  i:last-child {
+    margin-left: auto;
+    font-size: 12px;
+  }
+}
+
+.dm-list-submenu {
+  list-style: none;
+  padding: 0 0 0 28px;
+  margin: 0;
+}

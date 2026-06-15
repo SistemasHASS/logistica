@@ -37,6 +37,7 @@ export class ReporteDespachosComponent implements OnInit, OnDestroy {
   activeTabDespachos: 'ITEMS' | 'COMMODITY' = 'ITEMS';
   private intervalId?: any;
   private despachosAPI: any[] = []; // Cache de despachos atendidos desde API
+  private usuario: any = null; // Usuario logueado para filtro multiempresa
 
   /** KPI: requerimientos pendientes de atención (estado APROBADO). */
   get kpiPendientes(): number {
@@ -70,11 +71,20 @@ export class ReporteDespachosComponent implements OnInit, OnDestroy {
     private alertService: AlertService,
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+    await this.cargarUsuario();
     this.cargarDespachosAPI(); // Cargar API solo una vez
     this.cargarRequerimientosDesdeDexie(); // Cargar requerimientos pendientes
     this.cargarDespachosDesdeDexie(); // Cargar Dexie inicial
     this.escucharCambiosDespachos(); // Intervalo solo para Dexie
+  }
+
+  private async cargarUsuario(): Promise<void> {
+    try {
+      this.usuario = await this.dexieService.getUsuarioLogueado();
+    } catch (error) {
+      console.error('Error al cargar usuario:', error);
+    }
   }
 
   ngOnDestroy(): void {
@@ -85,9 +95,13 @@ export class ReporteDespachosComponent implements OnInit, OnDestroy {
 
   async cargarDespachosAPI() {
     try {
+      // Filtro multiempresa: ALLOGIST solo ve su empresa
+      const filtros = this.usuario?.idrol?.includes('ALLOGIST') && this.usuario?.ruc
+        ? [{ ruc: this.usuario.ruc }]
+        : [{}];
       // Cargar atendidos desde API solo una vez
       const despachosAPI = await new Promise<any[]>((resolve, reject) => {
-        this.despachosService.listarDespachosRealizados([{}]).subscribe({
+        this.despachosService.listarDespachosRealizados(filtros).subscribe({
           next: (data: any) => {
             let result: any[] = [];
             if (Array.isArray(data)) {

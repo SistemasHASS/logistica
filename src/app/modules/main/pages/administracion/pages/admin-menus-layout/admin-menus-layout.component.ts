@@ -7,8 +7,9 @@ import { environment } from 'src/environments/environment';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import {
   AccordionGroupConfig, AccordionItemConfig,
-  ACCORDION_DEFAULT, LayoutConfigService
+  ACCORDION_DEFAULT, LayoutConfigService, MenuType
 } from '@/app/modules/main/services/layout-config.service';
+import { DynamicMenuComponent } from '@/app/modules/main/pages/layout/components/dynamic-menu/dynamic-menu.component';
 
 interface MenuItem {
   id: string;
@@ -92,7 +93,7 @@ const CATEGORIA_ICONOS: Record<string, string> = {
   selector: 'app-admin-menus-layout',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DynamicMenuComponent],
   template: `
     <div class="menus-container">
 
@@ -215,12 +216,22 @@ const CATEGORIA_ICONOS: Record<string, string> = {
               <label class="editor-label"><i class='bx bx-user-circle'></i> Rol a editar:</label>
               <select [(ngModel)]="editorRol" (ngModelChange)="cargarMenuEditor()" class="select-rol select-lg">
                 <option value="">— Seleccione un rol —</option>
-                @for (r of rolesConAccordion; track r.idrol) {
+                @for (r of roles; track r.idrol) {
                   <option [value]="r.idrol">{{ r.idrol }} — {{ r.nombre }}</option>
                 }
               </select>
             </div>
             @if (editorRol) {
+              <div class="editor-tipo-select">
+                <label class="editor-label"><i class='bx bx-layout'></i> Tipo de menú:</label>
+                <select [(ngModel)]="editorTipoMenu" class="select-rol select-lg">
+                  @for (t of TIPOS_MENU; track t.value) {
+                    <option [value]="t.value">
+                      {{ t.label }}
+                    </option>
+                  }
+                </select>
+              </div>
               <div class="editor-actions">
                 <button class="btn-reset" (click)="resetearADefault()" title="Restaurar configuración por defecto">
                   <i class='bx bx-reset'></i> Restaurar default
@@ -236,8 +247,9 @@ const CATEGORIA_ICONOS: Record<string, string> = {
           @if (!editorRol) {
             <div class="editor-hint">
               <i class='bx bx-info-circle'></i>
-              Selecciona un rol con accordion habilitado para editar su menú.
-              Para habilitar accordion en un rol, usa <b>Permisos por Rol → LAYOUT_ACCORDION</b>.
+              Selecciona un rol para configurar su menú. Puedes elegir entre:
+              <b>Accordion</b> (grupos colapsables), <b>Nav</b> (menú vertical con submenús),
+              <b>List</b> (lista plana), o <b>Default</b> (menú tradicional por roles).
             </div>
           }
 
@@ -259,6 +271,12 @@ const CATEGORIA_ICONOS: Record<string, string> = {
                     <span class="grupo-icono"><i [class]="grupo.icono"></i></span>
                     <input type="text" [(ngModel)]="grupo.label" class="input-grupo-label" placeholder="Nombre del grupo">
                     <input type="text" [(ngModel)]="grupo.icono" class="input-grupo-icono" placeholder="Clase icono">
+                    <!-- Selector de tipo por grupo -->
+                    <select [(ngModel)]="grupo.tipo" class="select-grupo-tipo" title="Tipo de menú para este grupo">
+                      @for (t of TIPOS_MENU; track t.value) {
+                        <option [value]="t.value">{{ t.label }}</option>
+                      }
+                    </select>
                     <div class="grupo-orden-btns">
                       <button class="btn-orden" (click)="moverGrupo(gi, -1)" [disabled]="gi === 0" title="Subir"><i class='bx bx-up-arrow-alt'></i></button>
                       <button class="btn-orden" (click)="moverGrupo(gi, 1)" [disabled]="gi === editorMenu.length - 1" title="Bajar"><i class='bx bx-down-arrow-alt'></i></button>
@@ -268,14 +286,20 @@ const CATEGORIA_ICONOS: Record<string, string> = {
                   <!-- Items del grupo -->
                   <div class="editor-items">
                     @for (item of grupo.items; track item.id; let ii = $index) {
-                      <div class="editor-item-row" [class.inactivo]="!item.activo">
+                      <div class="editor-item-row" [class.inactivo]="!item.activo" [class.has-submenu]="item.submenu && item.submenu.length > 0">
                         <label class="toggle-switch sm">
                           <input type="checkbox" [(ngModel)]="item.activo">
                           <span class="slider"></span>
                         </label>
                         <span class="item-icono"><i [class]="item.icono"></i></span>
                         <span class="item-nombre">{{ item.nombre }}</span>
-                        <code class="item-ruta">{{ item.ruta }}</code>
+                        @if (item.submenu && item.submenu.length > 0) {
+                          <span class="item-submenu-badge" title="Tiene {{ item.submenu.length }} subitems">
+                            <i class='bx bx-collection'></i> {{ item.submenu.length }}
+                          </span>
+                        } @else {
+                          <code class="item-ruta">{{ item.ruta }}</code>
+                        }
                         <div class="item-orden-btns">
                           <button class="btn-orden sm" (click)="moverItem(grupo, ii, -1)" [disabled]="ii === 0"><i class='bx bx-up-arrow-alt'></i></button>
                           <button class="btn-orden sm" (click)="moverItem(grupo, ii, 1)" [disabled]="ii === grupo.items.length - 1"><i class='bx bx-down-arrow-alt'></i></button>
@@ -301,31 +325,19 @@ const CATEGORIA_ICONOS: Record<string, string> = {
               }
             </div>
 
-            <!-- Preview -->
+            <!-- Preview en vivo -->
             <div class="preview-panel">
-              <div class="preview-header"><i class='bx bx-show'></i> Preview del accordion</div>
+              <div class="preview-header">
+                <i class='bx bx-show'></i> 
+                Preview: {{ editorTipoMenuLabel }}
+                <span class="preview-badge">{{ editorTipoMenu }}</span>
+              </div>
               <div class="preview-sidebar">
-                @for (grupo of editorMenu; track grupo.id) {
-                  @if (grupo.activo) {
-                    <div class="preview-group">
-                      <div class="preview-group-header">
-                        <i [class]="grupo.icono"></i>
-                        <span>{{ grupo.label }}</span>
-                        <i class='bx bx-chevron-down'></i>
-                      </div>
-                      <div class="preview-items">
-                        @for (item of grupo.items; track item.id) {
-                          @if (item.activo) {
-                            <div class="preview-item">
-                              <i [class]="item.icono"></i>
-                              <span>{{ item.nombre }}</span>
-                            </div>
-                          }
-                        }
-                      </div>
-                    </div>
-                  }
-                }
+                <app-dynamic-menu
+                  [menuType]="editorTipoMenu"
+                  [menuGroups]="editorMenu"
+                  [contadorNotificaciones]="3">
+                </app-dynamic-menu>
               </div>
             </div>
           }
@@ -390,6 +402,7 @@ const CATEGORIA_ICONOS: Record<string, string> = {
     .editor-toolbar { display: flex; align-items: center; gap: 16px; background: #fff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e8e8e8; margin-bottom: 16px; flex-wrap: wrap; width: 100%; }
     .editor-label { font-size: 13px; font-weight: 600; color: #555; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
     .editor-rol-select { display: flex; align-items: center; gap: 10px; flex: 1; }
+    .editor-tipo-select { display: flex; align-items: center; gap: 10px; }
     .editor-actions { display: flex; gap: 8px; margin-left: auto; }
     .btn-guardar { display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: #1a73e8; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
     .btn-guardar:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -414,6 +427,9 @@ const CATEGORIA_ICONOS: Record<string, string> = {
     .item-icono { font-size: 14px; color: #888; min-width: 18px; }
     .item-nombre { flex: 1; font-size: 13px; color: #333; }
     .item-ruta { font-size: 11px; color: #888; background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+    .item-submenu-badge { font-size: 11px; color: #238664; background: #e8f5e9; padding: 2px 8px; border-radius: 12px; display: flex; align-items: center; gap: 4px; }
+    .select-grupo-tipo { padding: 5px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 11px; background: #f8f9fa; cursor: pointer; max-width: 120px; }
+    .editor-item-row.has-submenu { background: #f0f9ff; }
     .item-orden-btns { display: flex; gap: 2px; }
     .add-item-row { display: flex; gap: 8px; padding: 8px 14px; background: #fafafa; border-top: 1px solid #f0f0f0; }
     .select-add-item { flex: 1; border: 1px dashed #aaa; border-radius: 6px; padding: 5px 8px; font-size: 12px; color: #555; background: #fff; outline: none; }
@@ -430,9 +446,10 @@ const CATEGORIA_ICONOS: Record<string, string> = {
     input:checked + .slider::before { transform: translateX(18px); }
     .toggle-switch.sm input:checked + .slider::before { transform: translateX(14px); }
     /* Preview */
-    .preview-panel { width: 200px; flex-shrink: 0; }
-    .preview-header { font-size: 12px; font-weight: 600; color: #555; padding: 8px 12px; background: #f8f9fa; border-radius: 8px 8px 0 0; border: 1px solid #e0e0e0; display: flex; align-items: center; gap: 6px; }
-    .preview-sidebar { background: #238664; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0; border-top: none; padding: 6px 0; min-height: 200px; }
+    .preview-panel { width: 260px; flex-shrink: 0; }
+    .preview-header { font-size: 12px; font-weight: 600; color: #555; padding: 8px 12px; background: #f8f9fa; border-radius: 8px 8px 0 0; border: 1px solid #e0e0e0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .preview-badge { font-size: 10px; padding: 2px 8px; border-radius: 12px; background: #238664; color: #fff; margin-left: auto; text-transform: uppercase; }
+    .preview-sidebar { background: #238664; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0; border-top: none; padding: 8px 0; min-height: 300px; max-height: 500px; overflow-y: auto; }
     .preview-group { margin: 2px 6px; }
     .preview-group-header { display: flex; align-items: center; gap: 6px; padding: 7px 8px; color: #fff; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: default; }
     .preview-group-header i:last-child { margin-left: auto; }
@@ -461,12 +478,27 @@ export class AdminMenusLayoutComponent implements OnInit {
 
   // ── Tab editor ──
   editorRol = '';
+  editorTipoMenu: MenuType = 'accordion';
   editorMenu: AccordionGroupConfig[] = [];
   itemsAAgregar: Record<string, string> = {};
   cargandoEditor = signal(false);
   guardando = signal(false);
   rolesConAccordion: typeof ROLES_SISTEMA = [];
   private editorIniciado = false;
+
+  // Getter para el label del tipo de menú seleccionado
+  get editorTipoMenuLabel(): string {
+    const tipo = this.TIPOS_MENU.find(t => t.value === this.editorTipoMenu);
+    return tipo?.label || 'Accordion';
+  }
+
+  // Tipos de menú disponibles
+  readonly TIPOS_MENU: { value: MenuType; label: string; icon: string }[] = [
+    { value: 'accordion', label: 'Accordion (Grupos colapsables)', icon: 'bx bx-list-minus' },
+    { value: 'nav', label: 'Nav (Menú vertical con submenús)', icon: 'bx bx-menu' },
+    { value: 'list', label: 'List (Lista plana)', icon: 'bx bx-list-ul' },
+    { value: 'default', label: 'Default (Menú tradicional)', icon: 'bx bx-sidebar' }
+  ];
 
   async ngOnInit() {
     await this.cargarRolesConAccordion();
@@ -475,7 +507,7 @@ export class AdminMenusLayoutComponent implements OnInit {
   async cargarRolesConAccordion() {
     try {
       const resp: any = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/logistica/listar-config-permisos`, {})
+        this.http.post(`${this.baseUrl}/api/configuracionpermiso/listar-config-permisos`, {})
       );
       const permisos: { idrol: string; clave: string; valor: string }[] = Array.isArray(resp) ? resp : [];
       const rolesIds = new Set(
@@ -496,16 +528,23 @@ export class AdminMenusLayoutComponent implements OnInit {
     this.cdr.markForCheck();
     try {
       const resp: any = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/logistica/listar-config-permisos`, {})
+        this.http.post(`${this.baseUrl}/api/configuracionpermiso/listar-config-permisos`, {})
       );
       const permisos: { idrol: string; clave: string; valor: string }[] = Array.isArray(resp) ? resp : [];
-      const entry = permisos.find(p => p.clave === `ACCORDION_MENU_${this.editorRol}`);
+      
+      // Cargar tipo de menú
+      const tipoEntry = permisos.find(p => p.idrol === this.editorRol && p.clave === 'LAYOUT_MENU_TYPE');
+      this.editorTipoMenu = (tipoEntry?.valor as MenuType) || 'accordion';
+      
+      // Cargar configuración del menú
+      const entry = permisos.find(p => p.idrol === this.editorRol && (p.clave === `ACCORDION_MENU_${this.editorRol}` || p.clave === 'ACCORDION_MENU_CONFIG'));
       if (entry) {
         this.editorMenu = JSON.parse(entry.valor) as AccordionGroupConfig[];
       } else {
         this.editorMenu = JSON.parse(JSON.stringify(ACCORDION_DEFAULT));
       }
     } catch {
+      this.editorTipoMenu = 'accordion';
       this.editorMenu = JSON.parse(JSON.stringify(ACCORDION_DEFAULT));
     }
     this.itemsAAgregar = {};
@@ -517,19 +556,57 @@ export class AdminMenusLayoutComponent implements OnInit {
     if (!this.editorRol) return;
     this.guardando.set(true);
     try {
-      const valor = JSON.stringify(this.editorMenu);
-      await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/logistica/guardar-config-permiso`, {
-          idrol: this.editorRol,
-          clave: `ACCORDION_MENU_${this.editorRol}`,
-          valor,
-          descripcion: `Menú accordion personalizado para ${this.editorRol}`,
-          usuarioModifica: this.adminUser?.documentoidentidad || this.adminUser?.usuario || 'ADMIN'
-        })
+      const requests = [];
+      
+      // 1. Guardar tipo de menú
+      requests.push(
+        lastValueFrom(
+          this.http.post(`${this.baseUrl}/api/configuracionpermiso/guardar-config-permiso`, {
+            idrol: this.editorRol,
+            clave: 'LAYOUT_MENU_TYPE',
+            valor: this.editorTipoMenu,
+            descripcion: `Tipo de menú para ${this.editorRol}`,
+            usuarioModifica: this.adminUser?.documentoidentidad || this.adminUser?.usuario || 'ADMIN'
+          })
+        )
       );
+      
+      // 2. Guardar flag LAYOUT_ACCORDION
+      requests.push(
+        lastValueFrom(
+          this.http.post(`${this.baseUrl}/api/configuracionpermiso/guardar-config-permiso`, {
+            idrol: this.editorRol,
+            clave: 'LAYOUT_ACCORDION',
+            valor: this.editorTipoMenu === 'accordion' ? '1' : '0',
+            descripcion: `Usa accordion: ${this.editorTipoMenu === 'accordion'}`,
+            usuarioModifica: this.adminUser?.documentoidentidad || this.adminUser?.usuario || 'ADMIN'
+          })
+        )
+      );
+      
+      // 3. Guardar configuración del menú (solo para accordion y nav)
+      if (this.editorTipoMenu === 'accordion' || this.editorTipoMenu === 'nav' || this.editorTipoMenu === 'list') {
+        const valor = JSON.stringify(this.editorMenu);
+        requests.push(
+          lastValueFrom(
+            this.http.post(`${this.baseUrl}/api/configuracionpermiso/guardar-config-permiso`, {
+              idrol: this.editorRol,
+              clave: 'ACCORDION_MENU_CONFIG',
+              valor,
+              descripcion: `Configuración de menú ${this.editorTipoMenu} para ${this.editorRol}`,
+              usuarioModifica: this.adminUser?.documentoidentidad || this.adminUser?.usuario || 'ADMIN'
+            })
+          )
+        );
+      }
+      
+      await Promise.all(requests);
+      
       this.layoutConfig.invalidar();
+      await this.cargarRolesConAccordion();
       this.alertService.showAlert('Guardado', `Menú de ${this.editorRol} actualizado correctamente.`, 'success');
-    } catch {
+    } catch (err) {
+      console.error('Error guardando menú:', err);
       this.alertService.showAlert('Error', 'No se pudo guardar el menú.', 'error');
     }
     this.guardando.set(false);

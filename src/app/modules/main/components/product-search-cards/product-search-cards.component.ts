@@ -33,6 +33,7 @@ export class ProductSearchCardsComponent implements ControlValueAccessor {
   @Input() placeholder = 'Buscar...';
 
   @Output() onSelect = new EventEmitter<any>();
+  @Output() searchChange = new EventEmitter<string>();
 
   value: any;
 
@@ -72,6 +73,7 @@ export class ProductSearchCardsComponent implements ControlValueAccessor {
 
   onTyping() {
     this.showList = this.searchText.length > 0 && this.filteredItems.length > 0;
+    this.searchChange.emit(this.searchText);
   }
 
   selectItem(item: any) {

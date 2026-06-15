@@ -44,6 +44,23 @@ export interface SemanticColors {
   reqCancelado: string;
 }
 
+// Configuración tipográfica global y por componente
+export interface TypographyConfig {
+  // Global
+  fontFamily: string;
+  fontSize: number;        // en px
+  colorTexto: string;
+  // Por componente
+  tablas: { fontSize: number; colorTexto: string };
+  inputs: { fontSize: number; colorTexto: string };
+  formularios: { fontSize: number; colorTexto: string };
+  cards: { fontSize: number; colorTexto: string };
+  botones: { fontSize: number; colorTexto: string };
+  badges: { fontSize: number; colorTexto: string };
+  labels: { fontSize: number; colorTexto: string };
+  modales: { fontSize: number; colorTexto: string };
+}
+
 // Interfaz para módulos registrados en el sistema
 export interface ModuloRegistrado {
   id: string;
@@ -97,6 +114,24 @@ export class ThemeConfigService {
     rose: '#E8B4B8',           // Rosa pálido
     magenta: '#C2185B'         // Magenta
   };
+
+  // Tipografía por defecto
+  private readonly TYPOGRAPHY_DEFAULT: TypographyConfig = {
+    fontFamily: 'inherit',
+    fontSize: 9,
+    colorTexto: '#212529',
+    tablas:      { fontSize: 9,  colorTexto: '#212529' },
+    inputs:      { fontSize: 9,  colorTexto: '#495057' },
+    formularios: { fontSize: 9,  colorTexto: '#212529' },
+    cards:       { fontSize: 9,  colorTexto: '#212529' },
+    botones:     { fontSize: 9,  colorTexto: '#ffffff' },
+    badges:      { fontSize: 8,  colorTexto: '#ffffff' },
+    labels:      { fontSize: 9,  colorTexto: '#6c757d' },
+    modales:     { fontSize: 9,  colorTexto: '#212529' },
+  };
+
+  private _typography = signal<TypographyConfig>(this.cargarTypographyGuardada());
+  typography = computed(() => this._typography());
 
   // Paleta base actual (cargada de localStorage o default)
   private _palette = signal<ColorPalette>(this.cargarPaletaGuardada());
@@ -680,6 +715,37 @@ export class ThemeConfigService {
   }
 
   // ============================================
+  // TIPOGRAFÍA
+  // ============================================
+
+  updateTypography(config: Partial<TypographyConfig>) {
+    this._typography.update(current => ({ ...current, ...config }));
+    this.guardarTypographyEnStorage();
+    this.actualizarCSSVariables();
+  }
+
+  private cargarTypographyGuardada(): TypographyConfig {
+    if (typeof window === 'undefined') return this.TYPOGRAPHY_DEFAULT;
+    const saved = localStorage.getItem('hass_typography');
+    if (saved) {
+      try { return { ...this.TYPOGRAPHY_DEFAULT, ...JSON.parse(saved) }; }
+      catch { return this.TYPOGRAPHY_DEFAULT; }
+    }
+    return this.TYPOGRAPHY_DEFAULT;
+  }
+
+  private guardarTypographyEnStorage(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('hass_typography', JSON.stringify(this._typography()));
+  }
+
+  restaurarTypographyDefault() {
+    this._typography.set({ ...this.TYPOGRAPHY_DEFAULT });
+    this.guardarTypographyEnStorage();
+    this.actualizarCSSVariables();
+  }
+
+  // ============================================
   // CSS VARIABLES GLOBALES
   // ============================================
   
@@ -710,6 +776,28 @@ export class ThemeConfigService {
     root.style.setProperty('--modulo-req-proceso', semantic.reqEnProceso);
     root.style.setProperty('--modulo-req-completado', semantic.reqCompletado);
     root.style.setProperty('--modulo-req-cancelado', semantic.reqCancelado);
+
+    // Variables de tipografía
+    const t = this._typography();
+    root.style.setProperty('--typo-font-family',    t.fontFamily);
+    root.style.setProperty('--typo-font-size',      `${t.fontSize}px`);
+    root.style.setProperty('--typo-color',          t.colorTexto);
+    root.style.setProperty('--typo-tablas-size',    `${t.tablas.fontSize}px`);
+    root.style.setProperty('--typo-tablas-color',   t.tablas.colorTexto);
+    root.style.setProperty('--typo-inputs-size',    `${t.inputs.fontSize}px`);
+    root.style.setProperty('--typo-inputs-color',   t.inputs.colorTexto);
+    root.style.setProperty('--typo-forms-size',     `${t.formularios.fontSize}px`);
+    root.style.setProperty('--typo-forms-color',    t.formularios.colorTexto);
+    root.style.setProperty('--typo-cards-size',     `${t.cards.fontSize}px`);
+    root.style.setProperty('--typo-cards-color',    t.cards.colorTexto);
+    root.style.setProperty('--typo-btns-size',      `${t.botones.fontSize}px`);
+    root.style.setProperty('--typo-btns-color',     t.botones.colorTexto);
+    root.style.setProperty('--typo-badges-size',    `${t.badges.fontSize}px`);
+    root.style.setProperty('--typo-badges-color',   t.badges.colorTexto);
+    root.style.setProperty('--typo-labels-size',    `${t.labels.fontSize}px`);
+    root.style.setProperty('--typo-labels-color',   t.labels.colorTexto);
+    root.style.setProperty('--typo-modales-size',   `${t.modales.fontSize}px`);
+    root.style.setProperty('--typo-modales-color',  t.modales.colorTexto);
   }
 
   // Obtener CSS variable para un color

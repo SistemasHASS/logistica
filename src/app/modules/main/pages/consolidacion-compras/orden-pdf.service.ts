@@ -27,12 +27,14 @@ const EMPRESA_DEFAULT: EmpresaConfig = {
 
 export interface PlantillaOC {
   tituloDocumento: string;
+  mostrarItem: boolean;
   mostrarCommodity: boolean;
   mostrarCnd: boolean;
   mostrarUnidad: boolean;
   mostrarTipoCambio: boolean;
   mostrarClasificacion: boolean;
   mostrarCotizacion: boolean;
+  etiquetaItem: string;
   etiquetaCommodity: string;
   etiquetaCnd: string;
   etiquetaDescripcion: string;
@@ -62,12 +64,14 @@ export interface PlantillaOS {
 
 const CFG_OC_DEFAULT: PlantillaOC = {
   tituloDocumento: 'Orden de Compra',
+  mostrarItem: true,
   mostrarCommodity: true,
   mostrarCnd: true,
   mostrarUnidad: true,
   mostrarTipoCambio: true,
   mostrarClasificacion: true,
   mostrarCotizacion: true,
+  etiquetaItem: 'Item',
   etiquetaCommodity: 'Commodity',
   etiquetaCnd: 'Cnd',
   etiquetaDescripcion: 'Descripción',
@@ -257,12 +261,17 @@ export class OrdenPdfService {
     const fecha = oc.fechaCreacion || '';
     const pagina = 'Página 1 de 1';
 
-    const colSpanItems = 4 + (cfg.mostrarCommodity ? 1 : 0) + (cfg.mostrarCnd ? 1 : 0) + (cfg.mostrarUnidad ? 1 : 0);
+    const primeraLinea = (oc.items || [])[0];
+    const esCommodity = (primeraLinea?.tipoLinea || '').toUpperCase().includes('COMMODITY');
+    const etiquetaCodigo = esCommodity ? cfg.etiquetaCommodity : cfg.etiquetaItem;
+    const mostrarCodigo = esCommodity ? cfg.mostrarCommodity : cfg.mostrarItem;
+
+    const colSpanItems = 4 + (mostrarCodigo ? 1 : 0) + (cfg.mostrarCnd ? 1 : 0) + (cfg.mostrarUnidad ? 1 : 0);
 
     const itemsHtml = (oc.items || []).map((i: any, idx: number) => `
       <tr>
         <td style="text-align:center">${idx + 1}</td>
-        ${cfg.mostrarCommodity ? `<td style="text-align:center">${i.commodity || i.codigoCommodity || ''}</td>` : ''}
+        ${mostrarCodigo ? `<td style="text-align:center">${i.codigo || i.item || i.codigoItem || i.commodity || i.codigoCommodity || ''}</td>` : ''}
         ${cfg.mostrarCnd ? `<td style="text-align:center">${i.cnd || ''}</td>` : ''}
         <td>${i.descripcion || i.descripcionLocal || ''}</td>
         ${cfg.mostrarUnidad ? `<td style="text-align:center">${i.unidadMedida || i.unidadCodigo || ''}</td>` : ''}
@@ -324,7 +333,7 @@ export class OrdenPdfService {
   <thead>
     <tr>
       <td style="width:28px">#</td>
-      ${cfg.mostrarCommodity ? `<td>${cfg.etiquetaCommodity}</td>` : ''}
+      ${mostrarCodigo ? `<td>${etiquetaCodigo}</td>` : ''}
       ${cfg.mostrarCnd ? `<td>${cfg.etiquetaCnd}</td>` : ''}
       <td>${cfg.etiquetaDescripcion}</td>
       ${cfg.mostrarUnidad ? `<td>${cfg.etiquetaUnidad}</td>` : ''}
@@ -494,35 +503,40 @@ ${this.firmasHtml(
 
   // ── Preview con datos de muestra ─────────────────────────────────────────
 
-  buildPreviewOCHtml(empresa?: any): string {
+  buildPreviewOCHtml(empresa?: any, tipoLinea: 'ITEM' | 'COMMODITY' = 'ITEM'): string {
+    const esCommodity = tipoLinea === 'COMMODITY';
     const oc = {
-      numeroOrden: 'OC-2025-0001',
+      numeroOrden: esCommodity ? 'OC-2025-0002' : 'OC-2025-0001',
       fechaCreacion: '2025-05-25',
       fechaPreparacion: '2025-05-25',
       fechaAprobacion: '2025-05-26',
       fechaEntregaEstimada: '2025-06-05',
-      nombreProveedor: 'PROVEEDOR EJEMPLO S.A.C.',
-      rucProveedor: '20123456789',
-      direccionProveedor: 'Av. Los Negocios 123, Lima',
+      nombreProveedor: esCommodity ? 'COMPU CENTER BUSSINES S.A.C.' : 'PROVEEDOR EJEMPLO S.A.C.',
+      rucProveedor: esCommodity ? '20440384049' : '20123456789',
+      direccionProveedor: esCommodity ? 'Jr. Independencia Nro. 155' : 'Av. Los Negocios 123, Lima',
       telefonoProveedor: '01-234-5678',
       contactoProveedor: 'Juan Pérez',
-      emailProveedor: 'proveedor@ejemplo.com',
-      observaciones: 'Entrega en almacén central',
-      numeroCotizacion: 'COT-2025-042',
-      clasificacion: 'Materiales',
-      formaPago: 'Crédito 30 días',
-      estado: 'APROBADA',
-      moneda: 'PEN',
-      tipoCambio: '3.75',
-      subtotal: 5000.00,
-      igv: 900.00,
-      totalOrden: 5900.00,
+      emailProveedor: esCommodity ? 'asistente2@compucenter.pe' : 'proveedor@ejemplo.com',
+      observaciones: esCommodity ? 'REQUERIMIENTO LAPTOP LENOVO' : 'Entrega en almacén central',
+      numeroCotizacion: '',
+      clasificacion: 'Compras Locales',
+      formaPago: esCommodity ? 'FACTURA A 30 DIAS' : 'Crédito 30 días',
+      estado: 'Completada',
+      moneda: esCommodity ? 'USD' : 'PEN',
+      tipoCambio: esCommodity ? '3.462' : '3.75',
+      subtotal: esCommodity ? 1090.00 : 5000.00,
+      igv: esCommodity ? 196.20 : 900.00,
+      totalOrden: esCommodity ? 1286.20 : 5900.00,
       preparadoPor: 'Fernando Lamela',
       aprobadoPor: 'Marco Macedo',
-      items: [
-        { commodity: 'ITEM-001', cnd: 'A1', descripcion: 'Fertilizante NPK 20-20-20 x 50kg', unidadMedida: 'SAC', cantidad: 50, precioUnitario: 60.00, total: 3000.00 },
-        { commodity: 'ITEM-002', cnd: 'B2', descripcion: 'Sulfato de Potasio Granulado x 25kg', unidadMedida: 'SAC', cantidad: 40, precioUnitario: 50.00, total: 2000.00 },
-      ],
+      items: esCommodity
+        ? [
+            { codigo: '5607', tipoLinea: 'COMMODITY', cnd: '0', descripcion: 'LAPTOP LENOVO THINKBOOK 16 G8 IAL 21SK00CFLM INTEL CORE UNI ULTR', unidadMedida: 'UND', cantidad: 1, precioUnitario: 1090.00, total: 1090.00 },
+          ]
+        : [
+            { codigo: '003997', tipoLinea: 'ITEM', cnd: '0', descripcion: 'Fertilizante NPK 20-20-20 x 50kg', unidadMedida: 'SAC', cantidad: 50, precioUnitario: 60.00, total: 3000.00 },
+            { codigo: '004215', tipoLinea: 'ITEM', cnd: '0', descripcion: 'Sulfato de Potasio Granulado x 25kg', unidadMedida: 'SAC', cantidad: 40, precioUnitario: 50.00, total: 2000.00 },
+          ],
     };
     return this.buildOCHtml(oc, empresa);
   }

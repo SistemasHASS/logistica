@@ -97,6 +97,9 @@ export class ParametrosComponent implements OnInit {
   ocultarClasificacion = false;
   showValidation: boolean = false;
 
+  // 🔥 NUEVO: Flag para consumo administrativo
+  esAdministrativo = false;
+
   //Filtros
   filteredCecos: Ceco[] = [];
   filteredTurnos: Turno[] = [];
@@ -197,6 +200,38 @@ export class ParametrosComponent implements OnInit {
     
     // Ejecutar la lógica de cambio de tipo
     this.onTipoItemChange();
+  }
+
+  // 🔥 NUEVO: Manejador del cambio de check administrativo
+  async onEsAdministrativoChange() {
+    console.log('🔄 Cambio a Administrativo:', this.esAdministrativo);
+    
+    if (this.esAdministrativo) {
+      // Limpiar turno y cargar CECOs por cultivo directamente
+      this.configuracion.idturno = '';
+      this.filteredTurnos = [];
+      
+      if (this.configuracion.idcultivo) {
+        // Cargar CECOs filtrados por cultivo (sin pasar por turno)
+        this.filteredCecos = this.cecos.filter(
+          (x: Ceco) => x.idcultivo?.trim() === this.configuracion.idcultivo
+        );
+        console.log('✅ CECOs cargados por cultivo (admin):', this.filteredCecos.length);
+      }
+    } else {
+      // Restaurar flujo normal: recargar turnos por cultivo
+      if (this.configuracion.idcultivo) {
+        this.filteredTurnos = this.turnos.filter(
+          (x: Turno) => x.idcultivo?.trim() === this.configuracion.idcultivo
+        );
+        // Limpiar CECOs hasta que se seleccione turno
+        this.filteredCecos = [];
+      }
+      // Limpiar campos dependientes
+      this.configuracion.idceco = '';
+      this.configuracion.idlabor = '';
+      this.configuracion.idproyecto = '';
+    }
   }
 
   async getUsuario() {
@@ -421,12 +456,13 @@ export class ParametrosComponent implements OnInit {
       
       console.log(`🔍 Filtrando turnos para cultivo "${this.configuracion.idcultivo}": ${this.filteredTurnos.length} encontrados`);
       
-      // Para COMPRA: cargar CECOs según cultivo
-      if (this.configuracion.idTipoItem === 'COMPRA') {
-        console.log('🎯 Cargando CECOs para COMPRA...');
+      // Para COMPRA o CONSUMO administrativo: cargar CECOs según cultivo
+      if (this.configuracion.idTipoItem === 'COMPRA' ||
+          (this.configuracion.idTipoItem === 'CONSUMO' && this.esAdministrativo)) {
+        console.log('🎯 Cargando CECOs para COMPRA o CONSUMO ADMINISTRATIVO...');
         await this.cargarCecosPorCultivo();
       } else {
-        console.log('🎯 No es COMPRA, no cargar CECOs por cultivo');
+        console.log('🎯 No es COMPRA ni CONSUMO admin, no cargar CECOs por cultivo');
       }
     }
     
@@ -1168,6 +1204,29 @@ export class ParametrosComponent implements OnInit {
       return;
     }
 
+    // 🔥 NUEVO: Para CONSUMO administrativo, saltar validación de turno
+    if (this.configuracion.idTipoItem === 'CONSUMO' && this.esAdministrativo) {
+      console.log('🎯 Filtrando proyectos para CONSUMO ADMINISTRATIVO...');
+
+      // Filtrar proyectos solo por CECO + LABOR + CULTIVO (sin validar turno)
+      this.filteredProyectos = this.proyectos.filter(
+        (p: any) =>
+          p.ceco?.trim() === this.configuracion.idceco?.trim() &&
+          p.idlabor?.trim() === this.configuracion.idlabor?.trim() &&
+          p.idcultivo?.trim() === this.configuracion.idcultivo?.trim()
+      );
+
+      console.log('✅ PROYECTOS FILTRADOS (ADMIN):', this.filteredProyectos.length);
+
+      // Auto-selección igual que COMPRA
+      if (this.filteredProyectos.length === 1) {
+        this.configuracion.idproyecto = this.filteredProyectos[0].afe;
+        await this.nombreProyecto(this.configuracion.idproyecto);
+        console.log('✅ PROYECTO AUTO-SELECCIONADO (ADMIN):', this.configuracion.idproyecto, '-', this.nombreProyectoHeader);
+      }
+      return; // ← Termina aquí para administrativo
+    }
+
     // Lógica original para otros tipos (CONSUMO, TRANSFERENCIA)
     // �🔑 RELACIÓN: CULTIVO → TURNO → CECO → LABOR → PROYECTO
     // Validar que el CECO pertenezca al cultivo seleccionado a través del TURNO
@@ -1402,10 +1461,20 @@ export class ParametrosComponent implements OnInit {
         return;
       }
     } else if (this.configuracion.idTipoItem === 'CONSUMO') {
-      if (!this.configuracion.idturno) {
+      // 🔥 MODIFICADO: Validar turno solo si NO es administrativo
+      if (!this.esAdministrativo && !this.configuracion.idturno) {
         this.alertService.showAlert(
           'Advertencia!',
-          'Para CONSUMO debe seleccionar Turno',
+          'Para CONSUMO debe seleccionar Turno (o marcar como Administrativo)',
+          'warning'
+        );
+        return;
+      }
+      // Validar CECO, Labor y Proyecto para ambos casos (normal y administrativo)
+      if (!this.configuracion.idceco || !this.configuracion.idlabor || !this.configuracion.idproyecto) {
+        this.alertService.showAlert(
+          'Advertencia!',
+          'Para CONSUMO debe seleccionar CECO, Labor y Proyecto',
           'warning'
         );
         return;

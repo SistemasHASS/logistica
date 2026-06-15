@@ -77,11 +77,11 @@ export class DashboardDespachoComponent implements OnInit {
   modalKpiData: DespachoResumen[] = [];
   loadingModalKpi = false;
 
-  ngOnInit(): void {
-    this.cargarUsuario();
-    this.cargarKpis();
-    this.cargarGraficoDespachos();
-    this.cargarUltimosDespachos();
+  async ngOnInit(): Promise<void> {
+    await this.cargarUsuario();
+    await this.cargarKpis();
+    await this.cargarGraficoDespachos();
+    await this.cargarUltimosDespachos();
   }
 
   private async cargarUsuario(): Promise<void> {
@@ -92,65 +92,105 @@ export class DashboardDespachoComponent implements OnInit {
     }
   }
 
-  private cargarKpis(): void {
-    // KPIs estáticos por ahora - pueden conectarse a servicios reales
-    this.kpis = [
-      {
-        label: 'Despachos Hoy',
-        value: 12,
-        icon: 'bx bx-package',
-        color: 'primary',
-        route: './despachos'
-      },
-      {
-        label: 'Pendientes',
-        value: 8,
-        icon: 'bx bx-time',
-        color: 'warning',
-        route: './despachos'
-      },
-      {
-        label: 'Completados',
-        value: 145,
-        icon: 'bx bx-check-circle',
-        color: 'success',
-        route: './reporte-despachos'
-      },
-      {
-        label: 'Devoluciones',
-        value: 3,
-        icon: 'bx bx-undo',
-        color: 'danger',
-        route: './devoluciones-consumo'
-      }
-    ];
+  /**
+   * Helper para obtener filtros multiempresa.
+   * ALLOGIST solo ve datos de su empresa (RUC).
+   * Otros roles ven todo.
+   */
+  private getFiltrosMultiempresa(): any {
+    return this.usuario?.idrol?.includes('ALLOGIST') && this.usuario?.ruc
+      ? { ruc: this.usuario.ruc }
+      : {};
   }
 
-  private cargarGraficoDespachos(): void {
-    // Datos de ejemplo para el gráfico
+  private async cargarKpis(): Promise<void> {
+    try {
+      const filtros = this.getFiltrosMultiempresa();
+      const data = await this.despachosService.getDashboardContadores(filtros).toPromise();
+
+      this.kpis = [
+        {
+          label: 'Despachos Hoy',
+          value: data?.despachosHoy || 0,
+          icon: 'bx bx-package',
+          color: 'primary',
+          route: './despachos'
+        },
+        {
+          label: 'Pendientes',
+          value: data?.pendientes || 0,
+          icon: 'bx bx-time',
+          color: 'warning',
+          route: './despachos'
+        },
+        {
+          label: 'Completados',
+          value: data?.completadosMes || 0,
+          icon: 'bx bx-check-circle',
+          color: 'success',
+          route: './reporte-despachos'
+        },
+        {
+          label: 'Devoluciones',
+          value: data?.devolucionesPendientes || 0,
+          icon: 'bx bx-undo',
+          color: 'danger',
+          route: './devoluciones-consumo'
+        }
+      ];
+    } catch (error) {
+      console.error('Error al cargar KPIs:', error);
+      this.kpis = [
+        { label: 'Despachos Hoy', value: 0, icon: 'bx bx-package', color: 'primary', route: './despachos' },
+        { label: 'Pendientes', value: 0, icon: 'bx bx-time', color: 'warning', route: './despachos' },
+        { label: 'Completados', value: 0, icon: 'bx bx-check-circle', color: 'success', route: './reporte-despachos' },
+        { label: 'Devoluciones', value: 0, icon: 'bx bx-undo', color: 'danger', route: './devoluciones-consumo' }
+      ];
+    }
+  }
+
+  private async cargarGraficoDespachos(): Promise<void> {
     const documentStyle = getComputedStyle(document.documentElement);
     const textColor = documentStyle.getPropertyValue('--text-color');
     const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
 
-    this.chartData = {
-      labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-      datasets: [
-        {
-          label: 'Despachos',
-          data: [65, 59, 80, 81, 56, 55],
-          fill: false,
-          borderColor: documentStyle.getPropertyValue('--blue-500'),
-          tension: 0.4
-        },
-        {
-          label: 'Devoluciones',
-          data: [28, 48, 40, 19, 86, 27],
-          fill: false,
-          borderColor: documentStyle.getPropertyValue('--red-500'),
-          tension: 0.4
-        }
-      ]
-    };
+    try {
+      const filtros = { ...this.getFiltrosMultiempresa(), meses: 6 };
+      const data = await this.despachosService.getDespachosPorMes(filtros).toPromise() || [];
+
+      // Ordenar datos cronologicamente (mas antiguo a mas reciente)
+      const mesesOrdenados = [...data].reverse();
+
+      this.chartData = {
+        labels: mesesOrdenados.map((m: any) => m.nombreMes || ''),
+        datasets: [
+          {
+            label: 'Despachos',
+            data: mesesOrdenados.map((m: any) => m.despachos || 0),
+            fill: false,
+            borderColor: documentStyle.getPropertyValue('--blue-500'),
+            tension: 0.4
+          },
+          {
+            label: 'Devoluciones',
+            data: mesesOrdenados.map((m: any) => m.devoluciones || 0),
+            fill: false,
+            borderColor: documentStyle.getPropertyValue('--red-500'),
+            tension: 0.4
+          }
+        ]
+      };
+    } catch (error) {
+      console.error('Error al cargar grafico de despachos:', error);
+      // Fallback a datos vacios
+      this.chartData = {
+        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+        datasets: [
+          { label: 'Despachos', data: [0, 0, 0, 0, 0, 0], fill: false, borderColor: '#3b82f6', tension: 0.4 },
+          { label: 'Devoluciones', data: [0, 0, 0, 0, 0, 0], fill: false, borderColor: '#ef4444', tension: 0.4 }
+        ]
+      };
+    }
 
     this.chartOptions = {
       plugins: {
@@ -183,60 +223,29 @@ export class DashboardDespachoComponent implements OnInit {
     };
   }
 
-  private cargarUltimosDespachos(): void {
+  private async cargarUltimosDespachos(): Promise<void> {
     this.loadingDespachos = true;
 
-    // Datos de ejemplo - reemplazar con llamada real al servicio
-    setTimeout(() => {
-      this.ultimosDespachos = [
-        {
-          id: 1,
-          numeroRequerimiento: 'REQ-2024-001',
-          area: 'Almacén Central',
-          fundo: 'CAO',
-          fechaDespacho: '2024-06-15',
-          cantidadItems: 5,
-          estado: 'COMPLETADO'
-        },
-        {
-          id: 2,
-          numeroRequerimiento: 'REQ-2024-002',
-          area: 'Producción',
-          fundo: 'HP',
-          fechaDespacho: '2024-06-14',
-          cantidadItems: 3,
-          estado: 'PENDIENTE'
-        },
-        {
-          id: 3,
-          numeroRequerimiento: 'REQ-2024-003',
-          area: 'Mantenimiento',
-          fundo: 'BH',
-          fechaDespacho: '2024-06-14',
-          cantidadItems: 8,
-          estado: 'COMPLETADO'
-        },
-        {
-          id: 4,
-          numeroRequerimiento: 'REQ-2024-004',
-          area: 'Almacén Central',
-          fundo: 'CAO',
-          fechaDespacho: '2024-06-13',
-          cantidadItems: 2,
-          estado: 'PARCIAL'
-        },
-        {
-          id: 5,
-          numeroRequerimiento: 'REQ-2024-005',
-          area: 'Producción',
-          fundo: 'HP',
-          fechaDespacho: '2024-06-12',
-          cantidadItems: 6,
-          estado: 'COMPLETADO'
-        }
-      ];
+    try {
+      const filtros = { ...this.getFiltrosMultiempresa(), top: 5 };
+      const data = await this.despachosService.listarDespachosRealizados([filtros]).toPromise();
+
+      // Mapear datos de la API al formato del componente
+      this.ultimosDespachos = (data || []).slice(0, 5).map((d: any) => ({
+        id: d.id,
+        numeroRequerimiento: d.numeroRequisicion || d.numeroNS || 'N/A',
+        area: d.nombreArea || d.area || 'Sin área',
+        fundo: d.idfundo || d.fundo || '-',
+        fechaDespacho: d.fechaDespacho || d.fecha,
+        cantidadItems: d.detalle ? d.detalle.length : 0,
+        estado: d.estado || 'ATENCION_PARCIAL'
+      }));
+    } catch (error) {
+      console.error('Error al cargar ultimos despachos:', error);
+      this.ultimosDespachos = [];
+    } finally {
       this.loadingDespachos = false;
-    }, 500);
+    }
   }
 
   navegarAKpi(route: string | undefined): void {

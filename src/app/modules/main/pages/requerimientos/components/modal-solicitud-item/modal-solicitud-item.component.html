@@ -1,0 +1,106 @@
+<div class="modal-backdrop" *ngIf="visible">
+  <div class="modal-content" style="max-width: 560px; border-radius: 12px; overflow: hidden;">
+
+    <!-- Header -->
+    <div class="modal-header bg-warning text-dark">
+      <h5 class="modal-title mb-0">
+        <i class="bx bx-plus-circle me-2"></i>
+        Solicitar creación de nuevo ítem
+      </h5>
+      <button type="button" class="btn-close" (click)="cerrar()"></button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body p-4">
+
+      <!-- Aviso informativo -->
+      <div class="alert alert-info d-flex align-items-start gap-2 py-2 px-3 mb-4">
+        <i class="bx bx-info-circle mt-1 flex-shrink-0"></i>
+        <small>
+          Tu solicitud será enviada como notificación al <strong>Jefe de Logística</strong>.
+          Una vez revisada, el ítem será creado en el maestro y quedará disponible para requerimientos.
+        </small>
+      </div>
+
+      <!-- Nombre del ítem -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">
+          Nombre del ítem <span class="text-danger">*</span>
+        </label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="nombre"
+          placeholder="Ej: VALVULA SOLENOIDE 2 VIAS 1/2 PULGADA"
+          maxlength="200"
+        />
+        <small class="text-muted">{{ nombre.length }}/200</small>
+      </div>
+
+      <!-- Descripción / especificación técnica -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">
+          Descripción / especificación técnica <span class="text-danger">*</span>
+        </label>
+        <textarea
+          class="form-control"
+          rows="3"
+          [(ngModel)]="descripcion"
+          placeholder="Describe el uso, marca, medidas, voltaje u otra especificación relevante..."
+          maxlength="1000"
+        ></textarea>
+        <small class="text-muted">{{ descripcion.length }}/1000</small>
+      </div>
+
+      <!-- Unidad de medida sugerida -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Unidad de medida sugerida</label>
+        <select class="form-select" [(ngModel)]="unidadMedida">
+          <option value="">— Sin especificar —</option>
+          <option *ngFor="let u of unidades" [value]="u">{{ u }}</option>
+        </select>
+      </div>
+
+      <!-- Imagen referencial -->
+      <div class="mb-1">
+        <label class="form-label fw-semibold">Imagen referencial <span class="text-muted fw-normal">(opcional)</span></label>
+
+        <!-- Estado: sin imagen -->
+        <div *ngIf="!imagenPreview"
+          class="border border-dashed rounded d-flex flex-column align-items-center justify-content-center py-4 text-muted"
+          style="cursor: pointer; border-style: dashed !important; min-height: 110px;"
+          (click)="imgInput.click()">
+          <i class="bx bx-image-add fs-2 mb-1"></i>
+          <small>Clic para adjuntar imagen (JPG, PNG, GIF, WEBP · máx. 5 MB)</small>
+          <input #imgInput type="file" hidden accept=".jpg,.jpeg,.png,.gif,.webp" (change)="onImagenSeleccionada($event)" />
+        </div>
+
+        <!-- Estado: con imagen -->
+        <div *ngIf="imagenPreview" class="d-flex align-items-center gap-3 p-2 border rounded">
+          <img [src]="imagenPreview" alt="preview" style="height: 72px; width: 72px; object-fit: cover; border-radius: 6px;" />
+          <div class="flex-grow-1">
+            <div class="fw-semibold small text-truncate" style="max-width: 240px;">{{ imagenFile?.name }}</div>
+            <small class="text-muted">{{ imagenFile ? (imagenFile.size / 1024 | number:'1.0-0') + ' KB' : '' }}</small>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-danger" (click)="quitarImagen()" title="Quitar imagen">
+            <i class="bx bx-x"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer border-top px-4 py-3">
+      <button type="button" class="btn btn-secondary" (click)="cerrar()" [disabled]="enviando">
+        <i class="bx bx-x me-1"></i> Cancelar
+      </button>
+      <button type="button" class="btn btn-warning text-dark fw-semibold" (click)="enviar()" [disabled]="enviando || !nombre.trim() || !descripcion.trim()">
+        <span *ngIf="enviando" class="spinner-border spinner-border-sm me-2"></span>
+        <i *ngIf="!enviando" class="bx bx-send me-1"></i>
+        {{ enviando ? 'Enviando...' : 'Enviar solicitud' }}
+      </button>
+    </div>
+
+  </div>
+</div>

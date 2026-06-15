@@ -62,6 +62,7 @@ export class PdfComponent implements OnInit {
 
   // ── Vista previa ─────────────────────────────────────────────────
   previewUrl = signal<SafeResourceUrl | null>(null);
+  previewTipoOC = signal<'ITEM' | 'COMMODITY'>('ITEM');
 
   // ── Alertas ──────────────────────────────────────────────────────
   alertMsg  = signal('');
@@ -91,7 +92,7 @@ export class PdfComponent implements OnInit {
   refreshPreview() {
     const emp = this.empresa();
     const html = this.tabActivo() === 'oc'
-      ? this.svc.buildPreviewOCHtml(emp)
+      ? this.svc.buildPreviewOCHtml(emp, this.previewTipoOC())
       : this.svc.buildPreviewOSHtml(emp);
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);

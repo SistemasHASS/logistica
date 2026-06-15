@@ -1,0 +1,669 @@
+<div class="container-fluid py-3">
+
+  <!-- ENCABEZADO -->
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <i class="bx bx-store-alt text-success fs-4"></i>
+    <div>
+      <h5 class="fw-bold mb-0">Plantillas de Notas de Almacén</h5>
+      <small class="text-muted">Configure la estructura e impresión de la Nota de Ingreso (NI) y Nota de Salida (NS)</small>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ SELECTOR DE EMPRESA ══════════════════════ -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-body py-2">
+      <div class="d-flex align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bx bx-buildings text-secondary fs-5"></i>
+          <span class="fw-semibold" style="font-size:13px">Empresa:</span>
+        </div>
+
+        <!-- Chips de empresa -->
+        <div class="d-flex flex-wrap gap-2">
+          @for (emp of listaEmpresas(); track emp.ruc) {
+            <button
+              class="btn btn-sm d-flex align-items-center gap-2 px-3"
+              [class.btn-primary]="empresaRuc() === emp.ruc"
+              [class.btn-outline-secondary]="empresaRuc() !== emp.ruc"
+              (click)="setEmpresaActiva(emp)"
+              style="font-size:12px">
+              @if (emp.logoBase64) {
+                <img [src]="emp.logoBase64" alt="" style="max-height:20px;max-width:48px;object-fit:contain">
+              } @else {
+                <i class="bx bx-building"></i>
+              }
+              {{ emp.razonSocial }}
+              <small class="opacity-75">{{ emp.ruc }}</small>
+            </button>
+          }
+          @if (listaEmpresas().length === 0 && !cargando()) {
+            <span class="text-muted" style="font-size:12px">
+              <i class="bx bx-info-circle me-1"></i>No hay empresas configuradas
+            </span>
+          }
+        </div>
+
+        @if (cargando()) {
+          <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTA -->
+  @if (alertMsg()) {
+    <div class="alert py-2 mb-3" style="font-size:13px"
+      [class.alert-success]="alertTipo() === 'success'"
+      [class.alert-danger]="alertTipo() === 'danger'">
+      <i class="bx me-1" [class.bx-check-circle]="alertTipo() === 'success'" [class.bx-reset]="alertTipo() === 'danger'"></i>
+      {{ alertMsg() }}
+    </div>
+  }
+
+  <!-- ══════════════════════ FIRMA PREDETERMINADA ALMACENERO ══════════════════════ -->
+  <div class="card shadow-sm mb-3 border-start border-4 border-primary">
+    <div class="card-header py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bx bx-user-pin text-primary fs-5"></i>
+        <span class="fw-semibold" style="font-size:13px">Firma predeterminada del Almacenero (ALLOGIST)</span>
+        <small class="text-muted" style="font-size:11px">— Aparece en el lado izquierdo del PDF de conformidad</small>
+      </div>
+      @if (empresaNombre()) {
+        <div class="d-flex align-items-center gap-2">
+          @if (empresaLogo()) {
+            <img [src]="empresaLogo()" alt="Logo empresa"
+              style="max-height:32px;max-width:80px;object-fit:contain;border-radius:3px">
+          }
+          <span class="badge bg-primary text-white" style="font-size:11px">{{ empresaNombre() }}</span>
+          <small class="text-muted" style="font-size:10px">RUC: {{ empresaRuc() }}</small>
+        </div>
+      }
+    </div>
+    <div class="card-body py-3">
+      <div class="row g-3 align-items-start">
+
+        <!-- Nombre almacenero (buscador por empresa) -->
+        <div class="col-md-4">
+          <label class="form-label fw-semibold mb-1 d-flex align-items-center gap-2" style="font-size:12px">
+            Nombre completo del almacenero
+            @if (buscandoAlmacenero()) {
+              <div class="spinner-border spinner-border-sm text-primary" style="width:12px;height:12px" role="status"></div>
+            }
+          </label>
+
+          <!-- Input nombre (editable) -->
+          <input type="text" class="form-control form-control-sm"
+            [value]="cfgNI().nombreAlmacenero ?? ''"
+            (input)="setNombreAlmacenero($any($event.target).value)"
+            placeholder="Ej: Juan Pérez Quispe">
+
+          <!-- Resultados del API: almaceneros ALLOGIST de la empresa -->
+          @if (listaAlmaceneros().length > 0) {
+            <div class="mt-2">
+              <small class="text-muted d-block mb-1" style="font-size:10px">
+                <i class="bx bx-user-check me-1 text-success"></i>
+                Almaceneros ALLOGIST encontrados — haz clic para seleccionar:
+              </small>
+              <div class="list-group" style="max-height:160px;overflow-y:auto">
+                @for (alm of listaAlmaceneros(); track alm.usuario) {
+                  <button
+                    type="button"
+                    class="list-group-item list-group-item-action py-2 px-3"
+                    [class.active]="cfgNI().nombreAlmacenero === alm.nombre"
+                    (click)="seleccionarAlmacenero(alm)"
+                    style="font-size:12px">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div>
+                        <i class="bx bx-user me-1"></i>
+                        <strong>{{ alm.nombre }}</strong>
+                      </div>
+                      <small class="text-muted">{{ alm.usuario }}</small>
+                    </div>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Error / sin resultados -->
+          @if (almaceneroError()) {
+            <small class="text-warning d-block mt-1" style="font-size:10px">
+              <i class="bx bx-error-circle me-1"></i>{{ almaceneroError() }}
+            </small>
+          }
+
+          <small class="text-muted d-block mt-1" style="font-size:10px">
+            Se imprimirá debajo de la firma en el PDF
+          </small>
+        </div>
+
+        <!-- Canvas firma -->
+        <div class="col-md-5">
+          <label class="form-label fw-semibold mb-1 d-block" style="font-size:12px">
+            Firma digital del almacenero
+          </label>
+          <div style="position:relative;display:inline-block;border:2px dashed #adb5bd;border-radius:6px;background:#fafafa;cursor:crosshair">
+            <canvas #canvasFirmaAlmacen width="300" height="120"
+              style="display:block;border-radius:4px">
+            </canvas>
+            @if (firmaAlmacenVacia()) {
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;color:#bbb;font-size:12px;gap:4px">
+                <i class="bx bx-edit-alt" style="font-size:22px"></i>
+                <span>Dibuje la firma aquí</span>
+              </div>
+            }
+          </div>
+          <div class="d-flex gap-2 mt-1">
+            <button class="btn btn-sm btn-outline-secondary" (click)="limpiarFirmaAlmacen()">
+              <i class="bx bx-eraser me-1"></i> Limpiar
+            </button>
+            @if (!firmaAlmacenVacia()) {
+              <span class="text-success d-flex align-items-center gap-1" style="font-size:11px">
+                <i class="bx bx-check-circle"></i> Firma capturada
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- Preview firma guardada -->
+        <div class="col-md-3">
+          <label class="form-label fw-semibold mb-1 d-block" style="font-size:12px">
+            Vista previa en el PDF
+          </label>
+          <div style="border:1px solid #dee2e6;border-radius:6px;padding:10px 12px;background:#fff;min-height:140px">
+            <!-- Logo empresa -->
+            <div class="d-flex align-items-center gap-2 mb-2 pb-2" style="border-bottom:1px solid #eee">
+              @if (empresaLogo()) {
+                <img [src]="empresaLogo()" alt="Logo"
+                  style="max-height:28px;max-width:70px;object-fit:contain">
+              } @else {
+                <div class="text-muted" style="font-size:10px"><i class="bx bx-image me-1"></i>Sin logo</div>
+              }
+              <span style="font-size:10px;font-weight:600;color:#1a3a6b">{{ empresaNombre() || 'Empresa' }}</span>
+            </div>
+            <!-- Firma almacenero (tiempo real desde canvas) -->
+            <div style="text-align:center">
+              @if (firmaPreviewBase64()) {
+                <img [src]="firmaPreviewBase64()" alt="Firma almacenero"
+                  style="max-width:140px;max-height:55px;display:block;margin:0 auto 4px;border-bottom:1px solid #333;padding-bottom:2px">
+              } @else {
+                <div style="width:140px;height:1px;background:#333;margin:36px auto 4px"></div>
+              }
+              <div style="font-size:11px;font-weight:700;color:#222">{{ cfgNI().nombreAlmacenero || '___________________________' }}</div>
+              <div style="font-size:10px;color:#666">{{ cfgNI().firmante1 || 'ALMACEN' }}</div>
+            </div>
+          </div>
+          <div class="mt-1 text-muted" style="font-size:10px">
+            <i class="bx bx-info-circle me-1"></i>Guarda para persistir en la BD
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS NI / NS -->
+  <ul class="nav nav-tabs mb-0">
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="tabActivo() === 'ni'" (click)="setTab('ni')">
+        <i class="bx bx-log-in-circle me-1 text-success"></i> Nota de Ingreso (NI)
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="tabActivo() === 'ns'" (click)="setTab('ns')">
+        <i class="bx bx-log-out-circle me-1 text-danger"></i> Nota de Salida (NS)
+      </button>
+    </li>
+  </ul>
+
+  <!-- ══════════════════════ TAB NOTA DE INGRESO ══════════════════════ -->
+  @if (tabActivo() === 'ni') {
+    <div class="row g-3 mt-0">
+
+      <!-- Panel izquierdo: config -->
+      <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+          <div class="card-header d-flex align-items-center justify-content-between py-2">
+            <span class="fw-semibold">
+              <i class="bx bx-cog me-1 text-success"></i> Configuración — Nota de Ingreso
+            </span>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-secondary" (click)="resetNI()">
+                <i class="bx bx-reset me-1"></i> Restaurar
+              </button>
+              <button class="btn btn-sm btn-success" (click)="guardarNI()">
+                <i class="bx bx-save me-1"></i> Guardar
+              </button>
+            </div>
+          </div>
+          <div class="card-body" style="overflow-y:auto;max-height:680px">
+
+            <!-- Título -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold mb-1" style="font-size:12px">Título del documento</label>
+              <input type="text" class="form-control form-control-sm"
+                [value]="cfgNI().tituloDocumento"
+                (input)="patchNI({tituloDocumento: $any($event.target).value})">
+            </div>
+
+            <!-- Columnas visibles -->
+            <div class="mb-3">
+              <div class="fw-semibold mb-2" style="font-size:12px">Columnas visibles en la tabla</div>
+              <div class="d-flex flex-column gap-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="niUbicacion"
+                    [checked]="cfgNI().mostrarUbicacionFisica"
+                    (change)="patchNI({mostrarUbicacionFisica: $any($event.target).checked})">
+                  <label class="form-check-label" for="niUbicacion" style="font-size:12px">Ubicación Física</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="niCodInt"
+                    [checked]="cfgNI().mostrarCodInterno"
+                    (change)="patchNI({mostrarCodInterno: $any($event.target).checked})">
+                  <label class="form-check-label" for="niCodInt" style="font-size:12px">Código Interno (COD.INT.)</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="niCantComp"
+                    [checked]="cfgNI().mostrarCantidadCompra"
+                    (change)="patchNI({mostrarCantidadCompra: $any($event.target).checked})">
+                  <label class="form-check-label" for="niCantComp" style="font-size:12px">Cantidad Compra</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="niCantPend"
+                    [checked]="cfgNI().mostrarCantidadPendiente"
+                    (change)="patchNI({mostrarCantidadPendiente: $any($event.target).checked})">
+                  <label class="form-check-label" for="niCantPend" style="font-size:12px">Cantidad Pendiente</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="niStock"
+                    [checked]="cfgNI().mostrarStockActual"
+                    (change)="patchNI({mostrarStockActual: $any($event.target).checked})">
+                  <label class="form-check-label" for="niStock" style="font-size:12px">Stock Actual</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Firmantes -->
+            <div class="mb-3">
+              <div class="fw-semibold mb-2" style="font-size:12px">Líneas de firma</div>
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label mb-0" style="font-size:11px">Firmante 1</label>
+                  <input type="text" class="form-control form-control-sm"
+                    [value]="cfgNI().firmante1"
+                    (input)="patchNI({firmante1: $any($event.target).value})"
+                    placeholder="Ej: ALMACEN">
+                </div>
+                <div class="col-6">
+                  <label class="form-label mb-0" style="font-size:11px">Firmante 2</label>
+                  <input type="text" class="form-control form-control-sm"
+                    [value]="cfgNI().firmante2"
+                    (input)="patchNI({firmante2: $any($event.target).value})"
+                    placeholder="Ej: AUTORIZA">
+                </div>
+              </div>
+            </div>
+
+            <!-- Pie de página -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold mb-1" style="font-size:12px">Pie de página (opcional)</label>
+              <textarea class="form-control form-control-sm" rows="2"
+                style="font-size:12px;resize:vertical"
+                [value]="cfgNI().piePagina"
+                (input)="patchNI({piePagina: $any($event.target).value})"
+                placeholder="Texto que aparece al pie de la nota impresa..."></textarea>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel derecho: preview vivo -->
+      <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+          <div class="card-header d-flex align-items-center justify-content-between py-2">
+            <span class="fw-semibold"><i class="bx bx-show me-1 text-success"></i> Vista previa — Nota de Ingreso</span>
+          </div>
+          <div class="card-body p-3">
+            <div class="alert alert-secondary py-1 mb-3" style="font-size:11px">
+              <i class="bx bx-info-circle me-1"></i> Vista en tiempo real. Los cambios se reflejan al guardar.
+            </div>
+
+            <!-- NOTA PREVIEW -->
+            <div class="nota-preview">
+              <!-- Encabezado -->
+              <div class="np-header">
+                <div class="np-empresa d-flex align-items-center gap-2">
+                  @if (empresaLogo()) {
+                    <img [src]="empresaLogo()" alt="Logo" style="max-height:30px;max-width:70px;object-fit:contain">
+                  }
+                  <strong>{{ empresaNombre() || 'Hass Perú S.A.' }}</strong>
+                </div>
+                <div class="np-right">
+                  <div>Fecha: {{ hoy() }}</div>
+                  <div>Página: 1 de 1</div>
+                </div>
+              </div>
+              <!-- Título -->
+              <div class="np-title">{{ cfgNI().tituloDocumento }} # 227090</div>
+              <!-- Meta -->
+              <div class="np-meta">
+                <div>
+                  <span class="np-label">Transacción:</span> 03-06-2026 &nbsp;<strong>Recepción de O/C</strong>
+                </div>
+                <div><span class="np-label">Almacen:</span> ALMACEN PRINCIPAL - HASS</div>
+                <div>
+                  <span class="np-label">Documento:</span> 02-06-2026 &nbsp; O.C. &nbsp; 0000003779
+                </div>
+                <div><span class="np-label">Referencia:</span> FP</div>
+                <div><span class="np-label">Proveedor:</span></div>
+                <div><span class="np-label">Comentarios:</span> Recepción OC OC-20260526-0001</div>
+              </div>
+              <!-- Tabla -->
+              <div class="np-table-wrap">
+                <table class="np-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Item</th>
+                      <th>Cnd.</th>
+                      <th>Descripción</th>
+                      @if (cfgNI().mostrarUbicacionFisica) { <th>Ubic. Física</th> }
+                      @if (cfgNI().mostrarCodInterno)      { <th>COD.INT.</th> }
+                      <th>Unidad</th>
+                      <th>Cant. Ingreso</th>
+                      @if (cfgNI().mostrarCantidadCompra)   { <th>Cant. Compra</th> }
+                      @if (cfgNI().mostrarCantidadPendiente){ <th>Cant. Pendiente</th> }
+                      @if (cfgNI().mostrarStockActual)      { <th>Stock Actual</th> }
+                      <th>C.Costos</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1</td>
+                      <td>000077</td>
+                      <td>0</td>
+                      <td>Aceite Sae 40</td>
+                      @if (cfgNI().mostrarUbicacionFisica) { <td>- -</td> }
+                      @if (cfgNI().mostrarCodInterno)      { <td>006340</td> }
+                      <td>UND</td>
+                      <td>20.00</td>
+                      @if (cfgNI().mostrarCantidadCompra)   { <td>20.00</td> }
+                      @if (cfgNI().mostrarCantidadPendiente){ <td>20.00</td> }
+                      @if (cfgNI().mostrarStockActual)      { <td>40.00</td> }
+                      <td>RIEGO Y FE</td>
+                    </tr>
+                    <tr>
+                      <td>2</td>
+                      <td>000066</td>
+                      <td>0</td>
+                      <td>Aceite De Soya Bot 1 Lt</td>
+                      @if (cfgNI().mostrarUbicacionFisica) { <td>- -</td> }
+                      @if (cfgNI().mostrarCodInterno)      { <td>001536</td> }
+                      <td>UND</td>
+                      <td>23.00</td>
+                      @if (cfgNI().mostrarCantidadCompra)   { <td>23.00</td> }
+                      @if (cfgNI().mostrarCantidadPendiente){ <td>23.00</td> }
+                      @if (cfgNI().mostrarStockActual)      { <td>43.00</td> }
+                      <td>RIEGO Y FE</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <!-- Area logística -->
+              <div class="np-area">LOGISTICA</div>
+              <!-- Firmas NI -->
+              <div class="np-firmas">
+                <div class="np-firma">
+                  @if (firmaPreviewBase64()) {
+                    <img [src]="firmaPreviewBase64()" alt="Firma">
+                  }
+                  <div class="np-firma-linea"></div>
+                  @if (cfgNI().nombreAlmacenero) {
+                    <span class="np-firma-nombre">{{ cfgNI().nombreAlmacenero }}</span>
+                  }
+                  @if (cfgNI().dniAlmacenero) {
+                    <span class="np-firma-dni">DNI: {{ cfgNI().dniAlmacenero }}</span>
+                  }
+                  <span class="np-firma-rol">{{ cfgNI().firmante1 }}</span>
+                </div>
+                <div class="np-firma">
+                  <div class="np-firma-linea"></div>
+                  <span class="np-firma-rol">{{ cfgNI().firmante2 }}</span>
+                </div>
+              </div>
+              @if (cfgNI().piePagina) {
+                <div class="np-pie">{{ cfgNI().piePagina }}</div>
+              }
+              <!-- Total -->
+              <div class="np-total">Total Items : 2</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  }
+
+  <!-- ══════════════════════ TAB NOTA DE SALIDA ══════════════════════ -->
+  @if (tabActivo() === 'ns') {
+    <div class="row g-3 mt-0">
+
+      <!-- Panel izquierdo: config -->
+      <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+          <div class="card-header d-flex align-items-center justify-content-between py-2">
+            <span class="fw-semibold">
+              <i class="bx bx-cog me-1 text-danger"></i> Configuración — Nota de Salida
+            </span>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-secondary" (click)="resetNS()">
+                <i class="bx bx-reset me-1"></i> Restaurar
+              </button>
+              <button class="btn btn-sm btn-danger" (click)="guardarNS()">
+                <i class="bx bx-save me-1"></i> Guardar
+              </button>
+            </div>
+          </div>
+          <div class="card-body" style="overflow-y:auto;max-height:680px">
+
+            <!-- Título -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold mb-1" style="font-size:12px">Título del documento</label>
+              <input type="text" class="form-control form-control-sm"
+                [value]="cfgNS().tituloDocumento"
+                (input)="patchNS({tituloDocumento: $any($event.target).value})">
+            </div>
+
+            <!-- Columnas visibles -->
+            <div class="mb-3">
+              <div class="fw-semibold mb-2" style="font-size:12px">Columnas visibles en la tabla</div>
+              <div class="d-flex flex-column gap-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="nsUbicacion"
+                    [checked]="cfgNS().mostrarUbicacionFisica"
+                    (change)="patchNS({mostrarUbicacionFisica: $any($event.target).checked})">
+                  <label class="form-check-label" for="nsUbicacion" style="font-size:12px">Ubicación Física</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="nsCodInt"
+                    [checked]="cfgNS().mostrarCodInterno"
+                    (change)="patchNS({mostrarCodInterno: $any($event.target).checked})">
+                  <label class="form-check-label" for="nsCodInt" style="font-size:12px">Código Interno (COD.INT.)</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="nsCantPend"
+                    [checked]="cfgNS().mostrarCantidadPendiente"
+                    (change)="patchNS({mostrarCantidadPendiente: $any($event.target).checked})">
+                  <label class="form-check-label" for="nsCantPend" style="font-size:12px">Cantidad Pendiente</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="nsStock"
+                    [checked]="cfgNS().mostrarStockActual"
+                    (change)="patchNS({mostrarStockActual: $any($event.target).checked})">
+                  <label class="form-check-label" for="nsStock" style="font-size:12px">Stock Actual</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="nsCCostos"
+                    [checked]="cfgNS().mostrarCCostos"
+                    (change)="patchNS({mostrarCCostos: $any($event.target).checked})">
+                  <label class="form-check-label" for="nsCCostos" style="font-size:12px">Sección Centro de Costos</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Firmantes -->
+            <div class="mb-3">
+              <div class="fw-semibold mb-2" style="font-size:12px">Líneas de firma</div>
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label mb-0" style="font-size:11px">Firmante 1</label>
+                  <input type="text" class="form-control form-control-sm"
+                    [value]="cfgNS().firmante1"
+                    (input)="patchNS({firmante1: $any($event.target).value})"
+                    placeholder="Ej: ALMACEN">
+                </div>
+                <div class="col-6">
+                  <label class="form-label mb-0" style="font-size:11px">Firmante 2</label>
+                  <input type="text" class="form-control form-control-sm"
+                    [value]="cfgNS().firmante2"
+                    (input)="patchNS({firmante2: $any($event.target).value})"
+                    placeholder="Ej: RECIBI CONFORME">
+                </div>
+              </div>
+            </div>
+
+            <!-- Pie de página -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold mb-1" style="font-size:12px">Pie de página (opcional)</label>
+              <textarea class="form-control form-control-sm" rows="2"
+                style="font-size:12px;resize:vertical"
+                [value]="cfgNS().piePagina"
+                (input)="patchNS({piePagina: $any($event.target).value})"
+                placeholder="Texto que aparece al pie de la nota impresa..."></textarea>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel derecho: preview vivo -->
+      <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+          <div class="card-header d-flex align-items-center justify-content-between py-2">
+            <span class="fw-semibold"><i class="bx bx-show me-1 text-danger"></i> Vista previa — Nota de Salida</span>
+          </div>
+          <div class="card-body p-3">
+            <div class="alert alert-secondary py-1 mb-3" style="font-size:11px">
+              <i class="bx bx-info-circle me-1"></i> Vista en tiempo real. Los cambios se reflejan al guardar.
+            </div>
+
+            <!-- NOTA PREVIEW NS -->
+            <div class="nota-preview">
+              <!-- Encabezado -->
+              <div class="np-header">
+                <div class="np-empresa d-flex align-items-center gap-2">
+                  @if (empresaLogo()) {
+                    <img [src]="empresaLogo()" alt="Logo" style="max-height:30px;max-width:70px;object-fit:contain">
+                  }
+                  <strong>{{ empresaNombre() || 'Hass Perú S.A.' }}</strong>
+                </div>
+                <div class="np-right">
+                  <div>Fecha: {{ hoy() }}</div>
+                  <div>Página: 1 de 1</div>
+                </div>
+              </div>
+              <!-- Título -->
+              <div class="np-title">{{ cfgNS().tituloDocumento }} # 091353</div>
+              <!-- Meta -->
+              <div class="np-meta">
+                <div>
+                  <span class="np-label">Transacción:</span> 10-06-2026 &nbsp;<strong>Despacho de Requisiciones</strong>
+                </div>
+                <div><span class="np-label">Almacen:</span> ALMACEN PRINCIPAL - HASS</div>
+                <div>
+                  <span class="np-label">Documento:</span> 21-05-2026 &nbsp; REQ. &nbsp; 0000007478
+                </div>
+                <div><span class="np-label">Referencia:</span> RQ &nbsp; 0000007478 &nbsp;&nbsp; Recibido por:</div>
+                <div class="np-area-row"><strong>RIEGO Y FERTILIZACION</strong></div>
+                <div><span class="np-label">Comentarios:</span></div>
+              </div>
+              <!-- Tabla -->
+              <div class="np-table-wrap">
+                <table class="np-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Item</th>
+                      <th>Cnd.</th>
+                      <th>Descripción</th>
+                      @if (cfgNS().mostrarUbicacionFisica) { <th>Ubic. Física</th> }
+                      @if (cfgNS().mostrarCodInterno)      { <th>COD.INT.</th> }
+                      <th>Unidad</th>
+                      <th>Cant. Salida</th>
+                      <th>Cant. Requerida</th>
+                      @if (cfgNS().mostrarCantidadPendiente){ <th>Cant. Pendiente</th> }
+                      @if (cfgNS().mostrarStockActual)      { <th>Stock Actual</th> }
+                      <th>C.Costos</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1</td>
+                      <td>000011</td>
+                      <td>0</td>
+                      <td>Conector Giratorio Hembra Con Arandela 16 Mm X</td>
+                      @if (cfgNS().mostrarUbicacionFisica) { <td>- -</td> }
+                      @if (cfgNS().mostrarCodInterno)      { <td>004732</td> }
+                      <td>UND</td>
+                      <td>22.00</td>
+                      <td>22.00</td>
+                      @if (cfgNS().mostrarCantidadPendiente){ <td>0.00</td> }
+                      @if (cfgNS().mostrarStockActual)      { <td>127.00</td> }
+                      <td>11020</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <!-- Area logística -->
+              <div class="np-area">LOGISTICA</div>
+              <!-- Centro Costo -->
+              @if (cfgNS().mostrarCCostos) {
+                <div class="np-ccostos">Centro Costo:</div>
+              }
+              <!-- Firmas NS -->
+              <div class="np-firmas">
+                <div class="np-firma">
+                  @if (firmaPreviewBase64()) {
+                    <img [src]="firmaPreviewBase64()" alt="Firma">
+                  }
+                  <div class="np-firma-linea"></div>
+                  @if (cfgNS().nombreAlmacenero) {
+                    <span class="np-firma-nombre">{{ cfgNS().nombreAlmacenero }}</span>
+                  }
+                  @if (cfgNS().dniAlmacenero) {
+                    <span class="np-firma-dni">DNI: {{ cfgNS().dniAlmacenero }}</span>
+                  }
+                  <span class="np-firma-rol">{{ cfgNS().firmante1 }}</span>
+                </div>
+                <div class="np-firma">
+                  <div class="np-firma-linea"></div>
+                  <span class="np-firma-rol">{{ cfgNS().firmante2 }}</span>
+                </div>
+              </div>
+              @if (cfgNS().piePagina) {
+                <div class="np-pie">{{ cfgNS().piePagina }}</div>
+              }
+              <!-- Total -->
+              <div class="np-total">Total Items : 1</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  }
+
+</div>

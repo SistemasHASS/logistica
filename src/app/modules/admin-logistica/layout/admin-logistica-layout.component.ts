@@ -67,5 +67,6 @@ export class AdminLogisticaLayoutComponent implements OnInit {
     { route: 'parametros', label: 'Parámetros', icon: 'bx bx-cog', visible: () => this.isAdmin() },
     { route: 'aprobadores', label: 'Aprobadores', icon: 'bx bx-user-check', visible: () => this.isAdmin() },
     { route: 'auditoria', label: 'Auditoría', icon: 'bx bx-history', visible: () => this.isAdmin() },
+    { route: 'almacen', label: 'Plantillas Almacén', icon: 'bx bx-store-alt', visible: () => this.isAdmin() },
   ];
 }

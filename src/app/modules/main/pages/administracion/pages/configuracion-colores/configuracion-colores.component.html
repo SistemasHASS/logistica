@@ -54,6 +54,11 @@
           <i class="ti ti-menu-2 me-1"></i> Módulos del Menú
         </button>
       </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="activeTab() === 5" (click)="activeTab.set(5)" type="button">
+          <i class="bx bx-font me-1"></i> Tipografía
+        </button>
+      </li>
     </ul>
 
     <div class="tab-content">
@@ -1650,6 +1655,103 @@
         </div>
 
       </div>
+
+      <!-- TAB 6: TIPOGRAFÍA -->
+      <div class="tab-pane" [class.active]="activeTab() === 5" [class.show]="activeTab() === 5">
+        <div class="row mb-3">
+          <div class="col-12 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bx bx-font me-2 text-primary"></i>Configuración Tipográfica</h5>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-secondary btn-sm" (click)="restaurarTypografiaDefault()">
+                <i class="bx bx-reset me-1"></i> Restaurar Default
+              </button>
+              <button class="btn btn-primary btn-sm" (click)="guardarTypografia()">
+                <i class="bx bx-save me-1"></i> Guardar Tipografía
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Global -->
+        <div class="card mb-4">
+          <div class="card-header bg-light fw-bold"><i class="bx bx-globe me-1"></i> Configuración Global</div>
+          <div class="card-body">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Fuente principal</label>
+                <select class="form-select form-select-sm" [(ngModel)]="typography.fontFamily">
+                  @for (f of FUENTES_DISPONIBLES; track f.value) {
+                    <option [value]="f.value">{{ f.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small fw-bold">Tamaño global (px)</label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control form-control-sm" [(ngModel)]="typography.fontSize" min="7" max="20" step="1">
+                  <span class="input-group-text">px</span>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small fw-bold">Color de texto global</label>
+                <div class="input-group input-group-sm">
+                  <input type="color" class="form-control form-control-color form-control-sm" [(ngModel)]="typography.colorTexto" style="width:48px">
+                  <input type="text" class="form-control form-control-sm" [(ngModel)]="typography.colorTexto">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-2 border rounded text-center" [style.font-family]="typography.fontFamily" [style.font-size.px]="typography.fontSize" [style.color]="typography.colorTexto">
+                  Vista previa: El sistema de logística HASS — 0123456789
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Por componente -->
+        <div class="card">
+          <div class="card-header bg-light fw-bold"><i class="bx bx-layout me-1"></i> Configuración por Componente</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered mb-0 align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width:160px">Componente</th>
+                    <th>Tamaño (px)</th>
+                    <th>Color de texto</th>
+                    <th>Vista previa</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (comp of COMPONENTES_TYPO; track comp.key) {
+                    <tr>
+                      <td><i [class]="comp.icono + ' me-1'"></i><strong>{{ comp.label }}</strong></td>
+                      <td style="width:160px">
+                        <div class="input-group input-group-sm">
+                          <input type="number" class="form-control form-control-sm" [(ngModel)]="typography[comp.key].fontSize" min="7" max="20" step="1">
+                          <span class="input-group-text">px</span>
+                        </div>
+                      </td>
+                      <td style="width:200px">
+                        <div class="input-group input-group-sm">
+                          <input type="color" class="form-control form-control-color form-control-sm" [(ngModel)]="typography[comp.key].colorTexto" style="width:40px">
+                          <input type="text" class="form-control form-control-sm" [(ngModel)]="typography[comp.key].colorTexto">
+                        </div>
+                      </td>
+                      <td>
+                        <span [style.font-size.px]="typography[comp.key].fontSize" [style.color]="typography[comp.key].colorTexto">
+                          Texto de ejemplo — {{ comp.label }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

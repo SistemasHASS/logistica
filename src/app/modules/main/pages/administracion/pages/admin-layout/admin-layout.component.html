@@ -128,11 +128,52 @@
           </li>
           <li *ngIf="adminUser?.idPerfil.includes('TI')"
             class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-menus-dinamicos" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='bx bx-menu'></i>
+              </span>
+              <span class="hide-menu"> Menús Dinámicos</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-permisos-menu-dinamico" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='bx bx-lock-open-alt'></i>
+              </span>
+              <span class="hide-menu"> Permisos Menú Dinámico</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-plantillas-menu" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='bx bx-customize'></i>
+              </span>
+              <span class="hide-menu"> Plantillas de Menú</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
             <a routerLink="./admin-version-api" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
                 <i class='icon icon-git-merge'></i>
               </span>
               <span class="hide-menu"> API Versionado</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Empresas</span>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-empresas" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='bx bx-building'></i>
+              </span>
+              <span class="hide-menu"> Configuración Empresas</span>
             </a>
           </li>
           <li *ngIf="adminUser?.idPerfil.includes('TI')"
@@ -174,6 +215,15 @@
                 <i class='icon icon-file-pdf'></i>
               </span>
               <span class="hide-menu"> Plantilla PDF</span>
+            </a>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-plantilla-almacen" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='bx bx-store-alt'></i>
+              </span>
+              <span class="hide-menu"> Plantillas Almacén</span>
             </a>
           </li>
           <li *ngIf="adminUser?.idPerfil.includes('TI')"

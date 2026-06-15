@@ -11,6 +11,8 @@
           Items
         </button>
       </li>
+      <!-- ALLOGIST solo ve tab COMPRA (ITEM), ocultar otros tabs -->
+      @if (!esAlmacen) {
       <li class="nav-item">
         <button class="nav-link" [ngClass]="{ active: tabActiva === 'COMMODITY' }" (click)="cambiarTab('COMMODITY')">
           <i class="bx bx-cog me-2"></i>
@@ -29,6 +31,7 @@
           Activos Menores
         </button>
       </li>
+      }
     </ul>
 
     <!-- ===================== -->

@@ -358,9 +358,9 @@ export class RequerimientosMaestrasService {
   obtenerUnidadMedidaProducto(producto: any): string {
     if (typeof producto === 'string') {
       const item = this.items?.find((i: any) => i.codigo === producto);
-      return item?.unidadMedida || 'UN';
+      return item?.um || item?.unidadMedida || 'UN';
     }
-    return producto?.unidadMedida || 'UN';
+    return producto?.um || producto?.unidadMedida || 'UN';
   }
 
   async cargarDatosParaConsumo() {

@@ -1,0 +1,280 @@
+/* ══ Conformidad Almacén ═══════════════════════════════════════════ */
+
+/* ── Modal firma ─────────────────────────────────────── */
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 1040;
+}
+
+.modal-firma-container {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.modal-firma-box {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  width: 100%;
+  max-width: 900px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-detalle-container {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.modal-detalle-box {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mf-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mf-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ── Nota preview en modal ─────────────────── */
+.nota-preview-modal {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  background: #fefefe;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.np-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 11px;
+
+  .np-right {
+    text-align: right;
+    color: #555;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+}
+
+.np-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 5px;
+  color: #111;
+}
+
+.np-ref, .np-almacen {
+  font-size: 10px;
+  color: #374151;
+  margin-bottom: 3px;
+}
+
+.np-table-modal {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+  font-size: 9.5px;
+
+  th {
+    background: #f1f5f9;
+    border: 1px solid #d1d5db;
+    padding: 3px 5px;
+    text-align: center;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  td {
+    border: 1px solid #e5e7eb;
+    padding: 2px 5px;
+    text-align: center;
+  }
+
+  tbody tr:nth-child(even) td { background: #f9fafb; }
+}
+
+.np-table-wrap-modal {
+  overflow-x: auto;
+  margin-bottom: 4px;
+}
+
+.np-area-modal {
+  text-align: right;
+  font-size: 9px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 6px;
+  padding-right: 2px;
+}
+
+.np-firmas-modal {
+  display: flex;
+  gap: 24px;
+  padding: 10px 16px 6px;
+  border-top: 1px dashed #d1d5db;
+  margin-bottom: 4px;
+
+  .np-firma-modal {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #374151;
+    text-align: center;
+    min-height: 70px;
+    justify-content: flex-end;
+
+    img {
+      max-width: 100px;
+      max-height: 44px;
+      object-fit: contain;
+      margin-bottom: 2px;
+    }
+
+    .np-firma-linea-modal {
+      width: 100%;
+      height: 1px;
+      background: #374151;
+      margin: 2px 0;
+    }
+  }
+}
+
+.np-pie-modal {
+  font-size: 8px;
+  color: #9ca3af;
+  font-style: italic;
+  text-align: center;
+  margin-top: 3px;
+}
+
+.np-total-modal {
+  text-align: right;
+  font-size: 10px;
+  font-weight: 700;
+  margin-top: 5px;
+  padding-top: 4px;
+  border-top: 1px solid #d1d5db;
+}
+
+/* ── Panel firma ────────────────────────────── */
+.firma-panel {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  height: 100%;
+}
+
+.firma-panel-title {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 10px;
+  color: #1f2937;
+}
+
+.canvas-wrap {
+  position: relative;
+  border: 2px dashed #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+  cursor: crosshair;
+
+  &:hover { border-color: #6366f1; }
+}
+
+.canvas-firma {
+  display: block;
+  width: 100%;
+  height: 160px;
+  touch-action: none;
+}
+
+.canvas-vacio + .canvas-placeholder,
+.canvas-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  pointer-events: none;
+  font-size: 12px;
+  gap: 4px;
+
+  i { font-size: 24px; }
+}
+
+/* ── Firma display (historial) ──────────────── */
+.firma-display {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff;
+  text-align: center;
+}
+
+.firma-img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: #fff;
+  display: block;
+  margin: 0 auto;
+}
+
+/* ── Cards lista pendientes ──────────────────── */
+.card.border-start.border-warning.border-4 {
+  border-left-color: #f59e0b !important;
+  transition: box-shadow .2s;
+
+  &:hover { box-shadow: 0 4px 20px rgba(0,0,0,.12) !important; }
+}

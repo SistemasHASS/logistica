@@ -340,6 +340,41 @@
                   [disabled]="ordenesCompra().length === 0" title="Exportar a Excel">
             <i class="bx bx-download me-1"></i>Exportar Excel
           </button>
+          <button class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1"
+                  (click)="revertirOCsSeleccionadas()"
+                  [disabled]="revirtiendo() || ocSeleccionadasReversion().size === 0"
+                  title="Revertir OC(s) APROBADAS seleccionadas a estado PENDIENTE">
+            @if (revirtiendo()) {
+              <span class="spinner-border spinner-border-sm"></span>
+            } @else {
+              <i class="bx bx-undo"></i>
+            }
+            Revertir @if (ocSeleccionadasReversion().size > 0) { ({{ ocSeleccionadasReversion().size }}) }
+          </button>
+        </div>
+        <div class="d-flex gap-2 mb-2 flex-wrap">
+          <div class="input-group input-group-sm" style="max-width:240px">
+            <span class="input-group-text"><i class="bx bx-search"></i></span>
+            <input type="text" class="form-control" placeholder="Buscar por Número OC"
+                   [value]="filtroNumeroOC()"
+                   (input)="filtroNumeroOC.set($any($event.target).value)">
+            @if (filtroNumeroOC()) {
+              <button class="btn btn-outline-secondary" type="button" (click)="filtroNumeroOC.set('')">
+                <i class="bx bx-x"></i>
+              </button>
+            }
+          </div>
+          <div class="input-group input-group-sm" style="max-width:240px">
+            <span class="input-group-text"><i class="bx bx-store"></i></span>
+            <input type="text" class="form-control" placeholder="Buscar por Proveedor"
+                   [value]="filtroProveedorOC()"
+                   (input)="filtroProveedorOC.set($any($event.target).value)">
+            @if (filtroProveedorOC()) {
+              <button class="btn btn-outline-secondary" type="button" (click)="filtroProveedorOC.set('')">
+                <i class="bx bx-x"></i>
+              </button>
+            }
+          </div>
         </div>
 
         @if (cargandoOCs()) {
@@ -347,10 +382,11 @@
         } @else if (ordenesCompra().length === 0) {
           <div class="alert alert-info">No hay órdenes de compra.</div>
         } @else {
-          <p-table [value]="ordenesCompra()" [rows]="10" [paginator]="true" [rowsPerPageOptions]="[10, 20, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} órdenes" styleClass="p-datatable-sm p-datatable-gridlines">
+          <p-table [value]="ordenesCompraFiltradas()" [rows]="10" [paginator]="true" [rowsPerPageOptions]="[10, 20, 50]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} órdenes" styleClass="p-datatable-sm p-datatable-gridlines">
             <ng-template pTemplate="header">
               <tr>
                 <!-- <th style="width:40px"></th> -->
+                <th style="width:30px"></th>
                 <th style="width:20px">#</th>
                 <!-- <th>Número OC</th> -->
                 <th>Número SPRING</th>
@@ -367,12 +403,21 @@
                   [class.table-info]="oc.estado==='PENDIENTE_APROBACION'"
                   [class.table-success]="oc.estado==='APROBADA'"
                   [class.table-primary]="oc.estado==='ENVIADA'">
-                <!-- <td></td> -->
+                <td class="text-center">
+                  @if (oc.estado === 'APROBADA') {
+                    <p-checkbox [binary]="true"
+                                [ngModel]="ocSeleccionadasReversion().has(oc.idOrden)"
+                                (ngModelChange)="toggleReversion(oc.idOrden, $event)"
+                                title="Seleccionar para revertir">
+                    </p-checkbox>
+                  }
+                </td>
                 <td>{{ rowIndex + 1 }}</td>
                 <!-- <td><strong>{{ oc.numeroOrden }}</strong></td> -->
                 <td>
                   @if (oc.numeroOrdenSpring) {
-                    <span class="badge bg-primary">{{ oc.numeroOrdenSpring }}</span>
+                    <!-- <span class="badge bg-primary">{{ oc.numeroOrdenSpring }}</span> -->
+                    <span>{{ oc.numeroOrdenSpring }}</span>
                   } @else {
                     <span class="text-muted">-</span>
                   }
@@ -381,9 +426,10 @@
                 <td>{{ oc.rucProveedor }}</td>
                 <td>{{ oc.moneda }} {{ oc.totalOrden | number:'1.2-2' }}</td>
                 <td>{{ oc.fechaCreacion }}</td>
-                <td><span class="badge" [class]="badgeEstadoOC(oc.estado)">{{ oc.estado }}</span></td>
-                <td class="text-center">
-                  <div class="d-flex justify-content-center align-items-center gap-1 flex-wrap">
+                <!-- <td><span class="badge" [class]="badgeEstadoOC(oc.estado)">{{ oc.estado }}</span></td> -->
+                <td><span>{{ oc.estado }}</span></td>
+                <td>
+                  <div class="d-flex justify-content-start align-items-center gap-1 flex-wrap">
                     <!-- <button class="btn btn-outline-secondary btn-sm rounded-circle p-1 position-relative" style="width:30px;height:30px;line-height:1"
                             (click)="abrirAdjuntos(oc, 'OC')" title="Ver adjuntos">
                       <i class="bx bx-paperclip" style="font-size:0.85rem"></i>
@@ -391,17 +437,17 @@
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem;min-width:16px">{{ oc.cantAdjuntos }}</span>
                       }
                     </button> -->
-                    <button class="btn btn-outline-primary btn-sm rounded-circle p-1 position-relative" style="width:30px;height:30px;line-height:1"
+                    <button class="btn btn-outline-primary btn-sm px-2 py-1 d-inline-flex align-items-center" style="font-size:0.75rem"
                             (click)="verDetalleOC(oc)" title="Ver detalle">
-                      <i class="bx bx-show" style="font-size:0.85rem"></i>
+                      <i class="bx bx-show" style="font-size:0.8rem"></i>
                       @if ((oc.cantAdjuntos ?? 0) > 0) {
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary" style="font-size:0.6rem;min-width:16px">{{ oc.cantAdjuntos }}</span>
+                        <span class="badge bg-danger text-white ms-1" style="font-size:0.6rem;padding:0.15em 0.35em">{{ oc.cantAdjuntos }}</span>
                       }
                     </button>
                     @if (oc.estado === 'PENDIENTE') {
-                      <button class="btn btn-outline-warning btn-sm rounded-circle p-1" style="width:30px;height:30px;line-height:1"
+                      <button class="btn btn-outline-warning btn-sm px-2 py-1 d-inline-flex align-items-center" style="font-size:0.75rem"
                               (click)="editarOC(oc)" title="Editar OC">
-                        <i class="bx bx-edit" style="font-size:0.85rem"></i>
+                        <i class="bx bx-edit" style="font-size:0.8rem"></i>
                       </button>
                     }
                     <!-- @if (oc.estado === 'PENDIENTE' || oc.estado === 'PENDIENTE_APROBACION') {
@@ -411,29 +457,29 @@
                       </button>
                     } -->
                     @if (oc.estado === 'APROBADA' || oc.estado === 'ENVIADA' || oc.estado === 'ANULADA' || oc.estado === 'RECIBIDA_TOTAL' || oc.estado === 'RECIBIDA_PARCIAL') {
-                      <button class="btn btn-outline-danger btn-sm px-2" style="height:30px;line-height:1;font-size:0.78rem"
+                      <button class="btn btn-outline-danger btn-sm px-1 py-1 d-inline-flex align-items-center justify-content-center gap-1" style="font-size:0.75rem"
                               (click)="verPdfOCFormateado(oc)" title="Ver PDF oficial">
-                        <i class="bx bx-file-pdf me-1" style="font-size:0.85rem"></i>PDF
+                        <i class="bx bx-file-pdf" style="font-size:0.8rem"></i>OC
                       </button>
                     }
                     @if (oc.estado === 'PENDIENTE') {
-                      <button class="btn btn-warning btn-sm rounded-circle p-1" style="width:30px;height:30px;line-height:1"
+                      <button class="btn btn-warning btn-sm px-2 py-1 d-inline-flex align-items-center" style="font-size:0.75rem"
                               (click)="enviarOCAprobacion(oc)"
                               title="Enviar a aprobación">
-                        <i class="bx bx-send" style="font-size:0.85rem"></i>
+                        <i class="bx bx-send" style="font-size:0.8rem"></i>
                       </button>
                     }
                     @if (oc.estado === 'APROBADA' && !oc.correoEnviado) {
-                      <button class="btn btn-success btn-sm rounded-circle p-1" style="width:30px;height:30px;line-height:1"
+                      <button class="btn btn-success btn-sm px-2 py-1 d-inline-flex align-items-center" style="font-size:0.75rem"
                               (click)="confirmarEnvioOC(oc)" title="Confirmar y enviar correo">
-                        <i class="bx bx-envelope" style="font-size:0.85rem"></i>
+                        <i class="bx bx-envelope me-1" style="font-size:0.8rem"></i>Confirmar
                       </button>
                     }
-                    @if (oc.correoEnviado) {
+                    <!-- @if (oc.correoEnviado) {
                       <span class="badge bg-success rounded-pill" title="Correo enviado" style="font-size:0.7rem">
                         <i class="bx bx-check-double"></i>
                       </span>
-                    }
+                    } -->
                   </div>
                 </td>
               </tr>
@@ -545,11 +591,11 @@
             <label class="form-label small fw-bold">Email Proveedor *</label>
             <input class="form-control form-control-sm" type="email" [(ngModel)]="ocForm.emailProveedor" placeholder="ventas@proveedor.com">
           </div>
-          <div class="col-md-4">
+          <div class="col-md-4" style="display:none">
             <label class="form-label small fw-bold">Teléfono</label>
             <input class="form-control form-control-sm" [(ngModel)]="ocForm.telefonoProveedor">
           </div>
-          <div class="col-md-8">
+          <div class="col-md-8" style="display:none">
             <label class="form-label small fw-bold">Dirección</label>
             <input class="form-control form-control-sm" [(ngModel)]="ocForm.direccionProveedor">
           </div>
@@ -567,7 +613,7 @@
               <option value="USD">USD - Dólares</option>
             </select>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-3" style="display:none">
             <label class="form-label small fw-bold">Tipo de Cambio <small class="text-muted fw-normal">(SPRING)</small></label>
             <div class="input-group input-group-sm">
               <span class="input-group-text" title="Cargado desde SPRING"><i class="bx bx-link-external"></i></span>
@@ -591,7 +637,7 @@
               <option value="90 días">90 días</option>
             </select>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-3" style="display:none">
             <label class="form-label small fw-bold">Forma de Pago</label>
             <select class="form-select form-select-sm" [(ngModel)]="ocForm.formaPago">
               <option value="Transferencia">Transferencia</option>
@@ -648,6 +694,8 @@
                 <th class="text-end">Cantidad</th>
                 <th>UM</th>
                 <th class="text-end" style="min-width:130px">Precio Unit. ({{ simboloMoneda(ocForm.moneda) }}) *</th>
+                <!-- <th class="text-end" style="min-width:90px">Reducción ({{ simboloMoneda(ocForm.moneda) }})</th> -->
+                <th class="text-end" style="min-width:90px">Reducción moneda</th>
                 <th class="text-end" style="min-width:90px">Dto. %</th>
                 <th class="text-end">Subtotal ({{ simboloMoneda(ocForm.moneda) }})</th>
                 <th>CECO</th>
@@ -669,11 +717,21 @@
                            (blur)="item.precioUnitario = (+item.precioUnitario).toFixed(3); calcularTotalesOC()">
                   </td>
                   <td>
+                    <input type="text" class="form-control form-control-sm text-end"
+                           [(ngModel)]="item.reduccion" min="0" step="0.001"
+                           placeholder="0.000"
+                           [title]="'Monto fijo a descontar. Al usarlo limpia Dto.%'"
+                           (ngModelChange)="onReduccionChange(item)"
+                           (blur)="item.reduccion = (+item.reduccion || 0).toFixed(3); calcularTotalesOC()">
+                  </td>
+                  <td>
                     <div class="input-group input-group-sm">
                       <input type="text" class="form-control form-control-sm text-end"
                              [(ngModel)]="item.descuento" min="0" max="100" step="0.001"
-                             (ngModelChange)="calcularTotalesOC()"
-                             (blur)="item.descuento = (+item.descuento).toFixed(3); calcularTotalesOC()">
+                             placeholder="0.000"
+                             [title]="'Porcentaje de descuento. Al usarlo limpia Reducción'"
+                             (ngModelChange)="onDescuentoChange(item)"
+                             (blur)="item.descuento = (+item.descuento || 0).toFixed(3); calcularTotalesOC()">
                       <span class="input-group-text">%</span>
                     </div>
                   </td>
@@ -684,20 +742,27 @@
             </tbody>
             <tfoot class="table-light">
               <tr>
-                <td colspan="6" class="text-end fw-bold">Subtotal:</td>
+                <td colspan="7" class="text-end fw-bold">Subtotal:</td>
                 <td class="text-end fw-bold">{{ simboloMoneda(ocForm.moneda) }} {{ ocForm.subtotal | number:'1.3-3' }}</td>
                 <td></td>
               </tr>
               <tr>
-                <td colspan="6" class="text-end fw-bold">IGV (18%):</td>
+                <td colspan="7" class="text-end fw-bold">IGV (18%):</td>
                 <td class="text-end fw-bold">{{ simboloMoneda(ocForm.moneda) }} {{ ocForm.igv | number:'1.3-3' }}</td>
                 <td></td>
               </tr>
               <tr class="table-primary">
-                <td colspan="6" class="text-end fw-bold fs-6">TOTAL {{ ocForm.moneda }}:</td>
+                <td colspan="7" class="text-end fw-bold fs-6">TOTAL {{ ocForm.moneda }}:</td>
                 <td class="text-end fw-bold fs-6">{{ simboloMoneda(ocForm.moneda) }} {{ ocForm.totalOrden | number:'1.3-3' }}</td>
                 <td></td>
               </tr>
+              @if (ocForm.totalDescuento > 0) {
+                <tr class="table-warning">
+                  <td colspan="7" class="text-end fw-bold">Descuento aplicado:</td>
+                  <td class="text-end fw-bold text-danger">- {{ simboloMoneda(ocForm.moneda) }} {{ ocForm.totalDescuento | number:'1.3-3' }}</td>
+                  <td></td>
+                </tr>
+              }
             </tfoot>
           </table>
         </div>

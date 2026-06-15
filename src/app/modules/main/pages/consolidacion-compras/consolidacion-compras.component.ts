@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { lastValueFrom } from 'rxjs';
 import { TableModule } from 'primeng/table';
+import { CheckboxModule } from 'primeng/checkbox';
 import { HttpClient } from '@angular/common/http';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
@@ -21,7 +22,7 @@ import FileSaver from 'file-saver';
 @Component({
   selector: 'app-consolidacion-compras',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, TableModule, DropdownComponent, ItemSearchComponent],
+  imports: [CommonModule, FormsModule, TableModule, CheckboxModule, DropdownComponent, ItemSearchComponent],
   templateUrl: './consolidacion-compras.component.html',
   styleUrls: ['./consolidacion-compras.component.scss'],
 })
@@ -68,6 +69,18 @@ export class ConsolidacionComprasComponent implements OnInit {
   // Filtros
   busqueda = '';
   filtroEstadoOC = '';
+  filtroNumeroOC = signal('');
+  filtroProveedorOC = signal('');
+
+  ordenesCompraFiltradas = computed(() => {
+    const filtroNum = this.filtroNumeroOC().trim().toLowerCase();
+    const filtroProv = this.filtroProveedorOC().trim().toLowerCase();
+    return this.ordenesCompra().filter(oc => {
+      const matchNum = !filtroNum || (oc.numeroOrdenSpring ?? '').toLowerCase().includes(filtroNum);
+      const matchProv = !filtroProv || (oc.nombreProveedor ?? '').toLowerCase().includes(filtroProv);
+      return matchNum && matchProv;
+    });
+  });
 
   // Resumen general
   totalItems = computed(() => this.requerimientos().length);
@@ -141,7 +154,7 @@ export class ConsolidacionComprasComponent implements OnInit {
     condicionesPago: 'Contado', formaPago: 'Transferencia',
     rucEmpresaOC: '', almacen: '', lugarEntrega: '', observaciones: '',
     clasificacion: 'LOC', incoterm: '',
-    items: [], subtotal: 0, igv: 0, totalOrden: 0
+    items: [], subtotal: 0, igv: 0, totalOrden: 0, totalDescuento: 0
   };
 
   // Formulario OC Directa
@@ -504,7 +517,8 @@ export class ConsolidacionComprasComponent implements OnInit {
       ceco: g.items[0]?.ceco || '',
       proyecto: g.items[0]?.proyecto || '',
       idDetalle: g.items[0]?.idDetalle,
-      idConsolidacion: g.items[0]?.IdConsolidacion
+      idConsolidacion: g.items[0]?.IdConsolidacion,
+      tipoLinea: g.items[0]?.tipoItem || 'ITEM'
     }));
 
     // Obtener almacén del primer requerimiento seleccionado
@@ -659,13 +673,38 @@ export class ConsolidacionComprasComponent implements OnInit {
   subtotalItem(item: any): number {
     const precio = parseFloat(item.precioUnitario) || 0;
     const bruto = item.cantidad * precio;
+    const reduccion = parseFloat(item.reduccion) || 0;
     const descPct = parseFloat(item.descuento) || 0;
-    const neto = bruto - (bruto * descPct / 100);
-    return Math.round(neto * 1000) / 1000;
+    // Reducción (monto fijo) tiene prioridad si está presente; sino usa Dto.%
+    const neto = reduccion > 0
+      ? bruto - reduccion
+      : bruto - (bruto * descPct / 100);
+    return Math.round(Math.max(neto, 0) * 1000) / 1000;
+  }
+
+  onReduccionChange(item: any) {
+    const val = parseFloat(item.reduccion) || 0;
+    if (val > 0) { item.descuento = 0; }
+    this.calcularTotalesOC();
+  }
+
+  onDescuentoChange(item: any) {
+    const val = parseFloat(item.descuento) || 0;
+    if (val > 0) { item.reduccion = 0; }
+    this.calcularTotalesOC();
   }
 
   calcularTotalesOC() {
+    let descuento = 0;
+    for (const i of this.ocForm.items) {
+      const precio = parseFloat(i.precioUnitario) || 0;
+      const bruto = i.cantidad * precio;
+      const reduccion = parseFloat(i.reduccion) || 0;
+      const descPct = parseFloat(i.descuento) || 0;
+      descuento += reduccion > 0 ? reduccion : (bruto * descPct / 100);
+    }
     const subtotal = this.ocForm.items.reduce((s: number, i: any) => s + this.subtotalItem(i), 0);
+    this.ocForm.totalDescuento = Math.round(descuento * 1000) / 1000;
     this.ocForm.subtotal = Math.round(subtotal * 1000) / 1000;
     this.ocForm.igv = Math.round(subtotal * 0.18 * 1000) / 1000;
     this.ocForm.totalOrden = Math.round((subtotal + this.ocForm.igv) * 1000) / 1000;
@@ -791,6 +830,8 @@ export class ConsolidacionComprasComponent implements OnInit {
   }
 
   sincronizandoMasivo = signal(false);
+  ocSeleccionadasReversion = signal<Set<number>>(new Set());
+  revirtiendo = signal(false);
 
   async sincronizarOCsMasivo() {
     const pendientes = this.ordenesCompra().filter(o => o.estado === 'PENDIENTE' && !o.numeroOrdenSpring);
@@ -1733,6 +1774,57 @@ export class ConsolidacionComprasComponent implements OnInit {
       this.alertService.showAlert('Error', e?.message || 'Error inesperado.', 'error');
     } finally {
       this.guardandoOCDirecta.set(false);
+    }
+  }
+
+  toggleReversion(idOrden: number, checked: boolean) {
+    this.ocSeleccionadasReversion.update(set => {
+      const next = new Set(set);
+      if (checked) next.add(idOrden); else next.delete(idOrden);
+      return next;
+    });
+  }
+
+  async revertirOCsSeleccionadas() {
+    const ids = Array.from(this.ocSeleccionadasReversion());
+    if (ids.length === 0) {
+      this.alertService.showAlert('Sin selección', 'Selecciona al menos una OC APROBADA para revertir.', 'info');
+      return;
+    }
+    const ok = await this.alertService.showConfirm(
+      'Revertir a PENDIENTE',
+      `Se revertirán ${ids.length} OC(s) al estado PENDIENTE (borrador). ¿Confirmar?`,
+      'warning'
+    );
+    if (!ok) return;
+
+    this.revirtiendo.set(true);
+    let exitosas = 0;
+    let fallidas = 0;
+    try {
+      for (const idOrden of ids) {
+        try {
+          const resp: any = await lastValueFrom(
+            this.http.post(`${this.baseUrl}/api/logistica/revertir-oc-a-pendiente`, { idOrden })
+          );
+          if (resp?.success === 1 || resp?.success === true) {
+            exitosas++;
+          } else {
+            fallidas++;
+          }
+        } catch {
+          fallidas++;
+        }
+      }
+      this.ocSeleccionadasReversion.set(new Set());
+      await this.cargarOrdenesCompra();
+      if (fallidas === 0) {
+        this.alertService.showAlert('Éxito', `${exitosas} OC(s) revertidas a PENDIENTE correctamente.`, 'success');
+      } else {
+        this.alertService.showAlert('Parcial', `${exitosas} exitosas, ${fallidas} fallidas.`, 'warning');
+      }
+    } finally {
+      this.revirtiendo.set(false);
     }
   }
 }

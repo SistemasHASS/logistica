@@ -63,8 +63,9 @@
             <label>Almacén</label>
             <select class="form-control" [(ngModel)]="filtroStock.almacen" (change)="filtrarStock()" name="filtroStockAlmacen">
               <option value="">Todos</option>
-              <option value="ALM-PRINCIPAL">ALM-PRINCIPAL</option>
-              <option value="ALM-SUCURSAL">ALM-SUCURSAL</option>
+              @for (alm of almacenesDisponibles; track alm) {
+                <option [value]="alm">{{ alm }}</option>
+              }
             </select>
           </div>
           <div class="col-md-4">
@@ -108,7 +109,8 @@
             <tr>
               <td>{{ item.codigoItem }}</td>
               <td>{{ item.descripcionItem }}</td>
-              <td><span class="badge bg-info">{{ item.almacen }}</span></td>
+              <!-- <td><span class="badge bg-info">{{ item.almacen }}</span></td> -->
+              <td><span>{{ item.almacen }}</span></td>
               <td class="text-end"><strong>{{ formatearNumero(item.stockActual) }}</strong></td>
               <td class="text-end">{{ formatearNumero(item.stockMinimo) }}</td>
               <td class="text-end">{{ formatearNumero(item.stockMaximo) }}</td>
@@ -328,14 +330,14 @@
           <ng-template pTemplate="body" let-trans>
             <tr>
               <td>
-                <span [class]="trans.fuenteDato === 'SPRING' ? 'badge bg-success' : 'badge bg-secondary'">
+                <span [class]="trans.fuenteDato === 'SPRING' ? 'badge bg-success text-white' : 'badge bg-secondary text-white'">
                   {{ trans.fuenteDato }}
                 </span>
               </td>
               <td><strong>{{ trans.numeroTransaccion || '-' }}</strong></td>
               <td>
                 @if (trans.numeroNI_NS_SPRING) {
-                  <span class="badge bg-primary" pTooltip="Confirmado en SPRING">
+                  <span class="badge bg-primary text-white" pTooltip="Confirmado en SPRING">
                     {{ trans.tipoDocumentoSpring }} {{ trans.numeroNI_NS_SPRING }}
                   </span>
                   @if (trans.estadoIntegracionSpring === 'CONFIRMADO_SPRING') {

@@ -72,4 +72,22 @@ export class DespachosService {
     const url = `${this.baseUrl}/api/logistica/validar-stock-items`;
     return this.http.post<any>(url, { idalmacen, items });
   }
+
+  /**
+   * Obtiene los contadores para el dashboard (Despachos Hoy, Pendientes, Completados, Devoluciones)
+   * @param filtros Objeto opcional con { ruc } para filtro multiempresa ALLOGIST
+   * @returns Observable con contadores del dashboard
+   */
+  getDashboardContadores(filtros: any = {}): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/dashboard-contadores`, filtros);
+  }
+
+  /**
+   * Obtiene datos para el gráfico de despachos por mes
+   * @param filtros Objeto opcional con { ruc, meses } para filtro multiempresa ALLOGIST
+   * @returns Observable con array de datos mensuales
+   */
+  getDespachosPorMes(filtros: any = {}): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/dashboard-despachos-por-mes`, filtros);
+  }
 }

@@ -55,9 +55,20 @@
             </td>
             <td>
               <div [class]="{'fw-bold': !notificacion.leida}">
-                <strong>{{ notificacion.iditem }}</strong> - {{ notificacion.itemDescripcion }}
-                <br>
-                <small class="texto-descriptivo">{{ notificacion.mensaje }}</small>
+                <!-- Solicitud de nuevo item: mostrar nombre destacado -->
+                <ng-container *ngIf="esSolicitudItem(notificacion); else msgDefault">
+                  <span class="badge bg-warning text-dark me-1">
+                    <i class="bx bx-package me-1"></i>Nuevo ítem
+                  </span>
+                  <strong>{{ notificacion.itemDescripcion }}</strong>
+                  <br>
+                  <small class="texto-descriptivo">{{ notificacion.mensaje }}</small>
+                </ng-container>
+                <ng-template #msgDefault>
+                  <strong>{{ notificacion.iditem }}</strong> - {{ notificacion.itemDescripcion }}
+                  <br>
+                  <small class="texto-descriptivo">{{ notificacion.mensaje }}</small>
+                </ng-template>
               </div>
             </td>
             <td>
@@ -68,12 +79,22 @@
               </small>
             </td>
             <td>
-              <button pButton type="button" class="p-button-outlined p-button-sm"
-                      [disabled]="notificacion.leida"
-                      label="Marcar leída"
-                      icon="pi pi-check"
-                      (click)="marcarComoLeida(notificacion)">
-              </button>
+              <div class="d-flex flex-column gap-1">
+                <button pButton type="button" class="p-button-outlined p-button-sm"
+                        [disabled]="notificacion.leida"
+                        label="Marcar leída"
+                        icon="pi pi-check"
+                        (click)="marcarComoLeida(notificacion)">
+                </button>
+                <!-- Botón especial para SOLICITUD_ITEM_NUEVO -->
+                <button *ngIf="esSolicitudItem(notificacion)"
+                        pButton type="button"
+                        class="p-button-warning p-button-sm"
+                        label="Ir a Maestro de Ítems"
+                        icon="pi pi-arrow-right"
+                        (click)="irAMaestroItems(notificacion)">
+                </button>
+              </div>
             </td>
           </tr>
         </ng-template>

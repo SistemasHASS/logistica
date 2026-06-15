@@ -16,6 +16,23 @@ import { RippleModule } from 'primeng/ripple';
 import { TooltipModule } from 'primeng/tooltip';
 import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
 
+/** Item de menú para accesos directos */
+interface MenuShortcutItem {
+  id: string;
+  nombre: string;
+  icono: string;
+  ruta: string;
+  color: string;
+}
+
+/** Grupo de accesos directos */
+interface MenuShortcutGroup {
+  id: string;
+  label: string;
+  icono: string;
+  items: MenuShortcutItem[];
+}
+
 @Component({
   selector: 'app-dashboard-logistica',
   standalone: true,
@@ -152,6 +169,65 @@ export class DashboardLogisticaComponent implements OnInit {
   reporteTiemposData: any = null;
   reporteGastosData: any[] = [];
   reporteConsolidadoData: any = null;
+
+  // ==================== ACCESOS DIRECTOS (JLOLOGIST / LOLOGIST) ====================
+  /** Grupos de accesos directos basados en el menú layout - Ordenados por flujo operativo */
+  readonly menuShortcuts: MenuShortcutGroup[] = [
+    // {
+    //   id: 'panel',
+    //   label: 'Mi Panel',
+    //   icono: 'bx bxs-dashboard',
+    //   items: [
+    //     { id: 'dashboard-jlologist', nombre: 'Dashboard Jef. Logística', icono: 'bx bx-line-chart', ruta: '/main/dashboard-jlologist', color: 'info' },
+    //     { id: 'dashboard-logistica', nombre: 'Dashboard Logística', icono: 'bx bx-bar-chart-alt-2', ruta: '/main/dashboard-logistica', color: 'primary' },
+    //     { id: 'dashboard-oplogist', nombre: 'Mi Dashboard', icono: 'bx bx-user-check', ruta: '/main/dashboard-oplogist', color: 'success' },
+    //   ]
+    // },
+    {
+      id: 'requerimientos',
+      label: 'Requerimientos',
+      icono: 'icon icon-stack',
+      items: [
+        { id: 'requerimientos', nombre: 'Requerimientos', icono: 'icon icon-stack', ruta: '/main/requerimientos', color: 'success' },
+      ]
+    },
+    {
+      id: 'compras',
+      label: 'Compras & Órdenes',
+      icono: 'bx bx-cart',
+      items: [
+        { id: 'consolidacion-compras', nombre: 'Consolidación Compras', icono: 'bx bx-cart', ruta: '/main/consolidacion-compras', color: 'success' },
+        { id: 'ordenes-compra', nombre: 'Órdenes de Compra', icono: 'icon icon-file-text', ruta: '/main/ordenes-compra', color: 'primary' },
+        { id: 'ordenes-servicio', nombre: 'Órdenes de Servicio', icono: 'bx bx-wrench', ruta: '/main/ordenes-servicio', color: 'secondary' },
+      ]
+    },
+    {
+      id: 'almacen',
+      label: 'Almacén & Stock',
+      icono: 'bx bx-package',
+      items: [
+        { id: 'despachos', nombre: 'Gestión de Despachos', icono: 'icon icon-stack', ruta: '/main/despachos', color: 'info' },
+        { id: 'recepcion-mercaderia', nombre: 'Recepción de Mercadería', icono: 'icon icon-package', ruta: '/main/recepcion-mercaderia', color: 'success' },
+        { id: 'kardex', nombre: 'Kardex e Inventario', icono: 'bx bx-container', ruta: '/main/kardex', color: 'primary' },
+      ]
+    },
+    // {
+    //   id: 'reportes',
+    //   label: 'Reportes',
+    //   icono: 'icon icon-file-text',
+    //   items: [
+    //     { id: 'reporte-requerimientos', nombre: 'Reporte Requerimientos', icono: 'icon icon-file-check', ruta: '/main/reporte-requerimientos', color: 'success' },
+    //     { id: 'reportes-compras', nombre: 'Reportes Avanzados', icono: 'icon icon-pie-chart', ruta: '/main/reportes-compras', color: 'info' },
+    //     { id: 'reporte-despachos', nombre: 'Reporte de Despachos', icono: 'icon icon-file-text', ruta: '/main/reporte-despachos', color: 'primary' },
+    //   ]
+    // },
+  ];
+
+  /** Verifica si el usuario es JLOLOGIST o LOLOGIST */
+  esJefeLogistica(): boolean {
+    const rol = this.usuario?.idrol || '';
+    return rol.includes('JLOLOGIST') || rol.includes('LOLOGIST');
+  }
 
   constructor(
     private dexieService: DexieService,
@@ -755,6 +831,14 @@ export class DashboardLogisticaComponent implements OnInit {
 
   irKardex() {
     this.router.navigate(['main', 'kardex']);
+  }
+
+  /**
+   * Navega a una ruta desde los accesos directos del menú.
+   * @param ruta Ruta de destino (ej: '/main/requerimientos')
+   */
+  navegarDesdeAccesoDirecto(ruta: string) {
+    this.router.navigate([ruta]);
   }
 
   // Modal de gastos mensuales

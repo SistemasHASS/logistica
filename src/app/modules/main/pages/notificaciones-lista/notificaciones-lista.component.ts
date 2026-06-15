@@ -4,7 +4,7 @@ import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { NotificacionApiService, NotificacionDB } from '@/app/shared/services/notificacion-api.service';
 import { NotificationService } from '@/app/shared/services/notification.service';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 
 @Component({
@@ -23,7 +23,8 @@ export class NotificacionesListaComponent implements OnInit {
   constructor(
     private notificacionApi: NotificacionApiService,
     private notificationService: NotificationService,
-    private dexieService: DexieService
+    private dexieService: DexieService,
+    private router: Router
   ) {}
 
   async ngOnInit() {
@@ -79,34 +80,39 @@ export class NotificacionesListaComponent implements OnInit {
 
   getTipoNotificacionIcon(tipo: string): string {
     switch (tipo) {
-      case 'STOCK_DISPONIBLE':
-        return 'bx bx-check-circle icono-exito';
-      case 'SALDO_PENDIENTE':
-        return 'bx bx-error icono-advertencia';
-      default:
-        return 'bx bx-info-circle icono-informativo';
+      case 'STOCK_DISPONIBLE':    return 'bx bx-check-circle icono-exito';
+      case 'SALDO_PENDIENTE':     return 'bx bx-error icono-advertencia';
+      case 'SOLICITUD_ITEM_NUEVO': return 'bx bx-plus-circle icono-informativo';
+      default:                    return 'bx bx-info-circle icono-informativo';
     }
   }
 
   getClaseTipoNotificacion(tipo: string): string {
     switch (tipo) {
-      case 'STOCK_DISPONIBLE':
-        return 'estado-confirmado';
-      case 'SALDO_PENDIENTE':
-        return 'estado-pendiente';
-      default:
-        return 'estado-informativo';
+      case 'STOCK_DISPONIBLE':    return 'estado-confirmado';
+      case 'SALDO_PENDIENTE':     return 'estado-pendiente';
+      case 'SOLICITUD_ITEM_NUEVO': return 'estado-solicitud';
+      default:                    return 'estado-informativo';
     }
   }
 
   getTipoNotificacionLabel(tipo: string): string {
     switch (tipo) {
-      case 'STOCK_DISPONIBLE':
-        return 'Stock Disponible';
-      case 'SALDO_PENDIENTE':
-        return 'Saldo Pendiente';
-      default:
-        return tipo;
+      case 'STOCK_DISPONIBLE':    return 'Stock Disponible';
+      case 'SALDO_PENDIENTE':     return 'Saldo Pendiente';
+      case 'SOLICITUD_ITEM_NUEVO': return 'Solicitud Nuevo Ítem';
+      default:                    return tipo;
     }
+  }
+
+  esSolicitudItem(notificacion: NotificacionDB): boolean {
+    return notificacion.tipo_notificacion === 'SOLICITUD_ITEM_NUEVO';
+  }
+
+  irAMaestroItems(notificacion: NotificacionDB): void {
+    const nombre = notificacion.itemDescripcion ?? '';
+    this.router.navigate(['/main/maestros/items'], {
+      queryParams: { precargar: nombre }
+    });
   }
 }

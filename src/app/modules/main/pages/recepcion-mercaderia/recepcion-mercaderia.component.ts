@@ -137,7 +137,11 @@ export class RecepcionMercaderiaComponent implements OnInit {
    */
   async cargarRecepcionesDesdeBackend() {
     try {
-      const respuesta = await this.recepcionOCService.listarRecepciones({}).toPromise();
+      // Filtro multiempresa: ALLOGIST solo ve su empresa
+      const filtros = this.usuario?.idrol?.includes('ALLOGIST') && this.usuario?.ruc
+        ? { ruc: this.usuario.ruc }
+        : {};
+      const respuesta = await this.recepcionOCService.listarRecepciones(filtros).toPromise();
 
       // El SP retorna FOR JSON PATH → el backend devuelve array directamente o envuelto
       let lista: any[] = [];

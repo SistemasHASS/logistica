@@ -224,6 +224,10 @@ export class RequerimientosComponent implements OnInit {
   requerimientosOmitirValidacion: Set<string> = new Set();
 
   cambiarTab(tab: 'ITEM' | 'COMMODITY' | 'ACTIVOFIJO' | 'ACTIVOFIJOMENOR') {
+    // ALLOGIST solo puede ver el tab ITEM (COMPRA)
+    if (this.esAlmacen && tab !== 'ITEM') {
+      return;
+    }
     this.tabActiva = tab;
     this.mostrarFormulario = false;
     this.mostrarFormularioCommodity = false;
@@ -315,6 +319,10 @@ export class RequerimientosComponent implements OnInit {
     idrol: '',
     rol: '',
   };
+
+  get esAlmacen(): boolean {
+    return this.usuario?.idrol?.includes('ALLOGIST') ?? false;
+  }
   detalle: DetalleRequerimiento = {
     idrequerimiento: '', // ?? SE ASIGNA AL GUARDAR CABECERA
     codigo: '',
@@ -596,6 +604,14 @@ export class RequerimientosComponent implements OnInit {
   async ngOnInit() {
     await this.maestrasSvc.cargarUsuario();
     this.usuario = this.maestrasSvc.usuario;
+
+    // ALLOGIST solo puede crear requerimientos de COMPRA
+    if (this.esAlmacen) {
+      this.TipoSelecionado = 'COMPRA';
+      this.requerimiento.itemtipo = 'COMPRA';
+      this.tabActiva = 'ITEM';
+    }
+
     await this.sincronizaMaestroCommodity(); // Sincronizar maestro commodity desde API
     await this.sincronizaMaestroSubCommodity(); // Sincronizar maestro subcommodity desde API
     await this.maestrasSvc.cargarMaestras();
@@ -1180,9 +1196,9 @@ export class RequerimientosComponent implements OnInit {
   obtenerUnidadMedidaProducto(producto: any): string {
     if (typeof producto === 'string') {
       const item = this.items?.find((i: any) => i.codigo === producto);
-      return item?.unidadMedida || 'UN';
+      return item?.um || item?.unidadMedida || 'UN';
     }
-    return producto?.unidadMedida || 'UN';
+    return producto?.um || producto?.unidadMedida || 'UN';
   }
 
   actualizarUnidadMedidaDesdeProducto() {
@@ -1222,6 +1238,11 @@ export class RequerimientosComponent implements OnInit {
 
   async nuevoRequerimiento(): Promise<void> {
     await this.itemSvc.nuevo();
+    // ALLOGIST solo puede crear requerimientos de COMPRA
+    if (this.esAlmacen) {
+      this.itemSvc.TipoSelecionado = 'COMPRA';
+      this.itemSvc.requerimiento.itemtipo = 'COMPRA';
+    }
     this.requerimiento = this.itemSvc.requerimiento;
     this.detalles = this.itemSvc.detalles;
     this.glosa = this.itemSvc.glosa;
@@ -2000,7 +2021,13 @@ export class RequerimientosComponent implements OnInit {
     this.SeleccionaTipoGasto = this.itemSvc.SeleccionaTipoGasto;
   }
 
-  editarRequerimiento(index: number) {
+  async editarRequerimiento(index: number) {
+    const req = this.itemSvc.requerimientos[index];
+    // ALLOGIST solo puede editar requerimientos de COMPRA
+    if (this.esAlmacen && req?.itemtipo !== 'COMPRA') {
+      await this.alertService.showAlert('Acceso denegado', 'Solo puede editar requerimientos de tipo COMPRA.', 'warning');
+      return;
+    }
     this.itemSvc.editar(index);
     this.requerimiento = this.itemSvc.requerimiento;
     this.detalles = this.itemSvc.detalles;
@@ -2035,8 +2062,13 @@ export class RequerimientosComponent implements OnInit {
     this.ordenarRequerimientos();
   }
 
-  copiarRequerimiento(index: number) {
+  async copiarRequerimiento(index: number) {
     const reqOriginal: any = this.requerimientos[index];
+    // ALLOGIST solo puede copiar requerimientos de COMPRA
+    if (this.esAlmacen && reqOriginal?.itemtipo !== 'COMPRA') {
+      await this.alertService.showAlert('Acceso denegado', 'Solo puede copiar requerimientos de tipo COMPRA.', 'warning');
+      return;
+    }
     const nuevoId = `REQ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     this.itemSvc.requerimiento = { ...reqOriginal, id: undefined, idrequerimiento: nuevoId, fecha: new Date(), estados: 'PENDIENTE', estado: 0, checked: false, eliminado: 0, despachado: false };
     const detallesOriginales = reqOriginal.detalle ?? reqOriginal.detalles ?? [];

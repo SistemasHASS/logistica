@@ -17,6 +17,11 @@ import { AdminPlantillaPdfComponent } from './pages/admin-plantilla-pdf/admin-pl
 import { ConfiguracionColoresComponent } from './pages/configuracion-colores/configuracion-colores.component';
 import { AdminPermisosRolesComponent } from './pages/admin-permisos-roles/admin-permisos-roles.component';
 import { AdminMenusLayoutComponent } from './pages/admin-menus-layout/admin-menus-layout.component';
+import { AdminMenusDinamicosComponent } from './pages/admin-menus-dinamicos/admin-menus-dinamicos.component';
+import { AdminEmpresasComponent } from './pages/admin-empresas/admin-empresas.component';
+import { AdminPermisosMenuDinamicoComponent } from './pages/admin-permisos-menu-dinamico/admin-permisos-menu-dinamico.component';
+import { AdminPlantillasMenuComponent } from './pages/admin-plantillas-menu/admin-plantillas-menu.component';
+import { AdminPlantillaAlmacenComponent } from './pages/admin-plantilla-almacen/admin-plantilla-almacen.component';
 
 const routes: Routes = [
   {
@@ -39,6 +44,11 @@ const routes: Routes = [
       { path: 'configuracion-colores', component: ConfiguracionColoresComponent },
       { path: 'admin-permisos-roles', component: AdminPermisosRolesComponent },
       { path: 'admin-menus-layout', component: AdminMenusLayoutComponent },
+      { path: 'admin-menus-dinamicos', component: AdminMenusDinamicosComponent },
+      { path: 'admin-empresas', component: AdminEmpresasComponent },
+      { path: 'admin-permisos-menu-dinamico', component: AdminPermisosMenuDinamicoComponent },
+      { path: 'admin-plantillas-menu', component: AdminPlantillasMenuComponent },
+      { path: 'admin-plantilla-almacen', component: AdminPlantillaAlmacenComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }
