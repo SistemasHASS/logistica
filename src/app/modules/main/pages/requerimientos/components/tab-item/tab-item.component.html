@@ -296,7 +296,7 @@
                   <button class="nav-link" [class.active]="subTabActivo === 'detalles'"
                     type="button" (click)="subTabActivo = 'detalles'">
                     <i class="bi bi-list-ul me-1"></i> Líneas de detalle
-                    <span class="badge bg-primary ms-1">{{ detalles.length }}</span>
+                    <span class="badge bg-primary ms-1 text-white">{{ detalles.length }}</span>
                   </button>
                 </li>
                 <li class="nav-item">
@@ -345,7 +345,7 @@
                         <td>{{ item.labor }}</td>
                         <td>{{ item.activoFijo ? item.activoFijo : "N/A" }}</td>
                         <td>
-                          <button class="btn btn-sm btn-info me-1" (click)="copiarLinea(i)" title="Copiar línea">
+                          <button class="btn btn-sm btn-info me-1 text-white" (click)="copiarLinea(i)" title="Copiar línea">
                             <i class="icon-copy"></i>
                           </button>
                           <button class="btn btn-sm btn-danger" (click)="eliminarLinea(i)" title="eliminar línea">

@@ -192,11 +192,11 @@
               <!-- Botón Insertar/Actualizar - Solo en modo agregación -->
               <div class="mt-4 text-center" *ngIf="editIndex === -1">
                 <button
-                  class="btn btn-lg"
+                  class="btn btn-lg text-white"
                   [class]="editingTempIndex >= 0 ? 'btn-warning' : 'btn-info'"
                   (click)="insertarLineaEnTabla()"
                 >
-                  <i class="bx me-2" [class]="editingTempIndex >= 0 ? 'bx-save' : 'bx-plus'"></i>
+                  <i class="bx me-2 text-white" [class]="editingTempIndex >= 0 ? 'bx-save' : 'bx-plus'"></i>
                   {{ editingTempIndex >= 0 ? "Actualizar Línea" : "Insertar Línea" }}
                 </button>
                 <button

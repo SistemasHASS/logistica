@@ -140,6 +140,8 @@ export class ConsolidacionComprasComponent implements OnInit {
 
   // Clasificacion e Incoterms
   incoterms = signal<any[]>([]);
+  formasPago = signal<any[]>([]);
+  tiposPago = signal<any[]>([]);
   clasificacionOpciones = [
     { value: 'IMP', label: 'IMP - Importación' },
     { value: 'LOC', label: 'LOC - Compras Locales' },
@@ -151,7 +153,7 @@ export class ConsolidacionComprasComponent implements OnInit {
     rucProveedor: '', nombreProveedor: '', emailProveedor: '',
     telefonoProveedor: '', direccionProveedor: '',
     moneda: 'PEN', tipoCambio: 1, diasEntrega: 1, fechaEntregaEstimada: '',
-    condicionesPago: 'Contado', formaPago: 'Transferencia',
+    condicionesPago: '', formaPago: '',
     rucEmpresaOC: '', almacen: '', lugarEntrega: '', observaciones: '',
     clasificacion: 'LOC', incoterm: '',
     items: [], subtotal: 0, igv: 0, totalOrden: 0, totalDescuento: 0
@@ -162,7 +164,7 @@ export class ConsolidacionComprasComponent implements OnInit {
     rucProveedor: '', nombreProveedor: '', emailProveedor: '',
     telefonoProveedor: '', direccionProveedor: '',
     moneda: 'PEN', tipoCambio: 1, fechaEntregaEstimada: '',
-    condicionesPago: 'Contado', formaPago: 'Transferencia',
+    condicionesPago: '', formaPago: '',
     almacen: '', lugarEntrega: '', observaciones: '',
     clasificacion: 'LOC', incoterm: '',
     items: [], subtotal: 0, igv: 0, totalOrden: 0
@@ -208,7 +210,41 @@ export class ConsolidacionComprasComponent implements OnInit {
     this.cargarCecosDirecta();
     this.cargarProyectosDirecta();
     this.cargarIncoterms();
+    this.cargarFormasPago();
+    this.cargarTiposPago();
     await this.cargarOrdenesCompra();
+  }
+
+  async cargarFormasPago() {
+    try {
+      const resp: any = await lastValueFrom(
+        this.maestrasService.getFormasPago({ ruc: this.usuario?.ruc })
+      );
+      const lista = Array.isArray(resp) ? resp : [];
+      this.formasPago.set(lista);
+      if (lista.length > 0 && !this.ocForm.condicionesPago) {
+        this.ocForm.condicionesPago = lista[0].idformapago;
+        this.ocDirectaForm.condicionesPago = lista[0].idformapago;
+      }
+    } catch {
+      this.formasPago.set([]);
+    }
+  }
+
+  async cargarTiposPago() {
+    try {
+      const resp: any = await lastValueFrom(
+        this.maestrasService.getTiposPago({ ruc: this.usuario?.ruc })
+      );
+      const lista = Array.isArray(resp) ? resp : [];
+      this.tiposPago.set(lista);
+      if (lista.length > 0) {
+        if (!this.ocForm.formaPago) this.ocForm.formaPago = lista[0].TipoPago;
+        if (!this.ocDirectaForm.formaPago) this.ocDirectaForm.formaPago = lista[0].TipoPago;
+      }
+    } catch {
+      this.tiposPago.set([]);
+    }
   }
 
   async cargarIncoterms() {
@@ -969,7 +1005,7 @@ export class ConsolidacionComprasComponent implements OnInit {
         const respAdj: any = await lastValueFrom(
           this.http.post(`${this.baseUrl}/api/logistica/listar-adjuntos-oc`, { idOrden: oc.idOrden, tipoOrden: 'OC' })
         );
-        const adjuntos = Array.isArray(respAdj) ? respAdj : [];
+        const adjuntos = this.parseAdjuntosResponse(respAdj);
         const tienePdf = adjuntos.some((a: any) => {
           const tipo = (a.tipoArchivo || '').toLowerCase();
           const nombre = (a.nombreArchivo || '').toLowerCase();
@@ -1133,6 +1169,22 @@ export class ConsolidacionComprasComponent implements OnInit {
     this.cargarOrdenesCompra();
   }
 
+  // Helper para extraer array de adjuntos de la respuesta del backend
+  private parseAdjuntosResponse(resp: any): any[] {
+    if (!resp) return [];
+    // Si es array directo
+    if (Array.isArray(resp)) return resp;
+    // Si tiene propiedad resultado (formato del SP)
+    if (resp.resultado) {
+      const r = resp.resultado;
+      if (Array.isArray(r)) return r;
+      if (typeof r === 'string') {
+        try { return JSON.parse(r); } catch { return []; }
+      }
+    }
+    return [];
+  }
+
   async cargarAdjuntos(idOrden: number, tipo: string) {
     console.log('DEBUG cargarAdjuntos - idOrden:', idOrden, 'tipo:', typeof idOrden);
     try {
@@ -1142,7 +1194,7 @@ export class ConsolidacionComprasComponent implements OnInit {
         this.http.post(`${this.baseUrl}/api/logistica/listar-adjuntos-oc`, payload)
       );
       console.log('DEBUG cargarAdjuntos - resp:', resp);
-      this.adjuntos.set(Array.isArray(resp) ? resp : []);
+      this.adjuntos.set(this.parseAdjuntosResponse(resp));
     } catch {
       this.adjuntos.set([]);
     }
@@ -1489,6 +1541,10 @@ export class ConsolidacionComprasComponent implements OnInit {
     this.ocForm.emailProveedor = prov.email || '';
     this.ocForm.telefonoProveedor = prov.telefono || '';
     this.ocForm.direccionProveedor = prov.direccion || '';
+    if (prov.MonedaPago === 'EX') this.ocForm.moneda = 'USD';
+    else if (prov.MonedaPago === 'LO') this.ocForm.moneda = 'PEN';
+    if (prov.TipoPago) this.ocForm.condicionesPago = prov.TipoPago;
+    if (prov.TipoPago) this.ocForm.formaPago = prov.TipoPago;
     this.busquedaProveedor = '';
     this.mostrarSugerenciasProveedor.set(false);
     this.proveedoresSugeridos.set([]);
@@ -1517,7 +1573,8 @@ export class ConsolidacionComprasComponent implements OnInit {
       rucProveedor: '', nombreProveedor: '', emailProveedor: '',
       telefonoProveedor: '', direccionProveedor: '',
       moneda: 'PEN', tipoCambio: 1, fechaEntregaEstimada: '',
-      condicionesPago: 'Contado', formaPago: 'Transferencia',
+      condicionesPago: this.formasPago()[0]?.idformapago || '',
+      formaPago: this.tiposPago()[0]?.TipoPago || '',
       almacen: '', lugarEntrega: '', observaciones: '',
       clasificacion: 'LOC', incoterm: '',
       items: [], subtotal: 0, igv: 0, totalOrden: 0
@@ -1696,6 +1753,10 @@ export class ConsolidacionComprasComponent implements OnInit {
     this.ocDirectaForm.emailProveedor = prov.email || '';
     this.ocDirectaForm.telefonoProveedor = prov.telefono || '';
     this.ocDirectaForm.direccionProveedor = prov.direccion || '';
+    if (prov.MonedaPago === 'EX') this.ocDirectaForm.moneda = 'USD';
+    else if (prov.MonedaPago === 'LO') this.ocDirectaForm.moneda = 'PEN';
+    if (prov.TipoPago) this.ocDirectaForm.condicionesPago = prov.TipoPago;
+    if (prov.TipoPago) this.ocDirectaForm.formaPago = prov.TipoPago;
     this.busquedaProveedorDirecta = '';
     this.mostrarSugerenciasProveedorDirecta.set(false);
     this.proveedoresSugeridosDirecta.set([]);

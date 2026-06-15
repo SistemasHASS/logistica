@@ -118,7 +118,8 @@
           </ng-template>
           <ng-template pTemplate="body" let-oc>
             <tr>
-              <td><strong>{{ oc.numeroOrden }}</strong></td>
+              <!-- <td><strong>{{ oc.numeroOrden }}</strong></td> -->
+              <td><strong>{{ oc.numeroOrdenSpring }}</strong></td>
               <td>{{ formatearFecha(oc.fechaOrden) }}</td>
               <td>{{ oc.nombreProveedor }}</td>
               <td class="text-right">

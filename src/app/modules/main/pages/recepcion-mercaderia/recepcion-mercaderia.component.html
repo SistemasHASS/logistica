@@ -82,7 +82,7 @@
               <!-- <td><strong>{{ orden.numeroOrden }}</strong></td> -->
               <td>
                 @if (orden.numeroOrdenSpring) {
-                  <span class="badge bg-primary" title="Número en SPRING">{{ orden.numeroOrdenSpring }}</span>
+                  <span class="badge bg-primary text-white" title="Número en SPRING">{{ orden.numeroOrdenSpring }}</span>
                 } @else {
                   <span class="text-muted">-</span>
                 }
@@ -350,8 +350,8 @@
                 <th>Descripción</th>
                 <th>Ordenada</th>
                 <th>Recibida <span class="required">*</span></th>
-                <!-- <th>Aceptada <span class="required">*</span></th>
-                <th>Rechazada</th> -->
+                <th style="display: none;">Aceptada <span class="required">*</span></th>
+                <th style="display: none;">Rechazada</th>
                 <th>Lote</th>
                 <th>F. Venc.</th>
                 <th>Estado</th>
@@ -376,26 +376,16 @@
                     [max]="det.cantidadOrdenada"
                     step="0.01">
                 </td>
-                <!-- <td>
+                <td style="display: none;">
                   <input 
-                    type="text" 
-                    class="form-control input-sm" 
-                    [(ngModel)]="det.cantidadAceptada"
-                    (ngModelChange)="actualizarCantidades(det)"
-                    min="0"
-                    [max]="det.cantidadRecibida"
-                    step="0.01">
+                    type="hidden"
+                    [(ngModel)]="det.cantidadAceptada">
                 </td>
-                <td>
+                <td style="display: none;">
                   <input 
-                    type="text" 
-                    class="form-control input-sm" 
-                    [(ngModel)]="det.cantidadRechazada"
-                    (ngModelChange)="actualizarCantidades(det)"
-                    min="0"
-                    [max]="det.cantidadRecibida"
-                    step="0.01">
-                </td> -->
+                    type="hidden"
+                    [(ngModel)]="det.cantidadRechazada">
+                </td>
                 <td>
                   <input 
                     type="text" 
@@ -529,7 +519,7 @@
       </div>
 
       <!-- ALERTA: OC NO SINCRONIZADA CON SPRING -->
-      @if (ocDetalleNoSincronizada) {
+      <!-- @if (ocDetalleNoSincronizada) {
         <div class="alert alert-warning" style="margin: 16px 0; padding: 12px 16px; background: #fff3e0; border-left: 4px solid #f57c00; border-radius: 4px;">
           <div style="display: flex; align-items: center; justify-content: space-between;">
             <div>
@@ -543,7 +533,7 @@
             </button>
           </div>
         </div>
-      }
+      } -->
 
       <!-- DETALLE -->
       <h4>Items Recibidos</h4>

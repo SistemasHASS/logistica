@@ -606,7 +606,7 @@
         <div class="row g-2 mb-3">
           <div class="col-md-3">
             <label class="form-label small fw-bold">
-              Moneda * <span class="badge ms-1" [class]="ocForm.moneda === 'USD' ? 'bg-success' : 'bg-primary'">{{ simboloMoneda(ocForm.moneda) }} {{ ocForm.moneda }}</span>
+              Moneda * <span class="badge ms-1 text-white" [class]="ocForm.moneda === 'USD' ? 'bg-success' : 'bg-primary'">{{ simboloMoneda(ocForm.moneda) }} {{ ocForm.moneda }}</span>
             </label>
             <select class="form-select form-select-sm fw-bold" [(ngModel)]="ocForm.moneda">
               <option value="PEN">PEN - Soles</option>
@@ -631,18 +631,15 @@
           <div class="col-md-3">
             <label class="form-label small fw-bold">Condiciones de Pago</label>
             <select class="form-select form-select-sm" [(ngModel)]="ocForm.condicionesPago">
-              <option value="Contado">Contado</option>
-              <option value="30 días">30 días</option>
-              <option value="60 días">60 días</option>
-              <option value="90 días">90 días</option>
+              <option value="">-- Seleccione --</option>
+              <option *ngFor="let fp of formasPago()" [value]="fp.idformapago">{{ fp.formapago }}</option>
             </select>
           </div>
-          <div class="col-md-3" style="display:none">
+          <div class="col-md-3">
             <label class="form-label small fw-bold">Forma de Pago</label>
             <select class="form-select form-select-sm" [(ngModel)]="ocForm.formaPago">
-              <option value="Transferencia">Transferencia</option>
-              <option value="Efectivo">Efectivo</option>
-              <option value="Cheque">Cheque</option>
+              <option value="">-- Seleccione --</option>
+              <option *ngFor="let tp of tiposPago()" [value]="tp.TipoPago">{{ tp.Descripcion }}</option>
             </select>
           </div>
           <div class="col-md-3">
@@ -977,18 +974,15 @@
           <div class="col-md-3">
             <label class="form-label small fw-bold">Condiciones de Pago</label>
             <select class="form-select form-select-sm" [(ngModel)]="ocDirectaForm.condicionesPago">
-              <option value="Contado">Contado</option>
-              <option value="30 días">30 días</option>
-              <option value="60 días">60 días</option>
-              <option value="90 días">90 días</option>
+              <option value="">-- Seleccione --</option>
+              <option *ngFor="let fp of formasPago()" [value]="fp.idformapago">{{ fp.formapago }}</option>
             </select>
           </div>
           <div class="col-md-3">
             <label class="form-label small fw-bold">Forma de Pago</label>
             <select class="form-select form-select-sm" [(ngModel)]="ocDirectaForm.formaPago">
-              <option value="Transferencia">Transferencia</option>
-              <option value="Efectivo">Efectivo</option>
-              <option value="Cheque">Cheque</option>
+              <option value="">-- Seleccione --</option>
+              <option *ngFor="let tp of tiposPago()" [value]="tp.TipoPago">{{ tp.Descripcion }}</option>
             </select>
           </div>
           <div class="col-md-3">

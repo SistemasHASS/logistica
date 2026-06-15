@@ -398,36 +398,22 @@ export class RecepcionMercaderiaComponent implements OnInit {
   actualizarCantidades(detalle: DetalleRecepcion) {
     // Convertir a número si viene como string (inputs type="text")
     detalle.cantidadRecibida = Number(detalle.cantidadRecibida) || 0;
-    detalle.cantidadAceptada = Number(detalle.cantidadAceptada) || 0;
-    detalle.cantidadRechazada = Number(detalle.cantidadRechazada) || 0;
 
-    // Validar que cantidades sean coherentes
+    // ✅ SINCRONIZAR: cantidadAceptada = cantidadRecibida (columnas ocultas)
+    detalle.cantidadAceptada = detalle.cantidadRecibida;
+    detalle.cantidadRechazada = 0;
+
+    // Validar que cantidad recibida sea coherente
     if (detalle.cantidadRecibida < 0) detalle.cantidadRecibida = 0;
-    if (detalle.cantidadAceptada < 0) detalle.cantidadAceptada = 0;
-    if (detalle.cantidadRechazada < 0) detalle.cantidadRechazada = 0;
 
     // ✅ VALIDAR: cantidad recibida no puede ser mayor que la ordenada
     if (detalle.cantidadRecibida > detalle.cantidadOrdenada) {
       detalle.cantidadRecibida = detalle.cantidadOrdenada;
+      detalle.cantidadAceptada = detalle.cantidadRecibida;
     }
 
-    // Calcular cantidades automáticamente
-    const total = detalle.cantidadAceptada + detalle.cantidadRechazada;
-    if (total > detalle.cantidadRecibida) {
-      // Ajustar si la suma excede lo recibido
-      detalle.cantidadAceptada = detalle.cantidadRecibida - detalle.cantidadRechazada;
-      if (detalle.cantidadAceptada < 0) {
-        detalle.cantidadAceptada = 0;
-        detalle.cantidadRechazada = detalle.cantidadRecibida;
-      }
-    }
-
-    // Determinar estado
-    if (detalle.cantidadRechazada > 0) {
-      detalle.estadoItem = 'NO_CONFORME';
-    } else {
-      detalle.estadoItem = 'CONFORME';
-    }
+    // Determinar estado (siempre CONFORME porque rechazada = 0)
+    detalle.estadoItem = 'CONFORME';
 
     // Actualizar conformidad general
     this.actualizarConformidadGeneral();

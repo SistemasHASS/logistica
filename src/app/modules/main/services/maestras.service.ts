@@ -238,6 +238,24 @@ export class MaestrasService {
     }
   }
 
+  getTiposPago(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/get-tipos-pago`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error al obtener tipos de pago');
+    }
+  }
+
+  getFormasPago(body: any): Observable<any> {
+    const url = `${this.apiMaestra}/api/Maestros/importar-forma-pago`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error al obtener formas de pago');
+    }
+  }
+
   getMonedas(params: any): Observable<any> {
     const url = `${this.baseUrl}/tareo/monedas`;
     try {
