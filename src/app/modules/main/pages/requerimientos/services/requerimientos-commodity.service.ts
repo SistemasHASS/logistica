@@ -35,7 +35,33 @@ export class RequerimientosCommodityService {
 
   verBotones = false;
   dataSelectedCommodity: any[] = [];
-  itemTipoSeleccionado: 'CONSUMO' | 'COMPRA' = 'COMPRA';
+  itemTipoSeleccionado: 'CONSUMO' | 'COMPRA' | 'SERVICIO' = 'COMPRA';
+
+  // === FLUJO COMPRA/SERVICIO ===
+  tipoRequerimientoSeleccionado: 'COMPRA' | 'SERVICIO' | null = null;
+  mostrarConfiguracion = false;
+  configuracionGuardada = false;
+
+  // Configuración COMPRA
+  configCompra = {
+    fundo: '',
+    cultivo: '',
+    area: '',
+    ceco: '',
+    labor: '',
+    proyecto: '',
+    almacen: ''
+  };
+
+  // Configuración SERVICIO
+  configServicio = {
+    area: '',
+    servicio: '',
+    ceco: '',
+    turno: '',
+    labor: '',
+    proyecto: ''
+  };
 
   constructor(
     private dexieService: DexieService,
@@ -71,6 +97,14 @@ export class RequerimientosCommodityService {
     );
     this.ordenar();
     this.contarContadores();
+  }
+
+  inicializarEstado() {
+    // Verificar si hay configuración previa, si no, mostrar selección de tipo
+    if (!this.configuracionGuardada && !this.tipoRequerimientoSeleccionado) {
+      this.mostrarFormularioCommodity = false;
+      this.mostrarConfiguracion = false;
+    }
   }
 
   ordenar() {
@@ -451,5 +485,43 @@ export class RequerimientosCommodityService {
       },
       error: () => this.alertService.showAlert('Error', 'No se pudo conectar con el servidor', 'error'),
     });
+  }
+
+  // === MÉTODOS FLUJO COMPRA/SERVICIO ===
+
+  seleccionarTipo(tipo: 'COMPRA' | 'SERVICIO') {
+    this.tipoRequerimientoSeleccionado = tipo;
+    this.mostrarConfiguracion = true;
+  }
+
+  guardarConfiguracion(tipo: 'COMPRA' | 'SERVICIO') {
+    if (tipo === 'COMPRA') {
+      if (!this.configCompra.fundo) {
+        this.alertService.showAlert('Atención', 'Debe seleccionar Fundo como mínimo', 'warning');
+        return false;
+      }
+    } else {
+      if (!this.configServicio.area) {
+        this.alertService.showAlert('Atención', 'Debe seleccionar Área como mínimo', 'warning');
+        return false;
+      }
+    }
+    this.configuracionGuardada = true;
+    this.mostrarConfiguracion = false;
+    this.alertService.showAlert('Éxito', `Configuración para ${tipo} guardada correctamente`, 'success');
+    return true;
+  }
+
+  volverASeleccion() {
+    this.mostrarConfiguracion = false;
+    this.tipoRequerimientoSeleccionado = null;
+  }
+
+  reiniciarConfiguracion() {
+    this.tipoRequerimientoSeleccionado = null;
+    this.mostrarConfiguracion = false;
+    this.configuracionGuardada = false;
+    this.configCompra = { fundo: '', cultivo: '', area: '', ceco: '', labor: '', proyecto: '', almacen: '' };
+    this.configServicio = { area: '', servicio: '', ceco: '', turno: '', labor: '', proyecto: '' };
   }
 }

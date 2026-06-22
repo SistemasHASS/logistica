@@ -20,6 +20,7 @@ import { AdminMenusDinamicosComponent } from './pages/admin-menus-dinamicos/admi
 import { AdminPermisosMenuDinamicoComponent } from './pages/admin-permisos-menu-dinamico/admin-permisos-menu-dinamico.component';
 import { AdminPlantillasMenuComponent } from './pages/admin-plantillas-menu/admin-plantillas-menu.component';
 import { AdminPlantillaAlmacenComponent } from './pages/admin-plantilla-almacen/admin-plantilla-almacen.component';
+import { AdminConfigBrandingComponent } from './pages/admin-config-branding/admin-config-branding.component';
 
 @NgModule({
   imports: [
@@ -41,6 +42,7 @@ import { AdminPlantillaAlmacenComponent } from './pages/admin-plantilla-almacen/
     AdminPermisosMenuDinamicoComponent,
     AdminPlantillasMenuComponent,
     AdminPlantillaAlmacenComponent,
+    AdminConfigBrandingComponent,
     RouterModule,       // ✅ OBLIGATORIO PARA routerLink
 
   ]

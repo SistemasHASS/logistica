@@ -6,6 +6,7 @@ import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { StockNotificationService } from '@/app/shared/services/stock-notification.service';
 import { APP_VERSION, APP_INFO } from 'src/environments/version';
+import { AdminBrandingService, BRANDING_DEFAULTS } from '@/app/modules/main/pages/administracion/services/admin-branding.service';
 
 @Component({
   selector: 'app-login',
@@ -18,6 +19,10 @@ export class LoginComponent {
 
   appVersion = APP_VERSION;
   appInfo = APP_INFO;
+
+  logoLoginUrl: string = '';
+  tituloLogin: string = BRANDING_DEFAULTS.tituloLogin;
+  subtituloLogin: string = BRANDING_DEFAULTS.subtituloLogin;
 
   mostrarClave = false;
   usuario: any;
@@ -32,7 +37,8 @@ export class LoginComponent {
     private dexieService: DexieService,
     private alertService: AlertService,
     private authService: AuthService,
-    private stockNotificationService: StockNotificationService
+    private stockNotificationService: StockNotificationService,
+    private brandingService: AdminBrandingService
   ) {
     this.loginForm = this.fb.group({
       usuario: ['', [Validators.required]],  // Campo requerido
@@ -40,7 +46,16 @@ export class LoginComponent {
     });
   }
 
+  private cargarBranding(): void {
+    this.brandingService.obtenerBranding().then((data) => {
+      this.logoLoginUrl = data.logoLogin || '';
+      this.tituloLogin = data.tituloLogin || BRANDING_DEFAULTS.tituloLogin;
+      this.subtituloLogin = data.subtituloLogin || BRANDING_DEFAULTS.subtituloLogin;
+    }).catch(() => {});
+  }
+
   async ngOnInit() {
+    this.cargarBranding();
     this.usuario = await this.dexieService.showUsuario()
     if (!!this.usuario) {
       // Recargar notificaciones para el usuario existente

@@ -19,7 +19,7 @@ import { LayoutConfigService, MenuType } from '../../services/layout-config.serv
 import { HttpClient } from '@angular/common/http';
 import { DynamicMenuComponent } from './components/dynamic-menu/dynamic-menu.component';
 
-type AccordionGroup = 'panel' | 'config' | 'requerimientos' | 'compras' | 'almacen' | 'aprobaciones' | 'reportes';
+type AccordionGroup = 'panel' | 'config' | 'requerimientos' | 'compras' | 'almacen' | 'aprobaciones' | 'reportes' | 'consultas';
 
 @Component({
   selector: 'app-layout',
@@ -62,7 +62,7 @@ export class LayoutComponent {
   }
 
   // ── Accordion nav (JLOLOGIST) ──────────────────────────────────
-  readonly ACCORDION_GROUPS: AccordionGroup[] = ['panel', 'config', 'requerimientos', 'compras', 'almacen', 'aprobaciones', 'reportes'];
+  readonly ACCORDION_GROUPS: AccordionGroup[] = ['panel', 'config', 'requerimientos', 'compras', 'almacen', 'aprobaciones', 'reportes', 'consultas'];
 
   private readonly ROUTE_GROUP_MAP: Record<string, string> = {
     'dashboard-jlologist': 'panel',
@@ -94,6 +94,7 @@ export class LayoutComponent {
     'reporte-aprobaciones-area': 'reportes',
     'reporte-saldos': 'reportes',
     'reporte-aprobados': 'reportes',
+    'catalogo-items': 'consultas',
   };
 
   accordionOpen: Record<string, boolean> = {
@@ -104,6 +105,7 @@ export class LayoutComponent {
     almacen: false,
     aprobaciones: false,
     reportes: false,
+    consultas: false,
   };
 
   private loadAccordionState(): void {

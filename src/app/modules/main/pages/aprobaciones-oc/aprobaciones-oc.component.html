@@ -618,7 +618,7 @@
     </div>
 
     <div class="modal-footer">
-      @if (ocDetalle?.estado === 'PENDIENTE_APROBACION') {
+      @if (ocDetalle?.estado === 'PENDIENTE_APROBACION' && puedeAprobar) {
         <button class="btn btn-success" (click)="aprobarOC(ocDetalle)">
           <i class="bx bx-check"></i> Aprobar
         </button>

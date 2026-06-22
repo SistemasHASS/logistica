@@ -129,6 +129,10 @@ export class RequerimientosMaestrasService {
       this.almacenSeleccionado = config.idalmacen;
       this.clasificacionSeleccionado = config.idclasificacion;
       this.turnoSeleccionado = config.idturno;
+      // Cargar idalmacenDestino para TRANSFERENCIA
+      if ((config as any).idalmacenDestino) {
+        this.almacenDestino = (config as any).idalmacenDestino;
+      }
       if (config.idceco) {
         this.cecoSeleccionado = (await this.dexieService.getCecoById(config.idceco)) as Ceco | null;
         if (!this.cecoSeleccionado) {
@@ -143,6 +147,13 @@ export class RequerimientosMaestrasService {
       if (config.idlabor) {
         this.laborSeleccionado = (await this.dexieService.getLaborById(config.idlabor)) as Labor | null;
       }
+      console.log('🔧 Configuración cargada en maestras:', {
+        idTipoItem: config.idTipoItem,
+        idalmacen: config.idalmacen,
+        idalmacenDestino: (config as any).idalmacenDestino,
+        cultivo: config.idcultivo,
+        fundo: config.idfundo,
+      });
     }
   }
 

@@ -1,0 +1,535 @@
+<div class="cs-wrapper">
+
+  <!-- ══════════════════════ HEADER ══════════════════════ -->
+  <div class="cs-header">
+    <div class="cs-header__title">
+      <i class="bx bx-check-shield cs-header__icon"></i>
+      <div>
+        <h2>Conformidad de Servicios</h2>
+        <p>Valide o rechace los servicios recibidos de las órdenes de servicio</p>
+      </div>
+    </div>
+    <button class="btn btn-outline-primary btn-sm" (click)="cargarDatos()" [disabled]="cargando()">
+      <i class="bx bx-refresh" [class.bx-spin]="cargando()"></i> Actualizar
+    </button>
+  </div>
+
+  <!-- ══════════════════════ TABS ══════════════════════ -->
+  <div class="cs-tabs">
+    <button
+      class="cs-tab"
+      [class.cs-tab--active]="seccionActiva() === 'PENDIENTE'"
+      (click)="cambiarSeccion('PENDIENTE')">
+      <i class="bx bx-time-five"></i>
+      Pendientes de Conformidad
+      <span class="cs-tab__badge" *ngIf="listaPendientes().length > 0">{{ listaPendientes().length }}</span>
+    </button>
+    <button
+      class="cs-tab"
+      [class.cs-tab--active]="seccionActiva() === 'HISTORIAL'"
+      (click)="cambiarSeccion('HISTORIAL')">
+      <i class="bx bx-history"></i>
+      Historial de Conformidades
+    </button>
+  </div>
+
+  <!-- ══════════════════════ FILTROS ══════════════════════ -->
+  <div class="cs-filters">
+    <div class="cs-filters__search">
+      <i class="bx bx-search"></i>
+      <input
+        type="text"
+        placeholder="Buscar por N° orden, proveedor o descripción..."
+        [ngModel]="filtroBusqueda()"
+        (ngModelChange)="filtroBusqueda.set($event)">
+    </div>
+    <div class="cs-filters__tipo">
+      <input
+        type="text"
+        placeholder="Filtrar por tipo de servicio..."
+        [ngModel]="filtroTipoServicio()"
+        (ngModelChange)="filtroTipoServicio.set($event)">
+    </div>
+  </div>
+
+  <!-- ══════════════════════ ESTADO CARGANDO ══════════════════════ -->
+  <div class="cs-loading" *ngIf="cargando()">
+    <i class="bx bx-loader-circle bx-spin"></i>
+    <span>Cargando órdenes de servicio...</span>
+  </div>
+
+  <!-- ══════════════════════ SECCIÓN PENDIENTES ══════════════════════ -->
+  <ng-container *ngIf="!cargando() && seccionActiva() === 'PENDIENTE'">
+
+    <!-- CARDS (comentado — reemplazado por tabla PrimeNG)
+    <div class="cs-empty" *ngIf="pendientesFiltrados().length === 0">
+      <i class="bx bx-check-circle"></i>
+      <p>No hay órdenes de servicio pendientes de conformidad</p>
+    </div>
+    <div class="cs-grid" *ngIf="pendientesFiltrados().length > 0">
+      <div class="cs-card" *ngFor="let os of pendientesFiltrados()">
+        <div class="cs-card__header">
+          <div class="cs-card__num">
+            <span class="cs-badge cs-badge--enviada">ENVIADA</span>
+            <strong>{{ os.numeroOrden }}</strong>
+          </div>
+          <span class="cs-card__tipo">{{ os.tipoServicio }}</span>
+        </div>
+        <div class="cs-card__body">
+          <div class="cs-card__row"><i class="bx bx-building-house"></i><span><strong>Proveedor:</strong> {{ os.nombreProveedor }}</span></div>
+          <div class="cs-card__row"><i class="bx bx-id-card"></i><span><strong>RUC:</strong> {{ os.rucProveedor }}</span></div>
+          <div class="cs-card__row"><i class="bx bx-info-circle"></i><span><strong>Servicio:</strong> {{ os.descripcion }}</span></div>
+          <div class="cs-card__row"><i class="bx bx-money"></i><span><strong>Monto:</strong> {{ formatMonto(os.montoTotal, os.moneda) }}</span></div>
+          <div class="cs-card__row" *ngIf="os.fechaInicioServicio || os.fechaFinServicio"><i class="bx bx-calendar"></i><span>{{ os.fechaInicioServicio }} — {{ os.fechaFinServicio }}</span></div>
+          <div class="cs-card__row" *ngIf="os.ubicacionServicio"><i class="bx bx-map-pin"></i><span>{{ os.ubicacionServicio }}</span></div>
+        </div>
+        <div class="cs-card__footer">
+          <button class="btn btn-sm btn-outline-secondary" (click)="abrirDetalle(os)"><i class="bx bx-show"></i> Ver detalle</button>
+          <button class="btn btn-sm btn-success" (click)="abrirModalConformidad(os)"><i class="bx bx-check-circle"></i> Dar Conformidad</button>
+        </div>
+      </div>
+    </div>
+    -->
+
+    <!-- TABLA PRIMENG PENDIENTES DE CONFORMIDAD -->
+    <div class="cs-table-wrapper">
+      <p-table
+        [value]="pendientesFiltrados()"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 20, 50]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} órdenes"
+        [globalFilterFields]="['numeroOrden','nombreProveedor','rucProveedor','descripcion','tipoServicio']"
+        styleClass="p-datatable-sm p-datatable-striped p-datatable-gridlines"
+        [tableStyle]="{'min-width':'60rem'}"
+        emptyMessage="No hay órdenes de servicio pendientes de conformidad">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="numeroOrden" style="width:130px">
+              N° Orden <p-sortIcon field="numeroOrden" />
+            </th>
+            <th pSortableColumn="tipoServicio" style="width:140px">
+              Tipo Servicio <p-sortIcon field="tipoServicio" />
+            </th>
+            <th pSortableColumn="nombreProveedor">
+              Proveedor <p-sortIcon field="nombreProveedor" />
+            </th>
+            <th style="width:110px">RUC</th>
+            <th pSortableColumn="descripcion">Descripción</th>
+            <th pSortableColumn="montoTotal" style="width:120px; text-align:right">
+              Monto <p-sortIcon field="montoTotal" />
+            </th>
+            <th style="width:110px">F. Inicio</th>
+            <th style="width:110px">F. Fin</th>
+            <th style="width:130px; text-align:center">Acciones</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-os>
+          <tr>
+            <td>
+              <span class="cs-badge cs-badge--enviada me-1">OS</span>
+              <strong>{{ os.numeroOrden }}</strong>
+            </td>
+            <td>{{ os.tipoServicio }}</td>
+            <td>
+              <div class="fw-semibold">{{ os.nombreProveedor }}</div>
+            </td>
+            <td><small class="text-muted">{{ os.rucProveedor }}</small></td>
+            <td>
+              <span [title]="os.descripcion">
+                {{ os.descripcion && os.descripcion.length > 60 ? (os.descripcion | slice:0:60) + '…' : os.descripcion }}
+              </span>
+            </td>
+            <td style="text-align:right">
+              <strong>{{ formatMonto(os.montoTotal, os.moneda) }}</strong>
+            </td>
+            <td>{{ os.fechaInicioServicio ?? '—' }}</td>
+            <td>{{ os.fechaFinServicio ?? '—' }}</td>
+            <td style="text-align:center">
+              <div class="d-flex gap-1 justify-content-center">
+                <button class="btn btn-sm btn-outline-secondary" (click)="abrirDetalle(os)" title="Ver detalle">
+                  <i class="bx bx-show"></i>
+                </button>
+                <button class="btn btn-sm btn-success" (click)="abrirModalConformidad(os)" title="Dar Conformidad">
+                  <i class="bx bx-check-circle"></i> Conformidad
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="9" class="text-center py-4 text-muted">
+              <i class="bx bx-check-circle fs-3 d-block mb-2"></i>
+              No hay órdenes de servicio pendientes de conformidad
+            </td>
+          </tr>
+        </ng-template>
+
+      </p-table>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════════════ SECCIÓN HISTORIAL ══════════════════════ -->
+  <ng-container *ngIf="!cargando() && seccionActiva() === 'HISTORIAL'">
+
+    <div class="cs-empty" *ngIf="historialFiltrado().length === 0">
+      <i class="bx bx-folder-open"></i>
+      <p>No hay conformidades registradas aún</p>
+    </div>
+
+    <div class="cs-table-wrapper" *ngIf="historialFiltrado().length > 0">
+      <table class="cs-table">
+        <thead>
+          <tr>
+            <th>N° Orden</th>
+            <th>Tipo Servicio</th>
+            <th>Proveedor</th>
+            <th>Monto</th>
+            <th>Conformidad</th>
+            <th>Calificación</th>
+            <th>Registrado por</th>
+            <th>Fecha</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let os of historialFiltrado()">
+            <td><strong>{{ os.numeroOrden }}</strong></td>
+            <td>{{ os.tipoServicio }}</td>
+            <td>
+              <div>{{ os.nombreProveedor }}</div>
+              <small class="text-muted">{{ os.rucProveedor }}</small>
+            </td>
+            <td>{{ formatMonto(os.montoTotal, os.moneda) }}</td>
+            <td>
+              <span [class]="badgeConformidad(os.estadoConformidad)">
+                {{ etiquetaConformidad(os.estadoConformidad) }}
+              </span>
+            </td>
+            <td>
+              <div class="cs-stars">
+                <ng-container *ngFor="let s of estrellas">
+                  <i class="bx"
+                     [class.bxs-star]="(os.calificacion ?? 0) >= s"
+                     [class.bx-star]="(os.calificacion ?? 0) < s"
+                     [class.cs-star--filled]="(os.calificacion ?? 0) >= s">
+                  </i>
+                </ng-container>
+                <span class="ms-1">({{ os.calificacion ?? '—' }})</span>
+              </div>
+            </td>
+            <td>{{ os.nombreConformidad ?? os.usuarioConformidad ?? '—' }}</td>
+            <td>{{ os.fechaConformidad ?? '—' }}</td>
+            <td class="d-flex gap-1">
+              <button class="btn btn-sm btn-outline-secondary" (click)="abrirDetalle(os)" title="Ver detalle">
+                <i class="bx bx-show"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-primary" (click)="imprimirConformidad(os)" title="Imprimir documento">
+                <i class="bx bx-printer"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+</div>
+
+<!-- ══════════════════════ MODAL DETALLE ══════════════════════ -->
+<div class="cs-modal-overlay" *ngIf="modalDetalleAbierto()" (click)="cerrarDetalle()">
+  <div class="cs-modal cs-modal--lg" (click)="$event.stopPropagation()">
+    <div class="cs-modal__header">
+      <h3><i class="bx bx-file-blank me-2"></i>Detalle Orden de Servicio</h3>
+      <button class="cs-modal__close" (click)="cerrarDetalle()"><i class="bx bx-x"></i></button>
+    </div>
+
+    <div class="cs-modal__body" *ngIf="osSeleccionada() as os">
+      <div class="cs-detail-grid">
+        <div class="cs-detail-block">
+          <label>N° Orden</label>
+          <span>{{ os.numeroOrden }}</span>
+        </div>
+        <div class="cs-detail-block">
+          <label>Tipo Servicio</label>
+          <span>{{ os.tipoServicio }}</span>
+        </div>
+        <div class="cs-detail-block cs-detail-block--full">
+          <label>Descripción del Servicio</label>
+          <span>{{ os.descripcion }}</span>
+        </div>
+        <div class="cs-detail-block">
+          <label>Proveedor</label>
+          <span>{{ os.nombreProveedor }}</span>
+        </div>
+        <div class="cs-detail-block">
+          <label>RUC</label>
+          <span>{{ os.rucProveedor }}</span>
+        </div>
+        <div class="cs-detail-block">
+          <label>Monto Total</label>
+          <span><strong>{{ formatMonto(os.montoTotal, os.moneda) }}</strong></span>
+        </div>
+        <div class="cs-detail-block">
+          <label>Condiciones de Pago</label>
+          <span>{{ os.condicionesPago ?? '—' }}</span>
+        </div>
+        <div class="cs-detail-block">
+          <label>Fecha Inicio Servicio</label>
+          <span>{{ os.fechaInicioServicio ?? '—' }}</span>
+        </div>
+        <div class="cs-detail-block">
+          <label>Fecha Fin Servicio</label>
+          <span>{{ os.fechaFinServicio ?? '—' }}</span>
+        </div>
+        <div class="cs-detail-block">
+          <label>Plazo Ejecución</label>
+          <span>{{ os.plazoEjecucion ?? '—' }}</span>
+        </div>
+        <div class="cs-detail-block">
+          <label>Ubicación</label>
+          <span>{{ os.ubicacionServicio ?? '—' }}</span>
+        </div>
+        <div class="cs-detail-block">
+          <label>Centro de Costo</label>
+          <span>{{ os.centroCosto ?? '—' }}</span>
+        </div>
+        <div class="cs-detail-block">
+          <label>Proyecto</label>
+          <span>{{ os.proyecto ?? '—' }}</span>
+        </div>
+        <div class="cs-detail-block cs-detail-block--full" *ngIf="os.observaciones">
+          <label>Observaciones OS</label>
+          <span>{{ os.observaciones }}</span>
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="cs-items-section" *ngIf="os.items && os.items.length > 0">
+        <h4 class="cs-items-title"><i class="bx bx-list-ul me-1"></i>Ítems del Servicio</h4>
+        <table class="cs-table cs-table--sm">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Descripción</th>
+              <th>UM</th>
+              <th>Cantidad</th>
+              <th>P. Unitario</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let it of os.items">
+              <td>{{ it.item }}</td>
+              <td>{{ it.descripcionServicio }}</td>
+              <td>{{ it.unidadMedida }}</td>
+              <td>{{ it.cantidad }}</td>
+              <td>{{ it.precioUnitario | number:'1.2-2' }}</td>
+              <td>{{ it.subtotal | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Conformidad ya registrada -->
+      <div class="cs-conformidad-registrada" *ngIf="os.tieneConformidad">
+        <h4><i class="bx bx-check-shield me-1"></i>Conformidad Registrada</h4>
+        <div class="cs-conf-data">
+          <div class="cs-detail-block">
+            <label>Estado</label>
+            <span [class]="badgeConformidad(os.estadoConformidad)">
+              {{ etiquetaConformidad(os.estadoConformidad) }}
+            </span>
+          </div>
+          <div class="cs-detail-block">
+            <label>Calificación</label>
+            <div class="cs-stars">
+              <ng-container *ngFor="let s of estrellas">
+                <i class="bx"
+                   [class.bxs-star]="(os.calificacion ?? 0) >= s"
+                   [class.bx-star]="(os.calificacion ?? 0) < s"
+                   [class.cs-star--filled]="(os.calificacion ?? 0) >= s">
+                </i>
+              </ng-container>
+              <span class="ms-1">({{ os.calificacion ?? '—' }})</span>
+            </div>
+          </div>
+          <div class="cs-detail-block">
+            <label>Registrado por</label>
+            <span>{{ os.nombreConformidad ?? os.usuarioConformidad ?? '—' }}</span>
+          </div>
+          <div class="cs-detail-block">
+            <label>Fecha conformidad</label>
+            <span>{{ os.fechaConformidad ?? '—' }}</span>
+          </div>
+          <div class="cs-detail-block cs-detail-block--full" *ngIf="os.observacionesConformidad">
+            <label>Observaciones</label>
+            <span>{{ os.observacionesConformidad }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cs-modal__footer">
+      <button class="btn btn-secondary" (click)="cerrarDetalle()">Cerrar</button>
+      <button
+        class="btn btn-outline-primary"
+        *ngIf="osSeleccionada()?.tieneConformidad"
+        (click)="imprimirConformidad(osSeleccionada()!)">
+        <i class="bx bx-printer me-1"></i> Imprimir Conformidad
+      </button>
+      <button
+        class="btn btn-success"
+        *ngIf="osSeleccionada() && !osSeleccionada()?.tieneConformidad"
+        (click)="cerrarDetalle(); abrirModalConformidad(osSeleccionada()!)">
+        <i class="bx bx-check-circle"></i> Dar Conformidad
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ MODAL CONFORMIDAD ══════════════════════ -->
+<div class="cs-modal-overlay" *ngIf="modalConformidadAbierto()" (click)="cerrarModalConformidad()">
+  <div class="cs-modal cs-modal--xl" (click)="$event.stopPropagation()">
+    <div class="cs-modal__header cs-modal__header--conformidad">
+      <h3><i class="bx bx-check-circle me-2"></i>Registrar Conformidad</h3>
+      <button class="cs-modal__close" (click)="cerrarModalConformidad()"><i class="bx bx-x"></i></button>
+    </div>
+
+    <div class="cs-modal__body cs-modal__body--cols" *ngIf="osSeleccionada() as os">
+
+      <!-- ── COLUMNA IZQUIERDA: formulario ── -->
+      <div class="cs-conf-form-col">
+        <div class="cs-conf-info">
+          <div class="cs-conf-info__row">
+            <span class="cs-conf-info__label">N° Orden:</span>
+            <strong>{{ os.numeroOrden }}</strong>
+          </div>
+          <div class="cs-conf-info__row">
+            <span class="cs-conf-info__label">Proveedor:</span>
+            <span>{{ os.nombreProveedor }}</span>
+          </div>
+          <div class="cs-conf-info__row">
+            <span class="cs-conf-info__label">Servicio:</span>
+            <span>{{ os.descripcion }}</span>
+          </div>
+          <div class="cs-conf-info__row">
+            <span class="cs-conf-info__label">Monto:</span>
+            <strong>{{ formatMonto(os.montoTotal, os.moneda) }}</strong>
+          </div>
+        </div>
+
+        <!-- Tipo conformidad -->
+        <div class="cs-form-group">
+          <label class="cs-form-label cs-form-label--required">Resultado de la Conformidad</label>
+          <div class="cs-conformidad-options">
+            <button
+              *ngFor="let tipo of tiposConformidad"
+              class="cs-conf-option"
+              [class.cs-conf-option--selected]="formConformidad().conformidad === tipo.value"
+              [class.cs-conf-option--conforme]="tipo.value === 'CONFORME'"
+              [class.cs-conf-option--no-conforme]="tipo.value === 'NO_CONFORME'"
+              [class.cs-conf-option--obs]="tipo.value === 'CONFORME_CON_OBSERVACIONES'"
+              (click)="setConformidad(tipo.value)">
+              <i class="bx"
+                 [class.bx-check-circle]="tipo.value === 'CONFORME'"
+                 [class.bx-x-circle]="tipo.value === 'NO_CONFORME'"
+                 [class.bx-error-circle]="tipo.value === 'CONFORME_CON_OBSERVACIONES'">
+              </i>
+              {{ tipo.label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Calificación estrellas -->
+        <div class="cs-form-group">
+          <label class="cs-form-label">Calificación del Servicio</label>
+          <div class="cs-star-rating">
+            <button
+              *ngFor="let s of estrellas"
+              class="cs-star-btn"
+              [class.cs-star-btn--filled]="formConformidad().calificacion >= s"
+              (click)="setCalificacion(s)"
+              [title]="s + ' estrella(s)'">
+              <i class="bx" [class.bxs-star]="formConformidad().calificacion >= s" [class.bx-star]="formConformidad().calificacion < s"></i>
+            </button>
+            <span class="cs-star-label">{{ formConformidad().calificacion }}/5</span>
+          </div>
+        </div>
+
+        <!-- Observaciones -->
+        <div class="cs-form-group">
+          <label class="cs-form-label"
+            [class.cs-form-label--required]="formConformidad().conformidad === 'NO_CONFORME'">
+            Observaciones
+            <span *ngIf="formConformidad().conformidad === 'NO_CONFORME'" class="text-danger"> (requerido)</span>
+          </label>
+          <textarea
+            class="form-control"
+            rows="4"
+            placeholder="Ingrese observaciones, deficiencias detectadas o comentarios sobre el servicio recibido..."
+            [ngModel]="formConformidad().observaciones"
+            (ngModelChange)="setObservaciones($event)">
+          </textarea>
+        </div>
+
+        <!-- Firma digital (firmante 2 — confirmante) -->
+        <div class="cs-form-group">
+          <label class="cs-form-label cs-form-label--required">
+            Firma Digital <span class="text-muted fw-normal">(Jefe de Área / Confirmante)</span>
+          </label>
+          <div class="cs-firma-wrapper">
+            <canvas #firmaOSCanvas class="cs-firma-canvas"></canvas>
+            <div class="cs-firma-hint" *ngIf="firmaVacia()">
+              <i class="bx bx-edit-alt"></i>
+              <span>Firme aquí</span>
+            </div>
+          </div>
+          <div class="cs-firma-actions">
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="limpiarFirma()">
+              <i class="bx bx-eraser me-1"></i> Limpiar firma
+            </button>
+            <span class="cs-firma-status" [class.cs-firma-status--ok]="!firmaVacia()">
+              <i class="bx" [class.bx-check-circle]="!firmaVacia()" [class.bx-time-five]="firmaVacia()"></i>
+              {{ firmaVacia() ? 'Sin firma' : 'Firma capturada' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="cs-conf-user">
+          <i class="bx bx-user-check"></i>
+          <span>Registrado por: <strong>{{ usuario()?.nombre ?? '—' }}</strong></span>
+        </div>
+      </div><!-- /cs-conf-form-col -->
+
+      <!-- ── COLUMNA DERECHA: vista previa plantilla ── -->
+      <div class="cs-conf-preview-col">
+        <div class="cs-conf-preview__header">
+          <i class="bx bx-file-blank me-1"></i>
+          <span>Vista previa del documento</span>
+        </div>
+        <div class="cs-conf-preview__body" [innerHTML]="htmlPreview()"></div>
+      </div><!-- /cs-conf-preview-col -->
+
+    </div><!-- /cs-modal__body--cols -->
+
+    <div class="cs-modal__footer">
+      <button class="btn btn-secondary" (click)="cerrarModalConformidad()" [disabled]="guardando()">
+        Cancelar
+      </button>
+      <button
+        class="btn"
+        [class.btn-success]="formConformidad().conformidad === 'CONFORME' || formConformidad().conformidad === 'CONFORME_CON_OBSERVACIONES'"
+        [class.btn-danger]="formConformidad().conformidad === 'NO_CONFORME'"
+        (click)="guardarConformidad()"
+        [disabled]="guardando()">
+        <i class="bx" [class.bx-loader-circle]="guardando()" [class.bx-spin]="guardando()" [class.bx-check-circle]="!guardando()"></i>
+        {{ guardando() ? 'Guardando...' : 'Confirmar Conformidad' }}
+      </button>
+    </div>
+  </div>
+</div>

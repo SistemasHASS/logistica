@@ -78,11 +78,30 @@ export class ParametrosComponent implements OnInit {
   esLogist = false;
   esOpLogist = false;
   esEmLogist = false;
+  esAllogist = false;
+  esJloLogist = false;
 
   TipoItemSeleccionado = '';
 
   // 🎯 TABS MANAGEMENT
-  activeTab: 'compras' | 'consumo' = 'consumo';
+  activeTab: 'compras' | 'consumo' | 'transferencia' = 'consumo';
+
+  // === FLUJO COMPRA/SERVICIO EN TAB COMPRAS ===
+  tipoRequerimientoCompras: 'COMPRA' | 'SERVICIO' | null = null;
+  mostrarSeleccionTipo = true;
+
+  seleccionarTipoCompras(tipo: 'COMPRA' | 'SERVICIO') {
+    this.tipoRequerimientoCompras = tipo;
+    this.mostrarSeleccionTipo = false;
+    // Guardar en localStorage para uso en Requerimientos
+    localStorage.setItem('tipoRequerimientoConfig', tipo);
+  }
+
+  cambiarTipoCompras() {
+    this.tipoRequerimientoCompras = null;
+    this.mostrarSeleccionTipo = true;
+    localStorage.removeItem('tipoRequerimientoConfig');
+  }
 
   fundoSeleccionado = '';
   cultivoSeleccionado = '';
@@ -168,6 +187,8 @@ export class ParametrosComponent implements OnInit {
         this.activeTab = 'compras';
       } else if (this.configuracion.idTipoItem === 'CONSUMO') {
         this.activeTab = 'consumo';
+      } else if (this.configuracion.idTipoItem === 'TRANSFERENCIA') {
+        this.activeTab = 'transferencia';
       } else {
         // Si no hay tipo guardado, establecer CONSUMO por defecto
         this.activeTab = 'consumo';
@@ -186,7 +207,7 @@ export class ParametrosComponent implements OnInit {
   }
 
   // 🎯 MÉTODO PARA CAMBIAR ENTRE TABS
-  switchTab(tab: 'compras' | 'consumo') {
+  async switchTab(tab: 'compras' | 'consumo' | 'transferencia') {
     this.activeTab = tab;
     
     // Actualizar automáticamente el tipo de requerimiento según el tab
@@ -196,10 +217,20 @@ export class ParametrosComponent implements OnInit {
     } else if (tab === 'consumo') {
       this.configuracion.idTipoItem = 'CONSUMO';
       console.log('📦 Cambiado a tab CONSUMO - Tipo: CONSUMO');
+    } else if (tab === 'transferencia') {
+      this.configuracion.idTipoItem = 'TRANSFERENCIA';
+      this.cargarAlmacenesDestinoVirtual();
+      console.log('🔁 Cambiado a tab TRANSFERENCIA - Tipo: TRANSFERENCIA');
     }
     
     // Ejecutar la lógica de cambio de tipo
-    this.onTipoItemChange();
+    await this.onTipoItemChange();
+  }
+
+  async cargarAlmacenesDestinoVirtual() {
+    const destino = await this.dexieService.showAlmacenesDestino();
+    this.almacenesDestino = destino ?? [];
+    console.log('🔁 Almacenes destino cargados:', this.almacenesDestino.length);
   }
 
   // 🔥 NUEVO: Manejador del cambio de check administrativo
@@ -317,11 +348,15 @@ export class ParametrosComponent implements OnInit {
     this.esLogist = rol === 'LOLOGIST';
     this.esOpLogist = rol === 'OPLOGIST';
     this.esEmLogist = rol === 'EMLOGIST';
+    this.esAllogist = rol === 'ALLOGIST';
+    this.esJloLogist = rol === 'JLOLOGIST';
 
     console.log('ROLES CARGADOS:', {
       esLogist: this.esLogist,
       esOpLogist: this.esOpLogist,
       esEmLogist: this.esEmLogist,
+      esAllogist: this.esAllogist,
+      esJloLogist: this.esJloLogist,
     });
   }
 
@@ -342,8 +377,8 @@ export class ParametrosComponent implements OnInit {
 
     console.log('🔧 Tipo Item base:', this.tipoItem);
 
-    // 🔐 SOLO LOGIST puede TRANSFERENCIA
-    if (this.esLogist) {
+    // 🔐 LOLOGIST, ALLOGIST, JLOLOGIST pueden TRANSFERENCIA
+    if (this.esLogist || this.esAllogist || this.esJloLogist) {
       this.tipoItem.push({
         id: 'TRANSFERENCIA',
         descripcion: 'TRANSFERENCIA',
@@ -354,7 +389,7 @@ export class ParametrosComponent implements OnInit {
     // Reset por seguridad si cambia el rol
     if (
       this.configuracion.idTipoItem === 'TRANSFERENCIA' &&
-      !this.esLogist
+      !this.esLogist && !this.esAllogist && !this.esJloLogist
     ) {
       this.configuracion.idTipoItem = 'CONSUMO';
       console.log('🔧 Reset a CONSUMO por rol no autorizado');
@@ -382,7 +417,7 @@ export class ParametrosComponent implements OnInit {
   esTransferenciaNoPermitida(): boolean {
     return (
       this.configuracion.idTipoItem === 'TRANSFERENCIA' &&
-      !this.esLogist
+      !this.esLogist && !this.esAllogist && !this.esJloLogist
     );
   }
 
@@ -456,13 +491,14 @@ export class ParametrosComponent implements OnInit {
       
       console.log(`🔍 Filtrando turnos para cultivo "${this.configuracion.idcultivo}": ${this.filteredTurnos.length} encontrados`);
       
-      // Para COMPRA o CONSUMO administrativo: cargar CECOs según cultivo
+      // Para COMPRA, TRANSFERENCIA o CONSUMO administrativo: cargar CECOs según cultivo
       if (this.configuracion.idTipoItem === 'COMPRA' ||
+          this.configuracion.idTipoItem === 'TRANSFERENCIA' ||
           (this.configuracion.idTipoItem === 'CONSUMO' && this.esAdministrativo)) {
-        console.log('🎯 Cargando CECOs para COMPRA o CONSUMO ADMINISTRATIVO...');
+        console.log('🎯 Cargando CECOs para COMPRA, TRANSFERENCIA o CONSUMO ADMINISTRATIVO...');
         await this.cargarCecosPorCultivo();
       } else {
-        console.log('🎯 No es COMPRA ni CONSUMO admin, no cargar CECOs por cultivo');
+        console.log('🎯 No es COMPRA ni TRANSFERENCIA ni CONSUMO admin, no cargar CECOs por cultivo');
       }
     }
     
@@ -1074,8 +1110,8 @@ export class ParametrosComponent implements OnInit {
     if (this.configuracion.idceco) {
       console.log('🔍 CECO seleccionado:', this.configuracion.idceco);
       
-      // Para COMPRA: cargar labores según CECO
-      if (this.configuracion.idTipoItem === 'COMPRA') {
+      // Para COMPRA o TRANSFERENCIA: cargar labores según CECO directamente
+      if (this.configuracion.idTipoItem === 'COMPRA' || this.configuracion.idTipoItem === 'TRANSFERENCIA') {
         console.log('🎯 Cargando labores para COMPRA según CECO...');
         
         // Filtrar labores que pertenecen al CECO seleccionado
@@ -1166,8 +1202,8 @@ export class ParametrosComponent implements OnInit {
       return;
     }
 
-    // Para COMPRA: filtrar proyectos por CECO + LABOR
-    if (this.configuracion.idTipoItem === 'COMPRA') {
+    // Para COMPRA o TRANSFERENCIA: filtrar proyectos por CECO + LABOR + CULTIVO (sin validar turno)
+    if (this.configuracion.idTipoItem === 'COMPRA' || this.configuracion.idTipoItem === 'TRANSFERENCIA') {
       console.log('🎯 Filtrando proyectos para COMPRA (CECO + LABOR)...');
       
       this.filteredProyectos = this.proyectos.filter(
@@ -1298,16 +1334,31 @@ export class ParametrosComponent implements OnInit {
     // ===============================
     if (this.configuracion.idTipoItem === 'TRANSFERENCIA') {
 
-      // SOLO LOLOGIST
-      if (this.usuario.idrol !== 'LOLOGIST') {
+      // LOLOGIST, OPLOGIST y ALLOGIST
+      const rol = this.usuario.idrol;
+      if (rol !== 'LOLOGIST' && rol !== 'OPLOGIST' && rol !== 'ALLOGIST') {
         console.warn('⛔ Transferencia no permitida para este rol');
         return;
       }
 
-      const destino = await this.dexieService.showAlmacenesDestino();
-      this.almacenes = destino ?? [];
+      // Almacén origen: TODOS los almacenes físicos (para poder seleccionar cualquiera)
+      const todosAlmacenes = await this.dexieService.showAlmacenes();
+      this.almacenes = todosAlmacenes || [];
 
-      console.log('🔁 ALMACENES DESTINO:', this.almacenes);
+      // Por defecto seleccionar el almacén principal (almentrada = 'S') si no hay uno configurado
+      if (!this.configuracion.idalmacen) {
+        const almacenPrincipal = todosAlmacenes.find((c: any) => c.almentrada === 'S');
+        if (almacenPrincipal) {
+          this.configuracion.idalmacen = String(almacenPrincipal.idalmacen);
+        }
+      }
+
+      // Almacén destino: también TODOS los almacenes físicos
+      this.almacenesDestino = todosAlmacenes || [];
+
+      console.log('🔁 ALMACENES ORIGEN (todos):', this.almacenes.length);
+      console.log('🔁 ALMACÉN ORIGEN seleccionado:', this.configuracion.idalmacen);
+      console.log('🔁 ALMACENES DESTINO VIRTUAL:', this.almacenesDestino.length);
       return;
     }
 
@@ -1415,21 +1466,25 @@ export class ParametrosComponent implements OnInit {
         console.log('⚠️ No hay cultivo seleccionado para CONSUMO');
       }
     } else if (this.configuracion.idTipoItem === 'TRANSFERENCIA') {
-      // Limpiar todos los campos específicos
+      // Solo limpiar turno (no aplica en transferencia)
       this.configuracion.idturno = '';
-      this.configuracion.idceco = '';
-      this.configuracion.idlabor = '';
-      this.configuracion.idproyecto = '';
       this.filteredTurnos = [];
-      this.filteredCecos = [];
-      this.filteredLabores = [];
-      this.filteredProyectos = [];
-      
-      // Para TRANSFERENCIA: cargar turnos según cultivo si ya hay cultivo seleccionado
+
+      // Cargar CECOs según cultivo (igual que CONSUMO)
       if (this.configuracion.idcultivo) {
-        this.filteredTurnos = this.turnos.filter(
-          (x: Turno) => x.idcultivo?.trim() === this.configuracion.idcultivo
+        this.filteredCecos = this.cecos.filter(
+          (x: Ceco) => x.idcultivo?.trim() === this.configuracion.idcultivo
         );
+      }
+
+      // Si hay CECO guardado, recargar labores
+      if (this.configuracion.idceco) {
+        await this.darProyectoInversionLabor(false);
+      }
+
+      // Si hay labor guardada, recargar proyectos
+      if (this.configuracion.idlabor) {
+        await this.filtrarProyectoPorLabor(true);
       }
     }
 
@@ -1480,10 +1535,26 @@ export class ParametrosComponent implements OnInit {
         return;
       }
     } else if (this.configuracion.idTipoItem === 'TRANSFERENCIA') {
-      if (!this.configuracion.idturno || !this.configuracion.idceco || !this.configuracion.idlabor || !this.configuracion.idproyecto) {
+      if (!this.configuracion.idalmacen) {
         this.alertService.showAlert(
           'Advertencia!',
-          'Para TRANSFERENCIA debe seleccionar Turno, CECO, Labor y Proyecto',
+          'Para TRANSFERENCIA debe seleccionar el Almacén Origen',
+          'warning'
+        );
+        return;
+      }
+      if (!this.configuracion.idalmacenDestino) {
+        this.alertService.showAlert(
+          'Advertencia!',
+          'Para TRANSFERENCIA debe seleccionar el Almacén Destino (Virtual)',
+          'warning'
+        );
+        return;
+      }
+      if (!this.configuracion.idceco || !this.configuracion.idlabor || !this.configuracion.idproyecto) {
+        this.alertService.showAlert(
+          'Advertencia!',
+          'Para TRANSFERENCIA debe seleccionar CECO, Labor y Proyecto',
           'warning'
         );
         return;
@@ -1492,6 +1563,15 @@ export class ParametrosComponent implements OnInit {
 
     // Si pasa todas las validaciones
     this.configuracion.id = this.usuario.ruc + this.usuario.documentoidentidad;
+
+    console.log('💾 GUARDANDO CONFIGURACIÓN:', {
+      idTipoItem: this.configuracion.idTipoItem,
+      idalmacen: this.configuracion.idalmacen,
+      idalmacenDestino: this.configuracion.idalmacenDestino,
+      idfundo: this.configuracion.idfundo,
+      idcultivo: this.configuracion.idcultivo,
+    });
+
     await this.dexieService.saveConfiguracion(this.configuracion);
     this.alertService.showAlert(
       '¡Éxito!',

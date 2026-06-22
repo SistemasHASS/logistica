@@ -1,0 +1,107 @@
+<div class="card shadow-sm">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <div>
+      <h5 class="mb-0"><i class="bx bx-list-ul me-2 text-primary"></i>Catálogo de Items</h5>
+      <small class="text-muted">Lista de items maestros activos del sistema</small>
+    </div>
+    <button class="btn btn-outline-primary btn-sm" (click)="actualizarDesdeApi()" [disabled]="isLoading()">
+      @if (isLoading()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+      } @else {
+        <i class="bx bx-refresh me-1"></i>
+      }
+      Actualizar
+    </button>
+  </div>
+
+  <div class="card-body">
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <input
+        type="text"
+        class="form-control"
+        style="max-width: 340px;"
+        placeholder="Buscar por código, descripción, familia..."
+        [(ngModel)]="filtro"
+        (input)="buscar()"
+      />
+      <span class="text-muted ms-auto">Total activos: <strong>{{ totalRegistros }}</strong></span>
+    </div>
+
+    @if (isLoading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">{{ loadingMsg() }}</p>
+      </div>
+    } @else {
+      <p-table
+        [value]="itemsFiltrados"
+        [paginator]="true"
+        [rows]="25"
+        [totalRecords]="itemsFiltrados.length"
+        responsiveLayout="scroll"
+        [pageLinks]="5"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="{first} - {last} de {totalRecords}"
+        styleClass="p-datatable-sm p-datatable-striped"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width:50px">#</th>
+            <th style="min-width:120px" pSortableColumn="item">
+              Código <p-sortIcon field="item"></p-sortIcon>
+            </th>
+            <th style="min-width:200px" pSortableColumn="descripcionLocal">
+              Descripción <p-sortIcon field="descripcionLocal"></p-sortIcon>
+            </th>
+            <th style="min-width:100px" pSortableColumn="linea">
+              Línea <p-sortIcon field="linea"></p-sortIcon>
+            </th>
+            <th style="min-width:120px" pSortableColumn="familia">
+              Familia <p-sortIcon field="familia"></p-sortIcon>
+            </th>
+            <!-- <th style="min-width:120px" pSortableColumn="subFamilia">
+              Sub-Familia <p-sortIcon field="subFamilia"></p-sortIcon>
+            </th> -->
+            <th style="min-width:90px" pSortableColumn="unidadCodigo">
+              Unidad <p-sortIcon field="unidadCodigo"></p-sortIcon>
+            </th>
+            <!-- <th style="min-width:90px" pSortableColumn="unidadCompra">
+              Und. Compra <p-sortIcon field="unidadCompra"></p-sortIcon>
+            </th> -->
+            <th style="min-width:80px" class="text-center">Estado</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-item let-i="rowIndex">
+          <tr>
+            <td class="text-muted">{{ i + 1 }}</td>
+            <td><span class="badge bg-light text-dark border">{{ item.item }}</span></td>
+            <td>
+              <div class="fw-semibold">{{ item.descripcionLocal }}</div>
+              @if (item.descripcionCompleta && item.descripcionCompleta !== item.descripcionLocal) {
+                <small class="text-muted">{{ item.descripcionCompleta }}</small>
+              }
+            </td>
+            <td>{{ item.linea || '—' }}</td>
+            <td>{{ item.familia || '—' }}</td>
+            <!-- <td>{{ item.subFamilia || '—' }}</td> -->
+            <td>{{ item.unidadCodigo || '—' }}</td>
+            <!-- <td>{{ item.unidadCompra || '—' }}</td> -->
+            <td class="text-center">
+              <span class="badge bg-success-subtle text-success">Activo</span>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="9" class="text-center text-muted py-4">
+              <i class="bx bx-search fs-3 d-block mb-2"></i>
+              No se encontraron items con ese criterio de búsqueda.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </div>
+</div>

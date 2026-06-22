@@ -1,7 +1,7 @@
 <div class="card firstCard">
   <div class="card-body p-0">
 
-    <!-- TABS PARA COMPRAS Y CONSUMO -->
+    <!-- TABS PARA COMPRAS, CONSUMO Y TRANSFERENCIA -->
     <div class="row mb-4">
       <div class="col-12">
         <ul class="nav nav-tabs" id="parametrosTabs" role="tablist">
@@ -21,6 +21,14 @@
               <i class="bx bx-shopping-bag me-2"></i>COMPRAS
             </button>
           </li>
+          <li class="nav-item" role="presentation" *ngIf="esLogist || esAllogist || esJloLogist">
+            <button class="nav-link" [class.active]="activeTab === 'transferencia'" 
+                    id="transferencia-tab" data-bs-toggle="tab" data-bs-target="#transferencia" 
+                    type="button" role="tab" aria-controls="transferencia" 
+                    (click)="switchTab('transferencia')">
+              <i class="bx bx-transfer me-2"></i>TRANSFERENCIA
+            </button>
+          </li>
         </ul>
       </div>
     </div>
@@ -32,12 +40,57 @@
       <div class="tab-pane fade" [class.show]="activeTab === 'compras'" [class.active]="activeTab === 'compras'" 
            id="compras" role="tabpanel" aria-labelledby="compras-tab">
         
-        <!-- INFORMACIÓN PARA COMPRAS -->
-        <div class="alert alert-info mb-4">
-          <i class="bx bx-info-circle me-2"></i>
-          <strong>Configuración para COMPRAS:</strong> 
-          Los requerimientos de compra requieren: Empresa, Fundo, Cultivo, CECO, Labor, Proyecto y Almacén.
+        <!-- SELECCIÓN TIPO: COMPRA o SERVICIO -->
+        <div *ngIf="mostrarSeleccionTipo" class="seleccion-tipo-container mb-4">
+          <div class="text-center mb-4">
+            <h3 class="seleccion-titulo">¿Qué tipo de requerimiento deseas configurar?</h3>
+            <p class="seleccion-subtitulo">Selecciona el tipo para continuar con la configuración de parámetros</p>
+          </div>
+
+          <div class="cards-seleccion">
+            <!-- Card COMPRA -->
+            <div class="card-seleccion card-compra" (click)="seleccionarTipoCompras('COMPRA')">
+              <div class="icono-seleccion icono-compra">
+                <i class="bx bx-cart"></i>
+              </div>
+              <h4 class="titulo-card">COMPRA</h4>
+              <p class="desc-card">Configuración para requerimientos de compra de bienes y materiales</p>
+              <div class="badge-tipo">Items, Consumo, Transferencia</div>
+            </div>
+
+            <!-- Card SERVICIO -->
+            <div class="card-seleccion card-servicio" (click)="seleccionarTipoCompras('SERVICIO')">
+              <div class="icono-seleccion icono-servicio">
+                <i class="bx bx-wrench"></i>
+              </div>
+              <h4 class="titulo-card">SERVICIO</h4>
+              <p class="desc-card">Configuración para requerimientos de contratación de servicios</p>
+              <div class="badge-tipo">Commodity, Subservicios</div>
+            </div>
+          </div>
         </div>
+
+        <!-- FORMULARIO DE PARÁMETROS (después de seleccionar) -->
+        <div *ngIf="!mostrarSeleccionTipo && tipoRequerimientoCompras">
+          <!-- Badge de tipo seleccionado -->
+          <div class="alert mb-4" [ngClass]="tipoRequerimientoCompras === 'COMPRA' ? 'alert-primary' : 'alert-success'">
+            <div class="d-flex justify-content-between align-items-center">
+              <span>
+                <i class="bx" [ngClass]="tipoRequerimientoCompras === 'COMPRA' ? 'bx-cart' : 'bx-wrench'"></i>
+                <strong>Configurando:</strong> {{ tipoRequerimientoCompras }}
+              </span>
+              <button class="btn btn-sm btn-outline-secondary" (click)="cambiarTipoCompras()">
+                <i class="bx bx-refresh"></i> Cambiar tipo
+              </button>
+            </div>
+          </div>
+
+          <!-- INFORMACIÓN PARA COMPRAS -->
+          <div class="alert alert-info mb-4">
+            <i class="bx bx-info-circle me-2"></i>
+            <strong>Configuración para COMPRAS:</strong> 
+            Los requerimientos de compra requieren: Empresa, Fundo, Cultivo, CECO, Labor, Proyecto y Almacén.
+          </div>
 
         <!-- ITEM (Solo para COMPRAS si es necesario) -->
         <div class="row" [hidden]="ocultarItem">
@@ -212,6 +265,7 @@
             </fieldset>
           </div>
         </div>
+        </div><!-- Fin formulario parámetros -->
       </div>
 
       <!-- TAB CONSUMO -->
@@ -433,6 +487,169 @@
                       {{ a?.almacen }}
                     </option>
                   </select>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB TRANSFERENCIA -->
+      <div class="tab-pane fade" [class.show]="activeTab === 'transferencia'" [class.active]="activeTab === 'transferencia'"
+           id="transferencia" role="tabpanel" aria-labelledby="transferencia-tab"
+           *ngIf="esLogist || esAllogist || esJloLogist">
+
+        <div class="alert alert-warning mb-4">
+          <i class="bx bx-transfer me-2"></i>
+          <strong>Configuración para TRANSFERENCIA:</strong>
+          Define el almacén origen y el almacén de destino.
+          ALLOGIST recibirá la solicitud y ejecutará la transferencia.
+        </div>
+
+        <!-- EMPRESA / FUNDO -->
+        <div class="row">
+          <div class="col-6 col-lg-6 marginBottom">
+            <fieldset>
+              <div class="form-group row box-labelFloat">
+                <label class="col-lg-3 col-form-label">
+                  <b class="texto-error">*</b> Empresa
+                </label>
+                <div class="col-lg-9">
+                  <select [(ngModel)]="configuracion.idempresa" name="empresa_transf" class="form-select mb-2" disabled>
+                    <option [ngValue]="''">Seleccione una opción</option>
+                    <option *ngFor="let t of empresas" [ngValue]="t.ruc">{{ t.razonsocial }}</option>
+                  </select>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <div class="col-6 col-lg-6 marginBottom">
+            <fieldset>
+              <div class="form-group row box-labelFloat">
+                <label class="col-lg-3 col-form-label">
+                  <b class="texto-error">*</b> Fundo
+                </label>
+                <div class="col-lg-9">
+                  <select [(ngModel)]="configuracion.idfundo" name="fundo_transf" class="form-select mb-2"
+                    [ngClass]="{'is-invalid': showValidation && !configuracion.idfundo, 'is-valid': configuracion.idfundo}">
+                    <option [ngValue]="''">Seleccione una opción</option>
+                    <option *ngFor="let t of fundos" [ngValue]="t.codigoFundo">{{ t.nombreFundo }}</option>
+                  </select>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+
+        <!-- CULTIVO -->
+        <div class="row">
+          <div class="col-6 col-lg-6 marginBottom">
+            <fieldset>
+              <div class="form-group row box-labelFloat">
+                <label class="col-lg-3 col-form-label">
+                  <b class="texto-error">*</b> Cultivo
+                </label>
+                <div class="col-lg-9">
+                  <select [(ngModel)]="configuracion.idcultivo" name="cultivo_transf" class="form-select mb-2"
+                    (ngModelChange)="onCultivoChange()"
+                    [ngClass]="{'is-invalid': showValidation && !configuracion.idcultivo, 'is-valid': configuracion.idcultivo}">
+                    <option [ngValue]="''" disabled>Seleccione un cultivo</option>
+                    <option *ngFor="let t of cultivos" [ngValue]="t.codigo">{{ t.descripcion }}</option>
+                  </select>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+
+        <!-- ALMACÉN ORIGEN / ALMACÉN DESTINO VIRTUAL -->
+        <div class="row">
+          <div class="col-6 col-lg-6 marginBottom">
+            <fieldset>
+              <div class="form-group row box-labelFloat">
+                <label class="col-lg-3 col-form-label">
+                  <b class="texto-error">*</b> Almacén Origen
+                </label>
+                <div class="col-lg-9">
+                  <app-dropdown [(ngModel)]="configuracion.idalmacen"
+                    [editable]="true" [data]="almacenes" [valueField]="'idalmacen'" [optionLabel]="'almacen'"
+                    [textShow]="'Almacén Origen'" [textShow2]="'un almacén origen'"
+                    [disabled]="false"
+                    [required]="true">
+                  </app-dropdown>
+                  <small class="text-muted">Almacén físico de donde saldrán los items (búsqueda por nombre)</small>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <div class="col-6 col-lg-6 marginBottom">
+            <fieldset>
+              <div class="form-group row box-labelFloat">
+                <label class="col-lg-3 col-form-label">
+                  <b class="texto-error">*</b> Almacén Destino
+                </label>
+                <div class="col-lg-9">
+                  <app-dropdown [(ngModel)]="configuracion.idalmacenDestino"
+                    [editable]="true" [data]="almacenesDestino" [valueField]="'idalmacen'" [optionLabel]="'almacen'"
+                    [textShow]="'Almacén Destino'" [textShow2]="'un almacén destino'"
+                    [disabled]="false"
+                    [required]="true">
+                  </app-dropdown>
+                  <small class="text-muted">Almacén donde ingresará el stock (búsqueda por nombre)</small>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+
+        <!-- CECO / LABOR -->
+        <div class="row">
+          <div class="col-6 col-lg-6 marginBottom">
+            <fieldset>
+              <div class="form-group row box-labelFloat">
+                <label class="col-lg-3 col-form-label">
+                  <b class="texto-error">*</b> Ceco
+                </label>
+                <div class="col-lg-9">
+                  <app-dropdown [(ngModel)]="configuracion.idceco" (ngModelChange)="darProyectoInversionLabor(true)"
+                    [editable]="true" [data]="filteredCecos" [valueField]="'costcenter'" [optionLabel]="'localname'"
+                    [textShow]="'Ceco'" [textShow2]="'un ceco'" [disabled]="false" [required]="true">
+                  </app-dropdown>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <div class="col-6 col-lg-6 marginBottom">
+            <fieldset>
+              <div class="form-group row box-labelFloat">
+                <label class="col-lg-3 col-form-label">
+                  <b class="texto-error">*</b> Labor
+                </label>
+                <div class="col-lg-9">
+                  <app-dropdown [(ngModel)]="configuracion.idlabor" (ngModelChange)="filtrarProyectoPorLabor()"
+                    [editable]="true" [data]="filteredLabores" [valueField]="'idlabor'" [optionLabel]="'labor'"
+                    [textShow]="'Labor'" [textShow2]="'una Labor'" [disabled]="false" [required]="true">
+                  </app-dropdown>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+
+        <!-- PROYECTO -->
+        <div class="row">
+          <div class="col-6 col-lg-6 marginBottom">
+            <fieldset>
+              <div class="form-group row box-labelFloat">
+                <label class="col-lg-3 col-form-label">
+                  <b class="texto-error">*</b> Proyecto
+                </label>
+                <div class="col-lg-9">
+                  <app-dropdown [(ngModel)]="configuracion.idproyecto" [editable]="true" [data]="filteredProyectos"
+                    [valueField]="'afe'" [optionLabel]="'proyectoio'" [textShow]="'Proyecto'" [textShow2]="'un proyecto'"
+                    [disabled]="false" [required]="true">
+                  </app-dropdown>
                 </div>
               </div>
             </fieldset>

@@ -23,6 +23,17 @@ export class ItemService {
     }
   }
 
+  getItemSlim(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/listar-item-slim`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(
+        error.error?.message || 'Error al obtener maestro de item slim'
+      );
+    }
+  }
+
   registrarItem(body: any): Observable<any> {
     const url = `${this.baseUrl}/api/logistica/registrar-item`;
     try {

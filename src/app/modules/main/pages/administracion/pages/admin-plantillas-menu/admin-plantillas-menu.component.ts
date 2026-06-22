@@ -165,6 +165,9 @@ const PLANTILLAS_POR_TIPO: Record<MenuType, AccordionGroupConfig[]> = {
         <button class="tab-btn" [class.active]="tabActivo === 'editor'" (click)="tabActivo = 'editor'">
           <i class='bx bx-edit-alt'></i> Editor Drag & Drop
         </button>
+        <button class="tab-btn" [class.active]="tabActivo === 'roles'" (click)="irTabRoles()">
+          <i class='bx bx-user-pin'></i> Menú por Rol
+        </button>
       </div>
 
       <!-- ═══════ TAB: TIPOS DE MENÚ ═══════ -->
@@ -448,6 +451,143 @@ const PLANTILLAS_POR_TIPO: Record<MenuType, AccordionGroupConfig[]> = {
         </div>
       }
 
+      <!-- ═══════ TAB: MENÚ POR ROL ═══════ -->
+      @if (tabActivo === 'roles') {
+        <div class="roles-tab-wrapper">
+
+          <div class="roles-tab-header">
+            <div>
+              <h5 class="roles-tab-title"><i class='bx bx-user-pin'></i> Configuración de Menú por Rol</h5>
+              <p class="roles-tab-subtitle">Visualiza y asigna el menú dinámico para cada rol del sistema.</p>
+            </div>
+            <button class="btn-recargar" (click)="cargarConfigRoles()" [disabled]="cargandoRoles()">
+              @if (cargandoRoles()) { <i class='bx bx-loader-alt bx-spin'></i> }
+              @else { <i class='bx bx-refresh'></i> }
+              Recargar
+            </button>
+          </div>
+
+          <div class="roles-accordion">
+            @for (rol of rolesDisponibles; track rol.id) {
+              <div class="rol-acordion-item" [class.open]="rolAcordionAbierto === rol.id">
+
+                <!-- Header del acordion del rol -->
+                <div class="rol-acordion-header" (click)="toggleRolAcordion(rol.id)">
+                  <div class="rol-header-left">
+                    <span class="rol-badge" [class]="getRolBadgeClass(rol.id)">{{ rol.id }}</span>
+                    <div class="rol-info">
+                      <span class="rol-nombre">{{ rol.nombre }}</span>
+                      <span class="rol-config-badge" [class.tiene-config]="tieneConfigRol(rol.id)">
+                        @if (tieneConfigRol(rol.id)) {
+                          <i class='bx bx-check-circle'></i> Menú configurado: <strong>{{ getTipoMenuRol(rol.id) }}</strong>
+                        } @else {
+                          <i class='bx bx-info-circle'></i> Sin configuración personalizada
+                        }
+                      </span>
+                    </div>
+                  </div>
+                  <div class="rol-header-right">
+                    <span class="rol-grupo-count" *ngIf="tieneConfigRol(rol.id)">
+                      <i class='bx bx-layer'></i> {{ getGruposRol(rol.id).length }} grupos
+                    </span>
+                    <i class="bx bx-chevron-down rol-chevron"></i>
+                  </div>
+                </div>
+
+                <!-- Cuerpo del acordion del rol -->
+                @if (rolAcordionAbierto === rol.id) {
+                  <div class="rol-acordion-body">
+
+                    <div class="rol-body-grid">
+
+                      <!-- Columna izquierda: preview del menú actual -->
+                      <div class="rol-preview-col">
+                        <div class="rol-preview-header">
+                          <h6><i class='bx bx-show'></i> Menú Actual</h6>
+                          @if (!tieneConfigRol(rol.id)) {
+                            <span class="badge-sin-config">Usa menú por defecto del sistema</span>
+                          }
+                        </div>
+                        <div class="rol-preview-sidebar">
+                          <div class="rol-preview-user">
+                            <i class='bx bx-user-circle'></i>
+                            <span>{{ rol.nombre }}</span>
+                            <code class="rol-preview-id">{{ rol.id }}</code>
+                          </div>
+                          <div class="rol-preview-menu-area">
+                            <app-dynamic-menu
+                              [menuType]="getTipoMenuRol(rol.id)"
+                              [menuGroups]="getGruposRol(rol.id)"
+                              [contadorNotificaciones]="0">
+                            </app-dynamic-menu>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Columna derecha: acciones -->
+                      <div class="rol-actions-col">
+                        <div class="rol-actions-section">
+                          <h6 class="rol-actions-title"><i class='bx bx-edit-alt'></i> Editar Menú</h6>
+                          <button class="btn-editar-rol" (click)="abrirEditorParaRol(rol.id)">
+                            <i class='bx bx-pencil'></i> Abrir editor drag & drop
+                          </button>
+                          @if (tieneConfigRol(rol.id)) {
+                            <button class="btn-resetear-rol" (click)="resetearConfigRol(rol.id)">
+                              <i class='bx bx-reset'></i> Resetear a sistema por defecto
+                            </button>
+                          }
+                        </div>
+
+                        <div class="rol-actions-section">
+                          <h6 class="rol-actions-title"><i class='bx bx-collection'></i> Aplicar Plantilla Guardada</h6>
+                          @if (plantillas().length > 0) {
+                            <div class="plantillas-lista-compact">
+                              @for (p of plantillas(); track p.id) {
+                                @if (p.activo) {
+                                  <div class="plantilla-compact-item">
+                                    <div class="plantilla-compact-info">
+                                      <span class="plantilla-compact-badge">{{ p.tipoMenu }}</span>
+                                      <span class="plantilla-compact-nombre">{{ p.nombre }}</span>
+                                    </div>
+                                    <button class="btn-aplicar-compact" (click)="aplicarPlantillaARol(p, rol.id)" [disabled]="aplicandoRol()">
+                                      @if (aplicandoRol() && rolAplicando === rol.id) {
+                                        <i class='bx bx-loader-alt bx-spin'></i>
+                                      } @else {
+                                        <i class='bx bx-check'></i>
+                                      }
+                                      Aplicar
+                                    </button>
+                                  </div>
+                                }
+                              }
+                            </div>
+                          } @else {
+                            <p class="sin-plantillas-hint"><i class='bx bx-info-circle'></i> No hay plantillas guardadas. Crea una desde el Editor.</p>
+                          }
+                        </div>
+
+                        <div class="rol-actions-section">
+                          <h6 class="rol-actions-title"><i class='bx bx-layout'></i> Aplicar Tipo de Menú</h6>
+                          <div class="tipos-compact-lista">
+                            @for (tipo of tiposMenuDisponibles; track tipo.value) {
+                              <button class="btn-tipo-compact" [class.activo]="getTipoMenuRol(rol.id) === tipo.value" (click)="aplicarTipoDirectoARol(tipo.value, rol.id)" [style.border-color]="tipo.color" [disabled]="aplicandoRol()">
+                                <i [class]="tipo.icono" [style.color]="tipo.color"></i>
+                                <span>{{ tipo.label }}</span>
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+        </div>
+      }
+
       <!-- ═══════ MODAL: APLICAR A ROL ═══════ -->
       @if (modalAplicarVisible) {
         <div class="modal-overlay" (click)="cerrarModalAplicar()">
@@ -684,10 +824,104 @@ const PLANTILLAS_POR_TIPO: Record<MenuType, AccordionGroupConfig[]> = {
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+    /* ═══ Tab Roles ═══ */
+    .roles-tab-wrapper { display: flex; flex-direction: column; gap: 16px; }
+    .roles-tab-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; padding: 0 0 8px; border-bottom: 1px solid #eee; margin-bottom: 4px; }
+    .roles-tab-title { margin: 0 0 4px; font-size: 16px; font-weight: 700; color: #333; display: flex; align-items: center; gap: 8px; }
+    .roles-tab-subtitle { margin: 0; font-size: 12px; color: #777; }
+    .btn-recargar { display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: #f0f4ff; color: #1a73e8; border: 1px solid #c5d8ff; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-recargar:hover:not(:disabled) { background: #d2e3fc; }
+    .btn-recargar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Acordion de roles */
+    .roles-accordion { display: flex; flex-direction: column; gap: 8px; }
+    .rol-acordion-item { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden; transition: box-shadow 0.15s; }
+    .rol-acordion-item.open { border-color: #1a73e8; box-shadow: 0 2px 12px rgba(26,115,232,0.1); }
+    .rol-acordion-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; cursor: pointer; background: #fafafa; transition: background 0.12s; user-select: none; }
+    .rol-acordion-header:hover { background: #f0f4ff; }
+    .rol-acordion-item.open .rol-acordion-header { background: #f0f4ff; border-bottom: 1px solid #e0e8ff; }
+    .rol-header-left { display: flex; align-items: center; gap: 12px; }
+    .rol-header-right { display: flex; align-items: center; gap: 10px; }
+    .rol-info { display: flex; flex-direction: column; gap: 3px; }
+    .rol-nombre { font-size: 14px; font-weight: 600; color: #333; }
+    .rol-config-badge { font-size: 11px; display: flex; align-items: center; gap: 4px; color: #999; }
+    .rol-config-badge.tiene-config { color: #2e7d32; }
+    .rol-grupo-count { font-size: 11px; color: #888; display: flex; align-items: center; gap: 4px; }
+    .rol-chevron { font-size: 18px; color: #aaa; transition: transform 0.2s; }
+    .rol-acordion-item.open .rol-chevron { transform: rotate(180deg); color: #1a73e8; }
+
+    /* Badges de rol */
+    .rol-badge { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+    .rol-badge-ti { background: #1a237e; color: #fff; }
+    .rol-badge-admin { background: #4a148c; color: #fff; }
+    .rol-badge-jefe { background: #0d47a1; color: #fff; }
+    .rol-badge-op { background: #006064; color: #fff; }
+    .rol-badge-campo { background: #e65100; color: #fff; }
+    .rol-badge-almacen { background: #1b5e20; color: #fff; }
+    .rol-badge-aprobador { background: #880e4f; color: #fff; }
+    .rol-badge-finanzas { background: #b71c1c; color: #fff; }
+    .rol-badge-gerente { background: #37474f; color: #fff; }
+    .rol-badge-default { background: #616161; color: #fff; }
+
+    /* Cuerpo del acordion */
+    .rol-acordion-body { padding: 16px; animation: slideDown 0.18s ease; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    .rol-body-grid { display: grid; grid-template-columns: 260px 1fr; gap: 20px; }
+
+    /* Preview col */
+    .rol-preview-col { display: flex; flex-direction: column; gap: 8px; }
+    .rol-preview-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+    .rol-preview-header h6 { margin: 0; font-size: 13px; font-weight: 600; color: #555; display: flex; align-items: center; gap: 6px; }
+    .badge-sin-config { font-size: 10px; padding: 2px 8px; background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; border-radius: 10px; }
+    .rol-preview-sidebar { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; max-height: 360px; overflow-y: auto; }
+    .rol-preview-user { background: #1565c0; padding: 12px 10px; display: flex; align-items: center; gap: 8px; color: #fff; font-size: 12px; }
+    .rol-preview-user i { font-size: 22px; opacity: 0.9; }
+    .rol-preview-id { font-size: 9px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; color: #fff; margin-left: auto; font-weight: 700; }
+    .rol-preview-menu-area { padding: 4px 0; background: #f8f9fa; min-height: 100px; }
+    .rol-preview-menu-area ::ng-deep .dm-group-header,
+    .rol-preview-menu-area ::ng-deep .dm-icon,
+    .rol-preview-menu-area ::ng-deep .dm-label,
+    .rol-preview-menu-area ::ng-deep .dm-arrow,
+    .rol-preview-menu-area ::ng-deep .dm-item-link,
+    .rol-preview-menu-area ::ng-deep .dm-item-link i,
+    .rol-preview-menu-area ::ng-deep .dm-item-link span.hide-menu,
+    .rol-preview-menu-area ::ng-deep .dm-nav-link,
+    .rol-preview-menu-area ::ng-deep .dm-nav-link i,
+    .rol-preview-menu-area ::ng-deep .dm-list-link,
+    .rol-preview-menu-area ::ng-deep .dm-list-link i { color: #333 !important; font-size: 12px; }
+
+    /* Acciones col */
+    .rol-actions-col { display: flex; flex-direction: column; gap: 16px; }
+    .rol-actions-section { background: #f8f9fa; border: 1px solid #eee; border-radius: 8px; padding: 12px 14px; }
+    .rol-actions-title { margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #555; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .btn-editar-rol { width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; background: #1a73e8; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.12s; }
+    .btn-editar-rol:hover { background: #1557b0; }
+    .btn-resetear-rol { width: 100%; margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; background: #fff; color: #c62828; border: 1px solid #ffcdd2; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.12s; }
+    .btn-resetear-rol:hover { background: #ffebee; }
+
+    /* Plantillas compactas */
+    .plantillas-lista-compact { display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; }
+    .plantilla-compact-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 10px; background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; }
+    .plantilla-compact-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+    .plantilla-compact-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 2px 7px; border-radius: 10px; background: #e8f5e9; color: #2e7d32; white-space: nowrap; flex-shrink: 0; }
+    .plantilla-compact-nombre { font-size: 12px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .btn-aplicar-compact { display: flex; align-items: center; gap: 4px; padding: 5px 10px; background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .btn-aplicar-compact:hover:not(:disabled) { background: #c8e6c9; }
+    .btn-aplicar-compact:disabled { opacity: 0.5; cursor: not-allowed; }
+    .sin-plantillas-hint { font-size: 12px; color: #aaa; display: flex; align-items: center; gap: 6px; margin: 0; }
+
+    /* Tipos compactos */
+    .tipos-compact-lista { display: flex; flex-wrap: wrap; gap: 6px; }
+    .btn-tipo-compact { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #fff; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 12px; font-weight: 500; color: #555; cursor: pointer; transition: all 0.12s; }
+    .btn-tipo-compact:hover:not(:disabled) { background: #f0f4ff; }
+    .btn-tipo-compact.activo { background: #f0f4ff; font-weight: 700; }
+    .btn-tipo-compact:disabled { opacity: 0.5; cursor: not-allowed; }
+
     @media (max-width: 1100px) {
       .editor-panels { grid-template-columns: 1fr; }
       .paleta-panel { max-height: 300px; }
       .tipos-menu-grid { grid-template-columns: 1fr; }
+      .rol-body-grid { grid-template-columns: 1fr; }
     }
   `]
 })
@@ -699,7 +933,7 @@ export class AdminPlantillasMenuComponent {
   private readonly baseUrl = environment.baseUrl;
   private readonly adminUser = JSON.parse(localStorage.getItem('ADMIN_USER') || '{}');
 
-  tabActivo: 'tipos' | 'plantillas' | 'editor' = 'tipos';
+  tabActivo: 'tipos' | 'plantillas' | 'editor' | 'roles' = 'tipos';
   plantillas = signal<PlantillaMenu[]>([]);
   guardando = signal(false);
   busquedaPaleta = '';
@@ -722,6 +956,9 @@ export class AdminPlantillasMenuComponent {
   // Editor
   editorPlantilla: PlantillaMenu = this.crearPlantillaVacia();
 
+  // Editor — cuando viene de 'abrirEditorParaRol', guardar directo al rol
+  _rolEditorDestino: string | null = null;
+
   // Drag state
   private dragData: { tipo: 'paleta-grupo' | 'paleta-item' | 'builder-grupo' | 'builder-item'; payload: any } | null = null;
   dragOverGrupoIdx: number | null = null;
@@ -733,6 +970,12 @@ export class AdminPlantillasMenuComponent {
   modalAplicarTipo: MenuType | null = null;
   modalRolSeleccionado = '';
   aplicandoRol = signal(false);
+
+  // Tab Roles
+  rolAcordionAbierto: string | null = null;
+  cargandoRoles = signal(false);
+  configsRolCargadas = signal<Map<string, { tipoMenu: MenuType; grupos: AccordionGroupConfig[] }>>(new Map());
+  rolAplicando: string | null = null;
   readonly rolesDisponibles = [
     { id: 'TILOGIST', nombre: 'Admin Sistema' },
     { id: 'ADLOGIST', nombre: 'Admin Logística' },
@@ -750,6 +993,141 @@ export class AdminPlantillasMenuComponent {
   constructor() {
     this.cargarTiposCustom();
     this.cargarPlantillas();
+  }
+
+  // ══════════════════════════════════════════════
+  // TAB: MENÚ POR ROL
+  // ══════════════════════════════════════════════
+
+  irTabRoles() {
+    this.tabActivo = 'roles';
+    this.cargarConfigRoles();
+    this.cdr.markForCheck();
+  }
+
+  async cargarConfigRoles() {
+    this.cargandoRoles.set(true);
+    try {
+      await this.layoutConfig.cargar();
+      const mapa = new Map<string, { tipoMenu: MenuType; grupos: AccordionGroupConfig[] }>();
+      for (const rol of this.rolesDisponibles) {
+        const config = this.layoutConfig.getMenuConfig(rol.id);
+        if (config && (config.menuConfig?.length || config.usaAccordion)) {
+          mapa.set(rol.id, {
+            tipoMenu: config.tipoMenu,
+            grupos: config.menuConfig || this.layoutConfig.getAccordionMenu(rol.id)
+          });
+        }
+      }
+      this.configsRolCargadas.set(mapa);
+    } catch (err) {
+      console.error('[PlantillasMenu] Error cargando configs de roles:', err);
+    }
+    this.cargandoRoles.set(false);
+    this.cdr.markForCheck();
+  }
+
+  toggleRolAcordion(idrol: string) {
+    this.rolAcordionAbierto = this.rolAcordionAbierto === idrol ? null : idrol;
+    this.cdr.markForCheck();
+  }
+
+  tieneConfigRol(idrol: string): boolean {
+    return this.configsRolCargadas().has(idrol);
+  }
+
+  getTipoMenuRol(idrol: string): MenuType {
+    return this.configsRolCargadas().get(idrol)?.tipoMenu || 'default';
+  }
+
+  getGruposRol(idrol: string): AccordionGroupConfig[] {
+    const cfg = this.configsRolCargadas().get(idrol);
+    if (cfg?.grupos?.length) return cfg.grupos;
+    return this.layoutConfig.getAccordionMenu(idrol);
+  }
+
+  getRolBadgeClass(idrol: string): string {
+    const map: Record<string, string> = {
+      TILOGIST: 'rol-badge-ti',
+      ADLOGIST: 'rol-badge-admin',
+      JLOLOGIST: 'rol-badge-jefe',
+      JEMLOGIST: 'rol-badge-jefe',
+      LOLOGIST: 'rol-badge-op',
+      EMLOGIST: 'rol-badge-op',
+      OPLOGIST: 'rol-badge-campo',
+      ALLOGIST: 'rol-badge-almacen',
+      APLOGIST: 'rol-badge-aprobador',
+      FINANZAS: 'rol-badge-finanzas',
+      GERENTE: 'rol-badge-gerente',
+    };
+    return 'rol-badge ' + (map[idrol] || 'rol-badge-default');
+  }
+
+  abrirEditorParaRol(idrol: string) {
+    const grupos = this.getGruposRol(idrol);
+    const tipoMenu = this.getTipoMenuRol(idrol);
+    const nombreRol = this.rolesDisponibles.find(r => r.id === idrol)?.nombre || idrol;
+    this.editorPlantilla = {
+      id: `rol-${idrol.toLowerCase()}-${Date.now().toString(36)}`,
+      nombre: `Menú ${nombreRol}`,
+      descripcion: `Configuración de menú para el rol ${idrol}`,
+      tipoMenu,
+      grupos: JSON.parse(JSON.stringify(grupos)),
+      fechaCreacion: new Date().toISOString(),
+      usuarioCreador: this.adminUser?.documentoidentidad || 'ADMIN',
+      activo: true
+    };
+    this._rolEditorDestino = idrol;
+    this.tabActivo = 'editor';
+    this.cdr.markForCheck();
+  }
+
+  async aplicarPlantillaARol(p: PlantillaMenu, idrol: string) {
+    this.aplicandoRol.set(true);
+    this.rolAplicando = idrol;
+    const ok = await this.layoutConfig.guardarMenuConfig(idrol, p.tipoMenu, p.grupos);
+    if (ok) {
+      this.alertService.showAlert('Aplicado', `Plantilla "${p.nombre}" aplicada al rol ${idrol}.`, 'success');
+      await this.cargarConfigRoles();
+    } else {
+      this.alertService.showAlertError('Error', 'No se pudo aplicar la plantilla.');
+    }
+    this.rolAplicando = null;
+    this.aplicandoRol.set(false);
+    this.cdr.markForCheck();
+  }
+
+  async aplicarTipoDirectoARol(tipo: string, idrol: string) {
+    const menuType = this.getTipoMenuValue(tipo);
+    this.aplicandoRol.set(true);
+    this.rolAplicando = idrol;
+    const grupos = PLANTILLAS_POR_TIPO[menuType] || [];
+    const ok = await this.layoutConfig.guardarMenuConfig(idrol, menuType, grupos);
+    if (ok) {
+      this.alertService.showAlert('Aplicado', `Tipo "${tipo}" aplicado al rol ${idrol}.`, 'success');
+      await this.cargarConfigRoles();
+    } else {
+      this.alertService.showAlertError('Error', 'No se pudo aplicar el tipo.');
+    }
+    this.rolAplicando = null;
+    this.aplicandoRol.set(false);
+    this.cdr.markForCheck();
+  }
+
+  async resetearConfigRol(idrol: string) {
+    if (!confirm(`¿Resetear la configuración del menú para el rol ${idrol}? Volverá al menú por defecto del sistema.`)) return;
+    this.aplicandoRol.set(true);
+    this.rolAplicando = idrol;
+    const ok = await this.layoutConfig.guardarMenuConfig(idrol, 'default', []);
+    if (ok) {
+      this.alertService.showAlert('Reseteado', `Rol ${idrol} vuelve al menú por defecto.`, 'success');
+      await this.cargarConfigRoles();
+    } else {
+      this.alertService.showAlertError('Error', 'No se pudo resetear la configuración.');
+    }
+    this.rolAplicando = null;
+    this.aplicandoRol.set(false);
+    this.cdr.markForCheck();
   }
 
   // ══════════════════════════════════════════════
@@ -871,7 +1249,19 @@ export class AdminPlantillasMenuComponent {
 
       this.alertService.showAlert('Guardada', `Plantilla "${this.editorPlantilla.nombre}" guardada correctamente.`, 'success');
       await this.cargarPlantillas();
-      this.tabActivo = 'plantillas';
+      // Si venía de editar un rol, aplicar también al rol destino
+      if (this._rolEditorDestino) {
+        await this.layoutConfig.guardarMenuConfig(
+          this._rolEditorDestino,
+          this.editorPlantilla.tipoMenu,
+          this.editorPlantilla.grupos
+        );
+        this._rolEditorDestino = null;
+        await this.cargarConfigRoles();
+        this.tabActivo = 'roles';
+      } else {
+        this.tabActivo = 'plantillas';
+      }
     } catch (err) {
       console.error('Error guardando plantilla:', err);
       this.alertService.showAlertError('Error', 'No se pudo guardar la plantilla.');

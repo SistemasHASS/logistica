@@ -145,7 +145,7 @@ export class DexieService extends Dexie {
   public unidadesMedida!: Dexie.Table<UnidadMedida, number>;
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 39; // Added email configuration tables
+  private static readonly DB_VERSION = 40; // Reduced maestroItems index for faster bulkPut
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -189,15 +189,7 @@ export class DexieService extends Dexie {
         maestroCommoditys: `id,commodity01,commodity02,commodity,clasificacion,descripcionLocal,descripcionIngles,
         unidadporDefecto,cuentaContableGasto,elementoGasto,clasificacionActivo,estado,ultimoUsuario,
         montoReferencial,montoReferencialMoneda,descripcionEditableFlag,igvExoneradoFlag`,
-        maestroItems: `id,item,itemTipo,linea,familia,subFamilia,descripcionLocal,descripcionIngles,
-        descripcionCompleta,unidadCodigo,monedaCodigo,precioCosto,precioUnitarioLocal,
-        precioUnitarioDolares,itemPrecioFlag,disponibleVentaFlag,itemProcedencia,manejoxLoteFlag,
-        manejoxSerieFlag,manejoxKitFlag,afectoImpuestoVentasFlag,requisicionamientoAutomaticoFl,
-        disponibleTransferenciaFlag,disponibleConsumoFlag,formularioFlag,manejoxUnidadFlag,isoAplicableFlag,
-        cantidadDobleFlag,unidadReplicacion,cuentaInventario,cuentaGasto,cuentaServicioTecnico,
-        factorEquivalenciaComercial,estado,ultimaFechaModif,ultimoUsuario,cuentaVentas,
-        unidadCompra,controlCalidadFlag,cuentaTransito,cantidadDobleFactor,subFamiliaInferior,
-        stockMinimo,stockMaximo,referenciaFiscalIngreso02`,
+        maestroItems: `id,item,descripcionLocal,familia,subFamilia,estado,unidadCodigo`,
         maestroSubCommoditys: `id,commodity01,commodity02,commodity,descripcionLocal,descripcionIngles,
         unidadporDefecto,cuentaContableGasto,elementoGasto,clasificacionActivo,estado,ultimoUsuario,
         montoReferencial,montoReferencialMoneda,descripcionEditableFlag,igvExoneradoFlag`,
@@ -878,7 +870,10 @@ export class DexieService extends Dexie {
     await this.maestroItems.put(maestroItem);
   }
   async saveMaestroItems(maestroItems: MaestroItem[]) {
-    await this.maestroItems.bulkPut(maestroItems);
+    const chunkSize = 500;
+    for (let i = 0; i < maestroItems.length; i += chunkSize) {
+      await this.maestroItems.bulkPut(maestroItems.slice(i, i + chunkSize));
+    }
   }
   async showMaestroItem() {
     return await this.maestroItems.toArray();

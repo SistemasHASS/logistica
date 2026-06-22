@@ -174,3 +174,8 @@
 .detalle-req {
   label { display: block; }
 }
+
+// p-tag contrast (DESPACHADO) → texto blanco
+:host ::ng-deep .p-tag.p-tag-contrast {
+  color: #ffffff;
+}

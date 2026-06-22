@@ -90,7 +90,46 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
       { id: 'reporte-despachos',       nombre: 'Reporte de Despachos',     icono: 'icon icon-file-text',  ruta: './reporte-despachos',       activo: true, orden: 3 },
     ]
   },
+  {
+    id: 'consultas', label: 'Consultas', icono: 'bx bx-search-alt', activo: true, orden: 8,
+    items: [
+      { id: 'catalogo-items', nombre: 'Catálogo de Items', icono: 'bx bx-list-ul', ruta: './catalogo-items', activo: true, orden: 1 },
+    ]
+  },
 ];
+
+/**
+ * Módulos permitidos por rol — basado en las mismas reglas del layout estático
+ * Solo se usan como FALLBACK cuando no hay MENU_JSON en BD
+ */
+const MODULOS_POR_ROL: Record<string, string[]> = {
+  TILOGIST:  ['dashboard-tilogist', 'notificaciones', 'parametros', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'despachos', 'recepcion-mercaderia', 'kardex', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'catalogo-items'],
+  ADLOGIST:  ['dashboard-adlogist', 'notificaciones', 'parametros', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'despachos', 'recepcion-mercaderia', 'kardex', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'catalogo-items'],
+  JLOLOGIST: ['dashboard-jlologist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'catalogo-items'],
+  JEMLOGIST: ['dashboard-jemlogist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'aprobaciones-oc', 'aprobaciones-os', 'catalogo-items'],
+  LOLOGIST:  ['dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'saldo-requerimiento', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'despachos', 'recepcion-mercaderia', 'kardex', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'catalogo-items'],
+  EMLOGIST:  ['dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'catalogo-items'],
+  OPLOGIST:  ['dashboard-oplogist', 'notificaciones', 'requerimientos', 'catalogo-items'],
+  ALLOGIST:  ['dashboard-despacho', 'notificaciones', 'parametros', 'requerimientos', 'despachos', 'recepcion-mercaderia', 'kardex', 'reporte-despachos', 'catalogo-items'],
+  APLOGIST:  ['dashboard-oplogist', 'notificaciones', 'catalogo-items'],
+  FINANZAS:  ['dashboard-finanzas', 'aprobaciones-oc', 'aprobaciones-os', 'catalogo-items'],
+  GERENTE:   ['dashboard-oplogist', 'aprobaciones-oc', 'aprobaciones-os', 'catalogo-items'],
+};
+
+/** Filtra el ACCORDION_DEFAULT dejando solo los módulos permitidos para un rol */
+export function getMenuDefaultParaRol(idrol: string): AccordionGroupConfig[] {
+  const permitidos = MODULOS_POR_ROL[idrol];
+  if (!permitidos) return ACCORDION_DEFAULT;
+
+  const resultado: AccordionGroupConfig[] = [];
+  for (const grupo of ACCORDION_DEFAULT) {
+    const itemsFiltrados = grupo.items.filter(item => permitidos.includes(item.id));
+    if (itemsFiltrados.length > 0) {
+      resultado.push({ ...grupo, items: itemsFiltrados });
+    }
+  }
+  return resultado.length > 0 ? resultado : ACCORDION_DEFAULT;
+}
 
 @Injectable({ providedIn: 'root' })
 export class LayoutConfigService {
@@ -115,23 +154,31 @@ export class LayoutConfigService {
     }
     this.cargando = true;
     try {
-      console.log('[LayoutConfig] Llamando API:', `${this.baseUrl}/api/ConfiguracionPermiso/listar-config-permisos`);
-      // Enviar body vacío {} para listar todas las configuraciones
-      const resp: any = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/listar-config-permisos`, {})
-      );
-      console.log('[LayoutConfig] Respuesta API:', resp);
-      
-      const permisos: { idrol: string; clave: string; valor: string }[] = Array.isArray(resp) ? resp : [];
-      
-      // Debug: ver todas las configs recibidas del API
-      console.log('[LayoutConfig] Total configs recibidas:', permisos.length);
-      console.log('[LayoutConfig] Todas las claves recibidas:', permisos.map(p => `${p.idrol}:${p.clave}`));
-      console.log('[LayoutConfig] Configs ALLOGIST recibidas:', permisos.filter(p => p.idrol === 'ALLOGIST').map(p => ({ clave: p.clave, valorLen: p.valor?.length })));
+      // Llamar ambas APIs en paralelo
+      const [respPermisos, respConfigMenu] = await Promise.allSettled([
+        lastValueFrom(this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/listar-config-permisos`, {})),
+        lastValueFrom(this.http.post<any[]>(`${this.baseUrl}/api/configmenu/listar`, {}))
+      ]);
+
+      const permisos: { idrol: string; clave: string; valor: string }[] =
+        respPermisos.status === 'fulfilled' && Array.isArray((respPermisos as any).value)
+          ? (respPermisos as any).value
+          : [];
+
+      // configmenu devuelve filas con {idrol, clave, valor} — misma forma que permisos
+      const configMenuRows: { idrol: string; clave: string; valor: string }[] =
+        respConfigMenu.status === 'fulfilled' && Array.isArray((respConfigMenu as any).value)
+          ? (respConfigMenu as any).value
+          : [];
+
+      // Unificar: configmenu tiene precedencia para claves de menú
+      const todasLasClaves = [...permisos, ...configMenuRows];
+
+      console.log('[LayoutConfig] Total configs recibidas (permisos + configmenu):', todasLasClaves.length);
 
       // Procesar roles con accordion
       const roles = new Set(
-        permisos.filter(p => p.clave === 'LAYOUT_ACCORDION' && p.valor === '1').map(p => p.idrol)
+        todasLasClaves.filter(p => p.clave === 'LAYOUT_ACCORDION' && p.valor === '1').map(p => p.idrol)
       );
       this.accordionRoles.set(roles);
 
@@ -139,37 +186,50 @@ export class LayoutConfigService {
       const configs = new Map<string, MenuConfig>();
       const menus = new Map<string, AccordionGroupConfig[]>();
 
-      // Agrupar por idrol
-      const porRol = new Map<string, { clave: string; valor: string }[]>();
-      permisos.forEach(p => {
-        if (!porRol.has(p.idrol)) porRol.set(p.idrol, []);
-        porRol.get(p.idrol)!.push(p);
+      // Agrupar por idrol — configmenu sobrescribe permisos para misma clave
+      const porRol = new Map<string, Map<string, string>>();
+      todasLasClaves.forEach(p => {
+        if (!porRol.has(p.idrol)) porRol.set(p.idrol, new Map());
+        // Las últimas entradas (configmenu) sobrescriben las primeras (permisos)
+        porRol.get(p.idrol)!.set(p.clave, p.valor);
       });
 
       // Procesar cada rol
-      porRol.forEach((items, idrol) => {
+      porRol.forEach((clavesMap, idrol) => {
         const config: MenuConfig = { idrol, tipoMenu: 'default', usaAccordion: false };
-        
-        items.forEach(item => {
-          switch (item.clave) {
+
+        clavesMap.forEach((valor, clave) => {
+          switch (clave) {
             case 'LAYOUT_ACCORDION':
-              config.usaAccordion = item.valor === '1';
+              config.usaAccordion = valor === '1';
               break;
             case 'LAYOUT_MENU_TYPE':
-              config.tipoMenu = (item.valor as MenuType) || 'default';
+            case 'MENU_TYPE':
+              config.tipoMenu = (valor as MenuType) || 'default';
+              if (config.tipoMenu !== 'default') config.usaAccordion = true;
               break;
             case 'ACCORDION_MENU_CONFIG':
             case `ACCORDION_MENU_${idrol}`:
+            case 'MENU_JSON':
               try {
-                config.menuConfig = JSON.parse(item.valor) as AccordionGroupConfig[];
-                menus.set(idrol, config.menuConfig);
-                console.log(`[LayoutConfig] JSON parseado OK para ${idrol}, items:`, config.menuConfig?.length);
+                const parsed = JSON.parse(valor) as AccordionGroupConfig[];
+                if (parsed && parsed.length > 0) {
+                  config.menuConfig = parsed;
+                  menus.set(idrol, parsed);
+                  console.log(`[LayoutConfig] Menú cargado para ${idrol} (clave: ${clave}), grupos:`, parsed.length);
+                }
               } catch (err) {
-                console.error(`[LayoutConfig] Error parsing JSON para ${idrol}:`, err);
+                console.error(`[LayoutConfig] Error parsing JSON para ${idrol} clave ${clave}:`, err);
               }
               break;
           }
         });
+
+        // Si tiene menuConfig, siempre marcar usaAccordion y tipoMenu correcto
+        if (config.menuConfig && config.menuConfig.length > 0) {
+          config.usaAccordion = true;
+          if (config.tipoMenu === 'default') config.tipoMenu = 'accordion';
+        }
 
         configs.set(idrol, config);
       });
@@ -177,10 +237,8 @@ export class LayoutConfigService {
       this.menuConfigs.set(configs);
       this.accordionMenus.set(menus);
       this.cargado.set(true);
-      
-      // Debug: mostrar roles cargados
-      console.log('[LayoutConfig] Roles cargados:', Array.from(configs.keys()));
-      console.log('[LayoutConfig] ALLOGIST config:', configs.get('ALLOGIST'));
+
+      console.log('[LayoutConfig] Roles con menú configurado:', Array.from(configs.keys()));
     } catch (err) {
       console.error('[LayoutConfig] Error cargando:', err);
       this.accordionRoles.set(new Set());
@@ -236,7 +294,8 @@ export class LayoutConfigService {
     
     const custom = this.accordionMenus().get(idrol);
     if (custom && custom.length > 0) return custom;
-    return ACCORDION_DEFAULT;
+    // Fallback: menú filtrado según módulos permitidos del rol
+    return getMenuDefaultParaRol(idrol);
   }
 
   /** Guarda la configuración de menú para un rol */
@@ -266,40 +325,45 @@ export class LayoutConfigService {
         }))
       );
 
-      // Guardar configuración del menú si es accordion
-      if (menuConfig && tipoMenu === 'accordion') {
+      // Guardar configuración del menú (para todos los tipos que tengan grupos)
+      if (menuConfig && menuConfig.length > 0) {
         requests.push(
           lastValueFrom(this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/guardar-config-permiso`, {
             idrol,
             clave: 'ACCORDION_MENU_CONFIG',
             valor: JSON.stringify(menuConfig),
-            descripcion: `Configuración de menú accordion para ${idrol}`,
+            descripcion: `Configuración de menú ${tipoMenu} para ${idrol}`,
             usuarioModifica: 'ADMIN'
           }))
         );
       }
 
       await Promise.all(requests);
-      
-      // Actualizar signals locales
+
+      // Actualizar signals locales inmediatamente (sin esperar próximo cargar())
       const newConfig: MenuConfig = {
         idrol,
         tipoMenu,
-        usaAccordion: tipoMenu === 'accordion',
+        usaAccordion: tipoMenu !== 'default',
         menuConfig,
         ultimaModificacion: new Date()
       };
-      
+
       const newConfigs = new Map(this.menuConfigs());
       newConfigs.set(idrol, newConfig);
       this.menuConfigs.set(newConfigs);
-      
-      if (tipoMenu === 'accordion' && menuConfig) {
+
+      if (menuConfig && menuConfig.length > 0) {
         const newMenus = new Map(this.accordionMenus());
         newMenus.set(idrol, menuConfig);
         this.accordionMenus.set(newMenus);
+      }
+      if (newConfig.usaAccordion) {
         this.accordionRoles.set(new Set([...this.accordionRoles(), idrol]));
       }
+
+      // Notificar a otras pestañas
+      localStorage.setItem('LAYOUT_CONFIG_INVALIDADO', Date.now().toString());
 
       return true;
     } catch (error) {

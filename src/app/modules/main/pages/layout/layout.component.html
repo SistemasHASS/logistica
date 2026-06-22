@@ -261,6 +261,18 @@
               <span class="hide-menu"> Gestión de Despachos</span>
             </a>
           </li>
+          <li *ngIf="usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Transferencias</span>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('ALLOGIST')" class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./transferencias-almacen" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class="bx bx-transfer"></i>
+              </span>
+              <span class="hide-menu"> Transferencias Almacén</span>
+            </a>
+          </li>
           <li *ngIf="usuario?.idrol.includes('LOLOGIST') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Conformidad</span>
@@ -272,6 +284,15 @@
                 <i class="bx bx-pen"></i>
               </span>
               <span class="hide-menu"> Conformidad NI / NS</span>
+            </a>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('LOLOGIST') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('JEMLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./conformidad-servicios" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class="bx bx-check-shield"></i>
+              </span>
+              <span class="hide-menu"> Conformidad de Servicios</span>
             </a>
           </li>
           <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('ALLOGIST') || usuario?.idrol.includes('LOLOGIST')" class="nav-small-cap">
@@ -487,13 +508,13 @@
             </a>
           </li> -->
           <!-- ============================================= -->
-          <!-- APROBACIONES OC - Solo TILOGIST, ADLOGIST, FINANZA -->
+          <!-- APROBACIONES OC - TILOGIST, ADLOGIST, FINANZAS, JLOLOGIST (solo visualización) -->
           <!-- ============================================= -->
-          <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('FINANZAS')" class="nav-small-cap">
+          <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('FINANZAS') || usuario?.idrol.includes('JLOLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Aprobaciones OC</span>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('FINANZAS')" class="sidebar-item"
+          <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('FINANZAS') || usuario?.idrol.includes('JLOLOGIST')" class="sidebar-item"
             (click)="toggleSidebar()">
             <a routerLink="./aprobaciones-oc" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
@@ -502,12 +523,12 @@
               <span class="hide-menu"> Aprobación Órdenes Compra</span>
             </a>
           </li>
-          <!-- APROBACIONES OS - Solo TILOGIST, ADLOGIST, FINANZAS -->
-          <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('FINANZAS')" class="nav-small-cap">
+          <!-- APROBACIONES OS - TILOGIST, ADLOGIST, FINANZAS, JLOLOGIST (solo visualización) -->
+          <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('FINANZAS') || usuario?.idrol.includes('JLOLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Aprobaciones OS</span>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('FINANZAS')" class="sidebar-item"
+          <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('FINANZAS') || usuario?.idrol.includes('JLOLOGIST')" class="sidebar-item"
             (click)="toggleSidebar()">
             <a routerLink="./aprobaciones-os" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
@@ -662,6 +683,21 @@
               <span class="hide-menu"> lista de requerimientos</span>
             </a>
           </li> -->
+          <!-- ============================================= -->
+          <!-- CATÁLOGO DE ITEMS - Todos los roles          -->
+          <!-- ============================================= -->
+          <li class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Consultas</span>
+          </li>
+          <li class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./catalogo-items" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class="bx bx-list-ul"></i>
+              </span>
+              <span class="hide-menu"> Catálogo de Items</span>
+            </a>
+          </li>
         </ul>
         <div class="unlimited-access hide-menu position-relative mb-7 text-center ">
           <a *ngIf="isOnline" (click)="logout()" class="btn btn-danger">

@@ -1,0 +1,203 @@
+<div class="branding-page">
+
+  <!-- Header -->
+  <div class="branding-header">
+    <div class="branding-header__left">
+      <i class='bx bx-image-alt branding-header__icon'></i>
+      <div>
+        <h4 class="branding-header__title">Configuración de Branding</h4>
+        <p class="branding-header__sub">Personaliza el logo, ícono y textos del sistema</p>
+      </div>
+    </div>
+    <div class="branding-header__actions">
+      <button class="btn btn-outline-secondary btn-sm" (click)="restaurarDefaults()" [disabled]="guardando || loading">
+        <i class='bx bx-reset'></i> Restaurar defaults
+      </button>
+      <button class="btn btn-primary btn-sm" (click)="guardar()" [disabled]="guardando || loading">
+        <span *ngIf="guardando" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!guardando" class='bx bx-save me-1'></i>
+        {{ guardando ? 'Guardando...' : 'Guardar cambios' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading skeleton -->
+  <div *ngIf="loading" class="branding-loading">
+    <div class="spinner-border text-primary"></div>
+    <span>Cargando configuración...</span>
+  </div>
+
+  <div *ngIf="!loading" class="branding-grid">
+
+    <!-- ===== COLUMNA IZQUIERDA: Formularios ===== -->
+    <div class="branding-form-col">
+
+      <!-- LOGO LOGIN -->
+      <div class="branding-card">
+        <div class="branding-card__header">
+          <i class='bx bx-image branding-card__icon text-primary'></i>
+          <div>
+            <h6 class="branding-card__title">Logo del Login</h6>
+            <p class="branding-card__desc">Imagen principal de la pantalla de inicio de sesión</p>
+          </div>
+        </div>
+        <div class="branding-card__body">
+          <div class="branding-upload-zone" [class.has-image]="logoLoginPreview">
+            <ng-container *ngIf="!logoLoginPreview">
+              <i class='bx bx-cloud-upload branding-upload-zone__icon'></i>
+              <p class="branding-upload-zone__text">Arrastra una imagen o haz clic para seleccionar</p>
+              <p class="branding-upload-zone__hint">PNG, SVG, JPG · Máx. 2MB · Recomendado: 300×80px</p>
+            </ng-container>
+            <ng-container *ngIf="logoLoginPreview">
+              <img [src]="logoLoginPreview" alt="Logo Login" class="branding-upload-zone__preview" />
+            </ng-container>
+            <input
+              type="file"
+              class="branding-upload-zone__input"
+              accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+              (change)="onLogoLoginSelected($event)"
+            />
+          </div>
+          <div class="branding-upload-actions" *ngIf="logoLoginPreview">
+            <button class="btn btn-sm btn-outline-danger" (click)="quitarLogoLogin()">
+              <i class='bx bx-trash'></i> Quitar logo
+            </button>
+            <label class="btn btn-sm btn-outline-primary mb-0" style="cursor:pointer;">
+              <i class='bx bx-pencil'></i> Cambiar
+              <input type="file" class="d-none" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                (change)="onLogoLoginSelected($event)" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÍCONO APP -->
+      <div class="branding-card">
+        <div class="branding-card__header">
+          <i class='bx bx-cube branding-card__icon text-success'></i>
+          <div>
+            <h6 class="branding-card__title">Ícono del Sistema</h6>
+            <p class="branding-card__desc">Ícono que aparece en la barra lateral y como favicon</p>
+          </div>
+        </div>
+        <div class="branding-card__body">
+          <div class="branding-upload-zone branding-upload-zone--icon" [class.has-image]="iconAppPreview">
+            <ng-container *ngIf="!iconAppPreview">
+              <i class='bx bx-cloud-upload branding-upload-zone__icon'></i>
+              <p class="branding-upload-zone__text">Subir ícono</p>
+              <p class="branding-upload-zone__hint">PNG, SVG, ICO · Máx. 512KB · Recomendado: 512×512px</p>
+            </ng-container>
+            <ng-container *ngIf="iconAppPreview">
+              <img [src]="iconAppPreview" alt="Ícono App" class="branding-upload-zone__preview branding-upload-zone__preview--icon" />
+            </ng-container>
+            <input
+              type="file"
+              class="branding-upload-zone__input"
+              accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/x-icon,image/webp"
+              (change)="onIconAppSelected($event)"
+            />
+          </div>
+          <div class="branding-upload-actions" *ngIf="iconAppPreview">
+            <button class="btn btn-sm btn-outline-danger" (click)="quitarIconApp()">
+              <i class='bx bx-trash'></i> Quitar ícono
+            </button>
+            <label class="btn btn-sm btn-outline-primary mb-0" style="cursor:pointer;">
+              <i class='bx bx-pencil'></i> Cambiar
+              <input type="file" class="d-none" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/x-icon"
+                (change)="onIconAppSelected($event)" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEXTOS -->
+      <div class="branding-card">
+        <div class="branding-card__header">
+          <i class='bx bx-text branding-card__icon text-warning'></i>
+          <div>
+            <h6 class="branding-card__title">Textos del Login</h6>
+            <p class="branding-card__desc">Título y subtítulo que se muestran en la pantalla de acceso</p>
+          </div>
+        </div>
+        <div class="branding-card__body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Título principal</label>
+            <input type="text" class="form-control" [(ngModel)]="tituloLogin"
+              placeholder="Ej: SISTEMA DE LOGÍSTICA" maxlength="80" />
+            <small class="text-muted">{{ tituloLogin.length }}/80 caracteres</small>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Subtítulo / Descripción</label>
+            <input type="text" class="form-control" [(ngModel)]="subtituloLogin"
+              placeholder="Ej: Ingrese sus credenciales" maxlength="120" />
+            <small class="text-muted">{{ subtituloLogin.length }}/120 caracteres</small>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===== COLUMNA DERECHA: Preview ===== -->
+    <div class="branding-preview-col">
+      <div class="branding-preview-card">
+        <div class="branding-preview-card__label">
+          <i class='bx bx-show'></i> Vista previa del Login
+        </div>
+        <div class="branding-preview-card__screen">
+          <div class="login-preview">
+            <div class="login-preview__card">
+              <!-- Logo -->
+              <div class="login-preview__logo-wrap">
+                <img
+                  *ngIf="logoLoginPreview"
+                  [src]="logoLoginPreview"
+                  alt="Logo"
+                  class="login-preview__logo"
+                />
+                <div *ngIf="!logoLoginPreview" class="login-preview__logo-placeholder">
+                  <i class='bx bx-image-alt'></i>
+                  <span>Sin logo</span>
+                </div>
+              </div>
+              <!-- Textos -->
+              <h5 class="login-preview__title">{{ tituloLogin || 'TÍTULO DEL SISTEMA' }}</h5>
+              <p class="login-preview__sub">{{ subtituloLogin || 'Subtítulo...' }}</p>
+              <!-- Form mock -->
+              <div class="login-preview__field"></div>
+              <div class="login-preview__field"></div>
+              <div class="login-preview__btn">Ingresar</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info del ícono -->
+      <div class="branding-preview-card mt-3">
+        <div class="branding-preview-card__label">
+          <i class='bx bx-cube'></i> Vista previa del Ícono
+        </div>
+        <div class="branding-icon-previews">
+          <div class="branding-icon-item">
+            <div class="branding-icon-item__box branding-icon-item__box--sidebar">
+              <img *ngIf="iconAppPreview" [src]="iconAppPreview" alt="Ícono sidebar" />
+              <i *ngIf="!iconAppPreview" class='bx bx-image-alt'></i>
+            </div>
+            <span>Barra lateral</span>
+          </div>
+          <div class="branding-icon-item">
+            <div class="branding-icon-item__box branding-icon-item__box--favicon">
+              <img *ngIf="iconAppPreview" [src]="iconAppPreview" alt="Favicon" />
+              <i *ngIf="!iconAppPreview" class='bx bx-image-alt'></i>
+            </div>
+            <span>Favicon (32px)</span>
+          </div>
+        </div>
+        <p class="branding-icon-note">
+          <i class='bx bx-info-circle'></i>
+          El ícono se aplica en la barra lateral del sistema tras guardar y recargar la página.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>

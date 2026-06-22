@@ -101,6 +101,7 @@ export interface Configuracion {
   idcultivo: string;
   idarea: string;
   idalmacen: string;
+  idalmacenDestino?: string;
   idproyecto?: string;
   idacopio: number;
   idceco: string;

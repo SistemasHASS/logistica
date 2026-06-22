@@ -16,10 +16,14 @@
             <div class="card mb-0">
               <div class="card-body">
                 <a class="text-nowrap logo-img text-center d-block py-3 w-100">
-                  <img src="../assets/images/logos/favicon.svg" height="80px" alt="">
+                  <img
+                    [src]="logoLoginUrl || '../assets/images/logos/favicon.svg'"
+                    height="80px"
+                    alt="Logo"
+                  />
                 </a>
-                <h1 class="text-center">MODULO LOGISTICA</h1>
-                <p class="text-center">Ingrese sus credenciales</p>
+                <h1 class="text-center">{{ tituloLogin }}</h1>
+                <p class="text-center">{{ subtituloLogin }}</p>
                 <div *ngIf="!!mensajeLogin" 
                   class="col-md-12 alert alert-warning alert-dismissible alert-styled-left border-top-0
                   border-bottom-0 border-right-0">

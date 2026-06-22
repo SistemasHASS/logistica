@@ -240,6 +240,15 @@
               <span class="hide-menu"> Colores del Sistema</span>
             </a>
           </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-config-branding" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='bx bx-image-alt'></i>
+              </span>
+              <span class="hide-menu"> Branding del Sistema</span>
+            </a>
+          </li>
           <!-- <li
             *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('OPLOGIST') || adminUser?.idPerfil.includes('APLOGIST')"
             class="nav-small-cap">

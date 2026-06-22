@@ -1,7 +1,25 @@
-// /**
-//  * Script: update-version.js
-//  * Función: Genera una nueva versión automática para Angular + Dexie + SW
-//  */
+/**
+ * Script: update-version.js
+ * Función: Incrementa automáticamente el BUILD number en cada compilación.
+ * La versión semántica (MAJOR.MINOR.PATCH) debe ser modificada manualmente por el desarrollador.
+ * 
+ * Estructura de versión:
+ * {
+ *   "version": "1.4.2",   // MAJOR.MINOR.PATCH (manual)
+ *   "build": 187,         // Build automático (incrementa en cada build)
+ *   "buildTime": "2026-06-17T20:00:00.000Z"
+ * }
+ * 
+ * Cuándo cambiar cada parte (manual):
+ * - MAJOR: Cambios grandes, breaking changes, refactorización mayor
+ * - MINOR: Nuevas funcionalidades, módulos nuevos
+ * - PATCH: Bugfixes, hotfixes, correcciones menores
+ * 
+ * Uso manual de versión:
+ * npm run version:patch  -> Incrementa PATCH (1.4.2 -> 1.4.3)
+ * npm run version:minor  -> Incrementa MINOR (1.4.2 -> 1.5.0)
+ * npm run version:major  -> Incrementa MAJOR (1.4.2 -> 2.0.0)
+ */
 
 const fs = require('fs');
 const path = require('path');
@@ -14,101 +32,75 @@ const envPaths = [
 ];
 const versionJsonPath = path.resolve('src/assets/version.json');
 
-// 📦 Leer versión desde package.json
-const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-const [major, minor, patch] = pkg.version.split('.').map(Number);
-const newVersion = `${major}.${minor}.${patch + 1}`;
+// 📦 Leer versión actual desde version.json (fuente de verdad)
+let versionData;
+try {
+  versionData = JSON.parse(fs.readFileSync(versionJsonPath, 'utf8'));
+} catch (e) {
+  // Si no existe, crear estructura inicial
+  versionData = {
+    version: '1.0.0',
+    build: 0,
+    buildTime: new Date().toISOString()
+  };
+}
 
-// ✏️ Actualizar package.json
-pkg.version = newVersion;
+// 🔄 Incrementar SOLO el build number automáticamente
+const newBuild = (versionData.build || 0) + 1;
+const currentVersion = versionData.version || '1.0.0';
+
+// 📝 Preparar nueva estructura
+const newVersionData = {
+  version: currentVersion,    // MAJOR.MINOR.PATCH (el dev lo controla manualmente)
+  build: newBuild,            // Número de build (automático)
+  buildTime: new Date().toISOString()
+};
+
+// 💾 Guardar version.json
+fs.writeFileSync(versionJsonPath, JSON.stringify(newVersionData, null, 2));
+
+// 📦 Sincronizar con package.json (solo metadata, sin alterar versión semántica)
+const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+pkg.version = currentVersion;
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
 
-// 🔁 Actualizar environments
+// 🔁 Actualizar environments con formato: version (build)
+const displayVersion = `${currentVersion} (${newBuild})`;
 for (const envPath of envPaths) {
   if (!fs.existsSync(envPath)) continue;
 
   let content = fs.readFileSync(envPath, 'utf8');
 
-  // 1️⃣ Actualizar SOLO el comentario
+  // Actualizar comentario
   content = content.replace(
     /(\/\/\s*appVersion:\s*')[^']*('.*se reemplaza automáticamente)/,
-    `$1${newVersion}$2`
+    `$1${currentVersion}$2`
   );
 
-  // 2️⃣ Actualizar SOLO la línea real (inicio de línea)
+  // Actualizar línea real
   content = content.replace(
     /^\s*appVersion:\s*'[^']*',/m,
-    `  appVersion: '${newVersion}',`
+    `  appVersion: '${currentVersion}',`
   );
 
   fs.writeFileSync(envPath, content);
 }
 
-// 📄 version.json
-fs.writeFileSync(
-  versionJsonPath,
-  JSON.stringify(
-    {
-      version: newVersion,
-      buildTime: new Date().toISOString()
-    },
-    null,
-    2
-  )
-);
+// 📊 Mostrar resumen
+console.log('');
+console.log('╔════════════════════════════════════════════════════════╗');
+console.log('║           ✅ VERSIÓN ACTUALIZADA                      ║');
+console.log('╠════════════════════════════════════════════════════════╣');
+console.log(`║  📌 Versión semántica: ${currentVersion.padEnd(27)} ║`);
+console.log(`║  🔨 Build número:      ${String(newBuild).padEnd(27)} ║`);
+console.log(`║  🕐 Build time:         ${newVersionData.buildTime.slice(0, 19).padEnd(27)} ║`);
+console.log('╚════════════════════════════════════════════════════════╝');
+console.log('');
+console.log('💡 Para cambiar MAJOR/MINOR/PATCH manualmente:');
+console.log('   npm run version:patch  (bugfixes)');
+console.log('   npm run version:minor  (nuevas funcionalidades)');
+console.log('   npm run version:major  (cambios grandes)');
+console.log('');
 
-console.log(`✅ Versión actualizada correctamente → ${newVersion}`);
-
-// const fs = require('fs');
-// const path = require('path');
-
-// // 📂 Ruta raíz del proyecto (ajustada a tu estructura)
-// // const ROOT = 'D:/proyectos/logistica/logistica';
-// // 📌 raíz real del proyecto
-// const ROOT = process.cwd();
-
-// const versionFile = path.join(ROOT, 'src/assets/version.json');
-// const envFiles = [
-//   path.join(ROOT, 'src/environments/environment.ts'),
-//   path.join(ROOT, 'src/environments/environment.prod.ts'),
-// ];
-
-// // 🕐 Generar versión basada en fecha/hora (YYYY.MM.DD.HHMM)
-// const now = new Date();
-// const version = `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}.${now.getHours()}${now.getMinutes()}`;
-
-// // 🧾 Crear o actualizar version.json
-// // const jsonContent = JSON.stringify({ version }, null, 2);
-// // fs.writeFileSync(versionFile, jsonContent);
-// // console.log(`✅ Archivo version.json actualizado → ${versionFile}`);
-
-// const versionData = {
-//   version,
-//   buildTime: new Date().toISOString()
-// };
-
-// fs.writeFileSync(
-//   versionFile,
-//   JSON.stringify(versionData, null, 2)
-// );
-
-// console.log(`✅ version.json actualizado → ${version}`);
-
-// // 🧠 Actualizar appVersion en environment.ts y environment.prod.ts
-// for (const envFile of envFiles) {
-//   if (!fs.existsSync(envFile)) {
-//     console.warn(`⚠️ No se encontró: ${envFile}`);
-//     continue;
-//   }
-
-//   let content = fs.readFileSync(envFile, 'utf8');
-//   if (content.includes('appVersion')) {
-//     content = content.replace(/appVersion:\s*['"].*['"]/, `appVersion: '${version}'`);
-//   } else {
-//     content += `\nexport const appVersion = '${version}';\n`;
-//   }
-//   fs.writeFileSync(envFile, content);
-//   console.log(`🔁 appVersion actualizado en ${path.basename(envFile)} → ${version}`);
-// }
-
-// console.log(`🎉 Nueva versión generada: ${version}`);
+// Exportar para uso en otros scripts si es necesario
+module.exports = { version: currentVersion, build: newBuild };

@@ -1,0 +1,652 @@
+.cs-wrapper {
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.cs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    h2 {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+  }
+
+  &__icon {
+    font-size: 2.2rem;
+    color: #0d6efd;
+  }
+}
+
+/* ── Tabs ── */
+.cs-tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 1.25rem;
+}
+
+.cs-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.2rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: 0.9rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover { color: #0d6efd; }
+
+  &--active {
+    color: #0d6efd;
+    border-bottom-color: #0d6efd;
+    font-weight: 600;
+  }
+
+  &__badge {
+    background: #ef4444;
+    color: #fff;
+    border-radius: 999px;
+    padding: 0 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    min-width: 18px;
+    text-align: center;
+  }
+}
+
+/* ── Filters ── */
+.cs-filters {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+
+  &__search {
+    position: relative;
+    flex: 1;
+    min-width: 240px;
+
+    i {
+      position: absolute;
+      left: 0.7rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.1rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.2s;
+
+      &:focus { border-color: #0d6efd; }
+    }
+  }
+
+  &__tipo input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    min-width: 200px;
+    outline: none;
+    transition: border-color 0.2s;
+
+    &:focus { border-color: #0d6efd; }
+  }
+}
+
+/* ── Loading / Empty ── */
+.cs-loading, .cs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #94a3b8;
+  gap: 0.75rem;
+
+  i { font-size: 2.5rem; }
+  p { margin: 0; font-size: 0.95rem; }
+}
+
+/* ── Cards Grid (pendientes) ── */
+.cs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.cs-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s, transform 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem 0.6rem;
+    border-bottom: 1px solid #f1f5f9;
+    background: #f8fafc;
+  }
+
+  &__num {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    strong { font-size: 0.9rem; color: #1e293b; }
+  }
+
+  &__tipo {
+    font-size: 0.75rem;
+    color: #64748b;
+    background: #e2e8f0;
+    border-radius: 6px;
+    padding: 2px 8px;
+  }
+
+  &__body {
+    padding: 0.85rem 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  &__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    font-size: 0.83rem;
+    color: #475569;
+
+    i { font-size: 1rem; color: #94a3b8; margin-top: 1px; flex-shrink: 0; }
+  }
+
+  &__footer {
+    padding: 0.75rem 1rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    border-top: 1px solid #f1f5f9;
+    background: #f8fafc;
+  }
+}
+
+/* ── Badges ── */
+.cs-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+
+  &--enviada { background: #dbeafe; color: #1d4ed8; }
+}
+
+/* ── Table (historial) ── */
+.cs-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.cs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  thead tr {
+    background: #f8fafc;
+    th {
+      padding: 0.7rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: #374151;
+      border-bottom: 2px solid #e2e8f0;
+      white-space: nowrap;
+    }
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s;
+
+    &:hover { background: #f8fafc; }
+    &:last-child { border-bottom: none; }
+
+    td {
+      padding: 0.7rem 1rem;
+      color: #374151;
+      vertical-align: middle;
+    }
+  }
+
+  &--sm {
+    thead th, tbody td { padding: 0.5rem 0.75rem; }
+  }
+}
+
+/* ── Stars ── */
+.cs-stars {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+
+  i { font-size: 1rem; color: #d1d5db; }
+}
+
+.cs-star--filled { color: #f59e0b !important; }
+
+/* ── Star Rating (modal) ── */
+.cs-star-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cs-star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  transition: transform 0.15s;
+
+  i { font-size: 1.6rem; color: #d1d5db; transition: color 0.15s; }
+
+  &--filled i { color: #f59e0b; }
+  &:hover i { color: #f59e0b; transform: scale(1.1); }
+}
+
+.cs-star-label {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-left: 4px;
+}
+
+/* ══════════════════════ MODALS ══════════════════════ */
+.cs-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.cs-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: slideUp 0.2s ease;
+
+  &--lg  { max-width: 800px; }
+  &--xl  { max-width: 1100px; }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+
+    h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+    }
+
+    &--conformidad { background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
+  }
+
+  &__close {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    color: #94a3b8;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    &:hover { color: #374151; }
+  }
+
+  &__body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+
+    &--cols {
+      display: flex;
+      gap: 1.25rem;
+      padding: 1rem 1.25rem;
+      overflow-y: visible; // each col scrolls independently
+    }
+  }
+
+  &__footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    background: #f8fafc;
+    border-radius: 0 0 16px 16px;
+  }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Detail grid ── */
+.cs-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.cs-detail-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  span {
+    font-size: 0.9rem;
+    color: #1e293b;
+  }
+
+  &--full { grid-column: 1 / -1; }
+}
+
+/* ── Items section ── */
+.cs-items-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.cs-items-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Conformidad registrada (detalle modal) ── */
+.cs-conformidad-registrada {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+
+  h4 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #166534;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.cs-conf-data {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1.5rem;
+}
+
+/* ── Conformidad Info (en modal conformidad) ── */
+.cs-conf-info {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  &__row {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    align-items: baseline;
+  }
+  &__label {
+    font-weight: 600;
+    color: #64748b;
+    min-width: 90px;
+    flex-shrink: 0;
+  }
+}
+
+/* ── Form groups ── */
+.cs-form-group {
+  margin-bottom: 1.1rem;
+}
+
+.cs-form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.45rem;
+
+  &--required::after {
+    content: ' *';
+    color: #ef4444;
+  }
+}
+
+/* ── Conformidad options ── */
+.cs-conformidad-options {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.cs-conf-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.18s;
+  color: #374151;
+
+  &:hover { border-color: #94a3b8; }
+
+  &--selected {
+    &.cs-conf-option--conforme      { border-color: #16a34a; background: #f0fdf4; color: #166534; font-weight: 600; }
+    &.cs-conf-option--no-conforme   { border-color: #dc2626; background: #fef2f2; color: #991b1b; font-weight: 600; }
+    &.cs-conf-option--obs           { border-color: #d97706; background: #fffbeb; color: #92400e; font-weight: 600; }
+  }
+}
+
+/* ── User info ── */
+.cs-conf-user {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.83rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+
+  i { font-size: 1rem; }
+}
+
+/* ── Canvas firma digital ── */
+.cs-firma-wrapper {
+  position: relative;
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f8fafc;
+  cursor: crosshair;
+  transition: border-color 0.2s;
+
+  &:hover { border-color: #94a3b8; }
+}
+
+.cs-firma-canvas {
+  display: block;
+  width: 100%;
+  height: 120px;
+  touch-action: none;
+}
+
+.cs-firma-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #94a3b8;
+  pointer-events: none;
+  font-size: 0.82rem;
+
+  i { font-size: 1.5rem; }
+}
+
+.cs-firma-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.cs-firma-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #94a3b8;
+
+  &--ok { color: #16a34a; font-weight: 600; }
+  i { font-size: 1rem; }
+}
+
+/* ── Two-column conformidad modal ── */
+.cs-conf-form-col {
+  flex: 0 0 360px;
+  min-width: 0;
+  overflow-y: auto;
+  max-height: calc(90vh - 140px);
+  padding-right: 0.5rem;
+}
+
+.cs-conf-preview-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #e2e8f0;
+  padding-left: 1rem;
+  max-height: calc(90vh - 140px);
+  overflow-y: auto;
+}
+
+.cs-conf-preview__header {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.4rem 0 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
+}
+
+.cs-conf-preview__body {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem;
+  overflow: auto;
+  font-size: 11px;
+
+  // Escala la preview para que quepa en la columna
+  transform-origin: top left;
+  transform: scale(0.72);
+  width: 139%; // 1 / 0.72 ≈ 1.39
+}

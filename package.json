@@ -1,6 +1,6 @@
 {
   "name": "logistica",
-  "version": "1.0.99",
+  "version": "1.1.0",
   "scripts": {
     "ng": "ng",
     "start": "node scripts/update-version.js && ng serve",
@@ -11,7 +11,7 @@
     "build": "node scripts/update-version.js && ng build --configuration=production && node scripts/register-deployment.js",
     "build:prod": "node scripts/update-version.js && ng build --configuration=production && node scripts/register-deployment.js",
     "build:dev": "node scripts/update-version.js && ng build --configuration=development && node scripts/register-deployment.js --skip",
-    "build:prod-api": "node scripts/git-commit-and-build.js && node scripts/update-version.js && ng build --configuration=prod-api && node scripts/register-deployment.js",
+    "build:prod-api": "node scripts/git-commit-and-build.js && node scripts/update-version.js && ng build --configuration=prod-api && node scripts/register-deployment.js && node scripts/register-deployment.js --api=LOGISTICA",
     "build:no-register": "node scripts/update-version.js && ng build --configuration=prod-api",
     "register-deployment": "node scripts/register-deployment.js",
     "build-with-env": "node scripts/build-with-env.js",
@@ -22,7 +22,11 @@
     "deploy": "powershell -ExecutionPolicy Bypass -File scripts/deploy-to-server.ps1",
     "deploy:full": "npm run build:prod-api && npm run deploy",
     "deploy:logistica": "powershell -ExecutionPolicy Bypass -File scripts/deploy-full.ps1 -VersionApi LOGISTICA",
-    "deploy:maestra": "powershell -ExecutionPolicy Bypass -File scripts/deploy-full.ps1 -VersionApi MAESTRA"
+    "deploy:maestra": "powershell -ExecutionPolicy Bypass -File scripts/deploy-full.ps1 -VersionApi MAESTRA",
+    "version:patch": "node scripts/version-patch.js",
+    "version:minor": "node scripts/version-minor.js",
+    "version:major": "node scripts/version-major.js",
+    "version:check": "type src/assets/version.json"
   },
   "private": true,
   "dependencies": {

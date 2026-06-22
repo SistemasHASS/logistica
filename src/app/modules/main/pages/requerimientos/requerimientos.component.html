@@ -5,32 +5,43 @@
     <!-- NAVEGACION DE TABS -->
     <!-- ===================== -->
     <ul class="nav nav-tabs mb-3 custom-tabs">
-      <li class="nav-item">
-        <button class="nav-link" [ngClass]="{ active: tabActiva === 'ITEM' }" (click)="cambiarTab('ITEM')">
-          <i class="bx bx-file me-2"></i>
-          Items
-        </button>
-      </li>
-      <!-- ALLOGIST solo ve tab COMPRA (ITEM), ocultar otros tabs -->
-      @if (!esAlmacen) {
-      <li class="nav-item">
-        <button class="nav-link" [ngClass]="{ active: tabActiva === 'COMMODITY' }" (click)="cambiarTab('COMMODITY')">
-          <i class="bx bx-cog me-2"></i>
-          Servicios
-        </button>
-      </li>
-      <li class="nav-item">
-        <button class="nav-link" [ngClass]="{ active: tabActiva === 'ACTIVOFIJO' }" (click)="cambiarTab('ACTIVOFIJO')">
-          <i class="bx bx-building me-2"></i>
-          Activos Fijos
-        </button>
-      </li>
-      <li class="nav-item">
-        <button class="nav-link" [ngClass]="{ active: tabActiva === 'ACTIVOFIJOMENOR' }" (click)="cambiarTab('ACTIVOFIJOMENOR')">
-          <i class="bx bx-box me-2"></i>
-          Activos Menores
-        </button>
-      </li>
+      <!-- MODO SERVICIO: Solo mostrar tab Servicios (Commodity) -->
+      @if (esModoServicio) {
+        <li class="nav-item">
+          <button class="nav-link" [ngClass]="{ active: tabActiva === 'COMMODITY' }" (click)="cambiarTab('COMMODITY')">
+            <i class="bx bx-cog me-2"></i>
+            Servicios
+          </button>
+        </li>
+      } @else {
+        <!-- MODO NORMAL: Mostrar todos los tabs -->
+        <li class="nav-item">
+          <button class="nav-link" [ngClass]="{ active: tabActiva === 'ITEM' }" (click)="cambiarTab('ITEM')">
+            <i class="bx bx-file me-2"></i>
+            Items
+          </button>
+        </li>
+        <!-- ALLOGIST solo ve tab COMPRA (ITEM), ocultar otros tabs -->
+        @if (!esAlmacen) {
+        <li class="nav-item">
+          <button class="nav-link" [ngClass]="{ active: tabActiva === 'COMMODITY' }" (click)="cambiarTab('COMMODITY')">
+            <i class="bx bx-cog me-2"></i>
+            Servicios
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [ngClass]="{ active: tabActiva === 'ACTIVOFIJO' }" (click)="cambiarTab('ACTIVOFIJO')">
+            <i class="bx bx-building me-2"></i>
+            Activos Fijos
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [ngClass]="{ active: tabActiva === 'ACTIVOFIJOMENOR' }" (click)="cambiarTab('ACTIVOFIJOMENOR')">
+            <i class="bx bx-box me-2"></i>
+            Activos Menores
+          </button>
+        </li>
+        }
       }
     </ul>
 

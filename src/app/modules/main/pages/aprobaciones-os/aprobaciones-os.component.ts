@@ -66,6 +66,15 @@ export class AprobacionesOSComponent implements OnInit {
     totalVencidas: 0,
   };
 
+  // Control de permisos - JLOLOGIST solo visualiza, no aprueba
+  get soloVisualizacion(): boolean {
+    return this.usuario?.idrol?.includes('JLOLOGIST') ?? false;
+  }
+
+  get puedeAprobar(): boolean {
+    return !this.soloVisualizacion;
+  }
+
   // OS Pendientes
   osPendientes: any[] = [];
   osPendientesFiltradas: any[] = [];

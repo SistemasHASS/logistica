@@ -80,6 +80,16 @@ export class RequerimientosComponent implements OnInit {
   modoEdicionActivoFijo: boolean = false;
   mostrarFormularioActivoFijoMenor = false;
   modoEdicionActivoFijoMenor: boolean = false;
+
+  // === MODO SERVICIO (desde configuración en Parámetros) ===
+  get esModoServicio(): boolean {
+    return localStorage.getItem('tipoRequerimientoConfig') === 'SERVICIO';
+  }
+
+  get tabActivaInicial(): 'ITEM' | 'COMMODITY' | 'ACTIVOFIJO' | 'ACTIVOFIJOMENOR' {
+    return this.esModoServicio ? 'COMMODITY' : 'ITEM';
+  }
+
   requerimientos: Requerimiento[] = [];
   requerimientosItems: any[] = []; // ITEMS
   requerimientosCommodity: RequerimientoCommodity[] = []; // SERVICIOS
@@ -605,11 +615,9 @@ export class RequerimientosComponent implements OnInit {
     await this.maestrasSvc.cargarUsuario();
     this.usuario = this.maestrasSvc.usuario;
 
-    // ALLOGIST solo puede crear requerimientos de COMPRA
-    if (this.esAlmacen) {
-      this.TipoSelecionado = 'COMPRA';
-      this.requerimiento.itemtipo = 'COMPRA';
-      this.tabActiva = 'ITEM';
+    // MODO SERVICIO: Solo mostrar tab Commodity (desde configuración en Parámetros)
+    if (this.esModoServicio) {
+      this.tabActiva = 'COMMODITY';
     }
 
     await this.sincronizaMaestroCommodity(); // Sincronizar maestro commodity desde API
@@ -618,11 +626,41 @@ export class RequerimientosComponent implements OnInit {
     this.syncMaestrasDesdeServicio();
     await this.maestrasSvc.cargarConfiguracion();
     this.syncConfigDesdeServicio();
+
+    // Establecer tipo de requerimiento basado en la configuración guardada en Parámetros
+    const tipoConfigurado = this.configuracion.idTipoItem;
+    const rol = this.usuario.idrol;
+    const puedeTransferencia = rol === 'LOLOGIST' || rol === 'OPLOGIST' || rol === 'ALLOGIST';
+
+    console.log('🔧 Tipo configurado:', tipoConfigurado, '| Rol:', rol, '| PuedeTransferencia:', puedeTransferencia);
+
+    if (tipoConfigurado === 'TRANSFERENCIA' && puedeTransferencia) {
+      // TRANSFERENCIA: LOLOGIST, OPLOGIST y ALLOGIST
+      this.TipoSelecionado = 'TRANSFERENCIA';
+      this.requerimiento.itemtipo = 'TRANSFERENCIA';
+      this.tabActiva = 'ITEM';
+      this.opcionesPrioridadITEM = this.prioridadService.obtenerOpcionesPrioridad('TRANSFERENCIA');
+      console.log('✅ Establecido tipo TRANSFERENCIA');
+    } else if (tipoConfigurado === 'CONSUMO') {
+      // CONSUMO
+      this.TipoSelecionado = 'CONSUMO';
+      this.requerimiento.itemtipo = 'CONSUMO';
+      this.tabActiva = 'ITEM';
+      this.opcionesPrioridadITEM = this.prioridadService.obtenerOpcionesPrioridad('CONSUMO');
+      console.log('✅ Establecido tipo CONSUMO');
+    } else if (tipoConfigurado === 'COMPRA' || this.esAlmacen) {
+      // COMPRA (por defecto o si es ALLOGIST sin configuración específica)
+      this.TipoSelecionado = 'COMPRA';
+      this.requerimiento.itemtipo = 'COMPRA';
+      this.tabActiva = 'ITEM';
+      this.opcionesPrioridadITEM = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
+      console.log('✅ Establecido tipo COMPRA');
+    }
+
     await this.ListarItems();
     await this.cargarRequerimientos();
     await this.cargarPendientes();
     this.actualizarContadores();
-    this.opcionesPrioridadITEM = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
     this.opcionesPrioridadCOMMODITY = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
     this.opcionesPrioridadACTIVOFIJO = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
     this.opcionesPrioridadACTIVOFIJOMENOR = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
@@ -1238,11 +1276,21 @@ export class RequerimientosComponent implements OnInit {
 
   async nuevoRequerimiento(): Promise<void> {
     await this.itemSvc.nuevo();
-    // ALLOGIST solo puede crear requerimientos de COMPRA
-    if (this.esAlmacen) {
+
+    // ALLOGIST puede crear COMPRA o TRANSFERENCIA (según configuración)
+    // Solo forzar a COMPRA si no hay tipo configurado o si no es TRANSFERENCIA
+    const tipoActual = this.itemSvc.TipoSelecionado;
+    const esTransferenciaPermitida = tipoActual === 'TRANSFERENCIA' && (this.esAlmacen || this.usuario.idrol === 'LOLOGIST' || this.usuario.idrol === 'OPLOGIST');
+
+    if (this.esAlmacen && !esTransferenciaPermitida && !tipoActual) {
+      // Solo forzar a COMPRA si no hay tipo configurado y no es transferencia permitida
       this.itemSvc.TipoSelecionado = 'COMPRA';
       this.itemSvc.requerimiento.itemtipo = 'COMPRA';
+      console.log('📝 Forzado a COMPRA (no hay tipo configurado)');
+    } else if (esTransferenciaPermitida) {
+      console.log('📝 Manteniendo TRANSFERENCIA desde configuración');
     }
+
     this.requerimiento = this.itemSvc.requerimiento;
     this.detalles = this.itemSvc.detalles;
     this.glosa = this.itemSvc.glosa;
@@ -1250,9 +1298,17 @@ export class RequerimientosComponent implements OnInit {
     this.modoEdicion = this.itemSvc.modoEdicion;
     this.TipoSelecionado = this.itemSvc.TipoSelecionado;
     this.almacenSeleccionado = this.maestrasSvc.almacenSeleccionado;
+    this.almacenOrigen = this.maestrasSvc.almacenOrigen;
+    this.almacenDestino = this.maestrasSvc.almacenDestino;
     this.areaSeleccionada = this.maestrasSvc.areaSeleccionada;
     this.SeleccionaPrioridadITEM = this.itemSvc.SeleccionaPrioridadITEM;
     this.mostrarFormulario = this.itemSvc.mostrarFormulario;
+
+    console.log('🆕 Nuevo requerimiento creado:', {
+      tipo: this.TipoSelecionado,
+      almacenOrigen: this.almacenOrigen,
+      almacenDestino: this.almacenDestino,
+    });
   }
 
   async nuevoRequerimientoCommodity(): Promise<void> {
@@ -1291,6 +1347,10 @@ export class RequerimientosComponent implements OnInit {
     this.itemSvc.SeleccionaPrioridadITEM = this.SeleccionaPrioridadITEM;
     this.itemSvc.TipoSelecionado = this.TipoSelecionado;
     this.itemSvc.SeleccionaTipoGasto = this.SeleccionaTipoGasto;
+    if (this.TipoSelecionado === 'TRANSFERENCIA') {
+      this.maestrasSvc.almacenOrigen = this.almacenOrigen;
+      this.maestrasSvc.almacenDestino = this.almacenDestino;
+    }
     await this.itemSvc.sincronizarRequerimiento();
     this.requerimientos = this.itemSvc.requerimientos;
     this.sincronizando = this.maestrasSvc.sincronizando;
@@ -1975,6 +2035,10 @@ export class RequerimientosComponent implements OnInit {
     this.itemSvc.detalles = this.detalles;
     this.itemSvc.modoEdicion = this.modoEdicion;
     this.itemSvc.requerimiento = { ...this.requerimiento };
+    if (this.TipoSelecionado === 'TRANSFERENCIA') {
+      this.maestrasSvc.almacenOrigen = this.almacenOrigen;
+      this.maestrasSvc.almacenDestino = this.almacenDestino;
+    }
     await this.itemSvc.guardarRequerimiento();
     this.requerimientos = this.itemSvc.requerimientos;
     this.detalles = this.itemSvc.detalles;

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -15,9 +15,23 @@ import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento
   imports: [CommonModule, FormsModule, DatePipe, TableModule, DropdownComponent, ModalDetalleCommodityComponent, NumeroRequerimientoPipe],
   templateUrl: './tab-commodity.component.html',
 })
-export class TabCommodityComponent {
+export class TabCommodityComponent implements OnInit {
   readonly commoditySvc = inject(RequerimientosCommodityService);
   readonly maestrasSvc = inject(RequerimientosMaestrasService);
+
+  ngOnInit() {
+    const esModoServicio = localStorage.getItem('tipoRequerimientoConfig') === 'SERVICIO';
+    if (esModoServicio) {
+      // Modo servicio: Ir directamente al formulario sin selección
+      this.commoditySvc.tipoRequerimientoSeleccionado = 'SERVICIO';
+      this.commoditySvc.configuracionGuardada = true;
+      this.commoditySvc.mostrarConfiguracion = false;
+      // Establecer tipo SERVICIO en el formulario
+      this.commoditySvc.itemTipoSeleccionado = 'SERVICIO' as any;
+    } else {
+      this.commoditySvc.inicializarEstado();
+    }
+  }
 
   @Output() prioridadChange = new EventEmitter<string>();
   @Output() glosaChange = new EventEmitter<string>();
@@ -37,7 +51,7 @@ export class TabCommodityComponent {
   onPrioridadChange(val: string) { this.prioridadChange.emit(val); }
   onGlosaChange(val: string) { this.glosaChange.emit(val); }
   get itemTipoSeleccionado() { return this.commoditySvc.itemTipoSeleccionado; }
-  onItemTipoChange(val: 'CONSUMO' | 'COMPRA') { this.commoditySvc.itemTipoSeleccionado = val; }
+  onItemTipoChange(val: 'CONSUMO' | 'COMPRA' | 'SERVICIO') { this.commoditySvc.itemTipoSeleccionado = val; }
 
   // Datos de requerimientos del tab COMMODITY
   @Input() requerimientosCommodity: any[] = [];
@@ -49,6 +63,13 @@ export class TabCommodityComponent {
   @Input() dataSelectedCommodity: any[] = [];
   get sincronizando() { return this.maestrasSvc.sincronizando; }
   get progreso() { return this.maestrasSvc.progreso; }
+
+  // === FLUJO COMPRA/SERVICIO ===
+  get tipoRequerimientoSeleccionado() { return this.commoditySvc.tipoRequerimientoSeleccionado; }
+  get mostrarConfiguracion() { return this.commoditySvc.mostrarConfiguracion; }
+  get configuracionGuardada() { return this.commoditySvc.configuracionGuardada; }
+  get configCompra() { return this.commoditySvc.configCompra; }
+  get configServicio() { return this.commoditySvc.configServicio; }
 
   // Formulario cabecera COMMODITY (leídos del servicio)
   get mostrarFormularioCommodity() { return this.commoditySvc.mostrarFormularioCommodity; }
@@ -121,4 +142,15 @@ export class TabCommodityComponent {
   obtenerDescripcionServicio(s: any): string { return this.maestrasSvc.obtenerDescripcionServicio(typeof s === 'string' ? s : s?.servicio ?? s); }
   obtenerIdReq(id: any): string { return this.maestrasSvc.obtenerIdReq(id); }
   formatoFecha(fecha: any): string { return this.maestrasSvc.formatoFecha(fecha); }
+
+  // ─── FLUJO COMPRA/SERVICIO ────────────────────────────────────────────────
+  seleccionarTipo(tipo: 'COMPRA' | 'SERVICIO') { this.commoditySvc.seleccionarTipo(tipo); }
+  guardarConfiguracion() {
+    if (this.commoditySvc.guardarConfiguracion(this.tipoRequerimientoSeleccionado!)) {
+      // Después de guardar, inicializar el formulario
+      this.nuevoEvt.emit();
+    }
+  }
+  volverASeleccion() { this.commoditySvc.volverASeleccion(); }
+  reiniciarConfiguracion() { this.commoditySvc.reiniciarConfiguracion(); }
 }

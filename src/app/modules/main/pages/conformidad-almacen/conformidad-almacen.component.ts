@@ -4,6 +4,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TableModule } from 'primeng/table';
 import { lastValueFrom } from 'rxjs';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
@@ -24,7 +25,7 @@ type RolVista = 'LOLOGIST' | 'OPLOGIST' | 'ALLOGIST' | 'OTRO';
   selector: 'app-conformidad-almacen',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TableModule],
   templateUrl: './conformidad-almacen.component.html',
   styleUrl: './conformidad-almacen.component.scss',
 })
@@ -51,6 +52,16 @@ export class ConformidadAlmacenComponent implements OnInit {
   // ── Listas ──────────────────────────────────────────────────────
   listaPendientes = signal<ConformidadNota[]>([]);
   listaHistorial  = signal<ConformidadNota[]>([]);
+
+  // ── Filtros ─────────────────────────────────────────────────────
+  filtroRequerimiento = signal('');
+  filtroNI            = signal('');
+  filtroNS            = signal('');
+  filtroItem          = signal('');
+
+  // ── Listas filtradas computadas ─────────────────────────────────
+  pendientesFiltradas = computed(() => this.filtrarNotas(this.listaPendientes()));
+  historialFiltrado   = computed(() => this.filtrarNotas(this.listaHistorial()));
 
   // ── Plantillas configuradas (desde BD vía API) ──────────────────
   plantillaNI = signal<PlantillaAlmacen | null>(null);
@@ -123,10 +134,11 @@ export class ConformidadAlmacenComponent implements OnInit {
 
   async recargarListas(): Promise<void> {
     const tipo = this.tabActivo();
+    const idusuario = this.usuario()?.documentoidentidad ?? '';
     this.cargando.set(true);
     this.errorCarga.set(null);
     try {
-      const todas = await lastValueFrom(this.svc.listarNotas(tipo));
+      const todas = await lastValueFrom(this.svc.listarNotas(tipo, '', '', idusuario));
       this.listaPendientes.set(todas.filter(n => n.estado === 'PENDIENTE'));
       this.listaHistorial.set(todas.filter(n => n.estado !== 'PENDIENTE'));
     } catch (err: any) {
@@ -349,5 +361,46 @@ export class ConformidadAlmacenComponent implements OnInit {
   formatFecha(iso: string): string {
     if (!iso) return '-';
     return iso.substring(0, 10).split('-').reverse().join('/');
+  }
+
+  // ── Filtros helpers ─────────────────────────────────────────────
+  private filtrarNotas(notas: ConformidadNota[]): ConformidadNota[] {
+    const req = this.filtroRequerimiento().toLowerCase().trim();
+    const ni  = this.filtroNI().toLowerCase().trim();
+    const ns  = this.filtroNS().toLowerCase().trim();
+    const it  = this.filtroItem().toLowerCase().trim();
+
+    if (!req && !ni && !ns && !it) return notas;
+
+    return notas.filter(n => {
+      // Filtro por requerimiento (referencia/descripcionRef)
+      if (req && !n.referencia.toLowerCase().includes(req) && !n.descripcionRef.toLowerCase().includes(req)) {
+        return false;
+      }
+      // Filtro por NI
+      if (ni && n.tipo === 'NI' && !n.numeroNota.toLowerCase().includes(ni)) {
+        return false;
+      }
+      // Filtro por NS
+      if (ns && n.tipo === 'NS' && !n.numeroNota.toLowerCase().includes(ns)) {
+        return false;
+      }
+      // Filtro por item (busca en los items de la nota)
+      if (it) {
+        const tieneItem = n.items.some(i =>
+          i.codigo.toLowerCase().includes(it) ||
+          i.descripcion.toLowerCase().includes(it)
+        );
+        if (!tieneItem) return false;
+      }
+      return true;
+    });
+  }
+
+  limpiarFiltros(): void {
+    this.filtroRequerimiento.set('');
+    this.filtroNI.set('');
+    this.filtroNS.set('');
+    this.filtroItem.set('');
   }
 }

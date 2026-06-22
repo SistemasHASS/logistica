@@ -1,0 +1,40 @@
+.preview-frame {
+  width: 100%;
+  height: 580px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.config-card {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 1055;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-preview-box {
+  background: #fff;
+  border-radius: 8px;
+  width: 92vw;
+  max-width: 900px;
+  height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+}
+
+.modal-preview-iframe {
+  flex: 1;
+  border: none;
+  width: 100%;
+}

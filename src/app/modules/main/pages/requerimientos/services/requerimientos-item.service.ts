@@ -13,6 +13,7 @@ import {
 } from '@/app/shared/interfaces/Tables';
 import { PrioridadSpring, TipoRequerimiento } from '@/app/shared/interfaces/PrioridadRequerimiento';
 import { RequerimientosMaestrasService } from './requerimientos-maestras.service';
+import { TransferenciaService } from '@/app/modules/main/services/transferencia.service';
 
 @Injectable({ providedIn: 'root' })
 export class RequerimientosItemService {
@@ -77,6 +78,7 @@ export class RequerimientosItemService {
     private aprobacionesAreaService: AprobacionesAreaService,
     public prioridadService: PrioridadRequerimientoService,
     private maestras: RequerimientosMaestrasService,
+    private transferenciaService: TransferenciaService,
   ) {}
 
   get usuario() { return this.maestras.usuario; }
@@ -179,11 +181,31 @@ export class RequerimientosItemService {
     this.modalAbierto = false;
     this.modoEdicion = false;
     const cfg = this.maestras.configuracion;
+    const rol = this.usuario.idrol;
+    const puedeTransferencia = rol === 'LOLOGIST' || rol === 'OPLOGIST' || rol === 'ALLOGIST';
+
+    console.log('🆕 NUEVO REQUERIMIENTO - Configuración:', {
+      idTipoItem: cfg?.idTipoItem,
+      idalmacen: cfg?.idalmacen,
+      idalmacenDestino: (cfg as any)?.idalmacenDestino,
+      rol: rol,
+      puedeTransferencia: puedeTransferencia,
+    });
+
     if (cfg?.idTipoItem) {
-      this.TipoSelecionado = cfg.idTipoItem as TipoRequerimiento | '';
-      this.requerimiento.itemtipo = cfg.idTipoItem;
+      // Validar que solo LOLOGIST y ALLOGIST puedan hacer TRANSFERENCIAS
+      if (cfg.idTipoItem === 'TRANSFERENCIA' && !puedeTransferencia) {
+        console.log('🚫 TRANSFERENCIA no permitida para este rol, cambiando a COMPRA');
+        this.TipoSelecionado = 'COMPRA';
+        this.requerimiento.itemtipo = 'COMPRA';
+      } else {
+        console.log('✅ Tipo establecido desde configuración:', cfg.idTipoItem);
+        this.TipoSelecionado = cfg.idTipoItem as TipoRequerimiento | '';
+        this.requerimiento.itemtipo = cfg.idTipoItem;
+      }
       await this.onTipoChange();
     } else {
+      console.log('⚠️ No hay idTipoItem en configuración, default a CONSUMO');
       this.TipoSelecionado = 'CONSUMO';
       this.requerimiento.itemtipo = 'CONSUMO';
       await this.onTipoChange();
@@ -191,6 +213,12 @@ export class RequerimientosItemService {
     if (cfg?.idalmacen) {
       this.maestras.almacenSeleccionado = cfg.idalmacen;
       this.requerimiento.idalmacen = cfg.idalmacen;
+      if (this.TipoSelecionado === 'TRANSFERENCIA') {
+        this.maestras.almacenOrigen = cfg.idalmacen;
+      }
+    }
+    if (this.TipoSelecionado === 'TRANSFERENCIA' && (cfg as any)?.idalmacenDestino) {
+      this.maestras.almacenDestino = (cfg as any).idalmacenDestino;
     }
     this.maestras.areaSeleccionada = this.maestras.usuario.idarea || cfg?.idarea || '';
     this.requerimiento.idarea = this.maestras.areaSeleccionada;
@@ -213,6 +241,10 @@ export class RequerimientosItemService {
     this.maestras.clasificacionSeleccionado = req.idclasificacion;
     this.SeleccionaPrioridadITEM = req.prioridad as PrioridadSpring | '';
     this.glosa = req.glosa;
+    if (req.itemtipo === 'TRANSFERENCIA') {
+      this.maestras.almacenOrigen = req.idalmacen || '';
+      this.maestras.almacenDestino = req.idalmacendestino || '';
+    }
     this.opcionesPrioridadITEM = this.TipoSelecionado
       ? this.prioridadService.obtenerOpcionesPrioridad(this.TipoSelecionado as any)
       : [];
@@ -246,9 +278,10 @@ export class RequerimientosItemService {
     const clases = this.maestras.clasificaciones;
     if (this.TipoSelecionado === 'TRANSFERENCIA') {
       this.maestras.almacenSeleccionado = '';
-      this.maestras.clasificacionSeleccionado = 'STO';
-      this.maestras.clasificacionesFiltrados = clases.filter((c) => c.id === 'STO');
+      this.maestras.clasificacionSeleccionado = 'TRA';
+      this.maestras.clasificacionesFiltrados = clases.filter((c) => c.id === 'TRA');
       this.limpiarCamposCompraConsumo();
+      await this.cargarDatosParaTransferencia();
     } else if (this.TipoSelecionado === 'CONSUMO') {
       this.maestras.almacenOrigen = '';
       this.maestras.almacenDestino = '';
@@ -328,6 +361,32 @@ export class RequerimientosItemService {
     if (!this.maestras.cecos?.length) await this.maestras.ListarCecos();
     if (!this.maestras.labores?.length) await this.maestras.ListarLabores();
     if (!this.maestras.proyectos?.length) await this.maestras.ListarProyectos();
+  }
+
+  async cargarDatosParaTransferencia() {
+    try {
+      if (!this.maestras.alamcenesDestino?.length) await this.maestras.ListarAlmacenDestino();
+      if (!this.maestras.almacenes?.length) await this.maestras.ListarAlmacenes();
+      if (!this.maestras.cecos?.length) await this.maestras.ListarCecos();
+      if (!this.maestras.labores?.length) await this.maestras.ListarLabores();
+      if (!this.maestras.proyectos?.length) await this.maestras.ListarProyectos();
+      const config = await this.dexieService.obtenerPrimeraConfiguracion();
+      if (config) {
+        if (config.idalmacen) this.maestras.almacenOrigen = config.idalmacen;
+        if ((config as any).idalmacenDestino) this.maestras.almacenDestino = (config as any).idalmacenDestino;
+        if (config.idceco) {
+          this.maestras.cecoSeleccionado = (await this.dexieService.getCecoById(config.idceco)) as any;
+        }
+        if (config.idlabor) {
+          this.maestras.laborSeleccionado = (await this.dexieService.getLaborById(config.idlabor)) as any;
+        }
+        if (config.idproyecto) {
+          this.maestras.proyectoSeleccionado = (await this.dexieService.getProyectoByAfe(config.idproyecto)) as any;
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar datos para TRANSFERENCIA:', error);
+    }
   }
 
   async recargarValoresDesdeConfiguracion() {
@@ -570,8 +629,9 @@ export class RequerimientosItemService {
     }
     try {
       this.alertService.mostrarModalCarga();
-      const almacenObj = this.maestras.almacenes.find((a) => a.idalmacen == this.maestras.almacenSeleccionado);
-      const idAlmacenSync = almacenObj ? almacenObj.idalmacen : '';
+      const idAlmacenSync = this.TipoSelecionado === 'TRANSFERENCIA'
+        ? this.maestras.almacenOrigen
+        : (this.maestras.almacenes.find((a) => a.idalmacen == this.maestras.almacenSeleccionado)?.idalmacen || '');
       const idreq = this.modoEdicion ? this.requerimiento.idrequerimiento
         : this.maestras.usuario.sociedad + this.maestras.usuario.documentoidentidad + this.utilsService.formatoAnioMesDiaHoraMinSec();
       const req: Requerimiento = {
@@ -579,8 +639,8 @@ export class RequerimientosItemService {
         ruc: this.maestras.usuario.ruc,
         idfundo: this.maestras.fundoSeleccionado,
         idarea: this.maestras.areaSeleccionada,
-        idclasificacion: this.maestras.clasificacionSeleccionado
-          || (this.TipoSelecionado === 'COMPRA' ? 'CMP' : 'STO'),
+        idclasificacion: this.TipoSelecionado === 'TRANSFERENCIA' ? 'TRA'
+          : (this.maestras.clasificacionSeleccionado || (this.TipoSelecionado === 'COMPRA' ? 'CMP' : 'STO')),
         prioridad: this.SeleccionaPrioridadITEM ?? '1',
         nrodocumento: this.maestras.usuario.documentoidentidad,
         idalmacen: idAlmacenSync,
@@ -592,7 +652,7 @@ export class RequerimientosItemService {
         itemtipo: this.TipoSelecionado || this.requerimiento.itemtipo || 'CONSUMO',
         estados: 'PENDIENTE',
         fecha: new Date().toISOString(),
-        almacen: almacenObj?.almacen || '',
+        almacen: this.maestras.almacenes.find((a) => a.idalmacen == idAlmacenSync)?.almacen || '',
         idproyecto: this.maestras.proyectoSeleccionado?.proyectoio ?? '',
         estado: 0,
         disabled: false,
@@ -667,12 +727,59 @@ export class RequerimientosItemService {
     this.maestras.progreso = 0;
     const prioridadFinal: PrioridadSpring = (this.SeleccionaPrioridadITEM || this.requerimiento.prioridad || '1') as PrioridadSpring;
     const idReq = this.maestras.usuario.sociedad + this.maestras.usuario.documentoidentidad + this.utilsService.formatoAnioMesDiaHoraMinSec();
+
+    // TRANSFERENCIA: flujo especial → crear requerimiento de transferencia + migrar a SPRING automáticamente como APROBADA
+    if (this.TipoSelecionado === 'TRANSFERENCIA') {
+      try {
+        const payloadTransf = {
+          idrequerimiento: idReq,
+          ruc: this.maestras.usuario.ruc,
+          idfundo: this.requerimiento.idfundo,
+          idarea: this.maestras.areaSeleccionada,
+          idclasificacion: 'TRA',
+          prioridad: prioridadFinal,
+          nrodocumento: this.maestras.usuario.documentoidentidad,
+          idalmacen: this.maestras.almacenOrigen,
+          idalmacendestino: this.maestras.almacenDestino,
+          glosa: this.requerimiento.glosa || '',
+          referenciaGasto: this.SeleccionaTipoGasto || '',
+          eliminado: 0, tipo: 'ITEM', itemtipo: 'TRANSFERENCIA', estados: 'APROBADA',
+          almacenOrigen: this.maestras.almacenOrigen,
+          almacenDestino: this.maestras.almacenDestino,
+          usuario: this.maestras.usuario.documentoidentidad,
+          cantidadItems: this.requerimiento.detalle.length,
+          detalle: this.requerimiento.detalle.map((d: any) => ({
+            codigo: d.codigo, tipoclasificacion: 'I', cantidad: d.cantidad,
+            idproducto: d.producto || '', iddescripcion: d.descripcion || '',
+            idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
+            idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
+          })),
+        };
+        const resp = await this.transferenciaService.crearRequerimientoTransferencia(payloadTransf);
+        const parsed = Array.isArray(resp) ? resp[0] : (typeof resp === 'string' ? JSON.parse(resp) : resp);
+        if (parsed?.error) {
+          this.alertService.showAlertError('Error', parsed.mensaje || parsed.error);
+        } else {
+          // Migrar a SPRING automáticamente (sin pasar por aprobación)
+          await this.migrarTransferenciaASPRING(idReq, prioridadFinal);
+          await this.dexieService.requerimientos.update(this.requerimiento.id!, { estado: 1 });
+          await this.cargar();
+          this.contarContadores();
+        }
+      } catch (e: any) {
+        this.alertService.showAlertError('Error', e.message || 'No se pudo enviar el requerimiento de transferencia');
+      } finally {
+        this.maestras.sincronizando = false;
+      }
+      return;
+    }
+
     const payload = [{
       idrequerimiento: idReq, ruc: this.maestras.usuario.ruc, idfundo: this.requerimiento.idfundo,
       idarea: this.maestras.areaSeleccionada, idclasificacion: this.requerimiento.idclasificacion,
       prioridad: prioridadFinal, nrodocumento: this.maestras.usuario.documentoidentidad,
       idalmacen: this.requerimiento.idalmacen,
-      idalmacendestino: this.TipoSelecionado === 'TRANSFERENCIA' ? this.maestras.almacenDestino : '',
+      idalmacendestino: '',
       glosa: this.requerimiento.glosa || '', referenciaGasto: this.SeleccionaTipoGasto || '',
       eliminado: 0, tipo: this.requerimiento.tipo, itemtipo: this.requerimiento.itemtipo, estados: 'PENDIENTE',
       detalle: this.requerimiento.detalle.map((d: any) => ({
@@ -716,7 +823,7 @@ export class RequerimientosItemService {
       idrequerimiento: req.idrequerimiento, ruc: this.maestras.usuario.ruc,
       idfundo: req.idfundo, idarea: req.idarea, idclasificacion: req.idclasificacion,
       prioridad: req.prioridad || '1', nrodocumento: this.maestras.usuario.documentoidentidad,
-      idalmacen: req.idalmacen, idalmacendestino: req.tipo === 'TRANSFERENCIA' ? req.idalmacendestino : '',
+      idalmacen: req.idalmacen, idalmacendestino: req.itemtipo === 'TRANSFERENCIA' ? req.idalmacendestino : '',
       glosa: req.glosa || '', referenciaGasto: req.referenciaGasto || '',
       eliminado: 0, tipo: req.tipo, itemtipo: req.itemtipo, estados: 'PENDIENTE',
       detalle: (req.detalle || []).map((d: any) => ({
@@ -1429,5 +1536,136 @@ export class RequerimientosItemService {
   scrollRight(): void {
     const container = document.querySelector('.tab-buttons-container') as HTMLElement;
     if (container) container.scrollLeft += 200;
+  }
+
+  // ── Migración automática TRANSFERENCIA → SPRING ─────────────────────────
+  private async migrarTransferenciaASPRING(idReq: string, prioridad: PrioridadSpring): Promise<void> {
+    try {
+      const usuario = this.maestras.usuario;
+      const detalle = this.requerimiento.detalle;
+      const first = detalle[0];
+
+      const cecos = this.maestras.cecos || [];
+      const proyectos = this.maestras.proyectos || [];
+      const almacenes = this.maestras.almacenes || [];
+
+      const cecoFirst = cecos.find((c: any) => c.localname === first?.ceco || c.idceco === first?.ceco);
+      const proyectoFirst = proyectos.find((p: any) => p.proyectoio === first?.proyecto);
+
+      const centroCostoDefault = cecoFirst?.costcenter ?? '0001';
+      const proyectoAfeDefault = proyectoFirst?.afe ?? 'FUNDO HP';
+      const accountDefault = cecoFirst?.ccontable ?? '10411103';
+
+      let almacenCodigo = this.maestras.almacenOrigen || 'H001';
+      if (almacenCodigo && almacenCodigo.length <= 3 && !isNaN(Number(almacenCodigo))) {
+        const almacenCompleto = almacenes.find((a: any) => a.idalmacen == almacenCodigo || a.almacen == almacenCodigo);
+        almacenCodigo = almacenCompleto?.idalmacen ?? ('H' + almacenCodigo.padStart(3, '0'));
+      }
+
+      const payloadSpring = [
+        {
+          CompaniaSocio: (usuario.idempresa ?? '') + '00',
+          RequisicionNumero: '',
+          Clasificacion: 'TRA',
+          ComprasAlmacenFlag: 'A',
+          AlmacenCodigo: almacenCodigo,
+          MonedaCodigo: 'LO',
+          FechaRequerida: new Date().toISOString(),
+          FechaPreparacion: new Date().toISOString(),
+          FechaAprobacion: new Date().toISOString(),
+          PreparadaPor: -1,
+          AprobadaPor: -1,
+          PrecioTotal: 0,
+          PrioridadCodigo: String(prioridad ?? '1'),
+          DefaultPrime: centroCostoDefault,
+          DefaultAfe: proyectoAfeDefault,
+          CuantiaMonetariaPendienteFlag: 'N',
+          UnidadNegocio: '0001',
+          UnidadReplicacion: 'TRUJ',
+          LocalForeignFlag: 'L',
+          Comentarios: this.requerimiento.glosa || '',
+          Estado: 'AP',
+          UltimoUsuario: 'MISESF',
+          UltimaFechaModif: new Date().toISOString(),
+          UltimoUsuarioNumero: -1,
+          TransaccionOperacion: '999',
+          DefaultCampoReferencia: this.SeleccionaTipoGasto || '',
+          RevisionTecnicaPendienteFlag: 'N',
+          ClienteNumeroPedido: '',
+          ViaTransporte: 'T',
+          OrigenGeneracionFlag: 'L',
+          origen: 'app_logistica',
+          detalle: detalle.map((d: any, index: number) => {
+            const ceco = cecos.find((c: any) => c.localname === d.ceco || c.idceco === d.ceco);
+            const labor = this.maestras.labores?.find((l: any) => l.labor === d.labor);
+            const itemCcostodestino = labor?.idlabor ?? (ceco?.costcenter || '');
+            return {
+              Secuencia: index + 1,
+              TipoDetalle: 'ITEM',
+              Item: d.codigo,
+              Commodity: null,
+              Condicion: '0',
+              UnidadCodigo: d.unidadmedida || 'UND',
+              Descripcion: d.producto || d.descripcion || '',
+              ComprasAlmacenFlag: 'A',
+              RedefinidoFlag: 'N',
+              CantidadPedida: d.cantidad,
+              CantidadOrdenCompra: 0,
+              CantidadRecibida: 0,
+              PrecioUnitario: 0,
+              PrecioxCantidad: 0,
+              CotizacionCantidad: 0,
+              CotizacionPrecioUnitario: 0,
+              CotizacionPrecioUnitarioconIGV: 0,
+              CotizacionProveedor: 0,
+              ControlPresupuestalFlag: 'S',
+              Comentario: d.descripcion ?? '',
+              CentroCosto: ceco?.costcenter ?? '',
+              LoteProduccion: itemCcostodestino,
+              Estado: 'PE',
+              UltimoUsuario: 'MISESF',
+              UltimaFechaModif: new Date().toISOString(),
+              IGVExoneradoFlag: 'N',
+              GenerarContratoFlag: 'N',
+              origen: 'app_logistica',
+            };
+          }),
+          distribucion: [
+            {
+              Secuencia: 1,
+              Linea: 1,
+              Account: accountDefault,
+              Afe: proyectoAfeDefault,
+              Monto: '100.00',
+              CentroCostoDestino: centroCostoDefault,
+              Sucursal: '0801',
+              CampoReferencia: this.SeleccionaTipoGasto || 'GA',
+              ReferenciaFiscal01: '',
+              ReferenciaFiscal02: '',
+              origen: 'app_logistica',
+            },
+          ],
+        },
+      ];
+
+      const respSpring = await firstValueFrom(this.requerimientosService.getRegristroRequerimientoSPRING(payloadSpring));
+      const resultadoSpring = Array.isArray(respSpring) ? respSpring[0] : respSpring;
+
+      if (resultadoSpring?.errorgeneral === 0) {
+        const correlativoSPRING = resultadoSpring.RequisicionNumero;
+        const payloadActualizar = [{ idrequerimiento: idReq, RequisicionNumero: correlativoSPRING }];
+        this.requerimientosService.getNumeroRequerimientoPRING(payloadActualizar).subscribe({
+          next: () => {},
+          error: (err: any) => console.error('Error al guardar número WHRQ:', err),
+        });
+        this.alertService.showAlert('Éxito', `Requerimiento de transferencia enviado a SPRING (${correlativoSPRING})`, 'success');
+      } else {
+        console.error('Error SPRING TRANSFERENCIA:', respSpring);
+        this.alertService.showAlert('Aviso', 'Requerimiento creado como APROBADA pero no se pudo registrar en SPRING. Contacte a soporte.', 'warning');
+      }
+    } catch (e: any) {
+      console.error('Error migrarTransferenciaASPRING:', e);
+      this.alertService.showAlert('Aviso', 'Requerimiento creado como APROBADA pero falló la migración a SPRING. Contacte a soporte.', 'warning');
+    }
   }
 }

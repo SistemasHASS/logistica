@@ -53,3 +53,151 @@
 .texto-error {
   color: var(--app-danger);
 }
+
+// ============================================
+// ESTILOS FLUJO COMPRA/SERVICIO - SELECCIÓN
+// ============================================
+
+.seleccion-tipo-container {
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 16px;
+}
+
+.seleccion-titulo {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.seleccion-subtitulo {
+  font-size: 1rem;
+  color: #6c757d;
+  margin-bottom: 2rem;
+}
+
+.cards-seleccion {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.card-seleccion {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  width: 280px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  }
+
+  &.card-compra {
+    border-color: #2563eb;
+
+    &:hover {
+      border-color: #1d4ed8;
+      background: linear-gradient(135deg, #fff 0%, #eff6ff 100%);
+    }
+
+    .icono-compra {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    }
+
+    .titulo-card {
+      color: #2563eb;
+    }
+
+    .badge-tipo {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+  }
+
+  &.card-servicio {
+    border-color: #16a34a;
+
+    &:hover {
+      border-color: #15803d;
+      background: linear-gradient(135deg, #fff 0%, #f0fdf4 100%);
+    }
+
+    .icono-servicio {
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    }
+
+    .titulo-card {
+      color: #16a34a;
+    }
+
+    .badge-tipo {
+      background: #dcfce7;
+      color: #166534;
+    }
+  }
+}
+
+.icono-seleccion {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: white;
+  font-size: 2rem;
+}
+
+.titulo-card {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.desc-card {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.badge-tipo {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+// Responsive para móvil
+@media (max-width: 768px) {
+  .seleccion-tipo-container {
+    padding: 1rem;
+  }
+
+  .cards-seleccion {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .card-seleccion {
+    width: 100%;
+    max-width: 300px;
+    padding: 1.5rem;
+  }
+
+  .icono-seleccion {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+}

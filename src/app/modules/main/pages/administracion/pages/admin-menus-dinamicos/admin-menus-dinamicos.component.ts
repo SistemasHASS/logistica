@@ -6,7 +6,7 @@ import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { DynamicMenuComponent } from '../../../layout/components/dynamic-menu/dynamic-menu.component';
-import { LayoutConfigService, AccordionGroupConfig, MenuType, ACCORDION_DEFAULT } from '../../../../services/layout-config.service';
+import { LayoutConfigService, AccordionGroupConfig, MenuType, ACCORDION_DEFAULT, getMenuDefaultParaRol } from '../../../../services/layout-config.service';
 
 interface ConfigMenuDinamico {
   id: string;
@@ -407,6 +407,7 @@ export class AdminMenusDinamicosComponent {
 
       this.alertService.showAlert('Éxito', 'Configuración agregada correctamente', 'success');
       this.nuevaConfig = { clave: '', valor: '', descripcion: '' };
+      this.notificarCambioMenu();
       this.cargarConfiguracion();
     } catch (error) {
       console.error('Error agregando configuración:', error);
@@ -427,6 +428,7 @@ export class AdminMenusDinamicosComponent {
       );
 
       this.alertService.showAlert('Éxito', 'Configuración actualizada correctamente', 'success');
+      this.notificarCambioMenu();
       this.actualizarPreview();
     } catch (error) {
       console.error('Error actualizando configuración:', error);
@@ -443,6 +445,7 @@ export class AdminMenusDinamicosComponent {
       );
 
       this.alertService.showAlert('Éxito', 'Configuración eliminada correctamente', 'success');
+      this.notificarCambioMenu();
       this.cargarConfiguracion();
     } catch (error) {
       console.error('Error eliminando configuración:', error);
@@ -466,6 +469,12 @@ export class AdminMenusDinamicosComponent {
       this.nuevaConfig.descripcion = '';
       this.placeholderValor = 'Valor';
     }
+  }
+
+  /** Invalida el caché del servicio y notifica a otras pestañas para que recarguen el menú */
+  private notificarCambioMenu(): void {
+    this.layoutConfig.invalidar();
+    localStorage.setItem('LAYOUT_CONFIG_INVALIDADO', Date.now().toString());
   }
 
   // Aplicar configuración por defecto al rol seleccionado
@@ -496,12 +505,13 @@ export class AdminMenusDinamicosComponent {
         })
       );
 
-      // 2. Guardar MENU_JSON con el menú por defecto completo
+      // 2. Guardar MENU_JSON con el menú filtrado para el rol
+      const menuParaRol = getMenuDefaultParaRol(this.rolSeleccionado);
       await lastValueFrom(
         this.http.post(`${this.baseUrl}/api/configmenu/guardar`, {
           idrol: this.rolSeleccionado,
           clave: 'MENU_JSON',
-          valor: JSON.stringify(ACCORDION_DEFAULT),
+          valor: JSON.stringify(menuParaRol),
           descripcion: 'Estructura completa del menú accordion por defecto',
           usuarioModifica: 'ADMIN'
         })
@@ -519,6 +529,7 @@ export class AdminMenusDinamicosComponent {
       );
 
       this.alertService.showAlert('Éxito', 'Configuración por defecto aplicada correctamente', 'success');
+      this.notificarCambioMenu();
       this.cargarConfiguracion();
     } catch (error) {
       console.error('Error aplicando configuración por defecto:', error);

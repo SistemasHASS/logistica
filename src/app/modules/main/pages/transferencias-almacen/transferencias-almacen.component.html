@@ -1,0 +1,354 @@
+<div class="card firstCard">
+  <div class="card-body p-0">
+
+    <!-- HEADER -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div>
+        <h5 class="mb-0"><i class="bx bx-transfer me-2 text-warning"></i>Transferencias de Almacén</h5>
+        <small class="text-muted">Gestiona las transferencias de stock a almacenes virtuales</small>
+      </div>
+      <button class="btn btn-sm btn-outline-primary" (click)="activeTab === 'pendientes' ? cargarPendientes() : cargarHistorial()">
+        <i class="bx bx-refresh me-1"></i> Actualizar
+      </button>
+    </div>
+
+    <!-- TABS -->
+    <ul class="nav nav-tabs mb-4">
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab === 'pendientes'" (click)="switchTab('pendientes')">
+          <i class="bx bx-time me-1"></i> Pendientes
+          <span class="badge bg-warning text-dark ms-1" *ngIf="pendientes.length > 0">{{ pendientes.length }}</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab === 'historial'" (click)="switchTab('historial')">
+          <i class="bx bx-history me-1"></i> Historial
+        </button>
+      </li>
+    </ul>
+
+    <!-- TAB: PENDIENTES -->
+    <div *ngIf="activeTab === 'pendientes'">
+
+      <!-- Loading -->
+      <div *ngIf="cargandoPendientes" class="text-center py-5">
+        <div class="spinner-border text-warning" role="status"></div>
+        <p class="mt-2 text-muted">Cargando transferencias pendientes...</p>
+      </div>
+
+      <!-- Sin datos -->
+      <div *ngIf="!cargandoPendientes && pendientes.length === 0" class="text-center py-5">
+        <i class="bx bx-check-circle fs-1 text-success"></i>
+        <p class="mt-2 text-muted">No hay transferencias pendientes</p>
+      </div>
+
+      <!-- TABLA: transferencias pendientes -->
+      <div *ngIf="!cargandoPendientes && pendientes.length > 0">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm align-middle" style="font-size:13px">
+            <thead class="table-light">
+              <tr>
+                <th>Requerimiento</th>
+                <th>Almacén Origen</th>
+                <th></th>
+                <th>Almacén Destino</th>
+                <th>Estado</th>
+                <th>Solicitó</th>
+                <th>Fecha Solicitud</th>
+                <th class="text-center">Items</th>
+                <th class="text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of pendientes">
+                <td>
+                  <!-- <div class="fw-semibold">{{ t.idrequerimiento }}</div>
+                  <div class="text-muted" style="font-size:11px" *ngIf="t.RequisicionNumero">
+                    <i class="bx bx-hash me-1"></i>{{ t.RequisicionNumero }}
+                  </div> -->
+                  <i class="bx bx-hash me-1"></i>{{ t.RequisicionNumero }}
+                </td>
+                <td>
+                  <i class="bx bx-store text-danger me-1"></i>
+                  {{ t.nombreAlmacenOrigen || t.almacenOrigen }}
+                </td>
+                <td class="text-muted"><i class="bx bx-right-arrow-alt fs-5"></i></td>
+                <td>
+                  <i class="bx bx-store text-success me-1"></i>
+                  {{ t.nombreAlmacenDestino || t.almacenDestino }}
+                </td>
+                <td><span [class]="getEstadoBadgeClass(t.estado)">{{ getEstadoLabel(t.estado) }}</span></td>
+                <td>{{ t.nombreSolicitante || t.usuarioSolicita }}</td>
+                <td>{{ t.fechaSolicitud | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td class="text-center">
+                  <span class="badge bg-secondary">{{ t.cantidadItems }}</span>
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-warning" (click)="abrirModal(t)">
+                    <i class="bx bx-transfer me-1"></i> Ejecutar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!--
+      ╔══════════════════════════════════════════════════════════════╗
+      ║  CARDS — PENDIENTES (comentado, disponible para uso futuro)  ║
+      ╚══════════════════════════════════════════════════════════════╝
+
+      <div class="row g-3">
+        <div class="col-12" *ngFor="let t of pendientes">
+          <div class="card card-transferencia p-3" (click)="abrirModal(t)">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <strong>{{ t.idrequerimiento }}</strong>
+                  <span [class]="getEstadoBadgeClass(t.estado)">{{ getEstadoLabel(t.estado) }}</span>
+                </div>
+                <p class="mb-1 text-muted small">{{ t.descripcionRequerimiento }}</p>
+                <div class="d-flex gap-3 flex-wrap">
+                  <span class="small">
+                    <i class="bx bx-store text-danger me-1"></i>
+                    <strong>Origen:</strong> {{ t.nombreAlmacenOrigen || t.almacenOrigen }}
+                  </span>
+                  <span class="small text-muted"><i class="bx bx-right-arrow-alt"></i></span>
+                  <span class="small">
+                    <i class="bx bx-store text-success me-1"></i>
+                    <strong>Destino:</strong> {{ t.nombreAlmacenDestino || t.almacenDestino }}
+                  </span>
+                </div>
+              </div>
+              <div class="text-end">
+                <div class="small text-muted mb-1">{{ t.fechaSolicitud | date:'dd/MM/yyyy HH:mm' }}</div>
+                <div class="small"><i class="bx bx-package me-1"></i>{{ t.cantidadItems }} items</div>
+                <div class="small text-muted">Solicitó: {{ t.nombreSolicitante || t.usuarioSolicita }}</div>
+                <button class="btn btn-sm btn-warning mt-2" (click)="abrirModal(t); $event.stopPropagation()">
+                  <i class="bx bx-transfer me-1"></i> Ejecutar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      -->
+
+    </div>
+
+    <!-- TAB: HISTORIAL -->
+    <div *ngIf="activeTab === 'historial'">
+
+      <div *ngIf="cargandoHistorial" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Cargando historial...</p>
+      </div>
+
+      <div *ngIf="!cargandoHistorial && historial.length === 0" class="text-center py-5">
+        <i class="bx bx-list-ul fs-1 text-muted"></i>
+        <p class="mt-2 text-muted">No hay transferencias en el historial</p>
+      </div>
+
+      <!-- TABLA: historial de transferencias -->
+      <div *ngIf="!cargandoHistorial && historial.length > 0">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm align-middle" style="font-size:13px">
+            <thead class="table-light">
+              <tr>
+                <th>Requerimiento</th>
+                <th>Almacén Origen</th>
+                <th></th>
+                <th>Almacén Destino</th>
+                <th>Estado</th>
+                <th>Solicitó</th>
+                <th>Transfirió</th>
+                <th>Fecha Transferencia</th>
+                <th class="text-center">Items</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of historial">
+                <td>
+                  <div class="fw-semibold">{{ t.idrequerimiento }}</div>
+                  <div class="text-muted" style="font-size:11px" *ngIf="t.RequisicionNumero">
+                    <i class="bx bx-hash me-1"></i>{{ t.RequisicionNumero }}
+                  </div>
+                </td>
+                <td>
+                  <i class="bx bx-store text-danger me-1"></i>
+                  {{ t.nombreAlmacenOrigen || t.almacenOrigen }}
+                </td>
+                <td class="text-muted"><i class="bx bx-right-arrow-alt fs-5"></i></td>
+                <td>
+                  <i class="bx bx-store text-success me-1"></i>
+                  {{ t.nombreAlmacenDestino || t.almacenDestino }}
+                </td>
+                <td><span [class]="getEstadoBadgeClass(t.estado)">{{ getEstadoLabel(t.estado) }}</span></td>
+                <td>{{ t.nombreSolicitante || t.usuarioSolicita }}</td>
+                <td>{{ t.usuarioTransfiere || '-' }}</td>
+                <td>{{ t.fechaTransferencia ? (t.fechaTransferencia | date:'dd/MM/yyyy HH:mm') : '-' }}</td>
+                <td class="text-center">
+                  <span class="badge bg-secondary">{{ t.cantidadItems }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!--
+      ╔══════════════════════════════════════════════════════════════╗
+      ║  CARDS — HISTORIAL (comentado, disponible para uso futuro)   ║
+      ╚══════════════════════════════════════════════════════════════╝
+
+      <div class="row g-3">
+        <div class="col-12" *ngFor="let t of historial">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <strong>{{ t.idrequerimiento }}</strong>
+                  <span [class]="getEstadoBadgeClass(t.estado)">{{ getEstadoLabel(t.estado) }}</span>
+                </div>
+                <div class="d-flex gap-3 flex-wrap small">
+                  <span><i class="bx bx-store text-danger me-1"></i><strong>Origen:</strong> {{ t.nombreAlmacenOrigen || t.almacenOrigen }}</span>
+                  <span class="text-muted"><i class="bx bx-right-arrow-alt"></i></span>
+                  <span><i class="bx bx-store text-success me-1"></i><strong>Destino:</strong> {{ t.nombreAlmacenDestino || t.almacenDestino }}</span>
+                </div>
+              </div>
+              <div class="text-end small text-muted">
+                <div>Solicitó: {{ t.nombreSolicitante || t.usuarioSolicita }}</div>
+                <div>Transfirió: {{ t.usuarioTransfiere || '-' }}</div>
+                <div>{{ t.fechaTransferencia ? (t.fechaTransferencia | date:'dd/MM/yyyy HH:mm') : '-' }}</div>
+                <div><i class="bx bx-package me-1"></i>{{ t.cantidadItems }} items</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      -->
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: EJECUTAR TRANSFERENCIA -->
+<!-- ============================================================ -->
+<div *ngIf="mostrarModal">
+  <div class="modal-backdrop-custom" (click)="cerrarModal()"></div>
+  <div class="modal-custom">
+    <div class="card shadow-lg">
+      <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">
+          <i class="bx bx-transfer me-2"></i>
+          Ejecutar Transferencia — {{ transferenciasSeleccionada?.idrequerimiento }}
+        </h6>
+        <button class="btn btn-sm btn-outline-dark" (click)="cerrarModal()">
+          <i class="bx bx-x"></i>
+        </button>
+      </div>
+
+      <div class="card-body">
+
+        <!-- Información general -->
+        <div class="alert alert-light border mb-3">
+          <div class="row g-2">
+            <div class="col-md-6">
+              <small class="text-muted d-block">Almacén Origen</small>
+              <strong><i class="bx bx-store text-danger me-1"></i>{{ transferenciasSeleccionada?.nombreAlmacenOrigen || transferenciasSeleccionada?.almacenOrigen }}</strong>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted d-block">Almacén Destino (Virtual)</small>
+              <strong><i class="bx bx-store text-success me-1"></i>{{ transferenciasSeleccionada?.nombreAlmacenDestino || transferenciasSeleccionada?.almacenDestino }}</strong>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted d-block">Solicitante</small>
+              <span>{{ transferenciasSeleccionada?.nombreSolicitante || transferenciasSeleccionada?.usuarioSolicita }}</span>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted d-block">Fecha solicitud</small>
+              <span>{{ transferenciasSeleccionada?.fechaSolicitud | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerta stock insuficiente -->
+        <div class="alert alert-danger" *ngIf="stockInsuficiente">
+          <i class="bx bx-error me-2"></i>
+          <strong>Stock insuficiente:</strong> Uno o más items no tienen suficiente stock en el almacén origen.
+          No se puede ejecutar la transferencia hasta que se regularice el stock.
+        </div>
+
+        <!-- Tabla de items -->
+        <h6 class="mb-2"><i class="bx bx-list-check me-1"></i>Items a transferir</h6>
+
+        <div class="text-center py-3" *ngIf="cargandoDetalle">
+          <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+          <span class="ms-2 text-muted">Cargando items...</span>
+        </div>
+
+        <div class="table-responsive" *ngIf="!cargandoDetalle && detalle.length > 0">
+          <table class="table table-sm mb-3">
+            <thead class="table-light">
+              <tr>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th class="text-end">Cantidad</th>
+                <th>U.M.</th>
+                <th class="text-end">Stock Disponible</th>
+                <th class="text-center">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of detalle"
+                  [class.table-warning]="!item.tieneStock"
+                  [class.table-success]="item.tieneStock">
+                <td><code>{{ item.codigo }}</code></td>
+                <td>{{ item.descripcion }}</td>
+                <td class="text-end">{{ item.cantidad | number:'1.2-2' }}</td>
+                <td>{{ item.unidadMedida }}</td>
+                <td class="text-end">
+                  <span [class.text-danger]="!item.tieneStock" [class.fw-bold]="!item.tieneStock">
+                    {{ item.stockDisponible | number:'1.2-2' }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-success" *ngIf="item.tieneStock">
+                    <i class="bx bx-check"></i> OK
+                  </span>
+                  <span class="badge bg-danger" *ngIf="!item.tieneStock">
+                    <i class="bx bx-x"></i> Sin stock
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Observaciones -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Observaciones del almacén <small class="text-muted">(opcional)</small></label>
+          <textarea class="form-control" rows="2" [(ngModel)]="observacionesAlmacen"
+            placeholder="Ingrese observaciones sobre la transferencia..."></textarea>
+        </div>
+
+      </div>
+
+      <div class="card-footer d-flex justify-content-end gap-2">
+        <button class="btn btn-secondary" (click)="cerrarModal()" [disabled]="ejecutando">
+          Cancelar
+        </button>
+        <button class="btn btn-warning" (click)="confirmarTransferencia()"
+          [disabled]="ejecutando || cargandoDetalle || stockInsuficiente">
+          <span *ngIf="ejecutando" class="spinner-border spinner-border-sm me-1"></span>
+          <i class="bx bx-transfer me-1" *ngIf="!ejecutando"></i>
+          {{ ejecutando ? 'Ejecutando...' : 'Confirmar Transferencia' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

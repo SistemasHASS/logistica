@@ -35,6 +35,7 @@ import { CotizacionesComponent } from './modules/main/pages/cotizaciones/cotizac
 import { OrdenesCompraComponent } from './modules/main/pages/ordenes-compra/ordenes-compra.component';
 import { RecepcionMercaderiaComponent } from './modules/main/pages/recepcion-mercaderia/recepcion-mercaderia.component';
 import { ConformidadAlmacenComponent } from './modules/main/pages/conformidad-almacen/conformidad-almacen.component';
+import { TransferenciasAlmacenComponent } from './modules/main/pages/transferencias-almacen/transferencias-almacen.component';
 import { DashboardComprasComponent } from './modules/main/pages/dashboard-compras/dashboard-compras.component';
 import { GestionInventarioComponent } from './modules/main/pages/gestion-inventario/gestion-inventario.component';
 import { MaestroProveedoresComponent } from './modules/main/pages/maestro-proveedores/maestro-proveedores.component';
@@ -67,6 +68,9 @@ import { ConsolidacionComprasComponent } from './modules/main/pages/consolidacio
 import { ConsolidacionServiciosComponent } from './modules/main/pages/consolidacion-servicios/consolidacion-servicios.component';
 import { AdminLogisticaComponent } from './modules/main/pages/admin-logistica/admin-logistica.component';
 import { AdminLogisticaGuard } from './modules/auth/guard/admin-logistica.guard';
+import { ConformidadServiciosComponent } from './modules/main/pages/conformidad-servicios/conformidad-servicios.component';
+import { ConformidadServiciosGuard } from './modules/auth/guard/conformidad-servicios.guard';
+import { CatalogoItemsComponent } from './modules/main/pages/catalogo-items/catalogo-items.component';
 
 export const routes: Routes = [
   {
@@ -119,7 +123,7 @@ export const routes: Routes = [
       // { path: 'requerimientos', component: RequerimientosComponent, canActivate: [OperativoGuard, ConfigGuard] },
       { path: 'requerimientos', component: RequerimientosComponent, canActivate: [OperativoEmpaqueGuard, ConfigGuard] },
       { path: 'notificaciones', component: NotificacionesListaComponent, canActivate: [OperativoEmpaqueGuard] },
-      { path: 'saldo-requerimiento', component: SaldoRequerimientoComponent, canActivate: [OperativoEmpaqueGuard] },
+      // { path: 'saldo-requerimiento', component: SaldoRequerimientoComponent, canActivate: [OperativoEmpaqueGuard] },
       { path: 'solicitudes-compra', component: SolicitudesCompraComponent, canActivate: [LogisticoGuard] },
       { path: 'dashboard-logistica', component: DashboardLogisticaComponent, canActivate: [LogisticoGuard] },
       { path: 'dashboard-oplogist', component: DashboardOplogistComponent, canActivate: [OperativoLogisticoGuard] },
@@ -152,6 +156,7 @@ export const routes: Routes = [
       { path: 'listas-stock', component: ListasStockComponent, canActivate: [AlmacenGuard] },
       { path: 'despachos', component: DespachoComponent, canActivate: [AlmacenGuard] },
       { path: 'despachos-original', component: DespachoOriginalComponent, canActivate: [AlmacenGuard] },
+      { path: 'transferencias-almacen', component: TransferenciasAlmacenComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte_logistico', component: ReporteLogisticoComponent },
       { path: 'reporte-saldos', component: ReporteSaldosComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte-despachos', component: ReporteDespachosComponent, canActivate: [AlmacenGuard] },
@@ -159,6 +164,8 @@ export const routes: Routes = [
       { path: 'consolidacion-requerimientos', component: ConsolidacionRequerimientosComponent, canActivate: [LogisticoGuard] },
       { path: 'consolidacion-compras', component: ConsolidacionComprasComponent, canActivate: [LogisticoGuard] },
       { path: 'consolidacion-servicios', component: ConsolidacionServiciosComponent, canActivate: [LogisticoGuard] },
+      { path: 'conformidad-servicios', component: ConformidadServiciosComponent, canActivate: [ConformidadServiciosGuard] },
+      { path: 'catalogo-items', component: CatalogoItemsComponent },
       { path: '**', redirectTo: 'auth/login' }
     ],
     canActivate: [AuthGuard]

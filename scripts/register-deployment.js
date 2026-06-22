@@ -103,6 +103,7 @@ const payload = {
   appName: pkg.name,
   environment: args.environment || process.env.DEPLOY_ENV || 'production',
   version: versionJson.version,
+  build: versionJson.build || 0,
   buildTime: versionJson.buildTime,
   deployedAt: new Date().toISOString(),
   deployedBy: os.userInfo().username,
@@ -119,7 +120,7 @@ console.log('========== REGISTRO DE DEPLOYMENT ==========');
 console.log(`  API seleccionada: ${apiSelected}`);
 console.log(`  Endpoint:         ${endpoint}`);
 console.log(`  AppName:          ${payload.appName}`);
-console.log(`  Version:          ${payload.version}`);
+console.log(`  Version:          ${payload.version} (build ${payload.build})`);
 console.log(`  Environment:      ${payload.environment}`);
 console.log(`  Deployed by:      ${payload.deployedBy}@${payload.serverName}`);
 console.log('============================================');

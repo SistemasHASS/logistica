@@ -24,6 +24,7 @@ export interface ConformidadNota {
   fechaConformidad?: string;
   usuarioConformidad?: string;
   observaciones?: string;
+  usuarioPropietario?: string;  // quien debe dar la conformidad
 }
 
 export interface ConformidadItem {
@@ -54,10 +55,10 @@ export class ConformidadAlmacenService {
 
   constructor(private http: HttpClient) {}
 
-  listarNotas(tipo: TipoNota, estado: EstadoConformidad | '' = '', idalmacen = ''): Observable<ConformidadNota[]> {
+  listarNotas(tipo: TipoNota, estado: EstadoConformidad | '' = '', idalmacen = '', idusuario = ''): Observable<ConformidadNota[]> {
     return this.http.post<any>(
       `${this.url}/listar`,
-      { tipo, estado, idalmacen },
+      { tipo, estado, idalmacen, idusuario },
       { headers: this.headers }
     ).pipe(
       map(res => {
@@ -120,8 +121,9 @@ export class ConformidadAlmacenService {
       firmante:          n.firmante ?? undefined,
       firmaBase64:       n.firmaBase64 ?? undefined,
       fechaConformidad:  n.fechaConformidad ?? undefined,
-      usuarioConformidad: n.usuarioConformidad ?? undefined,
-      observaciones:     n.observaciones ?? undefined
+      usuarioConformidad:  n.usuarioConformidad  ?? undefined,
+      observaciones:      n.observaciones       ?? undefined,
+      usuarioPropietario: n.usuarioPropietario   ?? undefined
     };
   }
 }

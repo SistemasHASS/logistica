@@ -3,8 +3,8 @@
 
     <!-- HEADER -->
     <div class="page-header mb-3">
-      <h2><i class="bx bx-wrench me-2"></i>Consolidación de Servicios</h2>
-      <p class="texto-descriptivo">Consolidar requerimientos de servicio y emitir Órdenes de Servicio</p>
+      <h2><i class="bx bx-wrench me-2"></i>Gestión de Servicios - OS Individual</h2>
+      <p class="texto-descriptivo">Generar Órdenes de Servicio individuales desde requerimientos aprobados (1 Req = 1 OS)</p>
     </div>
 
     <!-- SUMMARY CARDS -->
@@ -15,7 +15,7 @@
         </div>
         <div class="stat-content">
           <span class="stat-value">{{ serviciosPendientes() }}</span>
-          <span class="stat-label">Pendientes de consolidar</span>
+          <span class="stat-label">Pendientes sin OS</span>
         </div>
       </div>
       <div class="stat-card info">
@@ -24,7 +24,7 @@
         </div>
         <div class="stat-content">
           <span class="stat-value">{{ totalServicios() }}</span>
-          <span class="stat-label">Total de servicios</span>
+          <span class="stat-label">Total requerimientos</span>
         </div>
       </div>
       <div class="stat-card success">
@@ -32,8 +32,8 @@
           <i class="bx bx-check-circle"></i>
         </div>
         <div class="stat-content">
-          <span class="stat-value">{{ serviciosConsolidados() }}</span>
-          <span class="stat-label">Consolidados</span>
+          <span class="stat-value">{{ ordenesServicio().length }}</span>
+          <span class="stat-label">OS generadas</span>
         </div>
       </div>
     </div>
@@ -47,7 +47,7 @@
       </li>
       <li class="nav-item">
         <button class="nav-link" [class.active]="tabActiva() === 1" (click)="tabActiva.set(1)" type="button">
-          <i class="bx bx-spreadsheet me-2"></i>Consolidar y Emitir OS
+          <i class="bx bx-wrench me-2"></i>Emitir OS Individual
         </button>
       </li>
       <li class="nav-item">
@@ -57,33 +57,39 @@
       </li>
       <li class="nav-item">
         <button class="nav-link" [class.active]="tabActiva() === 3" (click)="tabActiva.set(3)" type="button">
-          <i class="bx bx-check-circle me-2"></i>Conformidad OS
+          <i class="bx bx-check-circle me-2"></i>Confirmación Servicio
         </button>
       </li>
     </ul>
 
     <div>
 
-    <!-- TAB 0: REQUERIMIENTOS SERVICIO -->
+    <!-- TAB 0: REQUERIMIENTOS SERVICIO APROBADOS SIN OS -->
     @if (tabActiva() === 0) {
       <div class="tab-panel">
-        <!-- Toolbar ARRIBA -->
         <div class="d-flex gap-2 mb-3 align-items-center flex-wrap">
           <input type="text" class="form-control" style="max-width:300px"
-                 placeholder="Buscar..."
+                 placeholder="Buscar por descripción, código o N° req..."
                  [(ngModel)]="busqueda" (ngModelChange)="cargarRequerimientos()">
           <button class="btn btn-outline-secondary btn-sm" (click)="cargarRequerimientos()">
             <i class="bx bx-refresh"></i> Actualizar
           </button>
-          <span class="text-muted small ms-2">{{ itemsSeleccionados().length }} seleccionado(s)</span>
+          <span class="text-muted small ms-2">
+            {{ itemsSeleccionados().length }} seleccionado(s)
+            @if (itemsSeleccionados().length > 0) {
+              <span class="ms-1 fw-bold">| Monto est.: {{ osFormProveedor.moneda }}
+                {{ totalMontoSeleccionado() | number:'1.2-2' }}
+              </span>
+            }
+          </span>
           <button class="btn btn-primary btn-sm" [disabled]="itemsSeleccionados().length === 0" (click)="irAConsolidar()">
-            <i class="bx bx-right-arrow-alt me-1"></i> Pasar a Emitir OS
+            <i class="bx bx-right-arrow-alt me-1"></i> Generar OS ({{ itemsSeleccionados().length }})
           </button>
           <button class="btn btn-outline-success btn-sm ms-auto" (click)="abrirCargaMasiva()">
-            <i class="bx bx-upload me-1"></i> Regularización (Carga Excel)
+            <i class="bx bx-upload me-1"></i> Regularización (Excel)
           </button>
           <a href="#" class="btn btn-outline-secondary btn-sm" (click)="descargarPlantilla($event)">
-            <i class="bx bx-download me-1"></i> Plantilla Excel
+            <i class="bx bx-download me-1"></i> Plantilla
           </a>
         </div>
 
@@ -104,13 +110,15 @@
                 <input type="checkbox" (change)="seleccionarTodos($event)">
               </th>
               <th style="width:50px">#</th>
-              <th style="min-width:130px">Nro. Req.</th>
-              <th style="min-width:250px">Descripción del Servicio</th>
-              <th style="min-width:110px" class="text-end">Cant.</th>
-              <th style="min-width:70px">UM</th>
-              <th style="min-width:130px">Área</th>
-              <th style="min-width:100px">CECO</th>
-              <th style="min-width:130px">Consolidación</th>
+              <th style="min-width:120px">Nro. Req.</th>
+              <th style="min-width:220px">Descripción del Servicio</th>
+              <th style="min-width:80px" class="text-end">Cant.</th>
+              <th style="min-width:60px">UM</th>
+              <th style="min-width:120px" class="text-end">Precio Ref.</th>
+              <th style="min-width:130px" class="text-end">Precio Unit.</th>
+              <th style="min-width:100px" class="text-end">Subtotal</th>
+              <th style="min-width:100px">Área</th>
+              <th style="min-width:80px">CECO</th>
             </tr>
           </ng-template>
 
@@ -122,25 +130,38 @@
                        (change)="toggleSeleccion(req)">
               </td>
               <td>{{ i + 1 }}</td>
-              <td><small>{{ req.numeroRequerimiento }}</small></td>
-              <td>{{ req.descripcion }}</td>
-              <td class="fw-bold text-end">{{ req.cantidadPendiente | number:'1.2-2' }}</td>
-              <td>{{ req.unidadMedida }}</td>
-              <td><small>{{ req.area }}</small></td>
-              <td><small>{{ req.ceco }}</small></td>
+              <td><small class="fw-bold">{{ req.numeroRequerimiento }}</small></td>
               <td>
-                @if (req.codigoConsolidacion) {
-                  <span class="badge bg-success">{{ req.codigoConsolidacion }}</span>
-                } @else {
-                  <span class="badge bg-secondary">Sin consolidar</span>
+                <span>{{ req.descripcion }}</span>
+                @if (req.ultimoProveedor) {
+                  <br><small class="text-muted"><i class="bx bx-store-alt"></i> {{ req.ultimoProveedor }}</small>
                 }
               </td>
+              <td class="fw-bold text-end">{{ req.cantidadPendiente | number:'1.2-2' }}</td>
+              <td>{{ req.unidadMedida }}</td>
+              <td class="text-end">
+                @if (req.precioReferencial > 0) {
+                  <span class="text-success fw-bold">{{ req.precioReferencial | number:'1.2-2' }}</span>
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+              <td>
+                <input type="number" class="form-control form-control-sm text-end"
+                       [(ngModel)]="req.precioUnitario"
+                       [placeholder]="req.precioReferencial > 0 ? req.precioReferencial : '0.00'"
+                       style="max-width:110px"
+                       min="0" step="0.01">
+              </td>
+              <td class="text-end fw-bold">{{ subtotalReq(req) | number:'1.2-2' }}</td>
+              <td><small>{{ req.area }}</small></td>
+              <td><small>{{ req.ceco }}</small></td>
             </tr>
           </ng-template>
 
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="9" class="text-center py-3 text-muted">No hay requerimientos de servicio pendientes.</td>
+              <td colspan="11" class="text-center py-3 text-muted">No hay requerimientos de servicio pendientes de OS.</td>
             </tr>
           </ng-template>
 
@@ -148,163 +169,155 @@
       </div>
     }
 
-    <!-- TAB 1: CONSOLIDAR Y EMITIR OS -->
+    <!-- TAB 1: EMITIR OS INDIVIDUAL -->
     @if (tabActiva() === 1) {
       <div class="tab-panel">
         @if (itemsSeleccionados().length === 0) {
           <div class="alert alert-warning">
             <i class="bx bx-info-circle me-2"></i>
-            Selecciona requerimientos de servicio y haz clic en "Pasar a Emitir OS".
+            Seleccione requerimientos de servicio en el tab anterior, asigne precios y haga clic en "Generar OS".
           </div>
         } @else {
+          <div class="alert alert-info mb-3">
+            <i class="bx bx-info-circle me-2"></i>
+            <strong>{{ itemsSeleccionados().length }}</strong> requerimiento(s) seleccionado(s).
+            Se creará <strong>1 OS individual por cada requerimiento</strong>.
+          </div>
+
+          <!-- Barra de progreso durante generación -->
+          @if (generandoOSIndividuales()) {
+            <div class="alert alert-primary mb-3">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="spinner-border spinner-border-sm"></span>
+                <span>Generando OS {{ progresoGeneracion() }} de {{ totalGeneracion() }}...</span>
+              </div>
+              <div class="progress" style="height: 6px">
+                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                     [style.width.%]="(progresoGeneracion() / totalGeneracion()) * 100"></div>
+              </div>
+            </div>
+          }
+
           <div class="row g-3">
+            <!-- DATOS DEL PROVEEDOR (compartidos para todas las OS) -->
             <div class="col-12">
-              <h6 class="fw-bold border-bottom pb-2 text-primary">Datos del Proveedor</h6>
+              <h6 class="fw-bold border-bottom pb-2 text-primary">
+                <i class="bx bx-store-alt me-1"></i>Datos del Proveedor (aplicará a todas las OS)
+              </h6>
             </div>
             <div class="col-md-3">
               <label class="form-label small fw-bold">RUC *</label>
-              <input class="form-control form-control-sm" [(ngModel)]="osForm.rucProveedor">
+              <input class="form-control form-control-sm" [(ngModel)]="osFormProveedor.rucProveedor">
             </div>
             <div class="col-md-4">
               <label class="form-label small fw-bold">Nombre Proveedor *</label>
-              <input class="form-control form-control-sm" [(ngModel)]="osForm.nombreProveedor">
+              <input class="form-control form-control-sm" [(ngModel)]="osFormProveedor.nombreProveedor">
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-bold">Email Proveedor *</label>
-              <input class="form-control form-control-sm" type="email" [(ngModel)]="osForm.emailProveedor">
+              <label class="form-label small fw-bold">Email Proveedor</label>
+              <input class="form-control form-control-sm" type="email" [(ngModel)]="osFormProveedor.emailProveedor">
             </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-bold">Contacto</label>
-              <input class="form-control form-control-sm" [(ngModel)]="osForm.contactoProveedor">
-            </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label class="form-label small fw-bold">Teléfono</label>
-              <input class="form-control form-control-sm" [(ngModel)]="osForm.telefonoProveedor">
-            </div>
-
-            <div class="col-12">
-              <h6 class="fw-bold border-bottom pb-2 text-primary">Datos del Servicio</h6>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label small fw-bold">Tipo de Servicio</label>
-              <input class="form-control form-control-sm" [(ngModel)]="osForm.tipoServicio" placeholder="Mantenimiento">
-            </div>
-            <div class="col-md-9">
-              <label class="form-label small fw-bold">Descripción *</label>
-              <input class="form-control form-control-sm" [(ngModel)]="osForm.descripcion">
-            </div>
-            <div class="col-md-12">
-              <label class="form-label small fw-bold">Alcance del Servicio</label>
-              <textarea class="form-control form-control-sm" rows="2" [(ngModel)]="osForm.alcance"></textarea>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label small fw-bold">Fecha Inicio</label>
-              <input class="form-control form-control-sm" type="date" [(ngModel)]="osForm.fechaInicioServicio">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label small fw-bold">Fecha Fin</label>
-              <input class="form-control form-control-sm" type="date" [(ngModel)]="osForm.fechaFinServicio">
+              <input class="form-control form-control-sm" [(ngModel)]="osFormProveedor.telefonoProveedor">
             </div>
             <div class="col-md-2">
-              <label class="form-label small fw-bold">Plazo (días)</label>
-              <input class="form-control form-control-sm" type="number" [(ngModel)]="osForm.plazoEjecucion">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-bold">Ubicación del Servicio</label>
-              <input class="form-control form-control-sm" [(ngModel)]="osForm.ubicacionServicio">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label small fw-bold">Moneda *</label>
-              <select class="form-select form-select-sm" [(ngModel)]="osForm.moneda">
-                <option value="PEN">PEN - Soles</option>
-                <option value="USD">USD - Dólares</option>
+              <label class="form-label small fw-bold">Moneda</label>
+              <select class="form-select form-select-sm" [(ngModel)]="osFormProveedor.moneda">
+                <option value="PEN">PEN</option>
+                <option value="USD">USD</option>
               </select>
             </div>
             <div class="col-md-3">
-              <label class="form-label small fw-bold">Condiciones de Pago</label>
-              <select class="form-select form-select-sm" [(ngModel)]="osForm.condicionesPago">
+              <label class="form-label small fw-bold">Condiciones Pago</label>
+              <select class="form-select form-select-sm" [(ngModel)]="osFormProveedor.condicionesPago">
                 <option value="Contado">Contado</option>
-                <option value="50% adelanto">50% adelanto, 50% al finalizar</option>
+                <option value="50% adelanto">50% adelanto</option>
                 <option value="30 días">30 días</option>
               </select>
             </div>
-            <div class="col-md-3">
-              <label class="form-label small fw-bold">Forma de Pago</label>
-              <select class="form-select form-select-sm" [(ngModel)]="osForm.formaPago">
+            <div class="col-md-2">
+              <label class="form-label small fw-bold">Forma Pago</label>
+              <select class="form-select form-select-sm" [(ngModel)]="osFormProveedor.formaPago">
                 <option value="Transferencia">Transferencia</option>
                 <option value="Efectivo">Efectivo</option>
               </select>
             </div>
-            <div class="col-md-3">
-              <label class="form-label small fw-bold">Centro de Costo</label>
-              <input class="form-control form-control-sm" [(ngModel)]="osForm.centroCosto">
+            <div class="col-md-2">
+              <label class="form-label small fw-bold">Plazo (días)</label>
+              <input class="form-control form-control-sm" type="number" [(ngModel)]="osFormProveedor.plazoEjecucion">
             </div>
 
+            <!-- DETALLE DE REQUERIMIENTOS A GENERAR -->
             <div class="col-12">
-              <h6 class="fw-bold border-bottom pb-2 text-primary">Responsable de Conformidad</h6>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label small fw-bold">DNI Jefe de Área *</label>
-              <input class="form-control form-control-sm" [(ngModel)]="osForm.dniJefeArea" placeholder="DNI">
-            </div>
-            <div class="col-md-5">
-              <label class="form-label small fw-bold">Nombre Jefe de Área *</label>
-              <input class="form-control form-control-sm" [(ngModel)]="osForm.nombreJefeArea">
-            </div>
-
-            <div class="col-12">
-              <h6 class="fw-bold border-bottom pb-2 text-primary">Ítems del Servicio</h6>
+              <h6 class="fw-bold border-bottom pb-2 text-primary">
+                <i class="bx bx-list-check me-1"></i>Requerimientos - 1 OS por cada fila
+              </h6>
               <div class="table-responsive">
                 <table class="table table-sm table-bordered">
                   <thead class="table-light">
                     <tr>
-                      <th>Descripción del Servicio *</th>
-                      <th>Especificaciones</th>
-                      <th>UM</th>
-                      <th class="text-end">Cant.</th>
-                      <th class="text-end" style="min-width:120px">Precio Unit. *</th>
-                      <th class="text-end">Subtotal</th>
-                      <th></th>
+                      <th style="width:40px">#</th>
+                      <th style="min-width:120px">Nro. Req.</th>
+                      <th style="min-width:200px">Descripción del Servicio</th>
+                      <th style="min-width:70px">UM</th>
+                      <th style="min-width:80px" class="text-end">Cant.</th>
+                      <th style="min-width:100px" class="text-end">Precio Ref.</th>
+                      <th style="min-width:110px" class="text-end">Precio Unit.</th>
+                      <th style="min-width:100px" class="text-end">Subtotal</th>
+                      <th style="min-width:90px">Área</th>
+                      <th style="min-width:80px">CECO</th>
                     </tr>
                   </thead>
                   <tbody>
-                    @for (item of osForm.items; track $index; let i = $index) {
+                    @for (req of itemsSeleccionados(); track req.idDetalle; let i = $index) {
                       <tr>
-                        <td><input class="form-control form-control-sm" [(ngModel)]="item.descripcionServicio"></td>
-                        <td><input class="form-control form-control-sm" [(ngModel)]="item.especificaciones"></td>
-                        <td><input class="form-control form-control-sm" style="max-width:80px" [(ngModel)]="item.unidadMedida" value="SVC"></td>
-                        <td><input class="form-control form-control-sm text-end" type="number" [(ngModel)]="item.cantidad" (ngModelChange)="calcularTotalesOS()"></td>
-                        <td><input class="form-control form-control-sm text-end" type="number" [(ngModel)]="item.precioUnitario" (ngModelChange)="calcularTotalesOS()"></td>
-                        <td class="text-end fw-bold">{{ subtotalItemOS(item) | number:'1.2-2' }}</td>
-                        <td>
-                          <button class="btn btn-sm btn-outline-danger" (click)="eliminarItemOS(i)" [disabled]="osForm.items.length <= 1">
-                            <i class="bx bx-trash"></i>
-                          </button>
+                        <td class="text-center">{{ i + 1 }}</td>
+                        <td><small class="fw-bold">{{ req.numeroRequerimiento }}</small></td>
+                        <td>{{ req.descripcion }}</td>
+                        <td>{{ req.unidadMedida || 'SVC' }}</td>
+                        <td class="text-end fw-bold">{{ req.cantidadPendiente | number:'1.2-2' }}</td>
+                        <td class="text-end">
+                          @if (req.precioReferencial > 0) {
+                            <span class="text-success">{{ req.precioReferencial | number:'1.2-2' }}</span>
+                          } @else {
+                            <span class="text-muted">—</span>
+                          }
                         </td>
+                        <td>
+                          <input type="number" class="form-control form-control-sm text-end"
+                                 [(ngModel)]="req.precioUnitario" min="0" step="0.01"
+                                 style="max-width:110px">
+                        </td>
+                        <td class="text-end fw-bold">{{ subtotalReq(req) | number:'1.2-2' }}</td>
+                        <td><small>{{ req.area }}</small></td>
+                        <td><small>{{ req.ceco }}</small></td>
                       </tr>
                     }
                   </tbody>
                   <tfoot class="table-light">
                     <tr>
-                      <td colspan="5" class="text-end fw-bold fs-6">TOTAL {{ osForm.moneda }}:</td>
-                      <td class="text-end fw-bold fs-6">{{ osForm.montoTotal | number:'1.2-2' }}</td>
-                      <td></td>
+                      <td colspan="7" class="text-end fw-bold fs-6">TOTAL {{ osFormProveedor.moneda }}:</td>
+                      <td class="text-end fw-bold fs-6">{{ montoTotalSeleccion | number:'1.2-2' }}</td>
+                      <td colspan="2"></td>
                     </tr>
                   </tfoot>
                 </table>
               </div>
-              <button class="btn btn-sm btn-outline-primary mt-2" (click)="agregarItemOS()">
-                <i class="bx bx-plus"></i> Agregar ítem
-              </button>
             </div>
 
             <div class="col-12 mt-3">
               <div class="d-flex gap-2">
-                <button class="btn btn-success" (click)="crearOSBorrador()" [disabled]="guardandoOS()">
-                  @if (guardandoOS()) { <span class="spinner-border spinner-border-sm me-1"></span> }
-                  <i class="bx bx-save me-1"></i> Crear OS (Borrador)
+                <button class="btn btn-success" (click)="generarOSIndividuales()"
+                        [disabled]="generandoOSIndividuales()">
+                  @if (generandoOSIndividuales()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                  <i class="bx bx-check-double me-1"></i>
+                  Generar {{ itemsSeleccionados().length }} OS Individual(es)
                 </button>
-                <button class="btn btn-outline-secondary" (click)="limpiarSeleccion()">Limpiar</button>
+                <button class="btn btn-outline-secondary" (click)="tabActiva.set(0)">
+                  <i class="bx bx-arrow-back me-1"></i> Volver
+                </button>
+                <button class="btn btn-outline-danger" (click)="limpiarSeleccion(); tabActiva.set(0)">Cancelar</button>
               </div>
             </div>
           </div>
@@ -348,7 +361,12 @@
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                   <div>
                     <h6 class="mb-1 fw-bold">{{ os.numeroOrden }}</h6>
-                    <div class="text-muted small">{{ os.nombreProveedor }} | {{ os.tipoServicio }}</div>
+                    <div class="text-muted small">
+                      {{ os.nombreProveedor }} | {{ os.tipoServicio }}
+                      @if (os.idRequerimientoOrigen) {
+                        | <span class="text-primary">Req: {{ os.idRequerimientoOrigen }}</span>
+                      }
+                    </div>
                     <div class="small">
                       <span class="me-3"><i class="bx bx-dollar"></i> {{ os.moneda }} {{ os.montoTotal | number:'1.2-2' }}</span>
                       <span><i class="bx bx-calendar"></i> {{ os.fechaRegistro }}</span>
@@ -382,8 +400,8 @@
                       </button>
                     }
                     @if (os.estado === 'ENVIADA' && !os.tieneConformidad) {
-                      <button class="btn btn-sm btn-outline-success" (click)="abrirConformidad(os)">
-                        <i class="bx bx-check-circle"></i> Registrar Conformidad
+                      <button class="btn btn-sm btn-outline-success" (click)="abrirConfirmacionServicio(os)">
+                        <i class="bx bx-check-circle"></i> Confirmar Servicio
                       </button>
                     }
                   </div>
@@ -395,30 +413,36 @@
       </div>
     }
 
-    <!-- TAB 3: CONFORMIDAD OS -->
+    <!-- TAB 3: CONFIRMACIÓN DE SERVICIO REALIZADO -->
     @if (tabActiva() === 3) {
       <div class="tab-panel">
         <div class="alert alert-info">
           <i class="bx bx-info-circle me-2"></i>
-          Las conformidades pendientes aparecen aquí. El jefe de área debe firmar el acta de conformidad del servicio.
+          <strong>Flujo:</strong> El proveedor ejecuta el servicio &#8594; El jefe de área confirma la ejecución &#8594;
+          Se habilita el pago &#8594; Se cierra la OS.
         </div>
         @for (os of osPendientesConformidad(); track os.idOS) {
           <div class="card mb-2 border-warning">
             <div class="card-body p-3">
-              <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div>
-                  <h6 class="mb-1">{{ os.numeroOrden }} — {{ os.nombreProveedor }}</h6>
-                  <small class="text-muted">{{ os.tipoServicio }} | {{ os.moneda }} {{ os.montoTotal | number:'1.2-2' }}</small>
+                  <h6 class="mb-1 fw-bold">{{ os.numeroOrden }} — {{ os.nombreProveedor }}</h6>
+                  <small class="text-muted">
+                    {{ os.tipoServicio }} | {{ os.moneda }} {{ os.montoTotal | number:'1.2-2' }}
+                    @if (os.idRequerimientoOrigen) {
+                      | Req: {{ os.idRequerimientoOrigen }}
+                    }
+                  </small>
                 </div>
-                <button class="btn btn-sm btn-outline-success" (click)="abrirConformidad(os)">
-                  <i class="bx bx-check-circle me-1"></i> Registrar Conformidad
+                <button class="btn btn-sm btn-outline-success" (click)="abrirConfirmacionServicio(os)">
+                  <i class="bx bx-check-circle me-1"></i> Confirmar Servicio Ejecutado
                 </button>
               </div>
             </div>
           </div>
         }
         @if (osPendientesConformidad().length === 0) {
-          <div class="alert alert-success">No hay conformidades pendientes.</div>
+          <div class="alert alert-success">No hay servicios pendientes de confirmación.</div>
         }
       </div>
     }
@@ -585,6 +609,80 @@
                 [disabled]="datosExcel().length === 0 || procesandoExcel()">
           @if (procesandoExcel()) { <span class="spinner-border spinner-border-sm me-1"></span> }
           <i class="bx bx-cog me-1"></i> Procesar y Crear OS
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- MODAL CONFIRMACIÓN DE SERVICIO REALIZADO -->
+@if (modalConfirmacionAbierto()) {
+  <div class="modal-overlay" (click)="cerrarConfirmacionServicio()">
+    <div class="modal-box modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bx bx-check-shield me-2"></i>Confirmación de Servicio Ejecutado</h5>
+        <button class="btn-close btn-close-white" (click)="cerrarConfirmacionServicio()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info mb-3">
+          <strong>OS:</strong> {{ osActual()?.numeroOrden }} |
+          <strong>Proveedor:</strong> {{ osActual()?.nombreProveedor }} |
+          <strong>Monto:</strong> {{ osActual()?.moneda }} {{ osActual()?.montoTotal | number:'1.2-2' }}
+        </div>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Fecha de Ejecución *</label>
+            <input class="form-control" type="date" [(ngModel)]="confirmacionForm.fechaEjecucion">
+          </div>
+          <div class="col-md-8">
+            <label class="form-label fw-bold">Estado de Confirmación *</label>
+            <select class="form-select" [(ngModel)]="confirmacionForm.estado">
+              <option value="CONFIRMADO">CONFIRMADO - El servicio fue ejecutado satisfactoriamente</option>
+              <option value="CON_OBSERVACIONES">CON OBSERVACIONES - Se requieren ajustes</option>
+            </select>
+          </div>
+          <div class="col-md-12">
+            <label class="form-label fw-bold">Trabajo Ejecutado (descripción) *</label>
+            <textarea class="form-control" rows="3" [(ngModel)]="confirmacionForm.trabajoEjecutado"
+                      placeholder="Describa el trabajo realizado por el proveedor..."></textarea>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold">DNI Confirma *</label>
+            <input class="form-control" [(ngModel)]="confirmacionForm.dniConfirma">
+          </div>
+          <div class="col-md-8">
+            <label class="form-label fw-bold">Nombre de quien confirma *</label>
+            <input class="form-control" [(ngModel)]="confirmacionForm.nombreConfirma">
+          </div>
+          <div class="col-md-12">
+            <label class="form-label fw-bold">Observaciones</label>
+            <textarea class="form-control" rows="2" [(ngModel)]="confirmacionForm.observaciones"
+                      [placeholder]="confirmacionForm.estado === 'CON_OBSERVACIONES'
+                        ? 'Detalle las observaciones del servicio...'
+                        : 'Observaciones adicionales (opcional)'">
+            </textarea>
+          </div>
+        </div>
+        @if (confirmacionForm.estado === 'CONFIRMADO') {
+          <div class="alert alert-success mt-3">
+            <i class="bx bx-check-circle me-2"></i>
+            Al confirmar, se habilitará el proceso de <strong>pago</strong> y se cerrará la OS como completada.
+          </div>
+        } @else {
+          <div class="alert alert-warning mt-3">
+            <i class="bx bx-error me-2"></i>
+            Al registrar observaciones, la OS quedará pendiente de resolución antes de proceder al pago.
+          </div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" (click)="cerrarConfirmacionServicio()">Cancelar</button>
+        <button class="btn" [class.btn-success]="confirmacionForm.estado === 'CONFIRMADO'"
+                [class.btn-warning]="confirmacionForm.estado === 'CON_OBSERVACIONES'"
+                (click)="registrarConfirmacionServicio()" [disabled]="guardandoConfirmacion()">
+          @if (guardandoConfirmacion()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+          <i class="bx bx-check-shield me-1"></i>
+          {{ confirmacionForm.estado === 'CONFIRMADO' ? 'Confirmar Servicio' : 'Registrar Observaciones' }}
         </button>
       </div>
     </div>

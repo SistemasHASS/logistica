@@ -27,12 +27,17 @@ export class ConsolidacionServiciosComponent implements OnInit {
   cargandoOSs = signal(false);
   guardandoOS = signal(false);
   guardandoConformidad = signal(false);
+  guardandoConfirmacion = signal(false);
   subiendoAdjunto = signal(false);
   procesandoExcel = signal(false);
+  generandoOSIndividuales = signal(false);
+  progresoGeneracion = signal(0);
+  totalGeneracion = signal(0);
 
   modalAdjuntosAbierto = signal(false);
   modalConformidadAbierto = signal(false);
   modalCargaMasivaAbierto = signal(false);
+  modalConfirmacionAbierto = signal(false);
 
   requerimientos = signal<any[]>([]);
   itemsSeleccionados = signal<any[]>([]);
@@ -47,30 +52,32 @@ export class ConsolidacionServiciosComponent implements OnInit {
   );
 
   totalServicios = computed(() => this.requerimientos().length);
-  serviciosPendientes = computed(() => this.requerimientos().filter(r => !r.codigoConsolidacion).length);
-  serviciosConsolidados = computed(() => this.requerimientos().filter(r => !!r.codigoConsolidacion).length);
+  serviciosPendientes = computed(() => this.requerimientos().filter(r => !r.tieneOS).length);
+  serviciosConOSGenerada = computed(() => this.requerimientos().filter(r => !!r.tieneOS).length);
+  totalMontoSeleccionado = computed(() =>
+    this.itemsSeleccionados().reduce((sum, r) => sum + ((r.precioUnitario || r.precioReferencial || 0) * (r.cantidadPendiente || 1)), 0)
+  );
 
   busqueda = '';
   filtroEstadoOS = '';
   adjuntoDescripcion = '';
   archivoSeleccionado: File | null = null;
 
-  osForm: any = {
-    rucProveedor: '', nombreProveedor: '', emailProveedor: '',
+  osFormProveedor: any = {
+    proveedor: '', rucProveedor: '', nombreProveedor: '', emailProveedor: '',
     contactoProveedor: '', telefonoProveedor: '',
-    tipoServicio: 'Servicio', descripcion: '', alcance: '',
+    moneda: 'PEN', condicionesPago: 'Contado', formaPago: 'Transferencia',
     fechaInicioServicio: '', fechaFinServicio: '', plazoEjecucion: 30,
-    ubicacionServicio: '', moneda: 'PEN',
-    condicionesPago: 'Contado', formaPago: 'Transferencia',
-    centroCosto: '', proyecto: '', observaciones: '',
-    dniJefeArea: '', nombreJefeArea: '',
-    items: [{ descripcionServicio: '', especificaciones: '', unidadMedida: 'SVC', cantidad: 1, precioUnitario: 0 }],
-    montoTotal: 0
   };
 
   conformidadForm: any = {
     dniJefeArea: '', nombreJefeArea: '', cargoJefeArea: '',
     estado: 'CONFORME', observaciones: ''
+  };
+
+  confirmacionForm: any = {
+    fechaEjecucion: '', trabajoEjecutado: '', observaciones: '',
+    dniConfirma: '', nombreConfirma: '', estado: 'CONFIRMADO'
   };
 
   usuario: Usuario | null = null;
@@ -92,11 +99,17 @@ export class ConsolidacionServiciosComponent implements OnInit {
     this.cargandoReqs.set(true);
     try {
       const resp: any = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/logistica/listar-requerimientos-para-os`, {
-          ruc: this.usuario?.ruc, busqueda: this.busqueda
+        this.http.post(`${this.baseUrl}/api/logistica/listar-requerimientos-servicio-para-os`, {
+          idEmpresa: this.usuario?.idempresa, busqueda: this.busqueda, soloSinOS: true
         })
       );
-      this.requerimientos.set(Array.isArray(resp) ? resp : []);
+      const data = Array.isArray(resp) ? resp : [];
+      data.forEach((r: any) => {
+        if (!r.precioUnitario && r.precioReferencial > 0) {
+          r.precioUnitario = r.precioReferencial;
+        }
+      });
+      this.requerimientos.set(data);
     } catch { this.requerimientos.set([]); }
     finally { this.cargandoReqs.set(false); }
   }
@@ -125,58 +138,119 @@ export class ConsolidacionServiciosComponent implements OnInit {
     this.itemsSeleccionados.set((event.target as HTMLInputElement).checked ? [...this.requerimientos()] : []);
   }
   limpiarSeleccion() { this.itemsSeleccionados.set([]); }
+
   irAConsolidar() {
-    this.osForm.items = this.itemsSeleccionados().map(r => ({
-      descripcionServicio: r.descripcion,
-      especificaciones: '',
-      unidadMedida: r.unidadMedida || 'SVC',
-      cantidad: r.cantidadPendiente,
-      precioUnitario: 0,
-      idDetalle: r.idDetalle
-    }));
-    this.osForm.idConsolidacion = this.itemsSeleccionados()[0]?.IdConsolidacion;
+    const seleccionados = this.itemsSeleccionados();
+    if (seleccionados.length === 0) {
+      this.alertService.showAlert('Atención', 'Seleccione al menos un requerimiento.', 'warning');
+      return;
+    }
+    const sinPrecio = seleccionados.filter(r => !r.precioUnitario || r.precioUnitario <= 0);
+    if (sinPrecio.length > 0) {
+      this.alertService.showAlert('Atención',
+        `${sinPrecio.length} requerimiento(s) no tienen precio. Asigne un precio unitario antes de continuar.`, 'warning');
+      return;
+    }
+    if (seleccionados[0]?.dniJefeArea) {
+      this.osFormProveedor.dniJefeArea = seleccionados[0].dniJefeArea;
+      this.osFormProveedor.nombreJefeArea = seleccionados[0].nombreJefeArea;
+    }
     this.tabActiva.set(1);
   }
 
-  subtotalItemOS(item: any): number {
-    return Math.round(item.cantidad * item.precioUnitario * 100) / 100;
+  subtotalReq(req: any): number {
+    return Math.round((req.cantidadPendiente || 1) * (req.precioUnitario || 0) * 100) / 100;
   }
-  calcularTotalesOS() {
-    this.osForm.montoTotal = this.osForm.items.reduce((s: number, i: any) => s + this.subtotalItemOS(i), 0);
-  }
-  agregarItemOS() {
-    this.osForm.items.push({ descripcionServicio: '', especificaciones: '', unidadMedida: 'SVC', cantidad: 1, precioUnitario: 0 });
-  }
-  eliminarItemOS(i: number) { this.osForm.items.splice(i, 1); this.calcularTotalesOS(); }
 
-  async crearOSBorrador() {
-    if (!this.osForm.nombreProveedor || !this.osForm.rucProveedor) {
+  get montoTotalSeleccion(): number {
+    return this.itemsSeleccionados().reduce((s, r) => s + this.subtotalReq(r), 0);
+  }
+
+  async generarOSIndividuales() {
+    if (!this.osFormProveedor.nombreProveedor || !this.osFormProveedor.rucProveedor) {
       this.alertService.showAlert('Atención', 'Complete RUC y nombre del proveedor.', 'warning'); return;
     }
-    if (!this.osForm.dniJefeArea || !this.osForm.nombreJefeArea) {
-      this.alertService.showAlert('Atención', 'Indique el jefe de área responsable de la conformidad.', 'warning'); return;
+    const seleccionados = this.itemsSeleccionados();
+    if (seleccionados.length === 0) {
+      this.alertService.showAlert('Atención', 'No hay requerimientos seleccionados.', 'warning'); return;
     }
-    if (this.osForm.items.some((i: any) => !i.precioUnitario || i.precioUnitario <= 0)) {
-      this.alertService.showAlert('Atención', 'Todos los ítems deben tener precio unitario.', 'warning'); return;
+    const sinPrecio = seleccionados.filter(r => !r.precioUnitario || r.precioUnitario <= 0);
+    if (sinPrecio.length > 0) {
+      this.alertService.showAlert('Atención', `${sinPrecio.length} requerimiento(s) sin precio unitario.`, 'warning'); return;
     }
-    this.guardandoOS.set(true);
-    try {
-      const resp: any = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/logistica/crear-os-borrador`, {
-          ...this.osForm, usuarioGenera: this.usuario?.documentoidentidad
-        })
-      );
-      if (resp?.success) {
-        this.alertService.showAlert('OS Creada', `Orden de Servicio ${resp.numeroOS} creada en borrador.`, 'success');
-        this.limpiarSeleccion();
-        this.tabActiva.set(2);
-        await this.cargarOrdenesServicio();
-      } else {
-        this.alertService.showAlert('Error', resp?.mensaje || 'Error al crear OS.', 'error');
+
+    const ok = await this.alertService.showConfirm('Generar OS Individuales',
+      `Se crearán ${seleccionados.length} Orden(es) de Servicio individuales. ¿Confirma?`, 'question');
+    if (!ok) return;
+
+    this.generandoOSIndividuales.set(true);
+    this.progresoGeneracion.set(0);
+    this.totalGeneracion.set(seleccionados.length);
+    const resultados: { req: any; success: boolean; numeroOS?: string; mensaje?: string }[] = [];
+
+    for (let i = 0; i < seleccionados.length; i++) {
+      const req = seleccionados[i];
+      this.progresoGeneracion.set(i + 1);
+      try {
+        const payload = {
+          idRequerimiento: req.idRequerimiento,
+          idDetalleRequerimiento: req.idDetalle,
+          proveedor: this.osFormProveedor.rucProveedor,
+          nombreProveedor: this.osFormProveedor.nombreProveedor,
+          rucProveedor: this.osFormProveedor.rucProveedor,
+          emailProveedor: this.osFormProveedor.emailProveedor,
+          telefonoProveedor: this.osFormProveedor.telefonoProveedor,
+          tipoServicio: 'Servicio',
+          descripcion: req.descripcion,
+          alcance: req.observaciones || '',
+          cantidad: req.cantidadPendiente || 1,
+          precioUnitario: req.precioUnitario,
+          unidadMedida: req.unidadMedida || 'SVC',
+          moneda: this.osFormProveedor.moneda,
+          condicionesPago: this.osFormProveedor.condicionesPago,
+          formaPago: this.osFormProveedor.formaPago,
+          fechaInicioServicio: this.osFormProveedor.fechaInicioServicio || null,
+          fechaFinServicio: this.osFormProveedor.fechaFinServicio || null,
+          plazoEjecucion: this.osFormProveedor.plazoEjecucion || 30,
+          centroCosto: req.ceco,
+          proyecto: req.proyecto,
+          areaSolicita: req.area,
+          idArea: req.idarea,
+          dniJefeArea: req.dniJefeArea || '',
+          nombreJefeArea: req.nombreJefeArea || '',
+          usuarioGenera: this.usuario?.documentoidentidad
+        };
+        const resp: any = await lastValueFrom(
+          this.http.post(`${this.baseUrl}/api/logistica/crear-os-individual`, payload)
+        );
+        resultados.push({ req, success: !!resp?.success, numeroOS: resp?.numeroOS, mensaje: resp?.mensaje });
+      } catch (e: any) {
+        resultados.push({ req, success: false, mensaje: e?.message || 'Error inesperado' });
       }
-    } catch (e: any) {
-      this.alertService.showAlert('Error', e?.message || 'Error.', 'error');
-    } finally { this.guardandoOS.set(false); }
+    }
+
+    this.generandoOSIndividuales.set(false);
+    const exitosos = resultados.filter(r => r.success);
+    const fallidos = resultados.filter(r => !r.success);
+
+    if (fallidos.length === 0) {
+      this.alertService.showAlert('OS Generadas',
+        `${exitosos.length} OS individual(es) creada(s) exitosamente:\n${exitosos.map(r => r.numeroOS).join(', ')}`, 'success');
+    } else {
+      this.alertService.showAlert('Resultado parcial',
+        `${exitosos.length} exitosas, ${fallidos.length} fallidas.\nFallidas: ${fallidos.map(r => r.req.descripcion + ': ' + r.mensaje).join('\n')}`,
+        exitosos.length > 0 ? 'warning' : 'error');
+    }
+
+    this.limpiarSeleccion();
+    this.tabActiva.set(2);
+    await this.cargarRequerimientos();
+    await this.cargarOrdenesServicio();
+  }
+
+  // Método para compatibilidad con flujo consolidado existente (crear-os-borrador)
+  async crearOSBorrador() {
+    await this.generarOSIndividuales();
   }
 
   async enviarOSAprobacion(os: any) {
@@ -437,6 +511,66 @@ export class ConsolidacionServiciosComponent implements OnInit {
     );
   }
 
+  // =====================================================================
+  // CONFIRMACIÓN DE SERVICIO REALIZADO
+  // =====================================================================
+
+  abrirConfirmacionServicio(os: any) {
+    this.osActual.set(os);
+    this.confirmacionForm = {
+      fechaEjecucion: new Date().toISOString().slice(0, 10),
+      trabajoEjecutado: '',
+      observaciones: '',
+      dniConfirma: this.usuario?.documentoidentidad || '',
+      nombreConfirma: this.usuario?.nombre || '',
+      estado: 'CONFIRMADO'
+    };
+    this.modalConfirmacionAbierto.set(true);
+  }
+  cerrarConfirmacionServicio() { this.modalConfirmacionAbierto.set(false); }
+
+  async registrarConfirmacionServicio() {
+    if (!this.confirmacionForm.trabajoEjecutado) {
+      this.alertService.showAlert('Atención', 'Describa el trabajo ejecutado por el proveedor.', 'warning'); return;
+    }
+    if (!this.confirmacionForm.dniConfirma) {
+      this.alertService.showAlert('Atención', 'Indique quién confirma la ejecución del servicio.', 'warning'); return;
+    }
+
+    const ok = await this.alertService.showConfirm(
+      this.confirmacionForm.estado === 'CONFIRMADO' ? 'Confirmar Servicio Ejecutado' : 'Registrar Observaciones',
+      this.confirmacionForm.estado === 'CONFIRMADO'
+        ? `Al confirmar, se habilitará el pago de la OS ${this.osActual()?.numeroOrden}. ¿Desea continuar?`
+        : `Se registrarán observaciones para la OS ${this.osActual()?.numeroOrden}. ¿Desea continuar?`,
+      'question'
+    );
+    if (!ok) return;
+
+    this.guardandoConfirmacion.set(true);
+    try {
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/registrar-confirmacion-servicio`, {
+          idOrdenServicio: this.osActual()?.id || this.osActual()?.idOS,
+          ...this.confirmacionForm,
+          usuario: this.usuario?.documentoidentidad
+        })
+      );
+      if (resp?.success) {
+        this.alertService.showAlert('Confirmación Registrada',
+          this.confirmacionForm.estado === 'CONFIRMADO'
+            ? 'Servicio confirmado. Se habilitó el proceso de pago.'
+            : 'Observaciones registradas correctamente.',
+          'success');
+        this.cerrarConfirmacionServicio();
+        await this.cargarOrdenesServicio();
+      } else {
+        this.alertService.showAlert('Error', resp?.mensaje || 'Error al registrar confirmación.', 'error');
+      }
+    } catch (e: any) {
+      this.alertService.showAlert('Error', e?.message || 'Error inesperado.', 'error');
+    } finally { this.guardandoConfirmacion.set(false); }
+  }
+
   badgeEstadoOS(estado: string): string {
     const map: Record<string, string> = {
       'PENDIENTE': 'bg-warning text-dark',
@@ -444,7 +578,8 @@ export class ConsolidacionServiciosComponent implements OnInit {
       'APROBADA': 'bg-success',
       'ENVIADA': 'bg-primary',
       'CONFORME': 'bg-success',
-      'NO_CONFORME': 'bg-danger'
+      'NO_CONFORME': 'bg-danger',
+      'CON_OBSERVACIONES': 'bg-warning text-dark'
     };
     return map[estado] || 'bg-secondary';
   }

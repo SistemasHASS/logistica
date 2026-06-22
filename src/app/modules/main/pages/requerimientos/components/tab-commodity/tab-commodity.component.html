@@ -2,10 +2,199 @@
       <h2>Requerimientos Servicios</h2>
 
       <!-- ===================== -->
+      <!-- 01: SELECCIÓN TIPO (COMPRA/SERVICIO) -->
+      <!-- ===================== -->
+      <div *ngIf="!tipoRequerimientoSeleccionado && !configuracionGuardada" class="seleccion-tipo-container">
+        <div class="text-center mb-4">
+          <h3 class="seleccion-titulo">¿Qué tipo de requerimiento deseas crear?</h3>
+          <p class="seleccion-subtitulo">Selecciona el tipo para configurar los parámetros</p>
+        </div>
+
+        <div class="cards-seleccion">
+          <!-- Card COMPRA -->
+          <div class="card-seleccion card-compra" (click)="seleccionarTipo('COMPRA')">
+            <div class="icono-seleccion icono-compra">
+              <i class="bx bx-cart"></i>
+            </div>
+            <h4 class="titulo-card">COMPRA</h4>
+            <p class="desc-card">Requerimiento de compra de bienes y materiales</p>
+            <div class="badge-tipo">Items, Consumo, Transferencia</div>
+          </div>
+
+          <!-- Card SERVICIO -->
+          <div class="card-seleccion card-servicio" (click)="seleccionarTipo('SERVICIO')">
+            <div class="icono-seleccion icono-servicio">
+              <i class="bx bx-wrench"></i>
+            </div>
+            <h4 class="titulo-card">SERVICIO</h4>
+            <p class="desc-card">Requerimiento de contratación de servicios</p>
+            <div class="badge-tipo">Commodity, Subservicios</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== -->
+      <!-- 02: CONFIGURACIÓN PARÁMETROS -->
+      <!-- ===================== -->
+      <div *ngIf="tipoRequerimientoSeleccionado && mostrarConfiguracion" class="configuracion-container">
+        <!-- Configuración COMPRA -->
+        <div *ngIf="tipoRequerimientoSeleccionado === 'COMPRA'" class="config-panel">
+          <div class="config-banner config-banner-compra">
+            <i class="bx bx-cog"></i>
+            <span>Configuración para COMPRAS</span>
+          </div>
+          <h4 class="config-titulo">Parámetros de Compra</h4>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label>Fundo <span class="text-danger">*</span></label>
+              <select class="form-select" [(ngModel)]="configCompra.fundo">
+                <option value="">Seleccione fundo</option>
+                <option *ngFor="let f of maestrasSvc.fundos" [value]="f.idfundo">{{ f.fundo }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label>Cultivo</label>
+              <select class="form-select" [(ngModel)]="configCompra.cultivo">
+                <option value="">Seleccione cultivo</option>
+                <option *ngFor="let c of maestrasSvc.cultivos" [value]="c.idcultivo">{{ c.cultivo }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label>Área</label>
+              <select class="form-select" [(ngModel)]="configCompra.area">
+                <option value="">Seleccione área</option>
+                <option *ngFor="let a of maestrasSvc.areas" [value]="a.idarea">{{ a.area }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label>CECO</label>
+              <select class="form-select" [(ngModel)]="configCompra.ceco">
+                <option value="">Seleccione CECO</option>
+                <option *ngFor="let c of maestrasSvc.cecos" [value]="c.localname">{{ c.localname }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label>Labor</label>
+              <select class="form-select" [(ngModel)]="configCompra.labor">
+                <option value="">Seleccione labor</option>
+                <option *ngFor="let l of maestrasSvc.labores" [value]="l.labor">{{ l.labor }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label>Proyecto</label>
+              <select class="form-select" [(ngModel)]="configCompra.proyecto">
+                <option value="">Seleccione proyecto</option>
+                <option *ngFor="let p of maestrasSvc.proyectos" [value]="p.proyectoio">{{ p.proyecto }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label>Almacén</label>
+              <select class="form-select" [(ngModel)]="configCompra.almacen">
+                <option value="">Seleccione almacén</option>
+                <option *ngFor="let a of maestrasSvc.almacenes" [value]="a.idalmacen">{{ a.almacen }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="config-botones mt-4">
+            <button class="btn btn-secondary" (click)="volverASeleccion()">
+              <i class="bx bx-arrow-left"></i> Volver
+            </button>
+            <button class="btn btn-primary" (click)="maestrasSvc.cargarConfiguracion()">
+              <i class="bx bx-refresh"></i> Sincronizar
+            </button>
+            <button class="btn btn-success" (click)="guardarConfiguracion()">
+              <i class="bx bx-save"></i> Guardar Configuración
+            </button>
+          </div>
+        </div>
+
+        <!-- Configuración SERVICIO -->
+        <div *ngIf="tipoRequerimientoSeleccionado === 'SERVICIO'" class="config-panel">
+          <div class="config-banner config-banner-servicio">
+            <i class="bx bx-cog"></i>
+            <span>Configuración para SERVICIOS</span>
+          </div>
+          <h4 class="config-titulo">Parámetros de Servicio</h4>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label>Área <span class="text-danger">*</span></label>
+              <select class="form-select" [(ngModel)]="configServicio.area">
+                <option value="">Seleccione área</option>
+                <option *ngFor="let a of maestrasSvc.areas" [value]="a.idarea">{{ a.area }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label>Servicio</label>
+              <select class="form-select" [(ngModel)]="configServicio.servicio">
+                <option value="">Seleccione servicio</option>
+                <option *ngFor="let s of servicios" [value]="s.commodity01">{{ s.descripcionLocal }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label>CECO</label>
+              <select class="form-select" [(ngModel)]="configServicio.ceco">
+                <option value="">Seleccione CECO</option>
+                <option *ngFor="let c of maestrasSvc.cecos" [value]="c.localname">{{ c.localname }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label>Turno</label>
+              <select class="form-select" [(ngModel)]="configServicio.turno">
+                <option value="">Seleccione turno</option>
+                <option *ngFor="let t of turnos" [value]="t.idturno">{{ t.turno }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label>Labor</label>
+              <select class="form-select" [(ngModel)]="configServicio.labor">
+                <option value="">Seleccione labor</option>
+                <option *ngFor="let l of maestrasSvc.labores" [value]="l.labor">{{ l.labor }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label>Proyecto</label>
+              <select class="form-select" [(ngModel)]="configServicio.proyecto">
+                <option value="">Seleccione proyecto</option>
+                <option *ngFor="let p of maestrasSvc.proyectos" [value]="p.proyectoio">{{ p.proyecto }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="config-botones mt-4">
+            <button class="btn btn-secondary" (click)="volverASeleccion()">
+              <i class="bx bx-arrow-left"></i> Volver
+            </button>
+            <button class="btn btn-primary" (click)="maestrasSvc.cargarConfiguracion()">
+              <i class="bx bx-refresh"></i> Sincronizar
+            </button>
+            <button class="btn btn-success" (click)="guardarConfiguracion()">
+              <i class="bx bx-save"></i> Guardar Configuración
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== -->
       <!-- VISTA: LISTA COMMODITY -->
       <!-- ===================== -->
 
-      <div *ngIf="!mostrarFormularioCommodity">
+      <div *ngIf="configuracionGuardada && !mostrarFormularioCommodity">
+        <!-- Badge de tipo configurado -->
+        <!-- <div class="alert" [ngClass]="tipoRequerimientoSeleccionado === 'COMPRA' ? 'alert-primary' : 'alert-success'">
+          <div class="d-flex justify-content-between align-items-center">
+            <span>
+              <i class="bx" [ngClass]="tipoRequerimientoSeleccionado === 'COMPRA' ? 'bx-cart' : 'bx-wrench'"></i>
+              <strong>Tipo:</strong> {{ tipoRequerimientoSeleccionado }}
+            </span>
+            <button class="btn btn-sm btn-outline-secondary" (click)="reiniciarConfiguracion()">
+              <i class="bx bx-refresh"></i> Cambiar tipo
+            </button>
+          </div>
+        </div> -->
+
         <div class="p-0 card">
           <!-- Resumen de contadores -->
           <div class="requerimientos-tablas">
@@ -67,7 +256,7 @@
                     </td>
                     <td>
                       <button class="btn btn-sm btn-danger" title="Eliminar requerimiento" (click)="eliminarCommodity(i)">
-                        <i class="icon-trash"></i>
+                        <i class="icon-trash text-white"></i>
                       </button>
                     </td>
                   </tr>
@@ -155,12 +344,36 @@
       <!-- ===================== -->
 
       <div *ngIf="mostrarFormularioCommodity" class="formulario mt-4 p-4 shadow rounded">
-        <h2>{{ modoEdicionCommodity ? "Editar" : "Nuevo" }} Requerimiento de Servicio - {{ TipoSelecionado }}</h2>
+        <!-- Título según modo -->
+        <h2 *ngIf="!tipoRequerimientoSeleccionado">
+          {{ modoEdicionCommodity ? "Editar" : "Nuevo" }} Requerimiento de Servicio - {{ itemTipoSeleccionado }}
+        </h2>
+        <h2 *ngIf="tipoRequerimientoSeleccionado === 'SERVICIO'" style="color: #000;">
+          {{ modoEdicionCommodity ? "Editar" : "Nuevo" }} Requerimiento de Servicio - SERVICIO
+        </h2>
+        <h2 *ngIf="tipoRequerimientoSeleccionado === 'COMPRA'" class="text-primary">
+          {{ modoEdicionCommodity ? "Editar" : "Nuevo" }} Requerimiento de Servicio - COMPRA
+        </h2>
 
         <div class="requerimientos-form">
           <div class="row g-3">
-            <!-- Tipo -->
-            <div class="col-6">
+            <!-- Tipo: Modo SERVICIO (fijo) -->
+            <div class="col-6" *ngIf="tipoRequerimientoSeleccionado === 'SERVICIO'">
+              <label>Tipo <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" value="SERVICIO" readonly disabled style="background-color: #f0fdf4; color: #166534; font-weight: 600;">
+            </div>
+
+            <!-- Tipo: Modo normal (COMPRA/CONSUMO) -->
+            <div class="col-6" *ngIf="!tipoRequerimientoSeleccionado">
+              <label>Tipo <span class="text-danger">*</span></label>
+              <select class="form-select" [ngModel]="itemTipoSeleccionado" (ngModelChange)="onItemTipoChange($event)">
+                <option value="COMPRA">COMPRA</option>
+                <option value="CONSUMO">CONSUMO</option>
+              </select>
+            </div>
+
+            <!-- Tipo: Modo COMPRA configurado -->
+            <div class="col-6" *ngIf="tipoRequerimientoSeleccionado === 'COMPRA'">
               <label>Tipo <span class="text-danger">*</span></label>
               <select class="form-select" [ngModel]="itemTipoSeleccionado" (ngModelChange)="onItemTipoChange($event)">
                 <option value="COMPRA">COMPRA</option>

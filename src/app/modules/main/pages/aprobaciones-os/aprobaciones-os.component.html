@@ -184,33 +184,35 @@
                   pTooltip="Ver Detalle"
                   (click)="verDetalleOS(os)"
                 ></button>
-                <button
-                  pButton
-                  type="button"
-                  icon="pi pi-check"
-                  class="p-button-rounded p-button-success p-button-sm"
-                  pTooltip="Aprobar"
-                  (click)="abrirModalAprobacion(os, 'APROBAR')"
-                  [disabled]="os.estado !== 'PENDIENTE'"
-                ></button>
-                <button
-                  pButton
-                  type="button"
-                  icon="pi pi-times"
-                  class="p-button-rounded p-button-danger p-button-sm"
-                  pTooltip="Rechazar"
-                  (click)="abrirModalAprobacion(os, 'RECHAZAR')"
-                  [disabled]="os.estado !== 'PENDIENTE'"
-                ></button>
-                <button
-                  pButton
-                  type="button"
-                  icon="pi pi-ban"
-                  class="p-button-rounded p-button-warning p-button-sm"
-                  pTooltip="Anular (libera consolidación)"
-                  (click)="anularOS(os)"
-                  [disabled]="os.estado === 'ANULADA'"
-                ></button>
+                @if (puedeAprobar) {
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-check"
+                    class="p-button-rounded p-button-success p-button-sm"
+                    pTooltip="Aprobar"
+                    (click)="abrirModalAprobacion(os, 'APROBAR')"
+                    [disabled]="os.estado !== 'PENDIENTE'"
+                  ></button>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-times"
+                    class="p-button-rounded p-button-danger p-button-sm"
+                    pTooltip="Rechazar"
+                    (click)="abrirModalAprobacion(os, 'RECHAZAR')"
+                    [disabled]="os.estado !== 'PENDIENTE'"
+                  ></button>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-ban"
+                    class="p-button-rounded p-button-warning p-button-sm"
+                    pTooltip="Anular (libera consolidación)"
+                    (click)="anularOS(os)"
+                    [disabled]="os.estado === 'ANULADA'"
+                  ></button>
+                }
               </div>
             </td>
           </tr>

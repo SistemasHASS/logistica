@@ -1,0 +1,397 @@
+<div class="container-fluid py-3">
+
+  <!-- ENCABEZADO -->
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <i class="bx bx-check-shield text-success fs-4"></i>
+    <div>
+      <h5 class="fw-bold mb-0">Plantilla Conformidad de Servicio</h5>
+      <small class="text-muted">Configure las etiquetas, secciones y campos del documento de Conformidad de Servicio</small>
+    </div>
+  </div>
+
+  <!-- ALERTA -->
+  @if (alertMsg()) {
+    <div class="alert alert-{{ alertTipo() }} alert-dismissible py-2 mb-3" role="alert">
+      <i class="bx bx-info-circle me-1"></i>{{ alertMsg() }}
+    </div>
+  }
+
+  <!-- EMPRESA SELECTOR -->
+  @if (empresaLista().length > 1) {
+    <div class="row mb-3">
+      <div class="col-md-5">
+        <label class="form-label fw-semibold small">Empresa (cabecera del documento)</label>
+        <select class="form-select form-select-sm"
+          [ngModel]="empresa().id"
+          (ngModelChange)="seleccionarEmpresa($event)">
+          @for (e of empresaLista(); track e.id) {
+            <option [ngValue]="e.id">{{ e.razonSocial }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  }
+
+  <!-- GRID PRINCIPAL -->
+  <div class="row g-3">
+
+    <!-- ── PANEL CONFIG ── -->
+    <div class="col-lg-5">
+      <div class="card shadow-sm config-card">
+        <div class="card-header d-flex align-items-center justify-content-between py-2">
+          <span class="fw-semibold"><i class="bx bx-cog me-1 text-primary"></i> Configuración de etiquetas</span>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" (click)="restaurar()">
+              <i class="bx bx-reset me-1"></i> Restaurar
+            </button>
+            <button class="btn btn-sm btn-success" (click)="guardar()" [disabled]="guardandoBD()">
+              @if (guardandoBD()) {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+              } @else {
+                <i class="bx bx-save me-1"></i>
+              }
+              Guardar
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <!-- Título documento -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Título del documento</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().tituloDocumento"
+              (ngModelChange)="patch({ tituloDocumento: $event })"
+              (input)="refreshPreview()"/>
+          </div>
+
+          <hr class="my-2"/>
+          <p class="small fw-semibold text-muted mb-2">Etiquetas de campos</p>
+
+          <!-- Proveedor -->
+          <div class="mb-2">
+            <label class="form-label small">Proveedor</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().etiquetaProveedor"
+              (ngModelChange)="patch({ etiquetaProveedor: $event })"
+              (input)="refreshPreview()"/>
+          </div>
+
+          <!-- Número OS -->
+          <div class="mb-2">
+            <label class="form-label small">N° Orden de Servicio</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().etiquetaNumeroOS"
+              (ngModelChange)="patch({ etiquetaNumeroOS: $event })"
+              (input)="refreshPreview()"/>
+          </div>
+
+          <!-- Fecha OS -->
+          <div class="mb-2">
+            <label class="form-label small">Fecha de Orden de Servicio</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().etiquetaFechaOS"
+              (ngModelChange)="patch({ etiquetaFechaOS: $event })"
+              (input)="refreshPreview()"/>
+          </div>
+
+          <!-- Total OS -->
+          <div class="mb-2">
+            <label class="form-label small">Total Orden de Servicio</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().etiquetaTotalOS"
+              (ngModelChange)="patch({ etiquetaTotalOS: $event })"
+              (input)="refreshPreview()"/>
+          </div>
+
+          <!-- Fecha Recepción -->
+          <div class="mb-2">
+            <label class="form-label small">Fecha Recepción</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().etiquetaFechaRecepcion"
+              (ngModelChange)="patch({ etiquetaFechaRecepcion: $event })"
+              (input)="refreshPreview()"/>
+          </div>
+
+          <!-- Descripción OS -->
+          <div class="mb-2">
+            <label class="form-label small">Descripción O.S.</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().etiquetaDescripcionOS"
+              (ngModelChange)="patch({ etiquetaDescripcionOS: $event })"
+              (input)="refreshPreview()"/>
+          </div>
+
+          <!-- Comentarios -->
+          <div class="mb-2">
+            <label class="form-label small">Comentarios</label>
+            <div class="input-group input-group-sm">
+              <input type="text" class="form-control"
+                [ngModel]="cfg().etiquetaComentarios"
+                (ngModelChange)="patch({ etiquetaComentarios: $event })"
+                (input)="refreshPreview()"/>
+              <div class="input-group-text">
+                <div class="form-check form-check-inline mb-0">
+                  <input class="form-check-input" type="checkbox" id="mostrarComentarios"
+                    [ngModel]="cfg().mostrarComentarios"
+                    (ngModelChange)="patch({ mostrarComentarios: $event }); refreshPreview()"/>
+                  <label class="form-check-label small" for="mostrarComentarios">Mostrar</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Correspondiente a -->
+          <div class="mb-2">
+            <label class="form-label small">Correspondiente a</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().etiquetaCorrespondienteA"
+              (ngModelChange)="patch({ etiquetaCorrespondienteA: $event })"
+              (input)="refreshPreview()"/>
+          </div>
+
+          <hr class="my-2"/>
+          <p class="small fw-semibold text-muted mb-2">Totales</p>
+
+          <!-- Monto Servicio -->
+          <div class="mb-2">
+            <label class="form-label small">Monto Servicio</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().etiquetaMontoServicio"
+              (ngModelChange)="patch({ etiquetaMontoServicio: $event })"
+              (input)="refreshPreview()"/>
+          </div>
+
+          <!-- IGV -->
+          <div class="mb-2">
+            <label class="form-label small">IGV</label>
+            <div class="input-group input-group-sm">
+              <input type="text" class="form-control"
+                [ngModel]="cfg().etiquetaIGV"
+                (ngModelChange)="patch({ etiquetaIGV: $event })"
+                (input)="refreshPreview()"/>
+              <div class="input-group-text">
+                <div class="form-check form-check-inline mb-0">
+                  <input class="form-check-input" type="checkbox" id="mostrarIGV"
+                    [ngModel]="cfg().mostrarIGV"
+                    (ngModelChange)="patch({ mostrarIGV: $event }); refreshPreview()"/>
+                  <label class="form-check-label small" for="mostrarIGV">Mostrar</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Monto Total -->
+          <div class="mb-2">
+            <label class="form-label small">Monto Total a Pagar</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().etiquetaMontoTotal"
+              (ngModelChange)="patch({ etiquetaMontoTotal: $event })"
+              (input)="refreshPreview()"/>
+          </div>
+
+          <hr class="my-2"/>
+          <p class="small fw-semibold text-muted mb-2">Firmas</p>
+
+          <!-- Confirmado por (etiqueta junto al espacio) -->
+          <div class="mb-2">
+            <label class="form-label small">Etiqueta "Confirmado por"</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().etiquetaConfirmadoPor"
+              (ngModelChange)="patch({ etiquetaConfirmadoPor: $event })"
+              (input)="refreshPreview()"/>
+          </div>
+
+          <!-- Firmante 1 cargo -->
+          <div class="mb-2">
+            <label class="form-label small">Cargo Firma izquierda</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().firmante1Label"
+              (ngModelChange)="patch({ firmante1Label: $event })"
+              (input)="refreshPreview()"/>
+          </div>
+
+          <!-- Firmante 2 cargo -->
+          <div class="mb-2">
+            <label class="form-label small">Cargo Firma derecha</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().firmante2Label"
+              (ngModelChange)="patch({ firmante2Label: $event })"
+              (input)="refreshPreview()"/>
+          </div>
+
+          <hr class="my-2"/>
+
+          <!-- Pie de página -->
+          <div class="mb-2">
+            <label class="form-label small">Pie de página (opcional)</label>
+            <textarea class="form-control form-control-sm" rows="2"
+              [ngModel]="cfg().piePagina"
+              (ngModelChange)="patch({ piePagina: $event })"
+              (input)="refreshPreview()"></textarea>
+          </div>
+
+          <hr class="my-2"/>
+          <p class="small fw-semibold text-muted mb-2">
+            <i class="bx bx-pen me-1 text-primary"></i>Firma digital — Operador (LOLOGIST)
+          </p>
+
+          <!-- Buscador LOLOGIST por empresa -->
+          <div class="mb-2">
+            <label class="form-label small fw-semibold d-flex align-items-center gap-2">
+              Nombre del operador (LOLOGIST)
+              @if (buscandoLologist()) {
+                <div class="spinner-border spinner-border-sm text-primary" style="width:11px;height:11px" role="status"></div>
+              }
+            </label>
+
+            <!-- Input editable (manual o pre-llenado) -->
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().nombreLologist"
+              (ngModelChange)="patch({ nombreLologist: $event }); refreshPreview()"
+              placeholder="Ej: Juan Pérez García"/>
+
+            <!-- Lista LOLOGIST de la empresa -->
+            @if (listaLologist().length > 0) {
+              <div class="mt-1">
+                <small class="text-muted d-block mb-1" style="font-size:10px">
+                  <i class="bx bx-user-check me-1 text-success"></i>
+                  Operadores LOLOGIST encontrados — haz clic para seleccionar:
+                </small>
+                <div class="list-group" style="max-height:140px;overflow-y:auto">
+                  @for (op of listaLologist(); track op.usuario) {
+                    <button type="button"
+                      class="list-group-item list-group-item-action py-2 px-3"
+                      [class.active]="cfg().nombreLologist === op.nombre"
+                      (click)="seleccionarLologist(op)"
+                      style="font-size:12px">
+                      <div class="d-flex align-items-center justify-content-between">
+                        <div><i class="bx bx-user me-1"></i><strong>{{ op.nombre }}</strong></div>
+                        <small class="text-muted">{{ op.usuario }}</small>
+                      </div>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (lologistError()) {
+              <small class="text-warning d-block mt-1" style="font-size:10px">
+                <i class="bx bx-error-circle me-1"></i>{{ lologistError() }}
+              </small>
+            }
+            <small class="text-muted d-block mt-1" style="font-size:10px">
+              Se imprimirá debajo de la firma en el documento de conformidad
+            </small>
+          </div>
+
+          <!-- DNI LOLOGIST -->
+          <div class="mb-2">
+            <label class="form-label small">DNI del operador</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().dniLologist"
+              (ngModelChange)="patch({ dniLologist: $event }); refreshPreview()"
+              placeholder="Ej: 47123456" maxlength="8"/>
+            <small class="text-muted" style="font-size:10px">Se muestra bajo el nombre en el documento</small>
+          </div>
+
+          <!-- Cargo -->
+          <div class="mb-2">
+            <label class="form-label small">Cargo</label>
+            <input type="text" class="form-control form-control-sm"
+              [ngModel]="cfg().cargoLologist"
+              (ngModelChange)="patch({ cargoLologist: $event }); refreshPreview()"/>
+          </div>
+
+          <!-- Canvas firma -->
+          <div class="mb-2">
+            <label class="form-label small">Firma (dibuje con el ratón o dedo)</label>
+            <div class="border rounded" style="background:#fafafa;cursor:crosshair">
+              <canvas #canvasFirmaLologist
+                width="340" height="110"
+                style="display:block;width:100%;touch-action:none">
+              </canvas>
+            </div>
+            <div class="d-flex align-items-center justify-content-between mt-1">
+              <small class="text-muted">
+                @if (firmaVacia()) { <span class="text-warning"><i class="bx bx-info-circle me-1"></i>Sin firma</span> }
+                @else { <span class="text-success"><i class="bx bx-check me-1"></i>Firma registrada</span> }
+              </small>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-danger" (click)="limpiarFirma(); refreshPreview()" [disabled]="firmaVacia()">
+                  <i class="bx bx-trash me-1"></i>Limpiar
+                </button>
+                <button class="btn btn-sm btn-outline-success" (click)="guardar()" [disabled]="firmaVacia()">
+                  <i class="bx bx-save me-1"></i>Guardar firma
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview firma actual guardada -->
+          @if (cfg().firmaLologistBase64) {
+            <div class="mb-2 p-2 border rounded bg-white">
+              <small class="text-muted d-block mb-1">Firma guardada en plantilla:</small>
+              <img [src]="cfg().firmaLologistBase64" alt="firma guardada"
+                style="max-height:48px;max-width:180px;object-fit:contain;border:1px solid #eee;border-radius:4px"/>
+            </div>
+          }
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PANEL PREVIEW ── -->
+    <div class="col-lg-7">
+      <div class="card shadow-sm h-100">
+        <div class="card-header d-flex align-items-center justify-content-between py-2">
+          <span class="fw-semibold"><i class="bx bx-show me-1 text-success"></i> Vista previa</span>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" (click)="refreshPreview()">
+              <i class="bx bx-refresh me-1"></i> Refrescar
+            </button>
+            <button class="btn btn-sm btn-outline-primary" (click)="abrirModalPreview()">
+              <i class="bx bx-expand me-1"></i> Ampliar
+            </button>
+            <button class="btn btn-sm btn-outline-dark" (click)="abrirPreviewVentana()">
+              <i class="bx bx-printer me-1"></i> Imprimir muestra
+            </button>
+          </div>
+        </div>
+        <div class="card-body p-2">
+          @if (previewUrl()) {
+            <iframe class="preview-frame" [src]="previewUrl()"></iframe>
+          } @else {
+            <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+              <span><i class="bx bx-loader-circle bx-spin me-1"></i> Generando vista previa...</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /row -->
+
+</div><!-- /container -->
+
+<!-- MODAL PREVIEW AMPLIADO -->
+@if (modalPreviewAbierto()) {
+  <div class="modal-overlay" (click)="cerrarModalPreview()">
+    <div class="modal-preview-box" (click)="$event.stopPropagation()">
+      <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+        <span class="fw-semibold">Vista previa — Conformidad de Servicio</span>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-dark" (click)="abrirPreviewVentana()">
+            <i class="bx bx-printer me-1"></i> Imprimir
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" (click)="cerrarModalPreview()">
+            <i class="bx bx-x me-1"></i> Cerrar
+          </button>
+        </div>
+      </div>
+      @if (previewUrl()) {
+        <iframe class="modal-preview-iframe" [src]="previewUrl()"></iframe>
+      }
+    </div>
+  </div>
+}
