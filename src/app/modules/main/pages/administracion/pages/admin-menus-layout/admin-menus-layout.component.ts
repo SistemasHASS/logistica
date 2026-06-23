@@ -75,9 +75,11 @@ const MENUS_LAYOUT: MenuItem[] = [
   { id: 'reporte-aprobaciones-area', nombre: 'Reporte Aprobaciones Área', icono: 'icon icon-file-check', ruta: '/main/reporte-aprobaciones-area', roles: ['TILOGIST','ADLOGIST','APLOGIST'],                                        categoria: 'Reportes', orden: 29 },
   { id: 'reporte-saldos',         nombre: 'Reporte de Saldos',          icono: 'icon icon-file-text', ruta: '/main/reporte-saldos',         roles: ['TILOGIST','ADLOGIST','JLOLOGIST','LOLOGIST'],                                  categoria: 'Reportes', orden: 30 },
   { id: 'reporte-aprobados',      nombre: 'Reporte Reqs. Aprobados',    icono: 'icon icon-file-check',ruta: '/main/reporte-aprobados',      roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST'],                      categoria: 'Reportes', orden: 31 },
+  // ── Consultas ─────────────────────────────────────────────────
+  { id: 'catalogo-items',         nombre: 'Catálogo de Items',          icono: 'bx bx-list-ul',      ruta: '/main/catalogo-items',       roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST','EMLOGIST','OPLOGIST','ALLOGIST','APLOGIST','FINANZAS','GERENTE'], categoria: 'Consultas', orden: 32 },
 ];
 
-const CATEGORIAS_ORDEN = ['Mi Dashboard','Configuración','Requerimientos','Compras & Órdenes','Almacén & Stock','Aprobaciones','Reportes'];
+const CATEGORIAS_ORDEN = ['Mi Dashboard','Configuración','Requerimientos','Compras & Órdenes','Almacén & Stock','Aprobaciones','Reportes','Consultas'];
 
 const CATEGORIA_ICONOS: Record<string, string> = {
   'Mi Dashboard':      'bx bxs-dashboard',
@@ -87,6 +89,7 @@ const CATEGORIA_ICONOS: Record<string, string> = {
   'Almacén & Stock':   'bx bx-package',
   'Aprobaciones':      'icon icon-file-check',
   'Reportes':          'icon icon-pie-chart',
+  'Consultas':         'bx bx-search-alt',
 };
 
 @Component({
@@ -280,6 +283,7 @@ const CATEGORIA_ICONOS: Record<string, string> = {
                     <div class="grupo-orden-btns">
                       <button class="btn-orden" (click)="moverGrupo(gi, -1)" [disabled]="gi === 0" title="Subir"><i class='bx bx-up-arrow-alt'></i></button>
                       <button class="btn-orden" (click)="moverGrupo(gi, 1)" [disabled]="gi === editorMenu.length - 1" title="Bajar"><i class='bx bx-down-arrow-alt'></i></button>
+                      <button class="btn-orden btn-danger" (click)="eliminarGrupo(gi)" title="Eliminar grupo"><i class='bx bx-trash'></i></button>
                     </div>
                   </div>
 
@@ -303,6 +307,7 @@ const CATEGORIA_ICONOS: Record<string, string> = {
                         <div class="item-orden-btns">
                           <button class="btn-orden sm" (click)="moverItem(grupo, ii, -1)" [disabled]="ii === 0"><i class='bx bx-up-arrow-alt'></i></button>
                           <button class="btn-orden sm" (click)="moverItem(grupo, ii, 1)" [disabled]="ii === grupo.items.length - 1"><i class='bx bx-down-arrow-alt'></i></button>
+                          <button class="btn-orden sm btn-danger" (click)="eliminarItem(grupo, ii)" title="Eliminar ítem"><i class='bx bx-trash'></i></button>
                         </div>
                       </div>
                     }
@@ -543,6 +548,9 @@ export class AdminMenusLayoutComponent implements OnInit {
       } else {
         this.editorMenu = JSON.parse(JSON.stringify(ACCORDION_DEFAULT));
       }
+
+      // Asegurar que todos los grupos del default existan en el editor (faltantes se agregan inactivos)
+      this.editorMenu = this.completarGruposConDefault(this.editorMenu);
     } catch {
       this.editorTipoMenu = 'accordion';
       this.editorMenu = JSON.parse(JSON.stringify(ACCORDION_DEFAULT));
@@ -601,9 +609,11 @@ export class AdminMenusLayoutComponent implements OnInit {
       }
       
       await Promise.all(requests);
-      
+
       this.layoutConfig.invalidar();
-      await this.cargarRolesConAccordion();
+      await this.layoutConfig.cargar();        // recargar datos frescos en el servicio
+      await this.cargarRolesConAccordion();      // refrescar lista de roles del admin
+      this.cdr.markForCheck();
       this.alertService.showAlert('Guardado', `Menú de ${this.editorRol} actualizado correctamente.`, 'success');
     } catch (err) {
       console.error('Error guardando menú:', err);
@@ -617,6 +627,27 @@ export class AdminMenusLayoutComponent implements OnInit {
     this.editorMenu = JSON.parse(JSON.stringify(ACCORDION_DEFAULT));
     this.itemsAAgregar = {};
     this.cdr.markForCheck();
+  }
+
+  /** Agrega grupos del default que no estén en el menú guardado, inactivos para poder activarlos luego */
+  completarGruposConDefault(menu: AccordionGroupConfig[]): AccordionGroupConfig[] {
+    const resultado = menu.map(g => ({ ...g, items: [...(g.items || [])] }));
+    const idsPresentes = new Set(resultado.map(g => g.id));
+
+    for (const grupoDefault of ACCORDION_DEFAULT) {
+      if (!idsPresentes.has(grupoDefault.id)) {
+        resultado.push({
+          ...JSON.parse(JSON.stringify(grupoDefault)),
+          activo: false
+        });
+      }
+    }
+
+    // Ordenar según ACCORDION_DEFAULT
+    const orden = new Map(ACCORDION_DEFAULT.map((g, i) => [g.id, i]));
+    resultado.sort((a, b) => (orden.get(a.id) ?? 999) - (orden.get(b.id) ?? 999));
+
+    return resultado;
   }
 
   moverGrupo(idx: number, dir: number) {
@@ -657,6 +688,16 @@ export class AdminMenusLayoutComponent implements OnInit {
       orden: grupo.items.length + 1,
     }];
     this.itemsAAgregar[grupo.id] = '';
+    this.cdr.markForCheck();
+  }
+
+  eliminarItem(grupo: AccordionGroupConfig, idx: number) {
+    grupo.items = grupo.items.filter((_, i) => i !== idx);
+    this.cdr.markForCheck();
+  }
+
+  eliminarGrupo(idx: number) {
+    this.editorMenu = this.editorMenu.filter((_, i) => i !== idx);
     this.cdr.markForCheck();
   }
 

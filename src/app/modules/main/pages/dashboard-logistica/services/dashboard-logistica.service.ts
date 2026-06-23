@@ -74,6 +74,14 @@ export class DashboardLogisticaService {
     );
   }
 
+  // Órdenes de Servicio
+  obtenerOrdenesServicio(payload: any) {
+    return this.http.post<any[]>(
+      `${this.baseUrl}/api/logistica/dashboard-logistica/ordenes-servicio`,
+      payload
+    );
+  }
+
   // Solicitudes de Compra
   obtenerSolicitudesCompra(payload: any) {
     return this.http.post<any[]>(

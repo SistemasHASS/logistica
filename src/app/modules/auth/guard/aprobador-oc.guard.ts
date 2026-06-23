@@ -16,8 +16,8 @@ export class AprobadorOCGuard implements CanActivate {
     const user = await this.dexieService.showUsuario();
     const rol = user?.idrol || '';
     
-    // Permitir acceso a TILOGIST, ADLOGIST y FINANZA
-    if (rol.includes('TILOGIST') || rol.includes('ADLOGIST') || rol.includes('FINANZAS')) {
+    // Permitir acceso a aprobadores de OC/OS
+    if (rol.includes('TILOGIST') || rol.includes('ADLOGIST') || rol.includes('JLOLOGIST') || rol.includes('JEMLOGIST') || rol.includes('FINANZAS') || rol.includes('GERENTE')) {
       return true;
     }
     

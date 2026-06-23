@@ -23,6 +23,7 @@ import { AdminPermisosMenuDinamicoComponent } from './pages/admin-permisos-menu-
 import { AdminPlantillasMenuComponent } from './pages/admin-plantillas-menu/admin-plantillas-menu.component';
 import { AdminPlantillaAlmacenComponent } from './pages/admin-plantilla-almacen/admin-plantilla-almacen.component';
 import { AdminConfigBrandingComponent } from './pages/admin-config-branding/admin-config-branding.component';
+import { AdminSincronizacionComponent } from './pages/admin-sincronizacion/admin-sincronizacion.component';
 
 const routes: Routes = [
   {
@@ -51,6 +52,7 @@ const routes: Routes = [
       { path: 'admin-plantillas-menu', component: AdminPlantillasMenuComponent },
       { path: 'admin-plantilla-almacen', component: AdminPlantillaAlmacenComponent },
       { path: 'admin-config-branding', component: AdminConfigBrandingComponent },
+      { path: 'admin-sincronizacion', component: AdminSincronizacionComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

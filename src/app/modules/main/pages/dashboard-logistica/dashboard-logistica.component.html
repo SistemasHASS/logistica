@@ -33,6 +33,11 @@
           </button>
         </li>
         <li class="nav-item">
+          <button class="nav-link" [class.active]="activeTab === 5" (click)="onTabChange({ index: 5 })">
+            Órdenes de Servicio
+          </button>
+        </li>
+        <li class="nav-item" *ngIf="false">
           <button class="nav-link" [class.active]="activeTab === 2" (click)="onTabChange({ index: 2 })">
             Solicitudes
           </button>
@@ -429,7 +434,82 @@
     </div>
   </div>
 
-  <div *ngIf="activeTab === 2">
+  <div *ngIf="activeTab === 5">
+    <!-- Órdenes de Servicio -->
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title mb-4">Órdenes de Servicio - {{ empresaSeleccionada?.razonsocial }}</h5>
+
+            <div class="row mb-4">
+              <div class="col-md-3">
+                <div class="card fondo-suave border-0">
+                  <div class="card-body text-center">
+                    <h6 class="texto-descriptivo mb-1">Pendientes</h6>
+                    <h3 class="texto-advertencia mb-0">{{ ordenesServicio.pendiente }}</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card fondo-suave border-0">
+                  <div class="card-body text-center">
+                    <h6 class="texto-descriptivo mb-1">Aprobadas</h6>
+                    <h3 class="texto-confirmacion mb-0">{{ ordenesServicio.aprobada }}</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card fondo-suave border-0">
+                  <div class="card-body text-center">
+                    <h6 class="texto-descriptivo mb-1">En Tránsito</h6>
+                    <h3 class="texto-informativo mb-0">{{ ordenesServicio.enTransito }}</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card fondo-suave border-0">
+                  <div class="card-body text-center">
+                    <h6 class="texto-descriptivo mb-1">Recibidas</h6>
+                    <h3 class="texto-primario mb-0">{{ ordenesServicio.recibida }}</h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <p-table [value]="ordenesServicioList" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5,10,20]">
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th>N° OS</th>
+                    <th>Proveedor</th>
+                    <th>Fecha</th>
+                    <th>Monto</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-os>
+                  <tr>
+                    <td>{{ os.numero }}</td>
+                    <td>{{ os.proveedor }}</td>
+                    <td>{{ os.fecha }}</td>
+                    <td>{{ formatearMoneda(os.monto) }}</td>
+                    <td><span class="badge" [ngClass]="obtenerClaseEstado(os.estado)">{{ os.estado }}</span></td>
+                    <td>
+                      <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm" pTooltip="Ver detalle"></button>
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="false">
     <!-- Solicitudes de Compra -->
     <div class="row mb-4">
       <div class="col-md-12">

@@ -249,6 +249,20 @@
               <span class="hide-menu"> Branding del Sistema</span>
             </a>
           </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="nav-small-cap">
+            <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+            <span class="hide-menu"> Sincronización</span>
+          </li>
+          <li *ngIf="adminUser?.idPerfil.includes('TI')"
+            class="sidebar-item" (click)="toggleSidebar()">
+            <a routerLink="./admin-sincronizacion" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='bx bx-sync'></i>
+              </span>
+              <span class="hide-menu"> Sincronización de Ítems</span>
+            </a>
+          </li>
           <!-- <li
             *ngIf="adminUser?.idPerfil.includes('TI') || adminUser?.idPerfil.includes('OPLOGIST') || adminUser?.idPerfil.includes('APLOGIST')"
             class="nav-small-cap">

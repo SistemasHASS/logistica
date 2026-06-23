@@ -16,3 +16,8 @@
 .bg-success-subtle {
   background-color: #d1e7dd;
 }
+
+:host ::ng-deep table td.col-descripcion,
+:host ::ng-deep table td.col-descripcion * {
+  text-align: left !important;
+}

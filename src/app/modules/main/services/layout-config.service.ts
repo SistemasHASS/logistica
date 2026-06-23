@@ -116,19 +116,28 @@ const MODULOS_POR_ROL: Record<string, string[]> = {
   GERENTE:   ['dashboard-oplogist', 'aprobaciones-oc', 'aprobaciones-os', 'catalogo-items'],
 };
 
-/** Filtra el ACCORDION_DEFAULT dejando solo los módulos permitidos para un rol */
+/** Filtra el ACCORDION_DEFAULT dejando solo los módulos permitidos para un rol (soporta roles concatenados por coma) */
 export function getMenuDefaultParaRol(idrol: string): AccordionGroupConfig[] {
-  const permitidos = MODULOS_POR_ROL[idrol];
-  if (!permitidos) return ACCORDION_DEFAULT;
+  const roles = (idrol || '').split(',').map(r => r.trim()).filter(Boolean);
+  const permitidos = new Set<string>();
+  for (const rol of roles) {
+    (MODULOS_POR_ROL[rol] || []).forEach(id => permitidos.add(id));
+  }
+  if (permitidos.size === 0) return ACCORDION_DEFAULT;
 
   const resultado: AccordionGroupConfig[] = [];
   for (const grupo of ACCORDION_DEFAULT) {
-    const itemsFiltrados = grupo.items.filter(item => permitidos.includes(item.id));
+    const itemsFiltrados = grupo.items.filter(item => permitidos.has(item.id));
     if (itemsFiltrados.length > 0) {
       resultado.push({ ...grupo, items: itemsFiltrados });
     }
   }
   return resultado.length > 0 ? resultado : ACCORDION_DEFAULT;
+}
+
+/** Helper para normalizar roles concatenados por coma */
+function getRolesArray(idrol: string): string[] {
+  return (idrol || '').split(',').map(r => r.trim()).filter(Boolean);
 }
 
 @Injectable({ providedIn: 'root' })
@@ -146,8 +155,8 @@ export class LayoutConfigService {
 
   private cargando = false;
 
-  async cargar(): Promise<void> {
-    console.log('[LayoutConfig] cargar() iniciado - cargado:', untracked(this.cargado), 'cargando:', this.cargando);
+  async cargar(idrol?: string): Promise<void> {
+    console.log('[LayoutConfig] cargar() iniciado - cargado:', untracked(this.cargado), 'cargando:', this.cargando, 'idrol:', idrol);
     if (untracked(this.cargado) || this.cargando) {
       console.log('[LayoutConfig] cargar() - ya cargado o cargando, retornando');
       return;
@@ -155,9 +164,11 @@ export class LayoutConfigService {
     this.cargando = true;
     try {
       // Llamar ambas APIs en paralelo
+      const bodyPermisos = idrol ? { idrol } : {};
+      const bodyConfigMenu = idrol ? { idrol } : {};
       const [respPermisos, respConfigMenu] = await Promise.allSettled([
-        lastValueFrom(this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/listar-config-permisos`, {})),
-        lastValueFrom(this.http.post<any[]>(`${this.baseUrl}/api/configmenu/listar`, {}))
+        lastValueFrom(this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/listar-config-permisos`, bodyPermisos)),
+        lastValueFrom(this.http.post<any[]>(`${this.baseUrl}/api/configmenu/listar`, bodyConfigMenu))
       ]);
 
       const permisos: { idrol: string; clave: string; valor: string }[] =
@@ -239,6 +250,14 @@ export class LayoutConfigService {
       this.cargado.set(true);
 
       console.log('[LayoutConfig] Roles con menú configurado:', Array.from(configs.keys()));
+      const cfgJlologist = configs.get('JLOLOGIST');
+      if (cfgJlologist) {
+        console.log('[LayoutConfig] Config JLOLOGIST:', {
+          tipoMenu: cfgJlologist.tipoMenu,
+          usaAccordion: cfgJlologist.usaAccordion,
+          grupos: cfgJlologist.menuConfig?.length || 0
+        });
+      }
     } catch (err) {
       console.error('[LayoutConfig] Error cargando:', err);
       this.accordionRoles.set(new Set());
@@ -248,13 +267,14 @@ export class LayoutConfigService {
     }
   }
 
-  /** Obtiene la configuración completa del menú para un rol */
+  /** Obtiene la configuración completa del menú para un rol (soporta roles concatenados por coma) */
   getMenuConfig(idrol: string): MenuConfig {
-    const config = this.menuConfigs().get(idrol);
+    const config = this.getConfigParaRol(idrol);
     if (config) return config;
     
     // Fallback: mantener compatibilidad con sistema anterior
-    const usaAccordion = this.accordionRoles().has(idrol);
+    const roles = getRolesArray(idrol);
+    const usaAccordion = roles.some(rol => this.accordionRoles().has(rol));
     return {
       idrol,
       tipoMenu: usaAccordion ? 'accordion' : 'default',
@@ -263,38 +283,76 @@ export class LayoutConfigService {
     };
   }
 
+  private getConfigParaRol(idrol: string): MenuConfig | undefined {
+    const roles = getRolesArray(idrol);
+    for (const rol of roles) {
+      const config = this.menuConfigs().get(rol);
+      if (config) return config;
+    }
+    return undefined;
+  }
+
+  private getAccordionMenuParaRol(idrol: string): AccordionGroupConfig[] | undefined {
+    const roles = getRolesArray(idrol);
+    for (const rol of roles) {
+      const menu = this.accordionMenus().get(rol);
+      if (menu && menu.length > 0) return menu;
+    }
+    return undefined;
+  }
+
   // Roles que SIEMPRE usan menú accordion (fallback sin depender de BD)
   private readonly ROLES_ACCORDION_DEFAULT = new Set(['JLOLOGIST']);
 
-  /** Determina el tipo de menú a usar para un rol */
+  /** Determina el tipo de menú a usar para un rol (soporta roles concatenados por coma) */
   getMenuType(idrol: string): MenuType {
-    const config = this.menuConfigs().get(idrol);
+    const config = this.getConfigParaRol(idrol);
     if (config) return config.tipoMenu;
-    if (this.accordionRoles().has(idrol) || this.ROLES_ACCORDION_DEFAULT.has(idrol)) return 'accordion';
+    const roles = getRolesArray(idrol);
+    if (roles.some(rol => this.accordionRoles().has(rol) || this.ROLES_ACCORDION_DEFAULT.has(rol))) return 'accordion';
     return 'default';
   }
 
-  /** Verifica si un rol usa menú dinámico configurado */
+  /** Verifica si un rol usa menú dinámico configurado (soporta roles concatenados por coma) */
   tieneMenuConfigurado(idrol: string): boolean {
-    return this.menuConfigs().has(idrol) || this.accordionRoles().has(idrol) || this.ROLES_ACCORDION_DEFAULT.has(idrol);
+    const roles = getRolesArray(idrol);
+    return roles.some(rol =>
+      this.menuConfigs().has(rol) ||
+      this.accordionRoles().has(rol) ||
+      this.ROLES_ACCORDION_DEFAULT.has(rol)
+    );
   }
 
-  /** Legacy: verifica si usa accordion */
+  /** Legacy: verifica si usa accordion (soporta roles concatenados por coma) */
   usaAccordion(idrol: string): boolean {
-    const config = this.menuConfigs().get(idrol);
+    const config = this.getConfigParaRol(idrol);
     if (config) return config.usaAccordion || config.tipoMenu === 'accordion';
-    return this.accordionRoles().has(idrol) || this.ROLES_ACCORDION_DEFAULT.has(idrol);
+    const roles = getRolesArray(idrol);
+    return roles.some(rol => this.accordionRoles().has(rol) || this.ROLES_ACCORDION_DEFAULT.has(rol));
   }
 
   /** Devuelve el menú configurado para un rol. Si no hay config en BD, devuelve el default. */
   getAccordionMenu(idrol: string): AccordionGroupConfig[] {
-    const config = this.menuConfigs().get(idrol);
+    const config = this.getConfigParaRol(idrol);
+    console.log('[LayoutConfig] getAccordionMenu para', idrol, '- config encontrada:', !!config, 'roles:', getRolesArray(idrol));
     // Devolver menuConfig para cualquier tipo (accordion, nav, list)
-    if (config?.menuConfig && config.menuConfig.length > 0) return config.menuConfig;
-    
-    const custom = this.accordionMenus().get(idrol);
-    if (custom && custom.length > 0) return custom;
+    let menu: AccordionGroupConfig[] | undefined;
+    if (config?.menuConfig && config.menuConfig.length > 0) {
+      menu = config.menuConfig;
+      console.log('[LayoutConfig] Usando menuConfig de BD con', config.menuConfig.length, 'grupos');
+    } else {
+      menu = this.getAccordionMenuParaRol(idrol);
+      console.log('[LayoutConfig] Usando accordionMenus de BD:', menu ? menu.length + ' grupos' : 'no encontrado');
+    }
+
+    if (menu && menu.length > 0) {
+      // Respetar exactamente el menú configurado en BD
+      console.log('[LayoutConfig] Menú final desde BD:', menu.length, 'grupos');
+      return menu;
+    }
+
     // Fallback: menú filtrado según módulos permitidos del rol
+    console.log('[LayoutConfig] Fallback a default filtrado por rol');
     return getMenuDefaultParaRol(idrol);
   }
 

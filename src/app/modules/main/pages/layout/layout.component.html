@@ -45,11 +45,11 @@
       <!-- ============================================================ -->
       <!-- MENÚ DINÁMICO - Accordion/Nav/List configurable              -->
       <!-- ============================================================ -->
-      @if (usaMenuDinamico) {
+      @if (usaMenuDinamico()) {
         <nav class="sidebar-nav scroll-sidebar scroll-navbar accordion-nav" data-simplebar="">
           <app-dynamic-menu
-            [menuType]="menuType"
-            [menuGroups]="menuGroups"
+            [menuType]="menuType()"
+            [menuGroups]="menuGroups()"
             [contadorNotificaciones]="contadorNotificaciones"
             (itemClick)="toggleSidebar()">
           </app-dynamic-menu>
@@ -68,7 +68,7 @@
       }
 
       <!-- Sidebar navigation (todos los demás roles sin menú dinámico) -->
-      @if (!usaMenuDinamico) {
+      @if (!usaMenuDinamico()) {
       <!-- Sidebar navigation-->
       <nav class="sidebar-nav scroll-sidebar scroll-navbar" data-simplebar="">
         <ul>
@@ -420,7 +420,7 @@
               <span class="hide-menu"> Consolidación Compras</span>
             </a>
           </li>
-          <!-- <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('JLOLOGIST') || usuario?.idrol.includes('LOLOGIST')" class="sidebar-item"
+          <li *ngIf="usuario?.idrol.includes('JLOLOGIST') || usuario?.idrol.includes('LOLOGIST') || usuario?.idrol.includes('ADLOGIST')" class="sidebar-item"
             (click)="toggleSidebar()">
             <a routerLink="./consolidacion-servicios" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
@@ -428,7 +428,7 @@
               </span>
               <span class="hide-menu"> Consolidación Servicios</span>
             </a>
-          </li> -->
+          </li>
           <!-- <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Gestión de Stock</span>

@@ -90,8 +90,8 @@ export class AuthService {
   async isLogistico() {
     const user = await this.getUser();
     const rol = user?.idrol ?? '';
-    return rol.includes('LOLOGIST') || rol.includes('TILOGIST') || 
-           rol.includes('ADLOGIST');
+    return rol.includes('LOLOGIST') || rol.includes('TILOGIST') ||
+           rol.includes('ADLOGIST') || rol.includes('JLOLOGIST');
   }
 
   // ============================

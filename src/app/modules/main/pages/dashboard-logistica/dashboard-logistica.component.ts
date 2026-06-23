@@ -80,6 +80,7 @@ export class DashboardLogisticaComponent implements OnInit {
 
   // Datos para tabs hijos
   ordenesCompraList: any[] = [];
+  ordenesServicioList: any[] = [];
   solicitudesCompraList: any[] = [];
   proveedoresList: any[] = [];
 
@@ -715,19 +716,22 @@ export class DashboardLogisticaComponent implements OnInit {
         registrosPorPagina: 10
       };
 
-      // Llamadas paralelas a los 3 endpoints
-      const [ordenes, solicitudes, proveedores] = await Promise.all([
+      // Llamadas paralelas a los 4 endpoints
+      const [ordenes, ordenesServicio, solicitudes, proveedores] = await Promise.all([
         this.dashboardLogisticaService.obtenerOrdenesCompra(payload).toPromise(),
+        this.dashboardLogisticaService.obtenerOrdenesServicio(payload).toPromise(),
         this.dashboardLogisticaService.obtenerSolicitudesCompra(payload).toPromise(),
         this.dashboardLogisticaService.obtenerProveedores(payload).toPromise()
       ]);
 
       this.ordenesCompraList = ordenes || [];
+      this.ordenesServicioList = ordenesServicio || [];
       this.solicitudesCompraList = solicitudes || [];
       this.proveedoresList = proveedores || [];
     } catch (error) {
       console.error('Error al cargar datos de tabs hijos:', error);
       this.ordenesCompraList = [];
+      this.ordenesServicioList = [];
       this.solicitudesCompraList = [];
       this.proveedoresList = [];
     }

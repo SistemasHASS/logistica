@@ -1,4 +1,4 @@
-import { Component, inject, effect, untracked } from '@angular/core';
+import { Component, inject, effect, untracked, computed, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import Swal from 'sweetalert2';
 import moment from 'moment';
@@ -40,26 +40,23 @@ export class LayoutComponent {
   contadorNotificaciones: number = 0;
   private ultimaNotificacion: number = 0;
 
-  // Propiedades para menú dinámico
-  get menuType(): MenuType {
-    return this.layoutConfig.getMenuType(this.usuario?.idrol);
-  }
+  // Signal del rol para que los computed se recalculen cuando el usuario se cargue
+  rolSignal = signal<string>('');
 
-  get menuGroups() {
-    return this.layoutConfig.getAccordionMenu(this.usuario?.idrol);
-  }
+  // Propiedades para menú dinámico (computed reactivos ante cambios de config y rol)
+  menuType = computed<MenuType>(() => this.layoutConfig.getMenuType(this.rolSignal()));
+
+  menuGroups = computed(() => this.layoutConfig.getAccordionMenu(this.rolSignal()));
 
   // Determina qué sistema de menú usar
   get usaMenuRolesNuevo(): boolean {
-    const idrol = this.usuario?.idrol;
+    const idrol = this.rolSignal();
     // JLOLOGIST usa sistema legacy (DynamicMenuComponent)
     // Otros roles con configuración usan MenuRolesComponent
     return idrol !== 'JLOLOGIST' && this.layoutConfig.tieneMenuConfigurado(idrol);
   }
 
-  get usaMenuDinamico(): boolean {
-    return this.layoutConfig.tieneMenuConfigurado(this.usuario?.idrol);
-  }
+  usaMenuDinamico = computed(() => this.layoutConfig.tieneMenuConfigurado(this.rolSignal()));
 
   // ── Accordion nav (JLOLOGIST) ──────────────────────────────────
   readonly ACCORDION_GROUPS: AccordionGroup[] = ['panel', 'config', 'requerimientos', 'compras', 'almacen', 'aprobaciones', 'reportes', 'consultas'];
@@ -154,8 +151,11 @@ export class LayoutComponent {
   ) {
     // Recargar menú automáticamente cuando el admin invalide la config
     effect(() => {
-      if (!this.layoutConfig.cargado()) {
-        untracked(() => this.layoutConfig.cargar());
+      const cargado = this.layoutConfig.cargado();
+      const rol = this.rolSignal();
+      console.log('[Layout] effect cargado:', cargado, 'rol:', rol);
+      if (!cargado && rol) {
+        this.layoutConfig.cargar(rol);
       }
     });
   }
@@ -164,7 +164,8 @@ export class LayoutComponent {
     this.usuario = await this.dexieService.showUsuario();
     console.log('Layout - Usuario cargado:', this.usuario);
     console.log('Layout - Rol del usuario:', this.usuario?.idrol);
-    this.rol = this.usuario?.idrol;
+    this.rol = this.usuario?.idrol ?? '';
+    this.rolSignal.set(this.rol);
     this.userService.setUsuario(this.usuario);
     this.connectivityService.isOnline.subscribe((status: boolean) => {
       this.isOnline = status;
@@ -178,14 +179,16 @@ export class LayoutComponent {
       await this.cargarNotificaciones();
     }, 30000);
 
-    await this.layoutConfig.cargar();
+    // Forzar recarga fresca para el rol actual (evita usar caché de sesión anterior)
+    this.layoutConfig.invalidar();
+    await this.layoutConfig.cargar(this.rolSignal());
     
     // Debug: verificar configuración de menú para el rol actual
     const idrol = this.usuario?.idrol;
     console.log('[Layout] Menu config para', idrol, ':');
-    console.log('  - usaMenuDinamico:', this.usaMenuDinamico);
-    console.log('  - menuType:', this.menuType);
-    console.log('  - menuGroups count:', this.menuGroups?.length);
+    console.log('  - usaMenuDinamico:', this.usaMenuDinamico());
+    console.log('  - menuType:', this.menuType());
+    console.log('  - menuGroups count:', this.menuGroups()?.length);
     console.log('  - tieneMenuConfigurado:', this.layoutConfig.tieneMenuConfigurado(idrol));
     
     this.loadAccordionState();
@@ -200,7 +203,9 @@ export class LayoutComponent {
     // Recargar menú si el admin guardó cambios en otra pestaña
     window.addEventListener('storage', (e) => {
       if (e.key === 'LAYOUT_CONFIG_INVALIDADO') {
+        console.log('[Layout] Recibido evento LAYOUT_CONFIG_INVALIDADO, recargando menú...');
         this.layoutConfig.invalidar();
+        this.layoutConfig.cargar(this.rolSignal());
       }
     });
     this.fechaHoy = this.getDate();
@@ -219,7 +224,7 @@ export class LayoutComponent {
     } else if (idrol.includes('ADLOGIST')) {
       this.router.navigate(['main', 'dashboard-adlogist']);
     } else if (idrol.includes('JLOLOGIST')) {
-      this.router.navigate(['main', 'dashboard-jlologist']);
+      this.router.navigate(['main', 'dashboard-logistica']);
     } else if (idrol.includes('JEMLOGIST')) {
       this.router.navigate(['main', 'dashboard-jemlogist']);
     } else if (idrol.includes('OPLOGIST')) {
@@ -573,17 +578,17 @@ export class LayoutComponent {
   async recargarConfigMenu() {
     console.log('[Layout] Forzando recarga de config de menú...');
     this.layoutConfig.invalidar();
-    await this.layoutConfig.cargar();
-    
-    const idrol = this.usuario?.idrol;
+    await this.layoutConfig.cargar(this.rolSignal());
+
+    const idrol = this.rolSignal();
     console.log('[Layout] Después de recargar - Config para', idrol, ':');
-    console.log('  - usaMenuDinamico:', this.usaMenuDinamico);
-    console.log('  - menuType:', this.menuType);
-    console.log('  - menuGroups count:', this.menuGroups?.length);
+    console.log('  - usaMenuDinamico:', this.usaMenuDinamico());
+    console.log('  - menuType:', this.menuType());
+    console.log('  - menuGroups count:', this.menuGroups()?.length);
     console.log('  - tieneMenuConfigurado:', this.layoutConfig.tieneMenuConfigurado(idrol));
     console.log('  - config completa:', this.layoutConfig.getMenuConfig(idrol));
-    
+
     // Forzar actualización de la vista
-    alert(`Config recargada. usaMenuDinamico: ${this.usaMenuDinamico}, menuType: ${this.menuType}`);
+    alert(`Config recargada. usaMenuDinamico: ${this.usaMenuDinamico()}, menuType: ${this.menuType()}`);
   }
 }

@@ -181,7 +181,8 @@
           <tr>
             <th style="width:50px">#</th>
             <th>N° Req.</th>
-            <th>Fecha</th>
+            <th>Fecha Creación</th>
+            <th>Fecha Aprobación</th>
             <th>Tipo</th>
             <th>Glosa</th>
             <th>Estado</th>
@@ -193,6 +194,7 @@
             <td class="text-muted small text-center">{{ rowIndex + 1 }}</td>
             <td><strong class="text-primary">{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</strong></td>
             <td>{{ formatearFecha(req.fecha) }}</td>
+            <td>{{ formatearFecha(req.fechaAprobacion) }}</td>
             <td>
               <span class="badge" [class]="req.itemtipo === 'COMPRA' ? 'badge-informativo' : 'badge-inactivo'">
                 {{ req.itemtipo }}

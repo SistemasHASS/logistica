@@ -50,15 +50,15 @@
             <th style="min-width:120px" pSortableColumn="item">
               Código <p-sortIcon field="item"></p-sortIcon>
             </th>
-            <th style="min-width:200px" pSortableColumn="descripcionLocal">
+            <th style="min-width:200px" class="col-descripcion" pSortableColumn="descripcionLocal">
               Descripción <p-sortIcon field="descripcionLocal"></p-sortIcon>
             </th>
-            <th style="min-width:100px" pSortableColumn="linea">
+            <!-- <th style="min-width:100px" pSortableColumn="linea">
               Línea <p-sortIcon field="linea"></p-sortIcon>
             </th>
             <th style="min-width:120px" pSortableColumn="familia">
               Familia <p-sortIcon field="familia"></p-sortIcon>
-            </th>
+            </th> -->
             <!-- <th style="min-width:120px" pSortableColumn="subFamilia">
               Sub-Familia <p-sortIcon field="subFamilia"></p-sortIcon>
             </th> -->
@@ -76,14 +76,14 @@
           <tr>
             <td class="text-muted">{{ i + 1 }}</td>
             <td><span class="badge bg-light text-dark border">{{ item.item }}</span></td>
-            <td>
+            <td class="col-descripcion">
               <div class="fw-semibold">{{ item.descripcionLocal }}</div>
-              @if (item.descripcionCompleta && item.descripcionCompleta !== item.descripcionLocal) {
+              <!-- @if (item.descripcionCompleta && item.descripcionCompleta !== item.descripcionLocal) {
                 <small class="text-muted">{{ item.descripcionCompleta }}</small>
-              }
+              } -->
             </td>
-            <td>{{ item.linea || '—' }}</td>
-            <td>{{ item.familia || '—' }}</td>
+            <!-- <td>{{ item.linea || '—' }}</td>
+            <td>{{ item.familia || '—' }}</td> -->
             <!-- <td>{{ item.subFamilia || '—' }}</td> -->
             <td>{{ item.unidadCodigo || '—' }}</td>
             <!-- <td>{{ item.unidadCompra || '—' }}</td> -->

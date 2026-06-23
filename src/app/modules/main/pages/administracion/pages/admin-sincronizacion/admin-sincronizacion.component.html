@@ -1,0 +1,212 @@
+<div class="container-fluid py-3">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div>
+      <h4 class="mb-0 fw-semibold">
+        <i class="bx bx-sync me-2 text-primary"></i>Sincronización de Ítems
+      </h4>
+      <small class="text-muted">Historial del job nocturno · <code>LOGISTICA_MaestroItemSync</code></small>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <button class="btn btn-outline-secondary btn-sm" (click)="cargar()" [disabled]="isLoading">
+        <i class="bx" [ngClass]="isLoading ? 'bx-loader-alt bx-spin' : 'bx-refresh'"></i>
+        {{ isLoading ? 'Cargando...' : 'Actualizar' }}
+      </button>
+      <button class="btn btn-outline-success btn-sm" (click)="exportarCSV()" [disabled]="!logs.length">
+        <i class="bx bx-download me-1"></i>Exportar CSV
+      </button>
+      <button class="btn btn-success btn-sm" (click)="ejecutarAhora()" [disabled]="ejecutando">
+        <i class="bx me-1" [ngClass]="ejecutando ? 'bx-loader-alt bx-spin' : 'bx-play-circle'"></i>
+        {{ ejecutando ? 'Ejecutando...' : 'Ejecutar ahora' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Tarjetas resumen -->
+  <div class="row g-3 mb-4" *ngIf="estado">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center py-3">
+          <div class="fs-2 fw-bold text-primary">{{ estado.totalEjecuciones }}</div>
+          <div class="text-muted small">Total ejecuciones</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center py-3">
+          <div class="fs-2 fw-bold text-success">{{ estado.exitosos }}</div>
+          <div class="text-muted small">Exitosos</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center py-3">
+          <div class="fs-2 fw-bold text-danger">{{ estado.fallidos }}</div>
+          <div class="text-muted small">Fallidos</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center py-3">
+          <div class="fs-2 fw-bold" [ngClass]="tasaExito() >= 90 ? 'text-success' : tasaExito() >= 70 ? 'text-warning' : 'text-danger'">
+            {{ tasaExito() }}%
+          </div>
+          <div class="text-muted small">Tasa de éxito</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Última ejecución banner -->
+  <div *ngIf="estado?.ultimaEjecucion" class="alert mb-3 py-2 px-3 d-flex align-items-center gap-3"
+    [ngClass]="{
+      'alert-success': estado!.ultimaEjecucion!.estado === 'EXITOSO',
+      'alert-danger':  estado!.ultimaEjecucion!.estado === 'FALLIDO',
+      'alert-warning': estado!.ultimaEjecucion!.estado === 'EN_PROCESO'
+    }">
+    <i class="bx fs-5"
+      [ngClass]="{
+        'bx-check-circle': estado!.ultimaEjecucion!.estado === 'EXITOSO',
+        'bx-error-circle': estado!.ultimaEjecucion!.estado === 'FALLIDO',
+        'bx-loader-alt bx-spin': estado!.ultimaEjecucion!.estado === 'EN_PROCESO'
+      }"></i>
+    <div class="flex-grow-1 small">
+      <strong>Última ejecución:</strong>
+      {{ estado!.ultimaEjecucion!.estado }} ·
+      {{ tiempoTranscurrido(estado!.ultimaEjecucion!.fechaInicio) }} ·
+      {{ estado!.ultimaEjecucion!.filas ?? '-' }} ítems ·
+      Duración: {{ formatDuracion(estado!.ultimaEjecucion!.duracionSegundos) }}
+    </div>
+    <span class="badge" [ngClass]="{
+      'bg-success': estado!.ultimaEjecucion!.estado === 'EXITOSO',
+      'bg-danger':  estado!.ultimaEjecucion!.estado === 'FALLIDO',
+      'bg-warning text-dark': estado!.ultimaEjecucion!.estado === 'EN_PROCESO'
+    }">{{ estado!.ultimaEjecucion!.estado }}</span>
+  </div>
+
+  <!-- Controles de filtro -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2 py-2">
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <span class="small fw-semibold text-muted">Filtrar:</span>
+        <button class="btn btn-sm" [ngClass]="filtroEstado === 'TODOS' ? 'btn-primary' : 'btn-outline-secondary'"
+          (click)="filtroEstado = 'TODOS'">Todos ({{ logs.length }})</button>
+        <button class="btn btn-sm" [ngClass]="filtroEstado === 'EXITOSO' ? 'btn-success' : 'btn-outline-success'"
+          (click)="filtroEstado = 'EXITOSO'">
+          <i class="bx bx-check me-1"></i>Exitosos ({{ estado?.exitosos ?? 0 }})
+        </button>
+        <button class="btn btn-sm" [ngClass]="filtroEstado === 'FALLIDO' ? 'btn-danger' : 'btn-outline-danger'"
+          (click)="filtroEstado = 'FALLIDO'">
+          <i class="bx bx-x me-1"></i>Fallidos ({{ estado?.fallidos ?? 0 }})
+        </button>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <label class="small text-muted mb-0">Mostrar últimas:</label>
+        <select class="form-select form-select-sm" style="width:80px" [(ngModel)]="ultimas" (change)="cargar()">
+          <option *ngFor="let o of ultimasOpciones" [value]="o">{{ o }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tabla de logs -->
+    <div class="card-body p-0">
+      <div *ngIf="isLoading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted small">Cargando historial...</p>
+      </div>
+
+      <div *ngIf="!isLoading && !logsFiltrados.length" class="text-center py-5 text-muted">
+        <i class="bx bx-data fs-1 d-block mb-2"></i>
+        No hay registros para mostrar.
+        <br><small>Asegúrate de haber ejecutado <code>LOGISTICA_SincronizacionLog.sql</code> en la BD.</small>
+      </div>
+
+      <div *ngIf="!isLoading && logsFiltrados.length" class="table-responsive">
+        <table class="table table-hover table-sm mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width:40px">#</th>
+              <th>Estado</th>
+              <th>Tabla</th>
+              <th>Ítems</th>
+              <th>Duración</th>
+              <th>Inicio</th>
+              <th>Hace</th>
+              <th style="width:40px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let log of logsFiltrados; let i = index">
+              <tr [ngClass]="{'table-danger': log.estado === 'FALLIDO', 'table-success': log.estado === 'EXITOSO' && i === 0}">
+                <td class="text-muted small">{{ log.id }}</td>
+                <td>
+                  <span class="badge rounded-pill"
+                    [ngClass]="{
+                      'bg-success': log.estado === 'EXITOSO',
+                      'bg-danger':  log.estado === 'FALLIDO',
+                      'bg-warning text-dark': log.estado === 'EN_PROCESO'
+                    }">
+                    <i class="bx me-1"
+                      [ngClass]="{
+                        'bx-check': log.estado === 'EXITOSO',
+                        'bx-x':     log.estado === 'FALLIDO',
+                        'bx-loader-alt bx-spin': log.estado === 'EN_PROCESO'
+                      }"></i>{{ log.estado }}
+                  </span>
+                </td>
+                <td class="small"><code>{{ log.tabla }}</code></td>
+                <td class="fw-semibold">{{ log.filas ?? '-' }}</td>
+                <td class="small">{{ formatDuracion(log.duracionSegundos) }}</td>
+                <td class="small text-nowrap">{{ log.fechaInicio | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td class="small text-muted text-nowrap">{{ tiempoTranscurrido(log.fechaInicio) }}</td>
+                <td>
+                  <button class="btn btn-sm btn-link p-0 text-muted" (click)="toggleExpand(log.id)"
+                    title="Ver detalle">
+                    <i class="bx" [ngClass]="expandedId === log.id ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
+                  </button>
+                </td>
+              </tr>
+              <!-- Fila expandida con detalle -->
+              <tr *ngIf="expandedId === log.id">
+                <td colspan="8" class="p-0">
+                  <div class="px-3 py-2 bg-light border-top small">
+                    <div class="row g-2">
+                      <div class="col-md-6">
+                        <strong>Mensaje:</strong>
+                        <div class="mt-1">
+                          <pre class="mb-0 text-wrap"
+                            style="font-size:11px; max-height:150px; overflow-y:auto; background:transparent; border:none; padding:0;"
+                            [ngClass]="log.estado === 'FALLIDO' ? 'text-danger' : 'text-success'">{{ log.mensaje || 'Sin mensaje registrado.' }}</pre>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="d-flex flex-column gap-1">
+                          <div><strong>Operación:</strong> <code>{{ log.operacion }}</code></div>
+                          <div><strong>Servidor:</strong> {{ log.servidor ?? '-' }}</div>
+                          <div><strong>Inicio:</strong> {{ log.fechaInicio | date:'dd/MM/yyyy HH:mm:ss' }}</div>
+                          <div><strong>Fin:</strong> {{ (log.fechaFin | date:'dd/MM/yyyy HH:mm:ss') ?? '-' }}</div>
+                          <div><strong>Duración:</strong> {{ formatDuracion(log.duracionSegundos) }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Footer info -->
+    <div class="card-footer bg-white border-top text-muted small py-2 d-flex justify-content-between flex-wrap gap-1">
+      <span><i class="bx bx-time me-1"></i>Job programado: <strong>todos los días a las 23:00</strong></span>
+      <span>Duración promedio: <strong>{{ formatDuracion(estado?.promedioSegundos ?? null) }}</strong></span>
+      <span>Consultar BD: <code>EXEC LOGISTICA_verLogSincronizacion;</code></span>
+    </div>
+  </div>
+</div>
