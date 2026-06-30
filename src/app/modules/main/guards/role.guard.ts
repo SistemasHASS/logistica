@@ -65,7 +65,7 @@ export class DevolucionConsumoGuard implements CanActivate {
 
     // Roles permitidos: JEFE_ALMACEN, PERSONAL_ALMACEN
     // Mapeo de roles del frontend a roles del backend
-    const rolesPermitidos = ['ALLOGIST', 'ADLOGIST', 'OPLOGIST', 'EMLOGIST', 'LOLOGIST', 'APLOGIST'];
+    const rolesPermitidos = ['TILOGIST', 'ADLOGIST', 'JLOLOGIST', 'ALLOGIST', 'OPLOGIST', 'EMLOGIST', 'LOLOGIST', 'APLOGIST'];
     console.log('DevolucionConsumoGuard - Roles permitidos:', rolesPermitidos);
     console.log('DevolucionConsumoGuard - Tiene rol permitido:', tieneRolPermitido(usuario.idrol, rolesPermitidos));
     

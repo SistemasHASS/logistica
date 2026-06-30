@@ -1,0 +1,127 @@
+.permisos-container {
+  padding: 0 4px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+// Chips de roles
+.chip-rol {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: #f0f0f0;
+  border: 1.5px solid #dee2e6;
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: all 0.15s;
+  user-select: none;
+
+  &:hover {
+    background: #e2e8ff;
+    border-color: #4f8ef7;
+  }
+
+  &.chip-seleccionado {
+    background: #dbeafe;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+    font-weight: 600;
+  }
+}
+
+// Tabla
+.permisos-table {
+  font-size: 0.85rem;
+  min-width: 900px;
+
+  .col-modulo {
+    min-width: 200px;
+    white-space: nowrap;
+  }
+
+  .col-rol {
+    min-width: 80px;
+    max-width: 110px;
+  }
+
+  .col-rol-highlight {
+    background-color: #eff6ff !important;
+  }
+
+  .rol-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+
+    .rol-nombre {
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .rol-id {
+      font-size: 0.72rem;
+    }
+  }
+
+  .modulo-cell {
+    font-weight: 500;
+  }
+
+  .toggle-cell {
+    cursor: pointer;
+    transition: background 0.1s;
+
+    &:hover {
+      background: #f0f4ff;
+    }
+  }
+
+  .toggle-on {
+    color: #16a34a;
+  }
+
+  .toggle-off {
+    color: #9ca3af;
+  }
+
+  .toggle-icon {
+    font-size: 3rem;
+  }
+
+  .fila-editada {
+    background-color: #fffbeb !important;
+  }
+}
+
+.btn-xs {
+  padding: 1px 5px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.badge-sm {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+}
+
+.leyenda {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 8px;
+
+  .toggle-on { color: #16a34a; }
+  .toggle-off { color: #9ca3af; }
+}

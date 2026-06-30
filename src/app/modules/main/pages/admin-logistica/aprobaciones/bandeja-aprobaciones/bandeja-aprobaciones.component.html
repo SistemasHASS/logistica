@@ -33,15 +33,17 @@
           </div>
         </p-card>
       </div>
-      <div class="col-md-3">
-        <p-card [styleClass]="'kpi-card'">
-          <div class="kpi-value">{{ kpiPendientesSC() }}</div>
-          <div class="kpi-label">SC Pendientes</div>
-          <div class="kpi-icon text-primary">
-            <i class="bx bx-shopping-bag"></i>
-          </div>
-        </p-card>
-      </div>
+      @if (!soloConsumo()) {
+        <div class="col-md-3">
+          <p-card [styleClass]="'kpi-card'">
+            <div class="kpi-value">{{ kpiPendientesSC() }}</div>
+            <div class="kpi-label">SC Pendientes</div>
+            <div class="kpi-icon text-primary">
+              <i class="bx bx-shopping-bag"></i>
+            </div>
+          </p-card>
+        </div>
+      }
       <div class="col-md-3">
         <p-card [styleClass]="'kpi-card'">
           <div class="kpi-value">S/ {{ kpiMontoPendiente().toLocaleString() }}</div>
@@ -55,12 +57,14 @@
 
     <!-- Acciones rápidas -->
     <div class="row mb-4">
-      <div class="col-md-6">
+      <div [class]="soloConsumo() ? 'col-md-12' : 'col-md-6'">
         <p-button label="Aprobar Consumo" icon="bx bx-check-circle" (click)="irAConsumo()" [styleClass]="'w-100'"></p-button>
       </div>
-      <div class="col-md-6">
-        <p-button label="Aprobar SC" icon="bx bx-shopping-bag" (click)="irASC()" [styleClass]="'w-100 btn-secondary'"></p-button>
-      </div>
+      @if (!soloConsumo()) {
+        <div class="col-md-6">
+          <p-button label="Aprobar SC" icon="bx bx-shopping-bag" (click)="irASC()" [styleClass]="'w-100 btn-secondary'"></p-button>
+        </div>
+      }
     </div>
 
     <!-- Lista de aprobaciones pendientes -->
@@ -79,21 +83,23 @@
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-item>
-            <tr>
-              <td>
-                <p-tag [value]="item.tipo" [severity]="item.tipo === 'CONSUMO' ? 'info' : 'secondary'"></p-tag>
-              </td>
-              <td>{{ item.numero }}</td>
-              <td>{{ item.fecha }}</td>
-              <td>{{ item.solicitante }}</td>
-              <td>S/ {{ item.monto.toLocaleString() }}</td>
-              <td>
-                <p-tag [value]="item.estado" [severity]="getSeverity(item.estado)"></p-tag>
-              </td>
-              <td>
-                <p-button icon="bx bx-show" size="small" (click)="verDetalle(item)"></p-button>
-              </td>
-            </tr>
+            @if (!soloConsumo() || item.tipo === 'CONSUMO') {
+              <tr>
+                <td>
+                  <p-tag [value]="item.tipo" [severity]="item.tipo === 'CONSUMO' ? 'info' : 'secondary'"></p-tag>
+                </td>
+                <td>{{ item.numero }}</td>
+                <td>{{ item.fecha }}</td>
+                <td>{{ item.solicitante }}</td>
+                <td>S/ {{ item.monto.toLocaleString() }}</td>
+                <td>
+                  <p-tag [value]="item.estado" [severity]="getSeverity(item.estado)"></p-tag>
+                </td>
+                <td>
+                  <p-button icon="bx bx-show" size="small" (click)="verDetalle(item)"></p-button>
+                </td>
+              </tr>
+            }
           </ng-template>
         </p-table>
       </div>

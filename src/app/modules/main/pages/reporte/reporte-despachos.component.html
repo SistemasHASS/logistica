@@ -36,7 +36,8 @@
     </div>
 
     <!-- ===== TABS ITEMS / COMMODITY ===== -->
-    <ul class="nav nav-tabs despachos-tabs mb-3">
+    <!-- TABS COMENTADOS — solo se muestra tab ITEMS -->
+    <!-- <ul class="nav nav-tabs despachos-tabs mb-3">
         <li class="nav-item">
             <a class="nav-link" [class.active]="activeTabDespachos === 'ITEMS'"
                (click)="activeTabDespachos = 'ITEMS'; aplicarFiltro()" style="cursor:pointer;">
@@ -49,7 +50,7 @@
                 COMMODITY
             </a>
         </li>
-    </ul>
+    </ul> -->
 
     <div class="row mb-3">
         <div class="col-md-2">
@@ -124,7 +125,7 @@
                     </span>
                 </td>
                 <td>
-                    <button class="btn btn-info btn-sm" (click)="verDetalle(c)" title="Ver Detalle">
+                    <button class="btn btn-info btn-sm text-white" (click)="verDetalle(c)" title="Ver Detalle">
                         <i class="icon icon-eye"></i> Ver
                     </button>
                 </td>

@@ -1,17 +1,17 @@
 /* =========== Despachos - Nuevo diseño (Reporte) =========== */
 .despachos-container {
-  .titulo-pagina { font-weight: 600; color: var(--app-dark); }
+  .titulo-pagina { font-weight: 600; color: #2a2f45; }
 
   /* KPI cards */
   .kpi-row .kpi-card {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: var(--app-white);
+    background: #ffffff;
     border-radius: 12px;
     padding: 14px 12px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    border: 1px solid var(--app-gray-200);
+    border: 1px solid #e5e7eb;
     min-height: 88px;
     position: relative;
     overflow: visible;
@@ -27,8 +27,8 @@
     .kpi-body {
       flex-grow: 1;
       min-width: 0;
-      .kpi-label { font-weight: 600; color: var(--app-dark); font-size: .82rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .kpi-sub { color: var(--app-secondary); font-size: .70rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .kpi-label { font-weight: 600; color: #2a2f45; font-size: .82rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .kpi-sub { color: #6b7280; font-size: .70rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     }
     .kpi-value {
       font-size: 1.7rem;
@@ -37,11 +37,11 @@
       text-align: right;
       flex-shrink: 0;
     }
-    &.kpi-pendientes  .kpi-icon { background: var(--app-danger); }
-    &.kpi-parciales   .kpi-icon { background: var(--app-warning); }
-    &.kpi-sin-stock   .kpi-icon { background: var(--app-warning); }
-    &.kpi-atendidos   .kpi-icon { background: var(--app-success); }
-    &.kpi-total       .kpi-icon { background: var(--app-primary); }
+    &.kpi-pendientes  .kpi-icon { background: #ef4444; }
+    &.kpi-parciales   .kpi-icon { background: #f59e0b; }
+    &.kpi-sin-stock   .kpi-icon { background: #f59e0b; }
+    &.kpi-atendidos   .kpi-icon { background: #10b981; }
+    &.kpi-total       .kpi-icon { background: #10b981; }
   }
 
   /* KPI clickable */
@@ -247,6 +247,238 @@
   border-color: #8b5cf6;
   color: #fff;
   &:hover { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+}
+
+/* =========== Despacho en Bloque =========== */
+
+/* Aviso SIN_STOCK omitidos */
+.aviso-omitidos-bloque {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff8e1;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 7px 14px;
+  margin-bottom: 8px;
+  font-size: .82rem;
+  color: #92400e;
+  i { font-size: 1rem; color: #d97706; flex-shrink: 0; }
+}
+
+/* Barra masiva */
+.barra-masiva {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, .22);
+  animation: barraSlidein .22s ease;
+
+  @keyframes barraSlidein {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .badge-seleccion {
+    background: rgba(255,255,255,.18);
+    color: #fff;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-weight: 700;
+    font-size: .83rem;
+    white-space: nowrap;
+    i { margin-right: 4px; }
+  }
+
+  .barra-info-text {
+    color: rgba(255,255,255,.75);
+    font-size: .77rem;
+    flex: 1 1 auto;
+    min-width: 120px;
+  }
+
+  .btn-despachar-bloque {
+    background: #10b981;
+    border: none;
+    color: #fff;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 7px 18px;
+    font-size: .84rem;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background .15s, transform .1s;
+    &:hover:not(:disabled) { background: #059669; transform: scale(1.02); color: #fff; }
+    &:disabled { opacity: .6; cursor: not-allowed; }
+  }
+
+  .btn-limpiar-sel {
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.28);
+    color: rgba(255,255,255,.85);
+    border-radius: 8px;
+    padding: 7px 13px;
+    font-size: .82rem;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    &:hover:not(:disabled) { background: rgba(255,255,255,.2); color: #fff; }
+    &:disabled { opacity: .5; cursor: not-allowed; }
+  }
+}
+
+/* Fila seleccionada en la tabla */
+::ng-deep .tabla-despachos .p-datatable-tbody > tr.fila-seleccionada > td {
+  background: #eff6ff !important;
+}
+
+/* Fila SIN_STOCK bloqueada */
+::ng-deep .tabla-despachos .p-datatable-tbody > tr.fila-sin-stock-bloqueada {
+  opacity: .58;
+  > td { background: #fefce8 !important; }
+}
+
+/* Modal progreso bloque */
+.modal-bloque-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+
+  .modal-bloque-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px 36px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .3);
+    width: 420px;
+    max-width: 96vw;
+    text-align: center;
+
+    .bloque-spinner {
+      width: 52px; height: 52px;
+      border: 5px solid #e5e7eb;
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: girar .8s linear infinite;
+      margin: 0 auto 16px;
+      @keyframes girar { to { transform: rotate(360deg); } }
+    }
+
+    .bloque-titulo {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #1e3a5f;
+      margin-bottom: 6px;
+    }
+
+    .bloque-sub {
+      font-size: .84rem;
+      color: #6b7280;
+      margin-bottom: 14px;
+    }
+
+    .bloque-log {
+      max-height: 120px;
+      overflow-y: auto;
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 8px 10px;
+      text-align: left;
+
+      .bloque-log-linea {
+        font-size: .76rem;
+        color: #374151;
+        padding: 2px 0;
+        border-bottom: 1px solid #f3f4f6;
+        &:last-child { border-bottom: none; }
+      }
+    }
+  }
+}
+
+/* Modal resumen bloque */
+.modal-resumen {
+  max-width: 560px !important;
+
+  .resumen-stat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+
+    .resumen-stat-icon {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .resumen-stat-body {
+      flex: 1;
+      .resumen-stat-label { font-weight: 600; font-size: .87rem; }
+      .resumen-stat-desc  { font-size: .76rem; color: #6b7280; }
+    }
+
+    .resumen-stat-val {
+      font-size: 1.4rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    &.stat-ok   { background: #f0fdf4; .resumen-stat-icon { background: #d1fae5; color: #059669; } .resumen-stat-val { color: #059669; } }
+    &.stat-warn { background: #fffbeb; .resumen-stat-icon { background: #fef9c3; color: #d97706; } .resumen-stat-val { color: #d97706; } }
+    &.stat-err  { background: #fef2f2; .resumen-stat-icon { background: #fee2e2; color: #dc2626; } .resumen-stat-val { color: #dc2626; } }
+    &.stat-skip { background: #f9fafb; .resumen-stat-icon { background: #f3f4f6; color: #6b7280; } .resumen-stat-val { color: #6b7280; } }
+  }
+
+  .resumen-seccion-titulo {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #2a2f45;
+    margin: 14px 0 6px;
+    i { margin-right: 4px; }
+  }
+
+  .ns-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: #f9fafb;
+    margin-bottom: 4px;
+    font-size: .81rem;
+    gap: 8px;
+    span:first-child { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .ns-badge {
+      background: #2563eb;
+      color: #fff;
+      border-radius: 4px;
+      padding: 2px 9px;
+      font-size: .74rem;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    &.ns-item-warn { background: #fff9e6; border: 1px solid #fde68a; }
+    &.ns-item-err  { background: #fef2f2; border: 1px solid #fecaca; }
+  }
 }
 
 /* ===== Modal overlay despacho (mismo patrón que requerimientos) ===== */

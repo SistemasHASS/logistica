@@ -15,9 +15,10 @@ export class OperativoLogisticoGuard implements CanActivate {
     const user = await this.auth.getUser();
     
     // Roles permitidos para dashboard operativo/logístico
-    const rolesPermitidos = ['OPLOGIST', 'LOLOGIST', 'EMLOGIST', 'JEMLOGIST', 'JLOLOGIST', 'APLOGIST', 'ADLOGIST'];
+    const rolesPermitidos = ['OPLOGIST', 'LOLOGIST', 'EMLOGIST', 'JEMLOGIST', 'JLOLOGIST', 'APLOGIST', 'ADLOGIST', 'ALLOGIST'];
+    const rol = user?.idrol ?? '';
     
-    if (user && rolesPermitidos.includes(user.idrol)) {
+    if (user && rolesPermitidos.some(r => rol.includes(r))) {
       return true;
     }
     

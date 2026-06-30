@@ -28,6 +28,7 @@ import {
 } from "@/app/interfaces/aprobaciones.interface";
 
 import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
+import { NombreCortoPipe } from '@/app/shared/pipes/nombre-corto.pipe';
 
 @Component({
   selector: 'app-aprobaciones-area',
@@ -44,6 +45,7 @@ import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento
     CheckboxModule,
     Checkbox,
     NumeroRequerimientoPipe,
+    NombreCortoPipe,
 ],
   templateUrl: './aprobaciones-area.component.html',
   styleUrl: './aprobaciones-area.component.scss',
@@ -109,11 +111,30 @@ export class AprobacionesAreaComponent implements OnInit {
   displayAnulacionModal = false;
   requerimientoParaAnular: any = null;
   motivoAnulacion = '';
+  tipoAnulacion: 'RETORNABLE' | 'DEFINITIVA' = 'RETORNABLE';
   historialAnulaciones: any[] = [];
   loadingHistorialAnulaciones = false;
 
   // Tab activo
   activeTabIndex = 0;
+
+  // Filtro por tipo de requerimiento (solo diseño, para filtrar la lista de pendientes)
+  filtroTipoPendiente: 'TODOS' | 'COMPRA' | 'CONSUMO' | 'SERVICIO' = 'TODOS';
+
+  get requerimientosPendientesFiltrados(): RequerimientoPendiente[] {
+    if (this.filtroTipoPendiente === 'TODOS') return this.requerimientosPendientes;
+    return this.requerimientosPendientes.filter(req => {
+      const tipo = (req.itemtipo || req.tipoRequerimiento || '').toString().toUpperCase();
+      return tipo === this.filtroTipoPendiente;
+    });
+  }
+
+  contarPendientesPorTipo(tipo: 'COMPRA' | 'CONSUMO' | 'SERVICIO'): number {
+    return this.requerimientosPendientes.filter(req => {
+      const t = (req.itemtipo || req.tipoRequerimiento || '').toString().toUpperCase();
+      return t === tipo;
+    }).length;
+  }
 
   constructor(
     private aprobacionesService: AprobacionesService,
@@ -156,6 +177,7 @@ export class AprobacionesAreaComponent implements OnInit {
       this.cargarDashboard();
       this.sincronizarTablasMaestras();
       this.cargarRequerimientosPendientes();
+      this.cargarRequerimientosAnulados();
     });
   }
 
@@ -2086,7 +2108,13 @@ export class AprobacionesAreaComponent implements OnInit {
   abrirModalAnulacion(req: any) {
     this.requerimientoParaAnular = req;
     this.motivoAnulacion = '';
+    this.tipoAnulacion = 'RETORNABLE';
     this.displayAnulacionModal = true;
+  }
+
+  esAdminOTI(): boolean {
+    const rol = this.usuario?.idrol || '';
+    return rol.includes('ADLOGIST') || rol.includes('TILOGIST');
   }
 
   async confirmarAnulacion() {
@@ -2094,28 +2122,50 @@ export class AprobacionesAreaComponent implements OnInit {
       return;
     }
 
+    // Si el req ya migró a SPRING, no se puede devolver a PENDIENTE
+    if (this.requerimientoParaAnular.yaMigroSpring && this.tipoAnulacion === 'RETORNABLE') {
+      Swal.fire(
+        'No permitido',
+        `Este requerimiento ya fue migrado a SPRING (${this.requerimientoParaAnular.correlativoSpring}). Solo puede anularse definitivamente por un Administrador.`,
+        'warning'
+      );
+      return;
+    }
+
+    // Solo ADLOGIST/TILOGIST pueden hacer anulación definitiva
+    if (this.tipoAnulacion === 'DEFINITIVA' && !this.esAdminOTI()) {
+      Swal.fire('No permitido', 'Solo Administradores pueden realizar una anulación definitiva.', 'warning');
+      return;
+    }
+
     const data = {
       idRequerimiento: this.requerimientoParaAnular.idrequerimiento,
       usuario: this.usuario?.documentoidentidad || this.usuario?.dni || '',
       ruc: this.usuario?.ruc || '',
-      motivo: this.motivoAnulacion
+      motivo: this.motivoAnulacion,
+      tipoAnulacion: this.tipoAnulacion
     };
 
-    this.aprobacionesAreaService.anularRequerimiento(data).subscribe({
+    this.aprobacionesAreaService.anularRequerimientoV2(data).subscribe({
       next: (response: any) => {
         if (response.success) {
-          Swal.fire('Éxito', 'Requerimiento anulado correctamente', 'success');
+          const msg = this.tipoAnulacion === 'RETORNABLE'
+            ? 'Requerimiento devuelto a PENDIENTE. El solicitante puede corregir y reenviar a aprobación.'
+            : 'Requerimiento anulado definitivamente. No se migrará a SPRING.';
+          Swal.fire('Éxito', msg, 'success');
           this.displayAnulacionModal = false;
           this.motivoAnulacion = '';
+          this.tipoAnulacion = 'RETORNABLE';
           this.requerimientoParaAnular = null;
           this.cargarRequerimientosPendientes();
+          this.cargarRequerimientosAnulados();
         } else {
-          Swal.fire('Error', response.mensaje || 'Error al anular requerimiento', 'error');
+          Swal.fire('Error', response.mensaje || 'Error al procesar la anulación', 'error');
         }
       },
       error: (error: any) => {
         console.error('Error al anular requerimiento:', error);
-        Swal.fire('Error', 'Error al anular requerimiento', 'error');
+        Swal.fire('Error', 'Error al procesar la anulación', 'error');
       }
     });
   }

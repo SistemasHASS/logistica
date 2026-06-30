@@ -1,6 +1,7 @@
 <div class="aprobaciones-container p-4">
   <!-- Dashboard de Indicadores -->
-  <div class="row mb-4" *ngIf="dashboard">
+  <!-- Vista desktop: cards -->
+  <div class="row mb-4 d-none d-md-flex" *ngIf="dashboard">
     <div class="col-md-3">
       <p-card>
         <div class="text-center">
@@ -39,6 +40,32 @@
     </div>
   </div>
 
+  <!-- Vista móvil: indicadores compactos horizontales -->
+  <div class="d-md-none mb-4" *ngIf="dashboard">
+    <div class="dashboard-mobile-scroll d-flex flex-nowrap gap-2 overflow-auto pb-1">
+      <div class="dashboard-mobile-item flex-shrink-0 text-center bg-white rounded-3 shadow-sm p-2 border-start border-4 border-warning">
+        <i class="bx bx-clock text-warning" style="font-size: 1.25rem;"></i>
+        <div class="fw-bold lh-1" style="font-size: 1.1rem;">{{ getIndicador('pendientes') }}</div>
+        <small class="text-muted" style="font-size: 0.65rem;">Pendientes</small>
+      </div>
+      <div class="dashboard-mobile-item flex-shrink-0 text-center bg-white rounded-3 shadow-sm p-2 border-start border-4 border-success">
+        <i class="bx bx-check-circle text-success" style="font-size: 1.25rem;"></i>
+        <div class="fw-bold lh-1" style="font-size: 1.1rem;">{{ getIndicador('aprobados_hoy') }}</div>
+        <small class="text-muted" style="font-size: 0.65rem;">Aprob. Hoy</small>
+      </div>
+      <div class="dashboard-mobile-item flex-shrink-0 text-center bg-white rounded-3 shadow-sm p-2 border-start border-4 border-danger">
+        <i class="bx bx-x-circle text-danger" style="font-size: 1.25rem;"></i>
+        <div class="fw-bold lh-1" style="font-size: 1.1rem;">{{ getIndicador('rechazados_hoy') }}</div>
+        <small class="text-muted" style="font-size: 0.65rem;">Rech. Hoy</small>
+      </div>
+      <div class="dashboard-mobile-item flex-shrink-0 text-center bg-white rounded-3 shadow-sm p-2 border-start border-4 border-info">
+        <i class="bx bx-stopwatch text-info" style="font-size: 1.25rem;"></i>
+        <div class="fw-bold lh-1" style="font-size: 1.1rem;">{{ getIndicador('tiempo_promedio') }}<span style="font-size:0.65rem;">m</span></div>
+        <small class="text-muted" style="font-size: 0.65rem;">Tiempo</small>
+      </div>
+    </div>
+  </div>
+
   <!-- Tabs de Contenido -->
   <p-card>
     <div class="tabs-container">
@@ -73,18 +100,52 @@
       <div class="tab-content">
         <!-- Tab 1: Pendientes de Aprobación -->
         <div *ngIf="activeTabIndex === 0">
-          <p-table [value]="requerimientosPendientes" [loading]="loadingPendientes" 
+          <!-- Filtro por tipo: TODOS / COMPRA / CONSUMO -->
+          <div class="filtro-tipo-requerimientos mb-3">
+            <div class="filtro-tipo-scroll d-flex flex-nowrap gap-2 overflow-auto pb-1" role="group" aria-label="Filtro por tipo de requerimiento">
+              <button type="button" class="btn btn-outline-secondary flex-shrink-0"
+                      [class.active]="filtroTipoPendiente === 'TODOS'"
+                      (click)="filtroTipoPendiente = 'TODOS'">
+                <i class="bx bx-list-ul me-1"></i>
+                Todos
+                <span class="badge bg-secondary ms-2">{{ requerimientosPendientes.length }}</span>
+              </button>
+              <button type="button" class="btn btn-outline-primary flex-shrink-0"
+                      [class.active]="filtroTipoPendiente === 'COMPRA'"
+                      (click)="filtroTipoPendiente = 'COMPRA'">
+                <i class="bx bx-cart me-1"></i>
+                Compra
+                <span class="badge bg-primary ms-2">{{ contarPendientesPorTipo('COMPRA') }}</span>
+              </button>
+              <button type="button" class="btn btn-outline-success flex-shrink-0"
+                      [class.active]="filtroTipoPendiente === 'CONSUMO'"
+                      (click)="filtroTipoPendiente = 'CONSUMO'">
+                <i class="bx bx-package me-1"></i>
+                Consumo
+                <span class="badge bg-success ms-2">{{ contarPendientesPorTipo('CONSUMO') }}</span>
+              </button>
+              <button type="button" class="btn btn-outline-warning flex-shrink-0"
+                      [class.active]="filtroTipoPendiente === 'SERVICIO'"
+                      (click)="filtroTipoPendiente = 'SERVICIO'">
+                <i class="bx bx-wrench me-1"></i>
+                Servicio
+                <span class="badge bg-warning ms-2">{{ contarPendientesPorTipo('SERVICIO') }}</span>
+              </button>
+            </div>
+          </div>
+
+          <p-table [value]="requerimientosPendientesFiltrados" [loading]="loadingPendientes"
                    [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
                    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} requerimientos"
                    [rowsPerPageOptions]="[10,25,50]" styleClass="p-datatable-sm">
             <ng-template pTemplate="header">
               <tr>
-                <th>Número</th>
+                <th>N° Req.</th>
                 <th>Fecha</th>
                 <th>Solicitante</th>
                 <th>Área</th>
                 <th>Tipo</th>
-                <th>Descripción</th>
+                <th class="d-none d-md-table-cell">Descripción</th>
                 <!-- <th>Monto</th> -->
                 <th>Estado</th>
                 <!-- <th>Tiempo Espera</th> -->
@@ -94,12 +155,18 @@
             <ng-template pTemplate="body" let-req>
               <tr>
                 <!-- <td>{{ req.numeroRequerimiento }}</td> -->
-                <td>{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</td>
+                <td>
+                  <span class="d-none d-md-inline">{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</span>
+                  <span class="d-inline d-md-none">{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero : true }}</span>
+                </td>
                 <td>{{ req.fecha | date: 'dd/MM/yyyy' }}</td>
-                <td>{{ req.nombreSolicitante }}</td>
+                <td>
+                  <span class="d-none d-md-inline">{{ req.nombreSolicitante }}</span>
+                  <span class="d-inline d-md-none">{{ req.nombreSolicitante | nombreCorto }}</span>
+                </td>
                 <td>{{ req.nombreArea }}</td>
                 <td>{{ req.itemtipo || req.tipoRequerimiento || '-' }}</td>
-                <td>{{ req.glosa || 'Sin descripción' }}</td>
+                <td class="d-none d-md-table-cell">{{ req.glosa || 'Sin descripción' }}</td>
                 <!-- <td>{{ req.estados }}</td> -->
                 <!-- <td>{{ formatMoneda(req.montoTotal) }}</td> -->
                 <td>
@@ -110,12 +177,12 @@
                 <!-- <td>-</td> -->
                 <td>
                   <button pButton type="button" icon="bx bx-eye" 
-                          class="p-button-sm p-button-info me-2"
+                          class="p-button-sm p-button-info me-2 text-white"
                           (click)="verDetallePendientes(req)"
                           label="Ver">
                   </button>
                   <button pButton type="button" icon="bx bx-x-circle" 
-                          class="p-button-sm p-button-danger"
+                          class="p-button-sm p-button-danger text-white"
                           (click)="abrirModalAnulacion(req)"
                           label="Anular"
                           *ngIf="puedeAnular(req)">
@@ -159,7 +226,10 @@
             </ng-template>
             <ng-template pTemplate="body" let-req>
               <tr>
-                <td>{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</td>
+                <td>
+                  <span class="d-none d-md-inline">{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</span>
+                  <span class="d-inline d-md-none">{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero : true }}</span>
+                </td>
                 <td>{{ req.nombreArea }}</td>
                 <td>{{ req.fechaRegistro | date: 'dd/MM/yyyy' }}</td>
                 <td>{{ req.tipoRequerimiento }}</td>
@@ -171,7 +241,7 @@
                 </td>
                 <td>
                   <button pButton type="button" icon="icon icon-eye" 
-                          class="p-button-sm p-button-info"
+                          class="p-button-sm p-button-info text-white"
                           (click)="verDetalle(req)"
                           label="Ver">
                   </button>
@@ -199,7 +269,10 @@
             </ng-template>
             <ng-template pTemplate="body" let-req>
               <tr>
-                <td>{{ req.idrequerimiento | numeroRequerimiento : req.numeroRequerimiento }}</td>
+                <td>
+                  <span class="d-none d-md-inline">{{ req.idrequerimiento | numeroRequerimiento : req.numeroRequerimiento }}</span>
+                  <span class="d-inline d-md-none">{{ req.idrequerimiento | numeroRequerimiento : req.numeroRequerimiento : true }}</span>
+                </td>
                 <td>{{ req.nombreSolicitante }}</td>
                 <td>{{ req.areaSolicitante }}</td>
                 <td>{{ req.tipo }}</td>
@@ -214,7 +287,7 @@
                 </td>
                 <td>
                   <button pButton type="button" icon="pi pi-eye" 
-                          class="p-button-sm p-button-info"
+                          class="p-button-sm p-button-info text-white"
                           (click)="verDetalle(req)">
                   </button>
                 </td>
@@ -246,7 +319,10 @@
             </ng-template>
             <ng-template pTemplate="body" let-req>
               <tr>
-                <td>{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</td>
+                <td>
+                  <span class="d-none d-md-inline">{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</span>
+                  <span class="d-inline d-md-none">{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero : true }}</span>
+                </td>
                 <td>{{ req.fecha | date: 'dd/MM/yyyy' }}</td>
                 <td>{{ req.nombreSolicitante }}</td>
                 <td>{{ req.nombreArea }}</td>
@@ -262,7 +338,7 @@
                 </td>
                 <td>
                   <button pButton type="button" icon="bx bx-history" 
-                          class="p-button-sm p-button-info me-2"
+                          class="p-button-sm p-button-info text-white me-2"
                           (click)="verHistorialAnulacion(req)"
                           label="Historial">
                   </button>
@@ -316,9 +392,9 @@
   </div>
   <ng-template pTemplate="footer">
     <button pButton type="button" label="Rechazar" icon="pi pi-times" 
-            class="p-button-danger" (click)="rechazar()"></button>
+            class="p-button-danger text-white" (click)="rechazar()"></button>
     <button pButton type="button" label="Aprobar" icon="pi pi-check" 
-            class="p-button-success" (click)="aprobar()"></button>
+            class="p-button-success text-white" (click)="aprobar()"></button>
   </ng-template>
 </p-dialog>
 
@@ -402,35 +478,120 @@
   </ng-template>
 </p-dialog>
 
-<!-- Modal de Anulación -->
-<p-dialog [(visible)]="displayAnulacionModal" [modal]="true" [style]="{width: '600px'}"
-          header="Anular Requerimiento">
+<!-- Modal de Anulación v2 -->
+<p-dialog [(visible)]="displayAnulacionModal" [modal]="true" [style]="{width: '640px'}"
+          header="Gestionar Anulación de Requerimiento">
   <div *ngIf="requerimientoParaAnular">
-    <div class="mb-3">
-      <strong>Número:</strong> {{ requerimientoParaAnular.idrequerimiento | numeroRequerimiento : requerimientoParaAnular.RequisicionNumero }}
+
+    <!-- Info del requerimiento -->
+    <div class="p-3 mb-3 rounded" style="background:#f8f9fa; border-left:4px solid #6c757d;">
+      <div class="row g-2">
+        <div class="col-6">
+          <small class="text-muted d-block">Número</small>
+          <strong>{{ requerimientoParaAnular.idrequerimiento | numeroRequerimiento : requerimientoParaAnular.RequisicionNumero }}</strong>
+        </div>
+        <div class="col-6">
+          <small class="text-muted d-block">Estado actual</small>
+          <p-tag [severity]="requerimientoParaAnular.estado === 'APROBADO' || requerimientoParaAnular.estados === 'APROBADO' ? 'success' : 'warn'">
+            {{ requerimientoParaAnular.estado || requerimientoParaAnular.estados }}
+          </p-tag>
+        </div>
+        <div class="col-6">
+          <small class="text-muted d-block">Solicitante</small>
+          <span>{{ requerimientoParaAnular.nombreSolicitante }}</span>
+        </div>
+        <div class="col-6">
+          <small class="text-muted d-block">Área</small>
+          <span>{{ requerimientoParaAnular.nombreArea }}</span>
+        </div>
+        <div class="col-12" *ngIf="requerimientoParaAnular.yaMigroSpring">
+          <small class="text-muted d-block">Correlativo SPRING</small>
+          <span class="badge bg-primary">{{ requerimientoParaAnular.correlativoSpring }}</span>
+          <span class="ms-2 text-danger small"><i class="bx bx-error-circle"></i> Ya migrado a SPRING</span>
+        </div>
+        <div class="col-12" *ngIf="requerimientoParaAnular.vecesAnulado > 0">
+          <small class="text-warning"><i class="bx bx-history"></i> Este requerimiento fue retornado {{ requerimientoParaAnular.vecesAnulado }} vez/veces anteriormente.</small>
+        </div>
+        <div class="col-12" *ngIf="requerimientoParaAnular.ultimoMotivoAnulacion">
+          <small class="text-muted d-block">Último motivo de retorno</small>
+          <em class="text-secondary small">{{ requerimientoParaAnular.ultimoMotivoAnulacion }}</em>
+        </div>
+      </div>
     </div>
+
+    <!-- Selector tipo de anulación -->
     <div class="mb-3">
-      <strong>Solicitante:</strong> {{ requerimientoParaAnular.nombreSolicitante }}
+      <label class="form-label fw-bold">Tipo de acción <span class="text-danger">*</span></label>
+
+      <!-- RETORNABLE: siempre visible -->
+      <div class="form-check p-3 mb-2 border rounded"
+           [class.border-warning]="tipoAnulacion === 'RETORNABLE'"
+           [class.bg-warning]="tipoAnulacion === 'RETORNABLE'"
+           [class.bg-opacity-10]="tipoAnulacion === 'RETORNABLE'"
+           (click)="!requerimientoParaAnular.yaMigroSpring && (tipoAnulacion = 'RETORNABLE')">
+        <input class="form-check-input" type="radio" id="radioRetornable"
+               [(ngModel)]="tipoAnulacion" value="RETORNABLE"
+               [disabled]="requerimientoParaAnular.yaMigroSpring">
+        <label class="form-check-label w-100" for="radioRetornable" style="cursor:pointer;">
+          <div class="d-flex align-items-start gap-2">
+            <i class="bx bx-revision text-warning fs-5 mt-1"></i>
+            <div>
+              <strong>Devolver para corrección</strong>
+              <small class="d-block text-muted">El requerimiento vuelve a estado <strong>PENDIENTE</strong>. El solicitante podrá modificar los detalles y reenviar a aprobación. No se migra a SPRING.</small>
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <!-- DEFINITIVA: solo ADLOGIST/TILOGIST -->
+      <div class="form-check p-3 border rounded"
+           [class.border-danger]="tipoAnulacion === 'DEFINITIVA'"
+           [class.bg-danger]="tipoAnulacion === 'DEFINITIVA'"
+           [class.bg-opacity-10]="tipoAnulacion === 'DEFINITIVA'"
+           *ngIf="esAdminOTI()"
+           (click)="tipoAnulacion = 'DEFINITIVA'">
+        <input class="form-check-input" type="radio" id="radioDefinitiva"
+               [(ngModel)]="tipoAnulacion" value="DEFINITIVA">
+        <label class="form-check-label w-100" for="radioDefinitiva" style="cursor:pointer;">
+          <div class="d-flex align-items-start gap-2">
+            <i class="bx bx-x-circle text-danger fs-5 mt-1"></i>
+            <div>
+              <strong>Anular definitivamente</strong>
+              <small class="d-block text-muted">El requerimiento queda en estado <strong>ANULADO</strong> permanentemente. No puede recuperarse ni migrar a SPRING.</small>
+            </div>
+          </div>
+        </label>
+      </div>
     </div>
+
+    <!-- Motivo -->
     <div class="mb-3">
-      <strong>Área:</strong> {{ requerimientoParaAnular.nombreArea }}
+      <label for="motivoAnulacion" class="form-label">Motivo <span class="text-danger">*</span></label>
+      <textarea id="motivoAnulacion" class="form-control" rows="4"
+                [(ngModel)]="motivoAnulacion"
+                [placeholder]="tipoAnulacion === 'RETORNABLE' ? 'Indique qué debe corregir el solicitante (mínimo 10 caracteres)...' : 'Indique el motivo de la anulación definitiva (mínimo 10 caracteres)...'"></textarea>
+      <small class="text-muted">Mínimo 10 caracteres — {{ motivoAnulacion.length }}/10</small>
     </div>
-    <div class="mb-3">
-      <strong>Estado Actual:</strong> {{ requerimientoParaAnular.estado || requerimientoParaAnular.estados }}
+
+    <!-- Alerta resumen acción -->
+    <div class="alert alert-warning mb-0 py-2" *ngIf="tipoAnulacion === 'RETORNABLE'">
+      <i class="bx bx-info-circle"></i>
+      El requerimiento pasará a <strong>PENDIENTE</strong> y el solicitante recibirá el motivo para corregir.
     </div>
-    <div class="mb-3">
-      <label for="motivoAnulacion" class="form-label">Motivo de Anulación <span class="text-danger">*</span></label>
-      <textarea id="motivoAnulacion" class="form-control" rows="4" 
-                [(ngModel)]="motivoAnulacion" 
-                placeholder="Ingrese el motivo de anulación (mínimo 10 caracteres)..."></textarea>
-      <small class="text-muted">Mínimo 10 caracteres</small>
+    <div class="alert alert-danger mb-0 py-2" *ngIf="tipoAnulacion === 'DEFINITIVA'">
+      <i class="bx bx-error"></i>
+      Acción <strong>irreversible</strong>: el requerimiento quedará ANULADO y no podrá recuperarse ni migrar a SPRING.
     </div>
   </div>
+
   <ng-template pTemplate="footer">
-    <button pButton type="button" label="Cancelar" icon="pi pi-times" 
+    <button pButton type="button" label="Cancelar" icon="pi pi-times"
             class="p-button-secondary" (click)="displayAnulacionModal = false"></button>
-    <button pButton type="button" label="Anular" icon="bx bx-x-circle" 
-            class="p-button-danger" (click)="confirmarAnulacion()"
+    <button pButton type="button"
+            [label]="tipoAnulacion === 'RETORNABLE' ? 'Devolver para corrección' : 'Anular definitivamente'"
+            [icon]="tipoAnulacion === 'RETORNABLE' ? 'bx bx-revision' : 'bx bx-x-circle'"
+            [class]="tipoAnulacion === 'RETORNABLE' ? 'p-button-warning' : 'p-button-danger'"
+            (click)="confirmarAnulacion()"
             [disabled]="!motivoAnulacion || motivoAnulacion.length < 10"></button>
   </ng-template>
 </p-dialog>
@@ -507,7 +668,7 @@
     <div *ngIf="detallePendientesTab === 'items'" class="table-responsive">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h6 class="mb-0">Ítems</h6>
-        <span class="badge bg-info">{{ getDetallesItemsPendientes().length || 0 }} líneas</span>
+        <span class="badge bg-info text-white">{{ getDetallesItemsPendientes().length || 0 }} líneas</span>
       </div>
       <p-table [value]="getDetallesItemsPendientes()" [paginator]="true" [rows]="5"
                responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped">
@@ -547,7 +708,8 @@
             <td>{{ requerimientoDetallePendientes.nombreArea }}</td>
             <td>
               <button pButton type="button" icon="bx bx-check"
-                      class="p-button-sm"
+                      class="p-button-sm text-white"
+                      [style.color]="'#fff !important'"
                       [class.p-button-success]="!detallesPendientesAprobados.has(i)"
                       [class.p-button-outlined]="detallesPendientesAprobados.has(i)"
                       (click)="aprobarDetallePendienteIndividual(i)"
@@ -566,7 +728,7 @@
     <div *ngIf="detallePendientesTab === 'servicios'" class="table-responsive">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h6 class="mb-0">Servicios</h6>
-        <span class="badge bg-info">{{ getDetallesServiciosPendientes().length || 0 }} líneas</span>
+        <span class="badge bg-info text-white">{{ getDetallesServiciosPendientes().length || 0 }} líneas</span>
       </div>
       <p-table [value]="getDetallesServiciosPendientes()" [paginator]="true" [rows]="5"
                responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped">
@@ -605,7 +767,8 @@
             <td>{{ requerimientoDetallePendientes.nombreArea }}</td>
             <td>
               <button pButton type="button" icon="bx bx-check"
-                      class="p-button-sm"
+                      class="p-button-sm text-white"
+                      [style.color]="'#fff !important'"
                       [class.p-button-success]="!detallesPendientesAprobados.has(i)"
                       [class.p-button-outlined]="detallesPendientesAprobados.has(i)"
                       (click)="aprobarDetallePendienteIndividual(i)"
@@ -695,28 +858,34 @@
         <table class="table table-sm">
           <thead>
             <tr>
+              <th>Tipo</th>
               <th>Estado Anterior</th>
               <th>Estado Nuevo</th>
-              <th>Usuario Anula</th>
+              <th>Usuario</th>
               <th>Rol</th>
               <th>Motivo</th>
-              <th>Fecha Anulación</th>
+              <th>Fecha</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let hist of historialAnulaciones">
               <td>
-                <p-tag [severity]="'warn'">{{ hist.estadoAnterior }}</p-tag>
+                <p-tag [severity]="hist.tipoAnulacion === 'RETORNABLE' ? 'warn' : 'danger'"
+                       [value]="hist.tipoAnulacion === 'RETORNABLE' ? 'Devuelto' : 'Definitiva'">
+                </p-tag>
               </td>
               <td>
-                <p-tag [severity]="'danger'">{{ hist.estadoNuevo }}</p-tag>
+                <p-tag severity="warn">{{ hist.estadoAnterior }}</p-tag>
+              </td>
+              <td>
+                <p-tag [severity]="hist.estadoNuevo === 'PENDIENTE' ? 'warn' : 'danger'">
+                  {{ hist.estadoNuevo }}
+                </p-tag>
               </td>
               <td>{{ hist.usuarioAnula }}</td>
-              <td>{{ hist.rolUsuario }}</td>
-              <td>
-                <small>{{ hist.motivoAnulacion }}</small>
-              </td>
-              <td>{{ hist.fechaAnulacion }}</td>
+              <td><small>{{ hist.rolUsuario }}</small></td>
+              <td><small>{{ hist.motivoAnulacion }}</small></td>
+              <td><small>{{ hist.fechaAnulacion }}</small></td>
             </tr>
           </tbody>
         </table>

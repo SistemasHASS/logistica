@@ -273,11 +273,11 @@
               <span class="hide-menu"> Transferencias Almacén</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('LOLOGIST') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
+          <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('JLOLOGIST') || usuario?.idrol.includes('LOLOGIST') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
             <span class="hide-menu"> Conformidad</span>
           </li>
-          <li *ngIf="usuario?.idrol.includes('LOLOGIST') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item"
+          <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('JLOLOGIST') || usuario?.idrol.includes('LOLOGIST') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('ALLOGIST')" class="sidebar-item"
             (click)="toggleSidebar()">
             <a routerLink="./conformidad-almacen" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
@@ -286,7 +286,7 @@
               <span class="hide-menu"> Conformidad NI / NS</span>
             </a>
           </li>
-          <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('LOLOGIST') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST') || usuario?.idrol.includes('JEMLOGIST')" class="sidebar-item"
+          <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('JLOLOGIST') || usuario?.idrol.includes('JEMLOGIST') || usuario?.idrol.includes('LOLOGIST') || usuario?.idrol.includes('OPLOGIST') || usuario?.idrol.includes('EMLOGIST')" class="sidebar-item"
             (click)="toggleSidebar()">
             <a routerLink="./conformidad-servicios" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
               <span>
@@ -427,6 +427,15 @@
                 <i class='bx bx-wrench'></i>
               </span>
               <span class="hide-menu"> Consolidación Servicios</span>
+            </a>
+          </li>
+          <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('LOLOGIST') || usuario?.idrol.includes('JLOLOGIST')" class="sidebar-item"
+            (click)="toggleSidebar()">
+            <a routerLink="./consolidacion-corporativa" routerLinkActive="active" class="sidebar-link" aria-expanded="false">
+              <span>
+                <i class='bx bx-globe'></i>
+              </span>
+              <span class="hide-menu"> Consolidación Corporativa</span>
             </a>
           </li>
           <!-- <li *ngIf="usuario?.idrol.includes('TILOGIST') || usuario?.idrol.includes('ADLOGIST') || usuario?.idrol.includes('ALLOGIST')" class="nav-small-cap">

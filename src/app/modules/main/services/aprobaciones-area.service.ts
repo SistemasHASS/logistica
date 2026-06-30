@@ -227,6 +227,22 @@ export class AprobacionesAreaService {
   }
 
   /**
+   * Anula un requerimiento v2 con soporte de tipoAnulacion:
+   *   RETORNABLE -> vuelve a PENDIENTE para que el solicitante corrija y reenvie
+   *   DEFINITIVA  -> estado ANULADO permanente (solo ADLOGIST/TILOGIST)
+   * NUNCA migra a SPRING — solo migra al APROBAR
+   */
+  anularRequerimientoV2(data: {
+    idRequerimiento: string;
+    usuario: string;
+    ruc: string;
+    motivo: string;
+    tipoAnulacion: 'RETORNABLE' | 'DEFINITIVA';
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/anular-requerimiento-v2`, data);
+  }
+
+  /**
    * Obtiene el historial de anulaciones de un requerimiento
    */
   listarHistorialAnulaciones(data: {

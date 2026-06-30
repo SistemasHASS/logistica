@@ -23,12 +23,15 @@
         </li>
         <!-- ALLOGIST solo ve tab COMPRA (ITEM), ocultar otros tabs -->
         @if (!esAlmacen) {
+        <!-- Tab Servicios: solo visible si la config de Parámetros es COMPRA o SERVICIO -->
+        @if (mostrarTabServicios) {
         <li class="nav-item">
           <button class="nav-link" [ngClass]="{ active: tabActiva === 'COMMODITY' }" (click)="cambiarTab('COMMODITY')">
             <i class="bx bx-cog me-2"></i>
             Servicios
           </button>
         </li>
+        }
         <li class="nav-item">
           <button class="nav-link" [ngClass]="{ active: tabActiva === 'ACTIVOFIJO' }" (click)="cambiarTab('ACTIVOFIJO')">
             <i class="bx bx-building me-2"></i>

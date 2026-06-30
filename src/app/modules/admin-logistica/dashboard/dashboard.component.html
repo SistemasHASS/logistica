@@ -74,12 +74,14 @@
                 </div>
                 <span>Aprobar Consumo</span>
               </a>
-              <a class="quick-action-item" [routerLink]="['/admin-logistica', 'aprobar-sc']">
-                <div class="icon bg-info">
-                  <i class="bx bx-shopping-bag"></i>
-                </div>
-                <span>Aprobar SC</span>
-              </a>
+              @if (!isJefeLogistica()) {
+                <a class="quick-action-item" [routerLink]="['/admin-logistica', 'aprobar-sc']">
+                  <div class="icon bg-info">
+                    <i class="bx bx-shopping-bag"></i>
+                  </div>
+                  <span>Aprobar SC</span>
+                </a>
+              }
               <a class="quick-action-item" [routerLink]="['/admin-logistica', 'maestros']">
                 <div class="icon bg-primary">
                   <i class="bx bx-equalizer"></i>

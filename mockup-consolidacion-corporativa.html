@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mockup — Consolidación Corporativa de Compras</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" />
+<style>
+  * { box-sizing: border-box; }
+  body { background: #f0f2f7; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+
+  /* ---- VARIABLES ---- */
+  :root {
+    --hp:  #1565C0; --hp-l:  #E3F2FD;
+    --bh:  #2E7D32; --bh-l:  #E8F5E9;
+    --cao: #E65100; --cao-l: #FFF3E0;
+    --corp:#6A1B9A; --corp-l:#F3E5F5;
+  }
+
+  /* ---- PAGE ---- */
+  .page { max-width: 1200px; margin: 0 auto; }
+
+  /* ---- HEADER ---- */
+  .corp-header {
+    background: #fff; border-radius: 12px 12px 0 0;
+    padding: 16px 22px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 1px solid #e0e0e0;
+    flex-wrap: wrap; gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  }
+  .corp-header-left { display: flex; align-items: center; gap: 12px; }
+  .corp-header-left i { font-size: 28px; color: var(--corp); }
+  .corp-title  { margin: 0; font-size: 1rem; font-weight: 700; color: #1a1a2e; }
+  .corp-subtitle { font-size: .76rem; color: #757575; }
+
+  .badge-emp {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 20px; font-size: .78rem;
+    font-weight: 600; background: #f5f5f5; color: #616161;
+    border: 1px solid #e0e0e0; transition: .2s;
+  }
+  .badge-emp.ok { background: #E8F5E9; color: var(--bh); border-color: #A5D6A7; }
+  .badge-emp i  { font-size: 14px; }
+
+  /* ---- TABS ---- */
+  .tabs {
+    background: #fff; display: flex; align-items: center;
+    border-bottom: 2px solid #e0e0e0; padding: 0 16px;
+    gap: 2px; overflow-x: auto;
+  }
+  .tab {
+    display: flex; align-items: center; gap: 6px;
+    padding: 12px 16px; border: none; background: none; cursor: pointer;
+    font-size: .84rem; font-weight: 500; color: #616161;
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+    white-space: nowrap; transition: .15s;
+  }
+  .tab:hover { background: #f5f7fa; color: #1a1a2e; }
+  .tab.active { color: var(--hp); border-bottom-color: var(--hp); font-weight: 700; }
+  .tab.active.corp { color: var(--corp); border-bottom-color: var(--corp); }
+  .tab.disabled { opacity: .4; cursor: not-allowed; }
+  .tab-div { width: 1px; height: 28px; background: #e0e0e0; margin: 0 6px; }
+  .tbadge {
+    display: inline-block; padding: 1px 7px; border-radius: 10px;
+    font-size: .68rem; font-weight: 700; background: #eee; color: #616161;
+  }
+  .tbadge.ok   { background: #E8F5E9; color: var(--bh); }
+  .tbadge.corp { background: var(--corp-l); color: var(--corp); }
+
+  /* ---- CONTENT ---- */
+  .content { background: #fff; border-radius: 0 0 12px 12px; padding: 20px 22px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .hidden { display: none !important; }
+
+  /* ---- EMPRESA HEADER ---- */
+  .emp-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 16px; border-radius: 10px; border-left: 4px solid;
+    margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+  }
+  .emp-header.hp  { border-color: var(--hp);  background: linear-gradient(90deg,var(--hp-l) 0%,#fff 60%); }
+  .emp-header.bh  { border-color: var(--bh);  background: linear-gradient(90deg,var(--bh-l) 0%,#fff 60%); }
+  .emp-header.cao { border-color: var(--cao); background: linear-gradient(90deg,var(--cao-l) 0%,#fff 60%); }
+  .emp-info { display: flex; align-items: center; gap: 12px; }
+  .emp-info div strong { font-size: .88rem; color: #1a1a2e; display: block; }
+  .emp-info div small  { font-size: .74rem; color: #757575; }
+  .emp-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  .chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 3px 9px; border-radius: 6px; font-size: .73rem;
+    font-weight: 700; letter-spacing: .4px;
+  }
+  .chip.hp  { background: var(--hp);  color: #fff; }
+  .chip.bh  { background: var(--bh);  color: #fff; }
+  .chip.cao { background: var(--cao); color: #fff; }
+
+  /* ---- SEARCH ---- */
+  .search-box {
+    display: flex; align-items: center; gap: 6px;
+    background: #f5f7fa; border: 1px solid #e0e0e0;
+    border-radius: 7px; padding: 5px 10px;
+  }
+  .search-box i { font-size: 15px; color: #9e9e9e; }
+  .search-box input {
+    border: none; background: none; outline: none;
+    font-size: .82rem; width: 170px; color: #333;
+  }
+
+  /* ---- BOTONES ---- */
+  .btn-sel-all {
+    display: flex; align-items: center; gap: 5px;
+    padding: 6px 12px; border: 1px solid #e0e0e0;
+    border-radius: 7px; background: #fff; font-size: .79rem;
+    color: #424242; cursor: pointer;
+  }
+  .btn-pre {
+    display: flex; align-items: center; gap: 5px;
+    padding: 6px 14px; border: none; border-radius: 7px;
+    background: var(--hp); color: #fff; font-size: .8rem;
+    font-weight: 600; cursor: pointer;
+  }
+  .btn-pre:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-pre i, .btn-sel-all i { font-size: 15px; }
+
+  .btn-generar-oc {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 18px; border: none; border-radius: 8px;
+    background: var(--corp); color: #fff; font-size: .85rem;
+    font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
+
+  /* ---- TABLA REQS ---- */
+  .tabla-wrapper { border-radius: 10px; overflow: auto; max-height: 360px; border: 1px solid #f0f0f0; }
+  table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+  thead tr { background: #f5f7fa; position: sticky; top: 0; z-index: 2; }
+  th { padding: 9px 11px; text-align: left; font-weight: 600; color: #424242; border-bottom: 1px solid #e0e0e0; white-space: nowrap; }
+  td { padding: 8px 11px; border-bottom: 1px solid #f5f5f5; color: #333; vertical-align: middle; }
+  tbody tr { cursor: pointer; transition: background .1s; }
+  tbody tr:hover { background: #f8f9ff; }
+  tbody tr.sel { background: #E3F2FD; }
+  td.right { text-align: right; font-weight: 600; color: var(--hp); }
+
+  .codigo { display: inline-block; padding: 2px 7px; background: #EDE7F6; color: #4527A0; border-radius: 4px; font-size: .72rem; font-weight: 700; font-family: monospace; }
+  .tipo-b { display: inline-block; padding: 2px 7px; background: #E3F2FD; color: var(--hp); border-radius: 4px; font-size: .71rem; font-weight: 600; }
+
+  /* ---- PRE-CONSOLIDADO GUARDADO ---- */
+  .resumen-guard {
+    margin-top: 14px; background: #F1F8E9; border: 1px solid #A5D6A7;
+    border-radius: 8px; padding: 12px 16px;
+  }
+  .resumen-guard-header { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--bh); margin-bottom: 10px; flex-wrap: wrap; }
+  .resumen-guard-header i { font-size: 17px; }
+  .chips-wrap { display: flex; gap: 7px; flex-wrap: wrap; }
+  .item-chip {
+    display: flex; align-items: center; gap: 6px; padding: 5px 10px;
+    background: #fff; border: 1px solid #C8E6C9; border-radius: 6px;
+    font-size: .78rem; cursor: pointer;
+  }
+  .item-chip:hover { border-color: #4CAF50; }
+  .item-chip .cc { font-weight: 700; color: #4527A0; font-family: monospace; font-size: .72rem; }
+  .item-chip .cd { color: #555; }
+  .item-chip .cq { font-weight: 700; color: var(--bh); }
+
+  /* ---- CORPORATIVO ---- */
+  .alerta-inc {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: #FFF8E1; border: 1px solid #FFE082;
+    border-radius: 8px; padding: 12px 16px;
+    font-size: .82rem; color: #5D4037; margin-bottom: 14px;
+  }
+  .alerta-inc i { font-size: 18px; color: #F9A825; flex-shrink: 0; }
+  .corp-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+  .kpis { display: flex; gap: 10px; flex-wrap: wrap; }
+  .kpi {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 10px 16px; background: #f9f9f9; border-radius: 8px;
+    border: 1px solid #eee; min-width: 80px;
+  }
+  .kpi .val { font-size: 1.4rem; font-weight: 700; color: #1a1a2e; line-height: 1; }
+  .kpi .val.hp  { color: var(--hp); }
+  .kpi .val.bh  { color: var(--bh); }
+  .kpi .val.cao { color: var(--cao); }
+  .kpi .lbl { font-size: .68rem; color: #9e9e9e; margin-top: 3px; text-align: center; }
+
+  /* tabla corporativa */
+  .corp-table-wrap { border-radius: 10px; overflow: auto; border: 1px solid #e0e0e0; }
+  .corp-table th.hp  { color: var(--hp); }
+  .corp-table th.bh  { color: var(--bh); }
+  .corp-table th.cao { color: var(--cao); }
+  .corp-table th.tot { color: var(--corp); }
+  .cant { display: inline-block; padding: 3px 10px; border-radius: 12px; font-weight: 700; font-size: .8rem; }
+  .cant.hp  { background: var(--hp-l);  color: var(--hp); }
+  .cant.bh  { background: var(--bh-l);  color: var(--bh); }
+  .cant.cao { background: var(--cao-l); color: var(--cao); }
+  .cant.tot { background: var(--corp-l); color: var(--corp); font-size: .88rem; }
+  .flag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: .67rem; font-weight: 700; margin: 1px; }
+  .flag.hp  { background: var(--hp-l);  color: var(--hp); }
+  .flag.bh  { background: var(--bh-l);  color: var(--bh); }
+  .flag.cao { background: var(--cao-l); color: var(--cao); }
+  tfoot tr { background: #f8f6ff; }
+  tfoot td { font-weight: 700; border-top: 2px solid #e0e0e0 !important; font-size: .84rem; }
+
+  /* ---- MODAL ---- */
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.45); z-index: 1050;
+    align-items: center; justify-content: center;
+  }
+  .overlay.show { display: flex; }
+  .modal-panel {
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.2);
+    width: min(820px,95vw); max-height: 88vh;
+    display: flex; flex-direction: column;
+  }
+  .modal-panel.sm { width: min(500px,95vw); }
+  .modal-hd {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 15px 20px; border-bottom: 1px solid #e0e0e0; gap: 10px;
+  }
+  .modal-hd-info { display: flex; align-items: center; gap: 10px; }
+  .modal-hd-info > i { font-size: 22px; color: var(--corp); }
+  .modal-hd-info h6 { margin: 0; font-size: .9rem; font-weight: 700; }
+  .modal-hd-info small { font-size: .73rem; color: #757575; }
+  .modal-body-p { padding: 16px 20px; overflow-y: auto; flex: 1; }
+  .modal-ft { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid #e0e0e0; }
+  .btn-cancel { padding: 7px 14px; border: 1px solid #e0e0e0; border-radius: 6px; background: #fff; color: #616161; font-size: .82rem; cursor: pointer; }
+  .btn-confirm { display: flex; align-items: center; gap: 5px; padding: 7px 16px; border: none; border-radius: 6px; background: var(--hp); color: #fff; font-size: .82rem; font-weight: 700; cursor: pointer; }
+  .btn-x { border: none; background: #f5f5f5; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .det-line { font-size: .75rem; color: #616161; margin: 2px 0; }
+  .det-line strong { color: #1a1a2e; }
+
+  /* success alert */
+  .alerta-ok {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: #E8F5E9; border: 1px solid #A5D6A7;
+    border-radius: 8px; padding: 12px 16px; font-size: .82rem;
+    color: #1B5E20; margin-bottom: 14px;
+  }
+  .alerta-ok i { font-size: 18px; color: var(--bh); flex-shrink: 0; }
+
+  /* toaster */
+  .toast-wrap { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+  .toast-msg {
+    background: #333; color: #fff; padding: 10px 18px; border-radius: 8px;
+    font-size: .83rem; box-shadow: 0 4px 12px rgba(0,0,0,.2);
+    animation: fadeIn .2s ease; max-width: 340px;
+  }
+  .toast-msg.ok { background: #2E7D32; }
+  .toast-msg.err { background: #c62828; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+  .dot-sep { color: #bdbdbd; }
+  .link-btn { background: none; border: none; color: var(--hp); font-size: .79rem; cursor: pointer; padding: 0; text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ===== HEADER ===== -->
+  <div class="corp-header">
+    <div class="corp-header-left">
+      <i class="bx bx-building-house"></i>
+      <div>
+        <h5 class="corp-title">Consolidación Corporativa de Compras</h5>
+        <span class="corp-subtitle">Consolida requerimientos por empresa y genera una OC corporativa unificada</span>
+      </div>
+    </div>
+    <div id="badgesHeader" style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="badge-emp" id="badgeHP"><i class='bx bx-time-five'></i> HP <span id="bHPCnt" style="font-weight:400;color:#9e9e9e;font-size:.73rem">0/5</span></span>
+      <span class="badge-emp" id="badgeBH"><i class='bx bx-time-five'></i> BH <span id="bBHCnt" style="font-weight:400;color:#9e9e9e;font-size:.73rem">0/4</span></span>
+      <span class="badge-emp" id="badgeCAO"><i class='bx bx-time-five'></i> CAO <span id="bCAOCnt" style="font-weight:400;color:#9e9e9e;font-size:.73rem">0/4</span></span>
+    </div>
+  </div>
+
+  <!-- ===== TABS ===== -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('HP',this)"><i class='bx bx-buildings'></i> Empresa HP <span class="tbadge" id="tbHP">5 items</span></button>
+    <button class="tab" onclick="switchTab('BH',this)"><i class='bx bx-buildings'></i> Empresa BH <span class="tbadge" id="tbBH">4 items</span></button>
+    <button class="tab" onclick="switchTab('CAO',this)"><i class='bx bx-buildings'></i> Empresa CAO <span class="tbadge" id="tbCAO">4 items</span></button>
+    <div class="tab-div"></div>
+    <button class="tab" id="tabCorp" onclick="switchTab('CORP',this)"><i class='bx bx-globe'></i> Corporativo <span class="tbadge corp" id="tbCorp">Sin datos</span></button>
+  </div>
+
+  <!-- ===== TABS CONTENT ===== -->
+  <!-- HP -->
+  <div class="content" id="tab-HP">
+    <div class="emp-header hp">
+      <div class="emp-info">
+        <span class="chip hp">HP</span>
+        <div><strong>Hacienda Pampa S.A.</strong><small>5 requerimientos pendientes</small></div>
+      </div>
+      <div class="emp-actions">
+        <div class="search-box"><i class='bx bx-search'></i><input type="text" placeholder="Buscar código o ítem..." oninput="filterTable('tHP',this.value)" /></div>
+        <button class="btn-sel-all" onclick="toggleAll('HP')"><i class='bx bx-checkbox' id="icHP"></i> <span id="lblSelHP">Seleccionar todos</span></button>
+        <button class="btn-pre" id="btnPreHP" disabled onclick="openPreModal('HP')"><i class='bx bx-layer-plus'></i> Pre-consolidar HP (<span id="cntHP">0</span>)</button>
+      </div>
+    </div>
+
+    <div class="tabla-wrapper">
+      <table id="tHP">
+        <thead><tr><th style="width:36px"><input type="checkbox" id="chkAllHP" onclick="checkAll('HP',this.checked)" /></th><th>Código</th><th>Descripción</th><th>Área</th><th>Solicitante</th><th>Cant.</th><th>Unidad</th><th>Fecha</th><th>Tipo</th></tr></thead>
+        <tbody>
+          <tr onclick="toggleRow(this,'HP')"><td><input type="checkbox" class="chk-HP" onchange="updateCnt('HP');event.stopPropagation()" /></td><td><span class="codigo">MAT-001</span></td><td>ACEITE HIDRAULICO 68</td><td>MANTENIMIENTO</td><td>Juan Rios</td><td class="right">50</td><td>GLN</td><td>2026-06-10</td><td><span class="tipo-b">COMPRA</span></td></tr>
+          <tr onclick="toggleRow(this,'HP')"><td><input type="checkbox" class="chk-HP" onchange="updateCnt('HP');event.stopPropagation()" /></td><td><span class="codigo">MAT-001</span></td><td>ACEITE HIDRAULICO 68</td><td>MAQUINARIA</td><td>Pedro Salas</td><td class="right">30</td><td>GLN</td><td>2026-06-11</td><td><span class="tipo-b">COMPRA</span></td></tr>
+          <tr onclick="toggleRow(this,'HP')"><td><input type="checkbox" class="chk-HP" onchange="updateCnt('HP');event.stopPropagation()" /></td><td><span class="codigo">MAT-002</span></td><td>FILTRO DE AIRE MOTOR</td><td>MANTENIMIENTO</td><td>Juan Rios</td><td class="right">12</td><td>UND</td><td>2026-06-10</td><td><span class="tipo-b">COMPRA</span></td></tr>
+          <tr onclick="toggleRow(this,'HP')"><td><input type="checkbox" class="chk-HP" onchange="updateCnt('HP');event.stopPropagation()" /></td><td><span class="codigo">MAT-003</span></td><td>GRASA MULTIPROPÓSITO</td><td>CAMPO</td><td>Luis Torres</td><td class="right">25</td><td>KG</td><td>2026-06-12</td><td><span class="tipo-b">COMPRA</span></td></tr>
+          <tr onclick="toggleRow(this,'HP')"><td><input type="checkbox" class="chk-HP" onchange="updateCnt('HP');event.stopPropagation()" /></td><td><span class="codigo">MAT-004</span></td><td>MANGUERA HIDRÁULICA 1/2"</td><td>MAQUINARIA</td><td>Pedro Salas</td><td class="right">100</td><td>MT</td><td>2026-06-13</td><td><span class="tipo-b">COMPRA</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="guardHP" class="hidden resumen-guard">
+      <div class="resumen-guard-header"><i class='bx bx-check-shield'></i><strong>Consolidación HP guardada —</strong><span id="grpHPCnt"></span><span class="dot-sep">·</span><button class="link-btn" onclick="switchTab('CORP',document.querySelectorAll('.tab')[3])">Ver en corporativo →</button></div>
+      <div class="chips-wrap" id="chipsHP"></div>
+    </div>
+  </div>
+
+  <!-- BH -->
+  <div class="content hidden" id="tab-BH">
+    <div class="emp-header bh">
+      <div class="emp-info">
+        <span class="chip bh">BH</span>
+        <div><strong>Bertha Hacienda S.A.</strong><small>4 requerimientos pendientes</small></div>
+      </div>
+      <div class="emp-actions">
+        <div class="search-box"><i class='bx bx-search'></i><input type="text" placeholder="Buscar código o ítem..." oninput="filterTable('tBH',this.value)" /></div>
+        <button class="btn-sel-all" onclick="toggleAll('BH')"><i class='bx bx-checkbox' id="icBH"></i> <span id="lblSelBH">Seleccionar todos</span></button>
+        <button class="btn-pre" id="btnPreBH" disabled onclick="openPreModal('BH')"><i class='bx bx-layer-plus'></i> Pre-consolidar BH (<span id="cntBH">0</span>)</button>
+      </div>
+    </div>
+    <div class="tabla-wrapper">
+      <table id="tBH">
+        <thead><tr><th style="width:36px"><input type="checkbox" id="chkAllBH" onclick="checkAll('BH',this.checked)" /></th><th>Código</th><th>Descripción</th><th>Área</th><th>Solicitante</th><th>Cant.</th><th>Unidad</th><th>Fecha</th><th>Tipo</th></tr></thead>
+        <tbody>
+          <tr onclick="toggleRow(this,'BH')"><td><input type="checkbox" class="chk-BH" onchange="updateCnt('BH');event.stopPropagation()" /></td><td><span class="codigo">MAT-001</span></td><td>ACEITE HIDRAULICO 68</td><td>MANTENIMIENTO</td><td>Ana Vera</td><td class="right">40</td><td>GLN</td><td>2026-06-10</td><td><span class="tipo-b">COMPRA</span></td></tr>
+          <tr onclick="toggleRow(this,'BH')"><td><input type="checkbox" class="chk-BH" onchange="updateCnt('BH');event.stopPropagation()" /></td><td><span class="codigo">MAT-002</span></td><td>FILTRO DE AIRE MOTOR</td><td>MANTENIMIENTO</td><td>Ana Vera</td><td class="right">8</td><td>UND</td><td>2026-06-10</td><td><span class="tipo-b">COMPRA</span></td></tr>
+          <tr onclick="toggleRow(this,'BH')"><td><input type="checkbox" class="chk-BH" onchange="updateCnt('BH');event.stopPropagation()" /></td><td><span class="codigo">MAT-005</span></td><td>PERNO HEXAGONAL 3/4"</td><td>TALLER</td><td>Carlos Mendez</td><td class="right">200</td><td>UND</td><td>2026-06-11</td><td><span class="tipo-b">COMPRA</span></td></tr>
+          <tr onclick="toggleRow(this,'BH')"><td><input type="checkbox" class="chk-BH" onchange="updateCnt('BH');event.stopPropagation()" /></td><td><span class="codigo">MAT-006</span></td><td>DISCO DE CORTE 9"</td><td>TALLER</td><td>Carlos Mendez</td><td class="right">50</td><td>UND</td><td>2026-06-12</td><td><span class="tipo-b">COMPRA</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="guardBH" class="hidden resumen-guard">
+      <div class="resumen-guard-header"><i class='bx bx-check-shield'></i><strong>Consolidación BH guardada —</strong><span id="grpBHCnt"></span><span class="dot-sep">·</span><button class="link-btn" onclick="switchTab('CORP',document.querySelectorAll('.tab')[3])">Ver en corporativo →</button></div>
+      <div class="chips-wrap" id="chipsBH"></div>
+    </div>
+  </div>
+
+  <!-- CAO -->
+  <div class="content hidden" id="tab-CAO">
+    <div class="emp-header cao">
+      <div class="emp-info">
+        <span class="chip cao">CAO</span>
+        <div><strong>Campo Agropecuario S.A.</strong><small>4 requerimientos pendientes</small></div>
+      </div>
+      <div class="emp-actions">
+        <div class="search-box"><i class='bx bx-search'></i><input type="text" placeholder="Buscar código o ítem..." oninput="filterTable('tCAO',this.value)" /></div>
+        <button class="btn-sel-all" onclick="toggleAll('CAO')"><i class='bx bx-checkbox' id="icCAO"></i> <span id="lblSelCAO">Seleccionar todos</span></button>
+        <button class="btn-pre" id="btnPreCAO" disabled onclick="openPreModal('CAO')"><i class='bx bx-layer-plus'></i> Pre-consolidar CAO (<span id="cntCAO">0</span>)</button>
+      </div>
+    </div>
+    <div class="tabla-wrapper">
+      <table id="tCAO">
+        <thead><tr><th style="width:36px"><input type="checkbox" id="chkAllCAO" onclick="checkAll('CAO',this.checked)" /></th><th>Código</th><th>Descripción</th><th>Área</th><th>Solicitante</th><th>Cant.</th><th>Unidad</th><th>Fecha</th><th>Tipo</th></tr></thead>
+        <tbody>
+          <tr onclick="toggleRow(this,'CAO')"><td><input type="checkbox" class="chk-CAO" onchange="updateCnt('CAO');event.stopPropagation()" /></td><td><span class="codigo">MAT-001</span></td><td>ACEITE HIDRAULICO 68</td><td>MAQUINARIA</td><td>Maria Leon</td><td class="right">60</td><td>GLN</td><td>2026-06-09</td><td><span class="tipo-b">COMPRA</span></td></tr>
+          <tr onclick="toggleRow(this,'CAO')"><td><input type="checkbox" class="chk-CAO" onchange="updateCnt('CAO');event.stopPropagation()" /></td><td><span class="codigo">MAT-003</span></td><td>GRASA MULTIPROPÓSITO</td><td>CAMPO</td><td>Maria Leon</td><td class="right">15</td><td>KG</td><td>2026-06-10</td><td><span class="tipo-b">COMPRA</span></td></tr>
+          <tr onclick="toggleRow(this,'CAO')"><td><input type="checkbox" class="chk-CAO" onchange="updateCnt('CAO');event.stopPropagation()" /></td><td><span class="codigo">MAT-007</span></td><td>CEMENTO PORTLAND 42.5</td><td>CIVIL</td><td>Jose Ruiz</td><td class="right">80</td><td>BLS</td><td>2026-06-11</td><td><span class="tipo-b">COMPRA</span></td></tr>
+          <tr onclick="toggleRow(this,'CAO')"><td><input type="checkbox" class="chk-CAO" onchange="updateCnt('CAO');event.stopPropagation()" /></td><td><span class="codigo">MAT-002</span></td><td>FILTRO DE AIRE MOTOR</td><td>MANTENIMIENTO</td><td>Maria Leon</td><td class="right">6</td><td>UND</td><td>2026-06-12</td><td><span class="tipo-b">COMPRA</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="guardCAO" class="hidden resumen-guard">
+      <div class="resumen-guard-header"><i class='bx bx-check-shield'></i><strong>Consolidación CAO guardada —</strong><span id="grpCAOCnt"></span><span class="dot-sep">·</span><button class="link-btn" onclick="switchTab('CORP',document.querySelectorAll('.tab')[3])">Ver en corporativo →</button></div>
+      <div class="chips-wrap" id="chipsCAO"></div>
+    </div>
+  </div>
+
+  <!-- CORPORATIVO -->
+  <div class="content hidden" id="tab-CORP">
+    <div id="alertaInc" class="alerta-inc hidden">
+      <i class='bx bx-info-circle'></i>
+      <div><strong>Consolidación parcial.</strong> Solo se muestran las empresas con consolidación guardada.
+        <span id="alertaIncMsg"></span>
+      </div>
+    </div>
+    <div id="alertaOK" class="alerta-ok hidden">
+      <i class='bx bx-check-circle'></i>
+      <div><strong>OC Corporativa generada correctamente.</strong> Se ha creado la Orden de Compra consolidando los artículos de las empresas participantes.</div>
+    </div>
+    <div class="corp-top">
+      <div class="kpis">
+        <div class="kpi"><span class="val" id="kpiTotal">0</span><span class="lbl">Artículos únicos</span></div>
+        <div class="kpi" id="kpiHPBox"><span class="val hp" id="kpiHP">0</span><span class="lbl">Grupos HP</span></div>
+        <div class="kpi" id="kpiBHBox"><span class="val bh" id="kpiBH">0</span><span class="lbl">Grupos BH</span></div>
+        <div class="kpi" id="kpiCAOBox"><span class="val cao" id="kpiCAO">0</span><span class="lbl">Grupos CAO</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="search-box"><i class='bx bx-search'></i><input type="text" placeholder="Filtrar artículo..." oninput="filterCorp(this.value)" /></div>
+        <button class="btn-generar-oc" onclick="generarOC()"><i class='bx bx-cart-add'></i> Generar OC Corporativa</button>
+      </div>
+    </div>
+    <div class="corp-table-wrap">
+      <table class="corp-table">
+        <thead>
+          <tr id="corpThead"></tr>
+        </thead>
+        <tbody id="corpTbody"></tbody>
+        <tfoot id="corpTfoot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ===== MODAL PRE-CONSOLIDADO ===== -->
+<div class="overlay" id="modalPre">
+  <div class="modal-panel">
+    <div class="modal-hd">
+      <div class="modal-hd-info">
+        <i class='bx bx-layer-plus'></i>
+        <div>
+          <h6>Pre-consolidar empresa <span id="modalPreEmp"></span></h6>
+          <small>Los artículos seleccionados serán agrupados por código y guardados</small>
+        </div>
+      </div>
+      <button class="btn-x" onclick="closeModal('modalPre')"><i class='bx bx-x'></i></button>
+    </div>
+    <div class="modal-body-p">
+      <div class="tabla-wrapper" style="max-height:320px">
+        <table>
+          <thead><tr><th>Código</th><th>Descripción</th><th>Cantidad total</th><th>Unidad</th><th>Detalle (líneas agrupadas)</th></tr></thead>
+          <tbody id="modalPreBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-cancel" onclick="closeModal('modalPre')">Cancelar</button>
+      <button class="btn-confirm" onclick="confirmarGuardado()"><i class='bx bx-save'></i> <span id="btnConfirmLabel">Guardar consolidación</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL DETALLE ITEM ===== -->
+<div class="overlay" id="modalDet">
+  <div class="modal-panel sm">
+    <div class="modal-hd">
+      <div class="modal-hd-info">
+        <i class='bx bx-detail'></i>
+        <div>
+          <h6 id="modalDetTitle">Detalle</h6>
+          <small>Desglose por área y solicitante</small>
+        </div>
+      </div>
+      <button class="btn-x" onclick="closeModal('modalDet')"><i class='bx bx-x'></i></button>
+    </div>
+    <div class="modal-body-p">
+      <div class="tabla-wrapper">
+        <table>
+          <thead><tr><th>Empresa</th><th>Área</th><th>Solicitante</th><th>Cantidad</th></tr></thead>
+          <tbody id="modalDetBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-ft"><button class="btn-cancel" onclick="closeModal('modalDet')">Cerrar</button></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATOS
+// ============================================================
+const DATA = {
+  HP:  [
+    {id:1, cod:'MAT-001', desc:'ACEITE HIDRAULICO 68',      un:'GLN', qty:50,  area:'MANTENIMIENTO', sol:'Juan Rios',    fecha:'2026-06-10'},
+    {id:2, cod:'MAT-001', desc:'ACEITE HIDRAULICO 68',      un:'GLN', qty:30,  area:'MAQUINARIA',    sol:'Pedro Salas',  fecha:'2026-06-11'},
+    {id:3, cod:'MAT-002', desc:'FILTRO DE AIRE MOTOR',      un:'UND', qty:12,  area:'MANTENIMIENTO', sol:'Juan Rios',    fecha:'2026-06-10'},
+    {id:4, cod:'MAT-003', desc:'GRASA MULTIPROPÓSITO',      un:'KG',  qty:25,  area:'CAMPO',         sol:'Luis Torres',  fecha:'2026-06-12'},
+    {id:5, cod:'MAT-004', desc:'MANGUERA HIDRÁULICA 1/2"', un:'MT',  qty:100, area:'MAQUINARIA',    sol:'Pedro Salas',  fecha:'2026-06-13'},
+  ],
+  BH: [
+    {id:6, cod:'MAT-001', desc:'ACEITE HIDRAULICO 68',  un:'GLN', qty:40,  area:'MANTENIMIENTO', sol:'Ana Vera',      fecha:'2026-06-10'},
+    {id:7, cod:'MAT-002', desc:'FILTRO DE AIRE MOTOR',  un:'UND', qty:8,   area:'MANTENIMIENTO', sol:'Ana Vera',      fecha:'2026-06-10'},
+    {id:8, cod:'MAT-005', desc:'PERNO HEXAGONAL 3/4"', un:'UND', qty:200, area:'TALLER',         sol:'Carlos Mendez', fecha:'2026-06-11'},
+    {id:9, cod:'MAT-006', desc:'DISCO DE CORTE 9"',     un:'UND', qty:50,  area:'TALLER',         sol:'Carlos Mendez', fecha:'2026-06-12'},
+  ],
+  CAO: [
+    {id:10, cod:'MAT-001', desc:'ACEITE HIDRAULICO 68',   un:'GLN', qty:60, area:'MAQUINARIA',    sol:'Maria Leon', fecha:'2026-06-09'},
+    {id:11, cod:'MAT-003', desc:'GRASA MULTIPROPÓSITO',   un:'KG',  qty:15, area:'CAMPO',          sol:'Maria Leon', fecha:'2026-06-10'},
+    {id:12, cod:'MAT-007', desc:'CEMENTO PORTLAND 42.5',  un:'BLS', qty:80, area:'CIVIL',          sol:'Jose Ruiz',  fecha:'2026-06-11'},
+    {id:13, cod:'MAT-002', desc:'FILTRO DE AIRE MOTOR',   un:'UND', qty:6,  area:'MANTENIMIENTO',  sol:'Maria Leon', fecha:'2026-06-12'},
+  ],
+};
+
+const guardado = { HP: null, BH: null, CAO: null };
+let preEmpresa = null;
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(id, el) {
+  if (id === 'CORP' && !guardado.HP && !guardado.BH && !guardado.CAO) {
+    toast('Pre-consolida al menos una empresa primero', 'err'); return;
+  }
+  document.querySelectorAll('.content').forEach(c => c.classList.add('hidden'));
+  document.querySelectorAll('.tab').forEach(t => { t.classList.remove('active','corp'); });
+  document.getElementById('tab-' + id).classList.remove('hidden');
+  el.classList.add('active');
+  if (id === 'CORP') { el.classList.add('corp'); buildCorpTable(); }
+}
+
+// ============================================================
+// SELECCIÓN
+// ============================================================
+function toggleRow(tr, emp) {
+  const chk = tr.querySelector('input[type=checkbox]');
+  chk.checked = !chk.checked;
+  updateSel(tr, chk.checked);
+  updateCnt(emp);
+}
+function updateSel(tr, checked) {
+  if (checked) tr.classList.add('sel'); else tr.classList.remove('sel');
+}
+function checkAll(emp, val) {
+  document.querySelectorAll('.chk-' + emp).forEach(c => {
+    c.checked = val;
+    updateSel(c.closest('tr'), val);
+  });
+  updateCnt(emp);
+}
+function toggleAll(emp) {
+  const chks = document.querySelectorAll('.chk-' + emp);
+  const allChecked = [...chks].every(c => c.checked);
+  const newVal = !allChecked;
+  document.getElementById('chkAll' + emp).checked = newVal;
+  checkAll(emp, newVal);
+  document.getElementById('ic' + emp).className = newVal ? 'bx bx-checkbox-checked' : 'bx bx-checkbox';
+  document.getElementById('lblSel' + emp).textContent = newVal ? 'Deseleccionar todos' : 'Seleccionar todos';
+}
+function updateCnt(emp) {
+  const cnt = [...document.querySelectorAll('.chk-' + emp)].filter(c => c.checked).length;
+  document.getElementById('cnt' + emp).textContent = cnt;
+  document.getElementById('btnPre' + emp).disabled = cnt === 0;
+  // badge header
+  const total = DATA[emp].length;
+  document.getElementById('b' + emp + 'Cnt').textContent = cnt + '/' + total;
+}
+
+// ============================================================
+// FILTRO TABLA
+// ============================================================
+function filterTable(tid, val) {
+  const v = val.toLowerCase();
+  document.querySelectorAll('#' + tid + ' tbody tr').forEach(tr => {
+    const txt = tr.innerText.toLowerCase();
+    tr.style.display = txt.includes(v) ? '' : 'none';
+  });
+}
+
+// ============================================================
+// PRE-CONSOLIDADO MODAL
+// ============================================================
+function openPreModal(emp) {
+  preEmpresa = emp;
+  const rows = [...document.querySelectorAll('.chk-' + emp)].filter(c => c.checked).map(c => {
+    const tr = c.closest('tr'); const tds = tr.querySelectorAll('td');
+    return { cod: tds[1].innerText.trim(), desc: tds[2].innerText.trim(), qty: parseInt(tds[5].innerText), un: tds[6].innerText.trim(), area: tds[3].innerText.trim(), sol: tds[4].innerText.trim() };
+  });
+  // agrupar
+  const mapa = new Map();
+  rows.forEach(r => {
+    if (!mapa.has(r.cod)) mapa.set(r.cod, { cod: r.cod, desc: r.desc, un: r.un, qty: 0, lines: [] });
+    const e = mapa.get(r.cod); e.qty += r.qty; e.lines.push({ area: r.area, sol: r.sol, qty: r.qty });
+  });
+  const grupos = [...mapa.values()];
+  document.getElementById('modalPreEmp').innerHTML = `<span class="chip ${emp.toLowerCase()}">${emp}</span>`;
+  document.getElementById('btnConfirmLabel').textContent = 'Guardar consolidación ' + emp;
+  const tbody = document.getElementById('modalPreBody');
+  tbody.innerHTML = grupos.map(g => `
+    <tr>
+      <td><span class="codigo">${g.cod}</span></td>
+      <td>${g.desc}</td>
+      <td class="right">${g.qty}</td>
+      <td>${g.un}</td>
+      <td>${g.lines.map(l => `<div class="det-line">${l.area} — ${l.sol}: <strong>${l.qty}</strong></div>`).join('')}</td>
+    </tr>`).join('');
+  // guardar temporalmente para confirmar
+  window._preGrupos = grupos;
+  document.getElementById('modalPre').classList.add('show');
+}
+function confirmarGuardado() {
+  guardado[preEmpresa] = window._preGrupos;
+  // actualizar badge header
+  const el = document.getElementById('badge' + preEmpresa);
+  el.classList.add('ok');
+  el.querySelector('i').className = 'bx bx-check-circle';
+  // tab badge
+  const tb = document.getElementById('tb' + preEmpresa);
+  tb.textContent = 'Listo'; tb.classList.add('ok');
+  // mostrar resumen
+  renderResumen(preEmpresa);
+  // habilitar corporativo tab badge
+  const anyGuardado = Object.values(guardado).some(v => v);
+  if (anyGuardado) { document.getElementById('tbCorp').textContent = calcCorpItems().length + ' items'; }
+  closeModal('modalPre');
+  toast('Consolidación ' + preEmpresa + ' guardada correctamente', 'ok');
+}
+function renderResumen(emp) {
+  const g = guardado[emp];
+  document.getElementById('grp' + emp + 'Cnt').textContent = g.length + ' grupos de artículos listos para corporativo';
+  const chips = document.getElementById('chips' + emp);
+  chips.innerHTML = g.map(item => `
+    <div class="item-chip" onclick="openDetModal('${emp}','${item.cod}')">
+      <span class="cc">${item.cod}</span>
+      <span class="cd">${item.desc.slice(0,26)}</span>
+      <span class="cq">${item.qty} ${item.un}</span>
+    </div>`).join('');
+  document.getElementById('guard' + emp).classList.remove('hidden');
+}
+
+// ============================================================
+// MODAL DETALLE
+// ============================================================
+function openDetModal(emp, cod) {
+  const item = guardado[emp].find(i => i.cod === cod);
+  if (!item) return;
+  document.getElementById('modalDetTitle').textContent = cod + ' — ' + item.desc;
+  const chipCls = emp.toLowerCase();
+  document.getElementById('modalDetBody').innerHTML = item.lines.map(l => `
+    <tr>
+      <td><span class="chip ${chipCls}">${emp}</span></td>
+      <td>${l.area}</td><td>${l.sol}</td><td class="right">${l.qty}</td>
+    </tr>`).join('');
+  document.getElementById('modalDet').classList.add('show');
+}
+
+// ============================================================
+// CORPORATIVO
+// ============================================================
+function calcCorpItems() {
+  const mapa = new Map();
+  ['HP','BH','CAO'].forEach(emp => {
+    if (!guardado[emp]) return;
+    guardado[emp].forEach(item => {
+      if (!mapa.has(item.cod)) mapa.set(item.cod, { cod: item.cod, desc: item.desc, un: item.un, qHP:0, qBH:0, qCAO:0 });
+      const e = mapa.get(item.cod);
+      if (emp==='HP')  e.qHP  += item.qty;
+      if (emp==='BH')  e.qBH  += item.qty;
+      if (emp==='CAO') e.qCAO += item.qty;
+    });
+  });
+  return [...mapa.values()].map(e => ({ ...e, tot: e.qHP + e.qBH + e.qCAO }));
+}
+
+function buildCorpTable(filtro) {
+  const items = calcCorpItems().filter(i => !filtro || (i.cod+i.desc).toLowerCase().includes(filtro.toLowerCase()));
+  const empresas = ['HP','BH','CAO'].filter(e => guardado[e]);
+  // KPIs
+  document.getElementById('kpiTotal').textContent = items.length;
+  ['HP','BH','CAO'].forEach(e => {
+    document.getElementById('kpi'+e).textContent = guardado[e] ? guardado[e].length : 0;
+    document.getElementById('kpi'+e+'Box').style.display = guardado[e] ? '' : 'none';
+  });
+  // alerta incompleta
+  const faltantes = ['HP','BH','CAO'].filter(e => !guardado[e]);
+  if (faltantes.length > 0) {
+    document.getElementById('alertaInc').classList.remove('hidden');
+    document.getElementById('alertaIncMsg').innerHTML = ' · Pendiente: ' + faltantes.map(f => `<strong>${f}</strong>`).join(', ');
+  } else { document.getElementById('alertaInc').classList.add('hidden'); }
+  // thead
+  document.getElementById('corpThead').innerHTML = `
+    <th>Código</th><th>Descripción</th><th>Unidad</th>
+    ${empresas.map(e => `<th class="${e.toLowerCase()}" style="text-align:center">${e}</th>`).join('')}
+    <th class="tot" style="text-align:center">Total Corp.</th>
+    <th>Empresas</th>`;
+  // tbody
+  document.getElementById('corpTbody').innerHTML = items.length === 0
+    ? `<tr><td colspan="8" style="text-align:center;padding:40px;color:#9e9e9e"><i class='bx bx-package' style="font-size:30px;display:block;margin-bottom:8px"></i>Sin artículos consolidados</td></tr>`
+    : items.map(i => `
+    <tr>
+      <td><span class="codigo">${i.cod}</span></td>
+      <td>${i.desc}</td><td>${i.un}</td>
+      ${empresas.map(e => `<td style="text-align:center">${i['q'+e]>0 ? `<span class="cant ${e.toLowerCase()}">${i['q'+e]}</span>` : `<span style="color:#bdbdbd">—</span>`}</td>`).join('')}
+      <td style="text-align:center"><span class="cant tot">${i.tot} ${i.un}</span></td>
+      <td>${empresas.filter(e=>i['q'+e]>0).map(e=>`<span class="flag ${e.toLowerCase()}">${e}</span>`).join('')}</td>
+    </tr>`).join('');
+  // tfoot
+  const totHP  = items.reduce((s,i) => s+i.qHP,  0);
+  const totBH  = items.reduce((s,i) => s+i.qBH,  0);
+  const totCAO = items.reduce((s,i) => s+i.qCAO, 0);
+  const totAll = items.reduce((s,i) => s+i.tot, 0);
+  if (items.length > 0) {
+    document.getElementById('corpTfoot').innerHTML = `<tr>
+      <td colspan="3"><strong>TOTALES</strong></td>
+      ${empresas.map(e => `<td style="text-align:center;color:var(--${e.toLowerCase()})"><strong>${e==='HP'?totHP:e==='BH'?totBH:totCAO}</strong></td>`).join('')}
+      <td style="text-align:center;color:var(--corp)"><strong>${totAll}</strong></td>
+      <td></td></tr>`;
+  } else { document.getElementById('corpTfoot').innerHTML = ''; }
+}
+
+function filterCorp(val) { buildCorpTable(val); }
+
+function generarOC() {
+  const any = Object.values(guardado).some(v => v);
+  if (!any) { toast('No hay consolidaciones guardadas', 'err'); return; }
+  document.getElementById('alertaOK').classList.remove('hidden');
+  toast('OC Corporativa generada correctamente', 'ok');
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show'); }));
+
+function toast(msg, type) {
+  const d = document.createElement('div');
+  d.className = 'toast-msg ' + (type || '');
+  d.textContent = msg;
+  document.getElementById('toastWrap').appendChild(d);
+  setTimeout(() => d.remove(), 3200);
+}
+</script>
+</body>
+</html>

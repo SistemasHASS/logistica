@@ -170,6 +170,140 @@
   }
 }
 
+// ─── OC Pipeline Tracker ────────────────────────────────────────
+.oc-tracker {
+  background: var(--app-white);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,.07);
+  border: 1px solid var(--app-gray-300);
+}
+
+.oc-tracker-title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+  color: var(--app-secondary);
+  margin-bottom: 1rem;
+}
+
+.oc-steps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 22px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--app-gray-200);
+    z-index: 0;
+  }
+}
+
+.oc-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover .oc-step-bubble { transform: scale(1.12); }
+}
+
+.oc-step-bubble {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  border: 3px solid transparent;
+  transition: all 0.2s;
+  background: var(--app-gray-300);
+  color: var(--app-gray-600);
+
+  &.step-inactive  { background: var(--app-gray-200); color: var(--app-gray-400); border-color: var(--app-gray-300); }
+  &.step-active    { box-shadow: 0 0 0 4px rgba(0,0,0,.1); transform: scale(1.15); }
+  &.step-done      { opacity: 0.75; }
+
+  // Colores por estado
+  &.color-aprobado  { background: #10b981; border-color: #10b981; color: #fff; }
+  &.color-en-oc     { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
+  &.color-aprobada  { background: #8b5cf6; border-color: #8b5cf6; color: #fff; }
+  &.color-enviada   { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+  &.color-atendida  { background: #059669; border-color: #059669; color: #fff; }
+}
+
+.oc-step-line {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  right: -50%;
+  height: 3px;
+  z-index: 0;
+
+  &.line-done    { background: #10b981; }
+  &.line-active  { background: linear-gradient(90deg, #10b981 0%, #0ea5e9 100%); }
+  &.line-pending { background: var(--app-gray-200); }
+}
+
+.oc-step-count {
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 0.1rem;
+}
+
+.oc-step-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  color: var(--app-secondary);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 70px;
+
+  &.label-active { color: var(--app-dark); font-weight: 700; }
+}
+
+.oc-step-badge {
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 20px;
+  font-weight: 700;
+  background: var(--app-gray-200);
+  color: var(--app-secondary);
+
+  &.badge-active  { background: #0ea5e9; color: #fff; }
+  &.badge-done    { background: #10b981; color: #fff; }
+  &.badge-atendida { background: #059669; color: #fff; }
+  &.badge-aprobada { background: #8b5cf6; color: #fff; }
+  &.badge-enviada  { background: #3b82f6; color: #fff; }
+}
+
+// responsive mobile — pasos más pequeños
+@media (max-width: 576px) {
+  .oc-steps::before { top: 18px; }
+  .oc-step-bubble { width: 36px; height: 36px; font-size: 0.9rem; }
+  .oc-step-line   { top: 18px; }
+  .oc-step-label  { font-size: 0.6rem; max-width: 52px; }
+  .oc-step-count  { font-size: 0.85rem; }
+}
+
 // Detalle modal
 .detalle-req {
   label { display: block; }

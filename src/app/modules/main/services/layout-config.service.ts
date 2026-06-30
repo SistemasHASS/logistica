@@ -41,6 +41,11 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
       { id: 'dashboard-jlologist', nombre: 'Dashboard Jef. Logística', icono: 'bx bx-line-chart',       ruta: './dashboard-jlologist',  activo: true, orden: 1 },
       { id: 'dashboard-oplogist',  nombre: 'Mi Dashboard',             icono: 'bx bx-user-check',        ruta: './dashboard-oplogist',   activo: true, orden: 2 },
       { id: 'dashboard-logistica', nombre: 'Dashboard Logística',      icono: 'bx bx-bar-chart-alt-2',   ruta: './dashboard-logistica',  activo: true, orden: 3 },
+      { id: 'dashboard-despacho',  nombre: 'Dashboard Almacén',        icono: 'bx bxs-dashboard',        ruta: './dashboard-despacho',   activo: true, orden: 4 },
+      { id: 'dashboard-tilogist',  nombre: 'Dashboard TI',             icono: 'bx bxs-dashboard',        ruta: './dashboard-tilogist',   activo: true, orden: 5 },
+      { id: 'dashboard-adlogist',  nombre: 'Dashboard Admin',          icono: 'bx bxs-dashboard',        ruta: './dashboard-adlogist',   activo: true, orden: 6 },
+      { id: 'dashboard-jemlogist', nombre: 'Dashboard Jef. Empaque',   icono: 'bx bxs-dashboard',        ruta: './dashboard-jemlogist',  activo: true, orden: 7 },
+      { id: 'dashboard-finanzas',  nombre: 'Dashboard Finanzas',       icono: 'bx bx-line-chart',        ruta: './dashboard-finanzas',   activo: true, orden: 8 },
     ]
   },
   {
@@ -50,40 +55,49 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
     ]
   },
   {
-    id: 'requerimientos', label: 'Requerimientos', icono: 'icon icon-stack', activo: true, orden: 3,
+    id: 'maestros', label: 'Maestros', icono: 'bx bx-data', activo: true, orden: 3,
+    items: [
+      { id: 'maestros', nombre: 'Items / Commodities / UM', icono: 'bx bx-equalizer', ruta: './maestros', activo: true, orden: 1 },
+      { id: 'maestro-proveedores', nombre: 'Maestro Proveedores', icono: 'bx bx-store', ruta: './maestro-proveedores', activo: true, orden: 2 },
+    ]
+  },
+  {
+    id: 'requerimientos', label: 'Requerimientos', icono: 'icon icon-stack', activo: true, orden: 4,
     items: [
       { id: 'requerimientos',      nombre: 'Requerimientos',        icono: 'icon icon-stack',  ruta: './requerimientos',      activo: true, orden: 1 },
       { id: 'saldo-requerimiento', nombre: 'Saldo de Requerimiento',icono: 'icon icon-balance', ruta: './saldo-requerimiento', activo: true, orden: 2 },
     ]
   },
   {
-    id: 'compras', label: 'Compras & Órdenes', icono: 'bx bx-cart', activo: true, orden: 4,
+    id: 'compras', label: 'Compras & Órdenes', icono: 'bx bx-cart', activo: true, orden: 5,
     items: [
-      { id: 'solicitudes-compra',    nombre: 'Solicitudes de Compra',   icono: 'bx bx-shopping-bag',   ruta: './solicitudes-compra',    activo: true, orden: 1 },
-      { id: 'ordenes-compra',        nombre: 'Órdenes de Compra',       icono: 'icon icon-file-text',  ruta: './ordenes-compra',        activo: true, orden: 2 },
-      { id: 'consolidacion-compras', nombre: 'Consolidación Compras',   icono: 'bx bx-cart',           ruta: './consolidacion-compras', activo: true, orden: 3 },
-      { id: 'solicitudes-servicio',  nombre: 'Solicitudes de Servicio', icono: 'bx bx-briefcase',      ruta: './solicitudes-servicio',  activo: true, orden: 4 },
-      { id: 'ordenes-servicio',      nombre: 'Órdenes de Servicio',     icono: 'bx bx-wrench',         ruta: './ordenes-servicio',      activo: true, orden: 5 },
-      { id: 'cotizaciones',          nombre: 'Cotizaciones',            icono: 'icon icon-calculator',  ruta: './cotizaciones',          activo: true, orden: 6 },
+      { id: 'solicitudes-compra',      nombre: 'Solicitudes de Compra',    icono: 'bx bx-shopping-bag',    ruta: './solicitudes-compra',      activo: true, orden: 1 },
+      { id: 'ordenes-compra',          nombre: 'Órdenes de Compra',        icono: 'icon icon-file-text',   ruta: './ordenes-compra',          activo: true, orden: 2 },
+      { id: 'consolidacion-compras',   nombre: 'Consolidación Compras',    icono: 'bx bx-cart',            ruta: './consolidacion-compras',   activo: true, orden: 3 },
+      { id: 'solicitudes-servicio',    nombre: 'Solicitudes de Servicio',  icono: 'bx bx-briefcase',       ruta: './solicitudes-servicio',    activo: true, orden: 4 },
+      { id: 'ordenes-servicio',        nombre: 'Órdenes de Servicio',      icono: 'bx bx-wrench',          ruta: './ordenes-servicio',        activo: true, orden: 5 },
+      { id: 'cotizaciones',            nombre: 'Cotizaciones',             icono: 'icon icon-calculator',  ruta: './cotizaciones',            activo: true, orden: 6 },
+      { id: 'conformidad-servicios',   nombre: 'Conformidad de OS',        icono: 'bx bx-check-shield',    ruta: './conformidad-servicios',   activo: true, orden: 7 },
     ]
   },
   {
-    id: 'almacen', label: 'Almacén & Stock', icono: 'bx bx-package', activo: true, orden: 5,
+    id: 'almacen', label: 'Almacén & Stock', icono: 'bx bx-package', activo: true, orden: 6,
     items: [
       { id: 'despachos',            nombre: 'Gestión de Despachos',    icono: 'icon icon-stack',    ruta: './despachos',            activo: true, orden: 1 },
       { id: 'recepcion-mercaderia', nombre: 'Recepción de Mercadería', icono: 'icon icon-package',  ruta: './recepcion-mercaderia', activo: true, orden: 2 },
       { id: 'kardex',               nombre: 'Kardex e Inventario',     icono: 'bx bx-container',    ruta: './kardex',               activo: true, orden: 3 },
+      { id: 'conformidad-almacen',  nombre: 'Conformidad NI / NS',     icono: 'bx bx-pen',          ruta: './conformidad-almacen',  activo: true, orden: 4 },
     ]
   },
   {
-    id: 'aprobaciones', label: 'Aprobaciones', icono: 'icon icon-file-check', activo: true, orden: 6,
+    id: 'aprobaciones', label: 'Aprobaciones', icono: 'icon icon-file-check', activo: true, orden: 7,
     items: [
       { id: 'aprobaciones-oc', nombre: 'Aprobación OC', icono: 'icon icon-file-check', ruta: './aprobaciones-oc', activo: true, orden: 1 },
       { id: 'aprobaciones-os', nombre: 'Aprobación OS', icono: 'icon icon-file-check', ruta: './aprobaciones-os', activo: true, orden: 2 },
     ]
   },
   {
-    id: 'reportes', label: 'Reportes', icono: 'icon icon-file-text', activo: true, orden: 7,
+    id: 'reportes', label: 'Reportes', icono: 'icon icon-file-text', activo: true, orden: 8,
     items: [
       { id: 'reportes-compras',        nombre: 'Reportes Avanzados',       icono: 'icon icon-pie-chart',  ruta: './reportes-compras',        activo: true, orden: 1 },
       { id: 'reporte-requerimientos',  nombre: 'Reporte Requerimientos',   icono: 'icon icon-file-check', ruta: './reporte-requerimientos',  activo: true, orden: 2 },
@@ -91,7 +105,7 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
     ]
   },
   {
-    id: 'consultas', label: 'Consultas', icono: 'bx bx-search-alt', activo: true, orden: 8,
+    id: 'consultas', label: 'Consultas', icono: 'bx bx-search-alt', activo: true, orden: 9,
     items: [
       { id: 'catalogo-items', nombre: 'Catálogo de Items', icono: 'bx bx-list-ul', ruta: './catalogo-items', activo: true, orden: 1 },
     ]
@@ -103,14 +117,14 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
  * Solo se usan como FALLBACK cuando no hay MENU_JSON en BD
  */
 const MODULOS_POR_ROL: Record<string, string[]> = {
-  TILOGIST:  ['dashboard-tilogist', 'notificaciones', 'parametros', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'despachos', 'recepcion-mercaderia', 'kardex', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'catalogo-items'],
-  ADLOGIST:  ['dashboard-adlogist', 'notificaciones', 'parametros', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'despachos', 'recepcion-mercaderia', 'kardex', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'catalogo-items'],
-  JLOLOGIST: ['dashboard-jlologist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'catalogo-items'],
-  JEMLOGIST: ['dashboard-jemlogist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'aprobaciones-oc', 'aprobaciones-os', 'catalogo-items'],
-  LOLOGIST:  ['dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'saldo-requerimiento', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'despachos', 'recepcion-mercaderia', 'kardex', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'catalogo-items'],
-  EMLOGIST:  ['dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'catalogo-items'],
-  OPLOGIST:  ['dashboard-oplogist', 'notificaciones', 'requerimientos', 'catalogo-items'],
-  ALLOGIST:  ['dashboard-despacho', 'notificaciones', 'parametros', 'requerimientos', 'despachos', 'recepcion-mercaderia', 'kardex', 'reporte-despachos', 'catalogo-items'],
+  TILOGIST:  ['dashboard-tilogist', 'notificaciones', 'parametros', 'maestros', 'maestro-proveedores', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'catalogo-items'],
+  ADLOGIST:  ['dashboard-adlogist', 'notificaciones', 'parametros', 'maestros', 'maestro-proveedores', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'catalogo-items'],
+  JLOLOGIST: ['dashboard-jlologist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'catalogo-items'],
+  JEMLOGIST: ['dashboard-jemlogist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'aprobaciones-oc', 'aprobaciones-os', 'catalogo-items'],
+  LOLOGIST:  ['dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'saldo-requerimiento', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'catalogo-items'],
+  EMLOGIST:  ['dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'conformidad-servicios', 'catalogo-items'],
+  OPLOGIST:  ['dashboard-oplogist', 'notificaciones', 'requerimientos', 'conformidad-almacen', 'catalogo-items'],
+  ALLOGIST:  ['dashboard-despacho', 'notificaciones', 'parametros', 'requerimientos', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'reporte-despachos', 'catalogo-items'],
   APLOGIST:  ['dashboard-oplogist', 'notificaciones', 'catalogo-items'],
   FINANZAS:  ['dashboard-finanzas', 'aprobaciones-oc', 'aprobaciones-os', 'catalogo-items'],
   GERENTE:   ['dashboard-oplogist', 'aprobaciones-oc', 'aprobaciones-os', 'catalogo-items'],
@@ -209,6 +223,9 @@ export class LayoutConfigService {
       porRol.forEach((clavesMap, idrol) => {
         const config: MenuConfig = { idrol, tipoMenu: 'default', usaAccordion: false };
 
+        // Recopilar todas las claves primero para aplicar ITEMS_VISIBLES al final
+        let itemsVisiblesIds: string[] | null = null;
+
         clavesMap.forEach((valor, clave) => {
           switch (clave) {
             case 'LAYOUT_ACCORDION':
@@ -233,8 +250,60 @@ export class LayoutConfigService {
                 console.error(`[LayoutConfig] Error parsing JSON para ${idrol} clave ${clave}:`, err);
               }
               break;
+            case 'ITEMS_VISIBLES':
+              try {
+                const ids = JSON.parse(valor) as string[];
+                if (ids && ids.length > 0) itemsVisiblesIds = ids;
+              } catch (err) {
+                console.error(`[LayoutConfig] Error parsing ITEMS_VISIBLES para ${idrol}:`, err);
+              }
+              break;
           }
         });
+
+        // Aplicar ITEMS_VISIBLES: si hay MENU_JSON, úsalo como base y aplica los toggles;
+        // si no, construye desde ACCORDION_DEFAULT filtrando solo los ids habilitados
+        if (itemsVisiblesIds !== null) {
+          const ids = itemsVisiblesIds as string[];
+
+          // Base: MENU_JSON guardado o ACCORDION_DEFAULT completo
+          const base: AccordionGroupConfig[] = config.menuConfig && config.menuConfig.length > 0
+            ? config.menuConfig.map(g => ({ ...g, items: [...g.items] }))
+            : ACCORDION_DEFAULT.map(g => ({ ...g, items: [...g.items] }));
+
+          // Paso 1 — agregar items/grupos nuevos del ACCORDION_DEFAULT que no estén en base
+          const idsGruposBase = new Set(base.map(g => g.id));
+          for (const gDefault of ACCORDION_DEFAULT) {
+            if (!idsGruposBase.has(gDefault.id)) {
+              base.push({ ...JSON.parse(JSON.stringify(gDefault)), activo: false });
+            } else {
+              const gBase = base.find(g => g.id === gDefault.id)!;
+              const idsItemsBase = new Set(gBase.items.map(i => i.id));
+              for (const iDefault of gDefault.items) {
+                if (!idsItemsBase.has(iDefault.id)) {
+                  gBase.items.push({ ...JSON.parse(JSON.stringify(iDefault)), activo: false });
+                }
+              }
+            }
+          }
+
+          // Paso 2 — marcar activo según ITEMS_VISIBLES
+          const menuFiltrado: AccordionGroupConfig[] = base
+            .map(grupo => ({
+              ...grupo,
+              activo: grupo.items.some(item => ids.includes(item.id)),
+              items: grupo.items.map(item => ({ ...item, activo: ids.includes(item.id) }))
+            }))
+            .filter(grupo => grupo.items.some(item => item.activo));
+
+          if (menuFiltrado.length > 0) {
+            config.menuConfig = menuFiltrado;
+            menus.set(idrol, menuFiltrado);
+            config.usaAccordion = true;
+            if (config.tipoMenu === 'default') config.tipoMenu = 'accordion';
+            console.log(`[LayoutConfig] ITEMS_VISIBLES aplicado para ${idrol}: ${menuFiltrado.length} grupos`);
+          }
+        }
 
         // Si tiene menuConfig, siempre marcar usaAccordion y tipoMenu correcto
         if (config.menuConfig && config.menuConfig.length > 0) {

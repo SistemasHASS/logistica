@@ -59,10 +59,46 @@
     </div>
   </div>
 
+  <!-- ── OC Pipeline Tracker (solo si hay reqs COMPRA) ── -->
+  @if (contadorCompra > 0) {
+  <div class="oc-tracker mb-4">
+    <div class="oc-tracker-title">
+      <i class="bx bx-cart me-1"></i>
+      Flujo de mis Compras — estado actual
+    </div>
+    <div class="oc-steps">
+      @for (paso of obtenerPipelineCompra(); track paso.estado; let last = $last) {
+        <div class="oc-step" [class]="paso.stepClass" (click)="seleccionarFiltroOC(paso.estado)">
+          <!-- Línea de progreso (no en el último) -->
+          @if (!last) {
+            <div class="oc-step-line" [class]="paso.lineClass"></div>
+          }
+          <!-- Burbuja -->
+          <div class="oc-step-bubble" [class]="paso.bubbleClass">
+            <i class="bx" [class]="paso.icon"></i>
+          </div>
+          <!-- Contador -->
+          <span class="oc-step-count" [class]="paso.stepClass ? '' : 'text-muted'">
+            {{ paso.count }}
+          </span>
+          <!-- Label -->
+          <span class="oc-step-label" [class]="paso.labelClass">{{ paso.label }}</span>
+          <!-- Badge estado -->
+          @if (paso.count > 0) {
+            <span class="oc-step-badge" [class]="paso.badgeClass">
+              {{ paso.count === 1 ? '1 req' : paso.count + ' reqs' }}
+            </span>
+          }
+        </div>
+      }
+    </div>
+  </div>
+  }
+
   <!-- Pipeline visual de flujo con porcentajes -->
   <div class="card border-0 shadow-sm mb-4">
     <div class="card-body py-3">
-      <h6 class="card-title mb-3"><i class="bx bx-git-branch me-1"></i> Flujo de mis Requerimientos</h6>
+      <h6 class="card-title mb-3"><i class="bx bx-git-branch me-1"></i> Flujo de mis Requerimientos de Consumo — ESTADO ACTUAL</h6>
       <div class="row g-3">
         <div class="col-6 col-md-3">
           <div class="pipeline-pct-card">
@@ -144,7 +180,7 @@
       </ul>
     </div>
 
-    <!-- Sub-tabs de estado (dinámicos, solo los que tienen registros) -->
+    <!-- Sub-tabs de estado: en COMPRA los estados OC siempre visibles, en CONSUMO solo con datos -->
     <div class="card-header fondo-suave border-top-0 py-2 px-3">
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <button class="btn btn-sm" [class.btn-secondary]="filtroSubEstado === ''" [class.btn-outline-secondary]="filtroSubEstado !== ''" (click)="seleccionarSubEstado('')">
@@ -165,14 +201,48 @@
             [class.btn-outline-dark]="sub.severity === 'contrast' && filtroSubEstado !== sub.valor"
             [class.btn-secondary]="sub.severity === 'secondary' && filtroSubEstado === sub.valor"
             [class.btn-outline-secondary]="sub.severity === 'secondary' && filtroSubEstado !== sub.valor"
+            [style.opacity]="sub.count === 0 ? '0.4' : '1'"
+            [style.pointer-events]="sub.count === 0 ? 'none' : 'auto'"
             (click)="seleccionarSubEstado(sub.valor)">
             {{ sub.label }}
-            <span class="badge bg-white text-dark ms-1">{{ sub.count }}</span>
+            <span class="badge ms-1" [class.bg-white]="sub.count > 0" [class.bg-transparent]="sub.count === 0"
+                  [class.text-dark]="sub.count > 0" [class.text-muted]="sub.count === 0">{{ sub.count }}</span>
           </button>
         }
       </div>
     </div>
     <div class="card-body p-0">
+
+      <!-- Filtros en vivo -->
+      <div class="p-3 border-bottom bg-light">
+        <div class="d-flex align-items-end gap-2 flex-wrap">
+          <div class="flex-grow-1" style="min-width: 180px;">
+            <label class="form-label small text-muted mb-1">N° Requerimiento</label>
+            <span class="p-input-icon-left w-100">
+              <i class="bx bx-search"></i>
+              <input type="text" pInputText class="p-inputtext-sm w-100" placeholder="Buscar número..."
+                     [(ngModel)]="filtroNumeroReq" (input)="aplicarFiltro()">
+            </span>
+          </div>
+          <div style="min-width: 160px;">
+            <label class="form-label small text-muted mb-1">Fecha Creación</label>
+            <p-datePicker [(ngModel)]="filtroFechaCreacion" (ngModelChange)="aplicarFiltro()"
+                          dateFormat="dd/mm/yy" showIcon iconDisplay="input"
+                          placeholder="dd/mm/aaaa" styleClass="p-datepicker-sm w-100"></p-datePicker>
+          </div>
+          <div style="min-width: 160px;">
+            <label class="form-label small text-muted mb-1">Fecha Aprobación</label>
+            <p-datePicker [(ngModel)]="filtroFechaAprobacion" (ngModelChange)="aplicarFiltro()"
+                          dateFormat="dd/mm/yy" showIcon iconDisplay="input"
+                          placeholder="dd/mm/aaaa" styleClass="p-datepicker-sm w-100"></p-datePicker>
+          </div>
+          <button class="btn btn-outline-secondary btn-sm" (click)="limpiarFiltrosEnVivo()"
+                  pTooltip="Limpiar filtros" tooltipPosition="top">
+            <i class="bx bx-x"></i>
+          </button>
+        </div>
+      </div>
+
       <p-table [value]="requerimientosFiltrados" [paginator]="true" [rows]="10"
                [loading]="loading" styleClass="p-datatable-sm"
                [rowsPerPageOptions]="[10, 25, 50]" [showCurrentPageReport]="true"
@@ -183,25 +253,28 @@
             <th>N° Req.</th>
             <th>Fecha Creación</th>
             <th>Fecha Aprobación</th>
-            <th>Tipo</th>
+            <th class="d-none d-md-table-cell">Tipo</th>
             <th>Glosa</th>
-            <th>Estado</th>
+            <th class="d-none d-md-table-cell">Estado</th>
             <th class="text-center">Acciones</th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-req let-rowIndex="rowIndex">
           <tr>
             <td class="text-muted small text-center">{{ rowIndex + 1 }}</td>
-            <td><strong class="text-primary">{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</strong></td>
+            <td>
+              <strong class="text-primary d-none d-md-inline">{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</strong>
+              <strong class="text-primary d-md-none">{{ obtenerNumeroMovil(req) }}</strong>
+            </td>
             <td>{{ formatearFecha(req.fecha) }}</td>
             <td>{{ formatearFecha(req.fechaAprobacion) }}</td>
-            <td>
+            <td class="d-none d-md-table-cell">
               <span class="badge" [class]="req.itemtipo === 'COMPRA' ? 'badge-informativo' : 'badge-inactivo'">
                 {{ req.itemtipo }}
               </span>
             </td>
             <td>{{ req.glosa || '-' }}</td>
-            <td>
+            <td class="d-none d-md-table-cell">
               <p-tag [value]="obtenerTextoEstado(req.estados)"
                      [severity]="obtenerClaseEstado(req.estados)">
               </p-tag>
@@ -216,7 +289,7 @@
         </ng-template>
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td colspan="7" class="text-center py-4 text-muted">
+            <td colspan="8" class="text-center py-4 text-muted">
               <i class="bx bx-inbox fs-3 d-block mb-2"></i>
               @if (filtroEstado) {
                 No hay requerimientos en estado "{{ obtenerTextoEstado(filtroEstado) }}"
@@ -239,7 +312,8 @@
       <div class="row mb-3">
         <div class="col-6">
           <label class="fw-bold text-muted small">N° Requerimiento</label>
-          <p class="mb-0 text-primary fw-bold">{{ requerimientoSeleccionado.idrequerimiento | numeroRequerimiento : requerimientoSeleccionado.RequisicionNumero }}</p>
+          <p class="mb-0 text-primary fw-bold d-none d-md-block">{{ requerimientoSeleccionado.idrequerimiento | numeroRequerimiento : requerimientoSeleccionado.RequisicionNumero }}</p>
+          <p class="mb-0 text-primary fw-bold d-md-none">{{ obtenerNumeroMovilDetalle() }}</p>
         </div>
         <div class="col-6">
           <label class="fw-bold text-muted small">Estado</label>

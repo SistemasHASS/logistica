@@ -127,7 +127,10 @@ export class RequerimientosCommodityService {
     this.modoEdicionCommodity = false;
     this.opcionesPrioridadCOMMODITY = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
     this.SeleccionaPrioridadCOMMODITY = '1';
-    this.itemTipoSeleccionado = 'COMPRA';
+    const tipoConfig = localStorage.getItem('tipoRequerimientoConfig') as 'COMPRA' | 'SERVICIO' | null;
+    this.itemTipoSeleccionado = tipoConfig === 'SERVICIO' ? 'SERVICIO' : 'COMPRA';
+    this.tipoRequerimientoSeleccionado = tipoConfig || null;
+    this.configuracionGuardada = true;
     this.maestras.clasificacionSeleccionado = 'SER';
     if (this.maestras.configuracion?.idalmacen) {
       this.maestras.almacenSeleccionado = this.maestras.configuracion.idalmacen;
@@ -139,6 +142,7 @@ export class RequerimientosCommodityService {
     if (!req) return;
     this.mostrarFormularioCommodity = true;
     this.modoEdicionCommodity = true;
+    this.configuracionGuardada = true;
     this.commodityEditIndex = index;
     this.opcionesPrioridadCOMMODITY = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
     this.requerimientoCommodity = { ...req };
@@ -146,7 +150,8 @@ export class RequerimientosCommodityService {
     this.maestras.fundoSeleccionado = req.idfundo;
     this.maestras.areaSeleccionada = req.idarea;
     this.maestras.almacenSeleccionado = req.idalmacen;
-    this.itemTipoSeleccionado = (req.itemtipo as 'CONSUMO' | 'COMPRA') || 'COMPRA';
+    const tipoConfig = localStorage.getItem('tipoRequerimientoConfig') as 'COMPRA' | 'SERVICIO' | null;
+    this.itemTipoSeleccionado = (req.itemtipo as 'COMPRA' | 'SERVICIO') || tipoConfig || 'COMPRA';
     this.maestras.clasificacionSeleccionado = req.idclasificacion;
     this.SeleccionaPrioridadCOMMODITY = req.prioridad as PrioridadSpring | '';
     const proyectoObj = this.maestras.proyectos.find((p) => p.idproyecto === req.idproyecto);

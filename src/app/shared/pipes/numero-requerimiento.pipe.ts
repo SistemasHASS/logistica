@@ -25,16 +25,23 @@ import { Pipe, PipeTransform } from '@angular/core';
   pure: true,
 })
 export class NumeroRequerimientoPipe implements PipeTransform {
-  transform(idrequerimiento: string | number | null | undefined, requisicionSPRING?: string | null): string {
-    // 1) Si viene un correlativo SPRING válido, usarlo (no mutar)
+  transform(idrequerimiento: string | number | null | undefined, requisicionSPRING?: string | null, mobile: boolean = false): string {
+    // 1) Si viene un correlativo SPRING válido, usarlo
     if (requisicionSPRING && String(requisicionSPRING).trim() !== '') {
-      return String(requisicionSPRING).trim();
+      const spring = String(requisicionSPRING).trim();
+      return mobile ? this.cortoMobile(spring) : spring;
     }
 
     // 2) Caso normal: tomar últimos 12 caracteres del idrequerimiento
     if (idrequerimiento === null || idrequerimiento === undefined) return '';
     const valor = String(idrequerimiento).trim();
-    if (valor.length <= 12) return valor;
-    return valor.slice(-12);
+    const formateado = valor.length <= 12 ? valor : valor.slice(-12);
+    return mobile ? this.cortoMobile(formateado) : formateado;
+  }
+
+  private cortoMobile(valor: string): string {
+    // Vista móvil: mostrar exactamente los últimos 4 caracteres
+    if (valor.length <= 4) return valor;
+    return valor.slice(-4);
   }
 }

@@ -864,6 +864,7 @@ export class RequerimientosItemService {
 
   editarLinea(index: number): void {
     this.editIndex = index;
+    this.enModoEdicion = true;
     const det = this.detalles[index];
     let producto: any = null;
     if (det.codigo) producto = this.maestras.items.find((it: any) => it.codigo === det.codigo);
@@ -1667,5 +1668,41 @@ export class RequerimientosItemService {
       console.error('Error migrarTransferenciaASPRING:', e);
       this.alertService.showAlert('Aviso', 'Requerimiento creado como APROBADA pero falló la migración a SPRING. Contacte a soporte.', 'warning');
     }
+  }
+
+  // ── Plantillas de carga masiva ─────────────────────────────────────────────
+  descargarPlantillaCompra(): void {
+    const headers = [
+      'COD MATERIAL',
+      'DESCRIPCION',
+      'CANT.',
+      'UM',
+      'AREA',
+      'RESPONSABLE DE PEDIDO',
+      'CENTRO DE COSTO',
+      'PROYECTO',
+      'ACTIVIDAD',
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([headers]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Plantilla Compra');
+    XLSX.writeFile(wb, 'plantilla_carga_masiva_compra.xlsx');
+  }
+
+  descargarPlantillaConsumo(): void {
+    const headers = [
+      'Cod. Item',
+      'Descripcion Item',
+      'Cantidad',
+      'Unidad Medida',
+      'Turno',
+      'ActivoFijo',
+      'CECO',
+      'PROYECTO',
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([headers]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Plantilla Consumo');
+    XLSX.writeFile(wb, 'plantilla_carga_masiva_consumo.xlsx');
   }
 }

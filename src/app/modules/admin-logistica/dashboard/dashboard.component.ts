@@ -71,6 +71,10 @@ export class DashboardComponent implements OnInit {
     return this.authService.isAdmin();
   }
 
+  isJefeLogistica(): boolean {
+    return this.authService.isJefeLogistica();
+  }
+
   refresh() {
     this.loadDashboardData();
   }

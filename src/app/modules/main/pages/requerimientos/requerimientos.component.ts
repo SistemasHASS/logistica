@@ -86,6 +86,12 @@ export class RequerimientosComponent implements OnInit {
     return localStorage.getItem('tipoRequerimientoConfig') === 'SERVICIO';
   }
 
+  // Tab Servicios visible solo cuando se configuró COMPRA o SERVICIO (no CONSUMO)
+  get mostrarTabServicios(): boolean {
+    const tipo = localStorage.getItem('tipoRequerimientoConfig');
+    return tipo === 'COMPRA' || tipo === 'SERVICIO';
+  }
+
   get tabActivaInicial(): 'ITEM' | 'COMMODITY' | 'ACTIVOFIJO' | 'ACTIVOFIJOMENOR' {
     return this.esModoServicio ? 'COMMODITY' : 'ITEM';
   }
@@ -170,7 +176,11 @@ export class RequerimientosComponent implements OnInit {
     }
   }
   private get enModoEdicion(): boolean {
-    return this.editIndex >= 0 || this.editingTempIndex >= 0;
+    return this.editIndex >= 0
+      || this.editingTempIndex >= 0
+      || this.commodityEditIndex >= 0
+      || this.activoFijoEditIndex >= 0
+      || this.activoFijoMenorEditIndex >= 0;
   }
   get modalTurnoEditable(): boolean {
     return this.enModoEdicion ? true : this.permitirEditarParametros;
@@ -615,11 +625,6 @@ export class RequerimientosComponent implements OnInit {
     await this.maestrasSvc.cargarUsuario();
     this.usuario = this.maestrasSvc.usuario;
 
-    // MODO SERVICIO: Solo mostrar tab Commodity (desde configuración en Parámetros)
-    if (this.esModoServicio) {
-      this.tabActiva = 'COMMODITY';
-    }
-
     await this.sincronizaMaestroCommodity(); // Sincronizar maestro commodity desde API
     await this.sincronizaMaestroSubCommodity(); // Sincronizar maestro subcommodity desde API
     await this.maestrasSvc.cargarMaestras();
@@ -629,12 +634,25 @@ export class RequerimientosComponent implements OnInit {
 
     // Establecer tipo de requerimiento basado en la configuración guardada en Parámetros
     const tipoConfigurado = this.configuracion.idTipoItem;
+    const tipoLocalStorage = localStorage.getItem('tipoRequerimientoConfig');
     const rol = this.usuario.idrol;
-    const puedeTransferencia = rol === 'LOLOGIST' || rol === 'OPLOGIST' || rol === 'ALLOGIST';
+    const puedeTransferencia = rol === 'LOLOGIST' || rol === 'ALLOGIST' || rol === 'JLOLOGIST' || rol === 'ADLOGIST';
 
-    console.log('🔧 Tipo configurado:', tipoConfigurado, '| Rol:', rol, '| PuedeTransferencia:', puedeTransferencia);
+    console.log('🔧 Tipo configurado:', tipoConfigurado, '| localStorage:', tipoLocalStorage, '| Rol:', rol);
 
-    if (tipoConfigurado === 'TRANSFERENCIA' && puedeTransferencia) {
+    // Si el localStorage indica SERVICIO o COMPRA, el tab COMMODITY ya está activo — no cambiar a ITEM
+    if (tipoLocalStorage === 'SERVICIO') {
+      // SERVICIO: forzar tab COMMODITY, sin tocar ITEM
+      this.tabActiva = 'COMMODITY';
+      console.log('✅ Establecido modo SERVICIO (localStorage)');
+    } else if (tipoLocalStorage === 'COMPRA') {
+      // COMPRA desde Parámetros: tab ITEM para crear reqs ITEM tipo COMPRA
+      this.TipoSelecionado = 'COMPRA';
+      this.requerimiento.itemtipo = 'COMPRA';
+      this.tabActiva = 'ITEM';
+      this.opcionesPrioridadITEM = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
+      console.log('✅ Establecido tipo COMPRA (localStorage)');
+    } else if (tipoConfigurado === 'TRANSFERENCIA' && puedeTransferencia) {
       // TRANSFERENCIA: LOLOGIST, OPLOGIST y ALLOGIST
       this.TipoSelecionado = 'TRANSFERENCIA';
       this.requerimiento.itemtipo = 'TRANSFERENCIA';
@@ -648,13 +666,13 @@ export class RequerimientosComponent implements OnInit {
       this.tabActiva = 'ITEM';
       this.opcionesPrioridadITEM = this.prioridadService.obtenerOpcionesPrioridad('CONSUMO');
       console.log('✅ Establecido tipo CONSUMO');
-    } else if (tipoConfigurado === 'COMPRA' || this.esAlmacen) {
-      // COMPRA (por defecto o si es ALLOGIST sin configuración específica)
+    } else if (this.esAlmacen) {
+      // ALLOGIST sin configuración específica → COMPRA
       this.TipoSelecionado = 'COMPRA';
       this.requerimiento.itemtipo = 'COMPRA';
       this.tabActiva = 'ITEM';
       this.opcionesPrioridadITEM = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
-      console.log('✅ Establecido tipo COMPRA');
+      console.log('✅ Establecido tipo COMPRA (ALLOGIST)');
     }
 
     await this.ListarItems();
@@ -1280,7 +1298,7 @@ export class RequerimientosComponent implements OnInit {
     // ALLOGIST puede crear COMPRA o TRANSFERENCIA (según configuración)
     // Solo forzar a COMPRA si no hay tipo configurado o si no es TRANSFERENCIA
     const tipoActual = this.itemSvc.TipoSelecionado;
-    const esTransferenciaPermitida = tipoActual === 'TRANSFERENCIA' && (this.esAlmacen || this.usuario.idrol === 'LOLOGIST' || this.usuario.idrol === 'OPLOGIST');
+    const esTransferenciaPermitida = tipoActual === 'TRANSFERENCIA' && (this.esAlmacen || this.usuario.idrol === 'LOLOGIST' || this.usuario.idrol === 'JLOLOGIST' || this.usuario.idrol === 'ADLOGIST');
 
     if (this.esAlmacen && !esTransferenciaPermitida && !tipoActual) {
       // Solo forzar a COMPRA si no hay tipo configurado y no es transferencia permitida
@@ -1846,6 +1864,11 @@ export class RequerimientosComponent implements OnInit {
 
   cerrarModalCommodity() {
     this.modalAbiertoCommodity = false;
+    this.commodityEditIndex = -1;
+    this.commoditySvc.commodityEditIndex = -1;
+    this.filteredCecosModal = [];
+    this.filteredLaboresModal = [];
+    this.filteredProyectosModal = [];
   }
 
   async guardarLineaCommodity() {
@@ -1866,6 +1889,7 @@ export class RequerimientosComponent implements OnInit {
     this.SeleccionaSubServicio = this.commoditySvc.SeleccionaSubServicio;
     this.modoEdicionCommodity = this.commoditySvc.modoEdicionCommodity;
     this.modalAbiertoCommodity = this.commoditySvc.modalAbiertoCommodity;
+    this._inicializarFiltrosCascadaCommodityEdicion();
   }
 
   async eliminarDetalleCommodity(index: number) {
@@ -1886,6 +1910,9 @@ export class RequerimientosComponent implements OnInit {
     this.activoMenorSvc.cerrarModal();
     this.modalAbiertoActivoFijoMenor = this.activoMenorSvc.modalAbiertoActivoFijoMenor;
     this.activoFijoMenorEditIndex = this.activoMenorSvc.activoFijoMenorEditIndex;
+    this.filteredCecosModal = [];
+    this.filteredLaboresModal = [];
+    this.filteredProyectosModal = [];
   }
 
   async guardarLineaActivoFijoMenor() {
@@ -1910,6 +1937,9 @@ export class RequerimientosComponent implements OnInit {
     this.activoFijoSvc.cerrarModal();
     this.modalAbiertoActivoFijo = this.activoFijoSvc.modalAbiertoActivoFijo;
     this.activoFijoEditIndex = this.activoFijoSvc.activoFijoEditIndex;
+    this.filteredCecosModal = [];
+    this.filteredLaboresModal = [];
+    this.filteredProyectosModal = [];
   }
 
   async guardarLineaActivoFijo() {
@@ -2583,5 +2613,43 @@ export class RequerimientosComponent implements OnInit {
       return itemEncontrado ? itemEncontrado.descripcion : '';
     }
     return '';
+  }
+
+  private _inicializarFiltrosCascadaCommodityEdicion(): void {
+    const linea = this.lineaTempCommodity as any;
+    const turno = linea?.turno || '';
+    const ceco = linea?.ceco || '';
+    const labor = linea?.labor || '';
+
+    if (turno) {
+      const turnoObj = this.turnos.find((t: any) => t.nombreTurno === turno);
+      this.filteredCecosModal = turnoObj
+        ? this.cecos.filter((c: any) => c.conturno?.includes(turnoObj.conturno || ''))
+        : [...this.cecos];
+    } else {
+      this.filteredCecosModal = [...this.cecos];
+    }
+
+    if (ceco) {
+      const cecoObj = this.cecos.find((c: any) => c.localname === ceco);
+      this.filteredLaboresModal = cecoObj
+        ? this.labores.filter((l: any) => l.ceco === (cecoObj.costcenter || ''))
+        : [...this.labores];
+    } else {
+      this.filteredLaboresModal = [...this.labores];
+    }
+
+    if (ceco && labor) {
+      const cecoObj = this.cecos.find((c: any) => c.localname === ceco);
+      const laborObj = this.labores.find((l: any) => l.labor === labor);
+      this.filteredProyectosModal = this.proyectos.filter(
+        (p: any) =>
+          p.ceco?.trim() === (cecoObj?.costcenter || '')?.trim() &&
+          p.idlabor?.trim() === (laborObj?.idlabor || '')?.trim() &&
+          p.idcultivo?.trim() === this.maestrasSvc.cultivoSeleccionado?.trim(),
+      );
+    } else {
+      this.filteredProyectosModal = [...this.proyectos];
+    }
   }
 }

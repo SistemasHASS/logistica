@@ -13,8 +13,8 @@
 
     <nav class="sidebar-nav">
       <ul class="nav-list">
-        @for (item of menuItems; track item.route) {
-          @if (item.visible()) {
+        @for (item of menuItems(); track item.route) {
+          @if (item.visible) {
             <li class="nav-item">
               <a 
                 class="nav-link" 

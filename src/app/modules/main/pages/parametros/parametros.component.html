@@ -277,10 +277,10 @@
           <i class="bx bx-check-circle me-2"></i>
           <strong>Configuración para CONSUMO:</strong>
           Los requerimientos de consumo requieren: Empresa, Fundo, Cultivo, Turno, CECO, Labor, Proyecto y Almacén.
-          <br><small class="text-muted">Para consumos <strong>administrativos</strong>, el turno no es requerido.</small>
+          <!-- <br><small class="text-muted">Para consumos <strong>administrativos</strong>, el turno no es requerido.</small> -->
         </div>
 
-        <!-- 🔥 NUEVO: CHECK ADMINISTRATIVO -->
+        <!-- 🔥 NUEVO: CHECK ADMINISTRATIVO
         <div class="row mb-3">
           <div class="col-12">
             <div class="alert alert-info">
@@ -299,6 +299,7 @@
             </div>
           </div>
         </div>
+        -->
 
         <!-- ITEM (Solo para CONSUMO si es necesario) -->
         <div class="row" [hidden]="ocultarItem">
@@ -393,8 +394,10 @@
             </fieldset>
           </div>
 
-          <!-- 🔥 MODIFICADO: Ocultar turno cuando es administrativo -->
+          <!-- 🔥 MODIFICADO: Ocultar turno cuando es administrativo
           <div class="col-6 col-lg-6 marginBottom" [hidden]="esAdministrativo">
+            -->
+          <div class="col-6 col-lg-6 marginBottom">
             <fieldset>
               <div class="form-group row box-labelFloat">
                 <label class="col-lg-3 col-form-label">
@@ -405,7 +408,7 @@
                     [editable]="true" [data]="filteredTurnos" [valueField]="'codTurno'" [optionLabel]="'nombreTurno'"
                     [textShow]="'Turno'" [textShow2]="'un Turno'"
                     [disabled]="false"
-                    [required]="!esAdministrativo">
+                    [required]="true">
                   </app-dropdown>
                 </div>
               </div>

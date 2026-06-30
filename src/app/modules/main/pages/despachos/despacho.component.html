@@ -57,7 +57,8 @@
   </div>
 
   <!-- ===== TABS ITEMS / COMMODITY ===== -->
-  <ul class="nav nav-tabs despachos-tabs mb-0">
+  <!-- TABS COMENTADOS — solo se muestra tab ITEMS -->
+  <!-- <ul class="nav nav-tabs despachos-tabs mb-0">
     <li class="nav-item">
       <a class="nav-link" [class.active]="activeTabDespachos === 'ITEMS'"
          (click)="activeTabDespachos = 'ITEMS'" style="cursor:pointer;">
@@ -70,7 +71,7 @@
         COMMODITY
       </a>
     </li>
-  </ul>
+  </ul> -->
 
   <div class="card shadow-sm p-3 mb-3 tabla-card">
     <!-- <div class="fw-semibold mb-2">Reporte de Despachos Realizados</div> -->
@@ -106,11 +107,34 @@
 
     <!-- ===== TABLA DESKTOP ===== -->
     <div class="desktop-only">
+      <!-- ── AVISO SIN_STOCK omitidos (solo si hay selección activa) ── -->
+      <div class="aviso-omitidos-bloque" *ngIf="selectedRows.length > 0 && omitidosSinStockCount > 0">
+        <i class="bx bx-info-circle"></i>
+        <span><strong>{{ omitidosSinStockCount }} con SIN STOCK</strong> excluidos automáticamente de la selección.</span>
+      </div>
+
+      <!-- ── BARRA MASIVA ── -->
+      <div class="barra-masiva" *ngIf="selectedRows.length > 0">
+        <span class="badge-seleccion">
+          <i class="bx bx-check-square"></i> {{ selectedRows.length }} seleccionado{{ selectedRows.length !== 1 ? 's' : '' }}
+        </span>
+        <span class="barra-info-text">
+          Solo se procesarán reqs. con stock · parciales quedan en tabla
+        </span>
+        <button class="btn btn-despachar-bloque" (click)="despacharEnBloque()" [disabled]="bloqueProgreso">
+          <i class="bx bx-send"></i> Despachar en Bloque
+        </button>
+        <button class="btn btn-limpiar-sel" (click)="limpiarSeleccion()" [disabled]="bloqueProgreso">
+          <i class="bx bx-x"></i> Limpiar
+        </button>
+      </div>
+
       <p-table #dt [value]="despachosVisibles" [paginator]="true" [rows]="15"
                [totalRecords]="despachosVisibles.length" [loading]="loading"
                responsiveLayout="scroll" [pageLinks]="5" [showCurrentPageReport]="true"
                currentPageReportTemplate="< {first} - {last} de {totalRecords} >"
-               styleClass="p-datatable-sm p-datatable-striped tabla-despachos">
+               styleClass="p-datatable-sm p-datatable-striped tabla-despachos"
+               [(selection)]="selectedRows" dataKey="idrequerimiento">
 
         <ng-template pTemplate="header">
           <tr>
@@ -121,16 +145,21 @@
             <th style="min-width:90px">Almacén</th>
             <th style="min-width:140px">Usuario</th>
             <th style="min-width:120px">Área</th>
-            <th style="min-width:200px" *ngIf="activeTabDespachos === 'COMMODITY'">Servicio</th>
-            <th style="min-width:200px" *ngIf="activeTabDespachos === 'ITEMS'">Producto</th>
+            <!-- <th style="min-width:200px" *ngIf="activeTabDespachos === 'COMMODITY'">Servicio</th> -->
+            <th style="min-width:200px">Producto</th>
             <th style="min-width:110px">Estado</th>
             <th style="min-width:150px">Acciones</th>
           </tr>
         </ng-template>
 
         <ng-template pTemplate="body" let-c let-i="rowIndex">
-          <tr>
-            <td><p-tableCheckbox [value]="c"></p-tableCheckbox></td>
+          <tr [class.fila-seleccionada]="selectedRows.includes(c)"
+              [class.fila-sin-stock-bloqueada]="c.estados === 'SIN_STOCK'">
+            <td>
+              <p-tableCheckbox [value]="c" [disabled]="c.estados === 'SIN_STOCK'"
+                               [title]="c.estados === 'SIN_STOCK' ? 'Sin stock — no se puede despachar' : ''">
+              </p-tableCheckbox>
+            </td>
             <td class="fw-semibold">{{ i + 1 }}</td>
             <td>{{ c.RequisicionNumero || '-' }}</td>
             <td>{{ c.fechaAprobacion | date: 'dd/MM/yyyy' }}</td>
@@ -199,7 +228,7 @@
         <div class="mc-field"><strong>Almacén:</strong> {{ c.idalmacen || '-' }}</div>
         <div class="mc-field"><strong>Usuario:</strong> {{ obtenerNombreUsuario(c) }}</div>
         <div class="mc-field"><strong>Área:</strong> {{ obtenerNombreArea(c) }}</div>
-        <div class="mc-field"><strong>{{ activeTabDespachos === 'ITEMS' ? 'Producto' : 'Familia' }}:</strong> {{ obtenerFamilia(c) }}</div>
+        <div class="mc-field"><strong>Producto:</strong> {{ obtenerFamilia(c) }}</div>
         <div class="mc-actions">
           <button class="btn btn-sm btn-ver" (click)="verDetalle(c)">
             <i class="bx bx-show"></i> {{ c.estados === 'ATENCION_PARCIAL' ? 'Completar' : 'Ver' }}
@@ -366,6 +395,121 @@
     <div class="modal-footer">
       <button type="button" class="btn btn-accion-secundaria" (click)="cerrarModalAtencion()">Cerrar</button>
       <button type="button" class="btn btn-accion-primaria ms-2" (click)="registrarAtencion()">Registrar Atención</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- =================== MODAL PROGRESO BLOQUE =================== -->
+<div class="modal-bloque-overlay" *ngIf="bloqueProgreso">
+  <div class="modal-bloque-box">
+    <div class="bloque-spinner"></div>
+    <div class="bloque-titulo">Despachando en bloque...</div>
+    <div class="bloque-sub">
+      Procesando <strong>{{ bloqueProgresoActual }} de {{ bloqueProgresoTotal }}</strong>
+      &nbsp;&mdash;&nbsp; {{ bloqueProgresoReqActual }}
+    </div>
+    <div class="progress mb-3" style="height:10px; border-radius:999px;">
+      <div class="progress-bar"
+           [style.width.%]="bloqueProgresoPorc"
+           style="background:#2563eb; border-radius:999px; transition: width .3s;">
+      </div>
+    </div>
+    <div class="bloque-log">
+      <div *ngFor="let linea of bloqueProgresoLog" class="bloque-log-linea">{{ linea }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== MODAL RESUMEN BLOQUE =================== -->
+<div class="modal-backdrop-custom" *ngIf="modalResumenVisible" (click)="cerrarResumenBloque()">
+  <div class="modal-content-custom modal-resumen" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h5 class="modal-title">
+        <i class="bx bx-check-shield me-2" style="color:#2563eb;"></i>Resultado — Despacho en Bloque
+      </h5>
+      <button type="button" class="btn-close" (click)="cerrarResumenBloque()"></button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Stats -->
+      <div class="resumen-stat stat-ok">
+        <div class="resumen-stat-icon"><i class="bx bx-check-circle"></i></div>
+        <div class="resumen-stat-body">
+          <div class="resumen-stat-label">Despachados completos</div>
+          <div class="resumen-stat-desc">Salida NS generada y registrada en SPRING</div>
+        </div>
+        <div class="resumen-stat-val">{{ resumenBloque.exitosos.length }}</div>
+      </div>
+
+      <div class="resumen-stat stat-warn">
+        <div class="resumen-stat-icon"><i class="bx bx-error-circle"></i></div>
+        <div class="resumen-stat-body">
+          <div class="resumen-stat-label">Atención parcial</div>
+          <div class="resumen-stat-desc">Stock insuficiente en algunos ítems · quedan en tabla</div>
+        </div>
+        <div class="resumen-stat-val">{{ resumenBloque.parciales.length }}</div>
+      </div>
+
+      <div class="resumen-stat stat-err">
+        <div class="resumen-stat-icon"><i class="bx bx-x-circle"></i></div>
+        <div class="resumen-stat-body">
+          <div class="resumen-stat-label">Fallaron en SPRING</div>
+          <div class="resumen-stat-desc">Error en SP · no se generó NS · revisar manualmente</div>
+        </div>
+        <div class="resumen-stat-val">{{ resumenBloque.fallidos.length }}</div>
+      </div>
+
+      <div class="resumen-stat stat-skip">
+        <div class="resumen-stat-icon"><i class="bx bx-skip-next-circle"></i></div>
+        <div class="resumen-stat-body">
+          <div class="resumen-stat-label">Omitidos (SIN STOCK)</div>
+          <div class="resumen-stat-desc">Excluidos automáticamente antes del proceso</div>
+        </div>
+        <div class="resumen-stat-val">{{ resumenBloque.omitidos.length }}</div>
+      </div>
+
+      <!-- NS generados -->
+      <ng-container *ngIf="resumenBloque.exitosos.length">
+        <div class="resumen-seccion-titulo">
+          <i class="bx bx-receipt me-1"></i> Números NS generados:
+        </div>
+        <div class="ns-item" *ngFor="let e of resumenBloque.exitosos">
+          <span>{{ e.req }}</span>
+          <span class="ns-badge">{{ e.ns }}</span>
+        </div>
+      </ng-container>
+
+      <!-- Parciales -->
+      <ng-container *ngIf="resumenBloque.parciales.length">
+        <div class="resumen-seccion-titulo" style="color:#d97706;">
+          <i class="bx bx-error me-1"></i> Pendientes de completar:
+        </div>
+        <div class="ns-item ns-item-warn" *ngFor="let p of resumenBloque.parciales">
+          <span>{{ p.req }} &mdash; {{ p.motivo }}</span>
+          <span class="badge" style="background:#f59e0b;color:#fff;">PARCIAL</span>
+        </div>
+      </ng-container>
+
+      <!-- Fallidos -->
+      <ng-container *ngIf="resumenBloque.fallidos.length">
+        <div class="resumen-seccion-titulo" style="color:#dc2626;">
+          <i class="bx bx-x-circle me-1"></i> Errores en SPRING:
+        </div>
+        <div class="ns-item ns-item-err" *ngFor="let f of resumenBloque.fallidos">
+          <span>{{ f.req }} &mdash; <small>{{ f.error }}</small></span>
+          <span class="badge bg-danger">Error</span>
+        </div>
+      </ng-container>
+
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-accion-primaria" (click)="cerrarResumenBloque()">
+        <i class="bx bx-check me-1"></i> Aceptar
+      </button>
     </div>
 
   </div>

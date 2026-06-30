@@ -80,6 +80,7 @@ export class ParametrosComponent implements OnInit {
   esEmLogist = false;
   esAllogist = false;
   esJloLogist = false;
+  esAdlogist = false;
 
   TipoItemSeleccionado = '';
 
@@ -117,7 +118,7 @@ export class ParametrosComponent implements OnInit {
   showValidation: boolean = false;
 
   // 🔥 NUEVO: Flag para consumo administrativo
-  esAdministrativo = false;
+  // esAdministrativo = false;
 
   //Filtros
   filteredCecos: Ceco[] = [];
@@ -234,6 +235,7 @@ export class ParametrosComponent implements OnInit {
   }
 
   // 🔥 NUEVO: Manejador del cambio de check administrativo
+  /*
   async onEsAdministrativoChange() {
     console.log('🔄 Cambio a Administrativo:', this.esAdministrativo);
     
@@ -264,6 +266,7 @@ export class ParametrosComponent implements OnInit {
       this.configuracion.idproyecto = '';
     }
   }
+  */
 
   async getUsuario() {
     const usuario = await this.dexieService.showUsuario();
@@ -350,6 +353,7 @@ export class ParametrosComponent implements OnInit {
     this.esEmLogist = rol === 'EMLOGIST';
     this.esAllogist = rol === 'ALLOGIST';
     this.esJloLogist = rol === 'JLOLOGIST';
+    this.esAdlogist = rol === 'ADLOGIST';
 
     console.log('ROLES CARGADOS:', {
       esLogist: this.esLogist,
@@ -377,8 +381,8 @@ export class ParametrosComponent implements OnInit {
 
     console.log('🔧 Tipo Item base:', this.tipoItem);
 
-    // 🔐 LOLOGIST, ALLOGIST, JLOLOGIST pueden TRANSFERENCIA
-    if (this.esLogist || this.esAllogist || this.esJloLogist) {
+    // 🔐 LOLOGIST, ALLOGIST, JLOLOGIST, ADLOGIST pueden TRANSFERENCIA
+    if (this.esLogist || this.esAllogist || this.esJloLogist || this.esAdlogist) {
       this.tipoItem.push({
         id: 'TRANSFERENCIA',
         descripcion: 'TRANSFERENCIA',
@@ -389,7 +393,7 @@ export class ParametrosComponent implements OnInit {
     // Reset por seguridad si cambia el rol
     if (
       this.configuracion.idTipoItem === 'TRANSFERENCIA' &&
-      !this.esLogist && !this.esAllogist && !this.esJloLogist
+      !this.esLogist && !this.esAllogist && !this.esJloLogist && !this.esAdlogist
     ) {
       this.configuracion.idTipoItem = 'CONSUMO';
       console.log('🔧 Reset a CONSUMO por rol no autorizado');
@@ -417,7 +421,7 @@ export class ParametrosComponent implements OnInit {
   esTransferenciaNoPermitida(): boolean {
     return (
       this.configuracion.idTipoItem === 'TRANSFERENCIA' &&
-      !this.esLogist && !this.esAllogist && !this.esJloLogist
+      !this.esLogist && !this.esAllogist && !this.esJloLogist && !this.esAdlogist
     );
   }
 
@@ -493,12 +497,14 @@ export class ParametrosComponent implements OnInit {
       
       // Para COMPRA, TRANSFERENCIA o CONSUMO administrativo: cargar CECOs según cultivo
       if (this.configuracion.idTipoItem === 'COMPRA' ||
-          this.configuracion.idTipoItem === 'TRANSFERENCIA' ||
-          (this.configuracion.idTipoItem === 'CONSUMO' && this.esAdministrativo)) {
-        console.log('🎯 Cargando CECOs para COMPRA, TRANSFERENCIA o CONSUMO ADMINISTRATIVO...');
+          this.configuracion.idTipoItem === 'TRANSFERENCIA'
+          /* ||
+          (this.configuracion.idTipoItem === 'CONSUMO' && this.esAdministrativo) */
+          ) {
+        console.log('🎯 Cargando CECOs para COMPRA o TRANSFERENCIA...');
         await this.cargarCecosPorCultivo();
       } else {
-        console.log('🎯 No es COMPRA ni TRANSFERENCIA ni CONSUMO admin, no cargar CECOs por cultivo');
+        console.log('🎯 No es COMPRA ni TRANSFERENCIA, no cargar CECOs por cultivo');
       }
     }
     
@@ -1241,6 +1247,7 @@ export class ParametrosComponent implements OnInit {
     }
 
     // 🔥 NUEVO: Para CONSUMO administrativo, saltar validación de turno
+    /*
     if (this.configuracion.idTipoItem === 'CONSUMO' && this.esAdministrativo) {
       console.log('🎯 Filtrando proyectos para CONSUMO ADMINISTRATIVO...');
 
@@ -1262,6 +1269,7 @@ export class ParametrosComponent implements OnInit {
       }
       return; // ← Termina aquí para administrativo
     }
+    */
 
     // Lógica original para otros tipos (CONSUMO, TRANSFERENCIA)
     // �🔑 RELACIÓN: CULTIVO → TURNO → CECO → LABOR → PROYECTO
@@ -1517,10 +1525,13 @@ export class ParametrosComponent implements OnInit {
       }
     } else if (this.configuracion.idTipoItem === 'CONSUMO') {
       // 🔥 MODIFICADO: Validar turno solo si NO es administrativo
+      /*
       if (!this.esAdministrativo && !this.configuracion.idturno) {
+      */
+      if (!this.configuracion.idturno) {
         this.alertService.showAlert(
           'Advertencia!',
-          'Para CONSUMO debe seleccionar Turno (o marcar como Administrativo)',
+          'Para CONSUMO debe seleccionar Turno',
           'warning'
         );
         return;

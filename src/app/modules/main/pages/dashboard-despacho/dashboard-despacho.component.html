@@ -27,72 +27,71 @@
     </div>
   </div>
 
-  <!-- Gráfico y Últimos Despachos -->
+  <!-- Accesos Rápidos -->
   <div class="row g-4">
-    <!-- Gráfico de Despachos -->
-    <div class="col-12 col-lg-8">
-      <p-card header="Tendencia de Despachos">
-        <p-chart
-          type="line"
-          [data]="chartData"
-          [options]="chartOptions"
-          height="300px">
-        </p-chart>
-      </p-card>
-    </div>
-
-    <!-- Accesos Rápidos -->
-    <div class="col-12 col-lg-4">
+    <div class="col-12">
       <p-card header="Accesos Rápidos">
-        <div class="quick-actions d-flex flex-column gap-2">
-          <button
-            pButton
-            type="button"
-            label="Gestionar Despachos"
-            icon="bx bx-package"
-            class="p-button-primary w-100"
-            (click)="router.navigate(['/main/despachos'])">
-          </button>
-          <button
-            pButton
-            type="button"
-            label="Reporte de Despachos"
-            icon="bx bx-chart"
-            class="p-button-secondary w-100"
-            (click)="router.navigate(['/main/reporte-despachos'])">
-          </button>
-          <button
-            pButton
-            type="button"
-            label="Kardex"
-            icon="bx bx-list-ul"
-            class="p-button-info w-100"
-            (click)="router.navigate(['/main/kardex'])">
-          </button>
-          <!-- <button
-            pButton
-            type="button"
-            label="Devoluciones"
-            icon="bx bx-undo"
-            class="p-button-warning w-100"
-            (click)="router.navigate(['/main/devoluciones-consumo'])">
-          </button> -->
-          <button
-            pButton
-            type="button"
-            label="Gestión de Inventario"
-            icon="bx bx-box"
-            class="p-button-success w-100"
-            (click)="router.navigate(['/main/gestion-inventario'])">
-          </button>
-          <button
-            pButton
-            type="button"
-            label="Recepción Orden de Compra"
-            icon="bx bx-package"
-            class="p-button-success w-100"
-            (click)="router.navigate(['/main/recepcion-mercaderia'])">
-          </button>
+        <div class="quick-actions row row-cols-2 row-cols-md-3 row-cols-lg-5 g-2">
+          <div class="col">
+            <button
+              pButton
+              type="button"
+              label="Gestionar Despachos"
+              icon="bx bx-package"
+              class="p-button-primary w-100 justify-content-center"
+              (click)="router.navigate(['/main/despachos'])">
+            </button>
+          </div>
+          <div class="col">
+            <button
+              pButton
+              type="button"
+              label="Reporte de Despachos"
+              icon="bx bx-chart"
+              class="p-button-secondary w-100 justify-content-center"
+              (click)="router.navigate(['/main/reporte-despachos'])">
+            </button>
+          </div>
+          <div class="col">
+            <button
+              pButton
+              type="button"
+              label="Kardex"
+              icon="bx bx-list-ul"
+              class="p-button-info w-100 justify-content-center"
+              (click)="router.navigate(['/main/kardex'])">
+            </button>
+          </div>
+          <!-- <div class="col">
+            <button
+              pButton
+              type="button"
+              label="Devoluciones"
+              icon="bx bx-undo"
+              class="p-button-warning w-100 justify-content-center"
+              (click)="router.navigate(['/main/devoluciones-consumo'])">
+            </button>
+          </div> -->
+          <div class="col">
+            <button
+              pButton
+              type="button"
+              label="Gestión de Inventario"
+              icon="bx bx-box"
+              class="p-button-success w-100 justify-content-center"
+              (click)="router.navigate(['/main/gestion-inventario'])">
+            </button>
+          </div>
+          <div class="col">
+            <button
+              pButton
+              type="button"
+              label="Recepción Orden de Compra"
+              icon="bx bx-package"
+              class="p-button-success w-100 justify-content-center"
+              (click)="router.navigate(['/main/recepcion-mercaderia'])">
+            </button>
+          </div>
         </div>
       </p-card>
     </div>
@@ -106,7 +105,7 @@
           [value]="ultimosDespachos"
           [loading]="loadingDespachos"
           [paginator]="true"
-          [rows]="5"
+          [rows]="15"
           [showCurrentPageReport]="true"
           styleClass="p-datatable-sm p-datatable-striped">
 

@@ -125,23 +125,27 @@ export class DespachoComponent implements OnInit {
 
   /** KPI: requerimientos pendientes de atención (estado APROBADO). */
   get kpiPendientes(): number {
-    return (this.requerimientosAprobadosAll || []).filter(
-      (r: any) => r?.estados === 'APROBADO' || !r?.estados,
-    ).length;
+    return (this.requerimientosAprobadosAll || []).filter((r: any) => {
+      const clas = (r?.idclasificacion || '').toString().toUpperCase();
+      const esItem = !['SER', 'ACT', 'ACM'].includes(clas);
+      return esItem && (r?.estados === 'APROBADO' || !r?.estados);
+    }).length;
   }
 
   /** KPI: requerimientos con atención parcial pendientes de completar. */
   get kpiParciales(): number {
-    return (this.requerimientosAprobadosAll || []).filter(
-      (r: any) => r?.estados === 'ATENCION_PARCIAL'
-    ).length;
+    return (this.requerimientosAprobadosAll || []).filter((r: any) => {
+      const clas = (r?.idclasificacion || '').toString().toUpperCase();
+      return !['SER', 'ACT', 'ACM'].includes(clas) && r?.estados === 'ATENCION_PARCIAL';
+    }).length;
   }
 
   /** KPI: requerimientos sin stock, pendientes de atención cuando haya stock. */
   get kpiSinStock(): number {
-    return (this.requerimientosAprobadosAll || []).filter(
-      (r: any) => r?.estados === 'SIN_STOCK'
-    ).length;
+    return (this.requerimientosAprobadosAll || []).filter((r: any) => {
+      const clas = (r?.idclasificacion || '').toString().toUpperCase();
+      return !['SER', 'ACT', 'ACM'].includes(clas) && r?.estados === 'SIN_STOCK';
+    }).length;
   }
 
   /** Calcula el total de unidades pendientes de despacho en un requerimiento. */
@@ -165,15 +169,22 @@ export class DespachoComponent implements OnInit {
 
   /** KPI: requerimientos atendidos (despachado completo). */
   get kpiAtendidos(): number {
-    return (this.requerimientosAprobadosAll || []).filter((r: any) =>
-      ['ATENCION_COMPLETA', 'DESPACHADO_COMPLETO'].includes(r?.estados) ||
-      (r?.estados || '').toString().toUpperCase().includes('DESPACHADO')
-    ).length;
+    return (this.requerimientosAprobadosAll || []).filter((r: any) => {
+      const clas = (r?.idclasificacion || '').toString().toUpperCase();
+      const esItem = !['SER', 'ACT', 'ACM'].includes(clas);
+      return esItem && (
+        ['ATENCION_COMPLETA', 'DESPACHADO_COMPLETO'].includes(r?.estados) ||
+        (r?.estados || '').toString().toUpperCase().includes('DESPACHADO')
+      );
+    }).length;
   }
 
   /** KPI: total de requerimientos cargados. */
   get kpiTotal(): number {
-    return (this.requerimientosAprobadosAll || []).length;
+    return (this.requerimientosAprobadosAll || []).filter((r: any) => {
+      const clas = (r?.idclasificacion || '').toString().toUpperCase();
+      return !['SER', 'ACT', 'ACM'].includes(clas);
+    }).length;
   }
 
   /** Datos visibles en la tabla según tab activo y filtros rápidos Requisición. */
@@ -328,6 +339,25 @@ export class DespachoComponent implements OnInit {
   detalleTodosSinStock = false;
   detalleAlgunoSinStock = false;
   kpiDespachados = 0;
+
+  // ── Selección masiva ──────────────────────────────────────────────────────
+  selectedRows: any[] = [];
+
+  bloqueProgreso = false;
+  bloqueProgresoActual = 0;
+  bloqueProgresoTotal = 0;
+  bloqueProgresoReqActual = '';
+  bloqueProgresoLog: string[] = [];
+
+  modalResumenVisible = false;
+  resumenBloque: {
+    exitosos:  { req: string; ns: string }[];
+    parciales: { req: string; motivo: string }[];
+    fallidos:  { req: string; error: string }[];
+    omitidos:  { req: string }[];
+  } = { exitosos: [], parciales: [], fallidos: [], omitidos: [] };
+  // ─────────────────────────────────────────────────────────────────────────
+
   // Usuario
   usuario: Usuario = {
     id: '',
@@ -2287,5 +2317,255 @@ export class DespachoComponent implements OnInit {
       default:
         return 'bx bx-info-circle text-info';
     }
+  }
+
+  // ==========================================================================
+  // DESPACHO EN BLOQUE
+  // ==========================================================================
+
+  /** Indica si un requerimiento puede ser seleccionado para el bloque masivo. */
+  puedeSeleccionarse(r: any): boolean {
+    return r?.estados !== 'SIN_STOCK';
+  }
+
+  /** Limpia la selección masiva actual. */
+  limpiarSeleccion(): void {
+    this.selectedRows = [];
+  }
+
+  /** Número de SIN_STOCK visibles en el tab activo (para el aviso en la barra). */
+  get omitidosSinStockCount(): number {
+    return this.despachosVisibles.filter(r => r?.estados === 'SIN_STOCK').length;
+  }
+
+  /**
+   * Construye el body para generarSalidaNS a partir de un requerimiento.
+   * Replica la misma lógica que registrarAtencion() para el caso individual.
+   */
+  private construirBodyDespacho(req: any): any[] | null {
+    const detalle = (req.detalle || []).map((d: any) => {
+      const solicitada = Number(d.cantidad) || 0;
+      const atendida   = Number(d.atendida)  || 0;
+      const pendiente  = Math.max(0, solicitada - atendida);
+      const stock      = this.obtenerStock(d.codigo, req.idalmacen || '');
+      const atender    = Math.min(pendiente, stock);
+      return { ...d, stock, pendiente, atender };
+    });
+
+    const detalleAtendido = detalle.filter((d: any) => (d.atender || 0) > 0);
+    if (!detalleAtendido.length) return null;
+
+    const ahora = new Date();
+    const fechaFormateada =
+      ahora.toISOString().slice(0, 10) + ' ' + ahora.toTimeString().slice(0, 8);
+    const companiaSocio   = ((req.ruc || this.usuario?.idempresa || '').padStart(6, '0')) + '00';
+    const requisicionNum  = (req.RequisicionNumero || '').padStart(10, '0');
+    const primerDetalle   = detalleAtendido[0];
+    const proyectoAfe     = this.proyectos?.find(
+      (p: any) => p.proyectoio === (primerDetalle?.proyecto || req?.proyecto)
+    )?.afe || 'FUNDO HP';
+
+    return [{
+      CompaniaSocio:     companiaSocio,
+      RequisicionNumero: requisicionNum,
+      AlmacenCodigo:     req.idalmacen || 'H001',
+      Periodo:           new Date().toISOString().slice(0, 7).replace('-', ''),
+      UltimoUsuario:     this.usuario?.usuario || 'SYSTEM',
+      TipoCambio:        3.356,
+      FechaDocumento:    fechaFormateada,
+      Proyecto:          proyectoAfe,
+      detalle: detalleAtendido.map((d: any, index: number) => ({
+        Secuencia:   index + 1,
+        Item:        d.codigo.substring(0, 6),
+        Condicion:   d.condicion || '0',
+        UnidadCodigo: d.unidadMedida || d.unidad || 'UND',
+        Cantidad:    d.atender,
+        Lote:        d.lote || '00',
+        CentroCosto: d.centroCosto || req.centroCosto || '11020',
+        Actividad:   d.actividad || '0502'
+      }))
+    }];
+  }
+
+  /**
+   * Actualiza Dexie + BD Logistica después de un despacho exitoso en bloque.
+   * Replica la misma lógica post-éxito de registrarAtencion().
+   */
+  private async postDespachoExitoso(
+    req: any,
+    numeroNS: string,
+    detalleAtendido: any[]
+  ): Promise<'DESPACHADO' | 'ATENCION_PARCIAL'> {
+    // 1) Actualizar detalles en Dexie
+    for (const d of detalleAtendido) {
+      const registro = await this.dexieService.detalles
+        .where('idrequerimiento').equals(req.idrequerimiento)
+        .and((x: any) => x.codigo === d.codigo)
+        .first();
+      if (registro) {
+        registro.atendida = (registro.atendida || 0) + d.atender;
+        await this.dexieService.detalles.put(registro);
+      }
+    }
+
+    // 2) Calcular estado final
+    const allDetalle = req.detalle || [];
+    const todosAtendidos = allDetalle.every((d: any) => {
+      const totalNuevo = (Number(d.atendida) || 0) +
+        (detalleAtendido.find((x: any) => x.codigo === d.codigo)?.atender || 0);
+      return totalNuevo >= (Number(d.cantidad) || 0);
+    });
+    const estadoFinal: 'DESPACHADO' | 'ATENCION_PARCIAL' =
+      todosAtendidos ? 'DESPACHADO' : 'ATENCION_PARCIAL';
+
+    // 3) Actualizar requerimiento en Dexie
+    const reqDexie = await this.dexieService.requerimientos
+      .where('idrequerimiento').equals(req.idrequerimiento).first();
+    if (reqDexie) {
+      reqDexie.estados = estadoFinal;
+      await this.dexieService.requerimientos.put(reqDexie);
+    }
+
+    // 4) Registrar despacho en BD Logistica
+    this.despachosService.registrarDespacho({
+      idrequerimiento: req.idrequerimiento,
+      usuario: this.usuario.documentoidentidad,
+      observacion: `Despacho en bloque — NS: ${numeroNS}`,
+      numeroNS,
+      detalle: detalleAtendido.map((d: any) => ({
+        codigo: d.codigo,
+        solicitado: d.cantidad,
+        despachado: d.atender
+      }))
+    }).subscribe({ error: err => console.error('registrarDespacho bloque:', err) });
+
+    // 5) Actualizar estado en BD Logistica
+    this.despachosService.actualizarEstadoRequerimiento([{
+      idrequerimiento: req.idrequerimiento,
+      estados: estadoFinal,
+      usuario: this.usuario.documentoidentidad
+    }]).subscribe({ error: err => console.error('actualizarEstado bloque:', err) });
+
+    return estadoFinal;
+  }
+
+  /**
+   * Proceso principal de despacho en bloque — secuencial.
+   * Solo despacha los selectedRows que NO sean SIN_STOCK.
+   */
+  async despacharEnBloque(): Promise<void> {
+    // 1) Separar omitidos (SIN_STOCK) de los procesables
+    const omitidos  = this.selectedRows.filter(r => r?.estados === 'SIN_STOCK');
+    const procesables = this.selectedRows.filter(r => r?.estados !== 'SIN_STOCK');
+
+    if (!procesables.length) {
+      this.alertService.showAlert(
+        'Sin requerimientos válidos',
+        'Todos los seleccionados están en SIN STOCK y serán omitidos.',
+        'warning'
+      );
+      return;
+    }
+
+    // 2) Confirmación
+    const confirmar = await this.alertService.showConfirm(
+      '¿Despachar en bloque?',
+      `Se procesarán <strong>${procesables.length}</strong> requerimiento(s) de forma secuencial.` +
+      (omitidos.length
+        ? `<br><small class="text-warning">⚠️ ${omitidos.length} con SIN STOCK serán omitidos.</small>`
+        : ''),
+      'question'
+    );
+    if (!confirmar) return;
+
+    // 3) Inicializar estado de progreso
+    this.resumenBloque = {
+      exitosos:  [],
+      parciales: [],
+      fallidos:  [],
+      omitidos:  omitidos.map(r => ({ req: r.RequisicionNumero || `REQ-${r.idrequerimiento}` }))
+    };
+    this.bloqueProgresoLog    = [];
+    this.bloqueProgresoTotal  = procesables.length;
+    this.bloqueProgresoActual = 0;
+    this.bloqueProgreso       = true;
+
+    // 4) Loop secuencial
+    for (const req of procesables) {
+      const etiqueta = req.RequisicionNumero || `REQ-${req.idrequerimiento}`;
+      this.bloqueProgresoActual++;
+      this.bloqueProgresoReqActual = etiqueta;
+
+      try {
+        const body = this.construirBodyDespacho(req);
+
+        // Sin ítems con stock → omitir
+        if (!body) {
+          this.resumenBloque.omitidos.push({ req: etiqueta });
+          this.bloqueProgresoLog.push(`⬜ ${etiqueta} — sin ítems con stock`);
+          continue;
+        }
+
+        // Calcular detalleAtendido para post-proceso
+        const detalleAtendido = (req.detalle || [])
+          .map((d: any) => {
+            const pendiente = Math.max(0, (Number(d.cantidad) || 0) - (Number(d.atendida) || 0));
+            const stock     = this.obtenerStock(d.codigo, req.idalmacen || '');
+            return { ...d, stock, pendiente, atender: Math.min(pendiente, stock) };
+          })
+          .filter((d: any) => (d.atender || 0) > 0);
+
+        // Llamar a SPRING (await convertido a Promise)
+        const response = await firstValueFrom(
+          this.despachosService.generarSalidaNS(body)
+        );
+
+        let resultado = response?.resultado || response;
+        if (Array.isArray(resultado)) resultado = resultado[0];
+
+        if (!resultado || resultado.errorgeneral !== 0) {
+          const msg = resultado?.mensajeError || 'Error en SP SPRING';
+          this.resumenBloque.fallidos.push({ req: etiqueta, error: msg });
+          this.bloqueProgresoLog.push(`❌ ${etiqueta} — ${msg}`);
+          continue;
+        }
+
+        const ns = resultado.NumeroDocumento || '';
+        const estado = await this.postDespachoExitoso(req, ns, detalleAtendido);
+
+        if (estado === 'DESPACHADO') {
+          this.resumenBloque.exitosos.push({ req: etiqueta, ns });
+          this.bloqueProgresoLog.push(`✅ ${etiqueta} → ${ns}`);
+        } else {
+          this.resumenBloque.parciales.push({
+            req: etiqueta,
+            motivo: `NS: ${ns} — stock parcial`
+          });
+          this.bloqueProgresoLog.push(`⚠️ ${etiqueta} → ${ns} (parcial)`);
+        }
+
+      } catch (err: any) {
+        const msg = err?.message || 'Error inesperado';
+        this.resumenBloque.fallidos.push({ req: etiqueta, error: msg });
+        this.bloqueProgresoLog.push(`❌ ${etiqueta} — ${msg}`);
+      }
+    }
+
+    // 5) Finalizar
+    this.bloqueProgreso = false;
+    this.selectedRows   = [];
+    this.modalResumenVisible = true;
+
+    // Recargar tabla para reflejar nuevos estados
+    await this.cargarRequerimientosAprobados();
+  }
+
+  cerrarResumenBloque(): void {
+    this.modalResumenVisible = false;
+  }
+
+  get bloqueProgresoPorc(): number {
+    if (!this.bloqueProgresoTotal) return 0;
+    return Math.round((this.bloqueProgresoActual / this.bloqueProgresoTotal) * 100);
   }
 }

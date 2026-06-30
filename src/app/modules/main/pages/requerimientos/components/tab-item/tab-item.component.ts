@@ -103,6 +103,11 @@ export class TabItemComponent {
   @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
   @Input() turnosParaCarga: any[] = [];
 
+  get requerimientosFiltrados(): any[] {
+    if (!this.TipoSelecionado) return this.requerimientos;
+    return this.requerimientos.filter((r: any) => r.itemtipo === this.TipoSelecionado);
+  }
+
   // ─── Bulk-load state (managed entirely in this component) ────────────────
   modalVisible = false;
   lineasPreview: any[] = [];
@@ -144,6 +149,14 @@ export class TabItemComponent {
   nuevoRequerimiento() { this.itemSvc.mostrarFormulario = true; this.nuevoEvt.emit(); }
   onTipoChange() { this.tipoChangeEvt.emit(); }
   resetFileInput() { if (this.fileInputRef?.nativeElement) this.fileInputRef.nativeElement.value = ''; }
+
+  descargarPlantilla() {
+    if (this.TipoSelecionado === 'COMPRA') {
+      this.itemSvc.descargarPlantillaCompra();
+    } else if (this.TipoSelecionado === 'CONSUMO') {
+      this.itemSvc.descargarPlantillaConsumo();
+    }
+  }
 
   async onExcelUpload(event: any) {
     const file = event?.target?.files?.[0];

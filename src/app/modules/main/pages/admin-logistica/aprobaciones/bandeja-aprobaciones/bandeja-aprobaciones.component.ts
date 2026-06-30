@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
@@ -21,6 +21,7 @@ export class BandejaAprobacionesComponent implements OnInit {
   private dexieService = inject(DexieService);
 
   usuario = signal<any>(null);
+  soloConsumo = computed(() => this.usuario()?.idrol === 'JLOLOGIST');
   loading = signal(true);
 
   // KPIs

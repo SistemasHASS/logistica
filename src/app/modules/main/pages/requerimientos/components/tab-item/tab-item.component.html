@@ -1,5 +1,12 @@
 <div class="container mt-3">
-      <h2>Requerimientos Items</h2>
+      <h2>
+        Requerimientos Items
+        <span *ngIf="TipoSelecionado" class="badge ms-2" [ngClass]="{
+          'bg-primary': TipoSelecionado === 'COMPRA',
+          'bg-success': TipoSelecionado === 'CONSUMO',
+          'bg-warning text-dark': TipoSelecionado === 'TRANSFERENCIA'
+        }" style="display:none">{{ TipoSelecionado }}</span>
+      </h2>
 
       <!-- ===================== -->
       <!-- VISTA: LISTA DE REQUERIMIENTOS -->
@@ -9,7 +16,7 @@
         <div class="p-0 card">
           <!-- Resumen de contadores -->
           <div class="requerimientos-tablas">
-            <div>Total: <span class="azul">{{ requerimientos.length }}</span></div>
+            <div>Total: <span class="azul">{{ requerimientosFiltrados.length }}</span></div>
             <div>Sin enviar: <span class="rojo">{{ sinenviar }}</span></div>
             <div>Enviados: <span class="verde">{{ enviados }}</span></div>
           </div>
@@ -19,10 +26,10 @@
             <div class="table-responsive tabla-item" style="max-height: 60vh; overflow: auto">
               <p-table
                 #dt
-                [value]="requerimientos"
+                [value]="requerimientosFiltrados"
                 [paginator]="true"
                 [rows]="20"
-                [totalRecords]="requerimientos.length"
+                [totalRecords]="requerimientosFiltrados.length"
                 [loading]="loading"
                 responsiveLayout="stack"
                 breakpoint="768px"
@@ -37,6 +44,7 @@
                     <th style="min-width: 20px" pSortableColumn="item">Editar</th>
                     <th style="min-width: 100px" pSortableColumn="item">#Req</th>
                     <th style="min-width: 100px" pSortableColumn="item">Fecha</th>
+                    <th style="min-width: 90px; display:none" pSortableColumn="itemtipo">Tipo</th>
                     <!-- <th style="min-width: 100px" pSortableColumn="descripcionLocal">Fundo</th> -->
                     <th style="min-width: 100px" pSortableColumn="unidadCodigo">Almacen</th>
                     <th style="min-width: 120px" pSortableColumn="idarea">Área</th>
@@ -63,7 +71,14 @@
                     <td>
                       <span class="p-column-title">Fecha</span>
                       {{ c.fecha | date: "dd/MM/yyyy" }}
-                      <!-- {{ c.fecha | date: "dd/MM/yyyy HH:mm:ss" }} -->
+                    </td>
+                    <td style="display:none">
+                      <span class="p-column-title">Tipo</span>
+                      <span class="badge" [ngClass]="{
+                        'bg-primary': c.itemtipo === 'COMPRA',
+                        'bg-success': c.itemtipo === 'CONSUMO',
+                        'bg-warning text-dark': c.itemtipo === 'TRANSFERENCIA'
+                      }">{{ c.itemtipo }}</span>
                     </td>
                     <!-- <td>
                       <span class="p-column-title">Fundo</span>
@@ -280,6 +295,12 @@
 
             <!-- Acciones: carga masiva y agregar línea -->
             <div class="d-flex justify-content-end gap-3 acciones-movil">
+              <button *ngIf="TipoSelecionado === 'COMPRA'" type="button" class="btn btn-outline-primary" (click)="descargarPlantilla()" title="Descargar plantilla Excel para compra">
+                <i class="bi bi-download me-1"></i> Plantilla compra
+              </button>
+              <button *ngIf="TipoSelecionado === 'CONSUMO'" type="button" class="btn btn-outline-success" (click)="descargarPlantilla()" title="Descargar plantilla Excel para consumo">
+                <i class="bi bi-download me-1"></i> Plantilla consumo
+              </button>
               <button *ngIf="TipoSelecionado === 'COMPRA' || TipoSelecionado === 'CONSUMO'" type="button" class="btn btn-success" (click)="fileInput.click()">
                 <i class="bi bi-upload me-1"></i> Carga masiva
               </button>

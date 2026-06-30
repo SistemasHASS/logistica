@@ -1,0 +1,497 @@
+<div class="corp-page">
+
+  <!-- ========== HEADER ========== -->
+  <div class="corp-header">
+    <div class="corp-header-left">
+      <i class="bx bx-building-house"></i>
+      <div>
+        <h5 class="corp-title">Consolidación Corporativa de Compras</h5>
+        <span class="corp-subtitle">Consolida por empresa y genera una OC corporativa unificada</span>
+      </div>
+    </div>
+    <div class="corp-header-badges">
+      <div class="badge-empresa" [class.badge-ok]="guardadoHP()">
+        <i class="bx" [ngClass]="guardadoHP() ? 'bx-check-circle' : 'bx-time-five'"></i>
+        HP <span>{{ seleccionadosHP() }}/{{ totalItemsHP() }}</span>
+      </div>
+      <div class="badge-empresa" [class.badge-ok]="guardadoBH()">
+        <i class="bx" [ngClass]="guardadoBH() ? 'bx-check-circle' : 'bx-time-five'"></i>
+        BH <span>{{ seleccionadosBH() }}/{{ totalItemsBH() }}</span>
+      </div>
+      <div class="badge-empresa" [class.badge-ok]="guardadoCAO()">
+        <i class="bx" [ngClass]="guardadoCAO() ? 'bx-check-circle' : 'bx-time-five'"></i>
+        CAO <span>{{ seleccionadosCAO() }}/{{ totalItemsCAO() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== TABS PRINCIPALES ========== -->
+  <div class="corp-tabs">
+    <button class="corp-tab" [class.active]="tabActiva === 'HP'" (click)="cambiarTab('HP')">
+      <i class="bx bx-buildings"></i>
+      Empresa HP
+      <span class="tab-badge" [class.badge-consolidado]="guardadoHP()">
+        {{ guardadoHP() ? 'Listo' : totalItemsHP() + ' items' }}
+      </span>
+    </button>
+    <button class="corp-tab" [class.active]="tabActiva === 'BH'" (click)="cambiarTab('BH')">
+      <i class="bx bx-buildings"></i>
+      Empresa BH
+      <span class="tab-badge" [class.badge-consolidado]="guardadoBH()">
+        {{ guardadoBH() ? 'Listo' : totalItemsBH() + ' items' }}
+      </span>
+    </button>
+    <button class="corp-tab" [class.active]="tabActiva === 'CAO'" (click)="cambiarTab('CAO')">
+      <i class="bx bx-buildings"></i>
+      Empresa CAO
+      <span class="tab-badge" [class.badge-consolidado]="guardadoCAO()">
+        {{ guardadoCAO() ? 'Listo' : totalItemsCAO() + ' items' }}
+      </span>
+    </button>
+    <div class="tab-divisor"></div>
+    <button class="corp-tab tab-corporativo" [class.active]="tabActiva === 'CORPORATIVO'" (click)="cambiarTab('CORPORATIVO')"
+      [disabled]="!puedeConsolidarCorporativo()">
+      <i class="bx bx-globe"></i>
+      Corporativo
+      <span class="tab-badge badge-corp" *ngIf="puedeConsolidarCorporativo()">
+        {{ itemsCorporativos().length }} items
+      </span>
+      <span class="tab-badge" *ngIf="!puedeConsolidarCorporativo()">Sin datos</span>
+    </button>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB HP                                     -->
+  <!-- ========================================== -->
+  <div class="corp-content" *ngIf="tabActiva === 'HP'">
+    <div class="empresa-header hp">
+      <div class="empresa-info">
+        <span class="empresa-chip hp">HP</span>
+        <div>
+          <strong>Hacienda Pampa S.A.</strong>
+          <small>{{ totalItemsHP() }} requerimientos pendientes de consolidar</small>
+        </div>
+      </div>
+      <div class="empresa-actions">
+        <div class="search-box">
+          <i class="bx bx-search"></i>
+          <input type="text" placeholder="Buscar código o ítem..." [(ngModel)]="filtroHP" />
+        </div>
+        <button class="btn-seleccionar-todos" (click)="seleccionarTodos('HP', !todosMarcados('HP'))">
+          <i class="bx" [ngClass]="todosMarcados('HP') ? 'bx-checkbox-checked' : 'bx-checkbox'"></i>
+          {{ todosMarcados('HP') ? 'Deseleccionar todos' : 'Seleccionar todos' }}
+        </button>
+        <button class="btn-preconsolidar" [disabled]="seleccionadosHP() === 0"
+          (click)="preConsolidarEmpresa('HP')">
+          <i class="bx bx-layer-plus"></i>
+          Pre-consolidar HP ({{ seleccionadosHP() }})
+        </button>
+      </div>
+    </div>
+
+    <ng-container *ngTemplateOutlet="tablaRequerimientos; context: { $implicit: itemsHPFiltrados, empresa: 'HP' }"></ng-container>
+
+    <!-- Resumen pre-consolidado HP -->
+    <div class="pre-consolidado-resumen" *ngIf="guardadoHP()">
+      <div class="pre-consolidado-header">
+        <i class="bx bx-check-shield text-success"></i>
+        <strong>Consolidación HP guardada —</strong>
+        <span>{{ consolidadoHP().length }} grupos de artículos listos para corporativo</span>
+        <span class="dot-separator">·</span>
+        <button class="btn-link-sm" (click)="tabActiva = 'CORPORATIVO'">Ver en corporativo →</button>
+      </div>
+      <div class="consolidado-chips">
+        <div class="consolidado-chip" *ngFor="let item of consolidadoHP(); trackBy: trackByCodigo"
+          (click)="verDetalleConsolidado(item)">
+          <span class="chip-codigo">{{ item.codigo }}</span>
+          <span class="chip-desc">{{ item.descripcion | slice:0:28 }}</span>
+          <span class="chip-cant">{{ item.cantidadTotal }} {{ item.unidad }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB BH                                     -->
+  <!-- ========================================== -->
+  <div class="corp-content" *ngIf="tabActiva === 'BH'">
+    <div class="empresa-header bh">
+      <div class="empresa-info">
+        <span class="empresa-chip bh">BH</span>
+        <div>
+          <strong>Bertha Hacienda S.A.</strong>
+          <small>{{ totalItemsBH() }} requerimientos pendientes de consolidar</small>
+        </div>
+      </div>
+      <div class="empresa-actions">
+        <div class="search-box">
+          <i class="bx bx-search"></i>
+          <input type="text" placeholder="Buscar código o ítem..." [(ngModel)]="filtroBH" />
+        </div>
+        <button class="btn-seleccionar-todos" (click)="seleccionarTodos('BH', !todosMarcados('BH'))">
+          <i class="bx" [ngClass]="todosMarcados('BH') ? 'bx-checkbox-checked' : 'bx-checkbox'"></i>
+          {{ todosMarcados('BH') ? 'Deseleccionar todos' : 'Seleccionar todos' }}
+        </button>
+        <button class="btn-preconsolidar" [disabled]="seleccionadosBH() === 0"
+          (click)="preConsolidarEmpresa('BH')">
+          <i class="bx bx-layer-plus"></i>
+          Pre-consolidar BH ({{ seleccionadosBH() }})
+        </button>
+      </div>
+    </div>
+
+    <ng-container *ngTemplateOutlet="tablaRequerimientos; context: { $implicit: itemsBHFiltrados, empresa: 'BH' }"></ng-container>
+
+    <div class="pre-consolidado-resumen" *ngIf="guardadoBH()">
+      <div class="pre-consolidado-header">
+        <i class="bx bx-check-shield text-success"></i>
+        <strong>Consolidación BH guardada —</strong>
+        <span>{{ consolidadoBH().length }} grupos de artículos listos para corporativo</span>
+        <span class="dot-separator">·</span>
+        <button class="btn-link-sm" (click)="tabActiva = 'CORPORATIVO'">Ver en corporativo →</button>
+      </div>
+      <div class="consolidado-chips">
+        <div class="consolidado-chip" *ngFor="let item of consolidadoBH(); trackBy: trackByCodigo"
+          (click)="verDetalleConsolidado(item)">
+          <span class="chip-codigo">{{ item.codigo }}</span>
+          <span class="chip-desc">{{ item.descripcion | slice:0:28 }}</span>
+          <span class="chip-cant">{{ item.cantidadTotal }} {{ item.unidad }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB CAO                                    -->
+  <!-- ========================================== -->
+  <div class="corp-content" *ngIf="tabActiva === 'CAO'">
+    <div class="empresa-header cao">
+      <div class="empresa-info">
+        <span class="empresa-chip cao">CAO</span>
+        <div>
+          <strong>Campo Agropecuario S.A.</strong>
+          <small>{{ totalItemsCAO() }} requerimientos pendientes de consolidar</small>
+        </div>
+      </div>
+      <div class="empresa-actions">
+        <div class="search-box">
+          <i class="bx bx-search"></i>
+          <input type="text" placeholder="Buscar código o ítem..." [(ngModel)]="filtroCAO" />
+        </div>
+        <button class="btn-seleccionar-todos" (click)="seleccionarTodos('CAO', !todosMarcados('CAO'))">
+          <i class="bx" [ngClass]="todosMarcados('CAO') ? 'bx-checkbox-checked' : 'bx-checkbox'"></i>
+          {{ todosMarcados('CAO') ? 'Deseleccionar todos' : 'Seleccionar todos' }}
+        </button>
+        <button class="btn-preconsolidar" [disabled]="seleccionadosCAO() === 0"
+          (click)="preConsolidarEmpresa('CAO')">
+          <i class="bx bx-layer-plus"></i>
+          Pre-consolidar CAO ({{ seleccionadosCAO() }})
+        </button>
+      </div>
+    </div>
+
+    <ng-container *ngTemplateOutlet="tablaRequerimientos; context: { $implicit: itemsCAOFiltrados, empresa: 'CAO' }"></ng-container>
+
+    <div class="pre-consolidado-resumen" *ngIf="guardadoCAO()">
+      <div class="pre-consolidado-header">
+        <i class="bx bx-check-shield text-success"></i>
+        <strong>Consolidación CAO guardada —</strong>
+        <span>{{ consolidadoCAO().length }} grupos de artículos listos para corporativo</span>
+        <span class="dot-separator">·</span>
+        <button class="btn-link-sm" (click)="tabActiva = 'CORPORATIVO'">Ver en corporativo →</button>
+      </div>
+      <div class="consolidado-chips">
+        <div class="consolidado-chip" *ngFor="let item of consolidadoCAO(); trackBy: trackByCodigo"
+          (click)="verDetalleConsolidado(item)">
+          <span class="chip-codigo">{{ item.codigo }}</span>
+          <span class="chip-desc">{{ item.descripcion | slice:0:28 }}</span>
+          <span class="chip-cant">{{ item.cantidadTotal }} {{ item.unidad }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB CORPORATIVO                            -->
+  <!-- ========================================== -->
+  <div class="corp-content" *ngIf="tabActiva === 'CORPORATIVO'">
+
+    <!-- Alerta si no todas consolidadas -->
+    <div class="alerta-incompleta" *ngIf="!todasEmpresasConsolidadas()">
+      <i class="bx bx-info-circle"></i>
+      <div>
+        <strong>Consolidación parcial.</strong>
+        Solo se muestran las empresas con consolidación guardada.
+        <span *ngIf="!guardadoHP()"> · <strong>HP</strong> pendiente</span>
+        <span *ngIf="!guardadoBH()"> · <strong>BH</strong> pendiente</span>
+        <span *ngIf="!guardadoCAO()"> · <strong>CAO</strong> pendiente</span>
+      </div>
+    </div>
+
+    <!-- Header corporativo -->
+    <div class="corp-corporativo-header">
+      <div class="corp-kpis">
+        <div class="kpi-card">
+          <span class="kpi-valor">{{ itemsCorporativos().length }}</span>
+          <span class="kpi-label">Artículos únicos</span>
+        </div>
+        <div class="kpi-card" *ngIf="guardadoHP()">
+          <span class="kpi-valor hp">{{ consolidadoHP().length }}</span>
+          <span class="kpi-label">Grupos HP</span>
+        </div>
+        <div class="kpi-card" *ngIf="guardadoBH()">
+          <span class="kpi-valor bh">{{ consolidadoBH().length }}</span>
+          <span class="kpi-label">Grupos BH</span>
+        </div>
+        <div class="kpi-card" *ngIf="guardadoCAO()">
+          <span class="kpi-valor cao">{{ consolidadoCAO().length }}</span>
+          <span class="kpi-label">Grupos CAO</span>
+        </div>
+      </div>
+      <div class="corp-filtro-acc">
+        <div class="search-box">
+          <i class="bx bx-search"></i>
+          <input type="text" placeholder="Filtrar por código o descripción..." [(ngModel)]="filtroCorpCodigo"
+            (ngModelChange)="aplicarFiltroCorporativo()" />
+          <button class="btn-limpiar-filtro" *ngIf="filtroCorpCodigo" (click)="limpiarFiltroCorporativo()">
+            <i class="bx bx-x"></i>
+          </button>
+        </div>
+        <button class="btn-generar-oc" [disabled]="!puedeConsolidarCorporativo() || generandoOC()" (click)="generarOCCorporativa()">
+          <i class="bx" [ngClass]="generandoOC() ? 'bx-loader-alt bx-spin' : 'bx-cart-add'"></i>
+          {{ generandoOC() ? 'Generando...' : 'Generar OC Corporativa' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Alerta éxito OC -->
+    <div class="alerta-oc-generada" *ngIf="ocGenerada()">
+      <i class="bx bx-check-circle"></i>
+      <div>
+        <strong>OC Corporativa generada correctamente.</strong>
+        Se ha creado la Orden de Compra consolidando {{ itemsCorporativos().length }} artículos de las empresas participantes.
+      </div>
+      <button class="btn-link-sm" (click)="ocGenerada.set(false)"><i class="bx bx-x"></i></button>
+    </div>
+
+    <!-- Tabla corporativa -->
+    <div class="tabla-corporativa-wrapper">
+      <table class="tabla-corporativa">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>Unidad</th>
+            <th class="col-empresa hp" *ngIf="guardadoHP()">HP</th>
+            <th class="col-empresa bh" *ngIf="guardadoBH()">BH</th>
+            <th class="col-empresa cao" *ngIf="guardadoCAO()">CAO</th>
+            <th class="col-total">Total Corporativo</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of itemsCorporativosFiltrados; trackBy: trackByCodigo">
+            <td><span class="codigo-pill">{{ item.codigo }}</span></td>
+            <td class="td-descripcion">{{ item.descripcion }}</td>
+            <td>{{ item.unidad }}</td>
+            <td class="td-cantidad hp" *ngIf="guardadoHP()">
+              <span *ngIf="item.cantidadHP > 0" class="cant-chip hp">{{ item.cantidadHP }}</span>
+              <span *ngIf="item.cantidadHP === 0" class="cant-vacio">—</span>
+            </td>
+            <td class="td-cantidad bh" *ngIf="guardadoBH()">
+              <span *ngIf="item.cantidadBH > 0" class="cant-chip bh">{{ item.cantidadBH }}</span>
+              <span *ngIf="item.cantidadBH === 0" class="cant-vacio">—</span>
+            </td>
+            <td class="td-cantidad cao" *ngIf="guardadoCAO()">
+              <span *ngIf="item.cantidadCAO > 0" class="cant-chip cao">{{ item.cantidadCAO }}</span>
+              <span *ngIf="item.cantidadCAO === 0" class="cant-vacio">—</span>
+            </td>
+            <td class="td-total">
+              <strong>{{ item.cantidadTotal }} {{ item.unidad }}</strong>
+            </td>
+            <td>
+              <div class="estado-flags">
+                <span class="flag-empresa hp" *ngIf="item.consolidadoHP" title="HP consolidado">HP</span>
+                <span class="flag-empresa bh" *ngIf="item.consolidadoBH" title="BH consolidado">BH</span>
+                <span class="flag-empresa cao" *ngIf="item.consolidadoCAO" title="CAO consolidado">CAO</span>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="itemsCorporativosFiltrados.length === 0">
+            <td [colSpan]="8" class="td-empty">
+              <i class="bx bx-package"></i>
+              <span>Sin artículos consolidados. Primero pre-consolida al menos una empresa.</span>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot *ngIf="itemsCorporativosFiltrados.length > 0">
+          <tr class="fila-totales">
+            <td colspan="3"><strong>TOTALES</strong></td>
+            <td class="td-total-foot hp" *ngIf="guardadoHP()">
+              {{ itemsCorporativosFiltrados | sumCantidad:'cantidadHP' }}
+            </td>
+            <td class="td-total-foot bh" *ngIf="guardadoBH()">
+              {{ itemsCorporativosFiltrados | sumCantidad:'cantidadBH' }}
+            </td>
+            <td class="td-total-foot cao" *ngIf="guardadoCAO()">
+              {{ itemsCorporativosFiltrados | sumCantidad:'cantidadCAO' }}
+            </td>
+            <td class="td-total-foot total">
+              <strong>{{ itemsCorporativosFiltrados | sumCantidad:'cantidadTotal' }}</strong>
+            </td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- =========================================== -->
+<!-- TEMPLATE: Tabla de requerimientos por empresa -->
+<!-- =========================================== -->
+<ng-template #tablaRequerimientos let-items let-empresa="empresa">
+  <div class="tabla-reqs-wrapper">
+    <table class="tabla-reqs">
+      <thead>
+        <tr>
+          <th class="th-check">
+            <input type="checkbox" [checked]="todosMarcados(empresa)"
+              (change)="seleccionarTodos(empresa, $any($event.target).checked)" />
+          </th>
+          <th>Código</th>
+          <th>Descripción</th>
+          <th>Área</th>
+          <th>Solicitante</th>
+          <th>Cantidad</th>
+          <th>Unidad</th>
+          <th>Fecha</th>
+          <th>Tipo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of items; trackBy: trackById"
+          [class.fila-seleccionada]="item.seleccionado"
+          (click)="empresa === 'HP' ? toggleSeleccionHP(item) : empresa === 'BH' ? toggleSeleccionBH(item) : toggleSeleccionCAO(item)">
+          <td class="td-check" (click)="$event.stopPropagation()">
+            <input type="checkbox" [checked]="item.seleccionado"
+              (change)="empresa === 'HP' ? toggleSeleccionHP(item) : empresa === 'BH' ? toggleSeleccionBH(item) : toggleSeleccionCAO(item)" />
+          </td>
+          <td><span class="codigo-pill">{{ item.codigo }}</span></td>
+          <td class="td-descripcion">{{ item.descripcion }}</td>
+          <td>{{ item.area }}</td>
+          <td>{{ item.solicitante }}</td>
+          <td class="td-cantidad-req">{{ item.cantidad }}</td>
+          <td>{{ item.unidad }}</td>
+          <td>{{ item.fecha }}</td>
+          <td><span class="tipo-badge">{{ item.tipo }}</span></td>
+        </tr>
+        <tr *ngIf="items.length === 0">
+          <td colspan="9" class="td-empty">
+            <i class="bx bx-search-alt"></i>
+            <span>No se encontraron requerimientos.</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</ng-template>
+
+<!-- =========================================== -->
+<!-- MODAL: Pre-consolidado empresa              -->
+<!-- =========================================== -->
+<div class="modal-overlay" *ngIf="modalPreConsolidadoAbierto" (click)="cancelarPreConsolidado()">
+  <div class="modal-panel modal-preconsolidado" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="bx bx-layer-plus"></i>
+        <div>
+          <h6>Pre-consolidar empresa <span class="empresa-chip {{ preConsolidadoActual?.empresa?.toLowerCase() }}">{{ preConsolidadoActual?.empresa }}</span></h6>
+          <small>Los siguientes artículos serán agrupados y guardados como consolidación de esta empresa</small>
+        </div>
+      </div>
+      <button class="btn-cerrar-modal" (click)="cancelarPreConsolidado()"><i class="bx bx-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <table class="tabla-reqs tabla-modal">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>Cantidad total</th>
+            <th>Unidad</th>
+            <th>Líneas agrupadas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of preConsolidadoActual?.items; trackBy: trackByCodigo">
+            <td><span class="codigo-pill">{{ item.codigo }}</span></td>
+            <td class="td-descripcion">{{ item.descripcion }}</td>
+            <td class="td-cantidad-req">
+              <strong>{{ item.cantidadTotal }}</strong>
+            </td>
+            <td>{{ item.unidad }}</td>
+            <td>
+              <div class="detalle-lines">
+                <div class="detalle-line" *ngFor="let d of item.detalle">
+                  {{ d.area }} — {{ d.solicitante }}: <strong>{{ d.cantidad }}</strong>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancelar" (click)="cancelarPreConsolidado()">Cancelar</button>
+      <button class="btn-confirmar" (click)="confirmarGuardadoEmpresa()">
+        <i class="bx bx-save"></i> Guardar consolidación {{ preConsolidadoActual?.empresa }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================== -->
+<!-- MODAL: Detalle de item consolidado          -->
+<!-- =========================================== -->
+<div class="modal-overlay" *ngIf="modalDetalleAbierto" (click)="cerrarDetalleConsolidado()">
+  <div class="modal-panel modal-detalle" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="bx bx-detail"></i>
+        <div>
+          <h6>Detalle: {{ itemDetalleActual?.codigo }} — {{ itemDetalleActual?.descripcion }}</h6>
+          <small>Desglose por área y solicitante</small>
+        </div>
+      </div>
+      <button class="btn-cerrar-modal" (click)="cerrarDetalleConsolidado()"><i class="bx bx-x"></i></button>
+    </div>
+    <div class="modal-body" *ngIf="itemDetalleActual">
+      <div class="detalle-summary">
+        <span>Cantidad total: <strong>{{ itemDetalleActual.cantidadTotal }} {{ itemDetalleActual.unidad }}</strong></span>
+      </div>
+      <table class="tabla-reqs tabla-modal mt-2">
+        <thead>
+          <tr>
+            <th>Empresa</th>
+            <th>Área</th>
+            <th>Solicitante</th>
+            <th>Cantidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of itemDetalleActual.detalle">
+            <td><span class="empresa-chip {{ d.empresa.toLowerCase() }}">{{ d.empresa }}</span></td>
+            <td>{{ d.area }}</td>
+            <td>{{ d.solicitante }}</td>
+            <td><strong>{{ d.cantidad }}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancelar" (click)="cerrarDetalleConsolidado()">Cerrar</button>
+    </div>
+  </div>
+</div>

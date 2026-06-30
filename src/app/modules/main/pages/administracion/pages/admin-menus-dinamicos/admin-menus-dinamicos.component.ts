@@ -372,7 +372,9 @@ export class AdminMenusDinamicosComponent {
     const menuJsonConfig = this.configuraciones().find(c => c.clave === 'MENU_JSON');
     if (menuJsonConfig) {
       try {
-        this.previewMenuGroups = JSON.parse(menuJsonConfig.valor) as AccordionGroupConfig[];
+        const parsed = JSON.parse(menuJsonConfig.valor) as AccordionGroupConfig[];
+        // Sincronizar items nuevos del ACCORDION_DEFAULT que no estén en el JSON guardado
+        this.previewMenuGroups = this.sincronizarItemsNuevos(parsed);
         return;
       } catch { /* JSON inválido, usar default */ }
     }
@@ -380,12 +382,33 @@ export class AdminMenusDinamicosComponent {
     // Buscar config desde LayoutConfigService
     const configMenu = this.layoutConfig.getAccordionMenu(this.rolSeleccionado);
     if (configMenu && configMenu.length > 0) {
-      this.previewMenuGroups = configMenu;
+      this.previewMenuGroups = this.sincronizarItemsNuevos(configMenu);
       return;
     }
 
     // Fallback: usar ACCORDION_DEFAULT
     this.previewMenuGroups = ACCORDION_DEFAULT;
+  }
+
+  /** Agrega grupos e items del ACCORDION_DEFAULT que no estén en el menú cargado desde BD */
+  private sincronizarItemsNuevos(menu: AccordionGroupConfig[]): AccordionGroupConfig[] {
+    const resultado = menu.map(g => ({ ...g, items: [...(g.items || [])] }));
+    const idsGrupos = new Set(resultado.map(g => g.id));
+
+    for (const grupoDefault of ACCORDION_DEFAULT) {
+      if (!idsGrupos.has(grupoDefault.id)) {
+        resultado.push({ ...JSON.parse(JSON.stringify(grupoDefault)), activo: false });
+      } else {
+        const grupoGuardado = resultado.find(g => g.id === grupoDefault.id)!;
+        const idsItems = new Set(grupoGuardado.items.map(i => i.id));
+        for (const itemDefault of grupoDefault.items) {
+          if (!idsItems.has(itemDefault.id)) {
+            grupoGuardado.items.push({ ...JSON.parse(JSON.stringify(itemDefault)), activo: false });
+          }
+        }
+      }
+    }
+    return resultado;
   }
 
   async agregarConfiguracion() {

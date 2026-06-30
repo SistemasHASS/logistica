@@ -20,16 +20,14 @@ export class TabCommodityComponent implements OnInit {
   readonly maestrasSvc = inject(RequerimientosMaestrasService);
 
   ngOnInit() {
-    const esModoServicio = localStorage.getItem('tipoRequerimientoConfig') === 'SERVICIO';
-    if (esModoServicio) {
-      // Modo servicio: Ir directamente al formulario sin selección
-      this.commoditySvc.tipoRequerimientoSeleccionado = 'SERVICIO';
-      this.commoditySvc.configuracionGuardada = true;
-      this.commoditySvc.mostrarConfiguracion = false;
-      // Establecer tipo SERVICIO en el formulario
+    const tipoConfig = localStorage.getItem('tipoRequerimientoConfig') as 'COMPRA' | 'SERVICIO' | null;
+    this.commoditySvc.tipoRequerimientoSeleccionado = tipoConfig || null;
+    this.commoditySvc.configuracionGuardada = true;
+    this.commoditySvc.mostrarConfiguracion = false;
+    if (tipoConfig === 'SERVICIO') {
       this.commoditySvc.itemTipoSeleccionado = 'SERVICIO' as any;
-    } else {
-      this.commoditySvc.inicializarEstado();
+    } else if (tipoConfig === 'COMPRA') {
+      this.commoditySvc.itemTipoSeleccionado = 'COMPRA';
     }
   }
 
@@ -55,6 +53,11 @@ export class TabCommodityComponent implements OnInit {
 
   // Datos de requerimientos del tab COMMODITY
   @Input() requerimientosCommodity: any[] = [];
+
+  get requerimientosFiltrados(): any[] {
+    if (!this.itemTipoSeleccionado) return this.requerimientosCommodity;
+    return this.requerimientosCommodity.filter((r: any) => r.itemtipo === this.itemTipoSeleccionado);
+  }
   @Input() loading = false;
   @Input() sinenviarCommodity = 0;
   @Input() enviadosCommodity = 0;

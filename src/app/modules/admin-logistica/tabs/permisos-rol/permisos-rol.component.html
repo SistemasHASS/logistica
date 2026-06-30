@@ -1,0 +1,129 @@
+<div class="permisos-container">
+
+  <!-- Header -->
+  <div class="page-header mb-4">
+    <div>
+      <h4 class="fw-bold mb-1"><i class="bx bx-shield me-2 text-primary"></i>Permisos por Rol</h4>
+      <p class="text-muted mb-0">Configura qué módulos del menú puede ver cada rol. Los cambios se aplican al próximo inicio de sesión.</p>
+    </div>
+    <div class="header-actions">
+      @if (hayEditados()) {
+        <button class="btn btn-outline-secondary btn-sm me-2" (click)="descartarCambios()" [disabled]="guardando()">
+          <i class="bx bx-x me-1"></i>Descartar
+        </button>
+        <button class="btn btn-primary btn-sm" (click)="guardarCambios()" [disabled]="guardando()">
+          @if (guardando()) {
+            <span class="spinner-border spinner-border-sm me-1"></span>Guardando...
+          } @else {
+            <i class="bx bx-save me-1"></i>Guardar cambios
+          }
+        </button>
+      }
+      <button class="btn btn-outline-secondary btn-sm ms-2" (click)="cargarTodosLosPermisos()" [disabled]="loading()" title="Recargar">
+        <i class="bx bx-refresh" [class.bx-spin]="loading()"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Alertas -->
+  @if (mensajeExito()) {
+    <div class="alert alert-success alert-dismissible d-flex align-items-center mb-3" role="alert">
+      <i class="bx bx-check-circle me-2 fs-5"></i>
+      {{ mensajeExito() }}
+    </div>
+  }
+  @if (mensajeError()) {
+    <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
+      <i class="bx bx-error-circle me-2 fs-5"></i>
+      {{ mensajeError() }}
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted mt-2">Cargando permisos...</p>
+    </div>
+  } @else {
+
+    <!-- Chips resumen por rol -->
+    <div class="roles-chips mb-3 d-flex flex-wrap gap-2">
+      @for (rol of roles; track rol.idrol) {
+        <span
+          class="chip-rol"
+          [class.chip-seleccionado]="rolSeleccionado() === rol.idrol"
+          (click)="seleccionarRol(rol.idrol)"
+        >
+          <i class="bx bx-user-circle me-1"></i>
+          {{ rol.nombre }}
+          <span class="badge bg-primary ms-1 text-white">{{ contarPermisosActivos(rol.idrol) }}</span>
+        </span>
+      }
+    </div>
+
+    <!-- Tabla de permisos -->
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle permisos-table">
+        <thead class="table-dark">
+          <tr>
+            <th class="col-modulo text-white">Módulo</th>
+            @for (rol of roles; track rol.idrol) {
+              <th
+                class="col-rol text-center"
+                [class.col-rol-highlight]="rolSeleccionado() === rol.idrol"
+              >
+                <div class="rol-header">
+                  <small class="rol-nombre text-white">{{ rol.nombre }}</small>
+                  <small class="rol-id text-muted text-white">({{ rol.idrol }})</small>
+                  <div class="rol-actions mt-1">
+                    <button class="btn btn-xs btn-outline-success me-1 text-white" title="Activar todos" (click)="toggleTodoRol(rol.idrol, true)">
+                      <i class="bx bx-check-double"></i>
+                    </button>
+                    <button class="btn btn-xs btn-outline-danger text-white" title="Desactivar todos" (click)="toggleTodoRol(rol.idrol, false)">
+                      <i class="bx bx-x"></i>
+                    </button>
+                  </div>
+                </div>
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (fila of filas(); track fila.modulo.route) {
+            <tr [class.fila-editada]="fila.editado">
+              <td class="modulo-cell">
+                <i class="bx {{ fila.modulo.icon }} me-2 text-secondary"></i>
+                {{ fila.modulo.label }}
+                @if (fila.editado) {
+                  <span class="badge bg-warning text-dark ms-2 badge-sm">modificado</span>
+                }
+              </td>
+              @for (rol of roles; track rol.idrol) {
+                <td
+                  class="text-center toggle-cell"
+                  [class.col-rol-highlight]="rolSeleccionado() === rol.idrol"
+                  (click)="togglePermiso(fila, rol.idrol)"
+                >
+                  @if (fila.permisosPorRol[rol.idrol]) {
+                    <i class="bx bx-toggle-right toggle-on toggle-icon"></i>
+                  } @else {
+                    <i class="bx bx-toggle-left toggle-off toggle-icon"></i>
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Leyenda -->
+    <div class="leyenda d-flex align-items-center gap-3 mt-2 text-muted small">
+      <span><i class="bx bx-toggle-right toggle-on me-1"></i>Visible</span>
+      <span><i class="bx bx-toggle-left toggle-off me-1"></i>Oculto</span>
+      <span><span class="badge bg-warning text-dark">modificado</span> = cambio sin guardar</span>
+    </div>
+  }
+
+</div>

@@ -83,6 +83,10 @@ export const adminLogisticaRoutes: Routes = [
         path: 'conformidad-servicio',
         loadComponent: () => import('./tabs/conformidad-servicio/conformidad-servicio.component').then(m => m.ConformidadServicioAdminComponent)
       },
+      {
+        path: 'permisos-rol',
+        loadComponent: () => import('./tabs/permisos-rol/permisos-rol.component').then(m => m.PermisosRolComponent)
+      },
     ]
   }
 ];

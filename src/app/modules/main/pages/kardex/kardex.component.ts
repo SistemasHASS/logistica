@@ -81,8 +81,8 @@ export class KardexComponent implements OnInit {
   filtroKardex = {
     codigoItem: '',
     almacen: '',
-    fechaInicio: null as Date | null,
-    fechaFin: null as Date | null,
+    fechaInicio: null as string | null,
+    fechaFin: null as string | null,
     tipoMovimiento: '',
     fuente: '' as '' | 'SPRING' | 'LOCAL',
   };
@@ -91,8 +91,8 @@ export class KardexComponent implements OnInit {
   transacciones: any[] = [];
   transaccionesFiltradas: any[] = [];
   filtroTransacciones = {
-    fechaInicio: null as Date | null,
-    fechaFin: null as Date | null,
+    fechaInicio: null as string | null,
+    fechaFin: null as string | null,
     tipoTransaccion: '',
     estado: '',
     fuente: '' as '' | 'SPRING' | 'LOCAL',
@@ -219,6 +219,8 @@ export class KardexComponent implements OnInit {
     
     // Sincronizar tablas maestras
     await this.sincronizarTablasMaestras();
+    // Cargar kardex automáticamente al iniciar
+    await this.buscarKardex();
     console.log('ngOnInit - Completado');
   }
 
@@ -451,21 +453,17 @@ export class KardexComponent implements OnInit {
   // ==================== KARDEX ====================
 
   async buscarKardex() {
-    if (!this.filtroKardex.codigoItem) {
-      this.alertService.showAlert(
-        'Atención',
-        'Debe ingresar un código de item',
-        'warning',
-      );
-      return;
-    }
-
     try {
       this.loading = true;
       const filtros: any = {
-        codigoItem: this.filtroKardex.codigoItem,
         companiaSocio: this.companiaSocio,
       };
+
+      if (this.filtroKardex.codigoItem?.trim()) {
+        filtros.codigoItem = this.filtroKardex.codigoItem.trim();
+      } else {
+        filtros.top = 100;
+      }
 
       if (this.filtroKardex.almacen) filtros.almacen = this.filtroKardex.almacen;
       if (this.filtroKardex.tipoMovimiento) filtros.tipoMovimiento = this.filtroKardex.tipoMovimiento;
@@ -478,8 +476,18 @@ export class KardexComponent implements OnInit {
         filtros.fechaFin = this.formatearFechaSQL(this.filtroKardex.fechaFin);
       }
 
-      this.movimientosKardex =
-        await this.kardexService.consultarKardex(filtros);
+      const rawKardex = await this.kardexService.consultarKardex(filtros);
+      console.log('[Kardex] Respuesta backend:', rawKardex, 'length:', rawKardex?.length);
+      this.movimientosKardex = rawKardex.map((m: any) => ({
+        ...m,
+        codigoItem:      (m.codigoItem      ?? '').trim(),
+        descripcionItem: (m.descripcionItem ?? '').trim(),
+        unidadMedida:    (m.unidadMedida    ?? '').trim(),
+        almacenOrigen:   (m.almacenOrigen   ?? '').trim(),
+        almacenDestino:  (m.almacenDestino  ?? '').trim(),
+        tipoDocumento:   (m.tipoDocumento   ?? '').trim(),
+        numeroDocumento: (m.numeroDocumento ?? '').trim(),
+      }));
     } catch (error) {
       console.error('Error al buscar kardex:', error);
       this.alertService.showAlert(
@@ -921,7 +929,11 @@ export class KardexComponent implements OnInit {
     });
   }
 
-  formatearFechaSQL(fecha: Date): string {
+  formatearFechaSQL(fecha: Date | string | null): string {
+    if (!fecha) return '';
+    if (typeof fecha === 'string') {
+      return fecha.substring(0, 10);
+    }
     const year = fecha.getFullYear();
     const month = String(fecha.getMonth() + 1).padStart(2, '0');
     const day = String(fecha.getDate()).padStart(2, '0');

@@ -142,13 +142,14 @@
         <!-- Filtros -->
         <div class="row mb-2">
           <div class="col-md-2">
-            <label>Código Item <span class="texto-error">*</span></label>
+            <label>Código Item</label>
             <input type="text" class="form-control" [(ngModel)]="filtroKardex.codigoItem"
-                   placeholder="Ej: 000886">
+                   placeholder="Ej: 000886 (opcional)">
           </div>
           <div class="col-md-2">
             <label>Almacén</label>
             <select class="form-control" [(ngModel)]="filtroKardex.almacen">
+              <option value="">Todos</option>
               @for (alm of almacenes; track alm.value) {
                 <option [value]="alm.value">{{ alm.label }}</option>
               }
@@ -226,7 +227,7 @@
               <td><small>{{ mov.tipoDocumento }} {{ mov.numeroDocumento }}</small></td>
               <td>
                 @if (mov.numeroDocumentoSpring) {
-                  <span class="badge bg-primary">{{ mov.transaccionSpring }} {{ mov.numeroDocumentoSpring }}</span>
+                  <span class="badge bg-primary text-white">{{ mov.transaccionSpring }} {{ mov.numeroDocumentoSpring }}</span>
                 } @else {
                   <small class="text-muted">-</small>
                 }
@@ -242,7 +243,7 @@
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="12" class="text-center">Ingrese un código de item y presione buscar</td>
+              <td colspan="12" class="text-center">No se encontraron movimientos con los filtros aplicados</td>
             </tr>
           </ng-template>
         </p-table>

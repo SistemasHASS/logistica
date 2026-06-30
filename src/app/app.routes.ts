@@ -7,6 +7,7 @@ import { AprobacionesComponent } from './modules/main/pages/aprobaciones/aprobac
 import { NotificacionesListaComponent } from './modules/main/pages/notificaciones-lista/notificaciones-lista.component';
 import { AprobadorGuard } from './modules/auth/guard/aprobador.guard';
 import { AlmacenGuard } from './modules/auth/guard/almacen.guard';
+import { AdministradorOAlmacenGuard } from './modules/auth/guard/administrador-o-almacen.guard';
 import { OperativoGuard } from './modules/auth/guard/operativo.guard';
 import { OperativoLogisticoGuard } from './modules/auth/guard/operativo-logistico.guard';
 import { EmpaqueGuard } from './modules/auth/guard/empaque.guard';
@@ -71,6 +72,7 @@ import { AdminLogisticaGuard } from './modules/auth/guard/admin-logistica.guard'
 import { ConformidadServiciosComponent } from './modules/main/pages/conformidad-servicios/conformidad-servicios.component';
 import { ConformidadServiciosGuard } from './modules/auth/guard/conformidad-servicios.guard';
 import { CatalogoItemsComponent } from './modules/main/pages/catalogo-items/catalogo-items.component';
+import { ConsolidacionCorporativaComponent } from './modules/main/pages/consolidacion-corporativa/consolidacion-corporativa.component';
 
 export const routes: Routes = [
   {
@@ -116,7 +118,7 @@ export const routes: Routes = [
         ]
       },
       { path: 'aprobadores', component: AprobadoresMantenedorComponent, canActivate: [AdministradorGuard] },
-      { path: 'maestro-proveedores', component: MaestroProveedoresComponent, canActivate: [AlmacenGuard] },
+      { path: 'maestro-proveedores', component: MaestroProveedoresComponent, canActivate: [AdministradorOAlmacenGuard] },
       { path: 'evaluacion-proveedores', component: EvaluacionProveedoresComponent, canActivate: [AlmacenGuard] },
       // { path: 'parametros', component: ParametrosComponent, canActivate: [OperativoGuard] },
       { path: 'parametros', component: ParametrosComponent, canActivate: [OperativoEmpaqueGuard] },
@@ -165,6 +167,7 @@ export const routes: Routes = [
       { path: 'consolidacion-compras', component: ConsolidacionComprasComponent, canActivate: [LogisticoGuard] },
       { path: 'consolidacion-servicios', component: ConsolidacionServiciosComponent, canActivate: [LogisticoGuard] },
       { path: 'conformidad-servicios', component: ConformidadServiciosComponent, canActivate: [ConformidadServiciosGuard] },
+      { path: 'consolidacion-corporativa', component: ConsolidacionCorporativaComponent, canActivate: [LogisticoGuard] },
       { path: 'catalogo-items', component: CatalogoItemsComponent },
       { path: '**', redirectTo: 'auth/login' }
     ],

@@ -47,7 +47,7 @@
         <ng-template pTemplate="header">
           <tr>
             <th style="width:50px">#</th>
-            <th style="min-width:120px" pSortableColumn="item">
+            <th style="width:auto; white-space:nowrap" pSortableColumn="item">
               Código <p-sortIcon field="item"></p-sortIcon>
             </th>
             <th style="min-width:200px" class="col-descripcion" pSortableColumn="descripcionLocal">
@@ -68,14 +68,14 @@
             <!-- <th style="min-width:90px" pSortableColumn="unidadCompra">
               Und. Compra <p-sortIcon field="unidadCompra"></p-sortIcon>
             </th> -->
-            <th style="min-width:80px" class="text-center">Estado</th>
+            <th style="min-width:80px" class="d-none d-md-table-cell text-center">Estado</th>
           </tr>
         </ng-template>
 
         <ng-template pTemplate="body" let-item let-i="rowIndex">
           <tr>
             <td class="text-muted">{{ i + 1 }}</td>
-            <td><span class="badge bg-light text-dark border">{{ item.item }}</span></td>
+            <td class="text-nowrap"><span class="badge bg-light text-dark border">{{ item.item }}</span></td>
             <td class="col-descripcion">
               <div class="fw-semibold">{{ item.descripcionLocal }}</div>
               <!-- @if (item.descripcionCompleta && item.descripcionCompleta !== item.descripcionLocal) {
@@ -87,7 +87,7 @@
             <!-- <td>{{ item.subFamilia || '—' }}</td> -->
             <td>{{ item.unidadCodigo || '—' }}</td>
             <!-- <td>{{ item.unidadCompra || '—' }}</td> -->
-            <td class="text-center">
+            <td class="d-none d-md-table-cell text-center">
               <span class="badge bg-success-subtle text-success">Activo</span>
             </td>
           </tr>
@@ -95,7 +95,7 @@
 
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td colspan="9" class="text-center text-muted py-4">
+            <td colspan="5" class="text-center text-muted py-4">
               <i class="bx bx-search fs-3 d-block mb-2"></i>
               No se encontraron items con ese criterio de búsqueda.
             </td>

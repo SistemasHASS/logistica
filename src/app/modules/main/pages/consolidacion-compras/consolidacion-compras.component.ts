@@ -553,7 +553,8 @@ export class ConsolidacionComprasComponent implements OnInit {
       ceco: g.items[0]?.ceco || '',
       proyecto: g.items[0]?.proyecto || '',
       idDetalle: g.items[0]?.idDetalle,
-      idConsolidacion: g.items[0]?.IdConsolidacion,
+      idDetalles: g.items.map((i: any) => i.idDetalle).filter(Boolean),
+      idConsolidacion: g.items[0]?.IdConsolidacion ?? g.items[0]?.idConsolidacion,
       tipoLinea: g.items[0]?.tipoItem || 'ITEM'
     }));
 

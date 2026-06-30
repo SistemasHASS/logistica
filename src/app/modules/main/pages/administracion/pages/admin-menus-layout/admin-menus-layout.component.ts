@@ -57,13 +57,15 @@ const MENUS_LAYOUT: MenuItem[] = [
   { id: 'consolidacion-compras',nombre: 'Consolidación Compras',        icono: 'bx bx-cart',          ruta: '/main/consolidacion-compras',roles: ['TILOGIST','ADLOGIST','JLOLOGIST','LOLOGIST'],                                    categoria: 'Compras & Órdenes', orden: 15 },
   { id: 'solicitudes-servicio', nombre: 'Solicitudes de Servicio',      icono: 'bx bx-briefcase',     ruta: '/main/solicitudes-servicio', roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST'],                        categoria: 'Compras & Órdenes', orden: 16 },
   { id: 'ordenes-servicio',     nombre: '\u00d3rdenes de Servicio',          icono: 'bx bx-wrench',        ruta: '/main/ordenes-servicio',     roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST'],                        categoria: 'Compras & Órdenes', orden: 17 },
-  { id: 'cotizaciones',         nombre: 'Cotizaciones',                 icono: 'icon icon-calculator',ruta: '/main/cotizaciones',         roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST'],                        categoria: 'Compras & Órdenes', orden: 18 },
+  { id: 'cotizaciones',          nombre: 'Cotizaciones',                 icono: 'icon icon-calculator', ruta: '/main/cotizaciones',          roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST'],                                           categoria: 'Compras & Órdenes', orden: 18 },
+  { id: 'conformidad-servicios',nombre: 'Conformidad de OS',            icono: 'bx bx-check-shield',   ruta: '/main/conformidad-servicios', roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST','EMLOGIST'],                                 categoria: 'Compras & Órdenes', orden: 19 },
   // ── Almacén & Stock ───────────────────────────────────────────
-  { id: 'despachos',            nombre: 'Gestión de Despachos',         icono: 'icon icon-stack',     ruta: '/main/despachos',            roles: ['TILOGIST','ADLOGIST','ALLOGIST','JLOLOGIST','LOLOGIST'],                         categoria: 'Almacén & Stock', orden: 18 },
-  { id: 'recepcion-mercaderia', nombre: 'Recepción de Mercadería',      icono: 'icon icon-package',   ruta: '/main/recepcion-mercaderia', roles: ['TILOGIST','ADLOGIST','ALLOGIST','JLOLOGIST','LOLOGIST'],                         categoria: 'Almacén & Stock', orden: 19 },
-  { id: 'kardex',               nombre: 'Kardex e Inventario',          icono: 'bx bx-container',     ruta: '/main/kardex',               roles: ['TILOGIST','ADLOGIST','ALLOGIST','JLOLOGIST','LOLOGIST'],                         categoria: 'Almacén & Stock', orden: 20 },
-  { id: 'devoluciones-consumo', nombre: 'Devoluciones de Consumo',      icono: 'icon icon-undo2',     ruta: '/main/devoluciones-consumo', roles: ['TILOGIST','ADLOGIST','ALLOGIST'],                                                categoria: 'Almacén & Stock', orden: 21 },
-  { id: 'reingresos',           nombre: 'Reingresos',                   icono: 'icon icon-enter',     ruta: '/main/reingresos',           roles: ['TILOGIST','ADLOGIST','ALLOGIST'],                                                categoria: 'Almacén & Stock', orden: 22 },
+  { id: 'despachos',            nombre: 'Gestión de Despachos',         icono: 'icon icon-stack',      ruta: '/main/despachos',            roles: ['TILOGIST','ADLOGIST','ALLOGIST','JLOLOGIST','LOLOGIST'],                                            categoria: 'Almacén & Stock', orden: 20 },
+  { id: 'recepcion-mercaderia', nombre: 'Recepción de Mercadería',      icono: 'icon icon-package',    ruta: '/main/recepcion-mercaderia', roles: ['TILOGIST','ADLOGIST','ALLOGIST','JLOLOGIST','LOLOGIST'],                                            categoria: 'Almacén & Stock', orden: 21 },
+  { id: 'kardex',               nombre: 'Kardex e Inventario',          icono: 'bx bx-container',      ruta: '/main/kardex',               roles: ['TILOGIST','ADLOGIST','ALLOGIST','JLOLOGIST','LOLOGIST'],                                            categoria: 'Almacén & Stock', orden: 22 },
+  { id: 'conformidad-almacen',  nombre: 'Conformidad NI / NS',          icono: 'bx bx-pen',            ruta: '/main/conformidad-almacen',  roles: ['TILOGIST','ADLOGIST','ALLOGIST','JLOLOGIST','LOLOGIST','OPLOGIST'],                                  categoria: 'Almacén & Stock', orden: 23 },
+  { id: 'devoluciones-consumo', nombre: 'Devoluciones de Consumo',      icono: 'icon icon-undo2',      ruta: '/main/devoluciones-consumo', roles: ['TILOGIST','ADLOGIST','ALLOGIST'],                                                                    categoria: 'Almacén & Stock', orden: 24 },
+  { id: 'reingresos',           nombre: 'Reingresos',                   icono: 'icon icon-enter',      ruta: '/main/reingresos',           roles: ['TILOGIST','ADLOGIST','ALLOGIST'],                                                                    categoria: 'Almacén & Stock', orden: 25 },
   // ── Aprobaciones ──────────────────────────────────────────────
   { id: 'aprobaciones-oc',      nombre: 'Aprobación OC',                icono: 'icon icon-file-check',ruta: '/main/aprobaciones-oc',      roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','FINANZAS','GERENTE'],               categoria: 'Aprobaciones', orden: 23 },
   { id: 'aprobaciones-os',      nombre: 'Aprobación OS',                icono: 'icon icon-file-check',ruta: '/main/aprobaciones-os',      roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','FINANZAS','GERENTE'],               categoria: 'Aprobaciones', orden: 24 },
@@ -629,21 +631,34 @@ export class AdminMenusLayoutComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  /** Agrega grupos del default que no estén en el menú guardado, inactivos para poder activarlos luego */
+  /** Agrega grupos e items del default que no estén en el menú guardado, inactivos para poder activarlos luego */
   completarGruposConDefault(menu: AccordionGroupConfig[]): AccordionGroupConfig[] {
     const resultado = menu.map(g => ({ ...g, items: [...(g.items || [])] }));
     const idsPresentes = new Set(resultado.map(g => g.id));
 
     for (const grupoDefault of ACCORDION_DEFAULT) {
       if (!idsPresentes.has(grupoDefault.id)) {
+        // Grupo entero faltante → agregar inactivo
         resultado.push({
           ...JSON.parse(JSON.stringify(grupoDefault)),
           activo: false
         });
+      } else {
+        // Grupo existe → sincronizar items nuevos del default que no estén en el guardado
+        const grupoGuardado = resultado.find(g => g.id === grupoDefault.id)!;
+        const idsItemsGuardados = new Set(grupoGuardado.items.map(i => i.id));
+        for (const itemDefault of grupoDefault.items) {
+          if (!idsItemsGuardados.has(itemDefault.id)) {
+            grupoGuardado.items.push({
+              ...JSON.parse(JSON.stringify(itemDefault)),
+              activo: false
+            });
+          }
+        }
       }
     }
 
-    // Ordenar según ACCORDION_DEFAULT
+    // Ordenar grupos según ACCORDION_DEFAULT
     const orden = new Map(ACCORDION_DEFAULT.map((g, i) => [g.id, i]));
     resultado.sort((a, b) => (orden.get(a.id) ?? 999) - (orden.get(b.id) ?? 999));
 
