@@ -240,6 +240,7 @@
   &.step-done      { opacity: 0.75; }
 
   // Colores por estado
+  &.color-pendiente { background: #f59e0b; border-color: #f59e0b; color: #fff; }
   &.color-aprobado  { background: #10b981; border-color: #10b981; color: #fff; }
   &.color-en-oc     { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
   &.color-aprobada  { background: #8b5cf6; border-color: #8b5cf6; color: #fff; }
@@ -290,6 +291,7 @@
 
   &.badge-active  { background: #0ea5e9; color: #fff; }
   &.badge-done    { background: #10b981; color: #fff; }
+  &.badge-pendiente { background: #f59e0b; color: #fff; }
   &.badge-atendida { background: #059669; color: #fff; }
   &.badge-aprobada { background: #8b5cf6; color: #fff; }
   &.badge-enviada  { background: #3b82f6; color: #fff; }
@@ -312,4 +314,26 @@
 // p-tag contrast (DESPACHADO) → texto blanco
 :host ::ng-deep .p-tag.p-tag-contrast {
   color: #ffffff;
+}
+
+// ─── Tabs CONSUMO / COMPRA: borde solo en el tab NO seleccionado ───
+:host ::ng-deep .nav-tabs .nav-item .nav-link {
+  border: 2px solid #0ea5e9;
+  transition: all 0.2s ease;
+
+  &:hover:not(.active) {
+    background-color: rgba(14, 165, 233, 0.08);
+  }
+
+  &.tab-consumo,
+  &.tab-compra {
+    color: #0284c7; // azul
+
+    &.active {
+      color: #ffffff;
+      background-color: #0ea5e9;
+      border-color: #0ea5e9;
+      box-shadow: none;
+    }
+  }
 }

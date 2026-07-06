@@ -83,6 +83,11 @@ export class NotificacionesListaComponent implements OnInit {
       case 'STOCK_DISPONIBLE':    return 'bx bx-check-circle icono-exito';
       case 'SALDO_PENDIENTE':     return 'bx bx-error icono-advertencia';
       case 'SOLICITUD_ITEM_NUEVO': return 'bx bx-plus-circle icono-informativo';
+      case 'PENDIENTE_DESPACHO':  return 'bx bx-time-five icono-advertencia';
+      case 'DESPACHO_REALIZADO':  return 'bx bx-package icono-exito';
+      case 'OC_EMITIDA':          return 'bx bx-cart-check icono-exito';
+      case 'DESPACHO_PARCIAL':    return 'bx bx-transfer icono-advertencia';
+      case 'SIN_STOCK':           return 'bx bx-x-circle icono-error';
       default:                    return 'bx bx-info-circle icono-informativo';
     }
   }
@@ -92,6 +97,11 @@ export class NotificacionesListaComponent implements OnInit {
       case 'STOCK_DISPONIBLE':    return 'estado-confirmado';
       case 'SALDO_PENDIENTE':     return 'estado-pendiente';
       case 'SOLICITUD_ITEM_NUEVO': return 'estado-solicitud';
+      case 'PENDIENTE_DESPACHO':  return 'estado-pendiente';
+      case 'DESPACHO_REALIZADO':  return 'estado-confirmado';
+      case 'OC_EMITIDA':          return 'estado-confirmado';
+      case 'DESPACHO_PARCIAL':    return 'estado-pendiente';
+      case 'SIN_STOCK':           return 'estado-error';
       default:                    return 'estado-informativo';
     }
   }
@@ -101,6 +111,11 @@ export class NotificacionesListaComponent implements OnInit {
       case 'STOCK_DISPONIBLE':    return 'Stock Disponible';
       case 'SALDO_PENDIENTE':     return 'Saldo Pendiente';
       case 'SOLICITUD_ITEM_NUEVO': return 'Solicitud Nuevo Ítem';
+      case 'PENDIENTE_DESPACHO':  return 'Pendiente de Despacho';
+      case 'DESPACHO_REALIZADO':  return 'Despacho Realizado';
+      case 'OC_EMITIDA':          return 'OC Emitida';
+      case 'DESPACHO_PARCIAL':    return 'Despacho Parcial';
+      case 'SIN_STOCK':           return 'Sin Stock';
       default:                    return tipo;
     }
   }

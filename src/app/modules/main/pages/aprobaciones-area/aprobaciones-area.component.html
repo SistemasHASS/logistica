@@ -43,22 +43,22 @@
   <!-- Vista móvil: indicadores compactos horizontales -->
   <div class="d-md-none mb-4" *ngIf="dashboard">
     <div class="dashboard-mobile-scroll d-flex flex-nowrap gap-2 overflow-auto pb-1">
-      <div class="dashboard-mobile-item flex-shrink-0 text-center bg-white rounded-3 shadow-sm p-2 border-start border-4 border-warning">
+      <div class="dashboard-mobile-item flex-shrink-0 text-center bg-white rounded-3 shadow-sm p-2 border-start border-4 border-dark">
         <i class="bx bx-clock text-warning" style="font-size: 1.25rem;"></i>
         <div class="fw-bold lh-1" style="font-size: 1.1rem;">{{ getIndicador('pendientes') }}</div>
         <small class="text-muted" style="font-size: 0.65rem;">Pendientes</small>
       </div>
-      <div class="dashboard-mobile-item flex-shrink-0 text-center bg-white rounded-3 shadow-sm p-2 border-start border-4 border-success">
+      <div class="dashboard-mobile-item flex-shrink-0 text-center bg-white rounded-3 shadow-sm p-2 border-start border-4 border-dark">
         <i class="bx bx-check-circle text-success" style="font-size: 1.25rem;"></i>
         <div class="fw-bold lh-1" style="font-size: 1.1rem;">{{ getIndicador('aprobados_hoy') }}</div>
         <small class="text-muted" style="font-size: 0.65rem;">Aprob. Hoy</small>
       </div>
-      <div class="dashboard-mobile-item flex-shrink-0 text-center bg-white rounded-3 shadow-sm p-2 border-start border-4 border-danger">
+      <div class="dashboard-mobile-item flex-shrink-0 text-center bg-white rounded-3 shadow-sm p-2 border-start border-4 border-dark">
         <i class="bx bx-x-circle text-danger" style="font-size: 1.25rem;"></i>
         <div class="fw-bold lh-1" style="font-size: 1.1rem;">{{ getIndicador('rechazados_hoy') }}</div>
         <small class="text-muted" style="font-size: 0.65rem;">Rech. Hoy</small>
       </div>
-      <div class="dashboard-mobile-item flex-shrink-0 text-center bg-white rounded-3 shadow-sm p-2 border-start border-4 border-info">
+      <div class="dashboard-mobile-item flex-shrink-0 text-center bg-white rounded-3 shadow-sm p-2 border-start border-4 border-dark">
         <i class="bx bx-stopwatch text-info" style="font-size: 1.25rem;"></i>
         <div class="fw-bold lh-1" style="font-size: 1.1rem;">{{ getIndicador('tiempo_promedio') }}<span style="font-size:0.65rem;">m</span></div>
         <small class="text-muted" style="font-size: 0.65rem;">Tiempo</small>
@@ -103,50 +103,58 @@
           <!-- Filtro por tipo: TODOS / COMPRA / CONSUMO -->
           <div class="filtro-tipo-requerimientos mb-3">
             <div class="filtro-tipo-scroll d-flex flex-nowrap gap-2 overflow-auto pb-1" role="group" aria-label="Filtro por tipo de requerimiento">
-              <button type="button" class="btn btn-outline-secondary flex-shrink-0"
-                      [class.active]="filtroTipoPendiente === 'TODOS'"
+              <button type="button" class="btn btn-sm flex-shrink-0"
+                      [class.btn-secondary]="filtroTipoPendiente === 'TODOS'"
+                      [class.btn-outline-secondary]="filtroTipoPendiente !== 'TODOS'"
                       (click)="filtroTipoPendiente = 'TODOS'">
                 <i class="bx bx-list-ul me-1"></i>
                 Todos
-                <span class="badge bg-secondary ms-2">{{ requerimientosPendientes.length }}</span>
+                <span class="badge bg-white text-dark ms-1">{{ requerimientosPendientes.length }}</span>
               </button>
-              <button type="button" class="btn btn-outline-primary flex-shrink-0"
-                      [class.active]="filtroTipoPendiente === 'COMPRA'"
+              <button type="button" class="btn btn-sm flex-shrink-0"
+                      [class.btn-primary]="filtroTipoPendiente === 'COMPRA'"
+                      [class.btn-outline-primary]="filtroTipoPendiente !== 'COMPRA'"
                       (click)="filtroTipoPendiente = 'COMPRA'">
                 <i class="bx bx-cart me-1"></i>
                 Compra
-                <span class="badge bg-primary ms-2">{{ contarPendientesPorTipo('COMPRA') }}</span>
+                <span class="badge bg-white text-dark ms-1">{{ contarPendientesPorTipo('COMPRA') }}</span>
               </button>
-              <button type="button" class="btn btn-outline-success flex-shrink-0"
-                      [class.active]="filtroTipoPendiente === 'CONSUMO'"
+              <button type="button" class="btn btn-sm flex-shrink-0"
+                      [class.btn-success]="filtroTipoPendiente === 'CONSUMO'"
+                      [class.btn-outline-success]="filtroTipoPendiente !== 'CONSUMO'"
                       (click)="filtroTipoPendiente = 'CONSUMO'">
                 <i class="bx bx-package me-1"></i>
                 Consumo
-                <span class="badge bg-success ms-2">{{ contarPendientesPorTipo('CONSUMO') }}</span>
+                <span class="badge bg-white text-dark ms-1">{{ contarPendientesPorTipo('CONSUMO') }}</span>
               </button>
-              <button type="button" class="btn btn-outline-warning flex-shrink-0"
-                      [class.active]="filtroTipoPendiente === 'SERVICIO'"
+              <button type="button" class="btn btn-sm flex-shrink-0"
+                      [class.btn-warning]="filtroTipoPendiente === 'SERVICIO'"
+                      [class.btn-outline-warning]="filtroTipoPendiente !== 'SERVICIO'"
                       (click)="filtroTipoPendiente = 'SERVICIO'">
                 <i class="bx bx-wrench me-1"></i>
                 Servicio
-                <span class="badge bg-warning ms-2">{{ contarPendientesPorTipo('SERVICIO') }}</span>
+                <span class="badge bg-white text-dark ms-1">{{ contarPendientesPorTipo('SERVICIO') }}</span>
               </button>
             </div>
           </div>
 
           <p-table [value]="requerimientosPendientesFiltrados" [loading]="loadingPendientes"
+                   selectionMode="multiple" [(selection)]="requerimientosPendientesSeleccionados"
+                   [dataKey]="'idrequerimiento'"
                    [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
                    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} requerimientos"
                    [rowsPerPageOptions]="[10,25,50]" styleClass="p-datatable-sm">
             <ng-template pTemplate="header">
               <tr>
-                <th>N° Req.</th>
-                <th>Fecha</th>
+                <th style="width: 40px;">
+                  <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                </th>
+                <th>Fecha Creación</th>
                 <th>Solicitante</th>
                 <th>Área</th>
-                <th>Tipo</th>
+                <!-- <th>Tipo</th> -->
                 <th class="d-none d-md-table-cell">Descripción</th>
-                <!-- <th>Monto</th> -->
+                <th class="d-none d-md-table-cell text-end" *ngIf="filtroTipoPendiente === 'COMPRA'">Monto Ref.</th>
                 <th>Estado</th>
                 <!-- <th>Tiempo Espera</th> -->
                 <th>Acciones</th>
@@ -154,21 +162,31 @@
             </ng-template>
             <ng-template pTemplate="body" let-req>
               <tr>
-                <!-- <td>{{ req.numeroRequerimiento }}</td> -->
                 <td>
-                  <span class="d-none d-md-inline">{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero }}</span>
-                  <span class="d-inline d-md-none">{{ req.idrequerimiento | numeroRequerimiento : req.RequisicionNumero : true }}</span>
+                  <p-tableCheckbox [value]="req"></p-tableCheckbox>
                 </td>
                 <td>{{ req.fecha | date: 'dd/MM/yyyy' }}</td>
                 <td>
                   <span class="d-none d-md-inline">{{ req.nombreSolicitante }}</span>
                   <span class="d-inline d-md-none">{{ req.nombreSolicitante | nombreCorto }}</span>
                 </td>
-                <td>{{ req.nombreArea }}</td>
-                <td>{{ req.itemtipo || req.tipoRequerimiento || '-' }}</td>
+                <td>
+                  {{ req.nombreArea }}
+                  <div class="d-md-none mt-1" *ngIf="esRequerimientoCompra(req)">
+                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold" style="font-size:0.72rem;">
+                      <i class="bx bx-dollar-circle me-1"></i>{{ formatMoneda(calcularMontoRequerimiento(req)) }}
+                    </span>
+                  </div>
+                </td>
+                <!-- <td>{{ req.itemtipo || req.tipoRequerimiento || '-' }}</td> -->
                 <td class="d-none d-md-table-cell">{{ req.glosa || 'Sin descripción' }}</td>
-                <!-- <td>{{ req.estados }}</td> -->
-                <!-- <td>{{ formatMoneda(req.montoTotal) }}</td> -->
+                <td class="d-none d-md-table-cell text-end" *ngIf="filtroTipoPendiente === 'COMPRA'">
+                  <ng-container *ngIf="esRequerimientoCompra(req)">
+                    <span class="fw-semibold text-primary">{{ formatMoneda(calcularMontoRequerimiento(req)) }}</span>
+                    <div class="text-muted" style="font-size:0.7rem;">{{ (req.detalles || req.detalle)?.length || 0 }} ítems</div>
+                  </ng-container>
+                  <span *ngIf="!esRequerimientoCompra(req)" class="text-muted">—</span>
+                </td>
                 <td>
                   <p-tag [severity]="req.estado === 'APROBADO' ? 'success' : req.estado === 'RECHAZADO' ? 'danger' : 'warn'">
                     {{ req.estado || req.estados || 'PENDIENTE' }}
@@ -202,10 +220,19 @@
             </ng-template>
             <ng-template pTemplate="emptymessage">
               <tr>
-                <td colspan="10" class="text-center">No hay requerimientos pendientes de aprobación</td>
+                <td colspan="11" class="text-center">No hay requerimientos pendientes de aprobación</td>
               </tr>
             </ng-template>
           </p-table>
+
+          <div class="d-flex justify-content-center mt-3">
+            <button type="button" class="btn btn-success btn-sm"
+                    [disabled]="requerimientosPendientesSeleccionados.length === 0"
+                    (click)="abrirModalAprobacionMultiple()">
+              <i class="bx bx-check-double me-1"></i>
+              Aprobar seleccionados ({{ requerimientosPendientesSeleccionados.length }})
+            </button>
+          </div>
         </div>
 
         <!-- Tab 2: Mis Requerimientos -->
@@ -218,8 +245,9 @@
                 <th>Número</th>
                 <th>Area</th>
                 <th>Fecha</th>
-                <th>Tipo</th>
+                <!-- <th>Tipo</th> -->
                 <th>Descripción</th>
+                <!-- <th class="d-none d-md-table-cell text-end">Monto Ref.</th> -->
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -232,8 +260,22 @@
                 </td>
                 <td>{{ req.nombreArea }}</td>
                 <td>{{ req.fechaRegistro | date: 'dd/MM/yyyy' }}</td>
-                <td>{{ req.tipoRequerimiento }}</td>
-                <td>{{ req.glosa || 'Sin descripción' }}</td>
+                <!-- <td>{{ req.tipoRequerimiento }}</td> -->
+                <td>
+                  {{ req.glosa || 'Sin descripción' }}
+                  <div class="d-md-none mt-1" *ngIf="esRequerimientoCompra(req)">
+                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold" style="font-size:0.72rem;">
+                      <i class="bx bx-dollar-circle me-1"></i>{{ formatMoneda(calcularMontoRequerimiento(req)) }}
+                    </span>
+                  </div>
+                </td>
+                <!-- <td class="d-none d-md-table-cell text-end">
+                  <ng-container *ngIf="esRequerimientoCompra(req)">
+                    <span class="fw-semibold text-primary">{{ formatMoneda(calcularMontoRequerimiento(req)) }}</span>
+                    <div class="text-muted" style="font-size:0.7rem;">{{ (req.detalle)?.length || 0 }} ítems</div>
+                  </ng-container>
+                  <span *ngIf="!esRequerimientoCompra(req)" class="text-muted">—</span>
+                </td> -->
                 <td>
                   <p-tag [severity]="req.estado === 'APROBADO' ? 'success' : req.estado === 'RECHAZADO' ? 'danger' : 'warn'">
                     {{ req.estado }}
@@ -351,6 +393,28 @@
     </div>
   </p-card>
 </div>
+
+<!-- Modal de Aprobación Múltiple -->
+<p-dialog [(visible)]="displayAprobacionMultipleModal" [modal]="true" [style]="{width: '500px'}"
+          header="Aprobar requerimientos seleccionados">
+  <div>
+    <p>Se aprobarán <strong>{{ requerimientosPendientesSeleccionados.length }}</strong> requerimiento(s).</p>
+    <div class="mb-3">
+      <label for="observacionesMultiple" class="form-label">Observaciones:</label>
+      <textarea id="observacionesMultiple" class="form-control" rows="3"
+                [(ngModel)]="observacionesMultiple"
+                placeholder="Ingrese observaciones para la aprobación múltiple..."></textarea>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Cancelar" icon="pi pi-times"
+            class="p-button-secondary" (click)="displayAprobacionMultipleModal = false"
+            [disabled]="procesandoAprobacionMultiple"></button>
+    <button pButton type="button" label="Aprobar" icon="pi pi-check"
+            class="p-button-success text-white" (click)="aprobarSeleccionados()"
+            [disabled]="procesandoAprobacionMultiple"></button>
+  </ng-template>
+</p-dialog>
 
 <!-- Modal de Aprobación -->
 <p-dialog [(visible)]="displayAprobacionModal" [modal]="true" [style]="{width: '600px'}"
@@ -606,14 +670,14 @@
   <div *ngIf="requerimientoDetallePendientes" class="p-2">
     <!-- Cabecera -->
     <div class="row g-3 mb-3">
-      <div class="col-12 col-md-6 col-lg-4">
+      <!-- <div class="col-12 col-md-6 col-lg-4">
         <div class="text-muted small">Número</div>
         <div class="fw-semibold text-break">{{ requerimientoDetallePendientes.idrequerimiento | numeroRequerimiento : requerimientoDetallePendientes.RequisicionNumero }}</div>
       </div>
       <div class="col-12 col-md-6 col-lg-4">
         <div class="text-muted small">Requisición</div>
         <div class="fw-semibold">{{ requerimientoDetallePendientes.RequisicionNumero || 'N/A' }}</div>
-      </div>
+      </div> -->
       <div class="col-12 col-md-6 col-lg-4">
         <div class="text-muted small">Área</div>
         <div class="fw-semibold">{{ requerimientoDetallePendientes.nombreArea }}</div>
@@ -636,36 +700,10 @@
       </div>
     </div>
 
-    <!-- Tabs -->
-    <ul class="nav nav-tabs mb-3">
-      <li class="nav-item">
-        <a class="nav-link" [class.active]="detallePendientesTab === 'items'"
-           (click)="detallePendientesTab = 'items'" style="cursor:pointer;">
-          <i class="bx bx-list-ul"></i> Ítems
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" [class.active]="detallePendientesTab === 'servicios'"
-           (click)="detallePendientesTab = 'servicios'" style="cursor:pointer;">
-          <i class="bx bx-cog"></i> Servicios
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" [class.active]="detallePendientesTab === 'adjuntos'"
-           (click)="detallePendientesTab = 'adjuntos'" style="cursor:pointer;">
-          <i class="bx bx-paperclip"></i> Adjuntos
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" [class.active]="detallePendientesTab === 'historial-anulaciones'"
-           (click)="detallePendientesTab = 'historial-anulaciones'; cargarHistorialAnulaciones()" style="cursor:pointer;">
-          <i class="bx bx-history"></i> Historial Anulaciones
-        </a>
-      </li>
-    </ul>
+    <!-- Tabs comentadas: solo se muestra la tabla de Items -->
 
     <!-- Ítems -->
-    <div *ngIf="detallePendientesTab === 'items'" class="table-responsive">
+    <div class="table-responsive">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h6 class="mb-0">Ítems</h6>
         <span class="badge bg-info text-white">{{ getDetallesItemsPendientes().length || 0 }} líneas</span>
@@ -683,6 +721,8 @@
             <th>Código</th>
             <th>{{ esRequerimientoServicio ? 'Servicio' : 'Producto' }}</th>
             <th>Cantidad</th>
+            <th *ngIf="esRequerimientoCompra(requerimientoDetallePendientes)" class="text-end">P.Unit.</th>
+            <th *ngIf="esRequerimientoCompra(requerimientoDetallePendientes)" class="text-end">Subtotal</th>
             <th>Proyecto</th>
             <th>CECO</th>
             <th>Labor</th>
@@ -702,6 +742,12 @@
             <!-- <td>{{ det.idproducto || det.producto || det.codigo }}</td> -->
             <td>{{ det.descripcionItem || det.descripcion || 'Sin descripción' }}</td>
             <td>{{ det.cantidad }}</td>
+            <td *ngIf="esRequerimientoCompra(requerimientoDetallePendientes)" class="text-end">
+              <span class="text-muted small">{{ formatMoneda(getPrecioItem(det.codigo)) }}</span>
+            </td>
+            <td *ngIf="esRequerimientoCompra(requerimientoDetallePendientes)" class="text-end fw-semibold">
+              {{ formatMoneda(calcularMontoDetalle(det)) }}
+            </td>
             <td>{{ det.idproyecto || det.proyecto }}</td>
             <td>{{ det.idcentrocosto || det.ceco }}</td>
             <td>{{ det.idlabor || det.labor }}</td>
@@ -715,6 +761,14 @@
                       (click)="aprobarDetallePendienteIndividual(i)"
                       [label]="detallesPendientesAprobados.has(i) ? 'Aprobado' : 'Aprobar'">
               </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="footer">
+          <tr *ngIf="esRequerimientoCompra(requerimientoDetallePendientes)">
+            <td [attr.colspan]="7" class="text-end text-muted small">Monto total referencial:</td>
+            <td colspan="2" class="text-end">
+              <span class="fw-bold text-primary" style="font-size:1rem;">{{ formatMoneda(calcularMontoModalActual()) }}</span>
             </td>
           </tr>
         </ng-template>
@@ -724,173 +778,11 @@
       </p-table>
     </div>
 
-    <!-- Servicios -->
-    <div *ngIf="detallePendientesTab === 'servicios'" class="table-responsive">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h6 class="mb-0">Servicios</h6>
-        <span class="badge bg-info text-white">{{ getDetallesServiciosPendientes().length || 0 }} líneas</span>
-      </div>
-      <p-table [value]="getDetallesServiciosPendientes()" [paginator]="true" [rows]="5"
-               responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped">
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width:40px">
-              <p-checkbox [binary]="true"
-                          [ngModel]="isTodosDetallesPendientesSeleccionados()"
-                          (onChange)="toggleSeleccionTodosDetallesPendientes($event.checked)">
-              </p-checkbox>
-            </th>
-            <th>Código</th>
-            <th>Servicio</th>
-            <th>Cantidad</th>
-            <th>Proyecto</th>
-            <th>CECO</th>
-            <th>Labor</th>
-            <th>Área</th>
-            <th>Acciones</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-det let-i="rowIndex">
-          <tr>
-            <td>
-              <p-checkbox [binary]="true"
-                          [ngModel]="isDetallePendienteSeleccionado(i)"
-                          (onChange)="toggleSeleccionDetallePendiente(i, $event.checked)">
-              </p-checkbox>
-            </td>
-            <td>{{ det.codigo }}</td>
-            <td>{{ det.descripcion || 'Sin descripción' }}</td>
-            <td>{{ det.cantidad }}</td>
-            <td>{{ det.idproyecto || det.proyecto }}</td>
-            <td>{{ det.idcentrocosto || det.ceco }}</td>
-            <td>{{ det.idlabor || det.labor }}</td>
-            <td>{{ requerimientoDetallePendientes.nombreArea }}</td>
-            <td>
-              <button pButton type="button" icon="bx bx-check"
-                      class="p-button-sm text-white"
-                      [style.color]="'#fff !important'"
-                      [class.p-button-success]="!detallesPendientesAprobados.has(i)"
-                      [class.p-button-outlined]="detallesPendientesAprobados.has(i)"
-                      (click)="aprobarDetallePendienteIndividual(i)"
-                      [label]="detallesPendientesAprobados.has(i) ? 'Aprobado' : 'Aprobar'">
-              </button>
-            </td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr><td colspan="10" class="text-center">No hay servicios</td></tr>
-        </ng-template>
-      </p-table>
-    </div>
+    <!-- Servicios comentado -->
 
-    <!-- Adjuntos -->
-    <div *ngIf="detallePendientesTab === 'adjuntos'">
-      <div class="mb-3">
-        <input type="file" #fileInput (change)="onFileSelected($event)" 
-               class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
-      </div>
-      <div *ngIf="selectedFile" class="mb-3">
-        <div class="d-flex align-items-center gap-2">
-          <span class="badge bg-info">{{ selectedFile.name }}</span>
-          <span class="text-muted small">({{ adjuntosService.getFileSizeKB(selectedFile) }} KB)</span>
-          <button pButton type="button" icon="bx bx-upload" 
-                  class="p-button-sm p-button-success"
-                  (click)="subirAdjunto()"
-                  label="Subir"
-                  [disabled]="subiendoAdjunto">
-          </button>
-          <button pButton type="button" icon="bx bx-x" 
-                  class="p-button-sm p-button-secondary"
-                  (click)="cancelarSeleccionArchivo()">
-          </button>
-        </div>
-      </div>
-      <div *ngIf="loadingAdjuntos" class="text-center text-muted p-3">
-        <i class="bx bx-loader-alt bx-spin"></i> Cargando adjuntos...
-      </div>
-      <div *ngIf="!loadingAdjuntos && adjuntosRequerimiento.length === 0" class="text-center text-muted p-3">
-        Sin adjuntos
-      </div>
-      <div *ngIf="!loadingAdjuntos && adjuntosRequerimiento.length > 0" class="table-responsive">
-        <table class="table table-sm">
-          <thead>
-            <tr>
-              <th>Archivo</th>
-              <th>Tipo</th>
-              <th>Tamaño</th>
-              <th>Fecha</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let adj of adjuntosRequerimiento">
-              <td>{{ adj.nombreArchivo }}</td>
-              <td>{{ adj.tipoArchivo || '-' }}</td>
-              <td>{{ adj.tamanoArchivo ? (adj.tamanoArchivo / 1024).toFixed(2) + ' KB' : '-' }}</td>
-              <td>{{ adj.fechaCreacion }}</td>
-              <td>
-                <button pButton type="button" icon="bx bx-download" 
-                        class="p-button-sm p-button-info me-2"
-                        (click)="descargarAdjunto(adj)"
-                        label="Descargar">
-                </button>
-                <button pButton type="button" icon="bx bx-trash" 
-                        class="p-button-sm p-button-danger"
-                        (click)="eliminarAdjunto(adj.idAdjunto)"
-                        label="Eliminar">
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <!-- Adjuntos comentado -->
 
-    <!-- Historial de Anulaciones -->
-    <div *ngIf="detallePendientesTab === 'historial-anulaciones'">
-      <div *ngIf="loadingHistorialAnulaciones" class="text-center text-muted p-3">
-        <i class="bx bx-loader-alt bx-spin"></i> Cargando historial...
-      </div>
-      <div *ngIf="!loadingHistorialAnulaciones && historialAnulaciones.length === 0" class="text-center text-muted p-3">
-        Sin historial de anulaciones
-      </div>
-      <div *ngIf="!loadingHistorialAnulaciones && historialAnulaciones.length > 0" class="table-responsive">
-        <table class="table table-sm">
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Estado Anterior</th>
-              <th>Estado Nuevo</th>
-              <th>Usuario</th>
-              <th>Rol</th>
-              <th>Motivo</th>
-              <th>Fecha</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let hist of historialAnulaciones">
-              <td>
-                <p-tag [severity]="hist.tipoAnulacion === 'RETORNABLE' ? 'warn' : 'danger'"
-                       [value]="hist.tipoAnulacion === 'RETORNABLE' ? 'Devuelto' : 'Definitiva'">
-                </p-tag>
-              </td>
-              <td>
-                <p-tag severity="warn">{{ hist.estadoAnterior }}</p-tag>
-              </td>
-              <td>
-                <p-tag [severity]="hist.estadoNuevo === 'PENDIENTE' ? 'warn' : 'danger'">
-                  {{ hist.estadoNuevo }}
-                </p-tag>
-              </td>
-              <td>{{ hist.usuarioAnula }}</td>
-              <td><small>{{ hist.rolUsuario }}</small></td>
-              <td><small>{{ hist.motivoAnulacion }}</small></td>
-              <td><small>{{ hist.fechaAnulacion }}</small></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <!-- Historial de Anulaciones comentado -->
   </div>
 
   <ng-template pTemplate="footer">

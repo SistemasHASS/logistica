@@ -7,96 +7,134 @@
         <h3 class="mb-0"><i class="bx bx-user-check me-2 text-primary"></i>Mi Dashboard</h3>
         <p class="text-muted mb-0">Seguimiento de mis requerimientos — {{ usuario?.nombre || usuario?.usuario }}</p>
       </div>
-      <button class="btn btn-accion-primaria" (click)="irRequerimientos()">
+      <!-- <button class="btn btn-accion-primaria" (click)="irRequerimientos()">
         <i class="bx bx-plus me-1"></i> Nuevo Requerimiento
-      </button>
+      </button> -->
     </div>
   </div>
 
   <!-- KPI Cards -->
   <div class="row mb-4">
-    <div class="col-6 col-md-2 mb-3">
-      <div class="kpi-card kpi-total" [class.active]="filtroEstado === ''" (click)="seleccionarFiltro('')">
-        <div class="kpi-icon"><i class="bx bx-list-ul"></i></div>
-        <div class="kpi-number">{{ resumen.total }}</div>
-        <div class="kpi-label">Total</div>
+    @if (tabTipo === 'CONSUMO') {
+      <div class="col-6 col-md-2 mb-3">
+        <div class="kpi-card kpi-total" [class.active]="filtroEstado === ''" (click)="seleccionarFiltro('')">
+          <div class="kpi-icon"><i class="bx bx-list-ul"></i></div>
+          <div class="kpi-number">{{ resumen.total }}</div>
+          <div class="kpi-label">Total</div>
+        </div>
       </div>
-    </div>
-    <div class="col-6 col-md-2 mb-3">
-      <div class="kpi-card kpi-pendiente" [class.active]="filtroEstado === 'PENDIENTE'" (click)="seleccionarFiltro('PENDIENTE')">
-        <div class="kpi-icon"><i class="bx bx-time-five"></i></div>
-        <div class="kpi-number">{{ resumen.pendiente }}</div>
-        <div class="kpi-label">Pendientes</div>
+      <div class="col-6 col-md-2 mb-3">
+        <div class="kpi-card kpi-pendiente" [class.active]="filtroEstado === 'PENDIENTE'" (click)="seleccionarFiltro('PENDIENTE')">
+          <div class="kpi-icon"><i class="bx bx-time-five"></i></div>
+          <div class="kpi-number">{{ resumen.pendiente }}</div>
+          <div class="kpi-label">Pendientes</div>
+        </div>
       </div>
-    </div>
-    <div class="col-6 col-md-2 mb-3">
-      <div class="kpi-card kpi-aprobado" [class.active]="filtroEstado === 'APROBADO'" (click)="seleccionarFiltro('APROBADO')">
-        <div class="kpi-icon"><i class="bx bx-check-circle"></i></div>
-        <div class="kpi-number">{{ resumen.aprobado }}</div>
-        <div class="kpi-label">Aprobados</div>
+      <div class="col-6 col-md-2 mb-3">
+        <div class="kpi-card kpi-aprobado" [class.active]="filtroEstado === 'APROBADO'" (click)="seleccionarFiltro('APROBADO')">
+          <div class="kpi-icon"><i class="bx bx-check-circle"></i></div>
+          <div class="kpi-number">{{ resumen.aprobado }}</div>
+          <div class="kpi-label">Aprobados</div>
+        </div>
       </div>
-    </div>
-    <div class="col-6 col-md-2 mb-3">
-      <div class="kpi-card kpi-despachado" [class.active]="filtroEstado === 'DESPACHADO'" (click)="seleccionarFiltro('DESPACHADO')">
-        <div class="kpi-icon"><i class="bx bx-truck"></i></div>
-        <div class="kpi-number">{{ resumen.despachado }}</div>
-        <div class="kpi-label">Despachados</div>
+      <div class="col-6 col-md-2 mb-3">
+        <div class="kpi-card kpi-despachado" [class.active]="filtroEstado === 'DESPACHADO'" (click)="seleccionarFiltro('DESPACHADO')">
+          <div class="kpi-icon"><i class="bx bx-truck"></i></div>
+          <div class="kpi-number">{{ resumen.despachado }}</div>
+          <div class="kpi-label">Despachados</div>
+        </div>
       </div>
-    </div>
-    <div class="col-6 col-md-2 mb-3">
-      <div class="kpi-card kpi-rechazado" [class.active]="filtroEstado === 'RECHAZADO'" (click)="seleccionarFiltro('RECHAZADO')">
-        <div class="kpi-icon"><i class="bx bx-x-circle"></i></div>
-        <div class="kpi-number">{{ resumen.rechazado }}</div>
-        <div class="kpi-label">Rechazados</div>
+      <div class="col-6 col-md-2 mb-3">
+        <div class="kpi-card kpi-rechazado" [class.active]="filtroEstado === 'RECHAZADO'" (click)="seleccionarFiltro('RECHAZADO')">
+          <div class="kpi-icon"><i class="bx bx-x-circle"></i></div>
+          <div class="kpi-number">{{ resumen.rechazado }}</div>
+          <div class="kpi-label">Rechazados</div>
+        </div>
       </div>
-    </div>
-    <div class="col-6 col-md-2 mb-3">
-      <div class="kpi-card kpi-completado" [class.active]="filtroEstado === 'DESPACHADO_COMPLETO'" (click)="seleccionarFiltro('DESPACHADO_COMPLETO')">
-        <div class="kpi-icon"><i class="bx bx-trophy"></i></div>
-        <div class="kpi-number">{{ resumen.completado }}</div>
-        <div class="kpi-label">Completados</div>
+      <div class="col-6 col-md-2 mb-3">
+        <div class="kpi-card kpi-completado" [class.active]="filtroEstado === 'DESPACHADO_COMPLETO'" (click)="seleccionarFiltro('DESPACHADO_COMPLETO')">
+          <div class="kpi-icon"><i class="bx bx-trophy"></i></div>
+          <div class="kpi-number">{{ resumen.completado }}</div>
+          <div class="kpi-label">Completados</div>
+        </div>
       </div>
-    </div>
+    } @else {
+      <div class="col-6 col-md mb-3">
+        <div class="kpi-card kpi-total" [class.active]="filtroSubEstado === ''" (click)="seleccionarSubEstado('')">
+          <div class="kpi-icon"><i class="bx bx-list-ul"></i></div>
+          <div class="kpi-number">{{ resumenCompra.total }}</div>
+          <div class="kpi-label">Total</div>
+        </div>
+      </div>
+      <div class="col-6 col-md mb-3">
+        <div class="kpi-card kpi-pendiente" [class.active]="filtroSubEstado === 'PENDIENTE'" (click)="seleccionarSubEstado('PENDIENTE')">
+          <div class="kpi-icon"><i class="bx bx-time-five"></i></div>
+          <div class="kpi-number">{{ resumenCompra.pendiente }}</div>
+          <div class="kpi-label">Pendientes</div>
+        </div>
+      </div>
+      <div class="col-6 col-md mb-3">
+        <div class="kpi-card kpi-aprobado" [class.active]="filtroSubEstado === 'APROBADO'" (click)="seleccionarSubEstado('APROBADO')">
+          <div class="kpi-icon"><i class="bx bx-check-circle"></i></div>
+          <div class="kpi-number">{{ resumenCompra.aprobado }}</div>
+          <div class="kpi-label">Aprobados</div>
+        </div>
+      </div>
+      <div class="col-6 col-md mb-3">
+        <div class="kpi-card kpi-consolidado" [class.active]="filtroSubEstado === 'CON_OC'" (click)="seleccionarSubEstado('CON_OC')">
+          <div class="kpi-icon"><i class="bx bx-receipt"></i></div>
+          <div class="kpi-number">{{ resumenCompra.conOC }}</div>
+          <div class="kpi-label">Con OC</div>
+        </div>
+      </div>
+      <div class="col-6 col-md mb-3">
+        <div class="kpi-card kpi-completado" [class.active]="filtroSubEstado === 'ATENDIDO'" (click)="seleccionarSubEstado('ATENDIDO')">
+          <div class="kpi-icon"><i class="bx bx-check-double"></i></div>
+          <div class="kpi-number">{{ resumenCompra.atendido }}</div>
+          <div class="kpi-label">Atendidos</div>
+        </div>
+      </div>
+    }
   </div>
 
-  <!-- ── OC Pipeline Tracker (solo si hay reqs COMPRA) ── -->
-  @if (contadorCompra > 0) {
-  <div class="oc-tracker mb-4">
-    <div class="oc-tracker-title">
-      <i class="bx bx-cart me-1"></i>
-      Flujo de mis Compras — estado actual
-    </div>
-    <div class="oc-steps">
-      @for (paso of obtenerPipelineCompra(); track paso.estado; let last = $last) {
-        <div class="oc-step" [class]="paso.stepClass" (click)="seleccionarFiltroOC(paso.estado)">
-          <!-- Línea de progreso (no en el último) -->
-          @if (!last) {
-            <div class="oc-step-line" [class]="paso.lineClass"></div>
-          }
-          <!-- Burbuja -->
-          <div class="oc-step-bubble" [class]="paso.bubbleClass">
-            <i class="bx" [class]="paso.icon"></i>
-          </div>
-          <!-- Contador -->
-          <span class="oc-step-count" [class]="paso.stepClass ? '' : 'text-muted'">
-            {{ paso.count }}
-          </span>
-          <!-- Label -->
-          <span class="oc-step-label" [class]="paso.labelClass">{{ paso.label }}</span>
-          <!-- Badge estado -->
-          @if (paso.count > 0) {
-            <span class="oc-step-badge" [class]="paso.badgeClass">
-              {{ paso.count === 1 ? '1 req' : paso.count + ' reqs' }}
+  <!-- ── OC Pipeline Tracker (solo tab COMPRA) ── -->
+  <!-- @if (tabTipo === 'COMPRA') {
+    <div class="oc-tracker mb-4">
+      <div class="oc-tracker-title">
+        <i class="bx bx-cart me-1"></i>
+        Flujo de mis Compras — estado actual
+      </div>
+      <div class="oc-steps">
+        @for (paso of obtenerPipelineCompra(); track paso.estado; let last = $last) {
+          <div class="oc-step" [class]="paso.stepClass" (click)="seleccionarSubEstado(paso.estado)">
+            <!- - Línea de progreso (no en el último) - ->
+            @if (!last) {
+              <div class="oc-step-line" [class]="paso.lineClass"></div>
+            }
+            <!- - Burbuja - ->
+            <div class="oc-step-bubble" [class]="paso.bubbleClass">
+              <i class="bx" [class]="paso.icon"></i>
+            </div>
+            <!- - Contador - ->
+            <span class="oc-step-count" [class]="paso.stepClass ? '' : 'text-muted'">
+              {{ paso.count }}
             </span>
-          }
-        </div>
-      }
+            <!- - Label - ->
+            <span class="oc-step-label" [class]="paso.labelClass">{{ paso.label }}</span>
+            <!- - Badge estado - ->
+            @if (paso.count > 0) {
+              <span class="oc-step-badge" [class]="paso.badgeClass">
+                {{ paso.count === 1 ? '1 req' : paso.count + ' reqs' }}
+              </span>
+            }
+          </div>
+        }
+      </div>
     </div>
-  </div>
-  }
+  } -->
 
   <!-- Pipeline visual de flujo con porcentajes -->
-  <div class="card border-0 shadow-sm mb-4">
+  <!-- <div class="card border-0 shadow-sm mb-4">
     <div class="card-body py-3">
       <h6 class="card-title mb-3"><i class="bx bx-git-branch me-1"></i> Flujo de mis Requerimientos de Consumo — ESTADO ACTUAL</h6>
       <div class="row g-3">
@@ -150,7 +188,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <!-- Tabla de requerimientos con tabs integrados -->
   <div class="card border-0 shadow-sm">
@@ -164,14 +202,14 @@
     <div class="card-header bg-white pb-0 pt-0 px-3">
       <ul class="nav nav-tabs border-0">
         <li class="nav-item">
-          <button class="nav-link fw-semibold px-4" [class.active]="tabTipo === 'CONSUMO'" (click)="seleccionarTabTipo('CONSUMO')">
+          <button class="nav-link fw-semibold px-4 tab-consumo" [class.active]="tabTipo === 'CONSUMO'" (click)="seleccionarTabTipo('CONSUMO')">
             <i class="bx bx-package me-1"></i>
             Consumo
             <span class="badge ms-1" [class.badge-advertencia]="tabTipo === 'CONSUMO'" [class.badge-inactivo]="tabTipo !== 'CONSUMO'">{{ contadorConsumo }}</span>
           </button>
         </li>
         <li class="nav-item">
-          <button class="nav-link fw-semibold px-4" [class.active]="tabTipo === 'COMPRA'" (click)="seleccionarTabTipo('COMPRA')">
+          <button class="nav-link fw-semibold px-4 tab-compra" [class.active]="tabTipo === 'COMPRA'" (click)="seleccionarTabTipo('COMPRA')">
             <i class="bx bx-cart me-1"></i>
             Compra
             <span class="badge ms-1" [class.badge-informativo]="tabTipo === 'COMPRA'" [class.badge-inactivo]="tabTipo !== 'COMPRA'">{{ contadorCompra }}</span>
@@ -275,8 +313,8 @@
             </td>
             <td>{{ req.glosa || '-' }}</td>
             <td class="d-none d-md-table-cell">
-              <p-tag [value]="obtenerTextoEstado(req.estados)"
-                     [severity]="obtenerClaseEstado(req.estados)">
+              <p-tag [value]="obtenerTextoEstado(obtenerEstadoVisualFila(req))"
+                     [severity]="obtenerClaseEstado(obtenerEstadoVisualFila(req))">
               </p-tag>
             </td>
             <td class="text-center">
@@ -291,8 +329,8 @@
           <tr>
             <td colspan="8" class="text-center py-4 text-muted">
               <i class="bx bx-inbox fs-3 d-block mb-2"></i>
-              @if (filtroEstado) {
-                No hay requerimientos en estado "{{ obtenerTextoEstado(filtroEstado) }}"
+              @if (filtroSubEstado || filtroEstado) {
+                No hay requerimientos en estado "{{ obtenerTextoEstado(filtroSubEstado || filtroEstado) }}"
               } @else {
                 No tienes requerimientos registrados
               }
@@ -318,8 +356,8 @@
         <div class="col-6">
           <label class="fw-bold text-muted small">Estado</label>
           <div>
-            <p-tag [value]="obtenerTextoEstado(requerimientoSeleccionado.estados)"
-                   [severity]="obtenerClaseEstado(requerimientoSeleccionado.estados)">
+            <p-tag [value]="obtenerTextoEstado(obtenerEstadoVisualFila(requerimientoSeleccionado))"
+                   [severity]="obtenerClaseEstado(obtenerEstadoVisualFila(requerimientoSeleccionado))">
             </p-tag>
           </div>
         </div>

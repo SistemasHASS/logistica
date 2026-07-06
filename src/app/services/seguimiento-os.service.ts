@@ -135,6 +135,7 @@ export class SeguimientoOSService {
    */
   obtenerSiguienteEstado(estadoActual: EstadoSeguimientoOS): EstadoSeguimientoOS | null {
     const flujo: { [key in EstadoSeguimientoOS]?: EstadoSeguimientoOS } = {
+      'PENDIENTE_APROBACION': 'ENVIADA',
       'GENERADA': 'ENVIADA',
       'ENVIADA': 'ACEPTADA',
       'ACEPTADA': 'EN_EJECUCION',
@@ -155,6 +156,7 @@ export class SeguimientoOSService {
    */
   obtenerColorEstado(estado: EstadoSeguimientoOS): string {
     const colores: { [key in EstadoSeguimientoOS]: string } = {
+      'PENDIENTE_APROBACION': 'badge-danger',
       'GENERADA': 'badge-info',
       'ENVIADA': 'badge-warning',
       'ACEPTADA': 'badge-primary',
@@ -170,6 +172,7 @@ export class SeguimientoOSService {
    */
   obtenerTextoEstado(estado: EstadoSeguimientoOS): string {
     const textos: { [key in EstadoSeguimientoOS]: string } = {
+      'PENDIENTE_APROBACION': 'Pendiente Aprobación',
       'GENERADA': 'Generada',
       'ENVIADA': 'Enviada',
       'ACEPTADA': 'Aceptada',

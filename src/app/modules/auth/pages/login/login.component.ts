@@ -144,7 +144,8 @@ export class LoginComponent {
         break;
 
       case 'JLOLOGIST': // 👈 jefe de logística
-        this.router.navigate(['/main/dashboard-logistica']);
+        // this.router.navigate(['/main/dashboard-logistica']);
+        this.router.navigate(['/main/dashboard-jlologist'])
         break;
 
       case 'FINANZAS': // 👈 rol finanzas

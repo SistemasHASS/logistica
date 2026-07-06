@@ -103,12 +103,12 @@
   </div>
 
   <!-- Botones de Acción Rápida / Accesos Directos -->
-  <div class="row mb-4">
+  <!-- <div class="row mb-4">
     <div class="col-12">
       <div class="card border-0 shadow-sm">
-        <div class="card-body">
+        <div class="card-body"> -->
           <!-- Accesos Directos para JLOLOGIST y LOLOGIST (basado en menú layout) -->
-          @if (esJefeLogistica()) {
+          <!-- @if (esJefeLogistica()) {
             <h5 class="card-title mb-3">Accesos Directos</h5>
             <div class="dashboard-shortcuts-grid">
               @for (grupo of menuShortcuts; track grupo.id) {
@@ -131,10 +131,10 @@
                 </div>
               }
             </div>
-          }
+          } -->
 
           <!-- Acciones Rápidas para otros roles -->
-          @if (!esJefeLogistica()) {
+          <!-- @if (!esJefeLogistica()) {
             <h5 class="card-title mb-3">Acciones Rápidas</h5>
             <div class="d-flex gap-2 flex-wrap">
               <button pButton pRipple type="button" class="p-button-info" (click)="nuevaOrdenCompraDirecta()">
@@ -160,10 +160,10 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <!-- Gráfica y Seguimiento de Órdenes -->
-  <div class="row mb-4">
+  <!-- <div class="row mb-4">
     <div class="col-md-6">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-body">
@@ -211,7 +211,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <!-- Entregas de Hoy y Estado de Almacén -->
   <div class="row mb-4">

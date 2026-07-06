@@ -177,6 +177,110 @@
   font-weight: 600;
 }
 
+// ============================================
+// ESTILOS TABS PARAMETROS - VISIBILIDAD ACTIVO
+// ============================================
+::ng-deep .nav-tabs {
+  border-bottom: 2px solid #e9ecef;
+
+  .nav-item {
+    margin-bottom: -2px;
+  }
+
+  .nav-link {
+    border: 2px solid transparent;
+    border-bottom: none;
+    border-radius: 0;
+    color: #6c757d;
+    font-weight: 600;
+    background: #f8f9fa;
+    padding: 0.85rem 1.5rem;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    i {
+      font-size: 1.25rem;
+    }
+
+    &:hover {
+      background: #e9ecef;
+      color: #495057;
+      border-color: #dee2e6 #dee2e6 transparent;
+    }
+
+    &.active {
+      color: #fff;
+      background: #2563eb;
+      border-color: #2563eb;
+      box-shadow: 0 -4px 12px rgba(37, 99, 235, 0.25);
+      font-weight: 700;
+
+      i {
+        color: #fff;
+      }
+    }
+  }
+
+  // Tab 1 - Consumo (azul): borde en reposo
+  .nav-item:nth-child(1) .nav-link:not(.active) {
+    color: #2563eb;
+    border-color: #2563eb #2563eb transparent;
+
+    &:hover {
+      background: #eff6ff;
+      border-color: #2563eb #2563eb transparent;
+    }
+
+    i {
+      color: #2563eb;
+    }
+  }
+
+  // Tab 2 - Compras (verde): borde en reposo
+  .nav-item:nth-child(2) .nav-link:not(.active) {
+    color: #16a34a;
+    border-color: #16a34a #16a34a transparent;
+
+    &:hover {
+      background: #f0fdf4;
+      border-color: #16a34a #16a34a transparent;
+    }
+
+    i {
+      color: #16a34a;
+    }
+  }
+
+  .nav-item:nth-child(2) .nav-link.active {
+    background: #16a34a;
+    border-color: #16a34a;
+    box-shadow: 0 -4px 12px rgba(22, 163, 74, 0.25);
+  }
+
+  // Tab 3 - Transferencia (naranja): borde en reposo
+  .nav-item:nth-child(3) .nav-link:not(.active) {
+    color: #d97706;
+    border-color: #d97706 #d97706 transparent;
+
+    &:hover {
+      background: #fffbeb;
+      border-color: #d97706 #d97706 transparent;
+    }
+
+    i {
+      color: #d97706;
+    }
+  }
+
+  .nav-item:nth-child(3) .nav-link.active {
+    background: #d97706;
+    border-color: #d97706;
+    box-shadow: 0 -4px 12px rgba(217, 119, 6, 0.25);
+  }
+}
+
 // Responsive para móvil
 @media (max-width: 768px) {
   .seleccion-tipo-container {

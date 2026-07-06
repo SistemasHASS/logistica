@@ -77,6 +77,7 @@ export class LayoutComponent {
     'solicitudes-compra': 'compras',
     'ordenes-compra': 'compras',
     'consolidacion-compras': 'compras',
+    'consolidacion-compra': 'compras',
     'consolidacion-corporativa': 'compras',
     'solicitudes-servicio': 'compras',
     'ordenes-servicio': 'compras',
@@ -542,6 +543,7 @@ export class LayoutComponent {
       'gestion-inventario': 'Gestión de Inventario',
 
       'dashboard-finanzas': 'Dashboard Finanzas',
+
       'dashboard-aprobaciones-area': 'Dashboard Aprobaciones por Área',
 
       'dashboard-logistica': 'Dashboard de Logistica',
@@ -565,6 +567,18 @@ export class LayoutComponent {
       'reporte-saldos': 'Reporte de Saldos',
 
       'reporte-despachos': 'Reporte de Despachos',
+
+      'dashboard-oplogist': 'Mis Requeimientos',
+
+      'catalogo-items': 'Lista de Items',
+
+      'conformidad-almacen': 'Conformidad de Despacho',
+
+      'consolidacion-compras': 'Flujo de Compras',
+      
+      'consolidacion-compra': 'Flujo de Compras',
+
+      'conformidad-servicios': 'Conformidad de Servicios'
     };
 
     this.currentPath = pathMap[currentUrl[currentUrl.length - 1]] || '';

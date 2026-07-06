@@ -9,22 +9,26 @@
 
     .nav-link {
       color: #495057;
-      border: none;
-      border-bottom: 3px solid transparent;
+      border: 2px solid #007bff;
+      border-radius: 0;
       padding: 0.75rem 1.5rem;
       cursor: pointer;
       transition: all 0.3s ease;
+      background-color: #fff;
+      margin-right: 0.25rem;
 
       &:hover {
         color: #007bff;
-        border-bottom-color: #007bff;
+        border-color: #007bff;
+        background-color: #e7f1ff;
       }
 
       &.active {
-        color: #007bff;
-        background-color: transparent;
-        border-bottom-color: #007bff;
+        color: #fff;
+        background-color: #007bff;
+        border-color: #007bff;
         font-weight: 600;
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
       }
 
       .badge {
@@ -82,7 +86,7 @@
       gap: 0.25rem;
       font-weight: 500;
       padding: 0.5rem 1rem;
-      border-radius: 50rem;
+      border-radius: 0;
       border-width: 1px;
       transition: all 0.2s ease;
 
@@ -93,37 +97,8 @@
       .badge {
         font-size: 0.75rem;
         padding: 0.25em 0.5em;
-        border-radius: 50rem;
+        border-radius: 0.25rem;
       }
-
-      &.active {
-        color: #fff;
-      }
-
-      &:not(.active) {
-        background-color: #fff;
-      }
-    }
-
-    .btn-outline-secondary.active {
-      background-color: #6c757d;
-      border-color: #6c757d;
-    }
-
-    .btn-outline-primary.active {
-      background-color: #0d6efd;
-      border-color: #0d6efd;
-    }
-
-    .btn-outline-success.active {
-      background-color: #198754;
-      border-color: #198754;
-    }
-
-    .btn-outline-warning.active {
-      background-color: #ffc107;
-      border-color: #ffc107;
-      color: #000;
     }
   }
 }

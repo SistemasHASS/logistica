@@ -79,6 +79,7 @@ export class OrdenesServicioComponent implements OnInit {
   ordenActual: OrdenServicioConSeguimiento | null = null;
 
   mostrarFormulario = false;
+  mostrarModalDetalle = false;
   mostrarModalConformidad = false;
 
   // ============================================
@@ -118,7 +119,7 @@ export class OrdenesServicioComponent implements OnInit {
 
   // Estados de seguimiento
   estadosSeguimiento: EstadoSeguimientoOS[] = [
-    'GENERADA', 'ENVIADA', 'ACEPTADA', 'EN_EJECUCION', 'FINALIZADA', 'RECHAZADA'
+    'PENDIENTE_APROBACION', 'GENERADA', 'ENVIADA', 'ACEPTADA', 'EN_EJECUCION', 'FINALIZADA', 'RECHAZADA'
   ];
 
   // Estados de hitos
@@ -157,6 +158,7 @@ export class OrdenesServicioComponent implements OnInit {
   filtroEstado = 'TODAS';
   filtroProveedor = '';
   filtroTipoServicio = '';
+  filtroEmpresa = '';
 
   // Lista filtrada
   ordenesFiltradas: OrdenServicioConSeguimiento[] = [];
@@ -167,6 +169,7 @@ export class OrdenesServicioComponent implements OnInit {
   totalAceptadas = 0;
   totalEnEjecucion = 0;
   totalFinalizadas = 0;
+  totalPendientesAprobacion = 0;
 
   // Tipo de orden (DIRECTA o DESDE_SOLICITUD)
   tipoOrden: 'DIRECTA' | 'DESDE_SOLICITUD' = 'DESDE_SOLICITUD';
@@ -215,6 +218,7 @@ export class OrdenesServicioComponent implements OnInit {
       this.ordenesServicio = ordenes || [];
       this.ordenesFiltradas = [...this.ordenesServicio];
       this.actualizarContadores();
+      this.cdr.markForCheck();
       this.alertService.cerrarModalCarga();
     } catch (error) {
       console.error('Error al cargar órdenes:', error);
@@ -234,8 +238,10 @@ export class OrdenesServicioComponent implements OnInit {
          orden.rucProveedor?.includes(this.filtroProveedor));
       const cumpleTipo = !this.filtroTipoServicio || 
         orden.tipoServicio?.toLowerCase().includes(this.filtroTipoServicio.toLowerCase());
+      const cumpleEmpresa = !this.filtroEmpresa ||
+        orden.rucEmpresa?.includes(this.filtroEmpresa);
       
-      return cumpleEstado && cumpleProveedor && cumpleTipo;
+      return cumpleEstado && cumpleProveedor && cumpleTipo && cumpleEmpresa;
     });
   }
 
@@ -246,6 +252,7 @@ export class OrdenesServicioComponent implements OnInit {
     this.filtroEstado = 'TODAS';
     this.filtroProveedor = '';
     this.filtroTipoServicio = '';
+    this.filtroEmpresa = '';
     this.ordenesFiltradas = [...this.ordenesServicio];
   }
 
@@ -258,6 +265,7 @@ export class OrdenesServicioComponent implements OnInit {
     this.totalAceptadas = this.ordenesServicio.filter(o => o.estado === 'ACEPTADA').length;
     this.totalEnEjecucion = this.ordenesServicio.filter(o => o.estado === 'EN_EJECUCION').length;
     this.totalFinalizadas = this.ordenesServicio.filter(o => o.estado === 'FINALIZADA').length;
+    this.totalPendientesAprobacion = this.ordenesServicio.filter(o => o.estado === 'PENDIENTE_APROBACION').length;
   }
 
   async cargarCatalogosDistribucion() {
@@ -415,11 +423,13 @@ export class OrdenesServicioComponent implements OnInit {
     this.mostrarTabDistribucion = false;
     this.ordenActual = {
       numeroOrden: this.generarNumeroOrden(),
+      numeroOrdenSpring: '',
       solicitudServicioId: 0,
       tipoServicio: '',
       descripcion: '',
       fecha: new Date().toISOString().split('T')[0],
       rucProveedor: '',
+      rucEmpresa: this.usuario.ruc || '',
       proveedor: '',
       nombreProveedor: '',
       contactoProveedor: '',
@@ -464,6 +474,7 @@ export class OrdenesServicioComponent implements OnInit {
         // Crear orden desde solicitud
         this.ordenActual = {
           numeroOrden: this.generarNumeroOrden(),
+          numeroOrdenSpring: '',
           solicitudServicioId: solicitud.id,
           cotizacionServicioId: undefined,
           fecha: new Date().toISOString().split('T')[0],
@@ -475,6 +486,7 @@ export class OrdenesServicioComponent implements OnInit {
           proveedor: '',
           nombreProveedor: '',
           rucProveedor: '',
+          rucEmpresa: this.usuario.ruc || '',
           contactoProveedor: '',
           telefonoProveedor: '',
           emailProveedor: '',
@@ -628,7 +640,8 @@ export class OrdenesServicioComponent implements OnInit {
 
       if (ordenCompleta) {
         this.ordenActual = ordenCompleta;
-        // Mostrar modal de detalle (implementar según necesidad)
+        this.mostrarModalDetalle = true;
+        this.cdr.detectChanges();
       }
 
       this.alertService.cerrarModalCarga();
@@ -704,6 +717,11 @@ export class OrdenesServicioComponent implements OnInit {
     this.tipoOrden = 'DESDE_SOLICITUD';
   }
 
+  cerrarModalDetalle() {
+    this.mostrarModalDetalle = false;
+    this.ordenActual = null;
+  }
+
   cerrarModalConformidad() {
     this.mostrarModalConformidad = false;
   }
@@ -755,6 +773,7 @@ export class OrdenesServicioComponent implements OnInit {
     this.ordenSeguimiento = orden;
     this.hitosEdicion = orden.hitos || [];
     this.modalSeguimientoAbierto = true;
+    this.cdr.detectChanges();
 
     // Cargar seguimiento desde el backend si existe
     if (orden.id) {
@@ -1013,7 +1032,7 @@ export class OrdenesServicioComponent implements OnInit {
   esEstadoCompletado(estado: EstadoSeguimientoOS): boolean {
     if (!this.ordenSeguimiento) return false;
 
-    const ordenEstados: EstadoSeguimientoOS[] = ['GENERADA', 'ENVIADA', 'ACEPTADA', 'EN_EJECUCION', 'FINALIZADA'];
+    const ordenEstados: EstadoSeguimientoOS[] = ['PENDIENTE_APROBACION', 'GENERADA', 'ENVIADA', 'ACEPTADA', 'EN_EJECUCION', 'FINALIZADA'];
     const estadoActualIndex = ordenEstados.indexOf(this.ordenSeguimiento.estado);
     const estadoVerificarIndex = ordenEstados.indexOf(estado);
 
@@ -1283,6 +1302,7 @@ export class OrdenesServicioComponent implements OnInit {
           proveedor: cabecera.proveedorCodigo,
           nombreProveedor: cabecera.nombreProveedor,
           rucProveedor: cabecera.rucProveedor,
+          rucEmpresa: this.usuario.ruc || '',
           montoTotal,
           moneda: cabecera.moneda,
           formaPago: cabecera.formaPago,

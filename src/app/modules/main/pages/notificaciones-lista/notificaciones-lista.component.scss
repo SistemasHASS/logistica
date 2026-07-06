@@ -21,6 +21,13 @@
   font-weight: 600;
 }
 
+.estado-error {
+  background-color: #f8d7da;
+  color: #842029;
+  border: 1px solid #f5c2c7;
+  font-weight: 600;
+}
+
 :host ::ng-deep .p-paginator {
   background: transparent;
   border: none;

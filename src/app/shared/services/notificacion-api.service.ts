@@ -339,6 +339,39 @@ export class NotificacionApiService {
   }
 
   /**
+   * Registrar notificación directa al solicitante del requerimiento (OPLOGIST).
+   * Usada para: PENDIENTE_DESPACHO, DESPACHO_REALIZADO, OC_EMITIDA.
+   */
+  async registrarNotificacionSolicitante(data: {
+    usuario_destino: string;
+    iditem?: string;
+    id_dreq?: string;
+    itemDescripcion?: string;
+    mensaje: string;
+    tipo_notificacion: 'PENDIENTE_DESPACHO' | 'DESPACHO_REALIZADO' | 'OC_EMITIDA' | string;
+  }): Promise<boolean> {
+    try {
+      const jsonData = {
+        usuario_destino: data.usuario_destino,
+        iditem: data.iditem || '',
+        id_dreq: data.id_dreq || '0',
+        itemDescripcion: data.itemDescripcion || '',
+        mensaje: data.mensaje,
+        tipo_notificacion: data.tipo_notificacion
+      };
+
+      const response = await firstValueFrom(
+        this.http.post<any>(`${this.API_URL_LOGISTICA}/registrar-notificacion-solicitante`, jsonData)
+      );
+
+      return response?.resultado?.success === true || response?.resultado?.success === 1;
+    } catch (error) {
+      console.error('Error al registrar notificación al solicitante:', error);
+      return false;
+    }
+  }
+
+  /**
    * Marcar notificación como leída
    */
   async marcarComoLeida(idNotificacion: number): Promise<boolean> {

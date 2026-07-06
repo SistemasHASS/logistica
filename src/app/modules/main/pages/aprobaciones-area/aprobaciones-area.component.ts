@@ -18,6 +18,7 @@ import { ItemService } from '@/app/modules/main/services/items.service';
 import { CommodityService } from '@/app/modules/main/services/commoditys.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { AdjuntosService } from '@/app/modules/main/services/adjuntos.service';
+import { NotificacionApiService } from '@/app/shared/services/notificacion-api.service';
 import Swal from 'sweetalert2';
 import { environment } from '@/environments/environment';
 import {
@@ -121,6 +122,12 @@ export class AprobacionesAreaComponent implements OnInit {
   // Filtro por tipo de requerimiento (solo diseño, para filtrar la lista de pendientes)
   filtroTipoPendiente: 'TODOS' | 'COMPRA' | 'CONSUMO' | 'SERVICIO' = 'TODOS';
 
+  // Selección múltiple de requerimientos pendientes para aprobación en bloque
+  requerimientosPendientesSeleccionados: RequerimientoPendiente[] = [];
+  displayAprobacionMultipleModal = false;
+  observacionesMultiple = '';
+  procesandoAprobacionMultiple = false;
+
   get requerimientosPendientesFiltrados(): RequerimientoPendiente[] {
     if (this.filtroTipoPendiente === 'TODOS') return this.requerimientosPendientes;
     return this.requerimientosPendientes.filter(req => {
@@ -146,6 +153,7 @@ export class AprobacionesAreaComponent implements OnInit {
     private commodityService: CommodityService,
     private alertService: AlertService,
     public adjuntosService: AdjuntosService,
+    private notificacionApi: NotificacionApiService,
   ) {}
 
   ngOnInit() {
@@ -667,7 +675,7 @@ export class AprobacionesAreaComponent implements OnInit {
           );
           console.log('✅ Sincronización con SPRING completada');
           
-          // Información sobre el flujo posterior
+          // Información sobre el flujo posterior + notificación PENDIENTE_DESPACHO para CONSUMO
           const tipoReq = (this.requerimientoSeleccionado as any)?.itemtipo || 
                          (this.requerimientoSeleccionado as any)?.tipoRequerimiento ||
                          'COMPRA'; // Default
@@ -675,6 +683,19 @@ export class AprobacionesAreaComponent implements OnInit {
             console.log('ℹ️ Requerimiento de COMPRA migrado a SPRING - También aparecerá en consolidación para órdenes de compra');
           } else if (tipoReq === 'CONSUMO') {
             console.log('ℹ️ Requerimiento de CONSUMO migrado a SPRING - Listo para despacho directo');
+            const dniSolicitante = (this.requerimientoSeleccionado as any)?.dniregistra
+              || (this.requerimientoSeleccionado as any)?.nrodocumento
+              || '';
+            if (dniSolicitante) {
+              const numReq = (this.requerimientoSeleccionado as any)?.numero
+                || (this.requerimientoSeleccionado as any)?.idrequerimiento || 'N/A';
+              this.notificacionApi.registrarNotificacionSolicitante({
+                usuario_destino: dniSolicitante,
+                id_dreq: String((this.requerimientoSeleccionado as any)?.idrequerimiento || '0'),
+                mensaje: `Tu requerimiento de consumo ${numReq} fue aprobado y está pendiente de despacho por almacén.`,
+                tipo_notificacion: 'PENDIENTE_DESPACHO'
+              }).catch(() => {});
+            }
           }
         } catch (error) {
           console.error('❌ Error en sincronización con SPRING:', error);
@@ -766,6 +787,97 @@ export class AprobacionesAreaComponent implements OnInit {
       // console.error('Error al rechazar:', error);
       Swal.fire('Error', 'Error al procesar el rechazo', 'error');
     }
+  }
+
+  // =============================================
+  // APROBACIÓN MÚLTIPLE EN BLOQUE
+  // =============================================
+
+  abrirModalAprobacionMultiple() {
+    if (this.requerimientosPendientesSeleccionados.length === 0) {
+      Swal.fire('Advertencia', 'Seleccione al menos un requerimiento', 'warning');
+      return;
+    }
+    this.observacionesMultiple = '';
+    this.displayAprobacionMultipleModal = true;
+  }
+
+  async aprobarSeleccionados() {
+    if (!this.usuario || this.requerimientosPendientesSeleccionados.length === 0) return;
+
+    this.procesandoAprobacionMultiple = true;
+
+    const rolesGlobalesAprob = ['ADLOGIST', 'JLOLOGIST', 'JEMLOGIST', 'FINANZAS', 'GERENTE', 'TILOGIST'];
+    const esRolGlobalAprob = rolesGlobalesAprob.some(r => this.usuario.idrol?.includes(r));
+
+    const aprobables = this.requerimientosPendientesSeleccionados.filter(req => {
+      if (!esRolGlobalAprob && (req as any).dniregistra === this.usuario.documentoidentidad) {
+        return false;
+      }
+      return true;
+    });
+
+    if (aprobables.length === 0) {
+      this.procesandoAprobacionMultiple = false;
+      Swal.fire('No permitido', 'No puede aprobar sus propios requerimientos', 'warning');
+      return;
+    }
+
+    let exitosos = 0;
+    let fallidos = 0;
+
+    for (const req of aprobables) {
+      try {
+        const response = await this.aprobacionesAreaService
+          .aprobarRequerimientoArea({
+            idrequerimiento: req.idrequerimiento,
+            documentoidentidad: this.usuario.documentoidentidad,
+            accion: 'APROBADO',
+            comentarios: this.observacionesMultiple || 'Aprobado',
+            ruc: '20481121966',
+          })
+          .toPromise();
+
+        let esExitoso = false;
+        let responseItem = null;
+        if (response && Array.isArray(response) && response.length > 0) {
+          responseItem = response[0];
+        } else if (response && typeof response === 'object' && !Array.isArray(response)) {
+          responseItem = response;
+        }
+
+        if (responseItem) {
+          if ('success' in responseItem) {
+            esExitoso = responseItem.success === true;
+          } else if ('resultado' in responseItem) {
+            esExitoso = responseItem.resultado === 'SUCCESS' || responseItem.resultado === 'OK';
+          }
+        }
+
+        if (esExitoso) {
+          exitosos++;
+        } else {
+          fallidos++;
+        }
+      } catch (error) {
+        fallidos++;
+      }
+    }
+
+    this.procesandoAprobacionMultiple = false;
+    this.displayAprobacionMultipleModal = false;
+    this.observacionesMultiple = '';
+    this.requerimientosPendientesSeleccionados = [];
+
+    Swal.fire(
+      'Resumen de aprobación',
+      `Aprobados: ${exitosos}\nFallidos: ${fallidos}`,
+      exitosos > 0 ? 'success' : 'error',
+    );
+
+    await this.cargarRequerimientosPendientes();
+    await this.cargarDashboard();
+    await this.cargarMisRequerimientos();
   }
 
   // =============================================
@@ -1921,6 +2033,34 @@ export class AprobacionesAreaComponent implements OnInit {
       style: 'currency',
       currency: 'PEN',
     }).format(monto);
+  }
+
+  getPrecioItem(codigo: string): number {
+    const item = this.items.find((i: any) => i.id === codigo || i.codigo === codigo);
+    return item ? parseFloat(item.precio) || 0 : 0;
+  }
+
+  calcularMontoDetalle(det: any): number {
+    const precio = this.getPrecioItem(det.codigo);
+    const cantidad = parseFloat(det.cantidad) || 0;
+    return precio * cantidad;
+  }
+
+  calcularMontoRequerimiento(req: any): number {
+    const tipo = (req.itemtipo || req.tipoRequerimiento || '').toString().toUpperCase();
+    if (tipo !== 'COMPRA') return 0;
+    const detalles: any[] = req.detalles || req.detalle || [];
+    return detalles.reduce((total, det) => total + this.calcularMontoDetalle(det), 0);
+  }
+
+  calcularMontoModalActual(): number {
+    const dets = this.getDetallesItemsPendientes();
+    return dets.reduce((total, det) => total + this.calcularMontoDetalle(det), 0);
+  }
+
+  esRequerimientoCompra(req: any): boolean {
+    const tipo = (req?.itemtipo || req?.tipoRequerimiento || '').toString().toUpperCase();
+    return tipo === 'COMPRA';
   }
 
   getDetalleItems(requerimiento: any): any[] {

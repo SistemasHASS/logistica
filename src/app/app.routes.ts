@@ -66,6 +66,7 @@ import { OrdenesServicioComponent } from './modules/main/pages/ordenes-servicio/
 import { DevolucionConsumoGuard, ReingresoGuard } from './modules/main/guards/role.guard';
 import { AprobadorOCGuard } from './modules/auth/guard/aprobador-oc.guard';
 import { ConsolidacionComprasComponent } from './modules/main/pages/consolidacion-compras/consolidacion-compras.component';
+import { ConsolidacionCompraComponent } from './modules/main/pages/consolidacion-compra/consolidacion-compra.component';
 import { ConsolidacionServiciosComponent } from './modules/main/pages/consolidacion-servicios/consolidacion-servicios.component';
 import { AdminLogisticaComponent } from './modules/main/pages/admin-logistica/admin-logistica.component';
 import { AdminLogisticaGuard } from './modules/auth/guard/admin-logistica.guard';
@@ -165,6 +166,7 @@ export const routes: Routes = [
       { path: 'reporte-requerimientos', component: ReporteRequerimientos },
       { path: 'consolidacion-requerimientos', component: ConsolidacionRequerimientosComponent, canActivate: [LogisticoGuard] },
       { path: 'consolidacion-compras', component: ConsolidacionComprasComponent, canActivate: [LogisticoGuard] },
+      { path: 'consolidacion-compra', component: ConsolidacionCompraComponent, canActivate: [LogisticoGuard] },
       { path: 'consolidacion-servicios', component: ConsolidacionServiciosComponent, canActivate: [LogisticoGuard] },
       { path: 'conformidad-servicios', component: ConformidadServiciosComponent, canActivate: [ConformidadServiciosGuard] },
       { path: 'consolidacion-corporativa', component: ConsolidacionCorporativaComponent, canActivate: [LogisticoGuard] },

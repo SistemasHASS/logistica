@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mockup — Consolidación Corporativa v2</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+<link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"/>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{background:#f0f2f7;font-family:'Segoe UI',sans-serif;margin:0;padding:20px}
+:root{
+  --hp:#1565C0;--hp-l:#E3F2FD;
+  --bh:#2E7D32;--bh-l:#E8F5E9;
+  --cao:#E65100;--cao-l:#FFF3E0;
+  --corp:#6A1B9A;--corp-l:#F3E5F5;
+}
+.page{max-width:1320px;margin:0 auto}
+
+/* HEADER */
+.header{background:#fff;border-radius:12px 12px 0 0;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.06);flex-wrap:wrap;gap:10px}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-left i{font-size:26px;color:var(--corp)}
+.title{margin:0;font-size:1rem;font-weight:700;color:#1a1a2e}
+.subtitle{font-size:.72rem;color:#757575}
+.btn-reiniciar{display:flex;align-items:center;gap:5px;padding:6px 13px;border:1.5px solid #e53935;border-radius:8px;background:#fff;color:#e53935;font-size:.78rem;font-weight:600;cursor:pointer}
+.btn-reiniciar:hover{background:#ffeaea}
+
+/* FILTROS */
+.filtros{background:#fff;padding:14px 22px;border-bottom:1px solid #e0e0e0}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px 12px}
+.fi{display:flex;flex-direction:column;gap:3px}
+.fi label{font-size:.7rem;font-weight:600;color:#616161}
+.fi input,.fi select{padding:6px 8px;border:1px solid #d0d0d0;border-radius:6px;font-size:.78rem}
+.fi input:focus,.fi select:focus{border-color:var(--corp);outline:none}
+
+/* TABS */
+.tabs-nav{display:flex;gap:0;background:#fff;border-bottom:1px solid #e0e0e0;padding:0 22px}
+.tab{padding:11px 18px;border:none;background:transparent;font-size:.82rem;font-weight:600;color:#757575;cursor:pointer;border-bottom:3px solid transparent;display:flex;align-items:center;gap:6px}
+.tab i{font-size:16px}
+.tab.active.HP{color:var(--hp);border-bottom-color:var(--hp);background:var(--hp-l)}
+.tab.active.BH{color:var(--bh);border-bottom-color:var(--bh);background:var(--bh-l)}
+.tab.active.CAO{color:var(--cao);border-bottom-color:var(--cao);background:var(--cao-l)}
+.tab.active.CORP{color:var(--corp);border-bottom-color:var(--corp);background:var(--corp-l)}
+.tab.active.TODOS{color:#455A64;border-bottom-color:#455A64;background:#ECEFF1}
+.tab:hover{background:#f5f5f5}
+.badge-cnt{padding:2px 7px;border-radius:10px;font-size:.65rem;font-weight:700;color:#fff;background:#9e9e9e}
+
+/* PANELS */
+.panel-content{background:#fff;border-radius:0 0 12px 12px;padding:18px 22px;min-height:420px}
+.panel{display:none}
+.panel.active{display:block}
+
+/* EMP HEADER */
+.emp-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px}
+.emp-info{display:flex;align-items:center;gap:10px}
+.emp-info strong{font-size:.95rem;color:#2c3e50}
+.emp-info small{font-size:.7rem;color:#757575;display:block}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:.72rem;font-weight:700;color:#fff}
+.chip.HP{background:var(--hp)} .chip.BH{background:var(--bh)} .chip.CAO{background:var(--cao)} .chip.CORP{background:var(--corp)} .chip.TODOS{background:#455A64}
+
+/* TABLE */
+.tw{overflow-x:auto;border-radius:8px;border:1px solid #e0e0e0}
+.tw table{width:100%;border-collapse:collapse;font-size:.78rem}
+.tw th{background:#f5f5f5;padding:8px 10px;font-weight:700;color:#424242;text-align:left;border-bottom:1px solid #e0e0e0;white-space:nowrap}
+.tw td{padding:7px 10px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.tw tr:hover td{background:#fafafa}
+.tw td.text-end{text-align:right}
+.tw td.text-center{text-align:center}
+.codigo{font-weight:700;color:#1a237e}
+.cant{padding:2px 7px;border-radius:10px;font-weight:700;font-size:.7rem}
+.cant.HP{background:var(--hp-l);color:var(--hp)}
+.cant.BH{background:var(--bh-l);color:var(--bh)}
+.cant.CAO{background:var(--cao-l);color:var(--cao)}
+.price-inp{width:90px;padding:4px 6px;border:1px solid #e0e0e0;border-radius:5px;font-size:.78rem;text-align:right}
+.price-inp:focus{border-color:var(--corp);outline:none}
+.price-inp.cotizado{border-color:var(--bh);background:#F1F8E9}
+.select-prov{width:130px;padding:4px 6px;border:1px solid #e0e0e0;border-radius:5px;font-size:.75rem}
+.select-prov:focus{border-color:var(--corp);outline:none}
+.sub-empty{color:#bbb}
+.total-row{font-weight:700;background:#f8f6ff}
+
+/* ACTIONS */
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}
+.btn-export{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:1.5px solid var(--corp);border-radius:7px;background:#fff;color:var(--corp);font-size:.79rem;font-weight:700;cursor:pointer}
+.btn-export:hover{background:var(--corp-l)}
+.btn-gen{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border:none;border-radius:7px;background:#1565C0;color:#fff;font-size:.8rem;font-weight:700;cursor:pointer}
+.btn-gen:hover{background:#0D47A1}
+.btn-gen:disabled{opacity:.5;cursor:not-allowed}
+
+/* CORPORATIVE */
+.corp-filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.corp-filters select{padding:5px 8px;border:1px solid #d0d0d0;border-radius:6px;font-size:.75rem}
+.corp-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0;padding:10px;background:#f8f6ff;border-radius:8px;border:1px solid #e0e0e0}
+.corp-actions label{font-size:.75rem;font-weight:600;color:#424242}
+.corp-actions select{padding:5px 8px;border:1px solid #d0d0d0;border-radius:6px;font-size:.75rem;min-width:200px}
+.corp-actions .sel-count{font-size:.75rem;color:#616161}
+.cot-upload{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.cot-upload .btn-upload{background:#fff;border:1px solid var(--corp);color:var(--corp);padding:6px 12px;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px}
+.cot-upload .btn-upload:hover{background:#f8f6ff}
+.cot-upload .hint{font-size:.7rem;color:#616161}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.mpanel{background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:min(760px,95vw);max-height:88vh;display:flex;flex-direction:column}
+.mhd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e0e0e0;gap:10px;background:var(--corp);color:#fff;border-radius:12px 12px 0 0}
+.mhd h6{margin:0;font-size:.9rem;font-weight:700}
+.mhd .btn-x{background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:6px;padding:5px 10px;cursor:pointer}
+.mbody{padding:15px 18px;overflow-y:auto;flex:1}
+.mft{display:flex;justify-content:flex-end;gap:7px;padding:11px 18px;border-top:1px solid #e0e0e0}
+.oc-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px 12px;margin-bottom:14px;padding:12px;background:#f8f9ff;border-radius:8px;border:1px solid #e0e0e0}
+.oc-fld{display:flex;flex-direction:column;gap:2px}
+.oc-fld label{font-size:.7rem;font-weight:600;color:#616161}
+.oc-fld input,.oc-fld select,.oc-fld textarea{width:100%;padding:5px 7px;border:1px solid #d0d0d0;border-radius:5px;font-size:.75rem}
+.oc-fld textarea{resize:vertical;min-height:46px}
+.oc-fld.full{grid-column:1/-1}
+.oc-emp-box{margin-bottom:16px;border:1px solid #e0e0e0;border-radius:8px;padding:12px}
+.oc-emp-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.oc-items-table{width:100%;border-collapse:collapse;font-size:.72rem}
+.oc-items-table th{background:#f5f5f5;padding:6px 8px;text-align:left;border-bottom:1px solid #e0e0e0}
+.oc-items-table td{padding:5px 8px;border-bottom:1px solid #f0f0f0}
+.oc-total-box{background:#f8f6ff;border-radius:8px;padding:10px 14px;margin-top:8px}
+.oc-total-row{display:flex;justify-content:space-between;font-size:.78rem;padding:2px 0}
+.oc-total-row.grand{font-weight:700;font-size:.85rem;color:var(--corp);border-top:1px solid #e0e0e0;margin-top:4px;padding-top:4px}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:22px;right:22px;z-index:2000;display:flex;flex-direction:column;gap:7px}
+.toast-msg{background:#333;color:#fff;padding:9px 16px;border-radius:8px;font-size:.81rem;box-shadow:0 4px 12px rgba(0,0,0,.2);animation:fadeIn .2s ease;max-width:320px}
+.toast-msg.ok{background:#2E7D32}
+.toast-msg.warn{background:#E65100}
+.toast-msg.err{background:#c62828}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.hidden{display:none}
+
+/* DETALLE EXPANDIBLE EN TAB TODOS */
+.toggle-icon{font-size:14px;color:#9e9e9e;transition:transform .2s;cursor:pointer}
+.toggle-icon.open{transform:rotate(90deg)}
+.req-num{font-weight:700;color:var(--corp);font-family:monospace;font-size:.78rem}
+.req-row{cursor:pointer;transition:background .1s}
+.req-row:hover td{background:#f8f9ff}
+.det-row td{background:#fafbff;padding:0}
+.tag-pend{display:inline-block;padding:3px 8px;border-radius:6px;background:#FFF8E1;color:#F9A825;font-size:.7rem;font-weight:700}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="header">
+  <div class="header-left">
+    <i class='bx bx-globe'></i>
+    <div>
+      <div class="title">Consolidación Corporativa de Compras v2</div>
+      <div class="subtitle">Pre-consolidación por empresa + cotización + generación de OC</div>
+    </div>
+  </div>
+  <button class="btn-reiniciar" onclick="reiniciar()"><i class='bx bx-refresh'></i> Reiniciar</button>
+</div>
+
+<div class="filtros">
+  <div class="fgrid">
+    <div class="fi">
+      <label>Item</label>
+      <select id="fItem" onchange="aplicarFiltros()">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="fi">
+      <label>Línea</label>
+      <select id="fLinea" onchange="aplicarFiltros()">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div class="fi">
+      <label>Familia</label>
+      <select id="fFamilia" onchange="aplicarFiltros()">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div class="fi">
+      <label>Subfamilia</label>
+      <select id="fSubfamilia" onchange="aplicarFiltros()">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div class="fi">
+      <label>Buscar</label>
+      <input type="text" id="fBuscar" placeholder="Código o descripción..." oninput="aplicarFiltros()"/>
+    </div>
+  </div>
+</div>
+
+<div class="tabs-nav">
+  <button class="tab active TODOS" id="tabTODOS" onclick="switchTab('TODOS')"><i class='bx bx-list-ul'></i> Todos los requerimientos <span class="badge-cnt TODOS" id="cntTODOS">0</span></button>
+  <button class="tab HP" id="tabHP" onclick="switchTab('HP')"><i class='bx bx-buildings'></i> HP <span class="badge-cnt HP" id="cntHP">0</span></button>
+  <button class="tab BH" id="tabBH" onclick="switchTab('BH')"><i class='bx bx-buildings'></i> BH <span class="badge-cnt BH" id="cntBH">0</span></button>
+  <button class="tab CAO" id="tabCAO" onclick="switchTab('CAO')"><i class='bx bx-buildings'></i> CAO <span class="badge-cnt CAO" id="cntCAO">0</span></button>
+  <button class="tab CORP" id="tabCORP" onclick="switchTab('CORP')"><i class='bx bx-globe'></i> Corporativo <span class="badge-cnt CORP" id="cntCORP">0</span></button>
+</div>
+
+<div class="panel-content">
+  <!-- PANEL TODOS -->
+  <div class="panel active" id="panel-TODOS">
+    <div class="emp-hd">
+      <div class="emp-info"><span class="chip TODOS">TODOS</span><div><strong>Todos los requerimientos</strong><small>Listado completo de líneas de requerimiento</small></div></div>
+    </div>
+    <div class="tw" id="tblTODOS"></div>
+  </div>
+  <!-- PANEL HP -->
+  <div class="panel" id="panel-HP">
+    <div class="emp-hd">
+      <div class="emp-info"><span class="chip HP">HP</span><div><strong>Hass Peru S.A.</strong><small>Requerimientos pre-consolidados</small></div></div>
+    </div>
+    <div class="tw" id="tblHP"></div>
+  </div>
+  <!-- PANEL BH -->
+  <div class="panel" id="panel-BH">
+    <div class="emp-hd">
+      <div class="emp-info"><span class="chip BH">BH</span><div><strong>Berry Harvest S.A.</strong><small>Requerimientos pre-consolidados</small></div></div>
+    </div>
+    <div class="tw" id="tblBH"></div>
+  </div>
+  <!-- PANEL CAO -->
+  <div class="panel" id="panel-CAO">
+    <div class="emp-hd">
+      <div class="emp-info"><span class="chip CAO">CAO</span><div><strong>Corp Agricola Olmos S.A.</strong><small>Requerimientos pre-consolidados</small></div></div>
+    </div>
+    <div class="tw" id="tblCAO"></div>
+  </div>
+  <!-- PANEL CORP -->
+  <div class="panel" id="panel-CORP">
+    <div class="emp-hd">
+      <div class="emp-info"><span class="chip CORP">CORP</span><div><strong>Consolidado Corporativo</strong><small>Todas las empresas</small></div></div>
+    </div>
+
+    <div class="corp-actions">
+      <div>
+        <label>Proveedor para ítems marcados:</label>
+        <select id="provGlobalCorp" onchange="setProveedorGlobal()">
+          <option value="">Seleccionar proveedor...</option>
+        </select>
+      </div>
+      <span class="sel-count" id="selCountCorp">0 ítems seleccionados</span>
+      <button class="btn-gen" id="btnEmitirOC" onclick="emitirOC()" disabled><i class='bx bx-file'></i> Emitir OC Corporativa</button>
+    </div>
+
+    <div class="cot-upload">
+      <input type="file" id="fileCot" accept=".csv,.xlsx,.xls" style="display:none" onchange="importarCotizacion(this)">
+      <button class="btn-upload" onclick="document.getElementById('fileCot').click()"><i class='bx bx-upload'></i> Cargar cotización con precios</button>
+      <small class="hint">Descarga la plantilla, llena el precio del proveedor y súbela para completar los precios.</small>
+    </div>
+
+    <div class="tw" id="tblCORP"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-export" onclick="exportarExcel()"><i class='bx bx-download'></i> Exportar cotización Excel</button>
+    <button class="btn-gen" id="btnGenOC" onclick="emitirOC()"><i class='bx bx-file'></i> Emitir OC Corporativa</button>
+  </div>
+</div>
+
+</div>
+
+<!-- MODAL OC -->
+<div class="overlay" id="modalOC">
+  <div class="mpanel">
+    <div class="mhd">
+      <h6><i class='bx bx-file'></i> Emisión de Orden de Compra Corporativa</h6>
+      <button class="btn-x" onclick="cerrarModal()"><i class='bx bx-x'></i></button>
+    </div>
+    <div class="mbody" id="ocBody">
+      <div class="oc-form">
+        <div class="oc-fld">
+          <label>Proveedor</label>
+          <input type="text" id="ocProv" readonly/>
+        </div>
+        <div class="oc-fld">
+          <label>RUC</label>
+          <input type="text" id="ocRuc" readonly/>
+        </div>
+        <div class="oc-fld">
+          <label>Condición de pago</label>
+          <select id="ocCondPago">
+            <option value="Contado">Contado</option>
+            <option value="Crédito 30 días">Crédito 30 días</option>
+            <option value="Crédito 45 días">Crédito 45 días</option>
+            <option value="Crédito 60 días">Crédito 60 días</option>
+          </select>
+        </div>
+        <div class="oc-fld">
+          <label>Plazo de entrega (días)</label>
+          <input type="number" id="ocPlazo" value="7" min="1"/>
+        </div>
+        <div class="oc-fld">
+          <label>Moneda</label>
+          <select id="ocMoneda">
+            <option value="PEN">PEN - Soles</option>
+            <option value="USD">USD - Dólares</option>
+          </select>
+        </div>
+        <div class="oc-fld">
+          <label>Lugar de entrega</label>
+          <input type="text" id="ocLugar" value="Almacén central Grupo Hass"/>
+        </div>
+        <div class="oc-fld full">
+          <label>Observaciones</label>
+          <textarea id="ocObs" placeholder="Ingrese observaciones para la OC..."></textarea>
+        </div>
+      </div>
+      <div id="ocEmpresas"></div>
+    </div>
+    <div class="mft">
+      <button class="btn-reiniciar" onclick="cerrarModal()"><i class='bx bx-x'></i> Cerrar</button>
+      <button class="btn-gen" onclick="confirmarOC()"><i class='bx bx-check'></i> Crear OC automática por empresa</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+const empNombres = {HP:'Hass Peru S.A.', BH:'Berry Harvest S.A.', CAO:'Corp Agricola Olmos S.A.'};
+const proveedores = [
+  {id:'P001', nombre:'Proveedor Agro SAC', ruc:'20123456789'},
+  {id:'P002', nombre:'Suministros Industriales del Norte', ruc:'20548796321'},
+  {id:'P003', nombre:'Comercial Hass Perú', ruc:'20456987123'},
+  {id:'P004', nombre:'Repuestos y Servicios Olmos', ruc:'20632147895'}
+];
+
+// Datos mock: requerimientos con líneas de detalle
+const reqBase = [
+  {id:'REQ-2026-001', area:'MANTENIMIENTO', solicitante:'Juan Pérez', fecha:'2026-06-28'},
+  {id:'REQ-2026-002', area:'MAQUINARIA', solicitante:'Luis Rojas', fecha:'2026-06-29'},
+  {id:'REQ-2026-003', area:'CAMPO', solicitante:'Carlos Vega', fecha:'2026-06-29'},
+  {id:'REQ-2026-004', area:'TALLER', solicitante:'Miguel Torres', fecha:'2026-06-30'},
+  {id:'REQ-2026-005', area:'CIVIL', solicitante:'Pedro Díaz', fecha:'2026-06-30'}
+];
+
+const productos = [
+  {cod:'ITEM-1001', desc:'Filtro de aceite hidráulico', um:'UND', linea:'REPUESTOS', familia:'HIDRAULICA', subfamilia:'FILTROS', ultimaOC:4.50},
+  {cod:'ITEM-1002', desc:'Aceite hidráulico AW68 x 20L', um:'GAL', linea:'LUBRICANTES', familia:'HIDRAULICA', subfamilia:'ACEITES', ultimaOC:28.00},
+  {cod:'ITEM-1003', desc:'Bomba de agua centrífuga 3HP', um:'UND', linea:'EQUIPOS', familia:'BOMBAS', subfamilia:'CENTRIFUGAS', ultimaOC:1250.00},
+  {cod:'ITEM-1004', desc:'Manguera agrícola 2" x 100m', um:'ROL', linea:'RIEGO', familia:'MANGUERAS', subfamilia:'POLIETILENO', ultimaOC:145.00},
+  {cod:'ITEM-1005', desc:'Fumigadora manual 20L', um:'UND', linea:'FUMIGACION', familia:'EQUIPOS', subfamilia:'MANUALES', ultimaOC:85.00},
+  {cod:'ITEM-1006', desc:'Insecticida organofosforado x 1L', um:'LT', linea:'AGROQUIMICOS', familia:'INSECTICIDAS', subfamilia:'ORGANOFOSFORADOS', ultimaOC:32.00},
+  {cod:'ITEM-1007', desc:'Semilla de pasto cultivar verde', um:'KG', linea:'SEMILLAS', familia:'PASTOS', subfamilia:'FORRAJEROS', ultimaOC:12.50},
+  {cod:'ITEM-1008', desc:'Fertilizante NPK 20-20-20 x 50kg', um:'BOL', linea:'FERTILIZANTES', familia:'NPK', subfamilia:'GRANULADOS', ultimaOC:95.00}
+];
+
+let datos = [];
+let seleccionados = new Set();
+let costosProveedor = {};
+let proveedorPorItem = {};
+let seleccionadosCorp = new Set();
+let currentTab = 'TODOS';
+let proveedorGlobal = '';
+
+function generarDatos() {
+  const datos = [];
+  let id = 1;
+  reqBase.forEach((req, idx) => {
+    const nLineas = 2 + Math.floor(Math.random() * 3);
+    for (let l = 0; l < nLineas; l++) {
+      const prod = productos[(idx + l) % productos.length];
+      const empresa = ['HP', 'BH', 'CAO'][Math.floor(Math.random() * 3)];
+      const cantidad = 1 + Math.floor(Math.random() * 20);
+      datos.push({
+        id: id++,
+        req: req.id,
+        area: req.area,
+        solicitante: req.solicitante,
+        fecha: req.fecha,
+        empresa: empresa,
+        cod: prod.cod,
+        desc: prod.desc,
+        um: prod.um,
+        linea: prod.linea,
+        familia: prod.familia,
+        subfamilia: prod.subfamilia,
+        cantidad: cantidad,
+        ultimaOC: prod.ultimaOC
+      });
+    }
+  });
+  return datos;
+}
+
+function init() {
+  datos = generarDatos();
+  llenarFiltros();
+  llenarProveedorGlobal();
+  aplicarFiltros();
+  toast('Datos pre-consolidados cargados automáticamente','ok');
+}
+
+function llenarProveedorGlobal() {
+  const sel = document.getElementById('provGlobalCorp');
+  sel.innerHTML = '<option value="">Seleccionar proveedor...</option>' + proveedores.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+}
+
+function llenarFiltros() {
+  const items = [...new Set(datos.map(d => d.cod))].sort();
+  const lineas = [...new Set(datos.map(d => d.linea))].sort();
+  const familias = [...new Set(datos.map(d => d.familia))].sort();
+  const subfamilias = [...new Set(datos.map(d => d.subfamilia))].sort();
+
+  const setOpts = (id, vals) => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">' + (id === 'fItem' ? 'Todos' : id === 'fLinea' ? 'Todas' : 'Todas') + '</option>';
+    vals.forEach(v => sel.add(new Option(v, v)));
+  };
+  setOpts('fItem', items);
+  setOpts('fLinea', lineas);
+  setOpts('fFamilia', familias);
+  setOpts('fSubfamilia', subfamilias);
+}
+
+function aplicarFiltros() {
+  const fItem = document.getElementById('fItem').value;
+  const fLinea = document.getElementById('fLinea').value;
+  const fFamilia = document.getElementById('fFamilia').value;
+  const fSubfamilia = document.getElementById('fSubfamilia').value;
+  const fBuscar = document.getElementById('fBuscar').value.toLowerCase();
+
+  const filtrados = datos.filter(d => {
+    return (!fItem || d.cod === fItem) &&
+           (!fLinea || d.linea === fLinea) &&
+           (!fFamilia || d.familia === fFamilia) &&
+           (!fSubfamilia || d.subfamilia === fSubfamilia) &&
+           (!fBuscar || d.cod.toLowerCase().includes(fBuscar) || d.desc.toLowerCase().includes(fBuscar));
+  });
+
+  renderTodos(filtrados);
+  renderEmpresa('HP', filtrados.filter(d => d.empresa === 'HP'));
+  renderEmpresa('BH', filtrados.filter(d => d.empresa === 'BH'));
+  renderEmpresa('CAO', filtrados.filter(d => d.empresa === 'CAO'));
+  renderCorporativo(filtrados);
+}
+
+function renderTodos(rows) {
+  const container = document.getElementById('tblTODOS');
+  if (!rows.length) {
+    container.innerHTML = '<div style="padding:30px;text-align:center;color:#9e9e9e"><i class="bx bx-package" style="font-size:28px"></i><br/>Sin requerimientos</div>';
+    document.getElementById('cntTODOS').textContent = 0;
+    return;
+  }
+  // Agrupar por requerimiento + empresa (una fila por empresa dentro de cada req)
+  const mapa = new Map();
+  rows.forEach(r => {
+    const key = r.req + '|' + r.empresa;
+    if (!mapa.has(key)) {
+      mapa.set(key, {req: r.req, empresa: r.empresa, area: r.area, solicitante: r.solicitante, fecha: r.fecha, detalles: []});
+    }
+    mapa.get(key).detalles.push(r);
+  });
+  const grupos = Array.from(mapa.values()).sort((a, b) => a.req.localeCompare(b.req) || a.empresa.localeCompare(b.empresa));
+  document.getElementById('cntTODOS').textContent = grupos.length;
+
+  let html = `<table><thead>
+    <tr>
+      <th style="width:34px">Detalle</th>
+      <th>N° Requerimiento</th>
+      <th>Empresa</th>
+      <th>Área</th>
+      <th>Solicitante</th>
+      <th>Fecha</th>
+      <th>Líneas</th>
+      <th>Estado</th>
+    </tr>
+  </thead><tbody>`;
+  grupos.forEach(g => {
+    const idSafe = g.req.replace(/[^a-zA-Z0-9]/g, '_') + '_' + g.empresa;
+    html += `<tr class="req-row" id="todos-row-${idSafe}">
+      <td style="text-align:center"><i class='bx bx-chevron-right toggle-icon' id="todos-ic-${idSafe}" onclick="toggleTodosDet('${idSafe}');event.stopPropagation()"></i></td>
+      <td><span class="req-num">${g.req}</span></td>
+      <td><span class="chip ${g.empresa}">${g.empresa}</span></td>
+      <td>${g.area}</td>
+      <td>${g.solicitante}</td>
+      <td>${g.fecha}</td>
+      <td><span style="font-size:.76rem;color:#616161">${g.detalles.length} línea${g.detalles.length>1?'s':''}</span></td>
+      <td><span class="tag-pend">PENDIENTE</span></td>
+    </tr>
+    <tr class="det-row hidden" id="todos-det-${idSafe}">
+      <td colspan="8" style="padding:0;background:#f8f9fc">
+        <div style="padding:10px 18px">
+          <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+            <thead>
+              <tr style="background:#e8eaf6">
+                <th style="text-align:left;padding:6px 8px">Código</th>
+                <th style="text-align:left;padding:6px 8px">Descripción</th>
+                <th style="text-align:left;padding:6px 8px">Línea</th>
+                <th style="text-align:left;padding:6px 8px">Familia</th>
+                <th style="text-align:left;padding:6px 8px">Subfamilia</th>
+                <th style="text-align:center;padding:6px 8px;width:90px">Cantidad</th>
+                <th style="text-align:center;padding:6px 8px;width:80px">UM</th>
+                <th style="text-align:end;padding:6px 8px;width:120px">Costo última OC (S/)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${g.detalles.map(d => `
+              <tr>
+                <td style="padding:6px 8px;border-bottom:1px solid #e0e0e0"><span class="codigo">${d.cod}</span></td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e0e0e0">${d.desc}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e0e0e0">${d.linea}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e0e0e0">${d.familia}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e0e0e0">${d.subfamilia}</td>
+                <td style="text-align:center;padding:6px 8px;border-bottom:1px solid #e0e0e0"><span class="cant ${d.empresa}">${d.cantidad}</span></td>
+                <td style="text-align:center;padding:6px 8px;border-bottom:1px solid #e0e0e0">${d.um}</td>
+                <td style="text-align:end;padding:6px 8px;border-bottom:1px solid #e0e0e0">${d.ultimaOC.toFixed(2)}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  container.innerHTML = html;
+}
+
+function toggleTodosDet(idSafe) {
+  const ic = document.getElementById('todos-ic-' + idSafe);
+  const det = document.getElementById('todos-det-' + idSafe);
+  const open = ic.classList.toggle('open');
+  ic.className = open ? 'bx bx-chevron-down toggle-icon open' : 'bx bx-chevron-right toggle-icon';
+  det.classList.toggle('hidden', !open);
+}
+
+function renderEmpresa(emp, rows) {
+  document.getElementById('cnt' + emp).textContent = rows.length;
+  const container = document.getElementById('tbl' + emp);
+  if (!rows.length) {
+    container.innerHTML = '<div style="padding:30px;text-align:center;color:#9e9e9e"><i class="bx bx-package" style="font-size:28px"></i><br/>Sin requerimientos pre-consolidados</div>';
+    return;
+  }
+  let html = `<table><thead>
+    <tr>
+      <th><input type="checkbox" onclick="toggleAll('${emp}', this.checked)"></th>
+      <th>Código</th><th>Descripción</th><th>Línea</th><th>Familia</th><th>Subfamilia</th>
+      <th class="text-center">Cantidad</th><th class="text-center">UM</th>
+      <th class="text-end">Costo última OC (S/)</th>
+      <th>Proveedor</th>
+      <th class="text-end">Costo proveedor (S/)</th>
+      <th class="text-end">Subtotal (S/)</th>
+    </tr>
+  </thead><tbody>`;
+  let total = 0;
+  rows.forEach(r => {
+    const chk = seleccionados.has(r.id) ? 'checked' : '';
+    const costoProv = costosProveedor[r.id] || '';
+    const subtotal = seleccionados.has(r.id) ? (costoProv ? r.cantidad * parseFloat(costoProv) : 0) : 0;
+    total += subtotal;
+    const provSel = proveedorPorItem[r.id] || '';
+    html += `<tr>
+      <td class="text-center"><input type="checkbox" ${chk} onchange="toggleFila(${r.id}, this.checked)"></td>
+      <td><span class="codigo">${r.cod}</span></td>
+      <td>${r.desc}</td>
+      <td>${r.linea}</td>
+      <td>${r.familia}</td>
+      <td>${r.subfamilia}</td>
+      <td class="text-center"><span class="cant ${emp}">${r.cantidad}</span></td>
+      <td class="text-center">${r.um}</td>
+      <td class="text-end">${r.ultimaOC.toFixed(2)}</td>
+      <td>
+        <select class="select-prov" onchange="setProveedor(${r.id}, this.value)">
+          <option value="">Seleccionar...</option>
+          ${proveedores.map(p => `<option value="${p.id}" ${provSel === p.id ? 'selected' : ''}>${p.nombre}</option>`).join('')}
+        </select>
+      </td>
+      <td class="text-end">
+        <input type="number" class="price-inp${costoProv ? ' cotizado' : ''}" value="${costoProv}" placeholder="0.00" min="0" step="0.01"
+          oninput="setCostoProveedor(${r.id}, this.value)" style="width:100px"/>
+      </td>
+      <td class="text-end" id="sub-${r.id}">${subtotal ? subtotal.toFixed(2) : '<span class="sub-empty">—</span>'}</td>
+    </tr>`;
+  });
+  html += `</tbody><tfoot>
+    <tr class="total-row">
+      <td colspan="11" class="text-end">Total seleccionado ${emp}:</td>
+      <td class="text-end" id="total-${emp}">S/ ${total.toFixed(2)}</td>
+    </tr>
+  </tfoot></table>`;
+  container.innerHTML = html;
+}
+
+function renderCorporativo(rows) {
+  const container = document.getElementById('tblCORP');
+  if (!rows.length) {
+    document.getElementById('cntCORP').textContent = 0;
+    container.innerHTML = '<div style="padding:30px;text-align:center;color:#9e9e9e"><i class="bx bx-package" style="font-size:28px"></i><br/>Sin datos consolidados</div>';
+    return;
+  }
+  // Agrupar por código
+  const map = new Map();
+  rows.forEach(r => {
+    if (!map.has(r.cod)) map.set(r.cod, {cod:r.cod, desc:r.desc, um:r.um, linea:r.linea, familia:r.familia, subfamilia:r.subfamilia, HP:0, BH:0, CAO:0, ultimaOC:r.ultimaOC, ids:[]});
+    const g = map.get(r.cod);
+    g[r.empresa] += r.cantidad;
+    g.ids.push(r.id);
+  });
+  const grupos = Array.from(map.values());
+  document.getElementById('cntCORP').textContent = grupos.length;
+
+  let html = `<table><thead>
+    <tr>
+      <th><input type="checkbox" onclick="toggleAllCorp(this.checked)"></th>
+      <th>Código</th><th>Descripción</th><th>Línea</th><th>Familia</th><th>Subfamilia</th>
+      <th class="text-center">HP</th><th class="text-center">BH</th><th class="text-center">CAO</th>
+      <th class="text-center">Total</th><th class="text-end">Última OC (S/)</th>
+      <th class="text-end">P.U. (S/) sin IGV</th>
+      <th class="text-end">Subtotal (S/)</th>
+      <th>Proveedor asignado</th>
+    </tr>
+  </thead><tbody>`;
+  let totalCorp = 0;
+  grupos.forEach(g => {
+    const totalCant = g.HP + g.BH + g.CAO;
+    const chk = seleccionadosCorp.has(g.cod) ? 'checked' : '';
+    // Precio cotizado: usa el primer precio encontrado en costosProveedor de los ids de este código
+    const precio = g.ids.map(id => costosProveedor[id]).find(v => v !== undefined && v !== null && v !== '') || '';
+    const precioNum = parseFloat(precio) || 0;
+    const subtotal = precioNum * totalCant;
+    totalCorp += subtotal;
+    // Verificar si todos los ids de esta fila tienen el mismo proveedor
+    const provs = [...new Set(g.ids.map(id => proveedorPorItem[id]).filter(Boolean))];
+    const provTxt = provs.length === 1 ? proveedores.find(p => p.id === provs[0])?.nombre || '—' : (provs.length > 1 ? 'Varios' : '—');
+    html += `<tr>
+      <td class="text-center"><input type="checkbox" ${chk} onchange="toggleCorp('${g.cod}', this.checked)"></td>
+      <td><span class="codigo">${g.cod}</span></td>
+      <td>${g.desc}</td>
+      <td>${g.linea}</td>
+      <td>${g.familia}</td>
+      <td>${g.subfamilia}</td>
+      <td class="text-center">${g.HP || '<span class="sub-empty">—</span>'}</td>
+      <td class="text-center">${g.BH || '<span class="sub-empty">—</span>'}</td>
+      <td class="text-center">${g.CAO || '<span class="sub-empty">—</span>'}</td>
+      <td class="text-center"><strong>${totalCant}</strong></td>
+      <td class="text-end">${g.ultimaOC.toFixed(2)}</td>
+      <td class="text-end"><input type="number" class="price-inp" value="${precio}" placeholder="0.00" min="0" step="0.01" style="width:90px" oninput="setCostoCorp('${g.cod}', this.value)"></td>
+      <td class="text-end" id="sub-corp-${g.cod}">${subtotal ? subtotal.toFixed(2) : '<span class="sub-empty">—</span>'}</td>
+      <td id="prov-corp-${g.cod}">${provTxt}</td>
+    </tr>`;
+  });
+  html += `</tbody><tfoot>
+    <tr class="total-row">
+      <td colspan="12" class="text-end">Total corporativo cotizado:</td>
+      <td class="text-end">S/ ${totalCorp.toFixed(2)}</td>
+      <td></td>
+    </tr>
+  </tfoot></table>`;
+  container.innerHTML = html;
+  actualizarEstadoCorp();
+}
+
+function setCostoCorp(cod, valor) {
+  const precio = parseFloat(valor) || 0;
+  const ids = datos.filter(d => d.cod === cod).map(d => d.id);
+  ids.forEach(id => costosProveedor[id] = precio);
+  aplicarFiltros();
+}
+
+function actualizarEstadoCorp() {
+  document.getElementById('selCountCorp').textContent = seleccionadosCorp.size + ' ítems seleccionados';
+  document.getElementById('btnEmitirOC').disabled = seleccionadosCorp.size === 0 || !proveedorGlobal;
+}
+
+function toggleCorp(cod, checked) {
+  if (checked) seleccionadosCorp.add(cod); else seleccionadosCorp.delete(cod);
+  aplicarFiltros();
+}
+
+function toggleAllCorp(checked) {
+  const rows = datos;
+  const codigos = [...new Set(rows.map(d => d.cod))];
+  codigos.forEach(cod => {
+    if (checked) seleccionadosCorp.add(cod); else seleccionadosCorp.delete(cod);
+  });
+  aplicarFiltros();
+}
+
+function setProveedorGlobal() {
+  const val = document.getElementById('provGlobalCorp').value;
+  proveedorGlobal = val;
+  if (!val) {
+    aplicarFiltros();
+    return;
+  }
+  // Asignar proveedor a todos los ids de los códigos seleccionados
+  seleccionadosCorp.forEach(cod => {
+    const filas = datos.filter(d => d.cod === cod);
+    filas.forEach(r => proveedorPorItem[r.id] = val);
+  });
+  aplicarFiltros();
+  toast('Proveedor asignado a ' + seleccionadosCorp.size + ' ítem(s) seleccionado(s)','ok');
+}
+
+function switchTab(emp) {
+  currentTab = emp;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active', 'HP', 'BH', 'CAO', 'CORP', 'TODOS'));
+  const btn = document.getElementById('tab' + emp);
+  btn.classList.add('active', emp);
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + emp).classList.add('active');
+}
+
+function toggleAll(emp, checked) {
+  const rows = datos.filter(d => d.empresa === emp);
+  rows.forEach(r => {
+    if (checked) seleccionados.add(r.id); else seleccionados.delete(r.id);
+  });
+  aplicarFiltros();
+}
+
+function toggleFila(id, checked) {
+  if (checked) seleccionados.add(id); else seleccionados.delete(id);
+  aplicarFiltros();
+}
+
+function setProveedor(id, val) {
+  if (val) proveedorPorItem[id] = val; else delete proveedorPorItem[id];
+  // Si hay proveedor y no hay costo, no hacemos nada
+}
+
+function setCostoProveedor(id, val) {
+  costosProveedor[id] = val;
+  aplicarFiltros();
+}
+
+function exportarExcel() {
+  // Exportar siempre la tabla consolidada del tab Corporativo como .xlsx
+  const rows = datos;
+  const map = new Map();
+  rows.forEach(r => {
+    if (!map.has(r.cod)) map.set(r.cod, {cod:r.cod, desc:r.desc, um:r.um, linea:r.linea, familia:r.familia, subfamilia:r.subfamilia, HP:0, BH:0, CAO:0, ultimaOC:r.ultimaOC, ids:[]});
+    const g = map.get(r.cod);
+    g[r.empresa] += r.cantidad;
+    g.ids.push(r.id);
+  });
+  const grupos = Array.from(map.values());
+  const headers = ['Código', 'Descripción', 'UM', 'Cant. HP', 'Cant. BH', 'Cant. CAO', 'Total', 'Última OC (S/)', 'P.U. (S/) sin IGV', 'Subtotal (S/)'];
+  const wsData = [headers];
+  grupos.forEach((g, idx) => {
+    const rowNum = idx + 2;
+    const total = g.HP + g.BH + g.CAO;
+    const precio = g.ids.map(id => costosProveedor[id]).find(v => v !== undefined && v !== null && v !== '') || '';
+    const precioNum = parseFloat(precio) || 0;
+    wsData.push([
+      g.cod,
+      g.desc,
+      g.um,
+      g.HP || 0,
+      g.BH || 0,
+      g.CAO || 0,
+      total,
+      g.ultimaOC.toFixed(2),
+      precioNum || '',
+      { f: `I${rowNum}*G${rowNum}` }
+    ]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = headers.map(() => ({ wch: 16 }));
+  ws['!cols'][1] = { wch: 38 };
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Cotización');
+  const fecha = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `cotizacion_corporativa_${fecha}.xlsx`);
+  toast('Cotización exportada en Excel (.xlsx) con fórmulas de subtotal', 'ok');
+}
+
+function importarCotizacion(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target.result);
+    let workbook;
+    try {
+      workbook = XLSX.read(data, { type: 'array' });
+    } catch (err) {
+      toast('No se pudo leer el archivo Excel', 'err');
+      return;
+    }
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+    if (!json.length) { toast('Archivo vacío', 'err'); return; }
+    const idxCabecera = json.findIndex(row => row.some(c => String(c).toLowerCase().includes('código')));
+    if (idxCabecera < 0) { toast('Formato no válido. Debe tener columna Código', 'err'); return; }
+    const cabecera = json[idxCabecera].map(h => String(h).trim().toLowerCase());
+    const idxCod = cabecera.indexOf('código');
+    const idxPrecio = cabecera.indexOf('p.u. (s/) sin igv');
+    if (idxCod < 0 || idxPrecio < 0) { toast('Formato no válido. Debe tener columnas Código y P.U. (S/) sin IGV', 'err'); return; }
+    let count = 0;
+    json.slice(idxCabecera + 1).forEach(row => {
+      const cod = String(row[idxCod] || '').trim();
+      const precio = parseFloat(row[idxPrecio]) || 0;
+      if (cod && precio > 0) {
+        const ids = datos.filter(d => d.cod === cod).map(d => d.id);
+        if (ids.length) {
+          ids.forEach(id => costosProveedor[id] = precio);
+          count += ids.length;
+        }
+      }
+    });
+    input.value = '';
+    aplicarFiltros();
+    if (count) toast('Cotización cargada: ' + count + ' línea(s) con precio asignado', 'ok');
+    else toast('No se encontraron códigos coincidentes en el archivo', 'warn');
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function emitirOC() {
+  if (seleccionadosCorp.size === 0) { toast('Selecciona al menos un ítem en el corporativo','err'); return; }
+  if (!proveedorGlobal) { toast('Selecciona un proveedor global','err'); return; }
+
+  const prov = proveedores.find(p => p.id === proveedorGlobal);
+  document.getElementById('ocProv').value = prov.nombre;
+  document.getElementById('ocRuc').value = prov.ruc;
+
+  // Recopilar filas de los códigos seleccionados
+  const selectedIds = [];
+  seleccionadosCorp.forEach(cod => {
+    datos.filter(d => d.cod === cod).forEach(r => selectedIds.push(r.id));
+  });
+
+  // Agrupar por empresa
+  const porEmp = {HP:[], BH:[], CAO:[]};
+  selectedIds.forEach(id => {
+    const r = datos.find(d => d.id === id);
+    porEmp[r.empresa].push(r);
+  });
+
+  let html = '';
+  ['HP','BH','CAO'].forEach(emp => {
+    const items = porEmp[emp];
+    if (!items.length) return;
+    html += `<div class="oc-emp-box" data-emp="${emp}">
+      <div class="oc-emp-hd">
+        <span class="chip ${emp}">${emp}</span>
+        <strong>${empNombres[emp]}</strong>
+      </div>
+      <table class="oc-items-table">
+        <thead><tr><th>Código</th><th>Descripción</th><th>Cantidad</th><th>UM</th><th>Última OC (S/)</th><th>Precio proveedor (S/)</th><th>Subtotal (S/)</th></tr></thead>
+        <tbody>`;
+    items.forEach(r => {
+      const precio = costosProveedor[r.id] || r.ultimaOC;
+      html += `<tr data-id="${r.id}" data-qty="${r.cantidad}">
+        <td><span class="codigo">${r.cod}</span></td>
+        <td>${r.desc}</td>
+        <td>${r.cantidad}</td>
+        <td>${r.um}</td>
+        <td>${r.ultimaOC.toFixed(2)}</td>
+        <td><input type="number" class="price-inp" value="${precio.toFixed(2)}" min="0" step="0.01" style="width:90px" oninput="recalcEmitirOC()"></td>
+        <td class="oc-sub" style="text-align:right">${(r.cantidad * precio).toFixed(2)}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>
+      <div class="oc-total-box">
+        <div class="oc-total-row"><span>Subtotal:</span><span class="oc-subtotal" data-emp="${emp}">S/ 0.00</span></div>
+        <div class="oc-total-row"><span>IGV (18%):</span><span class="oc-igv" data-emp="${emp}">S/ 0.00</span></div>
+        <div class="oc-total-row grand"><span>TOTAL:</span><span class="oc-total" data-emp="${emp}">S/ 0.00</span></div>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('ocEmpresas').innerHTML = html;
+  document.getElementById('modalOC').classList.add('show');
+  recalcEmitirOC();
+}
+
+function recalcEmitirOC() {
+  document.querySelectorAll('.oc-emp-box').forEach(box => {
+    const emp = box.getAttribute('data-emp');
+    let subtotal = 0;
+    box.querySelectorAll('tbody tr').forEach(tr => {
+      const q = parseFloat(tr.getAttribute('data-qty')) || 0;
+      const p = parseFloat(tr.querySelector('input').value) || 0;
+      const sub = q * p;
+      tr.querySelector('.oc-sub').textContent = sub.toFixed(2);
+      subtotal += sub;
+      // guardar precio editado
+      const id = parseInt(tr.getAttribute('data-id'));
+      costosProveedor[id] = p;
+    });
+    const igv = subtotal * 0.18;
+    const total = subtotal + igv;
+    box.querySelector('.oc-subtotal').textContent = 'S/ ' + subtotal.toFixed(2);
+    box.querySelector('.oc-igv').textContent = 'S/ ' + igv.toFixed(2);
+    box.querySelector('.oc-total').textContent = 'S/ ' + total.toFixed(2);
+  });
+}
+
+function confirmarOC() {
+  const cond = document.getElementById('ocCondPago').value;
+  const plazo = document.getElementById('ocPlazo').value;
+  const lugar = document.getElementById('ocLugar').value;
+  const moneda = document.getElementById('ocMoneda').value;
+  const obs = document.getElementById('ocObs').value;
+  const prov = proveedores.find(p => p.id === proveedorGlobal);
+
+  // Recalcular totales finales por empresa
+  const resumen = [];
+  document.querySelectorAll('.oc-emp-box').forEach(box => {
+    const emp = box.getAttribute('data-emp');
+    let subtotal = 0;
+    box.querySelectorAll('tbody tr').forEach(tr => {
+      const q = parseFloat(tr.getAttribute('data-qty')) || 0;
+      const p = parseFloat(tr.querySelector('input').value) || 0;
+      subtotal += q * p;
+      const id = parseInt(tr.getAttribute('data-id'));
+      costosProveedor[id] = p;
+    });
+    const igv = subtotal * 0.18;
+    const total = subtotal + igv;
+    resumen.push({emp, subtotal, igv, total});
+  });
+
+  document.getElementById('modalOC').classList.remove('show');
+  let msg = `OC creadas para ${resumen.length} empresa(s) con proveedor ${prov.nombre}. `;
+  msg += resumen.map(r => `${r.emp}: S/ ${r.total.toFixed(2)}`).join(' · ');
+  toast(msg, 'ok');
+
+  // Limpiar selección corporativa para evitar duplicados
+  seleccionadosCorp.clear();
+  proveedorGlobal = '';
+  document.getElementById('provGlobalCorp').value = '';
+  aplicarFiltros();
+}
+
+function cerrarModal() {
+  document.getElementById('modalOC').classList.remove('show');
+}
+
+function reiniciar() {
+  seleccionados.clear();
+  seleccionadosCorp.clear();
+  costosProveedor = {};
+  proveedorPorItem = {};
+  proveedorGlobal = '';
+  document.getElementById('fItem').value = '';
+  document.getElementById('fLinea').value = '';
+  document.getElementById('fFamilia').value = '';
+  document.getElementById('fSubfamilia').value = '';
+  document.getElementById('fBuscar').value = '';
+  document.getElementById('provGlobalCorp').value = '';
+  init();
+  toast('Mockup reiniciado','ok');
+}
+
+function toast(msg, type) {
+  const d = document.createElement('div');
+  d.className = 'toast-msg ' + (type || '');
+  d.textContent = msg;
+  document.getElementById('toastWrap').appendChild(d);
+  setTimeout(() => d.remove(), 3000);
+}
+
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show'); }));
+
+window.onload = init;
+</script>
+</body>
+</html>

@@ -1387,6 +1387,26 @@ export class DespachoComponent implements OnInit {
           });
 
           /* -----------------------------------------------------
+           * NOTIFICAR AL SOLICITANTE (OPLOGIST)
+           * ----------------------------------------------------- */
+          const dniSolicitante = this.selected?.dniregistra
+            || this.selected?.nrodocumento
+            || this.selected?.usuarioregistra
+            || '';
+
+          if (dniSolicitante) {
+            const numReq = this.selected?.numero || this.selected?.idrequerimiento || 'N/A';
+            if (todosAtendidos) {
+              await this.notificacionApi.registrarNotificacionSolicitante({
+                usuario_destino: dniSolicitante,
+                id_dreq: String(this.selected?.idrequerimiento || '0'),
+                mensaje: `Tu requerimiento de consumo ${numReq} ha sido despachado completamente. NS: ${resultado.NumeroDocumento}.`,
+                tipo_notificacion: 'DESPACHO_REALIZADO'
+              }).catch(() => {});
+            }
+          }
+
+          /* -----------------------------------------------------
            * UI - Mostrar mensaje por 3 segundos
            * ----------------------------------------------------- */
           const mensajeEstado = todosAtendidos

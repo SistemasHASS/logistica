@@ -36,13 +36,13 @@
     .tab-button {
       padding: 12px 24px;
       background: transparent;
-      border: none;
-      border-bottom: 3px solid transparent;
+      border: 2px solid #3498db;
+      border-radius: 4px;
       cursor: pointer;
       font-size: 15px;
       font-weight: 500;
-      color: #666;
-      transition: all 0.3s ease;
+      color: #3498db;
+      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -52,14 +52,13 @@
       }
 
       &:hover {
-        color: #3498db;
-        background: rgba(52, 152, 219, 0.05);
+        background: rgba(52, 152, 219, 0.1);
       }
 
       &.active {
-        color: #3498db;
-        border-bottom-color: #3498db;
-        background: rgba(52, 152, 219, 0.08);
+        background: #3498db;
+        color: #ffffff;
+        border-color: #3498db;
       }
     }
   }

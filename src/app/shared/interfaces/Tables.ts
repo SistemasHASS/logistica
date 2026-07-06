@@ -1242,6 +1242,7 @@ export interface HitoServicio {
  */
 export type EstadoSeguimientoOS =
   | 'GENERADA'
+  | 'PENDIENTE_APROBACION'
   | 'ENVIADA'
   | 'ACEPTADA'
   | 'EN_EJECUCION'
@@ -1303,6 +1304,7 @@ export interface SeguimientoOrdenServicio {
 export interface OrdenServicioConSeguimiento {
   id?: number;
   numeroOrden: string;
+  numeroOrdenSpring: string;
   solicitudServicioId?: number;
   cotizacionServicioId?: number;
   fecha?: string;
@@ -1314,6 +1316,8 @@ export interface OrdenServicioConSeguimiento {
   proveedor: string;
   nombreProveedor: string;
   rucProveedor?: string;
+  rucEmpresa?: string;
+  empresa?: string;
   contactoProveedor?: string;
   telefonoProveedor?: string;
   emailProveedor?: string;

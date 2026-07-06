@@ -3,23 +3,24 @@
   <div class="page-header">
     <h2>Órdenes de Servicio</h2>
     <div class="header-actions">
-      <button class="btn-secondary" (click)="nuevaOrdenServicio()">
+      <!-- <button class="btn-secondary" (click)="nuevaOrdenServicio()">
         <i class="bx bx-file-plus"></i> Desde Solicitud
-      </button>
+      </button> -->
       <button class="btn-primary" (click)="nuevaOrdenServicioDirecta()">
         <i class="bx bx-plus"></i> Orden Directa
       </button>
       <button class="btn-excel" (click)="descargarPlantillaOSMasivo()" title="Descargar plantilla Excel">
         <i class="bx bx-download"></i> Plantilla Excel
       </button>
-      <label class="btn-excel-upload" title="Cargar OS masivo desde Excel">
+      <button class="btn-excel" (click)="inputCargaMasiva.click()" title="Cargar OS masivo desde Excel">
         <i class="bx bx-upload"></i> Carga Masiva
         <input
+          #inputCargaMasiva
           type="file"
           accept=".xlsx,.xls"
           style="display:none"
           (change)="onArchivoExcelSeleccionado($event)">
-      </label>
+      </button>
     </div>
   </div>
 
@@ -76,6 +77,13 @@
         <span class="stat-label">Finalizadas</span>
       </div>
     </div>
+    <div class="stat-card danger">
+      <div class="stat-icon"><i class="bx bx-time"></i></div>
+      <div class="stat-content">
+        <span class="stat-value">{{ totalPendientesAprobacion }}</span>
+        <span class="stat-label">Pendientes Aprobación</span>
+      </div>
+    </div>
   </div>
 
   <!-- LISTADO DE ÓRDENES -->
@@ -129,6 +137,7 @@
           <option value="ACEPTADA">Aceptada</option>
           <option value="EN_EJECUCION">En Ejecución</option>
           <option value="FINALIZADA">Finalizada</option>
+          <option value="PENDIENTE_APROBACION">Pendiente Aprobación</option>
           <option value="RECHAZADA">Rechazada</option>
         </select>
       </div>
@@ -150,6 +159,15 @@
           placeholder="Tipo de servicio..."
           (input)="filtrarOrdenes()">
       </div>
+      <div class="filter-group">
+        <label>Empresa (RUC):</label>
+        <input 
+          type="text" 
+          [(ngModel)]="filtroEmpresa" 
+          class="form-control"
+          placeholder="RUC empresa..."
+          (input)="filtrarOrdenes()">
+      </div>
       <button class="btn-secondary" (click)="limpiarFiltros()">
         <i class="bx bx-x"></i> Limpiar
       </button>
@@ -157,39 +175,47 @@
 
     <!-- TABLA DE ÓRDENES -->
     <div class="table-wrapper">
-      <table class="table">
-        <thead>
+      <p-table [value]="ordenesFiltradas" [paginator]="true" [rows]="10"
+               [rowsPerPageOptions]="[10,25,50]" [showCurrentPageReport]="true"
+               currentPageReportTemplate="Mostrando {first}-{last} de {totalRecords}"
+               styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
           <tr>
-            <th>#</th>
+            <th style="width:44px">#</th>
             <th>Número Orden</th>
             <th>Fecha</th>
             <th>Tipo Servicio</th>
+            <th>Empresa</th>
             <th>Proveedor</th>
-            <th>Monto Total</th>
-            <th>Plazo</th>
+            <th class="text-end">Monto Total</th>
+            <th class="text-center">Plazo</th>
             <th>Estado</th>
             <th>Progreso</th>
             <th>Acciones</th>
           </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let orden of ordenesFiltradas; let i = index">
-            <td>{{ i + 1 }}</td>
-            <td>
-              <strong>{{ orden.numeroOrden }}</strong>
-            </td>
-            <td>{{ orden.fecha ? formatearFecha(orden.fecha) : '-' }}</td>
+        </ng-template>
+        <ng-template pTemplate="body" let-orden let-ri="rowIndex">
+          <tr>
+            <td class="text-muted small text-center">{{ ri + 1 }}</td>
+            <td class="mono"><strong>{{ orden.numeroOrdenSpring }}</strong></td>
+            <td class="mono">{{ orden.fecha ? formatearFecha(orden.fecha) : '-' }}</td>
             <td>{{ orden.tipoServicio }}</td>
+            <td>
+              <div class="empresa-info">
+                <strong>{{ orden.empresa }}</strong>
+                <span class="badge badge-secondary">RUC: {{ orden.rucEmpresa || '-' }}</span>
+              </div>
+            </td>
             <td>
               <div class="proveedor-info">
                 <strong>{{ orden.nombreProveedor }}</strong>
-                <small>RUC: {{ orden.rucProveedor }}</small>
+                <small class="d-block text-muted">RUC: {{ orden.rucProveedor }}</small>
               </div>
             </td>
-            <td class="text-right">
+            <td class="text-end mono">
               <strong>S/ {{ formatearMoneda(orden.montoTotal) }}</strong>
             </td>
-            <td class="text-center">{{ orden.plazoEjecucion }} días</td>
+            <td class="text-center mono">{{ orden.plazoEjecucion }} días</td>
             <td>
               <span class="badge" [ngClass]="obtenerClaseEstado(orden.estado)">
                 {{ orden.estado }}
@@ -198,50 +224,37 @@
             <td>
               <div class="progress-container">
                 <div class="progress-bar">
-                  <div 
-                    class="progress-fill" 
-                    [style.width.%]="orden.porcentajeCompletado || 0">
-                  </div>
+                  <div class="progress-fill" [style.width.%]="orden.porcentajeCompletado || 0"></div>
                 </div>
                 <span class="progress-text">{{ (orden.porcentajeCompletado || 0).toFixed(0) }}%</span>
               </div>
             </td>
             <td class="actions">
-              <button 
-                class="btn btn-sm btn-info me-2" 
-                (click)="verDetalleOrden(orden)"
-                title="Ver Detalle">
+              <button class="btn btn-sm btn-info me-2" (click)="$event.stopPropagation(); verDetalleOrden(orden)" title="Ver Detalle">
                 <i class="bx bx-show"></i>
               </button>
-              <button 
-                class="btn btn-sm btn-warning me-2" 
-                (click)="verSeguimiento(orden)"
-                title="Ver Seguimiento">
+              <button class="btn btn-sm btn-warning me-2" (click)="$event.stopPropagation(); verSeguimiento(orden)" title="Ver Seguimiento">
                 <i class="bx bx-timeline"></i>
               </button>
-              <button 
-                class="btn btn-sm btn-success me-2" 
-                *ngIf="orden.estado === 'FINALIZADA'"
-                (click)="abrirModalConformidad(orden)"
-                title="Registrar Conformidad">
+              <button class="btn btn-sm btn-success me-2" *ngIf="orden.estado === 'FINALIZADA'"
+                      (click)="abrirModalConformidad(orden)" title="Registrar Conformidad">
                 <i class="bx bx-check-circle"></i>
               </button>
-              <button 
-                class="btn btn-sm btn-primary me-2"
-                *ngIf="orden.estado === 'GENERADA'"
-                (click)="sincronizarOrdenServicio(orden)"
-                title="Enviar a SPRING">
+              <button class="btn btn-sm btn-primary me-2" *ngIf="orden.estado === 'GENERADA'"
+                      (click)="sincronizarOrdenServicio(orden)" title="Enviar a SPRING">
                 <i class="bx bx-transfer"></i> SPRING
               </button>
             </td>
           </tr>
-          <tr *ngIf="ordenesFiltradas.length === 0">
-            <td colspan="10" class="text-center">
-              <p class="no-data">No hay órdenes de servicio registradas.</p>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="11" class="text-center py-4 text-muted">
+              <i class="bx bx-inbox fs-3 d-block mb-2"></i>No hay órdenes de servicio registradas.
             </td>
           </tr>
-        </tbody>
-      </table>
+        </ng-template>
+      </p-table>
     </div>
   </div>
 
@@ -492,7 +505,7 @@
 </div>
 
 <!-- MODAL DISTRIBUCIÓN CONTABLE -->
-<div class="modal" *ngIf="mostrarModalDistribucion" (click)="cerrarModalDistribucion()">
+<div class="modal-overlay" *ngIf="mostrarModalDistribucion" (click)="cerrarModalDistribucion()">
   <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>
@@ -564,7 +577,7 @@
   </div>
 </div>
 
-<div class="modal" *ngIf="mostrarModalConformidad" (click)="cerrarModalConformidad()">
+<div class="modal-overlay" *ngIf="mostrarModalConformidad" (click)="cerrarModalConformidad()">
   <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>Registrar Conformidad de Servicio</h3>
@@ -629,6 +642,9 @@
       </button>
     </div>
   </div>
+</div>
+
+<div class="modal-overlay" *ngIf="modalSeguimientoAbierto" (click)="cerrarModalSeguimiento()">
   <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>
@@ -786,6 +802,151 @@
       </button>
       <button class="btn btn-secondary" (click)="cerrarModalSeguimiento()">
         Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Detalle de Orden de Servicio -->
+<div class="modal-overlay" *ngIf="mostrarModalDetalle" (click)="cerrarModalDetalle()">
+  <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header" *ngIf="ordenActual">
+      <h3>
+        <i class="bx bx-file"></i>
+        Detalle de Orden de Servicio
+      </h3>
+      <button class="btn-close" (click)="cerrarModalDetalle()">
+        <i class="bx bx-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="ordenActual">
+      <!-- Header info -->
+      <div class="seguimiento-header mb-3">
+        <div class="row">
+          <div class="col-md-8">
+            <h4>{{ ordenActual.numeroOrdenSpring }}</h4>
+            <p class="text-muted mb-1">{{ ordenActual.descripcion }}</p>
+            <p class="text-muted small mb-0">
+              <i class="bx bx-calendar"></i>
+              {{ ordenActual.fecha ? formatearFecha(ordenActual.fecha) : '-' }}
+            </p>
+          </div>
+          <div class="col-md-4 text-right">
+            <span class="badge badge-lg" [ngClass]="obtenerClaseEstado(ordenActual.estado)">
+              {{ ordenActual.estado }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Datos generales -->
+      <div class="section-title">Información General</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Tipo de Servicio:</label>
+          <p class="form-control-plaintext">{{ ordenActual.tipoServicio }}</p>
+        </div>
+        <div class="form-group">
+          <label>Empresa:</label>
+          <p class="form-control-plaintext">
+            <strong> {{ ordenActual.empresa || '-' }}</strong>
+            <!-- <strong>RUC: {{ ordenActual.rucEmpresa || '-' }}</strong> -->
+          </p>
+        </div>
+        <div class="form-group">
+          <label>Proveedor:</label>
+          <p class="form-control-plaintext">
+            <strong>{{ ordenActual.nombreProveedor }}</strong>
+            <small class="d-block text-muted">RUC: {{ ordenActual.rucProveedor }}</small>
+          </p>
+        </div>
+        <div class="form-group">
+          <label>Fecha Inicio:</label>
+          <p class="form-control-plaintext">
+            {{ ordenActual.fechaInicioServicio ? formatearFecha(ordenActual.fechaInicioServicio) : '-' }}
+          </p>
+        </div>
+        <div class="form-group">
+          <label>Fecha Fin:</label>
+          <p class="form-control-plaintext">
+            {{ ordenActual.fechaFinServicio ? formatearFecha(ordenActual.fechaFinServicio) : '-' }}
+          </p>
+        </div>
+        <div class="form-group">
+          <label>Plazo Ejecución:</label>
+          <p class="form-control-plaintext">{{ ordenActual.plazoEjecucion }} días</p>
+        </div>
+        <div class="form-group">
+          <label>Monto Total:</label>
+          <p class="form-control-plaintext">
+            <strong>{{ ordenActual.moneda }} {{ formatearMoneda(ordenActual.montoTotal) }}</strong>
+          </p>
+        </div>
+        <div class="form-group">
+          <label>Forma de Pago:</label>
+          <p class="form-control-plaintext">{{ ordenActual.formaPago || '-' }}</p>
+        </div>
+        <div class="form-group">
+          <label>Centro de Costo:</label>
+          <p class="form-control-plaintext">{{ ordenActual.centroCosto || '-' }}</p>
+        </div>
+        <div class="form-group">
+          <label>Proyecto:</label>
+          <p class="form-control-plaintext">{{ ordenActual.proyecto || '-' }}</p>
+        </div>
+        <div class="form-group">
+          <label>Usuario Genera:</label>
+          <p class="form-control-plaintext">{{ ordenActual.usuarioGenera }}</p>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="ordenActual.observaciones">
+        <label>Observaciones:</label>
+        <p class="form-control-plaintext">{{ ordenActual.observaciones }}</p>
+      </div>
+
+      <!-- Detalle de items -->
+      <div class="section-title">Detalle de Servicios</div>
+      <div class="table-wrapper">
+        <p-table [value]="ordenActual.detalle || []" [paginator]="true" [rows]="10"
+                 styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Item</th>
+              <th>Descripción</th>
+              <th>U.M.</th>
+              <th class="text-end">Cantidad</th>
+              <th class="text-end">P. Unitario</th>
+              <th class="text-end">Subtotal</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-det>
+            <tr>
+              <td class="text-center">{{ det.item }}</td>
+              <td>{{ det.descripcionServicio }}</td>
+              <td class="text-center">{{ det.unidadMedida }}</td>
+              <td class="text-end">{{ det.cantidad }}</td>
+              <td class="text-end">{{ det.precioUnitario }}</td>
+              <td class="text-end">
+                <strong>{{ formatearMoneda(det.subtotal) }}</strong>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="6" class="text-center py-3 text-muted">
+                No hay detalles registrados.
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrarModalDetalle()">
+        <i class="bx bx-x"></i> Cerrar
       </button>
     </div>
   </div>

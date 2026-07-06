@@ -13,6 +13,7 @@ import { environment } from '@/environments/environment';
 import { OrdenPdfService } from './orden-pdf.service';
 import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import { OrdenCompraService } from '@/app/services/orden-compra.service';
+import { NotificacionApiService } from '@/app/shared/services/notificacion-api.service';
 import { DropdownComponent } from '@/app/modules/main/components/dropdown/dropdown.component';
 import { ItemSearchComponent } from './item-search/item-search.component';
 import { TipoCambioService } from '@/app/services/tipo-cambio.service';
@@ -197,7 +198,8 @@ export class ConsolidacionComprasComponent implements OnInit {
     private maestrasService: MaestrasService,
     private ordenCompraService: OrdenCompraService,
     private tipoCambioService: TipoCambioService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private notificacionApi: NotificacionApiService
   ) {}
 
   async ngOnInit() {
@@ -1117,6 +1119,22 @@ export class ConsolidacionComprasComponent implements OnInit {
         const titulo = resp?.correoEnviado === false ? 'OC Confirmada' : 'Enviado';
         this.alertService.showAlert(titulo, resp.mensaje, tipo);
         await this.cargarOrdenesCompra();
+
+        // Notificar a los solicitantes originales (OPLOGIST) cuya OC fue emitida
+        try {
+          const dnisSolicitantes: Array<{ dni: string }> = oc.dnisSolicitantes
+            ? (typeof oc.dnisSolicitantes === 'string' ? JSON.parse(oc.dnisSolicitantes) : oc.dnisSolicitantes)
+            : [];
+          for (const { dni } of dnisSolicitantes) {
+            if (!dni) continue;
+            await this.notificacionApi.registrarNotificacionSolicitante({
+              usuario_destino: dni,
+              id_dreq: String(oc.idOrden || '0'),
+              mensaje: `Tu requerimiento de compra ha sido atendido. Se emitió la OC ${oc.numeroOrden} al proveedor ${oc.nombreProveedor || oc.proveedor || ''}.`,
+              tipo_notificacion: 'OC_EMITIDA'
+            }).catch(() => {});
+          }
+        } catch { }
       } else {
         this.alertService.showAlert('Error', resp?.mensaje || 'Error al enviar.', 'error');
       }

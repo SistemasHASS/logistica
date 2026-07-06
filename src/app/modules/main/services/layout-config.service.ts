@@ -46,6 +46,7 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
       { id: 'dashboard-adlogist',  nombre: 'Dashboard Admin',          icono: 'bx bxs-dashboard',        ruta: './dashboard-adlogist',   activo: true, orden: 6 },
       { id: 'dashboard-jemlogist', nombre: 'Dashboard Jef. Empaque',   icono: 'bx bxs-dashboard',        ruta: './dashboard-jemlogist',  activo: true, orden: 7 },
       { id: 'dashboard-finanzas',  nombre: 'Dashboard Finanzas',       icono: 'bx bx-line-chart',        ruta: './dashboard-finanzas',   activo: true, orden: 8 },
+      { id: 'dashboard-aprobaciones-area', nombre: 'Dashboard Aprobaciones', icono: 'bx bxs-dashboard', ruta: './dashboard-aprobaciones-area', activo: true, orden: 9 },
     ]
   },
   {
@@ -73,11 +74,12 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
     items: [
       { id: 'solicitudes-compra',      nombre: 'Solicitudes de Compra',    icono: 'bx bx-shopping-bag',    ruta: './solicitudes-compra',      activo: true, orden: 1 },
       { id: 'ordenes-compra',          nombre: 'Órdenes de Compra',        icono: 'icon icon-file-text',   ruta: './ordenes-compra',          activo: true, orden: 2 },
-      { id: 'consolidacion-compras',   nombre: 'Consolidación Compras',    icono: 'bx bx-cart',            ruta: './consolidacion-compras',   activo: true, orden: 3 },
-      { id: 'solicitudes-servicio',    nombre: 'Solicitudes de Servicio',  icono: 'bx bx-briefcase',       ruta: './solicitudes-servicio',    activo: true, orden: 4 },
-      { id: 'ordenes-servicio',        nombre: 'Órdenes de Servicio',      icono: 'bx bx-wrench',          ruta: './ordenes-servicio',        activo: true, orden: 5 },
-      { id: 'cotizaciones',            nombre: 'Cotizaciones',             icono: 'icon icon-calculator',  ruta: './cotizaciones',            activo: true, orden: 6 },
-      { id: 'conformidad-servicios',   nombre: 'Conformidad de OS',        icono: 'bx bx-check-shield',    ruta: './conformidad-servicios',   activo: true, orden: 7 },
+      { id: 'consolidacion-compra',   nombre: 'Consolidación Compras',     icono: 'bx bx-cart',            ruta: './consolidacion-compra',   activo: true, orden: 3 },
+      { id: 'consolidacion-compras',  nombre: 'Flujo de Compras',        icono: 'bx bx-cart',            ruta: './consolidacion-compras',  activo: true, orden: 4 },
+      { id: 'solicitudes-servicio',    nombre: 'Solicitudes de Servicio',  icono: 'bx bx-briefcase',       ruta: './solicitudes-servicio',    activo: true, orden: 5 },
+      { id: 'ordenes-servicio',        nombre: 'Órdenes de Servicio',      icono: 'bx bx-wrench',          ruta: './ordenes-servicio',        activo: true, orden: 6 },
+      { id: 'cotizaciones',            nombre: 'Cotizaciones',             icono: 'icon icon-calculator',  ruta: './cotizaciones',            activo: true, orden: 7 },
+      { id: 'conformidad-servicios',   nombre: 'Conformidad de OS',        icono: 'bx bx-check-shield',    ruta: './conformidad-servicios',   activo: true, orden: 8 },
     ]
   },
   {
@@ -94,6 +96,7 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
     items: [
       { id: 'aprobaciones-oc', nombre: 'Aprobación OC', icono: 'icon icon-file-check', ruta: './aprobaciones-oc', activo: true, orden: 1 },
       { id: 'aprobaciones-os', nombre: 'Aprobación OS', icono: 'icon icon-file-check', ruta: './aprobaciones-os', activo: true, orden: 2 },
+      { id: 'aprobaciones-area', nombre: 'Aprobaciones por Área', icono: 'icon icon-circle', ruta: './aprobaciones-area', activo: true, orden: 3 },
     ]
   },
   {
@@ -102,6 +105,7 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
       { id: 'reportes-compras',        nombre: 'Reportes Avanzados',       icono: 'icon icon-pie-chart',  ruta: './reportes-compras',        activo: true, orden: 1 },
       { id: 'reporte-requerimientos',  nombre: 'Reporte Requerimientos',   icono: 'icon icon-file-check', ruta: './reporte-requerimientos',  activo: true, orden: 2 },
       { id: 'reporte-despachos',       nombre: 'Reporte de Despachos',     icono: 'icon icon-file-text',  ruta: './reporte-despachos',       activo: true, orden: 3 },
+      { id: 'reporte-aprobaciones-area', nombre: 'Reporte Aprobaciones Área', icono: 'icon icon-file-text', ruta: './reporte-aprobaciones-area', activo: true, orden: 4 },
     ]
   },
   {
@@ -117,15 +121,15 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
  * Solo se usan como FALLBACK cuando no hay MENU_JSON en BD
  */
 const MODULOS_POR_ROL: Record<string, string[]> = {
-  TILOGIST:  ['dashboard-tilogist', 'notificaciones', 'parametros', 'maestros', 'maestro-proveedores', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'catalogo-items'],
-  ADLOGIST:  ['dashboard-adlogist', 'notificaciones', 'parametros', 'maestros', 'maestro-proveedores', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'catalogo-items'],
-  JLOLOGIST: ['dashboard-jlologist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'catalogo-items'],
-  JEMLOGIST: ['dashboard-jemlogist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'aprobaciones-oc', 'aprobaciones-os', 'catalogo-items'],
-  LOLOGIST:  ['dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'saldo-requerimiento', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'catalogo-items'],
-  EMLOGIST:  ['dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'conformidad-servicios', 'catalogo-items'],
+  TILOGIST:  ['dashboard-tilogist', 'dashboard-aprobaciones-area', 'notificaciones', 'parametros', 'maestros', 'maestro-proveedores', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'aprobaciones-area', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'reporte-aprobaciones-area', 'catalogo-items'],
+  ADLOGIST:  ['dashboard-adlogist', 'dashboard-aprobaciones-area', 'notificaciones', 'parametros', 'maestros', 'maestro-proveedores', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'aprobaciones-area', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'reporte-aprobaciones-area', 'catalogo-items'],
+  JLOLOGIST: ['dashboard-jlologist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'aprobaciones-area', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'reporte-aprobaciones-area', 'catalogo-items'],
+  JEMLOGIST: ['dashboard-jemlogist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'aprobaciones-oc', 'aprobaciones-os', 'aprobaciones-area', 'reporte-aprobaciones-area', 'catalogo-items'],
+  LOLOGIST:  ['dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'saldo-requerimiento', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'reporte-aprobaciones-area', 'catalogo-items'],
+  EMLOGIST:  ['dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'conformidad-servicios', 'aprobaciones-area', 'catalogo-items'],
   OPLOGIST:  ['dashboard-oplogist', 'notificaciones', 'requerimientos', 'conformidad-almacen', 'catalogo-items'],
   ALLOGIST:  ['dashboard-despacho', 'notificaciones', 'parametros', 'requerimientos', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'reporte-despachos', 'catalogo-items'],
-  APLOGIST:  ['dashboard-oplogist', 'notificaciones', 'catalogo-items'],
+  APLOGIST:  ['dashboard-oplogist', 'dashboard-aprobaciones-area', 'notificaciones', 'aprobaciones-area', 'reporte-aprobaciones-area', 'catalogo-items'],
   FINANZAS:  ['dashboard-finanzas', 'aprobaciones-oc', 'aprobaciones-os', 'catalogo-items'],
   GERENTE:   ['dashboard-oplogist', 'aprobaciones-oc', 'aprobaciones-os', 'catalogo-items'],
 };

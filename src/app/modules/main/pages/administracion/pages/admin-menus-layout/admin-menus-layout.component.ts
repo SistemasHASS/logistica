@@ -54,8 +54,9 @@ const MENUS_LAYOUT: MenuItem[] = [
   // ── Compras & Órdenes ─────────────────────────────────────────
   { id: 'solicitudes-compra',   nombre: 'Solicitudes de Compra',        icono: 'bx bx-shopping-bag',  ruta: '/main/solicitudes-compra',   roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST'],                        categoria: 'Compras & Órdenes', orden: 13 },
   { id: 'ordenes-compra',       nombre: 'Órdenes de Compra',            icono: 'icon icon-file-text', ruta: '/main/ordenes-compra',       roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST'],                        categoria: 'Compras & Órdenes', orden: 14 },
-  { id: 'consolidacion-compras',nombre: 'Consolidación Compras',        icono: 'bx bx-cart',          ruta: '/main/consolidacion-compras',roles: ['TILOGIST','ADLOGIST','JLOLOGIST','LOLOGIST'],                                    categoria: 'Compras & Órdenes', orden: 15 },
-  { id: 'solicitudes-servicio', nombre: 'Solicitudes de Servicio',      icono: 'bx bx-briefcase',     ruta: '/main/solicitudes-servicio', roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST'],                        categoria: 'Compras & Órdenes', orden: 16 },
+  { id: 'consolidacion-compra',  nombre: 'Consolidación Compras',       icono: 'bx bx-cart',          ruta: '/main/consolidacion-compra',  roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST'],                         categoria: 'Compras & Órdenes', orden: 15 },
+  { id: 'consolidacion-compras', nombre: 'Flujo de Compras',            icono: 'bx bx-cart',          ruta: '/main/consolidacion-compras', roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST'],                         categoria: 'Compras & Órdenes', orden: 16 },
+  { id: 'solicitudes-servicio',  nombre: 'Solicitudes de Servicio',     icono: 'bx bx-briefcase',     ruta: '/main/solicitudes-servicio',  roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST'],                         categoria: 'Compras & Órdenes', orden: 17 },
   { id: 'ordenes-servicio',     nombre: '\u00d3rdenes de Servicio',          icono: 'bx bx-wrench',        ruta: '/main/ordenes-servicio',     roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST'],                        categoria: 'Compras & Órdenes', orden: 17 },
   { id: 'cotizaciones',          nombre: 'Cotizaciones',                 icono: 'icon icon-calculator', ruta: '/main/cotizaciones',          roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST'],                                           categoria: 'Compras & Órdenes', orden: 18 },
   { id: 'conformidad-servicios',nombre: 'Conformidad de OS',            icono: 'bx bx-check-shield',   ruta: '/main/conformidad-servicios', roles: ['TILOGIST','ADLOGIST','JLOLOGIST','JEMLOGIST','LOLOGIST','EMLOGIST'],                                 categoria: 'Compras & Órdenes', orden: 19 },
@@ -430,7 +431,7 @@ const CATEGORIA_ICONOS: Record<string, string> = {
     .editor-items { padding: 8px 0; }
     .editor-item-row { display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-bottom: 1px solid #f5f5f5; }
     .editor-item-row:last-child { border-bottom: none; }
-    .editor-item-row.inactivo { opacity: 0.45; }
+    .editor-item-row.inactivo { opacity: 0.6; background: repeating-linear-gradient(90deg, #fafafa 0px, #fafafa 6px, #f0f0f0 6px, #f0f0f0 7px); }
     .item-icono { font-size: 14px; color: #888; min-width: 18px; }
     .item-nombre { flex: 1; font-size: 13px; color: #333; }
     .item-ruta { font-size: 11px; color: #888; background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
@@ -534,19 +535,36 @@ export class AdminMenusLayoutComponent implements OnInit {
     this.cargandoEditor.set(true);
     this.cdr.markForCheck();
     try {
-      const resp: any = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/configuracionpermiso/listar-config-permisos`, {})
-      );
-      const permisos: { idrol: string; clave: string; valor: string }[] = Array.isArray(resp) ? resp : [];
-      
-      // Cargar tipo de menú
-      const tipoEntry = permisos.find(p => p.idrol === this.editorRol && p.clave === 'LAYOUT_MENU_TYPE');
+      // Consultar ambas fuentes igual que layout-config.service
+      const [respPermisos, respConfigMenu] = await Promise.allSettled([
+        lastValueFrom(this.http.post<any[]>(`${this.baseUrl}/api/configuracionpermiso/listar-config-permisos`, {})),
+        lastValueFrom(this.http.post<any[]>(`${this.baseUrl}/api/configmenu/listar`, {}))
+      ]);
+      const permisos: { idrol: string; clave: string; valor: string }[] =
+        respPermisos.status === 'fulfilled' && Array.isArray((respPermisos as any).value) ? (respPermisos as any).value : [];
+      const configMenuRows: { idrol: string; clave: string; valor: string }[] =
+        respConfigMenu.status === 'fulfilled' && Array.isArray((respConfigMenu as any).value) ? (respConfigMenu as any).value : [];
+
+      // Unificar — configmenu tiene precedencia (misma lógica que el servicio)
+      const todas = [...permisos, ...configMenuRows];
+      const delRol = todas.filter(p => p.idrol === this.editorRol);
+
+      // Cargar tipo de menú (configmenu tiene precedencia — último gana)
+      const tipoEntry = [...delRol].reverse().find((p: { idrol: string; clave: string; valor: string }) => p.clave === 'LAYOUT_MENU_TYPE');
       this.editorTipoMenu = (tipoEntry?.valor as MenuType) || 'accordion';
-      
-      // Cargar configuración del menú
-      const entry = permisos.find(p => p.idrol === this.editorRol && (p.clave === `ACCORDION_MENU_${this.editorRol}` || p.clave === 'ACCORDION_MENU_CONFIG'));
-      if (entry) {
-        this.editorMenu = JSON.parse(entry.valor) as AccordionGroupConfig[];
+
+      // Cargar configuración del menú (configmenu tiene precedencia por estar al final)
+      const menuEntry = [...delRol].reverse().find((p: { idrol: string; clave: string; valor: string }) =>
+        p.clave === 'ACCORDION_MENU_CONFIG' ||
+        p.clave === `ACCORDION_MENU_${this.editorRol}` ||
+        p.clave === 'MENU_JSON'
+      );
+      if (menuEntry) {
+        try {
+          this.editorMenu = JSON.parse(menuEntry.valor) as AccordionGroupConfig[];
+        } catch {
+          this.editorMenu = JSON.parse(JSON.stringify(ACCORDION_DEFAULT));
+        }
       } else {
         this.editorMenu = JSON.parse(JSON.stringify(ACCORDION_DEFAULT));
       }
@@ -661,6 +679,15 @@ export class AdminMenusLayoutComponent implements OnInit {
     // Ordenar grupos según ACCORDION_DEFAULT
     const orden = new Map(ACCORDION_DEFAULT.map((g, i) => [g.id, i]));
     resultado.sort((a, b) => (orden.get(a.id) ?? 999) - (orden.get(b.id) ?? 999));
+
+    // Ordenar items de cada grupo según ACCORDION_DEFAULT
+    for (const grupo of resultado) {
+      const grupoDefault = ACCORDION_DEFAULT.find(g => g.id === grupo.id);
+      if (grupoDefault) {
+        const ordenItems = new Map(grupoDefault.items.map((it, i) => [it.id, i]));
+        grupo.items.sort((a, b) => (ordenItems.get(a.id) ?? 999) - (ordenItems.get(b.id) ?? 999));
+      }
+    }
 
     return resultado;
   }

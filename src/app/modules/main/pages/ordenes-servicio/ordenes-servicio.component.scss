@@ -37,12 +37,13 @@
     .tab-button {
       padding: 12px 24px;
       background: transparent;
-      border: none;
+      border: 1px solid #3498db;
       border-bottom: 3px solid transparent;
+      border-radius: 8px 8px 0 0;
       cursor: pointer;
-      font-size: 15px;
+      font-size: 11px;
       font-weight: 500;
-      color: #666;
+      color: #3498db;
       transition: all 0.3s ease;
       display: flex;
       align-items: center;
@@ -53,14 +54,23 @@
       }
 
       &:hover {
-        color: #3498db;
-        background: rgba(52, 152, 219, 0.05);
+        color: #2980b9;
+        background: rgba(52, 152, 219, 0.08);
       }
 
       &.active {
-        color: #3498db;
-        border-bottom-color: #3498db;
-        background: rgba(52, 152, 219, 0.08);
+        color: #fff;
+        border: 1px solid #3498db;
+        border-bottom: 3px solid #1a5276;
+        background: #3498db;
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.35);
+        font-weight: 600;
+        transform: translateY(-2px);
+
+        &:hover {
+          color: #fff;
+          background: #2980b9;
+        }
       }
     }
   }
@@ -347,7 +357,7 @@
     padding: 10px 20px;
     border: none;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -521,7 +531,8 @@
 }
 
 // MODAL (fuera del contenedor para que position:fixed no quede relativizado)
-.modal-overlay {
+.modal-overlay,
+.modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -598,7 +609,8 @@
 }
 
 @media (max-width: 768px) {
-  .modal-overlay {
+  .modal-overlay,
+  .modal {
     padding: 0;
 
     .modal-content {
@@ -621,8 +633,8 @@
   color: #fff;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
 
@@ -639,8 +651,8 @@
   color: #fff;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
 

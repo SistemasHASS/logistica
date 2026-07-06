@@ -1,65 +1,215 @@
-<div class="container-fluid py-4">
-  <div class="dashboard-header d-flex align-items-center gap-3 mb-4">
+<div class="db-wrapper">
+
+  <!-- ── HEADER ─────────────────────────────────────────────────────────── -->
+  <div class="db-header mb-4">
     <div>
-      <h4 class="mb-0 fw-bold">Dashboard — Jefatura de Logística</h4>
-      <small class="text-muted">Bienvenido, {{ usuario?.nombre }}</small>
+      <h5 class="db-header__title"><i class="bx bx-bar-chart-alt-2 me-2 text-primary"></i>Dashboard — Jefatura de Logística</h5>
+      <p class="db-header__sub mb-0">{{ usuario?.nombre || usuario?.usuario }}</p>
     </div>
+    <button class="btn btn-sm btn-outline-secondary" (click)="cargarKpis()" title="Actualizar">
+      <i class="bx bx-refresh me-1"></i>Actualizar
+    </button>
   </div>
 
-  <!-- Accesos rápidos -->
-  <div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('aprobaciones-oc')">
-        <div class="acceso-icon text-primary"><i class="bx bx-check-circle"></i></div>
-        <div class="fw-semibold">Aprobaciones OC</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('aprobaciones-os')">
-        <div class="acceso-icon text-success"><i class="bx bx-check-shield"></i></div>
-        <div class="fw-semibold">Aprobaciones OS</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('ordenes-compra')">
-        <div class="acceso-icon text-warning"><i class="icon icon-file-text"></i></div>
-        <div class="fw-semibold">Órdenes de Compra</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('ordenes-servicio')">
-        <div class="acceso-icon text-info"><i class="bx bx-file-blank"></i></div>
-        <div class="fw-semibold">Órdenes de Servicio</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('solicitudes-compra')">
-        <div class="acceso-icon text-secondary"><i class="bx bx-shopping-bag"></i></div>
-        <div class="fw-semibold">Solicitudes de Compra</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('cotizaciones')">
-        <div class="acceso-icon text-danger"><i class="icon icon-calculator"></i></div>
-        <div class="fw-semibold">Cotizaciones</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('consolidacion-requerimientos')">
-        <div class="acceso-icon text-dark"><i class="icon icon-circle"></i></div>
-        <div class="fw-semibold">Consolidación</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card acceso-card border-0 shadow-sm text-center p-3" (click)="irA('dashboard-logistica')">
-        <div class="acceso-icon text-primary"><i class="bx bxs-dashboard"></i></div>
-        <div class="fw-semibold">Dashboard Logística</div>
+  <!-- ── TABS EMPRESAS ────────────────────────────────────────────────── -->
+  <div class="empresa-tabs mb-4">
+    <ng-container *ngIf="empresaCargando">
+      <div class="empresa-tab-sk"></div>
+      <div class="empresa-tab-sk"></div>
+    </ng-container>
+    <ng-container *ngIf="!empresaCargando">
+      <ng-container *ngIf="empresas.length === 0">
+        <span class="empresa-tab active"><i class="bx bx-building me-1"></i>Todas las empresas</span>
+      </ng-container>
+      <button *ngFor="let emp of empresas"
+              class="empresa-tab"
+              [class.active]="rucActivo === emp.ruc"
+              (click)="seleccionarEmpresa(emp.ruc)">
+        <i class="bx bx-building me-1"></i>
+        {{ emp.razonSocial }}
+        <span class="empresa-ruc">{{ emp.ruc }}</span>
+      </button>
+    </ng-container>
+  </div>
+
+  <!-- ── SECCIÓN 1: REQUERIMIENTOS DE COMPRA & ÓRDENES ─────────────────── -->
+  <div class="kpi-section__label mb-2 d-flex align-items-center gap-2">
+    <i class="bx bx-receipt"></i> Requerimientos de Compra &amp; Órdenes de Compra
+    <span class="badge bg-light text-secondary border" style="font-size:0.7rem">Solo COMPRA</span>
+  </div>
+  <div class="row mb-3">
+    <div class="col-6 col-md-4 col-lg-3 mb-2" *ngFor="let kpi of kpis.slice(0, 7); let i = index">
+      <div class="kpi-card" [ngClass]="'kpi-c-' + i" [class.active]="kpiActivo === i" (click)="seleccionarKpi(i)">
+        <ng-container *ngIf="kpi.cargando; else sk1">
+          <div class="sk-icon"></div><div class="sk-num"></div><div class="sk-lbl"></div>
+        </ng-container>
+        <ng-template #sk1>
+          <div class="kpi-icon"><i [class]="kpi.icono"></i></div>
+          <div class="kpi-number">{{ formatearValor(kpi) }}</div>
+          <div class="kpi-label">{{ kpi.titulo }}<ng-container *ngIf="kpi.subtitulo"><br><span>{{ kpi.subtitulo }}</span></ng-container></div>
+        </ng-template>
       </div>
     </div>
   </div>
 
-  <div class="alert alert-info border-0 rounded-3">
-    <i class="bx bx-info-circle me-2"></i>
-    Como <strong>Jefatura de Logística</strong> puedes aprobar OC y OS, gestionar órdenes y consolidaciones.
+  <!-- ── SECCIÓN 2: ÍTEMS ──────────────────────────────────────────────── -->
+  <!-- <div class="kpi-section__label mb-2">
+    <i class="bx bx-package"></i> Ítems de Requerimientos
   </div>
+  <div class="row mb-4">
+    <div class="col-6 col-md-3 mb-2" *ngFor="let kpi of kpis.slice(7); let j = index">
+      <div class="kpi-card" [ngClass]="'kpi-c-' + (j + 7)" [class.active]="kpiActivo === (j + 7)" (click)="seleccionarKpi(j + 7)">
+        <ng-container *ngIf="kpi.cargando; else sk2">
+          <div class="sk-icon"></div><div class="sk-num"></div><div class="sk-lbl"></div>
+        </ng-container>
+        <ng-template #sk2>
+          <div class="kpi-icon"><i [class]="kpi.icono"></i></div>
+          <div class="kpi-number">{{ formatearValor(kpi) }}</div>
+          <div class="kpi-label">{{ kpi.titulo }}<ng-container *ngIf="kpi.subtitulo"><br><span>{{ kpi.subtitulo }}</span></ng-container></div>
+        </ng-template>
+      </div>
+    </div>
+  </div> -->
+
+  <!-- ── TABLA DETALLE ─────────────────────────────────────────────────── -->
+  <div class="card border-0 shadow-sm">
+
+    <!-- Header de la tabla -->
+    <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-2 px-3"
+         [style.border-left]="'4px solid ' + tablaActivaConfig.color">
+      <div class="d-flex align-items-center gap-2">
+        <i [class]="tablaActivaConfig.icono" [style.color]="tablaActivaConfig.color" style="font-size:1.1rem"></i>
+        <span class="fw-bold" style="font-size:0.88rem">{{ tablaActivaConfig.titulo }}</span>
+        <span class="badge rounded-pill bg-light text-secondary border ms-1" style="font-size:0.7rem" *ngIf="!tablaCargando">
+          {{ tablaDataFiltrada.length }} registros
+        </span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="p-input-icon-left">
+          <i class="bx bx-search" style="font-size:.85rem"></i>
+          <input pInputText type="text" [(ngModel)]="filtroTexto"
+                 placeholder="Buscar..." class="p-inputtext-sm" style="width:180px">
+        </span>
+        <button class="btn btn-sm btn-outline-secondary" (click)="cargarTablaKpi(kpiActivo)" title="Recargar">
+          <i class="bx bx-refresh"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla ÍTEMS (dreq) -->
+    <ng-container *ngIf="esTablaItems">
+      <p-table [value]="tablaDataFiltrada" [paginator]="true" [rows]="10"
+               [loading]="tablaCargando" styleClass="p-datatable-sm"
+               [rowsPerPageOptions]="[10,25,50]" [showCurrentPageReport]="true"
+               currentPageReportTemplate="Mostrando {first}-{last} de {totalRecords}">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width:44px">#</th>
+            <th>N° Req</th>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th class="text-end">Cant.</th>
+            <th>U.M.</th>
+            <th>Estado Ítem</th>
+            <th>Estado Req</th>
+            <th>Fecha</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-it let-ri="rowIndex">
+          <tr>
+            <td class="text-muted small text-center">{{ ri + 1 }}</td>
+            <td class="mono">{{ it.nroRequerimiento }}</td>
+            <td class="mono">{{ it.codigo }}</td>
+            <td class="truncate" [title]="it.descripcion">{{ it.descripcion }}</td>
+            <td class="text-end mono">{{ it.cantidad }}</td>
+            <td>{{ it.unidadMedida }}</td>
+            <td><span class="est-badge" [ngClass]="estadoItemBadge(it.estadoItem)">{{ it.estadoItem }}</span></td>
+            <td><span class="est-badge" [ngClass]="estadoBadgeClass(it.estadoReq)">{{ it.estadoReq }}</span></td>
+            <td class="mono">{{ it.fechaRegistro }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="9" class="text-center py-4 text-muted">
+            <i class="bx bx-inbox fs-3 d-block mb-2"></i>Sin ítems en el período
+          </td></tr>
+        </ng-template>
+      </p-table>
+    </ng-container>
+
+    <!-- Tabla OC -->
+    <ng-container *ngIf="esTablaOCs">
+      <p-table [value]="tablaDataFiltrada" [paginator]="true" [rows]="10"
+               [loading]="tablaCargando" styleClass="p-datatable-sm"
+               [rowsPerPageOptions]="[10,25,50]" [showCurrentPageReport]="true"
+               currentPageReportTemplate="Mostrando {first}-{last} de {totalRecords}">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width:44px">#</th>
+            <th>N° Orden</th>
+            <th>Proveedor</th>
+            <th>Estado</th>
+            <th class="text-end">Total</th>
+            <th>Moneda</th>
+            <th>F. Creación</th>
+            <th>F. Entrega</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-oc let-ri="rowIndex">
+          <tr>
+            <td class="text-muted small text-center">{{ ri + 1 }}</td>
+            <td class="mono">{{ oc.numeroOrden }}</td>
+            <td class="truncate" [title]="oc.nombreProveedor">{{ oc.nombreProveedor }}</td>
+            <td><span class="est-badge" [ngClass]="estadoBadgeClass(oc.estado)">{{ oc.estado }}</span></td>
+            <td class="text-end mono">{{ oc.totalOrden | number:'1.2-2' }}</td>
+            <td>{{ oc.moneda }}</td>
+            <td class="mono">{{ oc.fechaCreacion }}</td>
+            <td class="mono">{{ oc.fechaEntrega }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="8" class="text-center py-4 text-muted">
+            <i class="bx bx-inbox fs-3 d-block mb-2"></i>Sin órdenes en el período
+          </td></tr>
+        </ng-template>
+      </p-table>
+    </ng-container>
+
+    <!-- Tabla REQUERIMIENTOS -->
+    <ng-container *ngIf="!esTablaItems && !esTablaOCs">
+      <p-table [value]="tablaDataFiltrada" [paginator]="true" [rows]="10"
+               [loading]="tablaCargando" styleClass="p-datatable-sm"
+               [rowsPerPageOptions]="[10,25,50]" [showCurrentPageReport]="true"
+               currentPageReportTemplate="Mostrando {first}-{last} de {totalRecords}">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width:44px">#</th>
+            <th>N° Req</th>
+            <th>Descripción</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+            <th>Usuario</th>
+            <th>Fecha</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-r let-ri="rowIndex">
+          <tr>
+            <td class="text-muted small text-center">{{ ri + 1 }}</td>
+            <td class="mono">{{ r.nroRequerimiento }}</td>
+            <td class="truncate" [title]="r.descripcion">{{ r.descripcion }}</td>
+            <td><span class="tipo-badge">{{ r.tipo }}</span></td>
+            <td><span class="est-badge" [ngClass]="estadoBadgeClass(r.estado)">{{ r.estado }}</span></td>
+            <td class="mono">{{ r.usuario }}</td>
+            <td class="mono">{{ r.fechaRegistro }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="7" class="text-center py-4 text-muted">
+            <i class="bx bx-inbox fs-3 d-block mb-2"></i>Sin registros en el período
+          </td></tr>
+        </ng-template>
+      </p-table>
+    </ng-container>
+
+  </div>
+
 </div>

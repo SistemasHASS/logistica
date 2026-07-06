@@ -39,7 +39,7 @@
   <ul class="nav nav-tabs mb-0">
     @if (esLologist() || esAllogist()) {
       <li class="nav-item">
-        <button class="nav-link" [class.active]="tabActivo() === 'NI'" (click)="setTab('NI')">
+        <button [class]="tabActivo() === 'NI' ? 'nav-link active bg-primary text-white border-primary' : 'nav-link text-primary border border-primary border-bottom-0 rounded-top-2'" (click)="setTab('NI')">
           <i class="bx bx-log-in-circle me-1 text-success"></i>
           Nota de Ingreso (NI)
           @if (esLologist()) {
@@ -50,7 +50,7 @@
     }
     @if (esOplogist() || esAllogist()) {
       <li class="nav-item">
-        <button class="nav-link" [class.active]="tabActivo() === 'NS'" (click)="setTab('NS')">
+        <button [class]="tabActivo() === 'NS' ? 'nav-link active bg-primary text-white border-primary' : 'nav-link text-primary border border-primary border-bottom-0 rounded-top-2'" (click)="setTab('NS')">
           <i class="bx bx-log-out-circle me-1 text-danger"></i>
           Nota de Salida (NS)
           @if (esOplogist()) {
@@ -66,16 +66,14 @@
     <ul class="nav nav-pills nav-sm gap-1">
       @if (!esAllogist()) {
         <li class="nav-item">
-          <button class="nav-link py-1 px-3" style="font-size:12.5px"
-            [class.active]="seccion() === 'pendientes'"
+          <button [class]="seccion() === 'pendientes' ? 'nav-link py-1 px-3 active' : 'nav-link py-1 px-3 text-primary border border-primary rounded-2'" style="font-size:12.5px"
             (click)="setSeccion('pendientes')">
             <i class="bx bx-time me-1"></i> Pendientes de firma
           </button>
         </li>
       }
       <li class="nav-item">
-        <button class="nav-link py-1 px-3" style="font-size:12.5px"
-          [class.active]="seccion() === 'historial'"
+        <button [class]="seccion() === 'historial' ? 'nav-link py-1 px-3 active' : 'nav-link py-1 px-3 text-primary border border-primary rounded-2'" style="font-size:12.5px"
           (click)="setSeccion('historial')">
           <i class="bx bx-history me-1"></i> Historial
         </button>

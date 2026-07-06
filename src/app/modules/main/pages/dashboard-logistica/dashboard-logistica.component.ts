@@ -197,7 +197,7 @@ export class DashboardLogisticaComponent implements OnInit {
       label: 'Compras & Órdenes',
       icono: 'bx bx-cart',
       items: [
-        { id: 'consolidacion-compras', nombre: 'Consolidación Compras', icono: 'bx bx-cart', ruta: '/main/consolidacion-compras', color: 'success' },
+        { id: 'consolidacion-compra', nombre: 'Consolidación Compras', icono: 'bx bx-cart', ruta: '/main/consolidacion-compra', color: 'success' },
         { id: 'ordenes-compra', nombre: 'Órdenes de Compra', icono: 'icon icon-file-text', ruta: '/main/ordenes-compra', color: 'primary' },
         { id: 'ordenes-servicio', nombre: 'Órdenes de Servicio', icono: 'bx bx-wrench', ruta: '/main/ordenes-servicio', color: 'secondary' },
       ]

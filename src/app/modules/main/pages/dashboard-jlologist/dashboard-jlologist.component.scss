@@ -1,5 +1,225 @@
-.dashboard-header { margin-bottom: 1.5rem; }
-.acceso-card { cursor: pointer; transition: transform .15s, box-shadow .15s; border-radius: 12px; }
-.acceso-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
-.acceso-icon { font-size: 2rem; margin-bottom: .5rem; }
-.stat-number { font-size: 2rem; font-weight: 700; }
+.db-wrapper { padding: 1.5rem; }
+
+// ── Header ────────────────────────────────────────────────────────────────
+.db-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 1rem;
+}
+.db-header__title { font-weight: 700; font-size: 1.1rem; margin: 0; }
+.db-header__sub   { font-size: 0.82rem; color: #6b7280; }
+
+// ── Empresa Tabs ──────────────────────────────────────────────────────────
+.empresa-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.empresa-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  background: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  white-space: nowrap;
+
+  &:hover:not(.active) {
+    border-color: #d1d5db;
+    background: #f9fafb;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0,0,0,.08);
+  }
+
+  &.active {
+    background: var(--app-primary, #2952ff);
+    color: #fff;
+    border-color: var(--app-primary, #2952ff);
+    box-shadow: 0 3px 10px rgba(41,82,255,.25);
+  }
+
+  .empresa-ruc {
+    font-size: 0.66rem;
+    font-weight: 400;
+    opacity: 0.7;
+    margin-left: 2px;
+    font-family: 'Courier New', monospace;
+  }
+
+  &.active .empresa-ruc { opacity: 0.85; }
+}
+
+.empresa-tab-sk {
+  height: 34px;
+  width: 160px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e4 50%, #f0f0f0 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+// ── Section label ─────────────────────────────────────────────────────────
+.kpi-section__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  i { font-size: 0.85rem; }
+}
+
+// ── KPI Card base (igual patrón oplogist) ─────────────────────────────────
+.kpi-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.1rem 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  border-left: 4px solid transparent;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  height: 100%;
+
+  &:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.1); }
+  &.active { border-color: currentColor; transform: translateY(-2px); }
+
+  .kpi-icon   { font-size: 1.6rem; margin-bottom: 0.3rem; }
+  .kpi-number { font-size: 1.9rem; font-weight: 700; line-height: 1; }
+  .kpi-label  { font-size: 0.66rem; text-transform: uppercase; letter-spacing: .05em; margin-top: 0.25rem; color: #6b7280; line-height: 1.3; }
+}
+
+// ── Colores por índice ────────────────────────────────────────────────────
+// 0 TOTAL RQ
+.kpi-c-0 {
+  border-left-color: #7c3aed;
+  background: linear-gradient(135deg, #fff 0%, rgba(124,58,237,.04) 100%);
+  .kpi-icon, .kpi-number { color: #7c3aed; }
+}
+// 1 RQ ATENDIDOS
+.kpi-c-1 {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #fff 0%, rgba(16,185,129,.04) 100%);
+  .kpi-icon, .kpi-number { color: #10b981; }
+}
+// 2 OC EMITIDAS
+.kpi-c-2 {
+  border-left-color: #f59e0b;
+  background: linear-gradient(135deg, #fff 0%, rgba(245,158,11,.04) 100%);
+  .kpi-icon, .kpi-number { color: #f59e0b; }
+}
+// 3 PENDIENTES
+.kpi-c-3 {
+  border-left-color: #ef4444;
+  background: linear-gradient(135deg, #fff 0%, rgba(239,68,68,.04) 100%);
+  .kpi-icon, .kpi-number { color: #ef4444; }
+}
+// 4 % CUMPLIMIENTO
+.kpi-c-4 {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #fff 0%, rgba(16,185,129,.04) 100%);
+  .kpi-icon, .kpi-number { color: #10b981; }
+}
+// 5 LEAD TIME
+.kpi-c-5 {
+  border-left-color: #3b82f6;
+  background: linear-gradient(135deg, #fff 0%, rgba(59,130,246,.04) 100%);
+  .kpi-icon, .kpi-number { color: #3b82f6; }
+}
+// 6 BACKLOG
+.kpi-c-6 {
+  border-left-color: #8b5cf6;
+  background: linear-gradient(135deg, #fff 0%, rgba(139,92,246,.04) 100%);
+  .kpi-icon, .kpi-number { color: #8b5cf6; }
+}
+// 7 TOTAL ÍTEMS
+.kpi-c-7 {
+  border-left-color: #0ea5e9;
+  background: linear-gradient(135deg, #fff 0%, rgba(14,165,233,.04) 100%);
+  .kpi-icon, .kpi-number { color: #0ea5e9; }
+}
+// 8 ÍTEMS POR ATENDER
+.kpi-c-8 {
+  border-left-color: #f97316;
+  background: linear-gradient(135deg, #fff 0%, rgba(249,115,22,.04) 100%);
+  .kpi-icon, .kpi-number { color: #f97316; }
+}
+// 9 ÍTEMS ATENDIDOS
+.kpi-c-9 {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #fff 0%, rgba(16,185,129,.04) 100%);
+  .kpi-icon, .kpi-number { color: #10b981; }
+}
+// 10 ÍTEMS ANULADOS
+.kpi-c-10 {
+  border-left-color: #6b7280;
+  background: linear-gradient(135deg, #fff 0%, rgba(107,114,128,.04) 100%);
+  .kpi-icon, .kpi-number { color: #6b7280; }
+}
+
+// ── Skeleton ──────────────────────────────────────────────────────────────
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+%sk {
+  border-radius: 5px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e4 50%, #f0f0f0 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+.sk-icon { @extend %sk; width: 28px; height: 28px; border-radius: 50%; margin: 0 auto 4px; }
+.sk-num  { @extend %sk; width: 44px; height: 26px; margin: 0 auto 4px; }
+.sk-lbl  { @extend %sk; width: 52px; height: 9px;  margin: 0 auto; }
+
+// ── Tabla detalle ─────────────────────────────────────────────────────────
+.truncate { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mono     { font-family: 'Courier New', monospace; font-size: 0.75rem; }
+
+// ── Badges estado ─────────────────────────────────────────────────────────
+.est-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+.badge-ok      { background: #d1fae5; color: #065f46; }
+.badge-pending { background: #fef3c7; color: #92400e; }
+.badge-danger  { background: #fee2e2; color: #991b1b; }
+.badge-info    { background: #ede9fe; color: #5b21b6; }
+
+.tipo-badge {
+  background: #f3f4f6; color: #374151;
+  padding: 2px 7px; border-radius: 20px;
+  font-size: 0.64rem; font-weight: 700; text-transform: uppercase;
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .db-wrapper { padding: 1rem; }
+}
+@media (max-width: 480px) {
+  .kpi-number { font-size: 1.5rem !important; }
+}

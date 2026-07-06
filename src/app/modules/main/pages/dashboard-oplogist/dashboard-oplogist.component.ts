@@ -68,6 +68,28 @@ export class DashboardOplogistComponent implements OnInit {
     return this.requerimientos.filter((r: any) => r.itemtipo === 'COMPRA').length;
   }
 
+  get resumenCompra() {
+    const r = this.requerimientos.filter((x: any) => x.itemtipo === 'COMPRA');
+    return {
+      total: r.length,
+      pendiente: r.filter((x: any) => ['PENDIENTE', 'ENVIADO'].includes(x.estados)).length,
+      aprobado: r.filter((x: any) => x.estados === 'APROBADO').length,
+      conOC: r.filter((x: any) => ['EN_OC', 'OC_APROBADA', 'OC_ENVIADA'].includes(x.estados)).length,
+      atendido: r.filter((x: any) => ['DESPACHADO', 'DESPACHADO_PARCIAL', 'DESPACHADO_COMPLETO', 'COMPLETADO'].includes(x.estados)).length,
+    };
+  }
+
+  obtenerEstadoVisualCompra(estadoBackend: string): string {
+    return this.MAPA_ESTADOS_COMPRA_VISUAL[estadoBackend] ?? estadoBackend;
+  }
+
+  obtenerEstadoVisualFila(req: any): string {
+    if (req?.itemtipo === 'COMPRA') {
+      return this.obtenerEstadoVisualCompra(req.estados);
+    }
+    return req?.estados ?? '';
+  }
+
   modalDetalleAbierto = false;
   requerimientoSeleccionado: any = null;
 
@@ -81,6 +103,34 @@ export class DashboardOplogistComponent implements OnInit {
     { valor: 'DESPACHADO', label: 'Despachado', clase: 'dark' },
     { valor: 'DESPACHADO_COMPLETO', label: 'Completado', clase: 'success' },
   ];
+
+  // Estados visual simplificados para la tab COMPRA
+  readonly ESTADOS_VISUALES_COMPRA = [
+    { valor: 'PENDIENTE', label: 'Pendiente', severity: 'warn' },
+    { valor: 'APROBADO', label: 'Aprobado', severity: 'success' },
+    { valor: 'CON_OC', label: 'Con OC', severity: 'info' },
+    { valor: 'ATENDIDO', label: 'Atendido', severity: 'success' },
+  ];
+
+  private readonly MAPA_ESTADOS_COMPRA_VISUAL: Record<string, string> = {
+    PENDIENTE: 'PENDIENTE',
+    ENVIADO: 'PENDIENTE',
+    APROBADO: 'APROBADO',
+    EN_OC: 'CON_OC',
+    OC_APROBADA: 'CON_OC',
+    OC_ENVIADA: 'CON_OC',
+    DESPACHADO: 'ATENDIDO',
+    DESPACHADO_PARCIAL: 'ATENDIDO',
+    DESPACHADO_COMPLETO: 'ATENDIDO',
+    COMPLETADO: 'ATENDIDO',
+  };
+
+  private readonly BACKEND_POR_ESTADO_VISUAL_COMPRA: Record<string, string[]> = {
+    PENDIENTE: ['PENDIENTE', 'ENVIADO'],
+    APROBADO: ['APROBADO'],
+    CON_OC: ['EN_OC', 'OC_APROBADA', 'OC_ENVIADA'],
+    ATENDIDO: ['DESPACHADO', 'DESPACHADO_PARCIAL', 'DESPACHADO_COMPLETO', 'COMPLETADO'],
+  };
 
   constructor(
     private dexieService: DexieService,
@@ -162,7 +212,12 @@ export class DashboardOplogistComponent implements OnInit {
     let filtrados = this.requerimientos.filter((r: any) => r.itemtipo === this.tabTipo);
 
     if (this.filtroSubEstado) {
-      filtrados = filtrados.filter((r: any) => r.estados === this.filtroSubEstado);
+      if (this.tabTipo === 'COMPRA') {
+        const backendEstados = this.BACKEND_POR_ESTADO_VISUAL_COMPRA[this.filtroSubEstado] ?? [this.filtroSubEstado];
+        filtrados = filtrados.filter((r: any) => backendEstados.includes(r.estados));
+      } else {
+        filtrados = filtrados.filter((r: any) => r.estados === this.filtroSubEstado);
+      }
     } else if (this.filtroEstado) {
       filtrados = filtrados.filter((r: any) => r.estados === this.filtroEstado);
     }
@@ -210,6 +265,7 @@ export class DashboardOplogistComponent implements OnInit {
   seleccionarTabTipo(tipo: 'CONSUMO' | 'COMPRA') {
     this.tabTipo = tipo;
     this.filtroSubEstado = '';
+    this.filtroEstado = '';
     this.aplicarFiltro();
   }
 
@@ -225,28 +281,24 @@ export class DashboardOplogistComponent implements OnInit {
 
   seleccionarFiltroOC(estado: string) {
     this.tabTipo = 'COMPRA';
-    this.filtroSubEstado = '';
-    this.filtroEstado = this.filtroEstado === estado ? '' : estado;
+    this.filtroEstado = '';
+    this.filtroSubEstado = this.filtroSubEstado === estado ? '' : estado;
     this.aplicarFiltro();
   }
 
   readonly pipelineOCPasos = [
-    { estado: 'APROBADO',          label: 'Aprobado',    icon: 'bx-check-circle',  color: 'color-aprobado' },
-    { estado: 'EN_OC',             label: 'En OC',       icon: 'bx-file-blank',    color: 'color-en-oc'    },
-    { estado: 'OC_APROBADA',       label: 'OC Aprobada', icon: 'bx-check-shield',  color: 'color-aprobada' },
-    { estado: 'OC_ENVIADA',        label: 'OC Enviada',  icon: 'bx-send',          color: 'color-enviada'  },
-    { estado: 'DESPACHADO_COMPLETO', label: 'Atendido',  icon: 'bx-trophy',        color: 'color-atendida' },
+    { estado: 'PENDIENTE', label: 'Pendiente', icon: 'bx-time-five',   color: 'color-pendiente' },
+    { estado: 'APROBADO',  label: 'Aprobado',  icon: 'bx-check-circle', color: 'color-aprobado'  },
+    { estado: 'CON_OC',    label: 'Con OC',    icon: 'bx-receipt',      color: 'color-en-oc'     },
+    { estado: 'ATENDIDO',  label: 'Atendido',  icon: 'bx-check-double', color: 'color-atendida'  },
   ];
 
   obtenerPipelineCompra(): { estado: string; label: string; icon: string; color: string; count: number; stepClass: string; bubbleClass: string; labelClass: string; badgeClass: string; lineClass: string }[] {
     const compra = this.requerimientos.filter((r: any) => r.itemtipo === 'COMPRA');
     const conteos: Record<string, number> = {};
     for (const paso of this.pipelineOCPasos) {
-      conteos[paso.estado] = compra.filter((r: any) =>
-        paso.estado === 'DESPACHADO_COMPLETO'
-          ? r.estados === 'DESPACHADO_COMPLETO' || r.estados === 'COMPLETADO' || r.estados === 'DESPACHADO'
-          : r.estados === paso.estado
-      ).length;
+      const backendEstados = this.BACKEND_POR_ESTADO_VISUAL_COMPRA[paso.estado] ?? [paso.estado];
+      conteos[paso.estado] = compra.filter((r: any) => backendEstados.includes(r.estados)).length;
     }
 
     // Paso activo = el más avanzado con count > 0
@@ -274,30 +326,27 @@ export class DashboardOplogistComponent implements OnInit {
     });
   }
 
-  // Estados del pipeline OC que siempre aparecen visibles en tab COMPRA
-  private readonly estadosFijosCompra = new Set(['APROBADO', 'EN_OC', 'OC_APROBADA', 'OC_ENVIADA', 'DESPACHADO_COMPLETO']);
-
   obtenerSubEstados(): { valor: string; label: string; count: number; severity: string }[] {
     const porTipo = this.requerimientos.filter((r: any) => r.itemtipo === this.tabTipo);
 
-    const ordenCompra  = ['PENDIENTE', 'ENVIADO', 'APROBADO', 'EN_OC', 'OC_APROBADA', 'OC_ENVIADA', 'DESPACHADO', 'DESPACHADO_PARCIAL', 'DESPACHADO_COMPLETO', 'RECHAZADO', 'ANULADO'];
-    const ordenConsumo = ['PENDIENTE', 'ENVIADO', 'APROBADO_AREA', 'APROBADO', 'CONSOLIDADO', 'DESPACHADO', 'DESPACHADO_PARCIAL', 'DESPACHADO_COMPLETO', 'RECHAZADO', 'ANULADO'];
-    const orden = this.tabTipo === 'COMPRA' ? ordenCompra : ordenConsumo;
+    if (this.tabTipo === 'COMPRA') {
+      return this.ESTADOS_VISUALES_COMPRA.map(ev => {
+        const backendEstados = this.BACKEND_POR_ESTADO_VISUAL_COMPRA[ev.valor];
+        const count = porTipo.filter((r: any) => backendEstados.includes(r.estados)).length;
+        return { ...ev, count };
+      });
+    }
 
+    const ordenConsumo = ['PENDIENTE', 'ENVIADO', 'APROBADO_AREA', 'APROBADO', 'CONSOLIDADO', 'DESPACHADO', 'DESPACHADO_PARCIAL', 'DESPACHADO_COMPLETO', 'RECHAZADO', 'ANULADO'];
     const severities: Record<string, string> = {
       PENDIENTE: 'warn', ENVIADO: 'info', APROBADO_AREA: 'info', APROBADO: 'success',
-      EN_OC: 'info', OC_APROBADA: 'success', OC_ENVIADA: 'info',
       CONSOLIDADO: 'info', DESPACHADO: 'contrast', DESPACHADO_PARCIAL: 'secondary',
       DESPACHADO_COMPLETO: 'success', RECHAZADO: 'danger', ANULADO: 'danger',
     };
     const resultado: { valor: string; label: string; count: number; severity: string }[] = [];
-    for (const valor of orden) {
+    for (const valor of ordenConsumo) {
       const count = porTipo.filter((r: any) => r.estados === valor).length;
-      // En tab COMPRA: estados fijos siempre visibles; el resto solo si tienen datos
-      const mostrar = this.tabTipo === 'COMPRA'
-        ? (this.estadosFijosCompra.has(valor) || count > 0)
-        : count > 0;
-      if (mostrar) {
+      if (count > 0) {
         resultado.push({ valor, label: this.obtenerTextoEstado(valor), count, severity: severities[valor] ?? 'secondary' });
       }
     }
@@ -334,6 +383,8 @@ export class DashboardOplogistComponent implements OnInit {
       DESPACHADO_PARCIAL: 'secondary',
       DESPACHADO_COMPLETO: 'success',
       COMPLETADO: 'success',
+      CON_OC: 'info',
+      ATENDIDO: 'success',
     };
     return clases[estado] ?? 'secondary';
   }
@@ -354,6 +405,8 @@ export class DashboardOplogistComponent implements OnInit {
       DESPACHADO_PARCIAL: 'Desp. Parcial',
       DESPACHADO_COMPLETO: 'Completado',
       COMPLETADO: 'Completado',
+      CON_OC: 'Con OC',
+      ATENDIDO: 'Atendido',
     };
     return textos[estado] || estado;
   }
