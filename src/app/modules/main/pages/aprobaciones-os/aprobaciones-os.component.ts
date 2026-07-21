@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AprobacionOSService } from '../../../../services/aprobacion-os.service';
-import { AprobacionOrdenService } from '@/app/services/aprobacion-orden.service';
 import { AlertService } from '../../../../shared/alertas/alerts.service';
 import { UserService } from '../../../../shared/services/user.service';
 import { DexieService } from '../../../../shared/dixiedb/dexie-db.service';
@@ -66,18 +65,36 @@ export class AprobacionesOSComponent implements OnInit {
     totalVencidas: 0,
   };
 
-  // Control de permisos - JLOLOGIST solo visualiza, no aprueba
-  get soloVisualizacion(): boolean {
-    return this.usuario?.idrol?.includes('JLOLOGIST') ?? false;
+  // Control de permisos - roles que pueden aprobar OS
+  get puedeAprobar(): boolean {
+    const rol = (this.usuario?.idrol ?? '').toUpperCase();
+    return rol.includes('FINANZAS');
   }
 
-  get puedeAprobar(): boolean {
-    return !this.soloVisualizacion;
+  get soloVisualizacion(): boolean {
+    return !this.puedeAprobar;
+  }
+
+  // Rol usado para filtrar listados. Vacío para lectura = ver todas las OS.
+  get rolFiltro(): string {
+    return this.puedeAprobar ? this.usuario?.idrol ?? '' : '';
+  }
+
+  get documentoIdentidadFiltro(): string {
+    return this.puedeAprobar ? this.usuario?.documentoidentidad ?? '' : '';
   }
 
   // OS Pendientes
   osPendientes: any[] = [];
   osPendientesFiltradas: any[] = [];
+
+  // OS Aprobadas / Rechazadas
+  osAprobadas: any[] = [];
+  tabVistaActiva: 'PENDIENTES' | 'APROBADAS' | 'RECHAZADAS' = 'PENDIENTES';
+
+  // Pagination
+  rowsPerPageOptions = [10, 25, 50, 100];
+  rows = 10;
 
   // Historial
   historialAprobaciones: any[] = [];
@@ -124,7 +141,6 @@ export class AprobacionesOSComponent implements OnInit {
 
   constructor(
     private aprobacionOSService: AprobacionOSService,
-    private aprobacionOrdenService: AprobacionOrdenService,
     private alertService: AlertService,
     private userService: UserService,
     private dexieService: DexieService
@@ -146,7 +162,7 @@ export class AprobacionesOSComponent implements OnInit {
   async cargarContadores() {
     try {
       const contadores = await this.aprobacionOSService
-        .obtenerContadores(this.usuario.documentoidentidad)
+        .obtenerContadores(this.documentoIdentidadFiltro, this.rolFiltro)
         .toPromise();
 
       if (contadores) {
@@ -161,22 +177,10 @@ export class AprobacionesOSComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
 
-      // Intentar nuevo endpoint con datos completos primero
-      let pendientes: any[] = [];
-      try {
-        const respDetallado = await lastValueFrom(
-          this.aprobacionOrdenService.listarPendientesDetallado(this.usuario.idrol, 'OS')
-        );
-        if (Array.isArray(respDetallado)) {
-          pendientes = respDetallado;
-        }
-      } catch {
-        // fallback al endpoint anterior
-        const response = await this.aprobacionOSService
-          .listarOSPendientes(this.usuario.documentoidentidad)
-          .toPromise();
-        pendientes = response || [];
-      }
+      const respDetallado = await lastValueFrom(
+        this.aprobacionOSService.listarOSPendientes(this.rolFiltro)
+      );
+      const pendientes = Array.isArray(respDetallado) ? respDetallado : [];
 
       this.osPendientes = pendientes;
       this.contadores.totalPendientes = pendientes.length;
@@ -189,10 +193,33 @@ export class AprobacionesOSComponent implements OnInit {
     }
   }
 
+  async cambiarVista(tab: 'PENDIENTES' | 'APROBADAS' | 'RECHAZADAS') {
+    this.tabVistaActiva = tab;
+    if (tab === 'APROBADAS') {
+      await this.cargarOSAprobadas('APROBADA');
+    } else if (tab === 'RECHAZADAS') {
+      await this.cargarOSAprobadas('RECHAZADA');
+    }
+  }
+
+  async cargarOSAprobadas(estado: string) {
+    try {
+      this.alertService.mostrarModalCarga();
+      const resp = await lastValueFrom(
+        this.aprobacionOSService.listarHistorialAprobaciones(this.rolFiltro, estado)
+      );
+      this.osAprobadas = Array.isArray(resp) ? resp : [];
+      this.alertService.cerrarModalCarga();
+    } catch (error) {
+      this.alertService.cerrarModalCarga();
+      this.osAprobadas = [];
+    }
+  }
+
   async cargarHistorial() {
     try {
       const response = await this.aprobacionOSService
-        .listarHistorialAprobaciones(this.usuario.documentoidentidad)
+        .listarHistorialAprobaciones(this.rolFiltro)
         .toPromise();
 
       if (response) {
@@ -207,10 +234,6 @@ export class AprobacionesOSComponent implements OnInit {
   aplicarFiltros() {
     this.osPendientesFiltradas = this.osPendientes.filter((os) => {
       let cumpleFiltro = true;
-
-      if (this.filtroEstado !== 'TODAS') {
-        cumpleFiltro = cumpleFiltro && os.estado === this.filtroEstado;
-      }
 
       if (this.filtroProveedor) {
         cumpleFiltro =
@@ -234,7 +257,6 @@ export class AprobacionesOSComponent implements OnInit {
   }
 
   limpiarFiltros() {
-    this.filtroEstado = 'TODAS';
     this.filtroProveedor = '';
     this.filtroFechaInicio = '';
     this.filtroFechaFin = '';
@@ -245,36 +267,29 @@ export class AprobacionesOSComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
 
-      // Intentar cargar OS completa con ítems reales
-      if (os.IdAprobacion || os.idAprobacion || os.CodigoOrden || os.codigoOrden) {
-        try {
-          const detalle = await lastValueFrom(
-            this.aprobacionOrdenService.obtenerOSDesdeConsolidacion({
-              idAprobacion: os.IdAprobacion || os.idAprobacion,
-              codigoOrden: os.CodigoOrden || os.codigoOrden,
-            })
-          );
-          if (detalle) {
-            this.osDetalle = { ...os, ...detalle };
-            this.historialOS = detalle.nivelesAprobacion || [];
-            this.alertService.cerrarModalCarga();
-            this.modalDetalleOS = true;
-            return;
-          }
-        } catch {
-          // fallback al historial anterior
-        }
+      const detalle = await lastValueFrom(
+        this.aprobacionOSService.obtenerOSDetalle({
+          idAprobacion: os.IdAprobacion || os.idAprobacion,
+          codigoOrden: os.CodigoOrden || os.codigoOrden,
+        })
+      );
+
+      if (detalle) {
+        const items = typeof detalle.items === 'string' ? JSON.parse(detalle.items) : (detalle.items || []);
+        const niveles = typeof detalle.nivelesAprobacion === 'string' ? JSON.parse(detalle.nivelesAprobacion) : (detalle.nivelesAprobacion || []);
+        this.osDetalle = { ...os, ...detalle, items, IdAprobacion: os.IdAprobacion || os.idAprobacion || detalle.idAprobacion };
+        this.historialOS = niveles;
+      } else {
+        this.osDetalle = os;
+        this.historialOS = [];
       }
 
-      this.osDetalle = os;
-      const historial = await this.aprobacionOSService
-        .obtenerHistorialOS(os.ordenServicioId)
-        .toPromise();
-      this.historialOS = historial || [];
       this.alertService.cerrarModalCarga();
       this.modalDetalleOS = true;
     } catch (error) {
-      console.error('Error al cargar historial de OS:', error);
+      console.error('Error al cargar detalle de OS:', error);
+      this.osDetalle = os;
+      this.historialOS = [];
       this.alertService.cerrarModalCarga();
     }
   }
@@ -297,18 +312,17 @@ export class AprobacionesOSComponent implements OnInit {
     }
 
     try {
-      const payload = {
-        idAprobacion: this.osSeleccionada.idAprobacion,
-        accion: this.accionAprobacion,
-        observaciones: this.observacionesAprobacion,
-        usuarioAprueba: this.usuario.documentoidentidad,
-      };
+      const response: any = await lastValueFrom(
+        this.aprobacionOSService.aprobarRechazarOS({
+          idAprobacion: this.osSeleccionada.idAprobacion,
+          accion: this.accionAprobacion,
+          usuarioAprueba: this.usuario.documentoidentidad,
+          nombreUsuario: this.usuario.nombre,
+          observaciones: this.observacionesAprobacion,
+        })
+      );
 
-      const response = await this.aprobacionOSService
-        .aprobarRechazarOS(payload)
-        .toPromise();
-
-      if (response?.errorgeneral === 0 || response?.errorgeneral === '0' || response?.success) {
+      if (response?.success) {
         this.alertService.showAlert(
           'Éxito',
           response?.mensaje || `Orden de servicio ${this.accionAprobacion === 'APROBAR' ? 'aprobada' : 'rechazada'} correctamente`,
@@ -355,7 +369,7 @@ export class AprobacionesOSComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
       const respuesta = await lastValueFrom(
-        this.aprobacionOrdenService.anular({
+        this.aprobacionOSService.anularOS({
           idAprobacion: os.idAprobacion,
           dniAprobador: this.usuario.documentoidentidad,
           nombreAprobador: this.usuario.nombre,
@@ -366,7 +380,7 @@ export class AprobacionesOSComponent implements OnInit {
       if (respuesta?.success) {
         this.alertService.showAlert(
           'OS Anulada',
-          'La OS fue anulada y la consolidación fue liberada. Los ítems volvieron a estado pendiente.',
+          respuesta?.mensaje || 'La OS fue anulada correctamente.',
           'success'
         );
         await this.cargarOSPendientes();
@@ -418,6 +432,19 @@ export class AprobacionesOSComponent implements OnInit {
     } catch (error) {
       console.error('Error al cargar flujos de aprobación:', error);
     }
+  }
+
+  obtenerClaseEstado(estado: string): string {
+    const clases: { [key: string]: string } = {
+      PENDIENTE: 'badge-warning',
+      PENDIENTE_APROBACION: 'badge-warning',
+      APROBADA: 'badge-success',
+      RECHAZADA: 'badge-danger',
+      EN_ESPERA: 'badge-secondary',
+      ANULADA: 'badge-secondary',
+      CANCELADA: 'badge-secondary',
+    };
+    return clases[estado] || 'badge-secondary';
   }
 
   getEstadoSeverity(estado: string): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' | null | undefined {

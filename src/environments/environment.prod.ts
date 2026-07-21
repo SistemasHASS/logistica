@@ -1,7 +1,7 @@
 export const environment = {
   production: true,
-  // appVersion: '3.2.2', // se reemplaza automáticamente
-  appVersion: '3.2.2',
+  // appVersion: '3.3.13', // se reemplaza automáticamente
+  appVersion: '3.3.13',
 
   updateMode: 'AUTO',      // 'AUTO' | 'MANUAL' | 'DISABLED'
   showUpdateModal: true,   // true | false

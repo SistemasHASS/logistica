@@ -18,6 +18,7 @@ import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento
   styleUrls: ['./reporte-aprobados.component.scss'],
 })
 export class ReporteAprobadosComponent implements OnInit {
+  tabActiva: 'aprobados' | 'rechazados' = 'aprobados';
   aprobados: any[] = [];
   rechazados: any[] = [];
   aprobadosOriginal: any[] = [];

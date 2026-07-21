@@ -11,13 +11,12 @@ import { NotificationService } from './shared/services/notification.service';
 import { StockNotificationService } from './shared/services/stock-notification.service';
 import { DexieService } from './shared/dixiedb/dexie-db.service';
 import { authInterceptor } from './modules/main/interceptors/auth.interceptor.fn';
-import { testInterceptor } from './modules/main/interceptors/test.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes,withHashLocation()), 
-    provideHttpClient(withInterceptors([testInterceptor, authInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideAnimations(),
     provideAnimationsAsync(),
     provideServiceWorker('ngsw-worker.js', {

@@ -36,16 +36,16 @@
   </div>
 
   <!-- Tabs -->
-  <ul class="nav nav-tabs mb-3">
-    <li class="nav-item">
-      <a class="nav-link" [class.active]="tabActiva === 'saldos'" (click)="tabActiva = 'saldos'">
-        <i class="bi bi-clock-history me-2"></i>Saldos Pendientes
-      </a>
+  <ul class="nav custom-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="tabActiva === 'saldos'" (click)="tabActiva = 'saldos'" type="button">
+        <i class="bx bx-time me-1"></i>Saldos Pendientes
+      </button>
     </li>
-    <li class="nav-item">
-      <a class="nav-link" [class.active]="tabActiva === 'reingresos'" (click)="tabActiva = 'reingresos'">
-        <i class="bi bi-arrow-repeat me-2"></i>Reingresos Registrados
-      </a>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="tabActiva === 'reingresos'" (click)="tabActiva = 'reingresos'" type="button">
+        <i class="bx bx-history me-1"></i>Reingresos Registrados
+      </button>
     </li>
   </ul>
 

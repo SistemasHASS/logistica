@@ -23,7 +23,7 @@ export interface KpiCard {
 }
 
 // export type TablaKpiTipo = 'reqs' | 'reqs-atendidos' | 'ocs' | 'reqs-pendientes' | 'ocs-cumplimiento' | 'ocs-leadtime' | 'backlog' | 'items-todos' | 'items-por-atender' | 'items-atendidos' | 'items-anulados';
-export type TablaKpiTipo = 'reqs' | 'reqs-atendidos' | 'ocs' | 'reqs-pendientes';
+export type TablaKpiTipo = 'reqs' | 'reqs-atendidos' | 'ocs' | 'reqs-pendientes' | 'items-todos' | 'items-por-atender' | 'items-atendidos' | 'items-anulados';
 
 export interface TablaKpiConfig {
   tipo: TablaKpiTipo;
@@ -31,6 +31,27 @@ export interface TablaKpiConfig {
   color: string;
   icono: string;
 }
+
+interface EmpresaPermitida {
+  nombre: string;
+  alias: string[];
+}
+
+const EMPRESAS_PERMITIDAS: EmpresaPermitida[] = [
+  { nombre: 'HASS PERU SA', alias: ['HASS PERU'] },
+  { nombre: 'BERRY HARVEST SA', alias: ['BERRY HARVEST'] },
+  { nombre: 'CORP AGRICOLA OLMOS', alias: ['CORP AGRICOLA OLMOS', 'CORPORACION AGRICOLA OLMOS', 'AGRÍCOLA OLMOS', 'AGRICOLA OLMOS'] }
+];
+
+const normalizarEmpresa = (nombre: string): string =>
+  (nombre ?? '')
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/(S\.A\.C\.?|S\.A\.?|S\.R\.L\.?|S\.A\.C\.I\.?|E\.I\.R\.L\.?)\.?$/g, '')
+    .trim();
 
 @Component({
   selector: 'app-dashboard-jlologist',
@@ -53,31 +74,15 @@ export class DashboardJlologistComponent implements OnInit {
   filtroTexto = '';
 
   kpis: KpiCard[] = [
-    { titulo: 'REQS. COMPRA',    subtitulo: 'TOTAL',             valor: 0, cambio: 0, labelCambio: 'Reqs de compra del período',  cargando: true, icono: 'bx bx-list-ul',        color: '#7c3aed' },
-    { titulo: 'COMPRA ATENDIDA', subtitulo: '',                  valor: 0, cambio: 0, labelCambio: 'Con OC o completada',         cargando: true, icono: 'bx bx-check-double',   color: '#10b981' },
-    { titulo: 'OC EMITIDAS',     subtitulo: '',                  valor: 0, cambio: 0, labelCambio: 'Órdenes de compra',           cargando: true, icono: 'bx bx-file',           color: '#f59e0b' },
-    { titulo: 'PENDIENTES',      subtitulo: 'DE OC',             valor: 0, cambio: 0, labelCambio: 'Reqs de compra sin OC',       cargando: true, icono: 'bx bx-time-five',      color: '#ef4444' },
-    // { titulo: '% CUMPLIMIENTO',  subtitulo: 'PLAZO ENTREGA',     valor: 0, sufijo: '%', decimales: 1, cambio: 0, labelCambio: 'Cumplimiento', cargando: true, icono: 'bx bx-check-circle', color: '#10b981' },
-    // { titulo: 'LEAD TIME',       subtitulo: 'PROMEDIO',          valor: 0, decimales: 1, cambio: 0, labelCambio: 'Días promedio proveedor', cargando: true, icono: 'bx bx-trending-up', color: '#3b82f6' },
-    // { titulo: 'BACKLOG',         subtitulo: 'ACTUAL',            valor: 0, cambio: 0, labelCambio: 'Reqs acumulados pendientes',  cargando: true, icono: 'bx bx-time',           color: '#8b5cf6' },
-    // { titulo: 'TOTAL',           subtitulo: 'ÍTEMS',             valor: 0, cambio: 0, labelCambio: 'Ítems del período',           cargando: true, icono: 'bx bx-package',        color: '#0ea5e9' },
-    // { titulo: 'ÍTEMS',           subtitulo: 'POR ATENDER',       valor: 0, cambio: 0, labelCambio: 'Sin consolidar',              cargando: true, icono: 'bx bx-loader-circle',  color: '#f97316' },
-    // { titulo: 'ÍTEMS',           subtitulo: 'ATENDIDOS',         valor: 0, cambio: 0, labelCambio: 'Consolidados/despachados',    cargando: true, icono: 'bx bx-check-square',   color: '#10b981' },
-    // { titulo: 'ÍTEMS',           subtitulo: 'ANULADOS',          valor: 0, cambio: 0, labelCambio: 'Eliminados del sistema',      cargando: true, icono: 'bx bx-x-circle',       color: '#6b7280' },
+    { titulo: 'TOTAL ÍTEMS',      subtitulo: 'REQS. COMPRA',      valor: 0, cambio: 0, labelCambio: 'Ítems de compra del período', cargando: true, icono: 'bx bx-package',        color: '#0ea5e9' },
+    { titulo: 'ÍTEMS CON OC',     subtitulo: '',                  valor: 0, cambio: 0, labelCambio: 'Ítems asignados a orden de compra', cargando: true, icono: 'bx bx-check-square',   color: '#10b981' },
+    { titulo: 'ÍTEMS PENDIENTES', subtitulo: 'DE ATENCIÓN',       valor: 0, cambio: 0, labelCambio: 'Ítems sin orden de compra',  cargando: true, icono: 'bx bx-loader-circle',  color: '#f97316' },
   ];
 
   private readonly tablaConfigs: TablaKpiConfig[] = [
-    { tipo: 'reqs',              titulo: 'Requerimientos de Compra',          color: '#7c3aed', icono: 'bx bx-list-ul'        },
-    { tipo: 'reqs-atendidos',    titulo: 'Compra Atendida (con OC)',          color: '#10b981', icono: 'bx bx-check-double'   },
-    { tipo: 'ocs',               titulo: 'Órdenes de Compra Emitidas',        color: '#f59e0b', icono: 'bx bx-file'           },
-    { tipo: 'reqs-pendientes',   titulo: 'Requerimientos de Compra Pendientes', color: '#ef4444', icono: 'bx bx-time-five'      },
-    // { tipo: 'ocs-cumplimiento',  titulo: 'OC — Cumplimiento Plazo Entrega',   color: '#10b981', icono: 'bx bx-check-circle'   },
-    // { tipo: 'ocs-leadtime',      titulo: 'OC — Lead Time Proveedor',          color: '#3b82f6', icono: 'bx bx-trending-up'    },
-    // { tipo: 'backlog',           titulo: 'Backlog — Reqs Sin Atender',        color: '#8b5cf6', icono: 'bx bx-time'           },
-    // { tipo: 'items-todos',       titulo: 'Total Ítems del Período',           color: '#0ea5e9', icono: 'bx bx-package'        },
-    // { tipo: 'items-por-atender', titulo: 'Ítems Por Atender',                 color: '#f97316', icono: 'bx bx-loader-circle'  },
-    // { tipo: 'items-atendidos',   titulo: 'Ítems Atendidos',                   color: '#10b981', icono: 'bx bx-check-square'   },
-    // { tipo: 'items-anulados',    titulo: 'Ítems Anulados',                    color: '#6b7280', icono: 'bx bx-x-circle'       },
+    { tipo: 'items-todos',       titulo: 'Total Ítems del Período',           color: '#0ea5e9', icono: 'bx bx-package'        },
+    { tipo: 'items-atendidos',   titulo: 'Ítems con Orden de Compra',         color: '#10b981', icono: 'bx bx-check-square'   },
+    { tipo: 'items-por-atender', titulo: 'Ítems Pendientes de Atención',      color: '#f97316', icono: 'bx bx-loader-circle'  },
   ];
 
   get tablaActivaConfig(): TablaKpiConfig {
@@ -119,14 +124,31 @@ export class DashboardJlologistComponent implements OnInit {
         } else if (Array.isArray(resp)) {
           lista = resp;
         }
-        this.empresas = lista.filter(e => e.activo !== false);
-        this.rucActivo = this.empresas.length > 0 ? (this.empresas[0].ruc ?? null) : (this.usuario?.ruc ?? null);
+        this.empresas = lista
+          .map(e => ({ e, nombre: normalizarEmpresa(e.razonSocial ?? '') }))
+          .filter(({ e, nombre }) => {
+            if (e.activo === false) return false;
+            return EMPRESAS_PERMITIDAS.some(p =>
+              p.alias.some(a => nombre.includes(normalizarEmpresa(a)))
+            );
+          })
+          .sort((a, b) => {
+            const idxA = EMPRESAS_PERMITIDAS.findIndex(p =>
+              p.alias.some(alias => a.nombre.includes(normalizarEmpresa(alias)))
+            );
+            const idxB = EMPRESAS_PERMITIDAS.findIndex(p =>
+              p.alias.some(alias => b.nombre.includes(normalizarEmpresa(alias)))
+            );
+            return idxA - idxB;
+          })
+          .map(({ e }) => e);
+        this.rucActivo = null;
         this.empresaCargando = false;
         this.cargarKpis();
         this.cdr.markForCheck();
       },
       error: () => {
-        this.rucActivo = this.usuario?.ruc ?? null;
+        this.rucActivo = null;
         this.empresaCargando = false;
         this.cargarKpis();
         this.cdr.markForCheck();
@@ -134,7 +156,7 @@ export class DashboardJlologistComponent implements OnInit {
     });
   }
 
-  seleccionarEmpresa(ruc: string) {
+  seleccionarEmpresa(ruc: string | null) {
     if (this.rucActivo === ruc) return;
     this.rucActivo = ruc;
     this.filtroTexto = '';
@@ -211,17 +233,9 @@ export class DashboardJlologistComponent implements OnInit {
       next: (resp) => {
         const data = Array.isArray(resp) ? resp[0] : resp;
         if (data) {
-          this.kpis[0]  = { ...this.kpis[0],  valor: data.totalRequerimientos ?? 0, cambio: data.cambioTotalReqs        ?? 0, cargando: false };
-          this.kpis[1]  = { ...this.kpis[1],  valor: data.reqsAtendidos        ?? 0, cambio: data.cambioReqsAtendidos   ?? 0, cargando: false };
-          this.kpis[2]  = { ...this.kpis[2],  valor: data.ocEmitidas           ?? 0, cambio: data.cambioOCEmitidas      ?? 0, cargando: false };
-          this.kpis[3]  = { ...this.kpis[3],  valor: data.pendientesAtencion   ?? 0, cambio: data.cambioPendientes      ?? 0, cargando: false };
-          // this.kpis[4]  = { ...this.kpis[4],  valor: data.pctCumplimiento      ?? 0, cambio: data.cambioPctCumplimiento ?? 0, cargando: false };
-          // this.kpis[5]  = { ...this.kpis[5],  valor: data.leadTimePromedio     ?? 0, cambio: data.cambioLeadTime        ?? 0, cargando: false };
-          // this.kpis[6]  = { ...this.kpis[6],  valor: data.backlogActual        ?? 0, cambio: data.cambioBacklog         ?? 0, cargando: false };
-          // this.kpis[7]  = { ...this.kpis[7],  valor: data.totalItems           ?? 0, cambio: 0,                              cargando: false };
-          // this.kpis[8]  = { ...this.kpis[8],  valor: data.itemsPorAtender      ?? 0, cambio: 0,                              cargando: false };
-          // this.kpis[9]  = { ...this.kpis[9],  valor: data.itemsAtendidos       ?? 0, cambio: 0,                              cargando: false };
-          // this.kpis[10] = { ...this.kpis[10], valor: data.itemsAnulados        ?? 0, cambio: 0,                              cargando: false };
+          this.kpis[0]  = { ...this.kpis[0],  valor: data.totalItems            ?? 0, cambio: data.cambioTotalItems            ?? 0, cargando: false };
+          this.kpis[1]  = { ...this.kpis[1],  valor: data.itemsConOC            ?? 0, cambio: data.cambioItemsConOC            ?? 0, cargando: false };
+          this.kpis[2]  = { ...this.kpis[2],  valor: data.itemsPendientesAtencion ?? 0, cambio: data.cambioItemsPendientesAtencion ?? 0, cargando: false };
           this.cargarTablaKpi(this.kpiActivo);
         } else {
           this.kpis = this.kpis.map(k => ({ ...k, cargando: false }));

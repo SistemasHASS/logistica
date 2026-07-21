@@ -47,23 +47,38 @@
     </div>
   </div>
 
-  <div class="tabs-nav">
-    <button class="tab" [class.active]="currentTab === 'TODOS'" (click)="switchTab('TODOS')">
-      <i class='bx bx-list-ul'></i> Todos los requerimientos <span class="badge-cnt TODOS">{{ cntTODOS }}</span>
-    </button>
-    <button class="tab" [class.active]="currentTab === 'HP'" (click)="switchTab('HP')">
-      <i class='bx bx-buildings'></i> HP <span class="badge-cnt HP">{{ cntHP }}</span>
-    </button>
-    <button class="tab" [class.active]="currentTab === 'BH'" (click)="switchTab('BH')">
-      <i class='bx bx-buildings'></i> BH <span class="badge-cnt BH">{{ cntBH }}</span>
-    </button>
-    <button class="tab" [class.active]="currentTab === 'CAO'" (click)="switchTab('CAO')">
-      <i class='bx bx-buildings'></i> CAO <span class="badge-cnt CAO">{{ cntCAO }}</span>
-    </button>
-    <button class="tab" [class.active]="currentTab === 'CORP'" (click)="switchTab('CORP')">
-      <i class='bx bx-globe'></i> Corporativo <span class="badge-cnt CORP">{{ cntCORP }}</span>
-    </button>
-  </div>
+  <ul class="nav custom-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="currentTab === 'TODOS'" (click)="switchTab('TODOS')" type="button">
+        <i class='bx bx-list-ul me-1'></i> Todos <span class="tab-badge ms-1">{{ cntTODOS }}</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="currentTab === 'HP'" (click)="switchTab('HP')" type="button">
+        <i class='bx bx-buildings me-1'></i> HP <span class="tab-badge ms-1">{{ cntHP }}</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="currentTab === 'BH'" (click)="switchTab('BH')" type="button">
+        <i class='bx bx-buildings me-1'></i> BH <span class="tab-badge ms-1">{{ cntBH }}</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="currentTab === 'CAO'" (click)="switchTab('CAO')" type="button">
+        <i class='bx bx-buildings me-1'></i> CAO <span class="tab-badge ms-1">{{ cntCAO }}</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="currentTab === 'CORP'" (click)="switchTab('CORP')" type="button">
+        <i class='bx bx-globe me-1'></i> Corporativo <span class="tab-badge ms-1">{{ cntCORP }}</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="currentTab === 'OC'" (click)="switchTab('OC')" type="button">
+        <i class='bx bx-file me-1'></i> Órdenes de Compra <span class="tab-badge ms-1">{{ ordenesCompra().length }}</span>
+      </button>
+    </li>
+  </ul>
 
   <div class="panel-content">
     <!-- PANEL TODOS: Total de requerimientos (listar-requerimientos-completos) -->
@@ -78,6 +93,7 @@
                  [loading]="cargandoReqsCompletos()"
                  responsiveLayout="scroll"
                  [pageLinks]="5"
+                 [rows]="10"
                  [showCurrentPageReport]="true"
                  [rowsPerPageOptions]="[10,20,50]"
                  currentPageReportTemplate="{first} - {last} de {totalRecords}"
@@ -115,8 +131,8 @@
                 <ng-template #sinConsolidar><span class="badge bg-secondary">Sin consolidar</span></ng-template>
               </td>
               <td>
-                <span class="chip {{ codigoEmpresaPorRuc(req.ruc) }}">{{ codigoEmpresaPorRuc(req.ruc) }}</span>
-                <small>{{ nombreEmpresaPorRuc(req.ruc) }}</small>
+                <span class="chip {{ codigoEmpresaPorRuc(req.ruc, req.razonSocial) }}">{{ codigoEmpresaPorRuc(req.ruc, req.razonSocial) }}</span>
+                <small>{{ nombreEmpresaPorRuc(req.ruc, req.razonSocial) }}</small>
               </td>
             </tr>
             <tr *ngIf="expandedRows[req.numeroRequerimiento]" class="row-expanded">
@@ -166,8 +182,17 @@
         <div class="emp-info"><span class="chip {{ emp }}">{{ emp }}</span><div><strong>{{ empNombres[emp] }}</strong><small>Requerimientos pre-consolidados</small></div></div>
       </div>
       <div class="tw">
-        <table>
-          <thead>
+        <p-table [value]="empresasRows[emp]"
+                 [paginator]="true"
+                 [rows]="10"
+                 [totalRecords]="empresasRows[emp].length"
+                 [pageLinks]="5"
+                 [showCurrentPageReport]="true"
+                 [rowsPerPageOptions]="[10, 20, 50]"
+                 currentPageReportTemplate="{first} - {last} de {totalRecords}"
+                 responsiveLayout="scroll"
+                 styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
             <tr>
               <th><input type="checkbox" (change)="toggleAll(emp, $any($event.target).checked)"></th>
               <th>Código</th><th>Descripción</th><th>Línea</th><th>Familia</th><th>Subfamilia</th>
@@ -177,9 +202,9 @@
               <th class="text-end">Costo proveedor (S/)</th>
               <th class="text-end">Subtotal (S/)</th> -->
             </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let r of empresasRows[emp]">
+          </ng-template>
+          <ng-template pTemplate="body" let-r>
+            <tr>
               <td class="text-center"><input type="checkbox" [checked]="seleccionados.has(r.id)" (change)="toggleFila(r.id, $any($event.target).checked)"></td>
               <td><span class="codigo">{{ r.cod }}</span></td>
               <td>{{ r.desc }}</td>
@@ -201,14 +226,8 @@
               </td>
               <td class="text-end">{{ (seleccionados.has(r.id) && costosProveedor[r.id] ? r.cantidad * (+costosProveedor[r.id]) : 0) ? (seleccionados.has(r.id) && costosProveedor[r.id] ? r.cantidad * (+costosProveedor[r.id]) : 0).toFixed(2) : '—' }}</td> -->
             </tr>
-          </tbody>
-          <!-- <tfoot>
-            <tr class="total-row">
-              <td colspan="11" class="text-end">Total seleccionado {{ emp }}:</td>
-              <td class="text-end">S/ {{ empresasTotal[emp].toFixed(2) }}</td>
-            </tr>
-          </tfoot> -->
-        </table>
+          </ng-template>
+        </p-table>
       </div>
     </div>
 
@@ -222,10 +241,11 @@
         <div>
           <label>Proveedor para ítems marcados:</label>
           <p-autoComplete
-            [(ngModel)]="proveedorGlobal"
+            [ngModel]="proveedorGlobalInput"
+            (ngModelChange)="proveedorGlobalInput = $event"
             [suggestions]="proveedoresSugeridos"
             (completeMethod)="filtrarProveedores($event)"
-            (onSelect)="setProveedorGlobal()"
+            (onSelect)="setProveedorGlobal($event)"
             field="nombre"
             [dropdown]="true"
             [forceSelection]="true"
@@ -243,13 +263,23 @@
 
       <div class="cot-upload">
         <input type="file" #fileCot accept=".csv,.xlsx,.xls" style="display:none" (change)="importarCotizacion(fileCot)">
+        <button class="btn-export" (click)="exportarExcel()"><i class='bx bx-download'></i> Exportar cotización Excel</button>
         <button class="btn-upload" (click)="fileCot.click()"><i class='bx bx-upload'></i> Cargar cotización con precios</button>
         <small class="hint">Descarga la plantilla, llena el precio del proveedor y súbela para completar los precios.</small>
       </div>
 
       <div class="tw">
-        <table>
-          <thead>
+        <p-table [value]="corpGrupos"
+                 [paginator]="true"
+                 [rows]="10"
+                 [totalRecords]="corpGrupos.length"
+                 [pageLinks]="5"
+                 [showCurrentPageReport]="true"
+                 [rowsPerPageOptions]="[10, 20, 50]"
+                 currentPageReportTemplate="{first} - {last} de {totalRecords}"
+                 responsiveLayout="scroll"
+                 styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
             <tr>
               <th><input type="checkbox" (change)="toggleAllCorp($any($event.target).checked)"></th>
               <th>Código</th><th>Descripción</th><th>Línea</th><th>Familia</th><th>Subfamilia</th>
@@ -259,9 +289,9 @@
               <th class="text-end">Subtotal (S/)</th>
               <th>Proveedor asignado</th>
             </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let g of corpGrupos">
+          </ng-template>
+          <ng-template pTemplate="body" let-g>
+            <tr>
               <td class="text-center"><input type="checkbox" [checked]="seleccionadosCorp.has(g.key)" (change)="toggleCorp(g.key, $any($event.target).checked)"></td>
               <td><span class="codigo">{{ g.cod }}</span></td>
               <td>{{ g.desc }}</td>
@@ -277,28 +307,418 @@
               <td class="text-end">{{ ((costosProveedor[g.ids[0]] ? +costosProveedor[g.ids[0]] : 0) * (g.HP + g.BH + g.CAO)) ? ((costosProveedor[g.ids[0]] ? +costosProveedor[g.ids[0]] : 0) * (g.HP + g.BH + g.CAO)).toFixed(2) : '—' }}</td>
               <td>{{ proveedorTexto(g.ids) }}</td>
             </tr>
-          </tbody>
-          <tfoot>
+          </ng-template>
+          <ng-template pTemplate="footer">
             <tr class="total-row">
               <td colspan="12" class="text-end">Total corporativo cotizado:</td>
               <td class="text-end">S/ {{ totalCorp.toFixed(2) }}</td>
               <td></td>
             </tr>
-          </tfoot>
-        </table>
+          </ng-template>
+        </p-table>
       </div>
     </div>
 
-    <div class="actions">
+    <!-- PANEL OC: Órdenes de Compra creadas -->
+    <div class="panel" [class.active]="currentTab === 'OC'" id="panel-OC">
+      <div class="emp-hd">
+        <div class="emp-info"><span class="chip OC">OC</span><div><strong>Órdenes de Compra</strong><small>OCs generadas con su estado y flujo</small></div></div>
+      </div>
+      <div class="d-flex gap-2 mb-3 align-items-center flex-wrap">
+        <select class="form-select form-select-sm" style="max-width:200px" [(ngModel)]="filtroEmpresaOC" (ngModelChange)="aplicarFiltrosOC()">
+          <option value="TODAS">Todas las empresas</option>
+          <option value="HP">Hass Peru S.A.</option>
+          <option value="BH">Berry Harvest S.A.</option>
+          <option value="CAO">Corp Agricola Olmos S.A.</option>
+        </select>
+        <ul class="nav custom-tabs ms-2" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" [class.active]="currentOCTab === 'TODOS'" (click)="cambiarOCTab('TODOS')" type="button">
+              <i class='bx bx-list-ul me-1'></i> Todos <span class="tab-badge ms-1">{{ contarOCTab('TODOS') }}</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" [class.active]="currentOCTab === 'PENDIENTES'" (click)="cambiarOCTab('PENDIENTES')" type="button">
+              <i class='bx bx-time me-1'></i> Pendientes <span class="tab-badge ms-1">{{ contarOCTab('PENDIENTES') }}</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" [class.active]="currentOCTab === 'APROBADAS'" (click)="cambiarOCTab('APROBADAS')" type="button">
+              <i class='bx bx-check-circle me-1'></i> Aprobadas <span class="tab-badge ms-1">{{ contarOCTab('APROBADAS') }}</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" [class.active]="currentOCTab === 'CERRADAS'" (click)="cambiarOCTab('CERRADAS')" type="button">
+              <i class='bx bx-archive me-1'></i> Cerradas <span class="tab-badge ms-1">{{ contarOCTab('CERRADAS') }}</span>
+            </button>
+          </li>
+        </ul>
+        <input type="text" class="form-control form-control-sm" style="max-width:200px" placeholder="Buscar por Número OC" [(ngModel)]="filtroNumeroOC" (ngModelChange)="aplicarFiltrosOC()">
+        <input type="text" class="form-control form-control-sm" style="max-width:200px" placeholder="Buscar por Proveedor" [(ngModel)]="filtroProveedorOC" (ngModelChange)="aplicarFiltrosOC()">
+        <button class="btn-gen btn-sm" (click)="cargarOrdenesCompra()" title="Refrescar"><i class='bx bx-refresh'></i></button>
+      </div>
+      <div class="tw">
+        <p-table [value]="ordenesCompraFiltradas()"
+                 [paginator]="true"
+                 [rows]="10"
+                 [totalRecords]="ordenesCompraFiltradas().length"
+                 [loading]="cargandoOCs()"
+                 [pageLinks]="5"
+                 [showCurrentPageReport]="true"
+                 [rowsPerPageOptions]="[10, 20, 50]"
+                 currentPageReportTemplate="{first} - {last} de {totalRecords}"
+                 responsiveLayout="scroll"
+                 styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width:20px">#</th>
+              <!-- <th>Número OC</th> -->
+              <th>Número SPRING</th>
+              <th>Empresa</th>
+              <th>Proveedor</th>
+              <th>RUC</th>
+              <th class="text-end">Total</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-oc let-rowIndex="rowIndex">
+            <tr [class.table-warning]="oc.estado === 'PENDIENTE'"
+                [class.table-info]="oc.estado === 'PENDIENTE_APROBACION'"
+                [class.table-success]="oc.estado === 'APROBADA'"
+                [class.table-primary]="oc.estado === 'ENVIADA'">
+              <td>{{ rowIndex + 1 }}</td>
+              <!-- <td><strong>{{ oc.numeroOrden }}</strong></td> -->
+              <td>{{ oc.numeroOrdenSpring || '—' }}</td>
+              <td>
+                <span class="chip {{ empresaOC(oc) }}">{{ empresaOC(oc) }}</span>
+                <small>{{ empNombres[empresaOC(oc)] }}</small>
+              </td>
+              <td>{{ oc.nombreProveedor }}</td>
+              <td>{{ oc.rucProveedor }}</td>
+              <td class="text-end">{{ oc.moneda }} {{ oc.totalOrden | number:'1.2-2' }}</td>
+              <td>{{ oc.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+              <td><span class="badge" [class.bg-secondary]="oc.estado === 'PENDIENTE'" [class.bg-warning]="oc.estado === 'PENDIENTE_APROBACION'" [class.bg-success]="oc.estado === 'APROBADA'" [class.bg-primary]="oc.estado === 'ENVIADA'" [class.bg-danger]="oc.estado === 'ANULADA'">{{ oc.estado }}</span></td>
+              <td>
+                <div class="d-flex gap-1 flex-wrap align-items-center oc-actions">
+                  @if (oc.estado === 'PENDIENTE') {
+                    <button class="btn btn-outline-warning btn-sm" (click)="editarOC(oc)" title="Editar OC">
+                      <i class='bx bx-edit'></i>
+                      @if ((oc.cantAdjuntos ?? 0) > 0) {
+                        <span class="badge bg-danger text-white">{{ oc.cantAdjuntos }}</span>
+                      }
+                    </button>
+                    <button class="btn btn-warning btn-sm" (click)="enviarOCAprobacion(oc)" title="Enviar a aprobación">
+                      <i class='bx bx-send'></i>
+                    </button>
+                  } @else {
+                    <button class="btn btn-outline-primary btn-sm" (click)="verDetalleOC(oc)" title="Ver detalle y adjuntos">
+                      <i class='bx bx-show'></i>
+                      @if ((oc.cantAdjuntos ?? 0) > 0) {
+                        <span class="badge bg-danger text-white">{{ oc.cantAdjuntos }}</span>
+                      }
+                    </button>
+                  }
+                  @if (oc.estado === 'APROBADA' || oc.estado === 'ENVIADA' || oc.estado === 'ANULADA') {
+                    <button class="btn btn-outline-danger btn-sm btn-lg" (click)="verPdfOCFormateado(oc)" title="Ver PDF oficial">
+                      <i class='bx bx-file-pdf'></i>OC
+                    </button>
+                  }
+                  @if (oc.estado === 'APROBADA' && !oc.correoEnviado) {
+                    <button class="btn btn-success btn-sm" (click)="confirmarEnvioOC(oc)" title="Confirmar envío al proveedor">
+                      <i class='bx bx-envelope'></i>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+
+    <!-- <div class="actions">
       <button class="btn-export" (click)="exportarExcel()"><i class='bx bx-download'></i> Exportar cotización Excel</button>
       <button class="btn-gen" (click)="emitirOC()"><i class='bx bx-file'></i> Emitir OC Corporativa</button>
+    </div> -->
+  </div>
+</div>
+
+<!-- MODAL DETALLE OC -->
+<div class="overlay" [class.show]="modalDetalleOCAbierto" (click)="cerrarModalDetalleOC()">
+  <div class="mpanel" (click)="$event.stopPropagation()">
+    <div class="mhd">
+      <h6><i class='bx bx-file'></i> {{ editandoDetalleOC ? 'Editar Orden de Compra' : 'Detalle Orden de Compra' }}</h6>
+      <div class="d-flex gap-2 align-items-center">
+        @if (ordenActual?.estado === 'PENDIENTE' && !editandoDetalleOC) {
+          <button class="btn btn-warning btn-sm" (click)="iniciarEdicionDetalleOC()" title="Editar OC"><i class='bx bx-edit'></i> Editar</button>
+        }
+        <button class="btn-x" (click)="cerrarModalDetalleOC()"><i class='bx bx-x'></i></button>
+      </div>
+    </div>
+    <div class="mbody" style="max-height:70vh;overflow-y:auto">
+      @if (ordenActual) {
+        @if (editandoDetalleOC) {
+          <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Datos del Proveedor</h6>
+          <div class="row g-2 mb-3 position-relative">
+            <div class="col-12">
+              <label class="form-label small fw-bold">Buscar Proveedor (RUC o Nombre)</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="bx bx-search"></i></span>
+                <input type="text" class="form-control" [(ngModel)]="busquedaProveedor" (input)="buscarProveedoresEdicion()" (blur)="cerrarSugerenciasProveedor()" placeholder="Escribe al menos 3 caracteres...">
+                @if (cargandoProveedoresEdicion) { <span class="input-group-text"><div class="spinner-border spinner-border-sm"></div></span> }
+                @if (proveedorSeleccionadoEdicion) { <button class="btn btn-outline-danger" type="button" (click)="limpiarProveedorEdicion()"><i class="bx bx-x"></i></button> }
+              </div>
+              @if (mostrarSugerenciasProveedor && proveedoresSugeridosEdicion.length > 0) {
+                <div class="dropdown-menu show w-100 position-absolute" style="z-index:1050;max-height:300px;overflow-y:auto;">
+                  @for (prov of proveedoresSugeridosEdicion; track prov.ruc || prov.documento || prov.id) {
+                    <a class="dropdown-item" href="javascript:void(0)" (click)="seleccionarProveedorEdicion(prov)">
+                      <strong class="text-primary">{{ prov.proveedor || 'Sin nombre' }}</strong>
+                      <div class="small text-muted">RUC: {{ prov.ruc || prov.documento || 'Sin RUC' }}</div>
+                    </a>
+                  }
+                </div>
+              }
+              @if (proveedorSeleccionadoEdicion) {
+                <div class="alert alert-success mt-2 py-2"><i class="bx bx-check-circle me-1"></i><strong>Proveedor:</strong> {{ proveedorSeleccionadoEdicion.proveedor }}</div>
+              }
+            </div>
+            <div class="col-md-4"><label class="form-label small fw-bold">RUC Proveedor *</label><input class="form-control form-control-sm" [(ngModel)]="ocFormEdicion.rucProveedor" [readonly]="proveedorSeleccionadoEdicion"></div>
+            <div class="col-md-4"><label class="form-label small fw-bold">Nombre / Razón Social *</label><input class="form-control form-control-sm" [(ngModel)]="ocFormEdicion.nombreProveedor" [readonly]="proveedorSeleccionadoEdicion"></div>
+            <div class="col-md-4"><label class="form-label small fw-bold">Email *</label><input class="form-control form-control-sm" type="email" [(ngModel)]="ocFormEdicion.emailProveedor"></div>
+          </div>
+
+          <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Condiciones de la Orden</h6>
+          <div class="row g-2 mb-3">
+            <div class="col-md-3"><label class="form-label small fw-bold">Moneda</label>
+              <select class="form-select form-select-sm" [(ngModel)]="ocFormEdicion.moneda">
+                <option value="PEN">PEN - Soles</option>
+                <option value="USD">USD - Dólares</option>
+              </select>
+            </div>
+            <div class="col-md-3"><label class="form-label small fw-bold">Días de Entrega</label><input class="form-control form-control-sm" type="number" [(ngModel)]="ocFormEdicion.diasEntrega" (ngModelChange)="calcularFechaEntrega()" min="1"></div>
+            <div class="col-md-3"><label class="form-label small fw-bold">Fecha Entrega</label><input class="form-control form-control-sm" type="date" [(ngModel)]="ocFormEdicion.fechaEntregaEstimada"></div>
+            <div class="col-md-3"><label class="form-label small fw-bold">Condiciones Pago</label>
+              <select class="form-select form-select-sm" [(ngModel)]="ocFormEdicion.condicionesPago">
+                <option value="">-- Seleccione --</option>
+                <option *ngFor="let fp of formasPago" [value]="fp.idformapago">{{ fp.formapago }}</option>
+              </select>
+            </div>
+            <div class="col-md-3"><label class="form-label small fw-bold">Forma Pago</label>
+              <select class="form-select form-select-sm" [(ngModel)]="ocFormEdicion.formaPago">
+                <option value="">-- Seleccione --</option>
+                <option *ngFor="let tp of tiposPago" [value]="tp.TipoPago">{{ tp.Descripcion }}</option>
+              </select>
+            </div>
+            <div class="col-md-3"><label class="form-label small fw-bold">Empresa</label>
+              <select class="form-select form-select-sm" [(ngModel)]="ocFormEdicion.rucEmpresaOC">
+                <option value="">-- Seleccione --</option>
+                @for (emp of empresas(); track emp.ruc) { <option [value]="emp.ruc">{{ emp.razonsocial }}</option> }
+              </select>
+            </div>
+            <div class="col-md-3"><label class="form-label small fw-bold">Almacén *</label>
+              <select class="form-select form-select-sm" [(ngModel)]="ocFormEdicion.almacen">
+                <option value="">-- Seleccione --</option>
+                <option *ngFor="let alm of almacenes" [value]="alm.idalmacen">{{ alm.almacen }}</option>
+              </select>
+            </div>
+            <div class="col-md-3"><label class="form-label small fw-bold">Lugar Entrega *</label>
+              <select class="form-select form-select-sm" [(ngModel)]="ocFormEdicion.lugarEntrega">
+                <option value="">-- Seleccione --</option>
+                <option value="AGENCIA DE TRANSPORTE">AGENCIA DE TRANSPORTE</option>
+                <option value="OFICINA DIEGO DE ALMAGRO">OFICINA DIEGO DE ALMAGRO</option>
+                <option value="FUNDO">FUNDO</option>
+                <option value="ALMACEN DE PROVEEDOR">ALMACEN DE PROVEEDOR</option>
+              </select>
+            </div>
+            <div class="col-12"><label class="form-label small fw-bold">Observaciones</label><textarea class="form-control form-control-sm" rows="2" [(ngModel)]="ocFormEdicion.observaciones"></textarea></div>
+          </div>
+
+          <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Ítems de la Orden</h6>
+          <p-table
+            [value]="ocFormEdicion.items"
+            [paginator]="true"
+            [rows]="5"
+            [rowsPerPageOptions]="[5, 10, 20, 50]"
+            responsiveLayout="scroll"
+            styleClass="p-datatable-sm p-datatable-striped p-datatable-gridlines"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ítems">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th class="text-end">Cantidad</th>
+                <th>UM</th>
+                <th class="text-end" style="min-width:110px">Precio Unit.</th>
+                <th class="text-end" style="min-width:90px">Reducción</th>
+                <th class="text-end" style="min-width:80px">Dto.%</th>
+                <th class="text-end">Subtotal</th>
+                <th>CECO</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-item>
+              <tr>
+                <td><small>{{ item.codigo }}</small></td>
+                <td><small>{{ item.descripcion }}</small></td>
+                <td class="text-end">{{ item.cantidad | number:'1.3-3' }}</td>
+                <td><small>{{ item.unidadMedida }}</small></td>
+                <td><input type="number" class="form-control form-control-sm text-end" [(ngModel)]="item.precioUnitario" (ngModelChange)="calcularTotalesOC()" min="0" step="0.001"></td>
+                <td><input type="number" class="form-control form-control-sm text-end" [(ngModel)]="item.reduccion" (ngModelChange)="onReduccionChange(item)" min="0" step="0.001"></td>
+                <td><input type="number" class="form-control form-control-sm text-end" [(ngModel)]="item.descuento" (ngModelChange)="onDescuentoChange(item)" min="0" max="100" step="0.001"></td>
+                <td class="text-end fw-bold">{{ simboloMoneda(ocFormEdicion.moneda) }} {{ subtotalItem(item) | number:'1.3-3' }}</td>
+                <td><small>{{ item.ceco }}</small></td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="footer">
+              <tr>
+                <td colspan="7" class="text-end fw-bold">Subtotal:</td>
+                <td class="text-end fw-bold">{{ simboloMoneda(ocFormEdicion.moneda) }} {{ ocFormEdicion.subtotal | number:'1.3-3' }}</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td colspan="7" class="text-end fw-bold">IGV (18%):</td>
+                <td class="text-end fw-bold">{{ simboloMoneda(ocFormEdicion.moneda) }} {{ ocFormEdicion.igv | number:'1.3-3' }}</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td colspan="7" class="text-end fw-bold">TOTAL {{ ocFormEdicion.moneda }}:</td>
+                <td class="text-end fw-bold">{{ simboloMoneda(ocFormEdicion.moneda) }} {{ ocFormEdicion.totalOrden | number:'1.3-3' }}</td>
+                <td></td>
+              </tr>
+              <tr *ngIf="ocFormEdicion.totalDescuento > 0">
+                <td colspan="7" class="text-end fw-bold">Descuento:</td>
+                <td class="text-end fw-bold text-danger">- {{ simboloMoneda(ocFormEdicion.moneda) }} {{ ocFormEdicion.totalDescuento | number:'1.3-3' }}</td>
+                <td></td>
+              </tr>
+            </ng-template>
+          </p-table>
+
+          <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Distribución Contable</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead class="table-light"><tr><th>Área</th><th>CECO</th><th>Proyecto</th><th class="text-end">% Distribución</th></tr></thead>
+              <tbody>
+                @for (dist of distribucionContableEdicion(); track $index) {
+                  <tr><td><small>{{ dist.area }}</small></td><td><small>{{ dist.ceco }}</small></td><td><small>{{ dist.proyecto }}</small></td><td class="text-end">{{ dist.porcentaje | number:'1.2-2' }}%</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="oc-form">
+            <div class="oc-fld"><label>Número OC</label><input type="text" [value]="ordenActual.numeroOrden" readonly/></div>
+            <div class="oc-fld"><label>Número SPRING</label><input type="text" [value]="ordenActual.numeroOrdenSpring || '—'" readonly/></div>
+            <div class="oc-fld"><label>Proveedor</label><input type="text" [value]="ordenActual.nombreProveedor" readonly/></div>
+            <div class="oc-fld"><label>RUC</label><input type="text" [value]="ordenActual.rucProveedor" readonly/></div>
+            <div class="oc-fld"><label>Email proveedor</label><input type="text" [value]="ordenActual.emailProveedor || '—'" readonly/></div>
+            <div class="oc-fld"><label>Teléfono</label><input type="text" [value]="ordenActual.telefonoProveedor || '—'" readonly/></div>
+            <div class="oc-fld"><label>Empresa</label><input type="text" [value]="empNombres[empresaOC(ordenActual)] || '—'" readonly/></div>
+            <div class="oc-fld"><label>Moneda</label><input type="text" [value]="ordenActual.moneda" readonly/></div>
+            <div class="oc-fld"><label>Condición pago</label><input type="text" [value]="ordenActual.condicionesPago || '—'" readonly/></div>
+            <div class="oc-fld"><label>Forma pago</label><input type="text" [value]="ordenActual.formaPago || '—'" readonly/></div>
+            <div class="oc-fld"><label>Lugar entrega</label><input type="text" [value]="ordenActual.lugarEntrega || '—'" readonly/></div>
+            <div class="oc-fld"><label>Fecha entrega</label><input type="text" [value]="(ordenActual.fechaEntregaEstimada | date:'dd/MM/yyyy') || '—'" readonly/></div>
+            <div class="oc-fld full"><label>Observaciones</label><textarea [value]="ordenActual.observaciones || '—'" rows="3" readonly></textarea></div>
+          </div>
+          <div class="mt-3">
+            <strong>Adjuntos:</strong>
+            <div class="oc-form mt-2">
+              <div class="oc-fld full"><input type="file" class="form-control form-control-sm" (change)="onArchivoAdjuntoOCChange($event)"></div>
+              <div class="oc-fld full"><input type="text" class="form-control form-control-sm" [(ngModel)]="descripcionAdjuntoOC" placeholder="Descripción del archivo"></div>
+            </div>
+            <button class="btn-gen btn-sm mt-2" (click)="subirAdjuntoOC()" [disabled]="!archivoAdjuntoOC || subiendoAdjuntoOC">
+              @if (subiendoAdjuntoOC) { <span class="spinner-border spinner-border-sm me-1"></span> Subiendo... }
+              @else { <i class='bx bx-upload'></i> Subir adjunto }
+            </button>
+            @if (adjuntosOC.length > 0) {
+              <ul class="list-group list-group-sm mt-2">
+                @for (adj of adjuntosOC; track adj.idAdjunto) {
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div><div>{{ adj.nombreArchivo }}</div><small class="text-muted">{{ adj.descripcion }}</small></div>
+                    <div class="d-flex gap-1 align-items-center">
+                      <span class="badge bg-secondary">{{ adj.tipoArchivo }}</span>
+                      <button class="btn btn-outline-danger btn-sm" (click)="eliminarAdjuntoOC(adj.idAdjunto)" title="Eliminar"><i class='bx bx-trash'></i></button>
+                    </div>
+                  </li>
+                }
+              </ul>
+            } @else { <div class="alert alert-warning mt-2">No hay adjuntos registrados.</div> }
+          </div>
+        }
+      }
+    </div>
+    <div class="mft">
+      @if (editandoDetalleOC) {
+        <button class="btn btn-secondary btn-sm" (click)="cancelarEdicionDetalleOC()">Cancelar</button>
+        <button class="btn-gen btn-sm" (click)="guardarEdicionDetalleOC()" [disabled]="guardandoOC()">
+          @if (guardandoOC()) { <span class="spinner-border spinner-border-sm me-1"></span> Guardando... }
+          @else { <i class='bx bx-save'></i> Guardar }
+        </button>
+      } @else {
+        <button class="btn-gen" (click)="cerrarModalDetalleOC()">Cerrar</button>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADJUNTOS OC -->
+<div class="overlay" [class.show]="modalAdjuntosOCAbierto" (click)="cerrarModalAdjuntosOC()">
+  <div class="mpanel" (click)="$event.stopPropagation()">
+    <div class="mhd">
+      <h6><i class='bx bx-paperclip'></i> Adjuntos OC {{ ordenActual?.numeroOrden }}</h6>
+      <button class="btn-x" (click)="cerrarModalAdjuntosOC()"><i class='bx bx-x'></i></button>
+    </div>
+    <div class="mbody">
+      <div class="oc-form">
+        <div class="oc-fld full">
+          <label>Archivo</label>
+          <input type="file" class="form-control form-control-sm" (change)="onArchivoAdjuntoOCChange($event)">
+        </div>
+        <div class="oc-fld full">
+          <label>Descripción</label>
+          <input type="text" class="form-control form-control-sm" [(ngModel)]="descripcionAdjuntoOC" placeholder="Descripción del archivo">
+        </div>
+      </div>
+      <button class="btn-gen btn-sm mt-2" (click)="subirAdjuntoOC()" [disabled]="!archivoAdjuntoOC || subiendoAdjuntoOC">
+        @if (subiendoAdjuntoOC) {
+          <span class="spinner-border spinner-border-sm me-1"></span> Subiendo...
+        } @else {
+          <i class='bx bx-upload'></i> Subir adjunto
+        }
+      </button>
+      <div class="mt-3">
+        <strong>Adjuntos registrados:</strong>
+        @if (adjuntosOC.length > 0) {
+          <ul class="list-group list-group-sm mt-2">
+            @for (adj of adjuntosOC; track adj.idAdjunto) {
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <div>{{ adj.nombreArchivo }}</div>
+                  <small class="text-muted">{{ adj.descripcion }}</small>
+                </div>
+                <div class="d-flex gap-1 align-items-center">
+                  <span class="badge bg-secondary">{{ adj.tipoArchivo }}</span>
+                  <button class="btn btn-outline-danger btn-sm" (click)="eliminarAdjuntoOC(adj.idAdjunto)" title="Eliminar"><i class='bx bx-trash'></i></button>
+                </div>
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="alert alert-warning mt-2">No hay adjuntos registrados.</div>
+        }
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn-gen" (click)="cerrarModalAdjuntosOC()">Cerrar</button>
     </div>
   </div>
 </div>
 
 <!-- MODAL OC -->
 <div class="overlay" [class.show]="modalOCAbierto" (click)="cerrarModalOverlay($event)">
-  <div class="mpanel">
+  <div id="modalOC" class="mpanel">
     <div class="mhd">
       <h6><i class='bx bx-file'></i> Emisión de Orden de Compra Corporativa</h6>
       <button class="btn-x" (click)="cerrarModal()"><i class='bx bx-x'></i></button>
@@ -316,26 +736,41 @@
         <div class="oc-fld">
           <label>Condición de pago</label>
           <select [(ngModel)]="ocCondPago">
-            <option value="Contado">Contado</option>
-            <option value="Crédito 30 días">Crédito 30 días</option>
-            <option value="Crédito 45 días">Crédito 45 días</option>
-            <option value="Crédito 60 días">Crédito 60 días</option>
+            <option value="">-- Seleccione --</option>
+            <option *ngFor="let fp of formasPago" [value]="fp.idformapago">{{ fp.formapago }}</option>
+          </select>
+        </div>
+        <div class="oc-fld">
+          <label>Forma de pago</label>
+          <select [(ngModel)]="ocFormaPago">
+            <option value="">-- Seleccione --</option>
+            <option *ngFor="let tp of tiposPago" [value]="tp.TipoPago">{{ tp.Descripcion }}</option>
           </select>
         </div>
         <div class="oc-fld">
           <label>Plazo de entrega (días)</label>
-          <input type="number" [(ngModel)]="ocPlazo" min="1"/>
+          <input type="number" [(ngModel)]="ocPlazo" min="1" (input)="calcularFechaEntregaOC()"/>
         </div>
         <div class="oc-fld">
-          <label>Moneda</label>
-          <select [(ngModel)]="ocMoneda">
+          <label>Fecha de entrega estimada</label>
+          <input type="date" [(ngModel)]="ocFechaEntrega"/>
+        </div>
+        <div class="oc-fld">
+          <label>Moneda <span class="chip {{ ocMoneda === 'USD' ? 'bg-success' : 'bg-primary' }}">{{ simboloMoneda(ocMoneda) }} {{ ocMoneda }}</span></label>
+          <select [(ngModel)]="ocMoneda" (change)="onMonedaChange()">
             <option value="PEN">PEN - Soles</option>
             <option value="USD">USD - Dólares</option>
           </select>
         </div>
         <div class="oc-fld">
           <label>Lugar de entrega</label>
-          <input type="text" [(ngModel)]="ocLugar"/>
+          <select [(ngModel)]="ocLugar">
+            <option value="">-- Seleccione lugar de entrega --</option>
+            <option value="AGENCIA DE TRANSPORTE">AGENCIA DE TRANSPORTE</option>
+            <option value="OFICINA DIEGO DE ALMAGRO">OFICINA DIEGO DE ALMAGRO</option>
+            <option value="FUNDO">FUNDO</option>
+            <option value="ALMACEN DE PROVEEDOR">ALMACEN DE PROVEEDOR</option>
+          </select>
         </div>
         <div class="oc-fld full">
           <label>Observaciones</label>
@@ -347,25 +782,68 @@
           <div class="oc-emp-hd">
             <span class="chip {{ empBox.emp }}">{{ empBox.emp }}</span>
             <strong>{{ empNombres[empBox.emp] }}</strong>
+            <div class="oc-emp-almacen">
+              <label>Almacén *</label>
+              <p-select
+                [(ngModel)]="empBox.almacen"
+                [options]="almacenesPorRuc(empBox.rucEmpresa)"
+                optionLabel="almacen"
+                optionValue="idalmacen"
+                placeholder="-- Seleccione almacén --"
+                [filter]="true"
+                filterBy="almacen"
+                filterPlaceholder="Buscar almacén..."
+                [showClear]="true"
+                appendTo="body"
+                [style]="{ width: '260px' }"
+                [panelStyle]="{ width: '260px', maxHeight: '240px' }"
+                [scrollHeight]="'200px'"
+                panelStyleClass="oc-almacen-panel">
+              </p-select>
+            </div>
           </div>
-          <table class="oc-items-table">
-            <thead><tr><th>Código</th><th>Descripción</th><th>Cantidad</th><th>UM</th><th>Última OC (S/)</th><th>Precio proveedor (S/)</th><th>Subtotal (S/)</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let r of empBox.items">
+          <p-table
+            [value]="empBox.items"
+            [paginator]="true"
+            [rows]="5"
+            [rowsPerPageOptions]="[5, 10, 20]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords}"
+            styleClass="p-datatable-sm oc-items-table"
+            [responsiveLayout]="'scroll'">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>UM</th>
+                <th>Última OC ({{ simboloMoneda(ocMoneda) }})</th>
+                <th>Precio proveedor ({{ simboloMoneda(ocMoneda) }})</th>
+                <th>Afecto IGV</th>
+                <th style="text-align:right">Subtotal ({{ simboloMoneda(ocMoneda) }})</th>
+                <th style="text-align:right">IGV ({{ simboloMoneda(ocMoneda) }})</th>
+                <th style="text-align:right">Total ({{ simboloMoneda(ocMoneda) }})</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-r>
+              <tr>
                 <td><span class="codigo">{{ r.cod }}</span></td>
                 <td>{{ r.desc }}</td>
                 <td>{{ r.cantidad }}</td>
                 <td>{{ r.um }}</td>
-                <td>{{ r.ultimaOC.toFixed(2) }}</td>
-                <td><input type="number" class="price-inp" [(ngModel)]="r.precio" min="0" step="0.01" style="width:90px" (input)="recalcEmitirOC()"></td>
+                <td>{{ mostrarUltimaOC(r) }}</td>
+                <td><input type="text" class="price-inp" [(ngModel)]="r.precio" min="0" step="0.01" style="width:90px" (input)="recalcEmitirOC()"></td>
+                <td><span class="chip {{ obtenerAfectoIGV(r) ? 'SI' : 'NO' }}">{{ obtenerAfectoIGV(r) ? 'SI' : 'NO' }}</span></td>
                 <td class="oc-sub" style="text-align:right">{{ (r.cantidad * r.precio).toFixed(2) }}</td>
+                <td class="oc-igv" style="text-align:right">{{ (obtenerAfectoIGV(r) ? r.cantidad * r.precio * 0.18 : 0).toFixed(2) }}</td>
+                <td class="oc-tot" style="text-align:right">{{ (obtenerAfectoIGV(r) ? r.cantidad * r.precio * 1.18 : r.cantidad * r.precio).toFixed(2) }}</td>
               </tr>
-            </tbody>
-          </table>
+            </ng-template>
+          </p-table>
           <div class="oc-total-box">
-            <div class="oc-total-row"><span>Subtotal:</span><span>S/ {{ empBox.subtotal.toFixed(2) }}</span></div>
-            <div class="oc-total-row"><span>IGV (18%):</span><span>S/ {{ empBox.igv.toFixed(2) }}</span></div>
-            <div class="oc-total-row grand"><span>TOTAL:</span><span>S/ {{ empBox.total.toFixed(2) }}</span></div>
+            <div class="oc-total-row"><span>Subtotal:</span><span>{{ simboloMoneda(ocMoneda) }} {{ empBox.subtotal.toFixed(2) }}</span></div>
+            <div class="oc-total-row"><span>IGV (18%):</span><span>{{ simboloMoneda(ocMoneda) }} {{ empBox.igv.toFixed(2) }}</span></div>
+            <div class="oc-total-row grand"><span>TOTAL:</span><span>{{ simboloMoneda(ocMoneda) }} {{ empBox.total.toFixed(2) }}</span></div>
           </div>
         </div>
       </div>

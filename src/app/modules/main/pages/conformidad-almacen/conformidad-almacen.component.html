@@ -36,25 +36,25 @@
   }
 
   <!-- TABS NI / NS (LOLOGIST ve NI, OPLOGIST ve NS, ALLOGIST ve ambas) -->
-  <ul class="nav nav-tabs mb-0">
+  <ul class="nav custom-tabs mb-0" role="tablist">
     @if (esLologist() || esAllogist()) {
-      <li class="nav-item">
-        <button [class]="tabActivo() === 'NI' ? 'nav-link active bg-primary text-white border-primary' : 'nav-link text-primary border border-primary border-bottom-0 rounded-top-2'" (click)="setTab('NI')">
-          <i class="bx bx-log-in-circle me-1 text-success"></i>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="tabActivo() === 'NI'" (click)="setTab('NI')" type="button">
+          <i class="bx bx-log-in-circle me-1"></i>
           Nota de Ingreso (NI)
           @if (esLologist()) {
-            <span class="badge bg-danger ms-1 text-white" style="font-size:10px">{{ listaPendientes().length }}</span>
+            <span class="tab-badge ms-1">{{ listaPendientes().length }}</span>
           }
         </button>
       </li>
     }
     @if (esOplogist() || esAllogist()) {
-      <li class="nav-item">
-        <button [class]="tabActivo() === 'NS' ? 'nav-link active bg-primary text-white border-primary' : 'nav-link text-primary border border-primary border-bottom-0 rounded-top-2'" (click)="setTab('NS')">
-          <i class="bx bx-log-out-circle me-1 text-danger"></i>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="tabActivo() === 'NS'" (click)="setTab('NS')" type="button">
+          <i class="bx bx-log-out-circle me-1"></i>
           Nota de Salida (NS)
           @if (esOplogist()) {
-            <span class="badge bg-danger ms-1 text-white" style="font-size:10px">{{ listaPendientes().length }}</span>
+            <span class="tab-badge ms-1">{{ listaPendientes().length }}</span>
           }
         </button>
       </li>
@@ -62,19 +62,17 @@
   </ul>
 
   <!-- SUB-SECCIÓN: Pendientes / Historial -->
-  <div class="bg-light border border-top-0 rounded-bottom px-3 py-2 mb-3">
-    <ul class="nav nav-pills nav-sm gap-1">
+  <div class="tabs-sub-section mb-3">
+    <ul class="nav">
       @if (!esAllogist()) {
         <li class="nav-item">
-          <button [class]="seccion() === 'pendientes' ? 'nav-link py-1 px-3 active' : 'nav-link py-1 px-3 text-primary border border-primary rounded-2'" style="font-size:12.5px"
-            (click)="setSeccion('pendientes')">
+          <button class="nav-link" [class.active]="seccion() === 'pendientes'" (click)="setSeccion('pendientes')" type="button">
             <i class="bx bx-time me-1"></i> Pendientes de firma
           </button>
         </li>
       }
       <li class="nav-item">
-        <button [class]="seccion() === 'historial' ? 'nav-link py-1 px-3 active' : 'nav-link py-1 px-3 text-primary border border-primary rounded-2'" style="font-size:12.5px"
-          (click)="setSeccion('historial')">
+        <button class="nav-link" [class.active]="seccion() === 'historial'" (click)="setSeccion('historial')" type="button">
           <i class="bx bx-history me-1"></i> Historial
         </button>
       </li>

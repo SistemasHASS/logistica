@@ -9,6 +9,7 @@ import { PrioridadRequerimientoService } from '@/app/shared/services/prioridad-r
 import { RequerimientoCommodity, DetalleRequerimientoCommodity } from '@/app/shared/interfaces/Tables';
 import { PrioridadSpring } from '@/app/shared/interfaces/PrioridadRequerimiento';
 import { RequerimientosMaestrasService } from './requerimientos-maestras.service';
+import { RequerimientosSyncService } from './requerimientos-sync.service';
 
 @Injectable({ providedIn: 'root' })
 export class RequerimientosCommodityService {
@@ -71,6 +72,7 @@ export class RequerimientosCommodityService {
     private aprobacionesAreaService: AprobacionesAreaService,
     public prioridadService: PrioridadRequerimientoService,
     private maestras: RequerimientosMaestrasService,
+    private syncService: RequerimientosSyncService,
   ) {}
 
   private emptyReq(): RequerimientoCommodity {
@@ -93,7 +95,9 @@ export class RequerimientosCommodityService {
   async cargar() {
     const todos = await this.dexieService.showRequerimientoCommodity();
     this.requerimientosCommodity = todos.filter(
-      (r: any) => r.nrodocumento === this.maestras.usuario?.documentoidentidad,
+      (r: any) =>
+        r.nrodocumento === this.maestras.usuario?.documentoidentidad &&
+        !this.syncService.debeOcultar(r.estados),
     );
     this.ordenar();
     this.contarContadores();

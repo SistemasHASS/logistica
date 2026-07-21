@@ -62,4 +62,9 @@ export class OrdenServicioService {
     const url = `${this.baseUrl}/api/logistica/orden-servicio/sincronizar`;
     return this.http.post<any>(url, orden);
   }
+
+  listarRequerimientosServicioParaOS(filtros: any = {}): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/listar-requerimientos-servicio-para-os`;
+    return this.http.post<any>(url, filtros);
+  }
 }

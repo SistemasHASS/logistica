@@ -39,7 +39,7 @@
     </div>
 
     <!-- TABS NAV -->
-    <ul class="nav nav-tabs mb-3 custom-tabs">
+    <ul class="nav custom-tabs mb-3">
       <li class="nav-item">
         <button class="nav-link" [class.active]="tabActiva() === 0" (click)="tabActiva.set(0)" type="button">
           <i class="bx bx-list-ul me-2"></i>Requerimientos de Servicio
@@ -147,7 +147,7 @@
                 }
               </td>
               <td>
-                <input type="number" class="form-control form-control-sm text-end"
+                <input type="text" class="form-control form-control-sm text-end"
                        [(ngModel)]="req.precioUnitario"
                        [placeholder]="req.precioReferencial > 0 ? req.precioReferencial : '0.00'"
                        style="max-width:110px"
@@ -205,13 +205,51 @@
                 <i class="bx bx-store-alt me-1"></i>Datos del Proveedor (aplicará a todas las OS)
               </h6>
             </div>
+            <div class="col-md-12">
+              <label class="form-label small fw-bold">Buscar Proveedor (RUC o Nombre)</label>
+              <div class="input-group input-group-sm" style="max-width: 520px;">
+                <span class="input-group-text"><i class="bx bx-search"></i></span>
+                <p-autoComplete
+                  [(ngModel)]="proveedorInput"
+                  [suggestions]="proveedoresSugeridos"
+                  (completeMethod)="filtrarProveedores($event)"
+                  (onSelect)="seleccionarProveedor($event)"
+                  field="nombre"
+                  [dropdown]="true"
+                  [forceSelection]="true"
+                  appendTo="body"
+                  placeholder="Escribe al menos 3 caracteres..."
+                  [style]="{ width: '100%' }"
+                  inputStyleClass="form-control form-control-sm">
+                  <ng-template let-prov pTemplate="item">
+                    <div>{{ prov.nombre }} <small class="text-muted">({{ prov.ruc }})</small></div>
+                  </ng-template>
+                </p-autoComplete>
+                @if (cargandoProveedores()) {
+                  <span class="input-group-text"><div class="spinner-border spinner-border-sm"></div></span>
+                }
+                @if (proveedorSeleccionado) {
+                  <button class="btn btn-outline-danger" type="button" (click)="limpiarProveedor()" title="Limpiar proveedor">
+                    <i class="bx bx-x"></i>
+                  </button>
+                }
+              </div>
+              @if (proveedorSeleccionado) {
+                <div class="alert alert-success mt-2 py-2 mb-0" style="max-width: 520px;">
+                  <i class="bx bx-check-circle me-1"></i>
+                  <strong>Proveedor:</strong> {{ proveedorSeleccionado.nombre }}
+                  <small class="text-muted">| RUC: {{ proveedorSeleccionado.ruc }}</small>
+                </div>
+              }
+              <small class="text-muted d-block mt-1">Seleccione un proveedor para cargar automáticamente RUC, nombre, email, moneda, condiciones y forma de pago.</small>
+            </div>
             <div class="col-md-3">
               <label class="form-label small fw-bold">RUC *</label>
-              <input class="form-control form-control-sm" [(ngModel)]="osFormProveedor.rucProveedor">
+              <input class="form-control form-control-sm" [(ngModel)]="osFormProveedor.rucProveedor" [readonly]="proveedorSeleccionado">
             </div>
             <div class="col-md-4">
               <label class="form-label small fw-bold">Nombre Proveedor *</label>
-              <input class="form-control form-control-sm" [(ngModel)]="osFormProveedor.nombreProveedor">
+              <input class="form-control form-control-sm" [(ngModel)]="osFormProveedor.nombreProveedor" [readonly]="proveedorSeleccionado">
             </div>
             <div class="col-md-4">
               <label class="form-label small fw-bold">Email Proveedor</label>
@@ -231,16 +269,21 @@
             <div class="col-md-3">
               <label class="form-label small fw-bold">Condiciones Pago</label>
               <select class="form-select form-select-sm" [(ngModel)]="osFormProveedor.condicionesPago">
-                <option value="Contado">Contado</option>
-                <option value="50% adelanto">50% adelanto</option>
-                <option value="30 días">30 días</option>
+                <option value="">-- Seleccione --</option>
+                <option *ngFor="let fp of formasPago" [value]="fp.idformapago">{{ fp.formapago }}</option>
+                @if (osFormProveedor.condicionesPago && !condicionPagoExiste(osFormProveedor.condicionesPago)) {
+                  <option [value]="osFormProveedor.condicionesPago">{{ osFormProveedor.condicionesPago }}</option>
+                }
               </select>
             </div>
             <div class="col-md-2">
               <label class="form-label small fw-bold">Forma Pago</label>
               <select class="form-select form-select-sm" [(ngModel)]="osFormProveedor.formaPago">
-                <option value="Transferencia">Transferencia</option>
-                <option value="Efectivo">Efectivo</option>
+                <option value="">-- Seleccione --</option>
+                <option *ngFor="let tp of tiposPago" [value]="tp.TipoPago">{{ tp.Descripcion }}</option>
+                @if (osFormProveedor.formaPago && !formaPagoExiste(osFormProveedor.formaPago)) {
+                  <option [value]="osFormProveedor.formaPago">{{ osFormProveedor.formaPago }}</option>
+                }
               </select>
             </div>
             <div class="col-md-2">
@@ -250,13 +293,28 @@
 
             <!-- DETALLE DE REQUERIMIENTOS A GENERAR -->
             <div class="col-12">
-              <h6 class="fw-bold border-bottom pb-2 text-primary">
-                <i class="bx bx-list-check me-1"></i>Requerimientos - 1 OS por cada fila
+              <h6 class="fw-bold border-bottom pb-2 text-primary d-flex justify-content-between align-items-center">
+                <span><i class="bx bx-list-check me-1"></i>Requerimientos - 1 OS por cada fila</span>
+                <span class="badge bg-primary text-white">
+                  {{ itemsSeleccionadosParaOS().length }} de {{ itemsSeleccionados().length }} para generar
+                </span>
               </h6>
               <div class="table-responsive">
-                <table class="table table-sm table-bordered">
-                  <thead class="table-light">
+                <p-table
+                  [value]="itemsSeleccionados()"
+                  [paginator]="true"
+                  [rows]="10"
+                  [rowsPerPageOptions]="[5, 10, 20, 50]"
+                  [showCurrentPageReport]="true"
+                  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+                  styleClass="p-datatable-sm p-datatable-gridlines">
+                  <ng-template pTemplate="header">
                     <tr>
+                      <th style="width:40px" class="text-center">
+                        <input type="checkbox" class="form-check-input"
+                               [checked]="seleccionadosParaOS().size === itemsSeleccionados().length && itemsSeleccionados().length > 0"
+                               (change)="seleccionarTodosParaOS($event)">
+                      </th>
                       <th style="width:40px">#</th>
                       <th style="min-width:120px">Nro. Req.</th>
                       <th style="min-width:200px">Descripción del Servicio</th>
@@ -268,41 +326,44 @@
                       <th style="min-width:90px">Área</th>
                       <th style="min-width:80px">CECO</th>
                     </tr>
-                  </thead>
-                  <tbody>
-                    @for (req of itemsSeleccionados(); track req.idDetalle; let i = $index) {
-                      <tr>
-                        <td class="text-center">{{ i + 1 }}</td>
-                        <td><small class="fw-bold">{{ req.numeroRequerimiento }}</small></td>
-                        <td>{{ req.descripcion }}</td>
-                        <td>{{ req.unidadMedida || 'SVC' }}</td>
-                        <td class="text-end fw-bold">{{ req.cantidadPendiente | number:'1.2-2' }}</td>
-                        <td class="text-end">
-                          @if (req.precioReferencial > 0) {
-                            <span class="text-success">{{ req.precioReferencial | number:'1.2-2' }}</span>
-                          } @else {
-                            <span class="text-muted">—</span>
-                          }
-                        </td>
-                        <td>
-                          <input type="number" class="form-control form-control-sm text-end"
-                                 [(ngModel)]="req.precioUnitario" min="0" step="0.01"
-                                 style="max-width:110px">
-                        </td>
-                        <td class="text-end fw-bold">{{ subtotalReq(req) | number:'1.2-2' }}</td>
-                        <td><small>{{ req.area }}</small></td>
-                        <td><small>{{ req.ceco }}</small></td>
-                      </tr>
-                    }
-                  </tbody>
-                  <tfoot class="table-light">
+                  </ng-template>
+                  <ng-template pTemplate="body" let-req let-i="rowIndex">
                     <tr>
-                      <td colspan="7" class="text-end fw-bold fs-6">TOTAL {{ osFormProveedor.moneda }}:</td>
+                      <td class="text-center">
+                        <input type="checkbox" class="form-check-input"
+                               [checked]="estaSeleccionadoParaOS(req.idDetalle)"
+                               (change)="toggleSeleccionParaOS(req)">
+                      </td>
+                      <td class="text-center">{{ i + 1 }}</td>
+                      <td><small class="fw-bold">{{ req.numeroRequerimiento }}</small></td>
+                      <td>{{ req.descripcion }}</td>
+                      <td>{{ req.unidadMedida || 'SVC' }}</td>
+                      <td class="text-end fw-bold">{{ req.cantidadPendiente | number:'1.2-2' }}</td>
+                      <td class="text-end">
+                        @if (req.precioReferencial > 0) {
+                          <span class="text-success">{{ req.precioReferencial | number:'1.2-2' }}</span>
+                        } @else {
+                          <span class="text-muted">—</span>
+                        }
+                      </td>
+                      <td>
+                        <input type="text" class="form-control form-control-sm text-end"
+                               [(ngModel)]="req.precioUnitario" min="0" step="0.01"
+                               style="max-width:110px">
+                      </td>
+                      <td class="text-end fw-bold">{{ subtotalReq(req) | number:'1.2-2' }}</td>
+                      <td><small>{{ req.area }}</small></td>
+                      <td><small>{{ req.ceco }}</small></td>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="footer">
+                    <tr>
+                      <td colspan="8" class="text-end fw-bold fs-6">TOTAL {{ osFormProveedor.moneda }}:</td>
                       <td class="text-end fw-bold fs-6">{{ montoTotalSeleccion | number:'1.2-2' }}</td>
                       <td colspan="2"></td>
                     </tr>
-                  </tfoot>
-                </table>
+                  </ng-template>
+                </p-table>
               </div>
             </div>
 
@@ -312,7 +373,7 @@
                         [disabled]="generandoOSIndividuales()">
                   @if (generandoOSIndividuales()) { <span class="spinner-border spinner-border-sm me-1"></span> }
                   <i class="bx bx-check-double me-1"></i>
-                  Generar {{ itemsSeleccionados().length }} OS Individual(es)
+                  Generar {{ itemsSeleccionadosParaOS().length }} OS Individual(es)
                 </button>
                 <button class="btn btn-outline-secondary" (click)="tabActiva.set(0)">
                   <i class="bx bx-arrow-back me-1"></i> Volver

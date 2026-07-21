@@ -211,48 +211,7 @@ textarea {
   justify-content: space-around;
 }
 
-/* Quitar estilos nativos de Bootstrap */
-.custom-tabs {
-  border-bottom: none;
-  gap: 4px;
-  padding: 4px;
-  background: #f1f2f6;
-  border-radius: 8px;
-  display: inline-flex;
-}
-
-.custom-tabs .nav-item {
-  display: flex;
-}
-
-.custom-tabs .nav-link {
-  border: none !important;
-  border-radius: 6px !important;
-  background: transparent !important;
-  color: #5a5a6e;
-  font-weight: 500;
-  padding: 10px 18px;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-/* Hover */
-.custom-tabs .nav-link:hover {
-  color: #6f42c1;
-  background: rgba(111, 66, 193, 0.08) !important;
-}
-
-/* Estado activo: tab pintado y cuadrado */
-.custom-tabs .nav-link.active {
-  color: #ffffff !important;
-  font-weight: 600;
-  background: #6f42c1 !important;
-  box-shadow: 0 2px 6px rgba(111, 66, 193, 0.35);
-}
-
-.custom-tabs .nav-link.active i {
-  color: #ffffff !important;
-}
+/* .custom-tabs — ver src/styles/custom-tabs.scss (global) */
 
 // .fila-enviada {
 //   background-color: #e2f4ec !important;

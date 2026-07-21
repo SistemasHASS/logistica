@@ -21,6 +21,25 @@ import {
 import { TableModule } from 'primeng/table';
 import { environment } from '@/environments/environment';
 
+interface ItemRecepcionUnificado {
+  id?: number;
+  origen: 'orden' | 'recepcion';
+  numeroOrdenSpring?: string | null;
+  numeroOrden?: string;
+  numeroRecepcion?: string;
+  numeroNI?: string;
+  nombreProveedor?: string;
+  fechaEntrega?: string;
+  fecha?: string;
+  almacen?: string;
+  itemsResumen?: string;
+  itemsTextoDetalle?: string;
+  estadoVisual: string;
+  conformidad?: boolean;
+  ingresadoKardex?: boolean;
+  raw: OrdenCompra | RecepcionOrdenCompra;
+}
+
 @Component({
   selector: 'app-recepcion-mercaderia',
   standalone: true,
@@ -89,6 +108,10 @@ export class RecepcionMercaderiaComponent implements OnInit {
   estaConectado = true;
   sincronizacionPendiente = false;
 
+  // Tabla unificada
+  tabActiva: 'TODOS' | 'PENDIENTES' | 'RECEPCIONADOS' = 'TODOS';
+  itemsUnificados: ItemRecepcionUnificado[] = [];
+
   constructor(
     private dexieService: DexieService,
     private alertService: AlertService,
@@ -108,6 +131,7 @@ export class RecepcionMercaderiaComponent implements OnInit {
     await this.cargarOrdenesCompra();
     await this.cargarAlmacenes();
     this.actualizarContadores();
+    this.construirItemsUnificados();
   }
 
   async cargarUsuario() {
@@ -122,6 +146,7 @@ export class RecepcionMercaderiaComponent implements OnInit {
     if (this.estaConectado) {
       try {
         await this.cargarRecepcionesDesdeBackend();
+        this.construirItemsUnificados();
         return;
       } catch (error) {
         console.warn('Error cargando desde backend, usando local:', error);
@@ -130,6 +155,7 @@ export class RecepcionMercaderiaComponent implements OnInit {
     // Fallback a Dexie
     this.recepciones = await this.dexieService.showRecepcionesOrdenCompra();
     this.actualizarContadores();
+    this.construirItemsUnificados();
   }
 
   /**
@@ -281,6 +307,7 @@ export class RecepcionMercaderiaComponent implements OnInit {
         } as OrdenCompra;
       });
       this.cdr.markForCheck();
+      this.construirItemsUnificados();
     } catch (error) {
       console.warn('Error cargando OCs desde backend, usando Dexie como fallback:', error);
       const todas = await this.dexieService.showOrdenesCompra();
@@ -291,6 +318,7 @@ export class RecepcionMercaderiaComponent implements OnInit {
           o.estado === 'CONFIRMADA' ||
           o.estado === 'RECIBIDA_PARCIAL'
       );
+      this.construirItemsUnificados();
     }
   }
 
@@ -425,14 +453,14 @@ export class RecepcionMercaderiaComponent implements OnInit {
     this.recepcion.conformidad = !hayNoConformes;
   }
 
-  async guardarRecepcion() {
+  async guardarRecepcion(): Promise<boolean> {
     if (!this.recepcion) {
       this.alertService.showAlert(
         'Error',
         'No hay una recepción activa.',
         'error'
       );
-      return;
+      return false;
     }
 
     if (!this.recepcion.ordenCompraId) {
@@ -441,12 +469,12 @@ export class RecepcionMercaderiaComponent implements OnInit {
         'Debe seleccionar una orden de compra.',
         'warning'
       );
-      return;
+      return false;
     }
 
     if (!this.recepcion.almacen) {
       this.alertService.showAlert('Atención', 'Debe seleccionar un almacén.', 'warning');
-      return;
+      return false;
     }
 
     // Validar que al menos un item tenga cantidad recibida
@@ -457,8 +485,10 @@ export class RecepcionMercaderiaComponent implements OnInit {
         'Debe registrar al menos una cantidad recibida.',
         'warning'
       );
-      return;
+      return false;
     }
+
+    let guardadoEnBackend = false;
 
     try {
       this.alertService.mostrarModalCarga();
@@ -503,6 +533,7 @@ export class RecepcionMercaderiaComponent implements OnInit {
 
             this.alertService.cerrarModalCarga();
             this.alertService.showAlert('Éxito', 'Recepción guardada y sincronizada correctamente.', 'success');
+            guardadoEnBackend = true;
           } else {
             throw new Error(respuesta?.error || 'Error al guardar en backend');
           }
@@ -529,6 +560,8 @@ export class RecepcionMercaderiaComponent implements OnInit {
         'error'
       );
     }
+
+    return guardadoEnBackend;
   }
 
   async actualizarOrdenCompra() {
@@ -1057,6 +1090,8 @@ export class RecepcionMercaderiaComponent implements OnInit {
       RECIBIDA_TOTAL:    'badge-success',
       VALIDADA:          'badge-info',
       INGRESADA_KARDEX:  'badge-success',
+      PENDIENTE:         'badge-info',
+      INGRESADO:         'badge-success',
     };
     return clases[estado] || 'badge-secondary';
   }
@@ -1184,5 +1219,243 @@ export class RecepcionMercaderiaComponent implements OnInit {
     } catch (error) {
       console.error('Error actualizando cantidad:', error);
     }
+  }
+
+  // =============================================
+  // MÉTODOS PARA TABLA UNIFICADA
+  // =============================================
+
+  cambiarTab(tab: 'TODOS' | 'PENDIENTES' | 'RECEPCIONADOS') {
+    this.tabActiva = tab;
+  }
+
+  construirItemsUnificados() {
+    const items: ItemRecepcionUnificado[] = [];
+
+    // Órdenes de compra pendientes de recepción
+    for (const orden of this.ordenesCompra) {
+      const pendientes = this.contarItemsPendientes(orden);
+      if (pendientes === 0) continue;
+
+      const detallePendiente = orden.detalle.filter(
+        (d) => (d.cantidad - (d.cantidadRecibida || 0)) > 0
+      );
+
+      items.push({
+        id: orden.id,
+        origen: 'orden',
+        numeroOrdenSpring: orden.numeroOrdenSpring || orden.numeroOrden,
+        numeroOrden: orden.numeroOrden,
+        nombreProveedor: orden.nombreProveedor,
+        fechaEntrega: orden.fechaEntrega,
+        fecha: orden.fecha,
+        almacen: orden.almacen,
+        itemsResumen: `${pendientes} / ${orden.detalle.length}`,
+        itemsTextoDetalle: detallePendiente.map(d => d.descripcion).join(' | '),
+        estadoVisual: 'PENDIENTE',
+        raw: orden
+      });
+    }
+
+    // Recepciones registradas
+    for (const recepcion of this.recepciones) {
+      items.push({
+        id: recepcion.id,
+        origen: 'recepcion',
+        numeroOrden: recepcion.numeroOrden,
+        numeroRecepcion: recepcion.numeroRecepcion,
+        numeroNI: recepcion.numeroNI,
+        nombreProveedor: recepcion.nombreProveedor,
+        fecha: recepcion.fecha,
+        almacen: recepcion.almacen,
+        itemsResumen: recepcion.detalle ? `${recepcion.detalle.length} ítems` : '-',
+        itemsTextoDetalle: recepcion.detalle
+          ? recepcion.detalle.map(d => `${d.descripcion} (${d.cantidadRecibida || 0})`).join(' | ')
+          : '',
+        estadoVisual: recepcion.ingresadoKardex ? 'INGRESADO' : (recepcion.estado || 'PARCIAL'),
+        conformidad: recepcion.conformidad,
+        ingresadoKardex: recepcion.ingresadoKardex,
+        raw: recepcion
+      });
+    }
+
+    // Ordenar por fecha descendente
+    items.sort((a, b) => {
+      const fa = new Date(a.fechaEntrega || a.fecha || '').getTime();
+      const fb = new Date(b.fechaEntrega || b.fecha || '').getTime();
+      return fb - fa;
+    });
+
+    this.itemsUnificados = items;
+  }
+
+  itemsFiltrados(): ItemRecepcionUnificado[] {
+    let filtrados = [...this.itemsUnificados];
+
+    // Filtro por tab
+    if (this.tabActiva === 'PENDIENTES') {
+      filtrados = filtrados.filter(
+        (item) => item.origen === 'orden' || !item.ingresadoKardex
+      );
+    } else if (this.tabActiva === 'RECEPCIONADOS') {
+      filtrados = filtrados.filter(
+        (item) => item.origen === 'recepcion' && item.ingresadoKardex
+      );
+    }
+
+    // Filtros existentes
+    if (this.filtroEstado !== 'TODAS') {
+      filtrados = filtrados.filter((item) => item.estadoVisual === this.filtroEstado);
+    }
+
+    if (this.filtroAlmacen) {
+      filtrados = filtrados.filter((item) =>
+        (item.almacen || '').toLowerCase().includes(this.filtroAlmacen.toLowerCase())
+      );
+    }
+
+    if (this.filtroFechaInicio) {
+      filtrados = filtrados.filter((item) => {
+        const f = new Date(item.fechaEntrega || item.fecha || '');
+        return f >= new Date(this.filtroFechaInicio);
+      });
+    }
+
+    if (this.filtroFechaFin) {
+      filtrados = filtrados.filter((item) => {
+        const f = new Date(item.fechaEntrega || item.fecha || '');
+        return f <= new Date(this.filtroFechaFin);
+      });
+    }
+
+    return filtrados;
+  }
+
+  obtenerClaseBoton(item: ItemRecepcionUnificado): string {
+    if (item.origen === 'orden') {
+      return 'btn-success';
+    }
+    if (!item.ingresadoKardex) {
+      return 'btn-primary';
+    }
+    return 'btn-outline-success';
+  }
+
+  obtenerTextoBoton(item: ItemRecepcionUnificado): string {
+    if (item.origen === 'orden') {
+      return 'Recibir';
+    }
+    if (!item.ingresadoKardex) {
+      return 'Ingresar a Almacén';
+    }
+    return 'Recepcionado con NI';
+  }
+
+  obtenerIconoBoton(item: ItemRecepcionUnificado): string {
+    if (item.origen === 'orden') {
+      return 'icon-package';
+    }
+    if (!item.ingresadoKardex) {
+      return 'bx bx-log-in-circle';
+    }
+    return 'bx bx-check-circle';
+  }
+
+  async ejecutarAccion(item: ItemRecepcionUnificado) {
+    if (item.origen === 'orden') {
+      const orden = item.raw as OrdenCompra;
+      this.nuevaRecepcionFormConOrden(orden.id!);
+      return;
+    }
+
+    const recepcion = item.raw as RecepcionOrdenCompra;
+    if (!recepcion.ingresadoKardex) {
+      await this.validarYIngresarKardex(recepcion);
+    } else {
+      this.verDetalle(recepcion);
+    }
+  }
+
+  verDetalleDesdeItem(item: ItemRecepcionUnificado) {
+    if (item.origen === 'orden') {
+      const orden = item.raw as OrdenCompra;
+      const recepcionFicticia: RecepcionOrdenCompra = {
+        id: orden.id,
+        numeroRecepcion: orden.numeroOrden,
+        ordenCompraId: orden.id || 0,
+        numeroOrden: orden.numeroOrden,
+        fecha: orden.fecha,
+        almacen: orden.almacen || '',
+        proveedor: orden.proveedor,
+        nombreProveedor: orden.nombreProveedor,
+        estado: 'PENDIENTE',
+        conformidad: true,
+        usuarioRecibe: this.usuario.documentoidentidad,
+        detalle: orden.detalle.map((d) => ({
+          recepcionId: 0,
+          detalleOrdenCompraId: d.id || 0,
+          item: d.item || 0,
+          codigo: d.codigo,
+          descripcion: d.descripcion,
+          cantidadOrdenada: d.cantidadPendiente,
+          cantidadRecibida: 0,
+          cantidadAceptada: 0,
+          cantidadRechazada: 0,
+          estadoItem: 'CONFORME',
+          unidadMedida: d.unidadMedida,
+          precioUnitario: d.precioUnitario,
+          ceco: d.ceco,
+          proyecto: d.proyecto
+        } as DetalleRecepcion))
+      };
+      this.verDetalle(recepcionFicticia);
+    } else {
+      this.verDetalle(item.raw as RecepcionOrdenCompra);
+    }
+  }
+
+  async eliminarRecepcionDesdeItem(item: ItemRecepcionUnificado) {
+    if (item.origen !== 'recepcion' || !item.id) return;
+    const recepcion = item.raw as RecepcionOrdenCompra;
+
+    const confirmacion = await this.alertService.showConfirm(
+      'Confirmación',
+      `¿Está seguro de eliminar la recepción ${recepcion.numeroRecepcion}? Esta acción no se puede deshacer.`,
+      'warning'
+    );
+    if (!confirmacion) return;
+
+    try {
+      await this.dexieService.recepcionesOrdenCompra.delete(recepcion.id!);
+      this.alertService.showAlert('Éxito', 'Recepción eliminada correctamente.', 'success');
+      await this.cargarRecepciones();
+      await this.cargarOrdenesCompra();
+    } catch (error) {
+      console.error('Error al eliminar recepción:', error);
+      this.alertService.showAlert(
+        'Error',
+        'Ocurrió un error al eliminar la recepción.',
+        'error'
+      );
+    }
+  }
+
+  async guardarRecepcionEIngresar() {
+    const guardadoEnBackend = await this.guardarRecepcion();
+    if (!guardadoEnBackend) {
+      // Modo offline o fallback local: NI se generará al sincronizar
+      return;
+    }
+
+    if (!this.recepcion?.id) {
+      this.alertService.showAlert(
+        'Error',
+        'No se pudo obtener el ID de la recepción para generar la Nota de Ingreso.',
+        'error'
+      );
+      return;
+    }
+
+    await this.validarYIngresarKardex(this.recepcion);
   }
 }

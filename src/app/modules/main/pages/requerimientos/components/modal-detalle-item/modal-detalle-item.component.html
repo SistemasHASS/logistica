@@ -187,6 +187,18 @@
                     [required]="false"
                   ></app-dropdown>
                 </div>
+
+                <!-- Afecto IGV -->
+                <div class="col-6">
+                  <label class="form-label">
+                    <i class="bx bx-receipt me-1"></i>
+                    Afecto IGV
+                  </label>
+                  <select class="form-select" [(ngModel)]="lineaTemp.afectoIGV" name="afectoIGV" disabled>
+                    <option value="S">SI</option>
+                    <option value="N">NO</option>
+                  </select>
+                </div>
               </div>
 
               <!-- Botón Insertar/Actualizar - Solo en modo agregación -->
@@ -236,10 +248,11 @@
                   <thead class="table-dark sticky-top">
                     <tr>
                       <th style="width: 6%">#</th>
-                      <th style="width: 34%">Producto</th>
-                      <th style="width: 12%">Cant.</th>
-                      <th style="width: 18%">Stock</th>
-                      <th style="width: 30%">Acción</th>
+                      <th style="width: 28%">Producto</th>
+                      <th style="width: 10%">Cant.</th>
+                      <th style="width: 14%">Stock</th>
+                      <th style="width: 14%">Afecto IGV</th>
+                      <th style="width: 28%">Acción</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -266,6 +279,7 @@
                         <span *ngIf="linea.stockDisponible === undefined || linea.stockDisponible === null"
                               class="text-muted">—</span>
                       </td>
+                      <td>{{ linea.afectoIGV === 'N' ? 'NO' : 'SI' }}</td>
                       <td>
                         <button class="btn btn-warning btn-sm me-1" (click)="editarLineaTemporal(i)" title="Editar línea">
                           <i class="bx bx-edit"></i>

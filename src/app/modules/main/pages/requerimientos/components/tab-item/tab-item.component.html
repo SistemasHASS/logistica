@@ -347,6 +347,7 @@
                         <th>Turno</th>
                         <th>Labor</th>
                         <th>Activo Fijo</th>
+                        <th>Afecto IGV</th>
                         <th>Acciones</th>
                       </tr>
                     </thead>
@@ -365,6 +366,7 @@
                         <td>{{ item.turno }}</td>
                         <td>{{ item.labor }}</td>
                         <td>{{ item.activoFijo ? item.activoFijo : "N/A" }}</td>
+                        <td>{{ item.afectoIGV === 'N' ? 'NO' : 'SI' }}</td>
                         <td>
                           <button class="btn btn-sm btn-info me-1 text-white" (click)="copiarLinea(i)" title="Copiar línea">
                             <i class="icon-copy"></i>
@@ -375,7 +377,7 @@
                         </td>
                       </tr>
                       <tr *ngIf="detalles.length === 0">
-                        <td colspan="10" class="text-muted">No hay detalles agregados</td>
+                        <td colspan="11" class="text-muted">No hay detalles agregados</td>
                       </tr>
                     </tbody>
                   </table>
@@ -466,6 +468,7 @@
                       <th>Turno</th>
                       <th>Labor</th>
                       <th>Activo Fijo</th>
+                      <th>Afecto IGV</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
@@ -484,6 +487,7 @@
                       <td>{{ item.turno }}</td>
                       <td>{{ item.labor }}</td>
                       <td>{{ item.activoFijo ? item.activoFijo : "N/A" }}</td>
+                      <td>{{ item.afectoIGV === 'N' ? 'NO' : 'SI' }}</td>
                       <td>
                         <button class="btn btn-sm btn-info me-1" (click)="copiarLinea(i)" title="Copiar línea">
                           <i class="icon-copy"></i>
@@ -494,7 +498,7 @@
                       </td>
                     </tr>
                     <tr *ngIf="detalles.length === 0">
-                      <td colspan="10" class="text-muted">No hay detalles agregados</td>
+                      <td colspan="11" class="text-muted">No hay detalles agregados</td>
                     </tr>
                   </tbody>
                 </table>

@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview — Estándar de Tabs · Sistema Logística</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css">
+  <style>
+    body { background: #f4f6fb; font-family: 'Segoe UI', sans-serif; padding: 30px; }
+
+    /* ═══════════════════════════════════════════════════
+       NUEVO ESTÁNDAR: AZUL  #0d6efd
+       - Inactivo : borde azul, texto azul, fondo blanco
+       - Hover    : fondo azul suave
+       - Activo   : fondo azul sólido, texto blanco
+    ════════════════════════════════════════════════════ */
+    .custom-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      border-bottom: 2px solid #dee2e6;
+      margin-bottom: 0;
+      padding-bottom: 0;
+      background: transparent;
+    }
+    .custom-tabs .nav-item { display: flex; }
+    .custom-tabs .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 18px;
+      background: #ffffff;
+      border: 1.5px solid #0d6efd;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      border-radius: 6px 6px 0 0;
+      font-size: 14px;
+      font-weight: 500;
+      color: #0d6efd;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .custom-tabs .nav-link:hover {
+      background: #e8f0fe;
+      color: #0d6efd;
+    }
+    .custom-tabs .nav-link.active {
+      background: #0d6efd !important;
+      color: #ffffff !important;
+      border-color: #0d6efd;
+      border-bottom-color: #0d6efd;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(13, 110, 253, 0.35);
+    }
+    .custom-tabs .nav-link.active i { color: #ffffff !important; }
+
+    /* Badge dentro de tab activo */
+    .custom-tabs .nav-link.active .tab-badge {
+      background: rgba(255,255,255,0.25);
+      color: #fff;
+    }
+    .custom-tabs .nav-link:not(.active) .tab-badge {
+      background: #e7f1ff;
+      color: #0d6efd;
+    }
+    .tab-badge {
+      font-size: 10px;
+      padding: 1px 7px;
+      border-radius: 20px;
+      font-weight: 600;
+      line-height: 1.6;
+    }
+
+    /* Sub-tabs (pills) — mismo color azul */
+    .sub-pills-wrap {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+      padding: 8px 12px;
+      margin-bottom: 16px;
+    }
+    .sub-pills-wrap .nav { gap: 6px; }
+    .sub-pill {
+      font-size: 12.5px;
+      padding: 4px 14px;
+      border-radius: 20px;
+      border: 1.5px solid #0d6efd;
+      color: #0d6efd;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .sub-pill.active {
+      background: #0d6efd;
+      color: #fff;
+      border-color: #0d6efd;
+    }
+    .sub-pill:hover:not(.active) { background: #e8f0fe; }
+
+    /* ── Utilidades preview ── */
+    .preview-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 28px 32px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+      margin-bottom: 32px;
+    }
+    .preview-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #9b9bb5;
+      margin-bottom: 10px;
+    }
+    .module-title { font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 8px; }
+    .section-header {
+      border-left: 4px solid #0d6efd;
+      padding-left: 12px;
+      margin-bottom: 20px;
+    }
+    .section-header h5 { color: #1e293b; font-weight: 700; margin: 0; font-size: 16px; }
+    .section-header small { color: #9b9bb5; font-size: 12px; }
+
+    .diff-table td, .diff-table th { font-size: 12px; vertical-align: middle; }
+    .tag-before { background:#fff0f0; color:#c0392b; border-radius:4px; padding:2px 7px; font-size:11px; font-weight:600; }
+    .tag-after  { background:#f0fff4; color:#27ae60; border-radius:4px; padding:2px 7px; font-size:11px; font-weight:600; }
+    .tag-ok     { background:#e7f1ff; color:#0d6efd; border-radius:4px; padding:2px 7px; font-size:11px; font-weight:600; }
+    hr.dashed { border-top: 2px dashed #dee2e6; }
+
+    /* Mock page container */
+    .mock-page {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 16px 20px 0 20px;
+    }
+    .mock-content {
+      background: #fff;
+      border: 1px solid #dee2e6;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      padding: 16px;
+      min-height: 60px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     CABECERA
+════════════════════════════════════════════════════════ -->
+<div class="d-flex align-items-center gap-3 mb-4">
+  <div style="background:#0d6efd;border-radius:10px;padding:10px 14px">
+    <i class="bx bx-layout text-white" style="font-size:24px"></i>
+  </div>
+  <div>
+    <h4 class="mb-0 fw-bold" style="color:#1e293b">Preview — Estándar de Tabs v2 · Sistema Logística</h4>
+    <small class="text-muted">
+      Activo: <strong style="color:#0d6efd">fondo #0d6efd</strong> · 
+      Inactivo: <strong style="color:#0d6efd">borde #0d6efd</strong> · 
+      Todos los módulos usarán este diseño
+    </small>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECCIÓN 1: ESTADOS DEL TAB
+════════════════════════════════════════════════════════ -->
+<div class="preview-card">
+  <div class="section-header mb-4">
+    <h5>1 · Estados del Tab</h5>
+    <small>Normal · Hover · Activo — aplica igual en todos los módulos</small>
+  </div>
+
+  <!-- Vista completa -->
+  <div class="preview-label">Vista real — varios tabs juntos</div>
+  <div class="mock-page">
+    <ul class="nav custom-tabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" type="button">
+          <i class="bx bx-file me-1"></i> Tab Activo
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" type="button">
+          <i class="bx bx-cog me-1"></i> Tab Inactivo
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" type="button">
+          <i class="bx bx-building me-1"></i> Con Badge
+          <span class="tab-badge ms-1">5</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" type="button">
+          <i class="bx bx-box me-1"></i> Otro Tab
+        </button>
+      </li>
+    </ul>
+    <div class="mock-content">
+      <span class="text-muted" style="font-size:12px"><i class="bx bx-info-circle me-1"></i> Contenido del tab activo se muestra aquí</span>
+    </div>
+  </div>
+
+  <!-- Desglose de estados -->
+  <div class="row g-3 mt-3">
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#f8faff;border:1px solid #cfe2ff">
+        <div class="preview-label">Estado INACTIVO</div>
+        <ul class="nav custom-tabs" role="tablist">
+          <li class="nav-item">
+            <button class="nav-link" type="button"><i class="bx bx-file me-1"></i> Tab</button>
+          </li>
+        </ul>
+        <small class="text-muted d-block mt-2">
+          Fondo: <code>#fff</code><br>
+          Borde: <code>1.5px solid #0d6efd</code><br>
+          Texto: <code>#0d6efd</code>
+        </small>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#f8faff;border:1px solid #cfe2ff">
+        <div class="preview-label">Estado HOVER</div>
+        <ul class="nav custom-tabs" role="tablist">
+          <li class="nav-item">
+            <button class="nav-link" style="background:#e8f0fe!important" type="button">
+              <i class="bx bx-file me-1"></i> Tab
+            </button>
+          </li>
+        </ul>
+        <small class="text-muted d-block mt-2">
+          Fondo: <code>#e8f0fe</code><br>
+          Borde: <code>1.5px solid #0d6efd</code><br>
+          Texto: <code>#0d6efd</code>
+        </small>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="p-3 rounded" style="background:#f8faff;border:1px solid #cfe2ff">
+        <div class="preview-label">Estado ACTIVO</div>
+        <ul class="nav custom-tabs" role="tablist">
+          <li class="nav-item">
+            <button class="nav-link active" type="button"><i class="bx bx-file me-1"></i> Tab</button>
+          </li>
+        </ul>
+        <small class="text-muted d-block mt-2">
+          Fondo: <code>#0d6efd</code><br>
+          Borde: <code>#0d6efd</code><br>
+          Texto: <code>#ffffff</code> · shadow activo
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECCIÓN 2: SIMULACIÓN MÓDULOS REALES
+════════════════════════════════════════════════════════ -->
+<div class="preview-card">
+  <div class="section-header mb-4">
+    <h5>2 · Simulación por módulo — cómo quedará cada uno</h5>
+    <small>Mismo patrón visual en todos los módulos del sistema</small>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- Requerimientos -->
+    <div class="col-12">
+      <div class="module-title"><i class="bx bx-file-plus me-1" style="color:#0d6efd"></i> Requerimientos</div>
+      <div class="mock-page">
+        <ul class="nav custom-tabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" type="button"><i class="bx bx-file me-1"></i> Items</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" type="button"><i class="bx bx-cog me-1"></i> Servicios</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" type="button"><i class="bx bx-building me-1"></i> Activos Fijos</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" type="button"><i class="bx bx-box me-1"></i> Activos Menores</button>
+          </li>
+        </ul>
+        <div class="mock-content"></div>
+      </div>
+    </div>
+
+    <hr class="dashed my-1">
+
+    <!-- Aprobaciones -->
+    <div class="col-12">
+      <div class="module-title">
+        <i class="bx bx-check-shield me-1 text-success"></i> Aprobaciones
+        <span class="tag-before ms-2">ANTES: &lt;a data-bs-toggle&gt; hardcoded</span>
+        <span class="tag-after ms-1">DESPUÉS: &lt;button [class.active]&gt;</span>
+      </div>
+      <div class="mock-page">
+        <ul class="nav custom-tabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" type="button"><i class="bx bx-list-ul me-1"></i> Items</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" type="button"><i class="bx bx-wrench me-1"></i> Servicios</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" type="button"><i class="bx bx-building me-1"></i> Activo Fijo</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" type="button"><i class="bx bx-box me-1"></i> Activo Menor</button>
+          </li>
+        </ul>
+        <div class="mock-content"></div>
+      </div>
+    </div>
+
+    <hr class="dashed my-1">
+
+    <!-- Conformidad Almacén + sub-pills -->
+    <div class="col-12">
+      <div class="module-title">
+        <i class="bx bx-pen me-1 text-warning"></i> Conformidad Almacén
+        <span class="tag-before ms-2">ANTES: [class] ternario inline</span>
+        <span class="tag-after ms-1">DESPUÉS: [class.active]</span>
+      </div>
+      <div class="mock-page">
+        <ul class="nav custom-tabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" type="button">
+              <i class="bx bx-log-in-circle me-1"></i> Nota de Ingreso (NI)
+              <span class="tab-badge ms-1">3</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" type="button">
+              <i class="bx bx-log-out-circle me-1"></i> Nota de Salida (NS)
+            </button>
+          </li>
+        </ul>
+      </div>
+      <div class="sub-pills-wrap">
+        <ul class="nav">
+          <li class="nav-item">
+            <button class="sub-pill active" type="button"><i class="bx bx-time me-1"></i> Pendientes de firma</button>
+          </li>
+          <li class="nav-item">
+            <button class="sub-pill" type="button"><i class="bx bx-history me-1"></i> Historial</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <hr class="dashed my-1">
+
+    <!-- Kardex / Devoluciones / Reingresos -->
+    <div class="col-12">
+      <div class="module-title">
+        <i class="bx bx-data me-1 text-info"></i> Kardex · Devoluciones · Reingresos
+        <span class="tag-before ms-2">ANTES: &lt;a&gt; + bi bi-*</span>
+        <span class="tag-after ms-1">DESPUÉS: &lt;button&gt; + bx bx-*</span>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <small class="text-muted d-block mb-1 fw-semibold">Kardex</small>
+          <div class="mock-page">
+            <ul class="nav custom-tabs" role="tablist">
+              <li class="nav-item"><button class="nav-link active" type="button"><i class="bx bx-box me-1"></i> Stock Actual</button></li>
+              <li class="nav-item"><button class="nav-link" type="button"><i class="bx bx-journal me-1"></i> Kardex</button></li>
+            </ul>
+            <div class="mock-content"></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <small class="text-muted d-block mb-1 fw-semibold">Devoluciones Consumo</small>
+          <div class="mock-page">
+            <ul class="nav custom-tabs" role="tablist">
+              <li class="nav-item"><button class="nav-link active" type="button"><i class="bx bx-transfer me-1"></i> Despachos</button></li>
+              <li class="nav-item"><button class="nav-link" type="button"><i class="bx bx-arrow-back me-1"></i> Reingresos</button></li>
+            </ul>
+            <div class="mock-content"></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <small class="text-muted d-block mb-1 fw-semibold">Reingresos</small>
+          <div class="mock-page">
+            <ul class="nav custom-tabs" role="tablist">
+              <li class="nav-item"><button class="nav-link active" type="button"><i class="bx bx-time me-1"></i> Saldos Pendientes</button></li>
+              <li class="nav-item"><button class="nav-link" type="button"><i class="bx bx-history me-1"></i> Historial</button></li>
+            </ul>
+            <div class="mock-content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="dashed my-1">
+
+    <!-- Cotizaciones con badges -->
+    <div class="col-12">
+      <div class="module-title">
+        <i class="bx bx-receipt me-1 text-danger"></i> Cotizaciones
+        <span class="tag-before ms-2">ANTES: pi pi-* icons</span>
+        <span class="tag-after ms-1">DESPUÉS: bx bx-*</span>
+      </div>
+      <div class="mock-page">
+        <ul class="nav custom-tabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" type="button">
+              <i class="bx bx-file me-1"></i> Solicitudes de Cotización
+              <span class="tab-badge ms-1">7</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" type="button">
+              <i class="bx bx-list-ul me-1"></i> Cotizaciones Recibidas
+              <span class="tab-badge ms-1">12</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" type="button">
+              <i class="bx bx-trophy me-1"></i> Cotizaciones Ganadoras
+            </button>
+          </li>
+        </ul>
+        <div class="mock-content"></div>
+      </div>
+    </div>
+
+    <hr class="dashed my-1">
+
+    <!-- Transferencias / Solicitudes Servicio -->
+    <div class="col-12">
+      <div class="module-title"><i class="bx bx-transfer me-1 text-secondary"></i> Transferencias Almacén · Solicitudes de Servicio</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <small class="text-muted d-block mb-1 fw-semibold">Transferencias Almacén</small>
+          <div class="mock-page">
+            <ul class="nav custom-tabs" role="tablist">
+              <li class="nav-item"><button class="nav-link active" type="button"><i class="bx bx-time me-1"></i> Pendientes <span class="tab-badge ms-1">4</span></button></li>
+              <li class="nav-item"><button class="nav-link" type="button"><i class="bx bx-history me-1"></i> Historial</button></li>
+            </ul>
+            <div class="mock-content"></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <small class="text-muted d-block mb-1 fw-semibold">Solicitudes de Servicio</small>
+          <div class="mock-page">
+            <ul class="nav custom-tabs" role="tablist">
+              <li class="nav-item"><button class="nav-link active" type="button"><i class="bx bx-briefcase me-1"></i> Mis Solicitudes <span class="tab-badge ms-1">2</span></button></li>
+              <li class="nav-item"><button class="nav-link" type="button"><i class="bx bx-cloud me-1"></i> Procesadas</button></li>
+            </ul>
+            <div class="mock-content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="dashed my-1">
+
+    <!-- Parámetros / Admin / Dashboard -->
+    <div class="col-12">
+      <div class="module-title"><i class="bx bx-cog me-1 text-secondary"></i> Parámetros · Admin Logística · Dashboard</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <small class="text-muted d-block mb-1 fw-semibold">Parámetros</small>
+          <div class="mock-page">
+            <ul class="nav custom-tabs" role="tablist">
+              <li class="nav-item"><button class="nav-link active" type="button"><i class="bx bx-package me-1"></i> Consumo</button></li>
+              <li class="nav-item"><button class="nav-link" type="button"><i class="bx bx-shopping-bag me-1"></i> Compras</button></li>
+              <li class="nav-item"><button class="nav-link" type="button"><i class="bx bx-transfer me-1"></i> Transferencia</button></li>
+            </ul>
+            <div class="mock-content"></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <small class="text-muted d-block mb-1 fw-semibold">Admin Logística</small>
+          <div class="mock-page">
+            <ul class="nav custom-tabs" role="tablist">
+              <li class="nav-item"><button class="nav-link active" type="button"><i class="bx bx-inbox me-1"></i> Bandeja</button></li>
+              <li class="nav-item"><button class="nav-link" type="button"><i class="bx bx-check-circle me-1"></i> Aprobar</button></li>
+              <li class="nav-item"><button class="nav-link" type="button"><i class="bx bx-equalizer me-1"></i> Maestros</button></li>
+            </ul>
+            <div class="mock-content"></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <small class="text-muted d-block mb-1 fw-semibold">Dashboard Logística</small>
+          <div class="mock-page">
+            <ul class="nav custom-tabs" role="tablist">
+              <li class="nav-item"><button class="nav-link active" type="button"><i class="bx bx-home me-1"></i> Inicio</button></li>
+              <li class="nav-item"><button class="nav-link" type="button"><i class="bx bx-cart me-1"></i> OC</button></li>
+              <li class="nav-item"><button class="nav-link" type="button"><i class="bx bx-wrench me-1"></i> OS</button></li>
+            </ul>
+            <div class="mock-content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECCIÓN 3: CÓDIGO HTML ESTÁNDAR
+════════════════════════════════════════════════════════ -->
+<div class="preview-card">
+  <div class="section-header mb-3">
+    <h5>3 · Plantilla HTML estándar (se aplicará en todos los módulos)</h5>
+  </div>
+  <pre style="background:#1e1e2e;color:#cdd6f4;border-radius:8px;padding:20px;font-size:12px;overflow-x:auto"><code><span style="color:#89b4fa">&lt;ul</span> <span style="color:#f38ba8">class</span>=<span style="color:#a6e3a1">"nav custom-tabs mb-3"</span> <span style="color:#f38ba8">role</span>=<span style="color:#a6e3a1">"tablist"</span><span style="color:#89b4fa">&gt;</span>
+  <span style="color:#89b4fa">&lt;li</span> <span style="color:#f38ba8">class</span>=<span style="color:#a6e3a1">"nav-item"</span> <span style="color:#f38ba8">role</span>=<span style="color:#a6e3a1">"presentation"</span><span style="color:#89b4fa">&gt;</span>
+    <span style="color:#89b4fa">&lt;button</span>
+      <span style="color:#f38ba8">class</span>=<span style="color:#a6e3a1">"nav-link"</span>
+      <span style="color:#f38ba8">[class.active]</span>=<span style="color:#a6e3a1">"tabActiva === 'TAB1'"</span>
+      <span style="color:#f38ba8">(click)</span>=<span style="color:#a6e3a1">"tabActiva = 'TAB1'"</span>
+      <span style="color:#f38ba8">type</span>=<span style="color:#a6e3a1">"button"</span><span style="color:#89b4fa">&gt;</span>
+      <span style="color:#89b4fa">&lt;i</span> <span style="color:#f38ba8">class</span>=<span style="color:#a6e3a1">"bx bx-ICONO me-1"</span><span style="color:#89b4fa">&gt;&lt;/i&gt;</span> Etiqueta
+    <span style="color:#89b4fa">&lt;/button&gt;</span>
+  <span style="color:#89b4fa">&lt;/li&gt;</span>
+<span style="color:#89b4fa">&lt;/ul&gt;</span></code></pre>
+
+  <div class="row g-3 mt-2">
+    <div class="col-md-6">
+      <div class="p-3 rounded" style="background:#fff5f5;border:1px solid #fcc">
+        <div class="preview-label" style="color:#c0392b">❌ Patrones INCORRECTOS (se eliminarán)</div>
+        <pre style="font-size:11px;margin:0;color:#c0392b">&lt;!-- MALO 1: &lt;a&gt; + data-bs-toggle hardcoded --&gt;
+&lt;a class="nav-link active" data-bs-toggle="tab"
+   href="#items" (click)="currentTab='ITEM'"&gt;ITEMS&lt;/a&gt;
+
+&lt;!-- MALO 2: [class] ternario inline --&gt;
+&lt;button [class]="tab==='NI'
+  ? 'nav-link active bg-primary text-white'
+  : 'nav-link text-primary border...'"&gt;
+
+&lt;!-- MALO 3: border-0 en ul / bi bi-* icons --&gt;
+&lt;ul class="nav nav-tabs border-0"&gt;
+  &lt;i class="bi bi-box-seam"&gt;&lt;/i&gt;</pre>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="p-3 rounded" style="background:#f0fff4;border:1px solid #9dd">
+        <div class="preview-label" style="color:#27ae60">✅ Patrón CORRECTO (nuevo estándar)</div>
+        <pre style="font-size:11px;margin:0;color:#1a6335">&lt;!-- BIEN: button + [class.active] + bx icon --&gt;
+&lt;ul class="nav custom-tabs mb-3" role="tablist"&gt;
+  &lt;li class="nav-item" role="presentation"&gt;
+    &lt;button
+      class="nav-link"
+      [class.active]="tabActiva === 'ITEM'"
+      (click)="tabActiva = 'ITEM'"
+      type="button"&gt;
+      &lt;i class="bx bx-list-ul me-1"&gt;&lt;/i&gt;
+      Items
+    &lt;/button&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECCIÓN 4: SCSS GLOBAL
+════════════════════════════════════════════════════════ -->
+<div class="preview-card">
+  <div class="section-header mb-3">
+    <h5>4 · SCSS Global único — <code>src/styles/custom-tabs.scss</code></h5>
+    <small>Un solo archivo importado en <code>styles.scss</code> — elimina los ~17 SCSS locales duplicados</small>
+  </div>
+  <pre style="background:#1e1e2e;color:#cdd6f4;border-radius:8px;padding:20px;font-size:12px;overflow-x:auto"><code><span style="color:#6c7086">/* src/styles/custom-tabs.scss */</span>
+
+<span style="color:#89b4fa">.custom-tabs</span> {
+  display: flex;
+  flex-wrap: wrap;
+  gap: <span style="color:#fab387">6px</span>;
+  border-bottom: <span style="color:#fab387">2px solid #dee2e6</span>;
+
+  <span style="color:#89b4fa">.nav-item</span> { display: flex; }
+
+  <span style="color:#89b4fa">.nav-link</span> {
+    display: flex;
+    align-items: center;
+    gap: <span style="color:#fab387">5px</span>;
+    padding: <span style="color:#fab387">8px 18px</span>;
+    background: <span style="color:#a6e3a1">#ffffff</span>;
+    border: <span style="color:#fab387">1.5px solid #0d6efd</span>;
+    border-bottom: <span style="color:#fab387">2px solid transparent</span>;
+    margin-bottom: <span style="color:#fab387">-2px</span>;
+    border-radius: <span style="color:#fab387">6px 6px 0 0</span>;
+    font-size: <span style="color:#fab387">14px</span>;
+    font-weight: <span style="color:#fab387">500</span>;
+    color: <span style="color:#a6e3a1">#0d6efd</span>;
+    cursor: pointer;
+    transition: all <span style="color:#fab387">0.2s</span> ease;
+    white-space: nowrap;
+    text-decoration: none;
+
+    <span style="color:#f38ba8">&amp;:hover</span> { background: <span style="color:#a6e3a1">#e8f0fe</span>; }
+
+    <span style="color:#f38ba8">&amp;.active</span> {
+      background: <span style="color:#a6e3a1">#0d6efd</span> !important;
+      color: <span style="color:#a6e3a1">#ffffff</span> !important;
+      border-color: <span style="color:#a6e3a1">#0d6efd</span>;
+      border-bottom-color: <span style="color:#a6e3a1">#0d6efd</span>;
+      font-weight: <span style="color:#fab387">600</span>;
+      box-shadow: <span style="color:#fab387">0 2px 6px</span> rgba(<span style="color:#fab387">13, 110, 253, 0.35</span>);
+
+      i { color: <span style="color:#a6e3a1">#ffffff</span> !important; }
+    }
+  }
+}</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECCIÓN 5: TABLA DE CAMBIOS
+════════════════════════════════════════════════════════ -->
+<div class="preview-card">
+  <div class="section-header mb-3">
+    <h5>5 · Cambios por módulo</h5>
+  </div>
+  <table class="table table-bordered diff-table">
+    <thead class="table-light">
+      <tr>
+        <th>Módulo</th>
+        <th>Cambio HTML</th>
+        <th>Cambio SCSS</th>
+        <th>Cambio icono</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>requerimientos</strong></td><td>Agregar <code>custom-tabs</code> (nuevo estilo)</td><td>Reemplazar local → global</td><td><span class="tag-ok">bx ✓</span></td></tr>
+      <tr><td><strong>consolidacion-compras/servicios</strong></td><td>Actualizar <code>custom-tabs</code> (nuevo estilo)</td><td>Reemplazar local → global</td><td><span class="tag-ok">bx ✓</span></td></tr>
+      <tr><td><strong>aprobaciones</strong></td><td><code>&lt;a data-bs-toggle&gt;</code> → <code>&lt;button [class.active]&gt;</code></td><td>Reemplazar → global</td><td><span class="tag-ok">Agregar bx</span></td></tr>
+      <tr><td><strong>reporte-aprobados</strong></td><td><code>&lt;a data-bs-toggle&gt;</code> → <code>&lt;button [class.active]&gt;</code></td><td>Reemplazar → global</td><td><span class="tag-ok">Agregar bx</span></td></tr>
+      <tr><td><strong>conformidad-almacen</strong></td><td><code>[class] ternario</code> → <code>[class.active]</code></td><td>Quitar inline → global</td><td><span class="tag-ok">bx ✓</span></td></tr>
+      <tr><td><strong>kardex</strong></td><td><code>&lt;a&gt;</code> → <code>&lt;button&gt;</code> + custom-tabs</td><td>Reemplazar → global</td><td><code>bi</code> → <code>bx</code></td></tr>
+      <tr><td><strong>devoluciones-consumo</strong></td><td><code>&lt;a&gt;</code> → <code>&lt;button&gt;</code> + custom-tabs</td><td>Reemplazar → global</td><td><code>bi</code> → <code>bx</code></td></tr>
+      <tr><td><strong>reingresos</strong></td><td><code>&lt;a&gt;</code> → <code>&lt;button&gt;</code> + custom-tabs</td><td>Reemplazar → global</td><td><code>bi</code> → <code>bx</code></td></tr>
+      <tr><td><strong>maestros</strong></td><td>Agregar <code>custom-tabs</code></td><td>Reemplazar → global</td><td><span class="tag-ok">Agregar bx</span></td></tr>
+      <tr><td><strong>cotizaciones</strong></td><td>Agregar <code>custom-tabs</code></td><td>Reemplazar → global</td><td><code>pi</code> → <code>bx</code></td></tr>
+      <tr><td><strong>transferencias-almacen</strong></td><td>Agregar <code>custom-tabs</code></td><td>Reemplazar → global</td><td><span class="tag-ok">bx ✓</span></td></tr>
+      <tr><td><strong>solicitudes-servicio</strong></td><td>Agregar <code>custom-tabs</code></td><td>Reemplazar → global</td><td><span class="tag-ok">bx ✓</span></td></tr>
+      <tr><td><strong>parametros</strong></td><td>Agregar <code>custom-tabs</code>, quitar <code>data-bs-target</code></td><td>Quitar <code>::ng-deep</code> → global</td><td><span class="tag-ok">bx ✓</span></td></tr>
+      <tr><td><strong>dashboard-logistica</strong></td><td>Agregar <code>custom-tabs</code> en 2 ul</td><td>Reemplazar → global</td><td><span class="tag-ok">Agregar bx</span></td></tr>
+      <tr><td><strong>dashboard-oplogist</strong></td><td>Quitar <code>border-0</code>, agregar <code>custom-tabs</code></td><td>Quitar <code>::ng-deep</code> → global</td><td><span class="tag-ok">bx ✓</span></td></tr>
+      <tr><td><strong>consolidacion-requerimientos</strong></td><td>Agregar <code>custom-tabs</code></td><td>Reemplazar → global</td><td><code>icon</code> → <code>bx</code></td></tr>
+      <tr><td><strong>aprobaciones-area</strong></td><td>Agregar <code>custom-tabs</code></td><td>Reemplazar → global</td><td><span class="tag-ok">bx ✓</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="text-center mt-3 mb-5">
+  <small class="text-muted">Sistema Logística · Estándar de Tabs v2.0 · Activo: <strong style="color:#0d6efd">#0d6efd</strong> · Inactivo: borde <strong style="color:#0d6efd">#0d6efd</strong></small>
+</div>
+
+</body>
+</html>

@@ -10,7 +10,7 @@
   </div>
 
   <!-- TABS OC / OS -->
-  <ul class="nav nav-tabs mb-0">
+  <ul class="nav custom-tabs mb-0" role="tablist">
     <li class="nav-item">
       <button class="nav-link" [class.active]="tabActivo() === 'oc'" (click)="setTab('oc')">
         <i class="bx bx-cart me-1 text-primary"></i> Orden de Compra (OC)
@@ -27,17 +27,15 @@
   @if (tabActivo() === 'oc') {
 
     <!-- Sub-secciones -->
-    <div class="bg-light border border-top-0 rounded-bottom px-3 py-2 mb-3">
-      <ul class="nav nav-pills nav-sm gap-1">
+    <div class="tabs-sub-section mb-3">
+      <ul class="nav">
         <li class="nav-item">
-          <button class="nav-link py-1 px-3" style="font-size:12.5px"
-            [class.active]="seccionTab() === 'plantilla'" (click)="setSeccion('plantilla')">
+          <button class="nav-link" [class.active]="seccionTab() === 'plantilla'" (click)="setSeccion('plantilla')" type="button">
             <i class="bx bx-layout me-1"></i> Configurar Plantilla
           </button>
         </li>
         <li class="nav-item">
-          <button class="nav-link py-1 px-3" style="font-size:12.5px"
-            [class.active]="seccionTab() === 'tc'" (click)="setSeccion('tc')">
+          <button class="nav-link" [class.active]="seccionTab() === 'tc'" (click)="setSeccion('tc')" type="button">
             <i class="bx bx-list-check me-1"></i> Términos y Condiciones
           </button>
         </li>
@@ -301,17 +299,15 @@
   @if (tabActivo() === 'os') {
 
     <!-- Sub-secciones -->
-    <div class="bg-light border border-top-0 rounded-bottom px-3 py-2 mb-3">
-      <ul class="nav nav-pills nav-sm gap-1">
+    <div class="tabs-sub-section mb-3">
+      <ul class="nav">
         <li class="nav-item">
-          <button class="nav-link py-1 px-3" style="font-size:12.5px"
-            [class.active]="seccionTab() === 'plantilla'" (click)="setSeccion('plantilla')">
+          <button class="nav-link" [class.active]="seccionTab() === 'plantilla'" (click)="setSeccion('plantilla')" type="button">
             <i class="bx bx-layout me-1"></i> Configurar Plantilla
           </button>
         </li>
         <li class="nav-item">
-          <button class="nav-link py-1 px-3" style="font-size:12.5px"
-            [class.active]="seccionTab() === 'tc'" (click)="setSeccion('tc')">
+          <button class="nav-link" [class.active]="seccionTab() === 'tc'" (click)="setSeccion('tc')" type="button">
             <i class="bx bx-list-check me-1"></i> Términos y Condiciones
           </button>
         </li>

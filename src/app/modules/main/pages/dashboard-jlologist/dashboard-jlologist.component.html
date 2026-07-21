@@ -16,11 +16,16 @@
     <ng-container *ngIf="empresaCargando">
       <div class="empresa-tab-sk"></div>
       <div class="empresa-tab-sk"></div>
+      <div class="empresa-tab-sk"></div>
+      <div class="empresa-tab-sk"></div>
     </ng-container>
     <ng-container *ngIf="!empresaCargando">
-      <ng-container *ngIf="empresas.length === 0">
-        <span class="empresa-tab active"><i class="bx bx-building me-1"></i>Todas las empresas</span>
-      </ng-container>
+      <button class="empresa-tab"
+              [class.active]="!rucActivo"
+              (click)="seleccionarEmpresa(null)">
+        <i class="bx bx-grid-alt me-1"></i>
+        Inicio
+      </button>
       <button *ngFor="let emp of empresas"
               class="empresa-tab"
               [class.active]="rucActivo === emp.ruc"
@@ -32,9 +37,9 @@
     </ng-container>
   </div>
 
-  <!-- ── SECCIÓN 1: REQUERIMIENTOS DE COMPRA & ÓRDENES ─────────────────── -->
+  <!-- ── SECCIÓN 1: ÍTEMS DE REQUERIMIENTOS DE COMPRA ──────────────────── -->
   <div class="kpi-section__label mb-2 d-flex align-items-center gap-2">
-    <i class="bx bx-receipt"></i> Requerimientos de Compra &amp; Órdenes de Compra
+    <i class="bx bx-package"></i> Ítems de Requerimientos de Compra
     <span class="badge bg-light text-secondary border" style="font-size:0.7rem">Solo COMPRA</span>
   </div>
   <div class="row mb-3">

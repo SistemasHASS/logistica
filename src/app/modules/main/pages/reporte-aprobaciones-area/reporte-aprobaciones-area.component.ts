@@ -77,7 +77,7 @@ export class ReporteAprobacionesAreaComponent implements OnInit {
     
     const data = {
       documentoidentidad: this.usuario.documentoidentidad,
-      ruc: '20481121966',
+      ruc: this.usuario.ruc,
       fechaInicio: this.fechaInicio || undefined,
       fechaFin: this.fechaFin || undefined
     };

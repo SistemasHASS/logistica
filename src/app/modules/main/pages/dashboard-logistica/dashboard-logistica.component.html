@@ -2,7 +2,7 @@
   <!-- Tabs Padre - Por Empresa -->
   <div class="row mb-3">
     <div class="col-12">
-      <ul class="nav nav-tabs" role="tablist">
+      <ul class="nav custom-tabs mb-3" role="tablist">
         <li class="nav-item" *ngFor="let empresa of empresas">
           <button class="nav-link" [class.active]="empresaSeleccionada?.id === empresa.id" (click)="seleccionarEmpresa(empresa)">
             {{ empresa.razonsocial }} ({{ getEmpresaSigla(empresa.id) }})
@@ -15,13 +15,13 @@
   <!-- Título del Dashboard con empresa seleccionada -->
   <div class="page-header mb-4">
     <h3 class="mb-0">Dashboard Logística - {{ empresaSeleccionada?.razonsocial }}</h3>
-    <p class="texto-descriptivo mb-0">Resumen general de operaciones logísticas para {{ getEmpresaSigla(empresaSeleccionada?.id) }}</p>
+    <!-- <p class="texto-descriptivo mb-0">Resumen general de operaciones logísticas para {{ getEmpresaSigla(empresaSeleccionada?.id) }}</p> -->
   </div>
 
   <!-- Tabs Hijos - Navegación Interna (dentro de cada empresa) -->
   <div class="row mb-4">
     <div class="col-12">
-      <ul class="nav nav-tabs mb-3" role="tablist">
+      <ul class="nav custom-tabs mb-3" role="tablist">
         <li class="nav-item">
           <button class="nav-link" [class.active]="activeTab === 0" (click)="activeTab = 0">
             Inicio

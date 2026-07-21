@@ -273,6 +273,20 @@ export class DashboardLogisticaComponent implements OnInit {
     return siglas[idEmpresa] || '';
   }
 
+  private readonly rucPorEmpresa: { [id: string]: string } = {
+    '000010': '20563196387',
+    '000008': '20481121966',
+    '000006': '20610773274'
+  };
+
+  get filtroEmpresa(): { idEmpresa: string; ruc: string } {
+    const idEmpresa = this.empresaSeleccionada?.id || '000010';
+    return {
+      idEmpresa,
+      ruc: this.empresaSeleccionada?.ruc || this.rucPorEmpresa[idEmpresa] || ''
+    };
+  }
+
   async cargarUsuario() {
     const usuarioGuardado = await this.dexieService.obtenerPrimerUsuario();
     if (usuarioGuardado) {
@@ -304,9 +318,10 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async calcularKPIsRequerimientos() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const payload = {
-        idEmpresa: idEmpresa,
+        idEmpresa,
+        ruc,
         fechaInicio: this.obtenerFechaInicio(),
         fechaFin: this.obtenerFechaFin()
       };
@@ -355,10 +370,11 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async generarGraficaRequerimientos() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const anio = new Date().getFullYear();
       const payload = {
-        idEmpresa: idEmpresa,
+        idEmpresa,
+        ruc,
         anio: anio
       };
 
@@ -488,9 +504,10 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async calcularSeguimientoOrdenes() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const payload = {
-        idEmpresa: idEmpresa
+        idEmpresa,
+        ruc
       };
 
       const response = await this.dashboardLogisticaService.obtenerSeguimientoOrdenes(payload).toPromise();
@@ -527,9 +544,10 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async obtenerEntregasHoy() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const payload = {
-        idEmpresa: idEmpresa,
+        idEmpresa,
+        ruc,
         fecha: this.obtenerFechaFin()
       };
 
@@ -576,9 +594,10 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async calcularEstadoAlmacen() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const payload = {
-        idEmpresa: idEmpresa,
+        idEmpresa,
+        ruc,
         idAlmacen: null
       };
 
@@ -614,9 +633,10 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async calcularResumenCompras() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const payload = {
-        idEmpresa: idEmpresa,
+        idEmpresa,
+        ruc,
         fechaInicio: this.obtenerFechaInicio(),
         fechaFin: this.obtenerFechaFin()
       };
@@ -654,10 +674,11 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async obtenerGastosMensuales() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const anio = new Date().getFullYear();
       const payload = {
-        idEmpresa: idEmpresa,
+        idEmpresa,
+        ruc,
         anio: anio
       };
 
@@ -709,9 +730,10 @@ export class DashboardLogisticaComponent implements OnInit {
 
   async cargarDatosTabsHijos() {
     try {
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const payload = {
-        idEmpresa: idEmpresa,
+        idEmpresa,
+        ruc,
         pagina: 1,
         registrosPorPagina: 10
       };
@@ -874,9 +896,10 @@ export class DashboardLogisticaComponent implements OnInit {
       this.requerimientoExpandido = null;
       this.paginaActualModal = 1;
 
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const payload = {
-        idEmpresa: idEmpresa,
+        idEmpresa,
+        ruc,
         estado: estado,
         fechaInicio: this.obtenerFechaInicio(),
         fechaFin: this.obtenerFechaFin()
@@ -1023,9 +1046,10 @@ export class DashboardLogisticaComponent implements OnInit {
     this.reporteComprasData = null;
 
     try {
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const payload = {
-        idEmpresa: idEmpresa,
+        idEmpresa,
+        ruc,
         fechaInicio: this.obtenerFechaInicio(),
         fechaFin: this.obtenerFechaFin()
       };
@@ -1054,9 +1078,10 @@ export class DashboardLogisticaComponent implements OnInit {
     this.reporteInventarioData = null;
 
     try {
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const payload = {
-        idEmpresa: idEmpresa,
+        idEmpresa,
+        ruc,
         idAlmacen: null
       };
 
@@ -1084,9 +1109,10 @@ export class DashboardLogisticaComponent implements OnInit {
     this.reporteProveedoresData = [];
 
     try {
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const payload = {
-        idEmpresa: idEmpresa,
+        idEmpresa,
+        ruc,
         fechaInicio: this.obtenerFechaInicio(),
         fechaFin: this.obtenerFechaFin()
       };
@@ -1115,9 +1141,10 @@ export class DashboardLogisticaComponent implements OnInit {
     this.reporteTiemposData = null;
 
     try {
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const payload = {
-        idEmpresa: idEmpresa,
+        idEmpresa,
+        ruc,
         fechaInicio: this.obtenerFechaInicio(),
         fechaFin: this.obtenerFechaFin()
       };
@@ -1146,10 +1173,11 @@ export class DashboardLogisticaComponent implements OnInit {
     this.reporteGastosData = [];
 
     try {
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const anio = new Date().getFullYear();
       const payload = {
-        idEmpresa: idEmpresa,
+        idEmpresa,
+        ruc,
         anio: anio
       };
 
@@ -1177,9 +1205,10 @@ export class DashboardLogisticaComponent implements OnInit {
     this.reporteConsolidadoData = null;
 
     try {
-      const idEmpresa = this.empresaSeleccionada?.id || '000010';
+      const { idEmpresa, ruc } = this.filtroEmpresa;
       const payload = {
-        idEmpresa: idEmpresa,
+        idEmpresa,
+        ruc,
         fechaInicio: this.obtenerFechaInicio(),
         fechaFin: this.obtenerFechaFin()
       };

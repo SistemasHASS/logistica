@@ -12,6 +12,7 @@ import { CheckboxModule, Checkbox } from 'primeng/checkbox';
 import { AprobacionesService } from '@/app/services/aprobaciones.service';
 import { AprobacionesAreaService } from '@/app/modules/main/services/aprobaciones-area.service';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
+import { RequerimientosSyncService } from '@/app/modules/main/pages/requerimientos/services/requerimientos-sync.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import { ItemService } from '@/app/modules/main/services/items.service';
@@ -147,6 +148,7 @@ export class AprobacionesAreaComponent implements OnInit {
     private aprobacionesService: AprobacionesService,
     private aprobacionesAreaService: AprobacionesAreaService,
     private requerimientosService: RequerimientosService,
+    private syncService: RequerimientosSyncService,
     private dexieService: DexieService,
     private maestrasService: MaestrasService,
     private ItemService: ItemService,
@@ -432,7 +434,7 @@ export class AprobacionesAreaComponent implements OnInit {
     // Enviar objeto JSON, no string
     const data = {
       documentoidentidad: this.usuario.documentoidentidad,
-      ruc: '20481121966',
+      ruc: this.usuario.ruc,
     };
 
     this.aprobacionesAreaService
@@ -487,7 +489,7 @@ export class AprobacionesAreaComponent implements OnInit {
     const data = {
       usuario: this.usuario.documentoidentidad,
       rol: this.usuario.rol || 'JEFE_AREA',
-      ruc: '20481121966',
+      ruc: this.usuario.ruc,
     };
 
     this.aprobacionesAreaService
@@ -534,7 +536,7 @@ export class AprobacionesAreaComponent implements OnInit {
     const data = {
       usuario: this.usuario.documentoidentidad,
       rol: 'TI', // Rol TI para ver todos
-      ruc: '20481121966',
+      ruc: this.usuario.ruc,
     };
 
     this.aprobacionesAreaService
@@ -614,7 +616,7 @@ export class AprobacionesAreaComponent implements OnInit {
           documentoidentidad: this.usuario.documentoidentidad,
           accion: 'APROBADO',
           comentarios: this.observaciones || 'Aprobado',
-          ruc: '20481121966',
+          ruc: this.usuario.ruc,
         })
         .toPromise();
 
@@ -665,8 +667,14 @@ export class AprobacionesAreaComponent implements OnInit {
       if (esExitoso) {
         Swal.fire('Éxito', mensaje, 'success');
         console.log('✅ Aprobación exitosa, requerimiento:', this.requerimientoSeleccionado);
+
+        // Ocultar el requerimiento de la lista local del creador sin esperar sincronización
+        await this.syncService.marcarAprobadoLocalmente(
+          this.requerimientoSeleccionado.idrequerimiento,
+        );
+
         console.log('🔄 Iniciando sincronización con SPRING...');
-        
+
         // Sincronizar con SPRING TODOS los requerimientos aprobados (COMPRA y CONSUMO)
         console.log('🔄 Iniciando sincronización con SPRING para requerimiento aprobado...');
         try {
@@ -743,7 +751,7 @@ export class AprobacionesAreaComponent implements OnInit {
           documentoidentidad: this.usuario.documentoidentidad,
           accion: 'RECHAZADO',
           comentarios: this.observaciones,
-          ruc: '20481121966',
+          ruc: this.usuario.ruc,
         })
         .toPromise();
 
@@ -825,6 +833,8 @@ export class AprobacionesAreaComponent implements OnInit {
 
     let exitosos = 0;
     let fallidos = 0;
+    let sincronizados = 0;
+    let fallidosSincronizacion = 0;
 
     for (const req of aprobables) {
       try {
@@ -834,7 +844,7 @@ export class AprobacionesAreaComponent implements OnInit {
             documentoidentidad: this.usuario.documentoidentidad,
             accion: 'APROBADO',
             comentarios: this.observacionesMultiple || 'Aprobado',
-            ruc: '20481121966',
+            ruc: this.usuario.ruc,
           })
           .toPromise();
 
@@ -856,6 +866,33 @@ export class AprobacionesAreaComponent implements OnInit {
 
         if (esExitoso) {
           exitosos++;
+
+          // Ocultar el requerimiento de la lista local del creador sin esperar sincronización
+          await this.syncService.marcarAprobadoLocalmente(req.idrequerimiento);
+
+          // Sincronizar con SPRING igual que en aprobación individual desde modal
+          try {
+            await this.sincronizarRequerimientoSPRING(req, true);
+            sincronizados++;
+
+            // Notificación PENDIENTE_DESPACHO para requerimientos de CONSUMO
+            const tipoReq = (req as any)?.itemtipo || (req as any)?.tipoRequerimiento || 'COMPRA';
+            if (tipoReq === 'CONSUMO') {
+              const dniSolicitante = (req as any)?.dniregistra || (req as any)?.nrodocumento || '';
+              if (dniSolicitante) {
+                const numReq = (req as any)?.numero || (req as any)?.idrequerimiento || 'N/A';
+                this.notificacionApi.registrarNotificacionSolicitante({
+                  usuario_destino: dniSolicitante,
+                  id_dreq: String((req as any)?.idrequerimiento || '0'),
+                  mensaje: `Tu requerimiento de consumo ${numReq} fue aprobado y está pendiente de despacho por almacén.`,
+                  tipo_notificacion: 'PENDIENTE_DESPACHO'
+                }).catch(() => {});
+              }
+            }
+          } catch (syncError) {
+            console.error(`❌ Error sincronizando requerimiento ${req.idrequerimiento} con SPRING:`, syncError);
+            fallidosSincronizacion++;
+          }
         } else {
           fallidos++;
         }
@@ -869,9 +906,14 @@ export class AprobacionesAreaComponent implements OnInit {
     this.observacionesMultiple = '';
     this.requerimientosPendientesSeleccionados = [];
 
+    let mensajeResumen = `Aprobados: ${exitosos}\nFallidos: ${fallidos}`;
+    if (sincronizados > 0 || fallidosSincronizacion > 0) {
+      mensajeResumen += `\nSincronizados con SPRING: ${sincronizados}\nFallos SPRING: ${fallidosSincronizacion}`;
+    }
+
     Swal.fire(
       'Resumen de aprobación',
-      `Aprobados: ${exitosos}\nFallidos: ${fallidos}`,
+      mensajeResumen,
       exitosos > 0 ? 'success' : 'error',
     );
 
@@ -884,7 +926,7 @@ export class AprobacionesAreaComponent implements OnInit {
   // SINCRONIZACIÓN CON SPRING
   // =============================================
 
-  async sincronizarRequerimientoSPRING(req: any) {
+  async sincronizarRequerimientoSPRING(req: any, silencioso: boolean = false) {
     console.log('🟢 INICIO sincronizarRequerimientoSPRING');
     console.log('📋 Objeto recibido en sincronizarSPRING:', req);
     
@@ -1083,11 +1125,13 @@ export class AprobacionesAreaComponent implements OnInit {
         requerimientoCompleto.detalles.length === 0
       ) {
         // console.error('❌ El requerimiento no tiene detalle');
-        Swal.fire(
-          'Error',
-          'No se pudo obtener el detalle del requerimiento',
-          'error',
-        );
+        if (!silencioso) {
+          Swal.fire(
+            'Error',
+            'No se pudo obtener el detalle del requerimiento',
+            'error',
+          );
+        }
         return;
       }
 
@@ -1304,7 +1348,7 @@ export class AprobacionesAreaComponent implements OnInit {
                   this.usuario.documentoidentidad || 'MISESF'
                 ).substring(0, 50),
                 UltimaFechaModif: new Date().toISOString(),
-                IGVExoneradoFlag: 'N',
+                IGVExoneradoFlag: d.afectoIGV === 'N' ? 'S' : 'N',
                 GenerarContratoFlag: 'N',
                 origen: origenapp,
               };
@@ -1452,17 +1496,21 @@ export class AprobacionesAreaComponent implements OnInit {
                 );
               }
 
-              Swal.fire(
-                'Éxito',
-                'Requerimiento sincronizado a SPRING correctamente',
-                'success',
-              );
+              if (!silencioso) {
+                Swal.fire(
+                  'Éxito',
+                  'Requerimiento sincronizado a SPRING correctamente',
+                  'success',
+                );
+              }
             } else {
-              Swal.fire(
-                'Error',
-                'Hubo un problema al sincronizar el requerimiento a SPRING',
-                'error',
-              );
+              if (!silencioso) {
+                Swal.fire(
+                  'Error',
+                  'Hubo un problema al sincronizar el requerimiento a SPRING',
+                  'error',
+                );
+              }
               // console.error('Detalles del error:', resp);
             }
           },
@@ -1473,7 +1521,9 @@ export class AprobacionesAreaComponent implements OnInit {
               status: (error as any)?.status,
               statusText: (error as any)?.statusText
             });
-            Swal.fire('Error', 'Error al sincronizar con SPRING', 'error');
+            if (!silencioso) {
+              Swal.fire('Error', 'Error al sincronizar con SPRING', 'error');
+            }
           },
         });
     } catch (error) {
@@ -1483,7 +1533,9 @@ export class AprobacionesAreaComponent implements OnInit {
         status: (error as any)?.status,
         statusText: (error as any)?.statusText
       });
-      Swal.fire('Error', 'Error al procesar la sincronización', 'error');
+      if (!silencioso) {
+        Swal.fire('Error', 'Error al procesar la sincronización', 'error');
+      }
     }
   }
 
@@ -1889,6 +1941,11 @@ export class AprobacionesAreaComponent implements OnInit {
         })
         .toPromise();
       if (response) {
+        // Ocultar el requerimiento de la lista local del creador sin esperar sincronización
+        await this.syncService.marcarAprobadoLocalmente(
+          this.requerimientoDetallePendientes.idrequerimiento,
+        );
+
         // Migrar a SPRING tras aprobación exitosa
         try {
           console.log('🔄 Migrando requerimiento aprobado a SPRING...');

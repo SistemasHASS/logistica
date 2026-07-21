@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SolicitudServicioService } from '@/app/services/solicitud-servicio.service';
+import { SolicitudServicioLocalService } from '@/app/services/solicitud-servicio-local.service';
+import { SolicitudServicioRemoteService } from '@/app/services/solicitud-servicio-remote.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { UserService } from '@/app/shared/services/user.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
@@ -84,7 +85,8 @@ export class SolicitudesServicioComponent implements OnInit {
   filtroTipoServicio = '';
 
   constructor(
-    private solicitudServicioService: SolicitudServicioService,
+    private solicitudServicioRemoteService: SolicitudServicioRemoteService,
+    private solicitudServicioLocalService: SolicitudServicioLocalService,
     private alertService: AlertService,
     private userService: UserService,
     private dexieService: DexieService
@@ -106,9 +108,9 @@ export class SolicitudesServicioComponent implements OnInit {
 
   async cargarContadores() {
     try {
-      const contadores = await this.solicitudServicioService
-        .obtenerContadores(this.usuario.documentoidentidad)
-        .toPromise();
+      const contadores = await this.solicitudServicioRemoteService.cargarContadores(
+        this.usuario.documentoidentidad
+      );
 
       if (contadores) {
         this.contadores = contadores;
@@ -127,18 +129,7 @@ export class SolicitudesServicioComponent implements OnInit {
       if (this.filtroTipoServicio) filtros.tipoServicio = this.filtroTipoServicio;
       filtros.usuarioSolicita = this.usuario.documentoidentidad;
 
-      const rawResponse = await this.solicitudServicioService
-        .listarSolicitudesServicio(filtros)
-        .toPromise();
-
-      // El SP usa FOR JSON PATH → backend retorna [ [array] ] o [ {obj} ]
-      // Desenvolver si el primer elemento es un array
-      let solicitudes = rawResponse || [];
-      if (Array.isArray(solicitudes) && solicitudes.length === 1 && Array.isArray(solicitudes[0])) {
-        solicitudes = solicitudes[0];
-      }
-
-      this.solicitudesServicio = solicitudes;
+      this.solicitudesServicio = await this.solicitudServicioRemoteService.cargarSolicitudes(filtros);
       this.alertService.cerrarModalCarga();
     } catch (error) {
       console.error('Error al cargar solicitudes:', error);
@@ -149,10 +140,8 @@ export class SolicitudesServicioComponent implements OnInit {
 
   async cargarSolicitudesLocales() {
     try {
-      const todasLasSolicitudes = await this.dexieService.solicitudesServicio.toArray();
-      this.solicitudesLocales = todasLasSolicitudes.filter(s => 
-        s.usuarioSolicita === this.usuario.documentoidentidad &&
-        s.numeroSolicitud != null && s.numeroSolicitud !== ''
+      this.solicitudesLocales = await this.solicitudServicioLocalService.obtenerSolicitudesLocales(
+        this.usuario.documentoidentidad
       );
       console.log('📋 Solicitudes locales cargadas:', this.solicitudesLocales.length);
     } catch (error) {
@@ -188,13 +177,15 @@ export class SolicitudesServicioComponent implements OnInit {
 
   async guardarEdicionLocal() {
     try {
-      // Actualizar en Dexie
-      await this.dexieService.solicitudesServicio.update(this.solicitudLocalEdicion.id, {
-        descripcionServicio: this.solicitudLocalEdicion.descripcionServicio,
-        montoEstimado: this.solicitudLocalEdicion.montoEstimado,
-        fechaRequerida: this.solicitudLocalEdicion.fechaRequerida,
-        observaciones: this.solicitudLocalEdicion.observaciones
-      });
+      await this.solicitudServicioLocalService.actualizarSolicitudLocal(
+        this.solicitudLocalEdicion.id,
+        {
+          descripcionServicio: this.solicitudLocalEdicion.descripcionServicio,
+          montoEstimado: this.solicitudLocalEdicion.montoEstimado,
+          fechaRequerida: this.solicitudLocalEdicion.fechaRequerida,
+          observaciones: this.solicitudLocalEdicion.observaciones,
+        }
+      );
       
       this.alertService.showAlert('Éxito', 'Solicitud actualizada correctamente', 'success');
       await this.cargarSolicitudesLocales();
@@ -232,16 +223,15 @@ export class SolicitudesServicioComponent implements OnInit {
         };
 
         // Enviar al backend
-        const response = await this.solicitudServicioService.guardarSolicitudServicio(solicitudParaEnviar).toPromise();
+        const response = await this.solicitudServicioRemoteService.guardarSolicitud(solicitudParaEnviar);
         
         if (response && (response.success || response.status === 'success')) {
           // Eliminar de Dexie — intentar por id y por numeroSolicitud
           if (solicitud.id != null) {
-            await this.dexieService.solicitudesServicio.delete(solicitud.id);
+            await this.solicitudServicioLocalService.eliminarSolicitudLocal(solicitud.id);
           }
           if (solicitud.numeroSolicitud) {
-            await this.dexieService.solicitudesServicio
-              .where('numeroSolicitud').equals(solicitud.numeroSolicitud).delete();
+            await this.solicitudServicioLocalService.eliminarSolicitudLocalPorNumero(solicitud.numeroSolicitud);
           }
           
           // Cambiar al tab de solicitudes procesadas ANTES de recargar
@@ -279,7 +269,7 @@ export class SolicitudesServicioComponent implements OnInit {
 
     if (confirmacion) {
       try {
-        await this.dexieService.solicitudesServicio.delete(solicitud.id);
+        await this.solicitudServicioLocalService.eliminarSolicitudLocal(solicitud.id);
         this.alertService.showAlert('Éxito', 'Solicitud eliminada correctamente', 'success');
         await this.cargarSolicitudesLocales();
       } catch (error) {
@@ -339,9 +329,7 @@ export class SolicitudesServicioComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
 
-      const solicitudCompleta = await this.solicitudServicioService
-        .obtenerSolicitudServicioPorId(solicitud.id)
-        .toPromise();
+      const solicitudCompleta = await this.solicitudServicioRemoteService.obtenerSolicitudPorId(solicitud.id);
 
       if (solicitudCompleta) {
         this.solicitudActual = { ...solicitudCompleta };
@@ -404,9 +392,7 @@ export class SolicitudesServicioComponent implements OnInit {
 
       this.solicitudActual.detalle = this.detalleServicio;
 
-      const respuesta = await this.solicitudServicioService
-        .guardarSolicitudServicio(this.solicitudActual)
-        .toPromise();
+      const respuesta = await this.solicitudServicioRemoteService.guardarSolicitud(this.solicitudActual);
 
       this.alertService.cerrarModalCarga();
 
@@ -455,22 +441,11 @@ export class SolicitudesServicioComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
 
-      const respuesta = await this.solicitudServicioService
-        .enviarSolicitudServicio(solicitud.id)
-        .toPromise();
+      const respuesta = await this.solicitudServicioRemoteService.enviarSolicitud(solicitud);
 
       this.alertService.cerrarModalCarga();
 
       if (respuesta?.status === 'success') {
-        // Asignar aprobadores automáticamente
-        try {
-          await this.solicitudServicioService
-            .asignarAprobadoresSS(solicitud.id, solicitud.montoEstimado)
-            .toPromise();
-        } catch (error) {
-          console.warn('Error al asignar aprobadores:', error);
-        }
-
         this.alertService.showAlert('Éxito', 'Solicitud enviada a aprobación correctamente', 'success');
         await this.cargarContadores();
         await this.cargarSolicitudes();
@@ -501,9 +476,7 @@ export class SolicitudesServicioComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
 
-      const respuesta = await this.solicitudServicioService
-        .anularSolicitudServicio(solicitud.id, motivo)
-        .toPromise();
+      const respuesta = await this.solicitudServicioRemoteService.anularSolicitud(solicitud.id, motivo);
 
       this.alertService.cerrarModalCarga();
 

@@ -44,54 +44,48 @@
 
   <!-- TABS -->
   <div class="tabs-container">
-    <div class="tabs-header">
-      <button 
-        class="tab-button" 
-        [class.active]="tabActiva === 0"
-        (click)="cambiarTab(0)">
-        <i class="bx bx-list-ul"></i> OC Pendientes
-      </button>
-      <!-- <button 
-        class="tab-button" 
-        [class.active]="tabActiva === 1"
-        (click)="cambiarTab(1)">
-        <i class="bx bx-users"></i> Usuarios Aprobadores
-      </button>
-      <button 
-        class="tab-button" 
-        [class.active]="tabActiva === 2"
-        (click)="cambiarTab(2)">
-        <i class="bx bx-sitemap"></i> Flujos de Aprobación
-      </button> -->
-    </div>
+    <!-- <ul class="nav custom-tabs mb-0">
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="tabActiva === 0" (click)="cambiarTab(0)" type="button">
+          <i class="bx bx-list-ul me-2"></i> OC Pendientes
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="tabActiva === 1" (click)="cambiarTab(1)" type="button">
+          <i class="bx bx-users me-2"></i> Usuarios Aprobadores
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="tabActiva === 2" (click)="cambiarTab(2)" type="button">
+          <i class="bx bx-sitemap me-2"></i> Flujos de Aprobación
+        </button>
+      </li>
+    </ul> -->
 
-    <!-- TAB 1: OC PENDIENTES -->
-    <div class="tab-content" *ngIf="tabActiva === 0">
+    <!-- TAB 0: OC PENDIENTES -->
+    <div class="tab-content p-3" *ngIf="tabActiva === 0">
 
-      <!-- MINI TABS: PENDIENTES / APROBADAS / RECHAZADAS -->
-      <div class="vista-tabs" style="display:flex;gap:8px;margin-bottom:16px;">
-        <button
-          class="btn"
-          [class.btn-warning]="tabVistaActiva === 'PENDIENTES'"
-          [class.btn-outline-secondary]="tabVistaActiva !== 'PENDIENTES'"
-          (click)="cambiarVista('PENDIENTES')">
-          <i class="bx bx-time"></i> Pendientes
-        </button>
-        <button
-          class="btn"
-          [class.btn-success]="tabVistaActiva === 'APROBADAS'"
-          [class.btn-outline-secondary]="tabVistaActiva !== 'APROBADAS'"
-          (click)="cambiarVista('APROBADAS')">
-          <i class="bx bx-check-circle"></i> Aprobadas
-        </button>
-        <button
-          class="btn"
-          [class.btn-danger]="tabVistaActiva === 'RECHAZADAS'"
-          [class.btn-outline-secondary]="tabVistaActiva !== 'RECHAZADAS'"
-          (click)="cambiarVista('RECHAZADAS')">
-          <i class="bx bx-x-circle"></i> Rechazadas
-        </button>
-      </div>
+      <!-- TABS: Pendientes / Aprobadas / Rechazadas -->
+      <ul class="nav custom-tabs mb-3">
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="tabVistaActiva === 'PENDIENTES'" (click)="cambiarVista('PENDIENTES')" type="button">
+            <i class="bx bx-time me-2"></i> Pendientes
+            <span class="tab-badge ms-1">{{ contadores.totalPendientes }}</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="tabVistaActiva === 'APROBADAS'" (click)="cambiarVista('APROBADAS')" type="button">
+            <i class="bx bx-check-circle me-2"></i> Aprobadas
+            <span class="tab-badge ms-1">{{ contadores.totalAprobadas }}</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="tabVistaActiva === 'RECHAZADAS'" (click)="cambiarVista('RECHAZADAS')" type="button">
+            <i class="bx bx-x-circle me-2"></i> Rechazadas
+            <span class="tab-badge ms-1">{{ contadores.totalRechazadas }}</span>
+          </button>
+        </li>
+      </ul>
 
       <!-- TABLA APROBADAS / RECHAZADAS -->
       @if (tabVistaActiva !== 'PENDIENTES') {

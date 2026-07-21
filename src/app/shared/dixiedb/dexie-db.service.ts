@@ -48,6 +48,9 @@ import {
   DetalleCotizacion,
   Cotizacion,
   Stock,
+  SyncMeta,
+  KardexCache,
+  TransaccionesCache,
   DetalleOrdenCompra,
   Despacho,
   DetalleDespacho,
@@ -130,6 +133,9 @@ export class DexieService extends Dexie {
   public stock!: Dexie.Table<Stock, number>;
   public movimientosStock!: Dexie.Table<MovimientoStock, number>;
   public listasStock!: Dexie.Table<ListaStock, number>;
+  public syncMeta!: Dexie.Table<SyncMeta, number>;
+  public kardexCache!: Dexie.Table<KardexCache, number>;
+  public transaccionesCache!: Dexie.Table<TransaccionesCache, number>;
   public detalleListaStock!: Dexie.Table<DetalleListaStock, number>;
   public despachos!: Dexie.Table<Despacho, number>;
   public detalleDespachos!: Dexie.Table<DetalleDespacho, number>;
@@ -145,7 +151,7 @@ export class DexieService extends Dexie {
   public unidadesMedida!: Dexie.Table<UnidadMedida, number>;
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 40; // Reduced maestroItems index for faster bulkPut
+  private static readonly DB_VERSION = 44; // Added afectoIGV to itemComoditys and detalles
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -169,9 +175,9 @@ export class DexieService extends Dexie {
         acopios: `id,nave,codigoAcopio,acopio`,
         cecos: `id,costcenter,localname,cultivo,conturno,esinversion,estado,ccontable,div`,
         labores: `id,idlabor,idgrupolabor,ceco,labor,estado`,
-        itemComoditys: `id,tipoclasificacion,codigo,descripcion,almacen,um`,
+        itemComoditys: `id,tipoclasificacion,codigo,descripcion,almacen,um,afectoIGV`,
         clasificaciones: `id,idclasificacion,descripcion_clasificacion,tipoClasificacion`,
-        detalles: `++id,idOriginal,idrequerimiento,codigo,descripcion,producto,cantidad,proyecto,ceco,turno,labor,esActivoFijo,activoFijo,estado,atendida`,
+        detalles: `++id,idOriginal,idrequerimiento,codigo,descripcion,producto,cantidad,proyecto,ceco,turno,labor,esActivoFijo,activoFijo,afectoIGV,estado,atendida`,
         requerimientos: `++id,idrequerimiento,fecha,idfundo,idarea,idalmacen,estados,estado,tipo,idproyecto,glosa,detalle,despachado,prioridad`,
         items: `id,tipoclasificacion,codigo,descripcion`,
         comodities: `id,tipoclasificacion,codigo,descripcion`,
@@ -203,9 +209,12 @@ export class DexieService extends Dexie {
         detalleCotizacion: `++id,cotizacionId,codigo,descripcion,cantidad,precioUnitario,total`,
         ordenesCompra: `++id,numeroOrden,solicitudCompraId,proveedor,fecha,estado,montoTotal`,
         detalleOrdenCompra: `++id,ordenCompraId,codigo,descripcion,cantidad,cantidadRecibida,estado`,
-        stock: `++id,[codigo+almacen],codigo,almacen,cantidad`,
+        stock: `++id,[companiaSocio+codigo+almacen],companiaSocio,[codigo+almacen],codigo,almacen,cantidad`,
         movimientosStock: `++id,fecha,tipo,codigo,almacenOrigen,almacenDestino,cantidad,usuario`,
         listasStock: `++id,nombre,almacen,fecha,estado,usuarioCreador`,
+        syncMeta: `++id,clave,fechaSync,hash,cantidadRegistros`,
+        kardexCache: `++id,clave,companiaSocio,fechaSync,cantidadRegistros`,
+        transaccionesCache: `++id,clave,companiaSocio,fechaSync,cantidadRegistros`,
         detalleListaStock: `++id,listaStockId,codigo,descripcion,stockActual,estado`,
         despachos: `++id,numeroDespacho,fecha,estado,usuarioSolicita,almacen,tipo`,
         detalleDespachos: `++id,despachoId,codigo,descripcion,cantidad,estado`,
@@ -228,15 +237,39 @@ export class DexieService extends Dexie {
       }).upgrade(async (tx) => {
         // Migración versión 38: Convertir estado a estadoItem en detalleRecepciones
         const detalleRecepciones = tx.table('detalleRecepciones');
-        const detalles = await detalleRecepciones.toArray();
-        
-        for (const det of detalles) {
+        const detallesRecepcion = await detalleRecepciones.toArray();
+
+        for (const det of detallesRecepcion) {
           if (det.estado && !det.estadoItem) {
             await detalleRecepciones.update(det.id, { estadoItem: det.estado });
           }
         }
-        
-        console.log(`✅ Migración v38: ${detalles.length} detalles de recepción migrados de estado a estadoItem`);
+
+        console.log(`✅ Migración v38: ${detallesRecepcion.length} detalles de recepción migrados de estado a estadoItem`);
+
+        // Migración versión 43: Asignar afectoIGV default 'S' a detalles existentes
+        const detalles = tx.table('detalles');
+        const detallesReq = await detalles.toArray();
+
+        for (const det of detallesReq) {
+          if (!det.afectoIGV) {
+            await detalles.update(det.id, { afectoIGV: 'S' });
+          }
+        }
+
+        console.log(`✅ Migración v43: ${detallesReq.length} detalles de requerimiento migrados con afectoIGV default S`);
+
+        // Migración versión 43: Asignar afectoIGV default 'S' a items del catálogo existentes
+        const itemComoditys = tx.table('itemComoditys');
+        const itemsCat = await itemComoditys.toArray();
+
+        for (const it of itemsCat) {
+          if (!it.afectoIGV) {
+            await itemComoditys.update(it.id, { afectoIGV: 'S' });
+          }
+        }
+
+        console.log(`✅ Migración v43: ${itemsCat.length} items del catálogo migrados con afectoIGV default S`);
       });
 
       this.usuario = this.table('usuario');
@@ -290,6 +323,9 @@ export class DexieService extends Dexie {
       this.stock = this.table('stock');
       this.movimientosStock = this.table('movimientosStock');
       this.listasStock = this.table('listasStock');
+      this.syncMeta = this.table('syncMeta');
+      this.kardexCache = this.table('kardexCache');
+      this.transaccionesCache = this.table('transaccionesCache');
       this.detalleListaStock = this.table('detalleListaStock');
       this.despachos = this.table('despachos');
       this.detalleDespachos = this.table('detalleDespachos');
@@ -1053,6 +1089,20 @@ export class DexieService extends Dexie {
   async showStock() {
     return await this.stock.toArray();
   }
+  async showStockPorCompanias(companiasSocios: string[]) {
+    if (!companiasSocios.length) return [];
+    return await this.stock.where('companiaSocio').anyOf(companiasSocios).toArray();
+  }
+  async replaceStocksPorCompanias(companiasSocios: string[], stocks: Stock[]) {
+    await this.transaction('rw', this.stock, async () => {
+      if (companiasSocios.length) {
+        await this.stock.where('companiaSocio').anyOf(companiasSocios).delete();
+      }
+      if (stocks.length) {
+        await this.stock.bulkPut(stocks);
+      }
+    });
+  }
   async showStockByAlmacen(almacen: string) {
     return await this.stock.where('almacen').equals(almacen).toArray();
   }
@@ -1070,6 +1120,20 @@ export class DexieService extends Dexie {
   async clearStock() {
     await this.stock.clear();
   }
+  //--------------------- Sincronización de cache ---------------------
+  async saveSyncMeta(meta: SyncMeta) {
+    const existente = await this.syncMeta.where('clave').equals(meta.clave).first();
+    if (existente?.id) {
+      meta.id = existente.id;
+    }
+    return await this.syncMeta.put(meta);
+  }
+  async getSyncMeta(clave: string) {
+    return await this.syncMeta.where('clave').equals(clave).first();
+  }
+  async deleteSyncMeta(clave: string) {
+    await this.syncMeta.where('clave').equals(clave).delete();
+  }
   //--------------------- Movimientos de Stock ---------------------
   async saveMovimientoStock(movimiento: MovimientoStock) {
     return await this.movimientosStock.put(movimiento);
@@ -1079,6 +1143,40 @@ export class DexieService extends Dexie {
   }
   async clearMovimientosStock() {
     await this.movimientosStock.clear();
+  }
+  //--------------------- Cache de Kardex ---------------------
+  async saveKardexCache(cache: KardexCache) {
+    const existente = await this.kardexCache.where('clave').equals(cache.clave).first();
+    if (existente?.id) {
+      cache.id = existente.id;
+    }
+    return await this.kardexCache.put(cache);
+  }
+  async getKardexCache(clave: string) {
+    return await this.kardexCache.where('clave').equals(clave).first();
+  }
+  async deleteKardexCache(clave: string) {
+    await this.kardexCache.where('clave').equals(clave).delete();
+  }
+  async clearKardexCache() {
+    await this.kardexCache.clear();
+  }
+  //--------------------- Cache de Transacciones ---------------------
+  async saveTransaccionesCache(cache: TransaccionesCache) {
+    const existente = await this.transaccionesCache.where('clave').equals(cache.clave).first();
+    if (existente?.id) {
+      cache.id = existente.id;
+    }
+    return await this.transaccionesCache.put(cache);
+  }
+  async getTransaccionesCache(clave: string) {
+    return await this.transaccionesCache.where('clave').equals(clave).first();
+  }
+  async deleteTransaccionesCache(clave: string) {
+    await this.transaccionesCache.where('clave').equals(clave).delete();
+  }
+  async clearTransaccionesCache() {
+    await this.transaccionesCache.clear();
   }
   //--------------------- Listas de Stock ---------------------
   async saveListaStock(lista: ListaStock) {

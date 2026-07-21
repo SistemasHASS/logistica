@@ -39,7 +39,7 @@
       </div>
     </div>
 
-    <div class="stat-card info">
+    <!-- <div class="stat-card info">
       <div class="stat-icon">
         <i class="bx bx-error-circle"></i>
       </div>
@@ -47,187 +47,234 @@
         <span class="stat-value">{{ contadores.totalVencidas }}</span>
         <span class="stat-label">Vencidas</span>
       </div>
-    </div>
+    </div> -->
   </div>
 
   <!-- Tabs -->
   <div class="tabs-container">
-    <div class="tabs-header">
+    <!-- <div class="tabs-header">
       <button class="tab-button" [class.active]="tabActiva === 0" (click)="tabActiva = 0">
         <i class="bx bx-time"></i>
         <span>Órdenes Pendientes</span>
       </button>
-      <!-- <button class="tab-button" [class.active]="tabActiva === 1" (click)="tabActiva = 1">
-        <i class="bx bx-history"></i>
-        <span>Historial de Aprobaciones</span>
-      </button>
-      <button class="tab-button" [class.active]="tabActiva === 2" (click)="tabActiva = 2">
-        <i class="bx bx-user-check"></i>
-        <span>Usuarios Aprobadores</span>
-      </button>
-      <button class="tab-button" [class.active]="tabActiva === 3" (click)="tabActiva = 3">
-        <i class="bx bx-sitemap"></i>
-        <span>Flujos de Aprobación</span>
-      </button> -->
-    </div>
+    </div> -->
 
     <div class="tabs-content">
-    <!-- Tab 1: Órdenes Pendientes -->
-    <div class="tab-pane fade" [class.show]="tabActiva === 0" [class.active]="tabActiva === 0" id="tab-pendientes">
-      <div class="filters-section">
-        <div class="filters-grid">
-          <div class="filter-group">
-            <label>Estado</label>
-            <p-select
-              [options]="opcionesEstado"
-              [(ngModel)]="filtroEstado"
-              name="filtroEstado"
-              optionLabel="label"
-              optionValue="value"
-              (onChange)="aplicarFiltros()"
-              placeholder="Seleccione estado"
-            ></p-select>
+      <!-- Tab 1: Órdenes de Servicio -->
+      <div class="tab-pane fade" [class.show]="tabActiva === 0" [class.active]="tabActiva === 0" id="tab-pendientes">
+
+        <!-- TABS: Pendientes / Aprobadas / Rechazadas -->
+        <ul class="nav custom-tabs mb-3">
+          <li class="nav-item">
+            <button class="nav-link" [class.active]="tabVistaActiva === 'PENDIENTES'" (click)="cambiarVista('PENDIENTES')" type="button">
+              <i class="bx bx-time me-2"></i> Pendientes
+              <span class="tab-badge ms-1">{{ contadores.totalPendientes }}</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" [class.active]="tabVistaActiva === 'APROBADAS'" (click)="cambiarVista('APROBADAS')" type="button">
+              <i class="bx bx-check-circle me-2"></i> Aprobadas
+              <span class="tab-badge ms-1">{{ contadores.totalAprobadas }}</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" [class.active]="tabVistaActiva === 'RECHAZADAS'" (click)="cambiarVista('RECHAZADAS')" type="button">
+              <i class="bx bx-x-circle me-2"></i> Rechazadas
+              <span class="tab-badge ms-1">{{ contadores.totalRechazadas }}</span>
+            </button>
+          </li>
+        </ul>
+
+        <!-- TABLA APROBADAS / RECHAZADAS -->
+        @if (tabVistaActiva !== 'PENDIENTES') {
+          <p-table
+            [value]="osAprobadas"
+            [rows]="rows"
+            [rowsPerPageOptions]="rowsPerPageOptions"
+            [paginator]="true"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+            [tableStyle]="{'min-width': '100%'}"
+            styleClass="p-datatable-striped">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>N° Orden</th>
+                <th>Proveedor</th>
+                <th>Descripción</th>
+                <th>Monto Total</th>
+                <th>Estado</th>
+                <th>Fecha Acción</th>
+                <th>Acciones</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-os>
+              <tr>
+                <td><strong>{{ os.numeroOrden }}</strong></td>
+                <td>{{ os.nombreProveedor }}</td>
+                <td>{{ os.descripcion }}</td>
+                <td class="text-right">
+                  <strong>{{ formatearMoneda(os.montoTotal) }}</strong>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="obtenerClaseEstado(os.estado)">
+                    {{ os.estado }}
+                  </span>
+                </td>
+                <td>{{ (os.fechaAccion || os.FechaAccion) ? formatearFecha(os.fechaAccion || os.FechaAccion) : '-' }}</td>
+                <td style="display:flex;gap:4px;">
+                  <button class="btn btn-sm btn-info" (click)="verDetalleOS(os)" title="Ver Detalle">
+                    <i class="bx bx-show"></i>
+                  </button>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="7" class="text-center">
+                  <p class="no-data">No hay órdenes {{ tabVistaActiva === 'APROBADAS' ? 'aprobadas' : 'rechazadas' }}.</p>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        }
+
+        <!-- FILTROS (solo para pendientes) -->
+        @if (tabVistaActiva === 'PENDIENTES') {
+          <div class="filters-section">
+            <div class="filters-grid">
+              <div class="filter-group">
+                <label>Proveedor:</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="filtroProveedor"
+                  (ngModelChange)="aplicarFiltros()"
+                  placeholder="Buscar por proveedor...">
+              </div>
+
+              <div class="filter-group">
+                <label>Fecha Desde:</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  [(ngModel)]="filtroFechaInicio"
+                  (ngModelChange)="aplicarFiltros()">
+              </div>
+
+              <div class="filter-group">
+                <label>Fecha Hasta:</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  [(ngModel)]="filtroFechaFin"
+                  (ngModelChange)="aplicarFiltros()">
+              </div>
+
+              <div class="filter-group">
+                <button class="btn btn-secondary" (click)="limpiarFiltros()">
+                  <i class="bx bx-x"></i> Limpiar Filtros
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div class="filter-group">
-            <label>Proveedor</label>
-            <input
-              type="text"
-              pInputText
-              [(ngModel)]="filtroProveedor"
-              name="filtroProveedor"
-              (input)="aplicarFiltros()"
-              placeholder="Buscar por proveedor"
-            />
-          </div>
-
-          <div class="filter-group">
-            <label>Fecha Inicio</label>
-            <input
-              type="date"
-              pInputText
-              [(ngModel)]="filtroFechaInicio"
-              name="filtroFechaInicio"
-              (change)="aplicarFiltros()"
-            />
-          </div>
-
-          <div class="filter-group">
-            <label>Fecha Fin</label>
-            <input
-              type="date"
-              pInputText
-              [(ngModel)]="filtroFechaFin"
-              name="filtroFechaFin"
-              (change)="aplicarFiltros()"
-            />
-          </div>
-
-          <div class="filter-group filter-actions">
-            <button
-              pButton
-              type="button"
-              label="Limpiar Filtros"
-              icon="pi pi-filter-slash"
-              class="p-button-outlined"
-              (click)="limpiarFiltros()"
-            ></button>
-          </div>
-        </div>
+          <!-- TABLA OS PENDIENTES -->
+          <p-table
+            [value]="osPendientesFiltradas"
+            [rows]="rows"
+            [rowsPerPageOptions]="rowsPerPageOptions"
+            [paginator]="true"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+            [tableStyle]="{'min-width': '100%'}"
+            styleClass="p-datatable-striped">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>N° Orden</th>
+                <th>Proveedor</th>
+                <th>Descripción</th>
+                <th>Monto Total</th>
+                <th>Nivel</th>
+                <th>Estado</th>
+                <th>Fecha Generación</th>
+                <th>Acciones</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-os>
+              <tr>
+                <td>{{ os.numeroOrden }}</td>
+                <td>
+                  <div>{{ os.nombreProveedor }}</div>
+                  <small class="text-muted">{{ os.proveedor }}</small>
+                </td>
+                <td>{{ os.descripcion }}</td>
+                <td class="text-right">
+                  <strong>{{ formatearMoneda(os.montoTotal) }}</strong>
+                </td>
+                <td>
+                  <span class="nivel-badge">Nivel {{ os.nivel }}</span>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="obtenerClaseEstado(os.estado)">
+                    {{ os.estado }}
+                  </span>
+                </td>
+                <td>{{ formatearFecha(os.fechaGeneracion) }}</td>
+                <td>
+                  <div class="acciones-buttons">
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-eye"
+                      class="p-button-rounded p-button-info p-button-sm"
+                      pTooltip="Ver Detalle"
+                      (click)="verDetalleOS(os)"
+                    ></button>
+                    @if (puedeAprobar) {
+                      <button
+                        pButton
+                        type="button"
+                        icon="pi pi-check"
+                        class="p-button-rounded p-button-success p-button-sm"
+                        pTooltip="Aprobar"
+                        (click)="abrirModalAprobacion(os, 'APROBAR')"
+                        [disabled]="os.estado !== 'PENDIENTE' && os.estado !== 'PENDIENTE_APROBACION'"
+                      ></button>
+                      <button
+                        pButton
+                        type="button"
+                        icon="pi pi-times"
+                        class="p-button-rounded p-button-danger p-button-sm"
+                        pTooltip="Rechazar"
+                        (click)="abrirModalAprobacion(os, 'RECHAZAR')"
+                        [disabled]="os.estado !== 'PENDIENTE' && os.estado !== 'PENDIENTE_APROBACION'"
+                      ></button>
+                      <button
+                        pButton
+                        type="button"
+                        icon="pi pi-ban"
+                        class="p-button-rounded p-button-warning p-button-sm"
+                        pTooltip="Anular (libera consolidación)"
+                        (click)="anularOS(os)"
+                        [disabled]="os.estado !== 'PENDIENTE' && os.estado !== 'PENDIENTE_APROBACION'"
+                      ></button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="8" class="text-center">
+                  <p class="no-data">No hay órdenes de servicio pendientes.</p>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        } <!-- fin @if tabVistaActiva === 'PENDIENTES' -->
       </div>
 
-      <p-table
-        [value]="osPendientesFiltradas"
-        [paginator]="true"
-        [rows]="10"
-        [showCurrentPageReport]="true"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} órdenes"
-        [rowsPerPageOptions]="[10, 25, 50]"
-        styleClass="p-datatable-sm"
-        [responsiveLayout]="'scroll'"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th>N° Orden</th>
-            <th>Proveedor</th>
-            <th>Descripción</th>
-            <th>Monto Total</th>
-            <th>Nivel</th>
-            <th>Estado</th>
-            <th>Fecha Generación</th>
-            <th>Acciones</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-os>
-          <tr>
-            <td>{{ os.numeroOrden }}</td>
-            <td>{{ os.nombreProveedor }}</td>
-            <td>{{ os.descripcion }}</td>
-            <td>{{ formatearMoneda(os.montoTotal) }}</td>
-            <td>
-              <span class="nivel-badge">Nivel {{ os.nivel }}</span>
-            </td>
-            <td>
-              <p-tag
-                [value]="os.estado"
-                [severity]="getEstadoSeverity(os.estado)"
-              ></p-tag>
-            </td>
-            <td>{{ formatearFecha(os.fechaGeneracion) }}</td>
-            <td>
-              <div class="acciones-buttons">
-                <button
-                  pButton
-                  type="button"
-                  icon="pi pi-eye"
-                  class="p-button-rounded p-button-info p-button-sm"
-                  pTooltip="Ver Detalle"
-                  (click)="verDetalleOS(os)"
-                ></button>
-                @if (puedeAprobar) {
-                  <button
-                    pButton
-                    type="button"
-                    icon="pi pi-check"
-                    class="p-button-rounded p-button-success p-button-sm"
-                    pTooltip="Aprobar"
-                    (click)="abrirModalAprobacion(os, 'APROBAR')"
-                    [disabled]="os.estado !== 'PENDIENTE'"
-                  ></button>
-                  <button
-                    pButton
-                    type="button"
-                    icon="pi pi-times"
-                    class="p-button-rounded p-button-danger p-button-sm"
-                    pTooltip="Rechazar"
-                    (click)="abrirModalAprobacion(os, 'RECHAZAR')"
-                    [disabled]="os.estado !== 'PENDIENTE'"
-                  ></button>
-                  <button
-                    pButton
-                    type="button"
-                    icon="pi pi-ban"
-                    class="p-button-rounded p-button-warning p-button-sm"
-                    pTooltip="Anular (libera consolidación)"
-                    (click)="anularOS(os)"
-                    [disabled]="os.estado === 'ANULADA'"
-                  ></button>
-                }
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="8" class="text-center">
-              No hay órdenes de servicio pendientes
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </div>
-
-    <!-- Tab 2: Historial de Aprobaciones -->
+      <!-- Tab 2: Historial de Aprobaciones -->
     <div class="tab-pane" [class.show]="tabActiva === 1" [class.active]="tabActiva === 1" id="tab-historial">
       <p-table
         [value]="historialAprobaciones"

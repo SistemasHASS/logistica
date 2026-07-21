@@ -9,6 +9,7 @@ import { PrioridadRequerimientoService } from '@/app/shared/services/prioridad-r
 import { RequerimientoActivoFijo, DetalleRequerimientoActivoFijo } from '@/app/shared/interfaces/Tables';
 import { PrioridadSpring } from '@/app/shared/interfaces/PrioridadRequerimiento';
 import { RequerimientosMaestrasService } from './requerimientos-maestras.service';
+import { RequerimientosSyncService } from './requerimientos-sync.service';
 
 @Injectable({ providedIn: 'root' })
 export class RequerimientosActivoFijoService {
@@ -43,6 +44,7 @@ export class RequerimientosActivoFijoService {
     private aprobacionesAreaService: AprobacionesAreaService,
     public prioridadService: PrioridadRequerimientoService,
     private maestras: RequerimientosMaestrasService,
+    private syncService: RequerimientosSyncService,
   ) {}
 
   itemTipoSeleccionado: 'CONSUMO' | 'COMPRA' = 'COMPRA';
@@ -67,7 +69,9 @@ export class RequerimientosActivoFijoService {
   async cargar() {
     const todos = await this.dexieService.showRequerimientoActivoFijo();
     this.requerimientosActivoFijo = todos.filter(
-      (r: any) => r.nrodocumento === this.maestras.usuario?.documentoidentidad,
+      (r: any) =>
+        r.nrodocumento === this.maestras.usuario?.documentoidentidad &&
+        !this.syncService.debeOcultar(r.estados),
     );
     // Inferir servicio para filas con servicio vacío usando el primer detalle
     const faltan = this.requerimientosActivoFijo.some((r: any) => !r.servicio && (r.detalle?.length || r.detalleActivoFijo?.length));

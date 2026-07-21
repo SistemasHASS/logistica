@@ -124,47 +124,6 @@
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-
-  .tabs-header {
-    display: flex;
-    border-bottom: 2px solid #ecf0f1;
-    background: #f8f9fa;
-
-    .tab-button {
-      flex: 1;
-      padding: 15px 20px;
-      background: transparent;
-      border: none;
-      font-size: 16px;
-      font-weight: 500;
-      color: #7f8c8d;
-      cursor: pointer;
-      transition: all 0.3s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-
-      i {
-        font-size: 20px;
-      }
-
-      &:hover {
-        background: #e8eaed;
-        color: #2c3e50;
-      }
-
-      &.active {
-        background: white;
-        color: #3498db;
-        border-bottom: 3px solid #3498db;
-      }
-    }
-  }
-
-  .tab-content {
-    padding: 25px;
-  }
 }
 
 .filters-section {

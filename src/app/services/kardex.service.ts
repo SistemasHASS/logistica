@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '@/environments/environment';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -41,7 +41,7 @@ export class KardexService {
   async listarTransacciones(filtros: any = {}): Promise<any[]> {
     try {
       const response = await firstValueFrom(
-        this.http.post<any>(`${this.baseUrl}/listar-transacciones`, filtros)
+        this.http.post<any>(`${this.baseUrl}/listar-transacciones`, filtros).pipe(timeout(45000))
       );
       return Array.isArray(response) ? response : [];
     } catch (error) {

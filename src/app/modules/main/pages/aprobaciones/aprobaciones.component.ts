@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 import { UtilsService } from '@/app/shared/utils/utils.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
+import { RequerimientosSyncService } from '@/app/modules/main/pages/requerimientos/services/requerimientos-sync.service';
 import { ItemService } from '@/app/modules/main/services/items.service';
 import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import { Usuario } from '@/app/shared/interfaces/Tables';
@@ -88,6 +89,7 @@ export class AprobacionesComponent {
     private dexieService: DexieService,
     private alertService: AlertService,
     private requerimientosService: RequerimientosService,
+    private syncService: RequerimientosSyncService,
     private maestrasService: MaestrasService,
     private ItemService: ItemService,
   ) { }
@@ -742,7 +744,7 @@ export class AprobacionesComponent {
               Estado: 'PE',
               UltimoUsuario: 'MISESF',
               UltimaFechaModif: new Date().toISOString(),
-              IGVExoneradoFlag: 'N',
+              IGVExoneradoFlag: d.afectoIGV === 'N' ? 'S' : 'N',
               GenerarContratoFlag: 'N',
               origen: origenapp,
             };
@@ -965,6 +967,7 @@ export class AprobacionesComponent {
             req.fechaAprobacion = new Date().toISOString();
 
             await this.dexieService.saveRequerimiento(req);
+            await this.syncService.marcarAprobadoLocalmente(req.idrequerimiento);
             this.quitarDeLista(req.idrequerimiento, tipo);
             this.cargarRequerimientos();
             await this.sincronizaRequerimientoSPRING(req);
@@ -1085,6 +1088,7 @@ export class AprobacionesComponent {
               req.usuarioAprueba = this.usuario.usuario;
               req.fechaAprobacion = new Date().toISOString();
               await this.dexieService.saveRequerimiento(req);
+              await this.syncService.marcarAprobadoLocalmente(req.idrequerimiento);
               await this.sincronizaRequerimientoSPRING(req);
             }
 
@@ -1102,6 +1106,7 @@ export class AprobacionesComponent {
   async aprobarSimple(req: any) {
     req.estados = 'APROBADO';
     await this.dexieService.requerimientos.put(req);
+    await this.syncService.marcarAprobadoLocalmente(req.idrequerimiento);
     this.alertService.showAlert(
       'Aprobado',
       'Requerimiento aprobado correctamente',
@@ -1218,7 +1223,8 @@ export class AprobacionesComponent {
               req.usuarioAprueba = this.usuario.usuario;
               req.fechaAprobacion = new Date().toISOString();
               await this.dexieService.saveRequerimiento(req);
-              
+              await this.syncService.marcarAprobadoLocalmente(req.idrequerimiento);
+
               // 🔥 Enviar a SPRING sin confirmación adicional
               await this.sincronizaRequerimientoSPRING(req, true);
               enviados++;

@@ -14,6 +14,7 @@ import {
 import { PrioridadSpring, TipoRequerimiento } from '@/app/shared/interfaces/PrioridadRequerimiento';
 import { RequerimientosMaestrasService } from './requerimientos-maestras.service';
 import { TransferenciaService } from '@/app/modules/main/services/transferencia.service';
+import { RequerimientosSyncService } from './requerimientos-sync.service';
 
 @Injectable({ providedIn: 'root' })
 export class RequerimientosItemService {
@@ -79,6 +80,7 @@ export class RequerimientosItemService {
     public prioridadService: PrioridadRequerimientoService,
     private maestras: RequerimientosMaestrasService,
     private transferenciaService: TransferenciaService,
+    private syncService: RequerimientosSyncService,
   ) {}
 
   get usuario() { return this.maestras.usuario; }
@@ -97,7 +99,7 @@ export class RequerimientosItemService {
     return {
       idrequerimiento: '', codigo: '', producto: null, descripcion: '', cantidad: 0,
       unidadMedida: '', proyecto: '', ceco: '', turno: '', labor: '',
-      esActivoFijo: false, activoFijo: '', estado: 0,
+      esActivoFijo: false, activoFijo: '', afectoIGV: 'S', estado: 0,
     };
   }
 
@@ -105,7 +107,9 @@ export class RequerimientosItemService {
   async cargar() {
     const todos = await this.dexieService.showRequerimiento();
     this.requerimientos = todos.filter(
-      (r: any) => r.nrodocumento === this.maestras.usuario?.documentoidentidad,
+      (r: any) =>
+        r.nrodocumento === this.maestras.usuario?.documentoidentidad &&
+        !this.syncService.debeOcultar(r.estados),
     );
     this.ordenar();
     this.contarContadores();
@@ -143,7 +147,12 @@ export class RequerimientosItemService {
     requerimientosActivoFijo: any[];
     requerimientosActivoFijoMenor: any[];
   }> {
-    const filtrar = (lista: any[]) => lista.filter((r: any) => r.nrodocumento === nrodocumento);
+    const filtrar = (lista: any[]) =>
+      lista.filter(
+        (r: any) =>
+          r.nrodocumento === nrodocumento &&
+          !this.syncService.debeOcultar(r.estados),
+      );
     const items = filtrar(await this.dexieService.showRequerimiento());
     this.ordenarLista(items);
     const commodity = filtrar(await this.dexieService.showRequerimientoCommodity());
@@ -455,7 +464,7 @@ export class RequerimientosItemService {
         ceco: this.maestras.cecoSeleccionado?.localname ?? '',
         turno: this.TipoSelecionado === 'COMPRA' ? '' : (this.maestras.turnoSeleccionado ?? ''),
         labor: this.maestras.laborSeleccionado?.labor ?? '',
-        esActivoFijo: false, activoFijo: '',
+        esActivoFijo: false, activoFijo: '', afectoIGV: 'S',
       };
     }
     this.modalAbierto = true;
@@ -591,10 +600,14 @@ export class RequerimientosItemService {
   actualizarUnidadMedidaDesdeProducto() {
     const producto = this.lineaTemp?.producto;
     if (producto) {
-      const unidadMedida = this.maestras.obtenerUnidadMedidaProducto(producto);
+      const codigo = typeof producto === 'string' ? producto : (producto?.codigo ?? '');
+      const codigoItem = codigo || this.lineaTemp?.codigo || '';
+      const item = this.maestras.items.find((i: any) => i.codigo === codigoItem || i.id === producto || i.descripcion === producto);
+      const unidadMedida = item?.um || item?.unidadMedida || this.maestras.obtenerUnidadMedidaProducto(producto);
       this.lineaTemp.unidadMedida = unidadMedida;
       this.maestras.unidadesMedidaFiltradas = [{ label: unidadMedida, value: unidadMedida }];
-      this.consultarStockItem(producto);
+      this.lineaTemp.afectoIGV = item?.afectoIGV === 'N' ? 'N' : 'S';
+      this.consultarStockItem(codigoItem || producto);
     }
   }
 
@@ -753,6 +766,7 @@ export class RequerimientosItemService {
             idproducto: d.producto || '', iddescripcion: d.descripcion || '',
             idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
             idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
+            afectoIGV: d.afectoIGV === 'N' ? 'N' : 'S',
           })),
         };
         const resp = await this.transferenciaService.crearRequerimientoTransferencia(payloadTransf);
@@ -787,6 +801,7 @@ export class RequerimientosItemService {
         idproducto: d.producto || '', iddescripcion: d.descripcion || '',
         idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
         idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
+        afectoIGV: d.afectoIGV === 'N' ? 'N' : 'S',
       })),
     }];
     this.requerimientosService.registrarRequerimientos(payload).subscribe({
@@ -831,6 +846,7 @@ export class RequerimientosItemService {
         idproducto: d.producto || '', iddescripcion: d.descripcion || '',
         idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
         idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
+        afectoIGV: d.afectoIGV === 'N' ? 'N' : 'S',
       })),
     }));
     try {
@@ -1095,6 +1111,7 @@ export class RequerimientosItemService {
       } else {
         row.descripcion = item.descripcion;
         row.unidadMedida = item.um || row.unidadMedida;
+        row.afectoIGV = item.afectoIGV === 'N' ? 'N' : 'S';
       }
     }
     if (!row.cantidad || row.cantidad <= 0) row.errores.push({ columna: 'Cantidad', mensaje: 'Debe ser mayor a 0' });
@@ -1125,6 +1142,7 @@ export class RequerimientosItemService {
       } else {
         row.descripcion = item.descripcion;
         row.unidadMedida = item.um || row.unidadMedida;
+        row.afectoIGV = item.afectoIGV === 'N' ? 'N' : 'S';
       }
     }
     if (!row.cantidad || row.cantidad <= 0) {
@@ -1213,6 +1231,7 @@ export class RequerimientosItemService {
         proyecto: proyecto || (this.maestras.proyectoSeleccionado as any)?.proyectoio || '',
         labor: laborRaw || (this.maestras.laborSeleccionado?.labor ?? ''),
         activofijo: '',
+        afectoIGV: itemEncontrado?.afectoIGV === 'N' ? 'N' : 'S',
         errores: [],
         error: false,
       };
@@ -1308,6 +1327,7 @@ export class RequerimientosItemService {
         proyecto: proyecto || (this.maestras.proyectoSeleccionado as any)?.proyectoio || '',
         ceco: ceco || (this.maestras.cecoSeleccionado as any)?.localname || '',
         labor: this.maestras.laborSeleccionado?.labor ?? '',
+        afectoIGV: itemEncontrado?.afectoIGV === 'N' ? 'N' : 'S',
         errores: [],
         error: false,
       };
@@ -1347,6 +1367,7 @@ export class RequerimientosItemService {
       labor: l.labor || (this.maestras.laborSeleccionado?.labor ?? ''),
       esActivoFijo: false,
       activoFijo: l.activofijo,
+      afectoIGV: l.afectoIGV === 'N' ? 'N' : 'S',
       estado: 0,
     }));
     this.detalles.push(...nuevos);
@@ -1392,6 +1413,7 @@ export class RequerimientosItemService {
       labor: this.lineaTemp.labor,
       esActivoFijo: this.lineaTemp.esActivoFijo,
       activoFijo: this.lineaTemp.activoFijo,
+      afectoIGV: this.lineaTemp.afectoIGV === 'N' ? 'N' : 'S',
       estado: 0,
     };
     if (this.editIndex >= 0) {
@@ -1428,6 +1450,7 @@ export class RequerimientosItemService {
       proyecto, ceco, turno, labor,
       esActivoFijo: this.lineaTemp.esActivoFijo || false,
       activoFijo: this.lineaTemp.activoFijo || '',
+      afectoIGV: this.lineaTemp.afectoIGV === 'N' ? 'N' : 'S',
       estado: 0,
       stockDisponible: this.stockActualLineaTemp,
     };
@@ -1447,6 +1470,7 @@ export class RequerimientosItemService {
       unidadMedida: '',
       esActivoFijo: false,
       activoFijo: '',
+      afectoIGV: 'S',
     };
   }
 
@@ -1626,7 +1650,7 @@ export class RequerimientosItemService {
               Estado: 'PE',
               UltimoUsuario: 'MISESF',
               UltimaFechaModif: new Date().toISOString(),
-              IGVExoneradoFlag: 'N',
+              IGVExoneradoFlag: d.afectoIGV === 'N' ? 'S' : 'N',
               GenerarContratoFlag: 'N',
               origen: 'app_logistica',
             };

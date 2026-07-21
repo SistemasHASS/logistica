@@ -10,23 +10,26 @@
   </div>
 
   <!-- TABS -->
-  <div class="tabs-container">
-    <button 
-      class="tab-button" 
-      [class.active]="!mostrarFormulario"
-      (click)="mostrarFormulario = false">
-      <i class="icon-list"></i> Listado de Recepciones
-    </button>
-    <button 
-      class="tab-button" 
-      [class.active]="mostrarFormulario"
-      (click)="mostrarFormulario = true">
-      <i class="icon-file-text"></i> {{ modoEdicion ? 'Editar' : 'Nueva' }} Recepción
-    </button>
-  </div>
+  <ul class="nav custom-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="tabActiva === 'TODOS'" (click)="cambiarTab('TODOS')" type="button">
+        <i class="bx bx-list-ul me-1"></i> Todos
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="tabActiva === 'PENDIENTES'" (click)="cambiarTab('PENDIENTES')" type="button">
+        <i class="bx bx-time me-1"></i> Pendientes de Recepción
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="tabActiva === 'RECEPCIONADOS'" (click)="cambiarTab('RECEPCIONADOS')" type="button">
+        <i class="bx bx-check-circle me-1"></i> Recepcionados con NI
+      </button>
+    </li>
+  </ul>
 
   <!-- CONTADORES -->
-  <div class="stats-cards" *ngIf="!mostrarFormulario">
+  <!-- <div class="stats-cards" *ngIf="!mostrarFormulario">
     <div class="stat-card warning">
       <div class="stat-icon"><i class="bx-clock"></i></div>
       <div class="stat-content">
@@ -55,12 +58,13 @@
         <span class="stat-label">No Conformes</span>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <!-- LISTADO DE RECEPCIONES -->
   <div class="content-section" *ngIf="!mostrarFormulario">
-    <!-- ÓRDENES PENDIENTES -->
-    <div class="ordenes-section" *ngIf="ordenesCompra.length > 0">
+    <ng-container *ngIf="false">
+      <!-- ÓRDENES PENDIENTES -->
+      <div class="ordenes-section" *ngIf="ordenesCompra.length > 0">
       <h3>Órdenes Pendientes de Recepción</h3>
       <div class="table-wrapper">
         <table class="table">
@@ -117,6 +121,7 @@
         </table>
       </div>
     </div>
+    </ng-container>
 
     <!-- FILTROS -->
     <div class="filters-section">
@@ -149,10 +154,93 @@
       </button>
     </div>
 
-    <!-- TABLA DE RECEPCIONES -->
-    <p-table [value]="recepcionesFiltradas()" [rows]="10" [paginator]="true" [rowsPerPageOptions]="[5,10,20,50]"
+    <!-- TABLA UNIFICADA NUEVA -->
+    <p-table [value]="itemsFiltrados()" [rows]="10" [paginator]="true" [rowsPerPageOptions]="[5,10,20,50]"
              [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
              [tableStyle]="{'min-width': '100%'}" styleClass="p-datatable-striped">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>#</th>
+          <th pSortableColumn="numeroOrdenSpring">Número SPRING <p-sortIcon field="numeroOrdenSpring"></p-sortIcon></th>
+          <th pSortableColumn="numeroOrden">Orden / Recepción <p-sortIcon field="numeroOrden"></p-sortIcon></th>
+          <th pSortableColumn="nombreProveedor">Proveedor <p-sortIcon field="nombreProveedor"></p-sortIcon></th>
+          <th pSortableColumn="fechaEntrega">Fecha Entrega <p-sortIcon field="fechaEntrega"></p-sortIcon></th>
+          <th pSortableColumn="almacen">Almacén <p-sortIcon field="almacen"></p-sortIcon></th>
+          <th>Items</th>
+          <th pSortableColumn="estadoVisual">Estado <p-sortIcon field="estadoVisual"></p-sortIcon></th>
+          <th>Conformidad</th>
+          <th>Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item let-i="rowIndex">
+        <tr>
+          <td>{{ i + 1 }}</td>
+          <td>
+            @if (item.numeroOrdenSpring || item.numeroNI) {
+              <span class="badge" [ngClass]="item.numeroNI ? 'badge-success' : 'badge-primary'" title="Número en SPRING / NI">
+                <i class="bx bx-link"></i> {{ item.numeroOrdenSpring || 'NI-' + item.numeroNI }}
+              </span>
+            } @else {
+              <span class="text-muted">-</span>
+            }
+          </td>
+          <td>
+            <strong>{{ item.numeroOrden || item.numeroRecepcion || '-' }}</strong>
+          </td>
+          <td>
+            <div class="proveedor-info">
+              <strong>{{ item.nombreProveedor || '-' }}</strong>
+            </div>
+          </td>
+          <td>{{ formatearFecha(item.fechaEntrega || item.fecha) }}</td>
+          <td>{{ item.almacen || '-' }}</td>
+          <td class="text-center" [attr.title]="item.itemsTextoDetalle">
+            {{ item.itemsResumen }}
+          </td>
+          <td>
+            <span class="badge" [ngClass]="obtenerClaseEstado(item.estadoVisual)">
+              {{ item.estadoVisual }}
+            </span>
+          </td>
+          <td>
+            @if (item.conformidad !== undefined) {
+              <span class="badge" [ngClass]="item.conformidad ? 'badge-success' : 'badge-danger'">
+                {{ item.conformidad ? 'CONFORME' : 'NO CONFORME' }}
+              </span>
+            } @else {
+              <span class="text-muted">-</span>
+            }
+          </td>
+          <td class="actions">
+            <button class="btn btn-sm" [ngClass]="obtenerClaseBoton(item)" (click)="ejecutarAccion(item)" [title]="obtenerTextoBoton(item)">
+              <i [class]="obtenerIconoBoton(item)"></i> {{ obtenerTextoBoton(item) }}
+            </button>
+            <button class="btn btn-sm btn-info ms-1" (click)="verDetalleDesdeItem(item)" title="Ver Detalle">
+              <i class="icon-eye"></i>
+            </button>
+            <!-- Botón eliminar oculto temporalmente. El flujo correcto en pendientes es recibir, no borrar.
+            <button *ngIf="item.origen === 'recepcion' && item.id" class="btn btn-sm btn-danger ms-1" (click)="eliminarRecepcionDesdeItem(item)" title="Eliminar">
+              <i class="icon-trash"></i>
+            </button>
+            -->
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="10" class="text-center">
+            <p class="no-data">No hay registros para mostrar.</p>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <!-- BLOQUES ANTIGUOS OCULTOS -->
+    <ng-container *ngIf="false">
+      <!-- TABLA DE RECEPCIONES -->
+      <p-table [value]="recepcionesFiltradas()" [rows]="10" [paginator]="true" [rowsPerPageOptions]="[5,10,20,50]"
+               [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+               [tableStyle]="{'min-width': '100%'}" styleClass="p-datatable-striped">
       <ng-template pTemplate="header">
         <tr>
           <!-- <th pSortableColumn="numeroRecepcion">Número Recepción <p-sortIcon field="numeroRecepcion"></p-sortIcon></th> -->
@@ -235,6 +323,7 @@
         </tr>
       </ng-template>
     </p-table>
+    </ng-container>
   </div>
 
   <!-- FORMULARIO DE RECEPCIÓN -->
@@ -441,8 +530,8 @@
         <button class="btn-secondary" (click)="cancelarFormulario()">
           <i class="icon-x"></i> Cancelar
         </button>
-        <button class="btn-primary" (click)="guardarRecepcion()">
-          <i class="icon-save"></i> Guardar Recepción
+        <button class="btn-primary" (click)="guardarRecepcionEIngresar()">
+          <i class="icon-save"></i> Guardar e Ingresar a Almacén
         </button>
       </div>
     </div>

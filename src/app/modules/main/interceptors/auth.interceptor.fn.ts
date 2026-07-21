@@ -28,9 +28,9 @@ export const authInterceptor: HttpInterceptorFn = (
     
     // Manejar si idrol es array o string con múltiples roles
     if (Array.isArray(usuario.idrol)) {
-      backendRole = usuario.idrol[0]; // Tomar el primer rol si es array
-    } else if (typeof usuario.idrol === 'string' && usuario.idrol.includes(',')) {
-      backendRole = usuario.idrol.split(',')[0].trim(); // Tomar el primer rol si hay múltiples
+      backendRole = usuario.idrol.map((rol: unknown) => String(rol).trim()).filter(Boolean).join(',');
+    } else if (typeof usuario.idrol === 'string') {
+      backendRole = usuario.idrol.split(',').map((rol: string) => rol.trim()).filter(Boolean).join(',');
     }
     
     // Para ReingresoController, usar el rol original ya que se agregaron OPLOGIST y LOLOGIST
@@ -43,7 +43,8 @@ export const authInterceptor: HttpInterceptorFn = (
       setHeaders: {
         'X-User-Role': backendRole,
         'X-User-Area': usuario.idarea || '',
-        'X-User-Id': usuario.documentoidentidad || ''
+        'X-User-Id': usuario.documentoidentidad || '',
+        'X-Company-Id': usuario.idempresa || ''
       }
     });
     

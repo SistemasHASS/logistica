@@ -10,6 +10,7 @@ import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { UserService } from '@/app/shared/services/user.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { MaestrasService } from '@/app/modules/main/services/maestras.service';
+import { CommodityService } from '@/app/modules/main/services/commoditys.service';
 import { lastValueFrom } from 'rxjs';
 import {
   Usuario,
@@ -19,6 +20,7 @@ import {
   OrdenServicioConSeguimiento
 } from '@/app/shared/interfaces/Tables';
 import { TableModule } from 'primeng/table';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 
 export interface FilaOSImport {
   grupoOs: string;
@@ -50,7 +52,7 @@ export interface FilaOSImport {
 
 @Component({
   selector: 'app-ordenes-servicio',
-  imports: [CommonModule, FormsModule, TableModule],
+  imports: [CommonModule, FormsModule, TableModule, AutoCompleteModule],
   templateUrl: './ordenes-servicio.component.html',
   styleUrls: ['./ordenes-servicio.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -94,6 +96,7 @@ export class OrdenesServicioComponent implements OnInit {
   mostrarTabDistribucion = false;
   gastosData: any[] = [];
   laborData: any[] = [];
+  cecosData: any[] = [];
 
   // Modal distribución contable
   mostrarModalDistribucion = false;
@@ -131,6 +134,17 @@ export class OrdenesServicioComponent implements OnInit {
   
   solicitudesAprobadas: any[] = [];
   cotizacionesDisponibles: any[] = [];
+  requerimientosServicio: any[] = [];
+
+  // Buscador de proveedores
+  proveedorInput: string = '';
+  proveedoresSugeridos: any[] = [];
+  proveedorSeleccionado: any = null;
+  cargandoProveedores = false;
+
+  // Catálogos de pago
+  formasPago: any[] = [];
+  tiposPago: any[] = [];
 
   conformidad: any = {
     numeroConformidad: '',
@@ -159,6 +173,13 @@ export class OrdenesServicioComponent implements OnInit {
   filtroProveedor = '';
   filtroTipoServicio = '';
   filtroEmpresa = '';
+
+  // Tabs del listado
+  tabListado: 'TODOS' | 'PENDIENTES' | 'APROBADAS' | 'CERRADAS' = 'TODOS';
+  conteoTodos = 0;
+  conteoPendientes = 0;
+  conteoAprobadas = 0;
+  conteoCerradas = 0;
 
   // Lista filtrada
   ordenesFiltradas: OrdenServicioConSeguimiento[] = [];
@@ -191,13 +212,32 @@ export class OrdenesServicioComponent implements OnInit {
     private userService: UserService,
     private dexieService: DexieService,
     private maestrasService: MaestrasService,
+    private commodityService: CommodityService,
     private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
     await this.cargarUsuario();
     await this.cargarOrdenes();
+    await this.cargarRequerimientosServicio();
     await this.cargarCatalogosDistribucion(); // usuario ya cargado, ruc disponible
+    Promise.all([this.cargarFormasPago(), this.cargarTiposPago()]);
+  }
+
+  async cargarRequerimientosServicio() {
+    try {
+      const resp = await this.ordenServicioService
+        .listarRequerimientosServicioParaOS({
+          ruc: this.usuario.ruc,
+          soloSinOS: true
+        })
+        .toPromise();
+      this.requerimientosServicio = Array.isArray(resp) ? resp : [];
+      this.cdr.markForCheck();
+    } catch (error) {
+      console.error('Error al cargar requerimientos de servicio:', error);
+      this.requerimientosServicio = [];
+    }
   }
 
   async cargarUsuario() {
@@ -216,8 +256,8 @@ export class OrdenesServicioComponent implements OnInit {
         .toPromise();
 
       this.ordenesServicio = ordenes || [];
-      this.ordenesFiltradas = [...this.ordenesServicio];
       this.actualizarContadores();
+      this.filtrarOrdenes();
       this.cdr.markForCheck();
       this.alertService.cerrarModalCarga();
     } catch (error) {
@@ -232,6 +272,8 @@ export class OrdenesServicioComponent implements OnInit {
    */
   filtrarOrdenes(): void {
     this.ordenesFiltradas = this.ordenesServicio.filter(orden => {
+      const estadosCategoria = this.getEstadosPorCategoria(this.tabListado);
+      const cumpleCategoria = estadosCategoria.includes(orden.estado as string);
       const cumpleEstado = this.filtroEstado === 'TODAS' || orden.estado === this.filtroEstado;
       const cumpleProveedor = !this.filtroProveedor || 
         (orden.nombreProveedor?.toLowerCase().includes(this.filtroProveedor.toLowerCase()) ||
@@ -240,9 +282,30 @@ export class OrdenesServicioComponent implements OnInit {
         orden.tipoServicio?.toLowerCase().includes(this.filtroTipoServicio.toLowerCase());
       const cumpleEmpresa = !this.filtroEmpresa ||
         orden.rucEmpresa?.includes(this.filtroEmpresa);
-      
-      return cumpleEstado && cumpleProveedor && cumpleTipo && cumpleEmpresa;
+
+      return cumpleCategoria && cumpleEstado && cumpleProveedor && cumpleTipo && cumpleEmpresa;
     });
+  }
+
+  getEstadosPorCategoria(categoria: 'TODOS' | 'PENDIENTES' | 'APROBADAS' | 'CERRADAS'): string[] {
+    switch (categoria) {
+      case 'TODOS':
+        return this.estadosSeguimiento;
+      case 'PENDIENTES':
+        return ['PENDIENTE_APROBACION', 'GENERADA'];
+      case 'APROBADAS':
+        return ['ENVIADA', 'ACEPTADA', 'EN_EJECUCION'];
+      case 'CERRADAS':
+        return ['FINALIZADA', 'RECHAZADA'];
+      default:
+        return [];
+    }
+  }
+
+  cambiarTabListado(tab: 'TODOS' | 'PENDIENTES' | 'APROBADAS' | 'CERRADAS'): void {
+    this.tabListado = tab;
+    this.filtroEstado = 'TODAS';
+    this.filtrarOrdenes();
   }
 
   /**
@@ -253,7 +316,7 @@ export class OrdenesServicioComponent implements OnInit {
     this.filtroProveedor = '';
     this.filtroTipoServicio = '';
     this.filtroEmpresa = '';
-    this.ordenesFiltradas = [...this.ordenesServicio];
+    this.filtrarOrdenes();
   }
 
   /**
@@ -266,6 +329,11 @@ export class OrdenesServicioComponent implements OnInit {
     this.totalEnEjecucion = this.ordenesServicio.filter(o => o.estado === 'EN_EJECUCION').length;
     this.totalFinalizadas = this.ordenesServicio.filter(o => o.estado === 'FINALIZADA').length;
     this.totalPendientesAprobacion = this.ordenesServicio.filter(o => o.estado === 'PENDIENTE_APROBACION').length;
+
+    this.conteoTodos = this.ordenesServicio.length;
+    this.conteoPendientes = this.ordenesServicio.filter(o => ['PENDIENTE_APROBACION', 'GENERADA'].includes(o.estado as string)).length;
+    this.conteoAprobadas = this.ordenesServicio.filter(o => ['ENVIADA', 'ACEPTADA', 'EN_EJECUCION'].includes(o.estado as string)).length;
+    this.conteoCerradas = this.ordenesServicio.filter(o => ['FINALIZADA', 'RECHAZADA'].includes(o.estado as string)).length;
   }
 
   async cargarCatalogosDistribucion() {
@@ -295,6 +363,10 @@ export class OrdenesServicioComponent implements OnInit {
         } catch { /* sin conexión, continuar */ }
       }
       this.laborData = labores || [];
+
+      // Cargar cecos: desde Dexie
+      let cecos = await this.dexieService.showCecos();
+      this.cecosData = cecos || [];
     } catch (error) {
       console.error('Error al cargar catálogos de distribución:', error);
     }
@@ -303,29 +375,124 @@ export class OrdenesServicioComponent implements OnInit {
   async generarDistribucionContable() {
     try {
       this.distribucionContable = [];
-      const distribucionesMap = new Map<string, any>();
+      if (!this.ordenActual) return;
 
-      // Para OS, la distribución se basa en el tipo de servicio y centro de costo
-      if (this.ordenActual) {
-        const cuentaKey = `${this.ordenActual.tipoServicio}-${this.ordenActual.centroCosto || ''}-${this.ordenActual.proyecto || ''}`;
-        const monto = this.ordenActual.montoTotal || 0;
+      // Asegurar que maestro de subcommoditys esté cargado
+      await this.asegurarMaestroCommoditys();
 
-        distribucionesMap.set(cuentaKey, {
-          id: `DIST-${cuentaKey}`,
-          cuenta: this.ordenActual.tipoServicio || '',
-          descripcion: this.ordenActual.descripcion || '',
-          centroCosto: this.ordenActual.centroCosto || '',
-          proyecto: this.ordenActual.proyecto || '',
-          monto: monto,
-          referencia: '',
-          ccDestino: ''
-        });
+      const codigo = this.ordenActual.codigo || '';
+      const monto = this.ordenActual.montoTotal || 0;
+      const centrocosto = this.ordenActual.centroCosto || '';
+      const proyecto = this.ordenActual.proyecto || '';
+
+      // Buscar commodity/subcommodity en Dexie por código
+      let cuentaContable = '';
+      let elementoGasto = '';
+      let descripcion = this.ordenActual.descripcion || '';
+
+      // Buscar primero en subcommoditys (tiene más detalle)
+      const subCommodity = await this.dexieService.maestroSubCommoditys
+        .where('commodity')
+        .equals(codigo)
+        .first();
+
+      if (subCommodity) {
+        cuentaContable = subCommodity.cuentaContableGasto || '';
+        elementoGasto = subCommodity.elementoGasto || '';
+        descripcion = subCommodity.descripcionLocal || descripcion;
+      } else {
+        // Fallback: buscar en commoditys por commodity01
+        const commodity = await this.dexieService.maestroCommoditys
+          .where('commodity01')
+          .equals(codigo)
+          .first();
+        if (commodity) {
+          descripcion = commodity.descripcionLocal || descripcion;
+        }
       }
 
-      this.distribucionContable = Array.from(distribucionesMap.values());
+      // Buscar tipo de gasto en catálogo para fondo
+      let fondo = '';
+      let referenciaGasto = elementoGasto || '';
+      if (elementoGasto && this.gastosData.length > 0) {
+        const gasto = this.gastosData.find((g: any) =>
+          g.codigo === elementoGasto || g.TipoGasto === elementoGasto
+        );
+        fondo = gasto?.descripcion || gasto?.Descripcion || elementoGasto;
+        referenciaGasto = gasto?.codigo || elementoGasto;
+      }
+
+      // C.C. Destino = labor del detalle del requerimiento
+      const ccdestino = this.ordenActual.labor || '';
+
+      this.distribucionContable = [{
+        id: `DIST-${Date.now()}`,
+        cuenta: cuentaContable,
+        descripcion: descripcion,
+        centrocosto: centrocosto,
+        proyecto: proyecto,
+        monto: monto,
+        fondo: fondo || elementoGasto,
+        referencia: referenciaGasto,
+        ccdestino: ccdestino,
+        turno: this.ordenActual.turno || '',
+        cultivo: this.ordenActual.cultivo || ''
+      }];
+
+      this.cdr.markForCheck();
     } catch (error) {
       console.error('Error al generar distribución contable:', error);
     }
+  }
+
+  private async asegurarMaestroCommoditys(): Promise<void> {
+    const count = await this.dexieService.countMaestroSubCommodity();
+    if (count === 0) {
+      try {
+        const resp = await lastValueFrom(this.commodityService.getSubCommodity([]));
+        if (resp && resp.length) {
+          await this.dexieService.saveMaestroSubCommodities(resp);
+        }
+      } catch { /* sin conexión, continuar */ }
+    }
+    const countCmm = await this.dexieService.countMaestroCommodity();
+    if (countCmm === 0) {
+      try {
+        const resp = await lastValueFrom(this.commodityService.getCommodity([]));
+        if (resp && resp.length) {
+          await this.dexieService.saveMaestroCommodities(resp);
+        }
+      } catch { /* sin conexión, continuar */ }
+    }
+  }
+
+  isLaborInList(ccdestino: string, centrocosto: string): boolean {
+    const labores = this.getLaboresPorCeco(centrocosto);
+    return labores.some(l => l.idlabor === ccdestino);
+  }
+
+  getLaboresPorCeco(centrocosto: string): any[] {
+    if (!centrocosto) return this.laborData;
+    const cecoTrim = centrocosto.trim();
+
+    // Resolver: si centrocosto es un nombre (localname), buscar el código (costcenter)
+    let codigoCeco = cecoTrim;
+    const cecoObj = this.cecosData.find((c: any) =>
+      c.costcenter?.trim() === cecoTrim ||
+      c.localname?.trim()?.toUpperCase() === cecoTrim.toUpperCase()
+    );
+    if (cecoObj) {
+      codigoCeco = cecoObj.costcenter?.trim() || cecoTrim;
+    }
+
+    const vistas = new Set<string>();
+    return this.laborData
+      .filter(l => l.ceco?.trim() === codigoCeco || l.ceco?.trim() === cecoTrim)
+      .filter(l => {
+        if (vistas.has(l.idlabor)) return false;
+        vistas.add(l.idlabor);
+        return true;
+      });
   }
 
   // ============================================
@@ -370,16 +537,29 @@ export class OrdenesServicioComponent implements OnInit {
     } else {
       this.distribucionContable = [...this.distribucionContable, item];
     }
+    this.recalcularMontosDistribucion();
     this.cerrarModalDistribucion();
   }
 
   eliminarDistribucion(index: number) {
     this.distribucionContable = this.distribucionContable.filter((_, i) => i !== index);
+    this.recalcularMontosDistribucion();
   }
 
   cerrarModalDistribucion() {
     this.mostrarModalDistribucion = false;
     this.distribucionEditIndex = null;
+  }
+
+  recalcularMontosDistribucion() {
+    const total = this.ordenActual?.montoTotal || 0;
+    const cant = this.distribucionContable.length;
+    if (cant === 0) return;
+    const montoPorLinea = Math.round((total / cant) * 100) / 100;
+    // Ajustar último para que la suma sea exacta
+    this.distribucionContable.forEach((dist, i) => {
+      dist.monto = i < cant - 1 ? montoPorLinea : Math.round((total - montoPorLinea * (cant - 1)) * 100) / 100;
+    });
   }
 
   getTotalDistribucion(): number {
@@ -389,33 +569,32 @@ export class OrdenesServicioComponent implements OnInit {
   async nuevaOrdenServicio() {
     this.tipoOrden = 'DESDE_SOLICITUD';
     this.mostrarTabDistribucion = false;
-    try {
-      this.alertService.mostrarModalCarga();
+    this.ordenActual = null;
 
-      // Cargar solicitudes aprobadas
-      const solicitudes = await this.solicitudServicioService
-        .listarSolicitudesServicio({ estado: 'APROBADA' })
-        .toPromise();
-
-      this.solicitudesAprobadas = solicitudes || [];
-
-      if (this.solicitudesAprobadas.length === 0) {
+    // Recargar requerimientos si no hay datos
+    if (this.requerimientosServicio.length === 0) {
+      try {
+        this.alertService.mostrarModalCarga();
+        await this.cargarRequerimientosServicio();
         this.alertService.cerrarModalCarga();
-        this.alertService.showAlert(
-          'Atención',
-          'No hay solicitudes de servicio aprobadas disponibles. Use "Orden Directa" si necesita crear una orden sin solicitud previa.',
-          'warning'
-        );
+      } catch (error) {
+        this.alertService.cerrarModalCarga();
+        this.alertService.showAlert('Error', 'Error al cargar requerimientos de servicio aprobados', 'error');
         return;
       }
-
-      this.alertService.cerrarModalCarga();
-      this.mostrarFormulario = true;
-    } catch (error) {
-      console.error('Error al cargar solicitudes:', error);
-      this.alertService.cerrarModalCarga();
-      this.alertService.showAlert('Error', 'Error al cargar solicitudes aprobadas', 'error');
     }
+
+    if (this.requerimientosServicio.length === 0) {
+      this.alertService.showAlert(
+        'Atención',
+        'No hay requerimientos de servicio aprobados disponibles. Use "Orden Directa" si necesita crear una orden sin requerimiento previo.',
+        'warning'
+      );
+      return;
+    }
+
+    this.mostrarFormulario = true;
+    this.cdr.markForCheck();
   }
 
   nuevaOrdenServicioDirecta() {
@@ -517,6 +696,176 @@ export class OrdenesServicioComponent implements OnInit {
       this.alertService.cerrarModalCarga();
       this.alertService.showAlert('Error', 'Error al cargar solicitud', 'error');
     }
+  }
+
+  async seleccionarRequerimiento(req: any) {
+    this.ordenActual = {
+      numeroOrden: this.generarNumeroOrden(),
+      numeroOrdenSpring: '',
+      solicitudServicioId: 0,
+      fecha: new Date().toISOString().split('T')[0],
+      estado: 'GENERADA',
+      tipoServicio: req.tipoItem || 'COMMODITY',
+      descripcion: req.descripcion || '',
+      proveedor: '',
+      nombreProveedor: req.ultimoProveedor ? req.ultimoProveedor.split(' - ')[0] : '',
+      rucProveedor: '',
+      rucEmpresa: this.usuario.ruc || '',
+      contactoProveedor: '',
+      telefonoProveedor: '',
+      emailProveedor: '',
+      fechaInicioServicio: '',
+      fechaFinServicio: '',
+      plazoEjecucion: 0,
+      montoTotal: (req.precioReferencial || 0) * (req.cantidad || 1),
+      moneda: 'PEN',
+      formaPago: '',
+      condicionesPago: '',
+      garantia: '',
+      penalidades: '',
+      centroCosto: req.ceco || req.centrocosto || '',
+      proyecto: req.proyecto || req.idproyecto || '',
+      turno: req.turno || '',
+      labor: req.labor || '',
+      cultivo: req.cultivo || '',
+      observaciones: '',
+      usuarioGenera: this.usuario.documentoidentidad || '',
+      porcentajeCompletado: 0,
+      hitos: [],
+      // Referencia al requerimiento origen
+      idRequerimientoOrigen: req.idrequerimiento,
+      idDetalleRequerimiento: req.idDetalle,
+      numeroRequerimiento: req.numeroRequerimiento,
+      area: req.area,
+      codigo: req.codigo,
+      cantidad: req.cantidad,
+      unidadMedida: req.unidadMedida,
+      precioReferencial: req.precioReferencial || 0,
+    };
+    this.cotizacionesDisponibles = [];
+    this.proveedorSeleccionado = null;
+    this.proveedorInput = '';
+
+    // Generar distribución contable automáticamente basada en el commodity
+    await this.generarDistribucionContable();
+    this.cdr.markForCheck();
+  }
+
+  // ============================================
+  // BUSCADOR DE PROVEEDORES
+  // ============================================
+  async filtrarProveedores(event: any): Promise<void> {
+    const query = String(event.query ?? '').trim();
+    if (!query || query.length < 3) {
+      this.proveedoresSugeridos = [];
+      return;
+    }
+    this.cargandoProveedores = true;
+    this.cdr.markForCheck();
+    try {
+      const body = { ruc: this.usuario.ruc, busqueda: query, estado: 'ACTIVO' };
+      const resp: any = await lastValueFrom(this.maestrasService.getProveedores(body));
+      let lista = Array.isArray(resp) ? resp : (resp.resultado || resp.data || []);
+      const queryLower = query.toLowerCase();
+      lista = lista.filter((p: any) => {
+        const nombre = String(p.proveedor ?? p.nombre ?? p.razonSocial ?? '').toLowerCase();
+        const ruc = String(p.ruc ?? p.rucproveedor ?? p.documento ?? '').toLowerCase();
+        return nombre.includes(queryLower) || ruc.includes(queryLower);
+      });
+      this.proveedoresSugeridos = lista.map((p: any) => ({
+        id: String(p.idproveedor ?? p.id ?? p.ruc ?? p.documento ?? ''),
+        nombre: String(p.proveedor ?? p.nombre ?? p.razonSocial ?? ''),
+        ruc: String(p.ruc ?? p.rucproveedor ?? p.documento ?? ''),
+        email: String(p.email ?? p.correo ?? p.Email ?? p.Correo ?? '').trim(),
+        telefono: String(p.telefono ?? p.Telefono ?? '').trim(),
+        formaPago: String(p.FormadePago ?? p.formadePago ?? p.formaPago ?? ''),
+        condicionesPago: String(p.TipoPago ?? p.tipoPago ?? p.condicionesPago ?? ''),
+        diasEntrega: parseInt(p.NumeroDiasEntrega ?? p.numeroDiasEntrega ?? p.DiasEntrega ?? p.diasEntrega ?? '30', 10) || 30
+      }));
+    } catch (err) {
+      this.proveedoresSugeridos = [];
+    } finally {
+      this.cargandoProveedores = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  seleccionarProveedor(event: any): void {
+    const prov = event?.value ?? event;
+    this.proveedorSeleccionado = prov;
+    if (!prov || !this.ordenActual) return;
+
+    this.ordenActual.rucProveedor = prov.ruc;
+    this.ordenActual.nombreProveedor = prov.nombre;
+    this.ordenActual.emailProveedor = prov.email || '';
+    this.ordenActual.condicionesPago = this.mapearAFormaPago(prov.formaPago) || this.mapearAFormaPago(prov.condicionesPago) || this.formasPago[0]?.idformapago || '';
+    this.ordenActual.formaPago = this.mapearATipoPago(prov.condicionesPago) || this.mapearATipoPago(prov.formaPago) || this.tiposPago[0]?.TipoPago || '';
+    this.ordenActual.plazoEjecucion = prov.diasEntrega ?? 30;
+    this.proveedorInput = prov.nombre;
+    this.cdr.markForCheck();
+  }
+
+  // ============================================
+  // CATÁLOGOS DE PAGO
+  // ============================================
+  async cargarFormasPago(): Promise<void> {
+    try {
+      const resp: any = await lastValueFrom(this.maestrasService.getFormasPago({ ruc: this.usuario?.ruc }));
+      this.formasPago = Array.isArray(resp) ? resp : (resp.resultado || resp.data || []);
+    } catch { this.formasPago = []; }
+  }
+
+  async cargarTiposPago(): Promise<void> {
+    try {
+      const resp: any = await lastValueFrom(this.maestrasService.getTiposPago({ ruc: this.usuario?.ruc }));
+      this.tiposPago = Array.isArray(resp) ? resp : (resp.resultado || resp.data || []);
+    } catch { this.tiposPago = []; }
+  }
+
+  private normalizarTexto(texto: string): string {
+    return String(texto ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  }
+
+  private mapearAFormaPago(valor: string): string {
+    if (!valor || !this.formasPago.length) return valor;
+    const v = this.normalizarTexto(valor);
+    const match = this.formasPago.find((fp: any) =>
+      this.normalizarTexto(fp.formapago) === v ||
+      this.normalizarTexto(fp.idformapago) === v
+    );
+    return match?.idformapago || valor;
+  }
+
+  private mapearATipoPago(valor: string): string {
+    if (!valor || !this.tiposPago.length) return valor;
+    const v = this.normalizarTexto(valor);
+    const match = this.tiposPago.find((tp: any) =>
+      this.normalizarTexto(tp.Descripcion) === v ||
+      this.normalizarTexto(tp.TipoPago) === v
+    );
+    return match?.TipoPago || valor;
+  }
+
+  condicionPagoExiste(valor: string): boolean {
+    return this.formasPago.some((fp: any) => fp.idformapago === valor);
+  }
+
+  formaPagoExiste(valor: string): boolean {
+    return this.tiposPago.some((tp: any) => tp.TipoPago === valor);
+  }
+
+  limpiarProveedor(): void {
+    this.proveedorSeleccionado = null;
+    this.proveedorInput = '';
+    if (this.ordenActual) {
+      this.ordenActual.rucProveedor = '';
+      this.ordenActual.nombreProveedor = '';
+      this.ordenActual.emailProveedor = '';
+      this.ordenActual.formaPago = '';
+      this.ordenActual.condicionesPago = '';
+      this.ordenActual.plazoEjecucion = 0;
+    }
+    this.cdr.markForCheck();
   }
 
   async seleccionarCotizacion(cotizacionId: number) {
@@ -715,6 +1064,8 @@ export class OrdenesServicioComponent implements OnInit {
     this.solicitudesAprobadas = [];
     this.cotizacionesDisponibles = [];
     this.tipoOrden = 'DESDE_SOLICITUD';
+    this.proveedorSeleccionado = null;
+    this.proveedorInput = '';
   }
 
   cerrarModalDetalle() {

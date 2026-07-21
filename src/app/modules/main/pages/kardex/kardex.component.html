@@ -1,7 +1,7 @@
 <div class="kardex-container">
   <div class="page-header">
     <h2><i class="bi bi-database"></i> Kardex e Inventario</h2>
-    <p class="texto-descriptivo">Gestión completa de inventario, kardex y transacciones</p>
+    <!-- <p class="texto-descriptivo">Gestión completa de inventario, kardex y transacciones</p> -->
     <!-- Botones de prueba y sincronización -->
     <!-- <div class="mt-3">
       <div class="btn-group me-2" role="group">
@@ -26,32 +26,54 @@
     </div> -->
   </div>
 
+  <ng-template #empresaSubTabs>
+    @if (puedeVerTodasEmpresas) {
+      <ul class="nav nav-pills empresa-subtabs mb-3" role="tablist">
+        @for (empresa of empresasDisponibles; track empresa.value) {
+          <li class="nav-item" role="presentation">
+            <button type="button" class="nav-link"
+                    [class.active]="empresaSeleccionada === empresa.value"
+                    (click)="seleccionarEmpresa(empresa.value)">
+              <i class="bx bx-building me-1"></i>{{ empresa.label }}
+            </button>
+          </li>
+        }
+      </ul>
+      @if (!empresaSeleccionada) {
+        <div class="alert alert-info py-2 mb-3">
+          <i class="bi bi-info-circle me-1"></i>Seleccione una empresa para habilitar la consulta.
+        </div>
+      }
+    }
+  </ng-template>
+
   <!-- Tabs de navegación -->
-  <ul class="nav nav-tabs mb-4">
-    <li class="nav-item">
-      <a class="nav-link" [class.active]="tabActiva === 0" (click)="tabActiva = 0">
-        <i class="bi bi-box-seam"></i> Stock Actual
-      </a>
+  <ul class="nav custom-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="tabActiva === 0" (click)="cambiarTab(0)" type="button">
+        <i class="bx bx-box me-1"></i> Stock Actual
+      </button>
     </li>
-    <li class="nav-item">
-      <a class="nav-link" [class.active]="tabActiva === 1" (click)="tabActiva = 1">
-        <i class="bi bi-journal-text"></i> Kardex
-      </a>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="tabActiva === 1" (click)="cambiarTab(1)" type="button">
+        <i class="bx bx-journal me-1"></i> Kardex
+      </button>
     </li>
-    <li class="nav-item">
-      <a class="nav-link" [class.active]="tabActiva === 2" (click)="tabActiva = 2">
-        <i class="bi bi-arrow-left-right"></i> Transacciones
-      </a>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="tabActiva === 2" (click)="cambiarTab(2)" type="button">
+        <i class="bx bx-transfer me-1"></i> Transacciones
+      </button>
     </li>
-    <li class="nav-item">
-      <a class="nav-link" [class.active]="tabActiva === 3" (click)="tabActiva = 3">
-        <i class="bi bi-graph-up"></i> Dashboard
-      </a>
-    </li>
+    <!-- <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="tabActiva === 3" (click)="tabActiva = 3" type="button">
+        <i class="bx bx-bar-chart me-1"></i> Dashboard
+      </button>
+    </li> -->
   </ul>
 
   <!-- TAB 1: STOCK ACTUAL -->
   <div *ngIf="tabActiva === 0" class="tab-content">
+    <ng-container *ngTemplateOutlet="empresaSubTabs"></ng-container>
     <div class="card">
       <div class="card-header">
         <h5><i class="bi bi-box-seam"></i> Stock Actual por Almacén</h5>
@@ -63,23 +85,15 @@
             <label>Almacén</label>
             <select class="form-control" [(ngModel)]="filtroStock.almacen" (change)="filtrarStock()" name="filtroStockAlmacen">
               <option value="">Todos</option>
-              @for (alm of almacenesDisponibles; track alm) {
+              @for (alm of almacenesStockDisponibles; track alm) {
                 <option [value]="alm">{{ alm }}</option>
               }
             </select>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-7">
             <label>Buscar Item</label>
             <input type="text" class="form-control" [(ngModel)]="filtroStock.codigoItem" 
-                   (input)="filtrarStock()" placeholder="Código o descripción" name="filtroStockCodigoItem">
-          </div>
-          <div class="col-md-3">
-            <label>&nbsp;</label>
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input" [(ngModel)]="filtroStock.stockBajo" 
-                     (change)="filtrarStock()" id="stockBajo" name="filtroStockStockBajo">
-              <label class="form-check-label" for="stockBajo">Solo stock bajo</label>
-            </div>
+                   (input)="programarFiltroStock()" placeholder="Código o descripción" name="filtroStockCodigoItem">
           </div>
           <div class="col-md-2">
             <label>&nbsp;</label>
@@ -90,41 +104,36 @@
         </div>
 
         <!-- Tabla de stock -->
-        <p-table [value]="stockFiltrado" [paginator]="true" [rows]="10" [loading]="loading"
+        <p-table [value]="stockFiltrado" [paginator]="true" [rows]="10" [loading]="loadingStock"
                  styleClass="p-datatable-sm" [rowsPerPageOptions]="[10,25,50]">
           <ng-template pTemplate="header">
             <tr>
+              <th *ngIf="puedeVerTodasEmpresas">Empresa</th>
               <th>Código</th>
               <th>Descripción</th>
               <th>Almacén</th>
+              <th>Stock Ingreso</th>
               <th>Stock Actual</th>
-              <th>Stock Mín</th>
-              <th>Stock Máx</th>
-              <th *ngIf="puedeVerPrecios">Costo Prom.</th>
-              <th *ngIf="puedeVerPrecios">Valor Total</th>
-              <th>Estado</th>
+              <th>Comprometido</th>
+              <th>Disponible</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-item>
             <tr>
+              <td *ngIf="puedeVerTodasEmpresas"><small>{{ item.companiaSocio }}</small></td>
               <td>{{ item.codigoItem }}</td>
               <td>{{ item.descripcionItem }}</td>
               <!-- <td><span class="badge bg-info">{{ item.almacen }}</span></td> -->
               <td><span>{{ item.almacen }}</span></td>
+              <td class="text-end">{{ formatearNumero(item.stockIngreso) }}</td>
               <td class="text-end"><strong>{{ formatearNumero(item.stockActual) }}</strong></td>
-              <td class="text-end">{{ formatearNumero(item.stockMinimo) }}</td>
-              <td class="text-end">{{ formatearNumero(item.stockMaximo) }}</td>
-              <td *ngIf="puedeVerPrecios" class="text-end">{{ formatearMoneda(item.costoPromedio) }}</td>
-              <td *ngIf="puedeVerPrecios" class="text-end"><strong>{{ formatearMoneda(item.valorTotal) }}</strong></td>
-              <!-- <td class="text-end"><strong>{{ formatearMoneda(item.valorInventario) }}</strong></td> -->
-              <td>
-                <p-tag [value]="getEstadoStock(item)" [severity]="getSeverityStock(getEstadoStock(item))"></p-tag>
-              </td>
+              <td class="text-end">{{ formatearNumero(item.stockComprometido) }}</td>
+              <td class="text-end"><strong>{{ formatearNumero(item.stockDisponible) }}</strong></td>
             </tr>
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="9" class="text-center">No hay datos disponibles</td>
+              <td [attr.colspan]="7 + (puedeVerTodasEmpresas ? 1 : 0)" class="text-center">No hay datos disponibles</td>
             </tr>
           </ng-template>
         </p-table>
@@ -134,6 +143,7 @@
 
   <!-- TAB 2: KARDEX -->
   <div *ngIf="tabActiva === 1" class="tab-content">
+    <ng-container *ngTemplateOutlet="empresaSubTabs"></ng-container>
     <div class="card">
       <div class="card-header">
         <h5><i class="bi bi-journal-text"></i> Consulta de Kardex</h5>
@@ -142,9 +152,16 @@
         <!-- Filtros -->
         <div class="row mb-2">
           <div class="col-md-2">
-            <label>Código Item</label>
-            <input type="text" class="form-control" [(ngModel)]="filtroKardex.codigoItem"
-                   placeholder="Ej: 000886 (opcional)">
+            <label>Ítem *</label>
+            <app-product-search-cards
+              [(ngModel)]="itemKardexSeleccionado"
+              name="itemKardex"
+              [data]="itemsKardex"
+              [optionLabel]="'descripcionItem'"
+              [valueField]="'codigoItem'"
+              [placeholder]="'Buscar ítem por código o descripción...'"
+              (onSelect)="seleccionarItemKardex($event)"
+            ></app-product-search-cards>
           </div>
           <div class="col-md-2">
             <label>Almacén</label>
@@ -172,17 +189,18 @@
             </select>
           </div>
           <div class="col-md-2">
-            <label>Fecha Inicio</label>
-            <input type="date" class="form-control" [(ngModel)]="filtroKardex.fechaInicio">
+            <label>Período desde *</label>
+            <input type="month" class="form-control" [(ngModel)]="filtroKardex.periodoInicio" required>
           </div>
           <div class="col-md-2">
-            <label>Fecha Fin</label>
-            <input type="date" class="form-control" [(ngModel)]="filtroKardex.fechaFin">
+            <label>Período hasta *</label>
+            <input type="month" class="form-control" [(ngModel)]="filtroKardex.periodoFin" required>
           </div>
         </div>
         <div class="row mb-3">
           <div class="col-md-12 d-flex gap-2">
-            <button class="btn btn-accion-primaria" (click)="buscarKardex()">
+            <button class="btn btn-accion-primaria" (click)="buscarKardex()"
+                    [disabled]="loadingKardex || (puedeVerTodasEmpresas && !empresaSeleccionada)">
               <i class="bi bi-search"></i> Buscar
             </button>
             <button class="btn btn-accion-secundaria" (click)="limpiarKardex()">
@@ -195,12 +213,13 @@
         </div>
 
         <!-- Tabla de kardex -->
-        <p-table [value]="movimientosKardex" [paginator]="true" [rows]="15" [loading]="loading"
-                 styleClass="p-datatable-sm" [rowsPerPageOptions]="[15,30,50]">
+        <p-table [value]="movimientosKardex" [paginator]="true" [rows]="10" [loading]="loadingKardex"
+                 styleClass="p-datatable-sm" [rowsPerPageOptions]="[10,25,50]">
           <ng-template pTemplate="header">
             <tr>
+              <th *ngIf="puedeVerTodasEmpresas">Empresa</th>
               <th>Fecha</th>
-              <th>Fuente</th>
+              <!-- <th>Fuente</th> -->
               <th>Tipo</th>
               <th>Documento Local</th>
               <th>NI / NS SPRING</th>
@@ -214,17 +233,25 @@
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-mov>
-            <tr>
-              <td>{{ formatearFecha(mov.fecha) }}</td>
+            <tr [class.fila-periodo]="mov.esCierrePeriodo">
+              <td *ngIf="puedeVerTodasEmpresas"><small>{{ mov.companiaSocio }}</small></td>
               <td>
+                @if (mov.esCierrePeriodo) {
+                  <strong>Periodo: {{ mov.periodo?.slice(0, 4) }}-{{ mov.periodo?.slice(4, 6) }}</strong>
+                } @else {
+                  {{ formatearFecha(mov.fecha) }}
+                }
+              </td>
+              <!-- <td>
                 <span [class]="mov.fuenteDato === 'SPRING' ? 'badge bg-success' : 'badge bg-secondary'">
                   {{ mov.fuenteDato }}
                 </span>
-              </td>
+              </td> -->
               <td>
-                <p-tag [value]="mov.tipoMovimiento" [severity]="getSeverityMovimiento(mov.tipoMovimiento)"></p-tag>
+                <p-tag [value]="mov.esCierrePeriodo ? 'INICIO PERIODO' : mov.tipoMovimiento"
+                       [severity]="mov.esCierrePeriodo ? 'contrast' : getSeverityMovimiento(mov.tipoMovimiento)"></p-tag>
               </td>
-              <td><small>{{ mov.tipoDocumento }} {{ mov.numeroDocumento }}</small></td>
+              <td><small>{{ mov.esCierrePeriodo ? 'Saldo inicial del mes' : (mov.tipoDocumento + ' ' + mov.numeroDocumento) }}</small></td>
               <td>
                 @if (mov.numeroDocumentoSpring) {
                   <span class="badge bg-primary text-white">{{ mov.transaccionSpring }} {{ mov.numeroDocumentoSpring }}</span>
@@ -243,7 +270,7 @@
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="12" class="text-center">No se encontraron movimientos con los filtros aplicados</td>
+              <td [attr.colspan]="puedeVerTodasEmpresas ? 13 : 12" class="text-center">No se encontraron movimientos con los filtros aplicados</td>
             </tr>
           </ng-template>
         </p-table>
@@ -253,19 +280,21 @@
 
   <!-- TAB 3: TRANSACCIONES -->
   <div *ngIf="tabActiva === 2" class="tab-content">
+    <ng-container *ngTemplateOutlet="empresaSubTabs"></ng-container>
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5><i class="bi bi-arrow-left-right"></i> Transacciones de Inventario</h5>
-        <button class="btn btn-accion-primaria" (click)="abrirModalNuevaTransaccion()">
+        <!-- <button class="btn btn-accion-primaria" (click)="abrirModalNuevaTransaccion()"
+                [disabled]="puedeVerTodasEmpresas && !empresaSeleccionada">
           <i class="bi bi-plus-circle"></i> Nueva Transacción
-        </button>
+        </button> -->
       </div>
       <div class="card-body">
         <!-- Filtros -->
         <div class="row mb-2">
           <div class="col-md-2">
             <label>Tipo Transacción</label>
-            <select class="form-control" [(ngModel)]="filtroTransacciones.tipoTransaccion" (change)="listarTransacciones()">
+            <select class="form-control" [(ngModel)]="filtroTransacciones.tipoTransaccion">
               <option value="">Todos</option>
               <option value="INGRESO">INGRESO (NI)</option>
               <option value="SALIDA">SALIDA (NS)</option>
@@ -274,7 +303,7 @@
           </div>
           <div class="col-md-2">
             <label>Estado</label>
-            <select class="form-control" [(ngModel)]="filtroTransacciones.estado" (change)="listarTransacciones()">
+            <select class="form-control" [(ngModel)]="filtroTransacciones.estado">
               <option value="">Todos</option>
               <option value="PROCESADO">PROCESADO</option>
               <option value="PENDIENTE">PENDIENTE</option>
@@ -283,24 +312,25 @@
           </div>
           <div class="col-md-2">
             <label>Fuente</label>
-            <select class="form-control" [(ngModel)]="filtroTransacciones.fuente" (change)="listarTransacciones()">
+            <select class="form-control" [(ngModel)]="filtroTransacciones.fuente">
               @for (f of fuentesDato; track f.value) {
                 <option [value]="f.value">{{ f.label }}</option>
               }
             </select>
           </div>
           <div class="col-md-2">
-            <label>Fecha Inicio</label>
-            <input type="date" class="form-control" [(ngModel)]="filtroTransacciones.fechaInicio">
+            <label>Fecha Inicio *</label>
+            <input type="date" class="form-control" [(ngModel)]="filtroTransacciones.fechaInicio" required>
           </div>
           <div class="col-md-2">
-            <label>Fecha Fin</label>
-            <input type="date" class="form-control" [(ngModel)]="filtroTransacciones.fechaFin">
+            <label>Fecha Fin *</label>
+            <input type="date" class="form-control" [(ngModel)]="filtroTransacciones.fechaFin" required>
           </div>
           <div class="col-md-2">
             <label>&nbsp;</label>
             <div class="d-grid gap-1">
-              <button class="btn btn-accion-primaria" (click)="listarTransacciones()">
+              <button class="btn btn-accion-primaria" (click)="listarTransacciones()"
+                      [disabled]="loadingTransacciones || (puedeVerTodasEmpresas && !empresaSeleccionada)">
                 <i class="bi bi-search"></i> Buscar
               </button>
               <button class="btn btn-accion-secundaria" (click)="limpiarFiltrosTransacciones()">
@@ -311,12 +341,14 @@
         </div>
 
         <!-- Tabla de transacciones -->
-        <p-table [value]="transaccionesFiltradas" [paginator]="true" [rows]="10" [loading]="loading"
-                 styleClass="p-datatable-sm">
+        <p-table [value]="transaccionesFiltradas" [paginator]="true" [rows]="10" [loading]="loadingTransacciones"
+                 styleClass="p-datatable-sm" [rowsPerPageOptions]="[10,25,50]">
           <ng-template pTemplate="header">
             <tr>
-              <th>Fuente</th>
-              <th>N° Transacción Local</th>
+              <!-- <th>Fuente</th> -->
+              <!-- <th>Empresa</th> -->
+              <!-- <th>N° Transacción Local</th> -->
+              <th>N° Transacción</th>
               <th>NI / NS SPRING</th>
               <th>Fecha</th>
               <th>Tipo</th>
@@ -330,11 +362,12 @@
           </ng-template>
           <ng-template pTemplate="body" let-trans>
             <tr>
-              <td>
+              <!-- <td>
                 <span [class]="trans.fuenteDato === 'SPRING' ? 'badge bg-success text-white' : 'badge bg-secondary text-white'">
                   {{ trans.fuenteDato }}
                 </span>
-              </td>
+              </td> -->
+              <!-- <td><small>{{ trans.companiaSocio || 'LOCAL' }}</small></td> -->
               <td><strong>{{ trans.numeroTransaccion || '-' }}</strong></td>
               <td>
                 @if (trans.numeroNI_NS_SPRING) {
@@ -375,7 +408,7 @@
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="9" class="text-center">No hay transacciones disponibles</td>
+              <td [attr.colspan]="puedeVerPrecios ? 12 : 11" class="text-center">No hay transacciones disponibles</td>
             </tr>
           </ng-template>
         </p-table>

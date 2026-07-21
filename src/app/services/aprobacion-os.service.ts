@@ -11,21 +11,23 @@ export class AprobacionOSService {
 
   constructor(private http: HttpClient) {}
 
-  obtenerContadores(documentoIdentidad?: string): Observable<any> {
+  obtenerContadores(documentoIdentidad?: string, rol?: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/logistica/aprobacion-os/contadores`, {
       documentoIdentidad,
+      rol,
     });
   }
 
-  listarOSPendientes(documentoIdentidad: string): Observable<any> {
+  listarOSPendientes(rol: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/logistica/aprobacion-os/listar-pendientes`, {
-      documentoIdentidad,
+      rol,
     });
   }
 
-  listarHistorialAprobaciones(documentoIdentidad: string): Observable<any> {
+  listarHistorialAprobaciones(rol: string, estado?: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/logistica/aprobacion-os/historial`, {
-      documentoIdentidad,
+      rol,
+      estado: estado || '',
     });
   }
 
@@ -35,8 +37,16 @@ export class AprobacionOSService {
     });
   }
 
+  obtenerOSDetalle(payload: { idAprobacion?: number; codigoOrden?: string }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/aprobacion-os/obtener-detalle`, payload);
+  }
+
   aprobarRechazarOS(payload: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/logistica/aprobacion-os/aprobar-rechazar`, payload);
+  }
+
+  anularOS(payload: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/aprobacion-os/anular`, payload);
   }
 
   listarUsuariosAprobadores(): Observable<any> {

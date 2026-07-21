@@ -3,29 +3,29 @@
 
   <div class="card-body">
     <!-- Tabs Principales -->
-    <ul class="nav nav-tabs mb-3" role="tablist">
+    <ul class="nav custom-tabs mb-3" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link" [class.active]="tabActiva === 'SOLICITUDES'" (click)="tabActiva = 'SOLICITUDES'" type="button">
-          <i class="pi pi-file me-1"></i> Solicitudes de Cotización
-          <span class="badge bg-warning ms-1" *ngIf="totalSolicitudesPendientes > 0">{{ totalSolicitudesPendientes }}</span>
+          <i class="bx bx-file me-1"></i> Solicitudes de Cotización
+          <span class="tab-badge ms-1" *ngIf="totalSolicitudesPendientes > 0">{{ totalSolicitudesPendientes }}</span>
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" [class.active]="tabActiva === 'COTIZACIONES'" (click)="tabActiva = 'COTIZACIONES'" type="button">
-          <i class="pi pi-list me-1"></i> Cotizaciones Recibidas
-          <span class="badge badge-informativo ms-1" *ngIf="cotizaciones.length > 0">{{ cotizaciones.length }}</span>
+          <i class="bx bx-list-ul me-1"></i> Cotizaciones Recibidas
+          <span class="tab-badge ms-1" *ngIf="cotizaciones.length > 0">{{ cotizaciones.length }}</span>
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" [class.active]="tabActiva === 'GANADORES'" (click)="cambiarTabGanadores()" type="button">
-          <i class="pi pi-trophy me-1"></i> Cotizaciones Ganadoras
-          <span class="badge badge-exito ms-1" *ngIf="cotizacionesGanadoras.length > 0">{{ cotizacionesGanadoras.length }}</span>
+          <i class="bx bx-trophy me-1"></i> Cotizaciones Ganadoras
+          <span class="tab-badge ms-1" *ngIf="cotizacionesGanadoras.length > 0">{{ cotizacionesGanadoras.length }}</span>
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" [class.active]="tabActiva === 'COMPARACION'" (click)="tabActiva = 'COMPARACION'" type="button">
-          <i class="pi pi-chart-bar me-1"></i> Comparación
-          <span class="badge badge-informativo ms-1" *ngIf="cotizacionesComparativo.length > 0">{{ cotizacionesComparativo.length }}</span>
+          <i class="bx bx-bar-chart me-1"></i> Comparación
+          <span class="tab-badge ms-1" *ngIf="cotizacionesComparativo.length > 0">{{ cotizacionesComparativo.length }}</span>
         </button>
       </li>
     </ul>

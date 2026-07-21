@@ -3,12 +3,6 @@
   <div class="page-header">
     <h2>Órdenes de Servicio</h2>
     <div class="header-actions">
-      <!-- <button class="btn-secondary" (click)="nuevaOrdenServicio()">
-        <i class="bx bx-file-plus"></i> Desde Solicitud
-      </button> -->
-      <button class="btn-primary" (click)="nuevaOrdenServicioDirecta()">
-        <i class="bx bx-plus"></i> Orden Directa
-      </button>
       <button class="btn-excel" (click)="descargarPlantillaOSMasivo()" title="Descargar plantilla Excel">
         <i class="bx bx-download"></i> Plantilla Excel
       </button>
@@ -25,23 +19,26 @@
   </div>
 
   <!-- TABS -->
-  <div class="tabs-container">
-    <button 
-      class="tab-button" 
-      [class.active]="!mostrarFormulario"
-      (click)="mostrarFormulario = false">
-      <i class="bx bx-list-ul"></i> Listado de Órdenes
-    </button>
-    <button 
-      class="tab-button" 
-      [class.active]="mostrarFormulario"
-      (click)="mostrarFormulario = true">
-      <i class="bx bx-file"></i> {{ ordenActual ? 'Editar' : 'Nueva' }} Orden
-    </button>
-  </div>
+  <ul class="nav custom-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="!mostrarFormulario" (click)="mostrarFormulario = false" type="button">
+        <i class="bx bx-list-ul me-1"></i> Listado de Órdenes
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="mostrarFormulario && tipoOrden === 'DIRECTA'" (click)="nuevaOrdenServicioDirecta()" type="button">
+        <i class="bx bx-plus me-1"></i> Orden Directa
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="mostrarFormulario && tipoOrden === 'DESDE_SOLICITUD'" (click)="nuevaOrdenServicio()" type="button">
+        <i class="bx bx-file-plus me-1"></i> Desde Solicitud
+      </button>
+    </li>
+  </ul>
 
   <!-- CONTADORES -->
-  <div class="stats-cards" *ngIf="!mostrarFormulario">
+  <!-- <div class="stats-cards" *ngIf="!mostrarFormulario">
     <div class="stat-card info">
       <div class="stat-icon"><i class="bx bx-file"></i></div>
       <div class="stat-content">
@@ -84,38 +81,70 @@
         <span class="stat-label">Pendientes Aprobación</span>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <!-- LISTADO DE ÓRDENES -->
   <div class="content-section" *ngIf="!mostrarFormulario">
-    <!-- SOLICITUDES APROBADAS PENDIENTES -->
-    <div class="solicitudes-section" *ngIf="solicitudesAprobadas.length > 0">
-      <h3>Solicitudes de Servicio Aprobadas (Pendientes de Orden)</h3>
+    <ul class="nav custom-tabs mb-3">
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="tabListado === 'TODOS'" (click)="cambiarTabListado('TODOS')" type="button">
+          <i class="bx bx-list-ul me-1"></i> Todos
+          <span class="badge bg-info ms-1 text-white">{{ conteoTodos }}</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="tabListado === 'PENDIENTES'" (click)="cambiarTabListado('PENDIENTES')" type="button">
+          <i class="bx bx-time me-1"></i> Pendientes
+          <span class="badge bg-primary ms-1 text-white">{{ conteoPendientes }}</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="tabListado === 'APROBADAS'" (click)="cambiarTabListado('APROBADAS')" type="button">
+          <i class="bx bx-check-circle me-1"></i> Aprobadas
+          <span class="badge bg-success ms-1 text-white">{{ conteoAprobadas }}</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="tabListado === 'CERRADAS'" (click)="cambiarTabListado('CERRADAS')" type="button">
+          <i class="bx bx-lock me-1"></i> Cerradas
+          <span class="badge bg-secondary ms-1 text-white">{{ conteoCerradas }}</span>
+        </button>
+      </li>
+    </ul>
+
+    <!-- REQUERIMIENTOS DE SERVICIO PENDIENTES (sólo en tab Pendientes) -->
+    <div class="solicitudes-section" *ngIf="tabListado === 'PENDIENTES' && requerimientosServicio.length > 0">
+      <h3>Requerimientos de Servicio Aprobados (Pendientes de Orden)</h3>
       <div class="table-wrapper">
         <table class="table">
           <thead>
             <tr>
               <th>#</th>
-              <th>Número Solicitud</th>
-              <th>Tipo Servicio</th>
+              <th>N° Requerimiento</th>
+              <th>Empresa</th>
+              <th>Área</th>
+              <th>Código</th>
               <th>Descripción</th>
-              <th>Monto Estimado</th>
+              <th class="text-center">Cantidad</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let sol of solicitudesAprobadas; let i = index">
+            <tr *ngFor="let req of requerimientosServicio; let i = index">
               <td>{{ i + 1 }}</td>
-              <td><strong>{{ sol.numeroSolicitud }}</strong></td>
-              <td>{{ sol.tipoServicio }}</td>
-              <td>{{ sol.descripcion }}</td>
-              <td class="text-right">
-                <strong>S/ {{ formatearMoneda(sol.montoEstimado) }}</strong>
+              <td><strong>{{ req.numeroRequerimiento }}</strong></td>
+              <td>
+                <strong>{{ req.empresa || req.ruc || '-' }}</strong>
+                <small class="d-block text-muted" *ngIf="req.ruc && req.empresa">RUC: {{ req.ruc }}</small>
               </td>
+              <td>{{ req.area || req.idarea || '-' }}</td>
+              <td class="mono">{{ req.codigo }}</td>
+              <td>{{ req.descripcion }}</td>
+              <td class="text-center">{{ req.cantidad }} {{ req.unidadMedida }}</td>
               <td class="actions">
                 <button 
                   class="btn btn-sm btn-success" 
-                  (click)="seleccionarSolicitud(sol.id)"
+                  (click)="seleccionarRequerimiento(req); mostrarFormulario = true"
                   title="Generar Orden de Servicio">
                   <i class="bx bx-file-plus"></i> Generar OS
                 </button>
@@ -261,53 +290,94 @@
   <!-- FORMULARIO DE ORDEN DE SERVICIO -->
   <div class="content-section" *ngIf="mostrarFormulario">
     <div class="form-container">
-      <h3>Nueva Orden de Servicio</h3>
+      <h3>{{ tipoOrden === 'DIRECTA' ? 'Nueva Orden de Servicio (Directa)' : 'Nueva Orden de Servicio (Desde Solicitud)' }}</h3>
 
       <!-- TABS INTERNOS -->
-      <div class="tabs-container">
-        <button
-          class="tab-button"
-          [class.active]="!mostrarTabDistribucion"
-          (click)="mostrarTabDistribucion = false">
-          <i class="icon-file-text"></i> General
-        </button>
-        <button
-          class="tab-button"
-          [class.active]="mostrarTabDistribucion"
-          (click)="mostrarTabDistribucion = true">
-          <i class="icon-calculator"></i> Distrib. Contable
-        </button>
-      </div>
+      <ul class="nav custom-tabs mb-3">
+        <li class="nav-item">
+          <button
+            class="nav-link"
+            [class.active]="!mostrarTabDistribucion"
+            (click)="mostrarTabDistribucion = false"
+            type="button">
+            <i class="bx bx-file-text me-1"></i> General
+          </button>
+        </li>
+        <li class="nav-item">
+          <button
+            class="nav-link"
+            [class.active]="mostrarTabDistribucion"
+            (click)="mostrarTabDistribucion = true"
+            type="button">
+            <i class="bx bx-calculator me-1"></i> Distrib. Contable
+          </button>
+        </li>
+      </ul>
 
-      <!-- SELECCIÓN DE SOLICITUD (solo visible en General cuando no hay orden actual) -->
+      <!-- SELECCIÓN DE REQUERIMIENTO DE SERVICIO (solo visible en General cuando no hay orden actual) -->
       <div *ngIf="!mostrarTabDistribucion && !ordenActual && tipoOrden === 'DESDE_SOLICITUD'">
         <div class="form-section">
-          <h4>Seleccionar Solicitud de Servicio Aprobada</h4>
-          <div class="table-container">
-            <table class="table">
-              <thead>
+          <h4>Requerimientos de Servicio Aprobados</h4>
+          <p class="text-muted mb-2">Seleccione un requerimiento de servicio aprobado para generar la Orden de Servicio.</p>
+          <div class="table-wrapper">
+            <p-table [value]="requerimientosServicio" [paginator]="true" [rows]="10"
+                     [rowsPerPageOptions]="[10,25,50]" [showCurrentPageReport]="true"
+                     currentPageReportTemplate="Mostrando {first}-{last} de {totalRecords}"
+                     styleClass="p-datatable-sm">
+              <ng-template pTemplate="header">
                 <tr>
-                  <th>Número</th>
-                  <th>Tipo</th>
+                  <th>#</th>
+                  <th>N° Requerimiento</th>
+                  <th>Fecha Creacion</th>
+                  <th>Fecha Aprobacion</th>
+                  <th>Empresa</th>
+                  <th>Área</th>
+                  <th>Código</th>
                   <th>Descripción</th>
-                  <th>Monto</th>
+                  <th class="text-center">Cantidad</th>
+                  <th class="text-end">Precio Ref.</th>
+                  <th>Último Proveedor</th>
                   <th>Acción</th>
                 </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let solicitud of solicitudesAprobadas">
-                  <td>{{ solicitud.numeroSolicitud }}</td>
-                  <td>{{ solicitud.tipoServicio }}</td>
-                  <td>{{ solicitud.descripcion }}</td>
-                  <td class="text-right">S/ {{ formatearMoneda(solicitud.montoEstimado) }}</td>
+              </ng-template>
+              <ng-template pTemplate="body" let-req let-ri="rowIndex">
+                <tr>
+                  <td class="text-muted small">{{ ri + 1 }}</td>
+                  <td class="mono"><strong>{{ req.numeroRequerimiento }}</strong></td>
+                  <td class="mono">{{ req.fechaRequerimiento ? formatearFecha(req.fechaRequerimiento) : '-' }}</td>
+                  <td class="mono">{{ req.fechaAprobacion ? formatearFecha(req.fechaAprobacion) : '-' }}</td>
                   <td>
-                    <button class="btn btn-sm btn-primary" (click)="seleccionarSolicitud(solicitud.id)">
-                      <i class="bx bx-check"></i> Seleccionar
+                    <div class="empresa-info">
+                      <strong>{{ req.empresa || req.ruc || '-' }}</strong>
+                      <small class="d-block text-muted" *ngIf="req.ruc && req.empresa">RUC: {{ req.ruc }}</small>
+                    </div>
+                  </td>
+                  <td>{{ req.area || req.idarea || '-' }}</td>
+                  <td class="mono">{{ req.codigo }}</td>
+                  <td>{{ req.descripcion }}</td>
+                  <td class="text-center">{{ req.cantidad }} {{ req.unidadMedida }}</td>
+                  <td class="text-end mono">
+                    <span *ngIf="req.precioReferencial > 0">S/ {{ formatearMoneda(req.precioReferencial) }}</span>
+                    <span *ngIf="!req.precioReferencial" class="text-muted">-</span>
+                  </td>
+                  <td>
+                    <small>{{ req.ultimoProveedor || '-' }}</small>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-success" (click)="seleccionarRequerimiento(req)" title="Generar OS desde este requerimiento">
+                      <i class="bx bx-file-plus"></i> Generar OS
                     </button>
                   </td>
                 </tr>
-              </tbody>
-            </table>
+              </ng-template>
+              <ng-template pTemplate="emptymessage">
+                <tr>
+                  <td colspan="12" class="text-center py-4 text-muted">
+                    <i class="bx bx-inbox fs-3 d-block mb-2"></i>No hay requerimientos de servicio aprobados pendientes.
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
           </div>
         </div>
       </div>
@@ -366,26 +436,48 @@
         </div>
 
         <div class="section-title">Datos del Proveedor</div>
+        <!-- Buscador de proveedor -->
+        <div class="form-group mb-3">
+          <label class="fw-bold">Buscar Proveedor (RUC o Nombre): <span class="required">*</span></label>
+          <div class="input-group" style="max-width: 550px;">
+            <!-- <span class="input-group-text"><i class="bx bx-search"></i></span> -->
+            <p-autoComplete
+              [(ngModel)]="proveedorInput"
+              [suggestions]="proveedoresSugeridos"
+              (completeMethod)="filtrarProveedores($event)"
+              (onSelect)="seleccionarProveedor($event)"
+              field="nombre"
+              [dropdown]="true"
+              [forceSelection]="true"
+              placeholder="Escriba al menos 3 caracteres..."
+              styleClass="w-100">
+              <ng-template let-prov pTemplate="item">
+                <div>{{ prov.nombre }} <small class="text-muted">({{ prov.ruc }})</small></div>
+              </ng-template>
+            </p-autoComplete>
+            <!-- <button *ngIf="proveedorSeleccionado" class="btn btn-outline-danger" type="button" (click)="limpiarProveedor()" title="Limpiar proveedor">
+              <i class="bx bx-x"></i>
+            </button> -->
+            <span *ngIf="cargandoProveedores" class="input-group-text">
+              <div class="spinner-border spinner-border-sm"></div>
+            </span>
+          </div>
+          <div *ngIf="proveedorSeleccionado" class="alert alert-success mt-2 py-2 mb-0" style="max-width: 550px;">
+            <i class="bx bx-check-circle me-1"></i>
+            <strong>Proveedor:</strong> {{ proveedorSeleccionado.nombre }}
+            <small class="text-muted">| RUC: {{ proveedorSeleccionado.ruc }}</small>
+          </div>
+          <small class="text-muted d-block mt-1">Al seleccionar un proveedor se cargarán automáticamente: RUC, nombre, email, plazo de entrega, forma y condición de pago.</small>
+        </div>
+
         <div class="form-grid">
           <div class="form-group">
             <label>RUC Proveedor: <span class="required">*</span></label>
-            <input type="text" class="form-control" [(ngModel)]="ordenActual.rucProveedor">
-          </div>
-          <div class="form-group">
-            <label>Código Proveedor: <span class="required">*</span></label>
-            <input type="text" class="form-control" [(ngModel)]="ordenActual.proveedor">
+            <input type="text" class="form-control" [(ngModel)]="ordenActual.rucProveedor" [readonly]="proveedorSeleccionado">
           </div>
           <div class="form-group">
             <label>Nombre Proveedor: <span class="required">*</span></label>
-            <input type="text" class="form-control" [(ngModel)]="ordenActual.nombreProveedor">
-          </div>
-          <div class="form-group">
-            <label>Contacto:</label>
-            <input type="text" class="form-control" [(ngModel)]="ordenActual.contactoProveedor">
-          </div>
-          <div class="form-group">
-            <label>Teléfono:</label>
-            <input type="text" class="form-control" [(ngModel)]="ordenActual.telefonoProveedor">
+            <input type="text" class="form-control" [(ngModel)]="ordenActual.nombreProveedor" [readonly]="proveedorSeleccionado">
           </div>
           <div class="form-group">
             <label>Email:</label>
@@ -412,12 +504,20 @@
             <input type="number" class="form-control" [(ngModel)]="ordenActual.montoTotal" step="0.01">
           </div>
           <div class="form-group">
-            <label>Forma de Pago: <span class="required">*</span></label>
-            <input type="text" class="form-control" [(ngModel)]="ordenActual.formaPago">
+            <label>Condiciones de Pago: <span class="required">*</span></label>
+            <select class="form-control" [(ngModel)]="ordenActual.condicionesPago">
+              <option value="">-- Seleccione --</option>
+              <option *ngFor="let fp of formasPago" [value]="fp.idformapago">{{ fp.formapago }}</option>
+              <option *ngIf="ordenActual.condicionesPago && !condicionPagoExiste(ordenActual.condicionesPago)" [value]="ordenActual.condicionesPago">{{ ordenActual.condicionesPago }}</option>
+            </select>
           </div>
           <div class="form-group">
-            <label>Condiciones de Pago:</label>
-            <input type="text" class="form-control" [(ngModel)]="ordenActual.condicionesPago">
+            <label>Forma de Pago: <span class="required">*</span></label>
+            <select class="form-control" [(ngModel)]="ordenActual.formaPago">
+              <option value="">-- Seleccione --</option>
+              <option *ngFor="let tp of tiposPago" [value]="tp.TipoPago">{{ tp.Descripcion }}</option>
+              <option *ngIf="ordenActual.formaPago && !formaPagoExiste(ordenActual.formaPago)" [value]="ordenActual.formaPago">{{ ordenActual.formaPago }}</option>
+            </select>
           </div>
         </div>
         <div class="form-group">
@@ -430,10 +530,10 @@
         </div>
       </div>
 
-      <!-- DISTRIBUCIÓN CONTABLE (visible solo en tab Distribución) -->
-      <div *ngIf="mostrarTabDistribucion && ordenActual">
-        <div class="section-title">Distribución Contable</div>
-        <div class="table-actions">
+      <!-- DISTRIBUCIÓN CONTABLE -->
+      <div class="distribucion-section" *ngIf="ordenActual && distribucionContable.length > 0">
+        <div class="section-header">
+          <h4>Distribución Contable</h4>
           <button class="btn-primary" type="button" (click)="abrirModalDistribucion()">
             <i class="bx bx-plus"></i> Agregar
           </button>
@@ -463,8 +563,19 @@
                 <td>{{ dist.proyecto }}</td>
                 <td class="text-right">{{ formatearMoneda(dist.monto) }}</td>
                 <td>{{ dist.fondo }}</td>
-                <td>{{ dist.referencia }}</td>
-                <td>{{ dist.ccdestino }}</td>
+                <td>
+                  <select class="form-control form-control-sm" [(ngModel)]="dist.referencia">
+                    <option value="">Seleccione un gasto</option>
+                    <option *ngFor="let gasto of gastosData" [value]="gasto.codigo">{{ gasto.descripcion }}</option>
+                  </select>
+                </td>
+                <td>
+                  <select class="form-control form-control-sm" [(ngModel)]="dist.ccdestino">
+                    <option value="">Seleccione una labor</option>
+                    <option *ngIf="dist.ccdestino && !isLaborInList(dist.ccdestino, dist.centrocosto)" [value]="dist.ccdestino">{{ dist.ccdestino }}</option>
+                    <option *ngFor="let labor of getLaboresPorCeco(dist.centrocosto)" [value]="labor.idlabor">{{ labor.labor }}</option>
+                  </select>
+                </td>
                 <td>{{ dist.turno }}</td>
                 <td>{{ dist.cultivo }}</td>
                 <td>

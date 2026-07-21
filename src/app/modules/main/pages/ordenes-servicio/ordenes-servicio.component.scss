@@ -27,53 +27,7 @@
     }
   }
 
-  // TABS
-  .tabs-container {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 24px;
-    border-bottom: 2px solid #e0e0e0;
-
-    .tab-button {
-      padding: 12px 24px;
-      background: transparent;
-      border: 1px solid #3498db;
-      border-bottom: 3px solid transparent;
-      border-radius: 8px 8px 0 0;
-      cursor: pointer;
-      font-size: 11px;
-      font-weight: 500;
-      color: #3498db;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      i {
-        font-size: 18px;
-      }
-
-      &:hover {
-        color: #2980b9;
-        background: rgba(52, 152, 219, 0.08);
-      }
-
-      &.active {
-        color: #fff;
-        border: 1px solid #3498db;
-        border-bottom: 3px solid #1a5276;
-        background: #3498db;
-        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.35);
-        font-weight: 600;
-        transform: translateY(-2px);
-
-        &:hover {
-          color: #fff;
-          background: #2980b9;
-        }
-      }
-    }
-  }
+  // TABS — ver src/styles/custom-tabs.scss (global)
 
   // STATS CARDS
   .stats-cards {
@@ -476,10 +430,11 @@
         }
 
         .form-control {
-          padding: 10px 14px;
+          padding: 8px 12px;
           border: 1px solid #ddd;
           border-radius: 6px;
-          font-size: 14px;
+          font-size: 13px;
+          height: 38px;
           transition: border-color 0.2s ease;
 
           &:focus {
@@ -497,6 +452,69 @@
         textarea.form-control {
           resize: vertical;
           min-height: 80px;
+        }
+      }
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+
+      h4 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+    }
+
+    .table-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+
+    .distribucion-section {
+      margin-top: 8px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      margin-bottom: 24px;
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+
+        thead {
+          background: #f8f9fa;
+          th {
+            padding: 12px 10px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            white-space: nowrap;
+          }
+        }
+
+        tbody {
+          tr {
+            border-bottom: 1px solid #f0f0f0;
+            &:hover { background: #f8f9fa; }
+            td {
+              padding: 12px 10px;
+              font-size: 14px;
+              color: #333;
+            }
+          }
+          .total-row td {
+            background: #f0f4ff;
+            font-weight: 600;
+          }
         }
       }
     }

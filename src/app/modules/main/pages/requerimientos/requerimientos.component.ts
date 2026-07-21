@@ -1,4 +1,4 @@
-﻿import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { lastValueFrom } from 'rxjs';
@@ -11,6 +11,7 @@ import { RequerimientosItemService } from './services/requerimientos-item.servic
 import { RequerimientosCommodityService } from './services/requerimientos-commodity.service';
 import { RequerimientosActivoFijoService } from './services/requerimientos-activo-fijo.service';
 import { RequerimientosActivoMenorService } from './services/requerimientos-activo-menor.service';
+import { RequerimientosSyncService } from './services/requerimientos-sync.service';
 import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import {
   Requerimiento,
@@ -69,8 +70,11 @@ import { ModalStockValidacionComponent } from './components/modal-stock-validaci
   templateUrl: './requerimientos.component.html',
   styleUrls: ['./requerimientos.component.scss'],
 })
-export class RequerimientosComponent implements OnInit {
+export class RequerimientosComponent implements OnInit, OnDestroy {
   private contadorReq = 0; // contador para IDs Ãºnicos en la sesiÃ³n
+  private visibilityChangeHandler = this.onVisibilityChange.bind(this);
+  private windowFocusHandler = this.onWindowFocus.bind(this);
+  private estadoSyncIntervalId: any = null;
   tabActiva: 'ITEM' | 'COMMODITY' | 'ACTIVOFIJO' | 'ACTIVOFIJOMENOR' = 'ITEM';
   mostrarFormulario = false;
   modoEdicion: boolean = false;
@@ -614,6 +618,7 @@ export class RequerimientosComponent implements OnInit {
     public commoditySvc: RequerimientosCommodityService,
     public activoFijoSvc: RequerimientosActivoFijoService,
     public activoMenorSvc: RequerimientosActivoMenorService,
+    private syncSvc: RequerimientosSyncService,
     private alertService: AlertService, // ? inyectar el servicio
     private requerimientosService: RequerimientosService,
     private aprobacionesAreaService: AprobacionesAreaService, // ? Servicio de aprobaciones por área
@@ -677,6 +682,21 @@ export class RequerimientosComponent implements OnInit {
 
     await this.ListarItems();
     await this.cargarRequerimientos();
+
+    // Sincronizar estados con el servidor (online inmediato / offline al restaurar)
+    this.syncSvc.escucharConectividad(this.usuario, async () => {
+      await this.cargarRequerimientos();
+      this.actualizarContadores();
+    });
+    await this.sincronizarEstadosYRecargar();
+
+    // Re-sincronizar estados cuando el usuario vuelve a la página/app
+    document.addEventListener('visibilitychange', this.visibilityChangeHandler);
+    window.addEventListener('focus', this.windowFocusHandler);
+
+    // Sincronizar estados periódicamente para reflejar aprobaciones desde otros dispositivos
+    this.iniciarSincronizacionPeriodica();
+
     await this.cargarPendientes();
     this.actualizarContadores();
     this.opcionesPrioridadCOMMODITY = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
@@ -684,6 +704,46 @@ export class RequerimientosComponent implements OnInit {
     this.opcionesPrioridadACTIVOFIJOMENOR = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
     await this.verificarRequerimientoConsolidado();
     this.mostrarInformacionArea();
+  }
+
+  ngOnDestroy(): void {
+    this.syncSvc.detenerEscucha();
+    document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+    window.removeEventListener('focus', this.windowFocusHandler);
+    if (this.estadoSyncIntervalId) {
+      clearInterval(this.estadoSyncIntervalId);
+      this.estadoSyncIntervalId = null;
+    }
+  }
+
+  private async onVisibilityChange(): Promise<void> {
+    if (document.visibilityState === 'visible') {
+      await this.sincronizarEstadosYRecargar();
+    }
+  }
+
+  private async onWindowFocus(): Promise<void> {
+    await this.sincronizarEstadosYRecargar();
+  }
+
+  private iniciarSincronizacionPeriodica(): void {
+    // Cada 30 segundos, si la pestaña es visible y hay conexion,
+    // sincroniza estados con el servidor para reflejar aprobaciones
+    // hechas desde otros dispositivos.
+    this.estadoSyncIntervalId = setInterval(async () => {
+      if (document.visibilityState !== 'visible' || !navigator.onLine) return;
+      await this.sincronizarEstadosYRecargar();
+    }, 30000);
+  }
+
+  private async sincronizarEstadosYRecargar(): Promise<void> {
+    try {
+      await this.syncSvc.sincronizarEstados(this.usuario);
+      await this.cargarRequerimientos();
+      this.actualizarContadores();
+    } catch (error) {
+      console.error('Error al sincronizar estados de requerimientos:', error);
+    }
   }
 
   private syncMaestrasDesdeServicio() {

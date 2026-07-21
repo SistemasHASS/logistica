@@ -1,28 +1,32 @@
-<div class="container mt-4 custom-tabs">
+<div class="container mt-4">
 
-    <ul class="nav nav-tabs">
-        <li class="nav-item">
-            <a class="nav-link active" data-bs-toggle="tab" href="#items" (click)="currentTab = 'ITEM'">ITEMS</a>
+    <ul class="nav custom-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" [class.active]="currentTab === 'ITEM'" (click)="currentTab = 'ITEM'" type="button">
+                <i class="bx bx-list-ul me-1"></i> Items
+            </button>
         </li>
-        <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="tab" href="#commodity" (click)="currentTab = 'COMMODITY'">SERVICIOS</a>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" [class.active]="currentTab === 'COMMODITY'" (click)="currentTab = 'COMMODITY'" type="button">
+                <i class="bx bx-wrench me-1"></i> Servicios
+            </button>
         </li>
-        <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="tab" href="#activofijo" (click)="currentTab = 'ACTIVOFIJO'">ACTIVO
-                FIJO</a>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" [class.active]="currentTab === 'ACTIVOFIJO'" (click)="currentTab = 'ACTIVOFIJO'" type="button">
+                <i class="bx bx-building me-1"></i> Activo Fijo
+            </button>
         </li>
-        <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="tab" href="#activofijomenor"
-                (click)="currentTab = 'ACTIVOFIJOMENOR'">ACTIVO
-                MENOR</a>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" [class.active]="currentTab === 'ACTIVOFIJOMENOR'" (click)="currentTab = 'ACTIVOFIJOMENOR'" type="button">
+                <i class="bx bx-box me-1"></i> Activo Menor
+            </button>
         </li>
     </ul>
 
-    <!-- ✅ CONTENEDOR OBLIGATORIO PARA TABS -->
-    <div class="tab-content mt-3">
+    <div>
 
         <!-- TAB ITEMS -->
-        <div class="tab-pane fade show active" id="items">
+        <div *ngIf="currentTab === 'ITEM'">
             <h5>Requerimientos Item (Jefe aprueba)</h5>
             <div class="text-center mt-4">
                 <!-- <div class="mb-2">
@@ -105,7 +109,7 @@
         </div>
 
         <!-- TAB COMMODITY -->
-        <div class="tab-pane fade" id="commodity">
+        <div *ngIf="currentTab === 'COMMODITY'">
             <h5>Requerimientos Servicios (por monto)</h5>
             <div class="text-center mt-4">
                 <!-- <div class="mb-2">
@@ -186,7 +190,7 @@
         </div>
 
         <!-- TAB ACTIVO FIJO -->
-        <div class="tab-pane fade" id="activofijo">
+        <div *ngIf="currentTab === 'ACTIVOFIJO'">
             <h5>Requerimientos activo fijo (por monto)</h5>
             <div class="text-center mt-4">
                 <!-- <div class="mb-2">
@@ -267,7 +271,7 @@
         </div>
 
         <!-- TAB ACTIVO FIJO MENOR-->
-        <div class="tab-pane fade" id="activofijomenor">
+        <div *ngIf="currentTab === 'ACTIVOFIJOMENOR'">
             <h5>Requerimientos activo fijo (por monto)</h5>
             <div class="text-center mt-4">
                 <!-- <div class="mb-2">

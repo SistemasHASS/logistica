@@ -9,6 +9,7 @@ import { PrioridadRequerimientoService } from '@/app/shared/services/prioridad-r
 import { RequerimientoActivoFijoMenor, DetalleRequerimientoActivoFijoMenor } from '@/app/shared/interfaces/Tables';
 import { PrioridadSpring } from '@/app/shared/interfaces/PrioridadRequerimiento';
 import { RequerimientosMaestrasService } from './requerimientos-maestras.service';
+import { RequerimientosSyncService } from './requerimientos-sync.service';
 
 @Injectable({ providedIn: 'root' })
 export class RequerimientosActivoMenorService {
@@ -44,6 +45,7 @@ export class RequerimientosActivoMenorService {
     private aprobacionesAreaService: AprobacionesAreaService,
     public prioridadService: PrioridadRequerimientoService,
     private maestras: RequerimientosMaestrasService,
+    private syncService: RequerimientosSyncService,
   ) {}
 
   itemTipoSeleccionado: 'CONSUMO' | 'COMPRA' = 'COMPRA';
@@ -68,7 +70,9 @@ export class RequerimientosActivoMenorService {
   async cargar() {
     const todos = await this.dexieService.showRequerimientoActivoFijoMenor();
     this.requerimientosActivoFijoMenor = todos.filter(
-      (r: any) => r.nrodocumento === this.maestras.usuario?.documentoidentidad,
+      (r: any) =>
+        r.nrodocumento === this.maestras.usuario?.documentoidentidad &&
+        !this.syncService.debeOcultar(r.estados),
     );
     const faltan = this.requerimientosActivoFijoMenor.some((r: any) => !r.servicio && (r.detalle?.length || r.detalleActivoFijoMenor?.length));
     if (faltan) {

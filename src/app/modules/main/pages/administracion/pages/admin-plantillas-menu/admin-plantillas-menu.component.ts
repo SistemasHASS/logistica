@@ -41,7 +41,8 @@ interface ItemPaleta {
 
 const PALETA_GRUPOS: ItemPaleta[] = [
   { id: 'grp-dashboard', nombre: 'Mi Panel', icono: 'bx bxs-dashboard', tipo: 'grupo' },
-  { id: 'grp-config', nombre: 'Configuración', icono: 'icon icon-equalizer', tipo: 'grupo' },
+  // { id: 'grp-config', nombre: 'Configuración', icono: 'icon icon-equalizer', tipo: 'grupo' },
+  { id: 'grp-config', nombre: 'Notificaciones', icono: 'icon icon-equalizer', tipo: 'grupo' },
   { id: 'grp-requerimientos', nombre: 'Requerimientos', icono: 'icon icon-stack', tipo: 'grupo' },
   { id: 'grp-compras', nombre: 'Compras & Órdenes', icono: 'bx bx-cart', tipo: 'grupo' },
   { id: 'grp-almacen', nombre: 'Almacén & Stock', icono: 'bx bx-package', tipo: 'grupo' },

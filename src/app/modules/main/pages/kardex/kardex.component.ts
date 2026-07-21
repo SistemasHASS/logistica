@@ -16,7 +16,9 @@ import { TextareaModule } from 'primeng/textarea';
 import { DatePickerModule } from 'primeng/datepicker';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
+import { Stock } from '@/app/shared/interfaces/Tables';
 import { MaestrasService } from '../../services/maestras.service';
+import { ProductSearchCardsComponent } from '../../components/product-search-cards/product-search-cards.component';
 import { take } from 'rxjs/operators';
 
 // Interfaces para formularios
@@ -59,6 +61,7 @@ interface VerificarEstadoForm {
     TextareaModule,
     DatePickerModule,
     AutoCompleteModule,
+    ProductSearchCardsComponent,
   ],
   templateUrl: './kardex.component.html',
   styleUrls: ['./kardex.component.scss'],
@@ -66,23 +69,33 @@ interface VerificarEstadoForm {
 export class KardexComponent implements OnInit {
   // Tabs
   tabActiva: number = 0;
+  private filtroStockTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly formatoMoneda = new Intl.NumberFormat('es-PE', {
+    style: 'currency',
+    currency: 'PEN',
+  });
+  private readonly formatoNumero = new Intl.NumberFormat('es-PE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  });
 
   // Stock
   stock: any[] = [];
   stockFiltrado: any[] = [];
+  almacenesStockDisponibles: string[] = [];
   filtroStock = {
     almacen: '',
     codigoItem: '',
-    stockBajo: false,
   };
 
   // Kardex
   movimientosKardex: any[] = [];
+  itemKardexSeleccionado: any = null;
   filtroKardex = {
     codigoItem: '',
     almacen: '',
-    fechaInicio: null as string | null,
-    fechaFin: null as string | null,
+    periodoInicio: null as string | null,
+    periodoFin: null as string | null,
     tipoMovimiento: '',
     fuente: '' as '' | 'SPRING' | 'LOCAL',
   };
@@ -101,6 +114,7 @@ export class KardexComponent implements OnInit {
   // Nueva transacción
   modalNuevaTransaccion = false;
   items: any[] = [];
+  itemsKardex: any[] = [];
   itemsFiltrados: any[] = [];
   nuevaTransaccion = {
     tipoTransaccion: 'INGRESO',
@@ -198,6 +212,35 @@ export class KardexComponent implements OnInit {
 
   // Loading
   loading = false;
+  loadingStock = false;
+  loadingKardex = false;
+  loadingTransacciones = false;
+
+  // Cache
+  private readonly STOCK_CACHE_PREFIX = 'stock_';
+  private readonly KARDEX_CACHE_PREFIX = 'kardex_';
+  private readonly TRANSACCIONES_CACHE_PREFIX = 'transacciones_';
+  sincronizandoStock = false;
+  sincronizandoKardex = false;
+  sincronizandoTransacciones = false;
+  lastSyncStock: Date | null = null;
+  lastSyncKardex: Date | null = null;
+  lastSyncTransacciones: Date | null = null;
+  hayStockCache = false;
+  hayKardexCache = false;
+  hayTransaccionesCache = false;
+
+  get stockCacheKey(): string {
+    return `${this.STOCK_CACHE_PREFIX}${this.alcanceEmpresaCache}`;
+  }
+
+  private get kardexCacheKey(): string {
+    return `${this.KARDEX_CACHE_PREFIX}${this.alcanceEmpresaCache}_${this.hashString(JSON.stringify(this.construirFiltrosKardex()))}`;
+  }
+
+  private get transaccionesCacheKey(): string {
+    return `${this.TRANSACCIONES_CACHE_PREFIX}${this.alcanceEmpresaCache}_${this.hashString(JSON.stringify(this.construirFiltrosTransacciones()))}`;
+  }
 
   constructor(
     private kardexService: KardexService,
@@ -207,21 +250,60 @@ export class KardexComponent implements OnInit {
     private maestrasService: MaestrasService,
   ) {}
 
+  // Lista de companias a consultar en kardex. Por defecto la empresa del usuario.
+  // TODO: configurar las 3 empresas del grupo cuando se defina el listado.
+  companiasSocios: string[] = [];
+  todasCompaniasSocios: string[] = [];
+  readonly empresasDisponibles: Array<{ label: string; value: string }> = [
+    { label: 'HASS PERU SA', value: '00000800' },
+    { label: 'Berry Harvest S.A.', value: '00000600' },
+    { label: 'Corporacion Agricola Olmos S.A.', value: '00001000' },
+  ];
+  empresaSeleccionada = '';
+
   async ngOnInit() {
     console.log('ngOnInit - Iniciando');
     await this.cargarUsuario();
     console.log('Usuario cargado:', this.usuario);
-    await this.cargarDatos();
-    await this.cargarItems();
-    
-    // Cargar almacenes desde Dexie si ya existen
-    await this.cargarAlmacenesDesdeDexie();
-    
-    // Sincronizar tablas maestras
-    await this.sincronizarTablasMaestras();
-    // Cargar kardex automáticamente al iniciar
-    await this.buscarKardex();
+
+    // Inicializar companias a consultar (por defecto la del usuario)
+    await this.configurarAlcanceEmpresas();
+
+    // Inicializar fechas por defecto: ultimos 30 dias
+    const hoy = new Date();
+    this.filtroKardex.periodoFin = this.formatearPeriodoMes(hoy);
+    this.filtroKardex.periodoInicio = this.formatearPeriodoMes(new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1));
+    this.filtroTransacciones.fechaFin = this.formatearFechaSQL(hoy.toISOString());
+    this.filtroTransacciones.fechaInicio = this.formatearFechaSQL(
+      new Date(hoy.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    );
+
+    // Cargar stock inmediatamente desde Dexie (cache); si no existe, desde API
+    await Promise.all([
+      this.cargarStockInicial(),
+
+      // Cargar almacenes desde Dexie si ya existen
+      this.cargarAlmacenesDesdeDexie(),
+    ]);
+
+    // Sincronizar tablas maestras en segundo plano (sin bloquear UI)
+    this.sincronizarTablasMaestrasSilencioso();
+
+    // Cargar transacciones y dashboard
+
+    // Cargar kardex automáticamente al iniciar (cache primero, luego sync silenciosa)
+
     console.log('ngOnInit - Completado');
+  }
+
+  async cambiarTab(indice: number): Promise<void> {
+    this.tabActiva = indice;
+
+    if (!this.companiaConsulta || (this.puedeVerTodasEmpresas && !this.empresaSeleccionada)) return;
+
+    if (indice === 0 && this.stock.length === 0) {
+      await this.cargarStockInicial();
+    }
   }
 
   async cargarUsuario() {
@@ -229,25 +311,103 @@ export class KardexComponent implements OnInit {
     if (!this.usuario) {
       this.usuario = this.userService.getUsuario();
     }
+    if (this.usuario) {
+      this.userService.setUsuario(this.usuario);
+    }
   }
 
   get puedeVerPrecios(): boolean {
     return !this.usuario?.idrol?.includes('ALLOGIST');
   }
 
+  get puedeVerTodasEmpresas(): boolean {
+    return this.usuario?.idrol?.includes('JLOLOGIST') ?? false;
+  }
+
   get companiaSocio(): string {
-    if (!this.usuario?.idempresa) return '00000800';
-    return this.usuario.idempresa.padStart(6, '0') + '00';
+    return this.normalizarCompaniaSocio(this.usuario?.idempresa);
+  }
+
+  get alcanceEmpresaCache(): string {
+    return this.puedeVerTodasEmpresas && !this.empresaSeleccionada
+      ? `TODAS_${this.hashString(this.companiasSocios.join('|'))}`
+      : this.companiaConsulta;
+  }
+
+  get companiaConsulta(): string {
+    return this.puedeVerTodasEmpresas && this.empresaSeleccionada
+      ? this.empresaSeleccionada
+      : this.companiaSocio;
+  }
+
+  private normalizarCompaniaSocio(idempresa: unknown): string {
+    const valor = String(idempresa ?? '').trim();
+    if (/^\d{8}$/.test(valor) && valor.endsWith('00')) return valor;
+    if (/^\d{1,6}$/.test(valor)) return `${valor.padStart(6, '0')}00`;
+    return '';
+  }
+
+  private async configurarAlcanceEmpresas(): Promise<void> {
+    if (!this.puedeVerTodasEmpresas) {
+      this.companiasSocios = [this.companiaSocio];
+      return;
+    }
+
+    this.todasCompaniasSocios = this.empresasDisponibles.map(empresa => empresa.value);
+    this.empresaSeleccionada = '';
+    this.companiasSocios = [];
+  }
+
+  async seleccionarEmpresa(companiaSocio: string): Promise<void> {
+    if (!this.puedeVerTodasEmpresas || this.empresaSeleccionada === companiaSocio) return;
+    this.empresaSeleccionada = companiaSocio;
+    await this.cambiarEmpresaSeleccionada();
+  }
+
+  async cambiarEmpresaSeleccionada(): Promise<void> {
+    if (!this.puedeVerTodasEmpresas) return;
+
+    this.companiasSocios = [this.empresaSeleccionada];
+
+    this.stock = [];
+    this.stockFiltrado = [];
+    this.almacenesStockDisponibles = [];
+    this.items = [];
+    this.itemsKardex = [];
+    this.movimientosKardex = [];
+    this.transacciones = [];
+    this.transaccionesFiltradas = [];
+
+    await this.cargarStockInicial();
+  }
+
+  private validarEmpresaSeleccionada(): boolean {
+    if (this.puedeVerTodasEmpresas && this.empresaSeleccionada) return true;
+    if (!this.puedeVerTodasEmpresas && this.companiaSocio) return true;
+
+    this.alertService.showAlert(
+      'Atención',
+      this.puedeVerTodasEmpresas
+        ? 'Debe seleccionar HASS PERU SA, Berry Harvest S.A. o Corporacion Agricola Olmos S.A.'
+        : 'El usuario ALLOGIST no tiene una empresa válida asignada en el login.',
+      'warning',
+    );
+    return false;
+  }
+
+  private construirAlcanceEmpresa(): any {
+    const incluirTodasEmpresas = false;
+    return {
+      companiaSocio: this.companiaConsulta,
+      companiasSocios: this.companiasSocios,
+      incluirTodasEmpresas,
+    };
   }
 
   async cargarDatos() {
-    this.loading = true;
+    // Cada tabla maneja su propio loading para no bloquear las demás
     try {
-      await Promise.all([
-        this.consultarStock(),
-        this.listarTransacciones(),
-        this.cargarDashboard(),
-      ]);
+      await this.cargarDashboard();
     } catch (error) {
       console.error('Error al cargar datos:', error);
       this.alertService.showAlert(
@@ -255,8 +415,6 @@ export class KardexComponent implements OnInit {
         'Error al cargar los datos',
         'error',
       );
-    } finally {
-      this.loading = false;
     }
   }
 
@@ -282,7 +440,7 @@ export class KardexComponent implements OnInit {
       const almacenes$ = this.maestrasService.getAlmacenes([
         { ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA' },
       ]);
-      
+
       almacenes$.pipe(take(1)).subscribe(async (resp: any) => {
         console.log('Respuesta de almacenes:', resp);
         if (!!resp && resp.length) {
@@ -349,6 +507,32 @@ export class KardexComponent implements OnInit {
     }
   }
 
+  private sincronizarTablasMaestrasSilencioso(): void {
+    console.log('[Maestras] Iniciando sincronización silenciosa de almacenes');
+    const almacenes$ = this.maestrasService.getAlmacenes([
+      { ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA' },
+    ]);
+
+    almacenes$.pipe(take(1)).subscribe({
+      next: async (resp: any) => {
+        if (!!resp && resp.length) {
+          await Promise.all([
+            this.dexieService.saveAlmacenes(resp),
+            this.dexieService.saveAlmacenesDestino(resp),
+          ]);
+          await Promise.all([
+            this.ListarAlmacenes(),
+            this.ListarAlmacenesDestino(),
+          ]);
+          console.log('[Maestras] Almacenes sincronizados silenciosamente');
+        }
+      },
+      error: (error: any) => {
+        console.error('[Maestras] Error en sincronización silenciosa:', error);
+      },
+    });
+  }
+
   async ListarAlmacenes() {
     console.log('ListarAlmacenes - Iniciando');
     const almacenes = await this.dexieService.showAlmacenes();
@@ -373,28 +557,200 @@ export class KardexComponent implements OnInit {
 
   // ==================== STOCK ====================
 
-  get almacenesDisponibles(): string[] {
-    const set = new Set(this.stock.map(i => (i.almacen ?? '').trim()).filter(Boolean));
-    return Array.from(set).sort();
+  // ---------- Carga y cache de stock ----------
+
+  async cargarStockInicial(): Promise<void> {
+    if (!this.companiaConsulta || (this.puedeVerTodasEmpresas && !this.empresaSeleccionada)) {
+      this.stock = [];
+      this.stockFiltrado = [];
+      this.almacenesStockDisponibles = [];
+      this.items = [];
+      this.itemsKardex = [];
+      return;
+    }
+
+    const cargadoDesdeDexie = await this.cargarStockDesdeDexie();
+
+    if (cargadoDesdeDexie) {
+      console.log('[Stock] Cargado desde Dexie, iniciando sincronización silenciosa');
+      this.sincronizarStockSilencioso();
+      return;
+    }
+
+    console.log('[Stock] Sin cache en Dexie, cargando desde API');
+    this.loadingStock = true;
+    try {
+      await this.consultarStockDesdeApi();
+    } finally {
+      this.loadingStock = false;
+    }
   }
 
-  async consultarStock() {
+  private async cargarStockDesdeDexie(): Promise<boolean> {
     try {
-      const filtros: any = { companiaSocio: this.companiaSocio };
-      if (this.filtroStock.almacen)    filtros.almacen    = this.filtroStock.almacen;
-      if (this.filtroStock.codigoItem) filtros.codigoItem = this.filtroStock.codigoItem;
-      const raw = await this.kardexService.consultarStock(filtros);
-      this.stock = raw.map(i => ({
-        ...i,
-        codigoItem:      (i.codigoItem      ?? '').trim(),
-        descripcionItem: (i.descripcionItem ?? '').trim(),
-        unidadMedida:    (i.unidadMedida    ?? '').trim(),
-        almacen:         (i.almacen         ?? '').trim(),
-      }));
-      this.stockFiltrado = [...this.stock];
+      const [cachedStock, meta] = await Promise.all([
+        this.dexieService.showStockPorCompanias(this.companiasSocios),
+        this.dexieService.getSyncMeta(this.stockCacheKey),
+      ]);
+
+      if (!meta || !cachedStock || cachedStock.length === 0) {
+        this.hayStockCache = false;
+        return false;
+      }
+
+      this.stock = cachedStock.map(item => this.normalizarStockItem(item));
+      this.filtrarStock();
+      this.derivarItemsDesdeStock();
+      this.lastSyncStock = meta ? new Date(meta.fechaSync) : null;
+      this.hayStockCache = true;
+
+      console.log(`[Stock] Cache cargado: ${cachedStock.length} registros. Último sync: ${this.lastSyncStock}`);
+      return true;
     } catch (error) {
-      console.error('Error al consultar stock:', error);
+      console.error('Error al cargar stock desde Dexie:', error);
+      return false;
     }
+  }
+
+  private async consultarStockDesdeApi(): Promise<void> {
+    try {
+      const filtros = this.construirAlcanceEmpresa();
+      const raw = await this.kardexService.consultarStock(filtros);
+      await this.guardarStockEnCache(raw);
+      this.aplicarStock(raw, new Date());
+    } catch (error) {
+      console.error('Error al consultar stock desde API:', error);
+    }
+  }
+
+  async consultarStock(): Promise<void> {
+    // Refresco manual: limpiar cache, llamar API y mostrar spinner
+    this.loadingStock = true;
+    try {
+      await this.consultarStockDesdeApi();
+    } finally {
+      this.loadingStock = false;
+    }
+  }
+
+  private async sincronizarStockSilencioso(): Promise<void> {
+    if ((this.puedeVerTodasEmpresas && !this.empresaSeleccionada) || this.sincronizandoStock) return;
+
+    this.sincronizandoStock = true;
+    try {
+      const filtros = this.construirAlcanceEmpresa();
+      const raw = await this.kardexService.consultarStock(filtros);
+
+      const nuevoHash = this.generarHashStock(raw);
+      const meta = await this.dexieService.getSyncMeta(this.stockCacheKey);
+      const hashActual = meta?.hash ?? '';
+
+      if (nuevoHash === hashActual) {
+        console.log('[Stock] Sin cambios respecto al cache. No se actualiza la vista.');
+        // Actualizar timestamp de sync para reflejar que se verificó
+        if (meta) {
+          meta.fechaSync = new Date().toISOString();
+          await this.dexieService.saveSyncMeta(meta);
+          this.lastSyncStock = new Date();
+        }
+        return;
+      }
+
+      console.log('[Stock] Datos nuevos detectados, actualizando cache y vista');
+      await this.guardarStockEnCache(raw);
+      this.aplicarStock(raw, new Date());
+    } catch (error) {
+      console.error('Error en sincronización silenciosa de stock:', error);
+    } finally {
+      this.sincronizandoStock = false;
+    }
+  }
+
+  private async guardarStockEnCache(raw: any[]): Promise<void> {
+    const stocksParaGuardar: Stock[] = raw.map(item => {
+      const normalizado = this.normalizarStockItem(item);
+      return {
+        ...normalizado,
+        codigo: (normalizado.codigoItem ?? normalizado.codigo ?? '').trim(),
+        descripcion: (normalizado.descripcionItem ?? normalizado.descripcion ?? '').trim(),
+        cantidad: normalizado.stockActual ?? normalizado.cantidad ?? 0,
+        companiaSocio: normalizado.companiaSocio ?? this.companiaConsulta,
+      };
+    });
+
+    const hash = this.generarHashStock(raw);
+
+    await this.dexieService.replaceStocksPorCompanias(this.companiasSocios, stocksParaGuardar);
+    await this.dexieService.saveSyncMeta({
+      clave: this.stockCacheKey,
+      fechaSync: new Date().toISOString(),
+      hash,
+      cantidadRegistros: stocksParaGuardar.length,
+    });
+  }
+
+  private normalizarStockItem(item: any): any {
+    return {
+      ...item,
+      codigoItem: (item.codigoItem ?? item.codigo ?? '').trim(),
+      descripcionItem: (item.descripcionItem ?? item.descripcion ?? '').trim(),
+      unidadMedida: (item.unidadMedida ?? '').trim(),
+      almacen: (item.almacen ?? '').trim(),
+    };
+  }
+
+  private aplicarStock(raw: any[], fechaSync: Date): void {
+    this.stock = raw.map(item => this.normalizarStockItem(item));
+    this.filtrarStock();
+    this.derivarItemsDesdeStock();
+    this.lastSyncStock = fechaSync;
+    this.hayStockCache = true;
+  }
+
+  private derivarItemsDesdeStock(): void {
+    this.almacenesStockDisponibles = Array.from(
+      new Set(this.stock.map(item => (item.almacen ?? '').trim()).filter(Boolean))
+    ).sort();
+
+    this.items = this.stock.map(item => ({
+      idItem: item.idItem,
+      codigoItem: item.codigoItem ?? item.codigo,
+      descripcionItem: item.descripcionItem ?? item.descripcion,
+      unidadMedida: item.unidadMedida,
+      costoPromedio: item.costoPromedio,
+      almacen: item.almacen,
+      label: `${item.codigoItem ?? item.codigo} - ${item.descripcionItem ?? item.descripcion}`,
+    }));
+
+    this.itemsKardex = Array.from(
+      new Map(this.items.map(item => [item.codigoItem, item])).values()
+    );
+  }
+
+  private generarHashStock(items: any[]): string {
+    const normalizado = items
+      .map(i => ({
+        codigoItem: (i.codigoItem ?? i.codigo ?? '').trim(),
+        companiaSocio: (i.companiaSocio ?? '').trim(),
+        almacen: (i.almacen ?? '').trim(),
+        stockActual: i.stockActual ?? i.cantidad ?? 0,
+      }))
+      .sort((a, b) => a.codigoItem.localeCompare(b.codigoItem) || a.almacen.localeCompare(b.almacen));
+
+    return this.hashString(JSON.stringify(normalizado));
+  }
+
+  private hashString(str: string): string {
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    }
+    return String(hash >>> 0);
+  }
+
+  programarFiltroStock(): void {
+    if (this.filtroStockTimer) clearTimeout(this.filtroStockTimer);
+    this.filtroStockTimer = setTimeout(() => this.filtrarStock(), 180);
   }
 
   filtrarStock() {
@@ -414,9 +770,6 @@ export class KardexComponent implements OnInit {
             item.descripcionItem.toLowerCase().trim().includes(busqueda));
       }
 
-      if (this.filtroStock.stockBajo) {
-        cumpleFiltro = cumpleFiltro && item.stockActual <= item.stockMinimo;
-      }
 
       return cumpleFiltro;
     });
@@ -426,9 +779,10 @@ export class KardexComponent implements OnInit {
     this.filtroStock = {
       almacen: '',
       codigoItem: '',
-      stockBajo: false,
     };
-    this.consultarStock();
+    this.filtrarStock();
+    // Refrescar en segundo plano por si los datos cambiaron
+    this.sincronizarStockSilencioso();
   }
 
   getEstadoStock(item: any): string {
@@ -453,41 +807,123 @@ export class KardexComponent implements OnInit {
   // ==================== KARDEX ====================
 
   async buscarKardex() {
+    if (!this.validarEmpresaSeleccionada()) return;
+
+    if (!this.filtroKardex.codigoItem?.trim()) {
+      this.alertService.showAlert('Atención', 'Debe ingresar el código de ítem para consultar el Kardex.', 'warning');
+      return;
+    }
+
+    if (!this.validarRangoPeriodos(this.filtroKardex.periodoInicio, this.filtroKardex.periodoFin)) {
+      return;
+    }
+
+    const filtros = this.construirFiltrosKardex();
+    const cacheCargado = await this.cargarKardexDesdeCache();
+
+    if (cacheCargado) {
+      void this.sincronizarKardexSilencioso(filtros, true);
+      return;
+    }
+
+    this.movimientosKardex = [];
+    this.hayKardexCache = false;
+    await this.sincronizarKardexSilencioso(filtros, false);
+  }
+
+  seleccionarItemKardex(item: any): void {
+    this.itemKardexSeleccionado = item;
+    this.filtroKardex.codigoItem = item?.codigoItem ?? item?.codigo ?? '';
+  }
+
+  private construirFiltrosKardex(): any {
+    const filtros: any = this.construirAlcanceEmpresa();
+
+    filtros.codigoItem = this.filtroKardex.codigoItem.trim();
+
+    if (this.filtroKardex.almacen) filtros.almacen = this.filtroKardex.almacen;
+    if (this.filtroKardex.tipoMovimiento) filtros.tipoMovimiento = this.filtroKardex.tipoMovimiento;
+    if (this.filtroKardex.fuente) filtros.fuente = this.filtroKardex.fuente;
+
+    // Siempre enviar fechas; el SP usa ultimos 30 dias si no vienen,
+    // pero enviarlas garantiza cache correcto y filtro explicito.
+    filtros.periodoInicio = this.filtroKardex.periodoInicio?.replace('-', '');
+    filtros.periodoFin = this.filtroKardex.periodoFin?.replace('-', '');
+
+    if (this.filtroKardex.periodoInicio && this.filtroKardex.periodoFin) {
+      filtros.fechaInicio = `${this.filtroKardex.periodoInicio}-01`;
+      const [anioFin, mesFin] = this.filtroKardex.periodoFin.split('-').map(Number);
+      const ultimoDia = new Date(anioFin, mesFin, 0).getDate();
+      filtros.fechaFin = `${this.filtroKardex.periodoFin}-${String(ultimoDia).padStart(2, '0')}`;
+    }
+
+    return filtros;
+  }
+
+  private async cargarKardexDesdeCache(): Promise<boolean> {
     try {
-      this.loading = true;
-      const filtros: any = {
-        companiaSocio: this.companiaSocio,
-      };
-
-      if (this.filtroKardex.codigoItem?.trim()) {
-        filtros.codigoItem = this.filtroKardex.codigoItem.trim();
-      } else {
-        filtros.top = 100;
+      const cache = await this.dexieService.getKardexCache(this.kardexCacheKey);
+      if (!cache || !cache.movimientos?.length) {
+        this.hayKardexCache = false;
+        return false;
       }
 
-      if (this.filtroKardex.almacen) filtros.almacen = this.filtroKardex.almacen;
-      if (this.filtroKardex.tipoMovimiento) filtros.tipoMovimiento = this.filtroKardex.tipoMovimiento;
-      if (this.filtroKardex.fuente) filtros.fuente = this.filtroKardex.fuente;
+      this.movimientosKardex = cache.movimientos.map((m: any) => this.normalizarMovimientoKardex(m));
+      this.lastSyncKardex = new Date(cache.fechaSync);
+      this.hayKardexCache = true;
+      console.log(`[Kardex] Cache cargado: ${cache.movimientos.length} movimientos. Último sync: ${this.lastSyncKardex}`);
+      return true;
+    } catch (error) {
+      console.error('Error al cargar kardex desde cache:', error);
+      return false;
+    }
+  }
 
-      if (this.filtroKardex.fechaInicio) {
-        filtros.fechaInicio = this.formatearFechaSQL(this.filtroKardex.fechaInicio);
-      }
-      if (this.filtroKardex.fechaFin) {
-        filtros.fechaFin = this.formatearFechaSQL(this.filtroKardex.fechaFin);
-      }
+  private async sincronizarKardexSilencioso(filtros: any, cacheCargado: boolean): Promise<void> {
+    if (this.sincronizandoKardex) return;
 
+    // Si no hay cache, mostrar spinner mientras se carga la primera vez
+    if (!cacheCargado) {
+      this.loadingKardex = true;
+    }
+
+    this.sincronizandoKardex = true;
+    try {
       const rawKardex = await this.kardexService.consultarKardex(filtros);
       console.log('[Kardex] Respuesta backend:', rawKardex, 'length:', rawKardex?.length);
-      this.movimientosKardex = rawKardex.map((m: any) => ({
-        ...m,
-        codigoItem:      (m.codigoItem      ?? '').trim(),
-        descripcionItem: (m.descripcionItem ?? '').trim(),
-        unidadMedida:    (m.unidadMedida    ?? '').trim(),
-        almacenOrigen:   (m.almacenOrigen   ?? '').trim(),
-        almacenDestino:  (m.almacenDestino  ?? '').trim(),
-        tipoDocumento:   (m.tipoDocumento   ?? '').trim(),
-        numeroDocumento: (m.numeroDocumento ?? '').trim(),
-      }));
+
+      const nuevoHash = this.generarHashKardex(rawKardex);
+      const cache = await this.dexieService.getKardexCache(this.kardexCacheKey);
+      const hashActual = cache?.hash ?? '';
+
+      if (nuevoHash === hashActual) {
+        console.log('[Kardex] Sin cambios respecto al cache.');
+        if (cache) {
+          this.movimientosKardex = cache.movimientos.map((m: any) => this.normalizarMovimientoKardex(m));
+          this.hayKardexCache = this.movimientosKardex.length > 0;
+          cache.fechaSync = new Date().toISOString();
+          await this.dexieService.saveKardexCache(cache);
+          this.lastSyncKardex = new Date();
+        }
+        return;
+      }
+
+      console.log('[Kardex] Datos nuevos detectados, actualizando cache y vista');
+      const movimientosNormalizados = rawKardex.map((m: any) => this.normalizarMovimientoKardex(m));
+
+      await this.dexieService.saveKardexCache({
+        clave: this.kardexCacheKey,
+        companiaSocio: this.companiaSocio,
+        filtros,
+        movimientos: movimientosNormalizados,
+        fechaSync: new Date().toISOString(),
+        hash: nuevoHash,
+        cantidadRegistros: movimientosNormalizados.length,
+      });
+
+      this.movimientosKardex = movimientosNormalizados;
+      this.lastSyncKardex = new Date();
+      this.hayKardexCache = true;
     } catch (error) {
       console.error('Error al buscar kardex:', error);
       this.alertService.showAlert(
@@ -496,16 +932,101 @@ export class KardexComponent implements OnInit {
         'error',
       );
     } finally {
-      this.loading = false;
+      this.sincronizandoKardex = false;
+      this.loadingKardex = false;
     }
   }
 
+  private normalizarMovimientoKardex(m: any): any {
+    return {
+      ...m,
+      codigoItem:      (m.codigoItem      ?? '').trim(),
+      descripcionItem: (m.descripcionItem ?? '').trim(),
+      unidadMedida:    (m.unidadMedida    ?? '').trim(),
+      almacenOrigen:   (m.almacenOrigen   ?? '').trim(),
+      almacenDestino:  (m.almacenDestino  ?? '').trim(),
+      tipoDocumento:   (m.tipoDocumento   ?? '').trim(),
+      numeroDocumento: (m.numeroDocumento ?? '').trim(),
+    };
+  }
+
+  private generarHashKardex(items: any[]): string {
+    const normalizado = items
+      .map(m => ({
+        codigoItem: (m.codigoItem ?? m.codigo ?? '').trim(),
+        almacenOrigen: (m.almacenOrigen ?? '').trim(),
+        almacenDestino: (m.almacenDestino ?? '').trim(),
+        cantidadEntrada: m.cantidadEntrada ?? 0,
+        cantidadSalida: m.cantidadSalida ?? 0,
+        saldo: m.saldo ?? null,
+        periodo: m.periodo ?? '',
+        esCierrePeriodo: m.esCierrePeriodo ?? false,
+        stockPeriodo: m.stockPeriodo ?? null,
+        fecha: m.fecha ?? '',
+      }))
+      .sort((a, b) =>
+        a.fecha.localeCompare(b.fecha) ||
+        a.codigoItem.localeCompare(b.codigoItem) ||
+        a.almacenOrigen.localeCompare(b.almacenOrigen)
+      );
+
+    return this.hashString(JSON.stringify(normalizado));
+  }
+
+  private validarRangoPeriodos(periodoInicio: string | null, periodoFin: string | null): boolean {
+    if (!periodoInicio || !periodoFin || !/^\d{4}-\d{2}$/.test(periodoInicio) || !/^\d{4}-\d{2}$/.test(periodoFin)) {
+      this.alertService.showAlert('Atención', 'Debe seleccionar el período desde y el período hasta.', 'warning');
+      return false;
+    }
+
+    if (periodoInicio > periodoFin) {
+      this.alertService.showAlert('Atención', 'El período desde no puede ser posterior al período hasta.', 'warning');
+      return false;
+    }
+
+    const [anioInicio, mesInicio] = periodoInicio.split('-').map(Number);
+    const [anioFin, mesFin] = periodoFin.split('-').map(Number);
+    const meses = (anioFin - anioInicio) * 12 + mesFin - mesInicio;
+
+    if (meses > 11) {
+      this.alertService.showAlert('Atención', 'El rango máximo de consulta es de 12 meses.', 'warning');
+      return false;
+    }
+
+    return true;
+  }
+
+  private validarPeriodo(fechaInicio: string | null, fechaFin: string | null, maximoDias = 90): boolean {
+    if (!fechaInicio || !fechaFin) {
+      this.alertService.showAlert('Atención', 'Debe seleccionar fecha de inicio y fecha de fin.', 'warning');
+      return false;
+    }
+
+    if (fechaInicio > fechaFin) {
+      this.alertService.showAlert('Atención', 'La fecha de inicio no puede ser posterior a la fecha de fin.', 'warning');
+      return false;
+    }
+
+    const inicio = new Date(`${fechaInicio}T00:00:00`);
+    const fin = new Date(`${fechaFin}T00:00:00`);
+    const dias = Math.floor((fin.getTime() - inicio.getTime()) / 86400000);
+
+    if (dias > maximoDias) {
+      this.alertService.showAlert('Atención', `El período máximo de consulta es de ${maximoDias} días.`, 'warning');
+      return false;
+    }
+
+    return true;
+  }
+
   limpiarKardex() {
+    this.itemKardexSeleccionado = null;
+    const hoy = new Date();
     this.filtroKardex = {
       codigoItem: '',
       almacen: '',
-      fechaInicio: null,
-      fechaFin: null,
+      periodoInicio: this.formatearPeriodoMes(new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)),
+      periodoFin: this.formatearPeriodoMes(hoy),
       tipoMovimiento: '',
       fuente: '',
     };
@@ -531,29 +1052,157 @@ export class KardexComponent implements OnInit {
 
   // ==================== TRANSACCIONES ====================
 
-  async listarTransacciones() {
+  async listarTransacciones(forzarApi = false): Promise<void> {
+    if (!this.validarEmpresaSeleccionada()) return;
+
+    if (!this.validarPeriodo(this.filtroTransacciones.fechaInicio, this.filtroTransacciones.fechaFin)) {
+      return;
+    }
+
+    const filtros = this.construirFiltrosTransacciones();
+
+    if (!forzarApi) {
+      const cacheCargado = await this.cargarTransaccionesDesdeCache();
+      if (cacheCargado) {
+        this.sincronizarTransaccionesSilencioso(filtros, true);
+        return;
+      }
+    }
+
+    // Sin cache o forzado: cargar desde API con spinner
+    this.loadingTransacciones = true;
     try {
-      const filtros: any = {
-        companiaSocio: this.companiaSocio,
-      };
-
-      if (this.filtroTransacciones.tipoTransaccion) filtros.tipoTransaccion = this.filtroTransacciones.tipoTransaccion;
-      if (this.filtroTransacciones.estado)          filtros.estado          = this.filtroTransacciones.estado;
-      if (this.filtroTransacciones.fuente)          filtros.fuente          = this.filtroTransacciones.fuente;
-
-      if (this.filtroTransacciones.fechaInicio) {
-        filtros.fechaInicio = this.formatearFechaSQL(this.filtroTransacciones.fechaInicio);
-      }
-      if (this.filtroTransacciones.fechaFin) {
-        filtros.fechaFin = this.formatearFechaSQL(this.filtroTransacciones.fechaFin);
-      }
-
-      this.transacciones =
-        await this.kardexService.listarTransacciones(filtros);
-      this.transaccionesFiltradas = [...this.transacciones];
+      const raw = await this.kardexService.listarTransacciones(filtros);
+      await this.guardarTransaccionesEnCache(raw);
+      this.aplicarTransacciones(raw, new Date());
     } catch (error) {
       console.error('Error al listar transacciones:', error);
+    } finally {
+      this.loadingTransacciones = false;
     }
+  }
+
+  private construirFiltrosTransacciones(): any {
+    const filtros: any = this.construirAlcanceEmpresa();
+
+    if (this.filtroTransacciones.tipoTransaccion) filtros.tipoTransaccion = this.filtroTransacciones.tipoTransaccion;
+    if (this.filtroTransacciones.estado)          filtros.estado          = this.filtroTransacciones.estado;
+    if (this.filtroTransacciones.fuente)          filtros.fuente          = this.filtroTransacciones.fuente;
+
+    if (this.filtroTransacciones.fechaInicio) {
+      filtros.fechaInicio = this.formatearFechaSQL(this.filtroTransacciones.fechaInicio);
+    }
+    if (this.filtroTransacciones.fechaFin) {
+      filtros.fechaFin = this.formatearFechaSQL(this.filtroTransacciones.fechaFin);
+    }
+
+    return filtros;
+  }
+
+  private async cargarTransaccionesDesdeCache(): Promise<boolean> {
+    try {
+      const cache = await this.dexieService.getTransaccionesCache(this.transaccionesCacheKey);
+      if (!cache || !cache.transacciones?.length) {
+        this.hayTransaccionesCache = false;
+        return false;
+      }
+
+      this.transacciones = cache.transacciones.map((t: any) => this.normalizarTransaccion(t));
+      this.transaccionesFiltradas = [...this.transacciones];
+      this.lastSyncTransacciones = new Date(cache.fechaSync);
+      this.hayTransaccionesCache = true;
+      console.log(`[Transacciones] Cache cargado: ${cache.transacciones.length} registros. Último sync: ${this.lastSyncTransacciones}`);
+      return true;
+    } catch (error) {
+      console.error('Error al cargar transacciones desde cache:', error);
+      return false;
+    }
+  }
+
+  private async sincronizarTransaccionesSilencioso(filtros: any, cacheCargado: boolean): Promise<void> {
+    if (this.sincronizandoTransacciones) return;
+
+    if (!cacheCargado) {
+      this.loadingTransacciones = true;
+    }
+
+    this.sincronizandoTransacciones = true;
+    try {
+      const raw = await this.kardexService.listarTransacciones(filtros);
+      const nuevoHash = this.generarHashTransacciones(raw);
+      const cache = await this.dexieService.getTransaccionesCache(this.transaccionesCacheKey);
+      const hashActual = cache?.hash ?? '';
+
+      if (nuevoHash === hashActual) {
+        console.log('[Transacciones] Sin cambios respecto al cache.');
+        if (cache) {
+          cache.fechaSync = new Date().toISOString();
+          await this.dexieService.saveTransaccionesCache(cache);
+          this.lastSyncTransacciones = new Date();
+        }
+        return;
+      }
+
+      console.log('[Transacciones] Datos nuevos detectados, actualizando cache y vista');
+      await this.guardarTransaccionesEnCache(raw);
+      this.aplicarTransacciones(raw, new Date());
+    } catch (error) {
+      console.error('Error al sincronizar transacciones:', error);
+    } finally {
+      this.sincronizandoTransacciones = false;
+      this.loadingTransacciones = false;
+    }
+  }
+
+  private async guardarTransaccionesEnCache(raw: any[]): Promise<void> {
+    const transaccionesNormalizadas = raw.map(t => this.normalizarTransaccion(t));
+    const hash = this.generarHashTransacciones(raw);
+
+    await this.dexieService.saveTransaccionesCache({
+      clave: this.transaccionesCacheKey,
+      companiaSocio: this.companiaSocio,
+      filtros: this.construirFiltrosTransacciones(),
+      transacciones: transaccionesNormalizadas,
+      fechaSync: new Date().toISOString(),
+      hash,
+      cantidadRegistros: transaccionesNormalizadas.length,
+    });
+  }
+
+  private aplicarTransacciones(raw: any[], fechaSync: Date): void {
+    this.transacciones = raw.map(t => this.normalizarTransaccion(t));
+    this.transaccionesFiltradas = [...this.transacciones];
+    this.lastSyncTransacciones = fechaSync;
+    this.hayTransaccionesCache = true;
+  }
+
+  private normalizarTransaccion(t: any): any {
+    return {
+      ...t,
+      tipoTransaccion: (t.tipoTransaccion ?? '').trim(),
+      estado: (t.estado ?? '').trim(),
+      fuente: (t.fuente ?? '').trim(),
+      numeroDocumento: (t.numeroDocumento ?? '').trim(),
+      almacenOrigen: (t.almacenOrigen ?? '').trim(),
+      almacenDestino: (t.almacenDestino ?? '').trim(),
+    };
+  }
+
+  private generarHashTransacciones(items: any[]): string {
+    const normalizado = items
+      .map(t => ({
+        idTransaccion: t.idTransaccion ?? t.id ?? '',
+        tipoTransaccion: (t.tipoTransaccion ?? '').trim(),
+        estado: (t.estado ?? '').trim(),
+        numeroDocumento: (t.numeroDocumento ?? '').trim(),
+        fecha: t.fecha ?? '',
+      }))
+      .sort((a, b) =>
+        String(a.idTransaccion).localeCompare(String(b.idTransaccion)) ||
+        a.fecha.localeCompare(b.fecha)
+      );
+
+    return this.hashString(JSON.stringify(normalizado));
   }
 
   buscarItem(event: any) {
@@ -642,16 +1291,21 @@ export class KardexComponent implements OnInit {
 
   limpiarFiltrosTransacciones() {
     this.filtroTransacciones = {
-      fechaInicio: null,
-      fechaFin: null,
+      fechaInicio: this.formatearFechaSQL(
+        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+      ),
+      fechaFin: this.formatearFechaSQL(new Date().toISOString()),
       tipoTransaccion: '',
       estado: '',
       fuente: '',
     };
-    this.listarTransacciones();
+    this.transacciones = [];
+    this.transaccionesFiltradas = [];
   }
 
   abrirModalNuevaTransaccion() {
+    if (!this.validarEmpresaSeleccionada()) return;
+
     console.log('abrirModalNuevaTransaccion() - Inicializando');
     
     // Limpiar items filtrados al abrir el modal
@@ -694,6 +1348,7 @@ export class KardexComponent implements OnInit {
       this.loading = true;
       const transaccion = {
         ...this.nuevaTransaccion,
+        companiaSocio: this.companiaConsulta,
         usuarioRegistro: this.usuario?.documentoidentidad || 'SISTEMA',
       };
 
@@ -794,6 +1449,9 @@ export class KardexComponent implements OnInit {
       if (resultado.status === 'success') {
         this.alertService.showAlert('Éxito', resultado.message, 'success');
         await this.cargarDatos();
+        // Refrescar stock y transacciones desde API tras cambio local
+        await this.consultarStock();
+        await this.listarTransacciones(true);
       } else {
         this.alertService.showAlert('Error', resultado.message, 'error');
       }
@@ -849,7 +1507,9 @@ export class KardexComponent implements OnInit {
 
       if (resultado.status === 'success') {
         this.alertService.showAlert('Éxito', resultado.message, 'success');
-        await this.listarTransacciones();
+        // Refrescar desde API tras cambio local para mantener caches consistentes
+        await this.listarTransacciones(true);
+        await this.consultarStock();
       } else {
         this.alertService.showAlert('Error', resultado.message, 'error');
       }
@@ -940,18 +1600,18 @@ export class KardexComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 
+  private formatearPeriodoMes(fecha: Date): string {
+    const year = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  }
+
   formatearMoneda(valor: number): string {
-    return new Intl.NumberFormat('es-PE', {
-      style: 'currency',
-      currency: 'PEN',
-    }).format(valor);
+    return this.formatoMoneda.format(valor);
   }
 
   formatearNumero(valor: number): string {
-    return new Intl.NumberFormat('es-PE', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 4,
-    }).format(valor);
+    return this.formatoNumero.format(valor);
   }
 
   // ==================== PRUEBAS Y SINCRONIZACIÓN ====================
@@ -1308,32 +1968,9 @@ export class KardexComponent implements OnInit {
     );
   }
 
-  // Cargar items para el dropdown
+  // Cargar items para el dropdown desde el stock cacheado
   async cargarItems() {
-    try {
-      const resultado = await this.kardexService.consultarStock({ companiaSocio: this.companiaSocio });
-
-      console.log('Items: ', resultado);
-
-      if (Array.isArray(resultado) && resultado.length > 0) {
-        this.items = resultado.map((item: any) => ({
-          idItem: item.idItem,
-          codigoItem: item.codigoItem,
-          descripcionItem: item.descripcionItem,
-          unidadMedida: item.unidadMedida,
-          costoPromedio: item.costoPromedio,
-
-          almacen: item.almacen, // 👈 IMPORTANTE
-
-          // 👇 lo que mostrará el autocomplete
-          label: `${item.codigoItem} - ${item.descripcionItem}`,
-          // label: `${item.codigoItem}`
-        }));
-      }
-    } catch (error) {
-      console.error('Error al cargar items:', error);
-    } finally {
-      this.loading = false;
-    }
+    // Los items se derivan del stock ya cargado; no se llama al API nuevamente
+    this.derivarItemsDesdeStock();
   }
 }

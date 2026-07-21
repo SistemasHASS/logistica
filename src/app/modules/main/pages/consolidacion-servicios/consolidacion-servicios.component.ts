@@ -3,19 +3,22 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { lastValueFrom } from 'rxjs';
 import { TableModule } from 'primeng/table';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 import { HttpClient } from '@angular/common/http';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { Usuario } from '@/app/shared/interfaces/Tables';
 import { environment } from '@/environments/environment';
 import { OrdenPdfService } from '../consolidacion-compras/orden-pdf.service';
+import { EmpresasService } from '../dashboard-logistica/services/empresas.service';
+import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import * as XLSX from 'xlsx';
 import FileSaver from 'file-saver';
 
 @Component({
   selector: 'app-consolidacion-servicios',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, TableModule],
+  imports: [CommonModule, FormsModule, TableModule, AutoCompleteModule],
   templateUrl: './consolidacion-servicios.component.html',
   styleUrls: ['./consolidacion-servicios.component.scss'],
 })
@@ -57,16 +60,30 @@ export class ConsolidacionServiciosComponent implements OnInit {
   totalMontoSeleccionado = computed(() =>
     this.itemsSeleccionados().reduce((sum, r) => sum + ((r.precioUnitario || r.precioReferencial || 0) * (r.cantidadPendiente || 1)), 0)
   );
+  seleccionadosParaOS = signal<Set<number | string>>(new Set());
+  itemsSeleccionadosParaOS = computed(() =>
+    this.itemsSeleccionados().filter(r => this.seleccionadosParaOS().has(r.idDetalle))
+  );
+  totalMontoSeleccionadoParaOS = computed(() =>
+    this.itemsSeleccionadosParaOS().reduce((sum, r) => sum + this.subtotalReq(r), 0)
+  );
 
   busqueda = '';
   filtroEstadoOS = '';
   adjuntoDescripcion = '';
   archivoSeleccionado: File | null = null;
 
+  proveedorInput = '';
+  proveedorSeleccionado: any = null;
+  proveedoresSugeridos: any[] = [];
+  cargandoProveedores = signal(false);
+  formasPago: any[] = [];
+  tiposPago: any[] = [];
+
   osFormProveedor: any = {
     proveedor: '', rucProveedor: '', nombreProveedor: '', emailProveedor: '',
     contactoProveedor: '', telefonoProveedor: '',
-    moneda: 'PEN', condicionesPago: 'Contado', formaPago: 'Transferencia',
+    moneda: 'PEN', condicionesPago: '', formaPago: '',
     fechaInicioServicio: '', fechaFinServicio: '', plazoEjecucion: 30,
   };
 
@@ -81,18 +98,59 @@ export class ConsolidacionServiciosComponent implements OnInit {
   };
 
   usuario: Usuario | null = null;
+  empresas: any[] = [];
 
   constructor(
     private http: HttpClient,
     private dexieService: DexieService,
     private alertService: AlertService,
-    private pdfService: OrdenPdfService
+    private pdfService: OrdenPdfService,
+    private empresasService: EmpresasService,
+    private maestrasService: MaestrasService
   ) {}
 
   async ngOnInit() {
     this.usuario = (await this.dexieService.obtenerPrimerUsuario()) ?? null;
+    await this.cargarEmpresas();
     await this.cargarRequerimientos();
     await this.cargarOrdenesServicio();
+    Promise.all([this.cargarFormasPago(), this.cargarTiposPago()]);
+  }
+
+  async cargarFormasPago(): Promise<void> {
+    try {
+      const resp: any = await lastValueFrom(this.maestrasService.getFormasPago({ ruc: this.usuario?.ruc }));
+      this.formasPago = Array.isArray(resp) ? resp : (resp.resultado || resp.data || []);
+    } catch { this.formasPago = []; }
+  }
+
+  async cargarTiposPago(): Promise<void> {
+    try {
+      const resp: any = await lastValueFrom(this.maestrasService.getTiposPago({ ruc: this.usuario?.ruc }));
+      this.tiposPago = Array.isArray(resp) ? resp : (resp.resultado || resp.data || []);
+    } catch { this.tiposPago = []; }
+  }
+
+  async cargarEmpresas() {
+    try {
+      const empresasData = await this.empresasService.getEmpresas().toPromise();
+      if (empresasData) {
+        this.empresas = this.empresasService.filtrarEmpresasRequeridas(empresasData);
+      }
+    } catch {
+      this.empresas = [];
+    }
+  }
+
+  private readonly rucPorEmpresa: { [id: string]: string } = {
+    '000010': '20563196387',
+    '000008': '20481121966',
+    '000006': '20610773274'
+  };
+
+  get rucEmpresa(): string {
+    const idEmpresa = this.usuario?.idempresa;
+    return this.empresas.find(e => e.id === idEmpresa)?.ruc || this.rucPorEmpresa[idEmpresa || ''] || '';
   }
 
   async cargarRequerimientos() {
@@ -100,7 +158,7 @@ export class ConsolidacionServiciosComponent implements OnInit {
     try {
       const resp: any = await lastValueFrom(
         this.http.post(`${this.baseUrl}/api/logistica/listar-requerimientos-servicio-para-os`, {
-          idEmpresa: this.usuario?.idempresa, busqueda: this.busqueda, soloSinOS: true
+          idEmpresa: this.usuario?.idempresa, ruc: this.rucEmpresa, busqueda: this.busqueda, soloSinOS: true
         })
       );
       const data = Array.isArray(resp) ? resp : [];
@@ -155,24 +213,139 @@ export class ConsolidacionServiciosComponent implements OnInit {
       this.osFormProveedor.dniJefeArea = seleccionados[0].dniJefeArea;
       this.osFormProveedor.nombreJefeArea = seleccionados[0].nombreJefeArea;
     }
+    this.seleccionadosParaOS.set(new Set(seleccionados.map(r => r.idDetalle)));
     this.tabActiva.set(1);
+  }
+
+  estaSeleccionadoParaOS(idDetalle: number | string) {
+    return this.seleccionadosParaOS().has(idDetalle);
+  }
+
+  toggleSeleccionParaOS(req: any) {
+    const set = new Set(this.seleccionadosParaOS());
+    if (set.has(req.idDetalle)) set.delete(req.idDetalle);
+    else set.add(req.idDetalle);
+    this.seleccionadosParaOS.set(set);
+  }
+
+  seleccionarTodosParaOS(event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.seleccionadosParaOS.set(checked ? new Set(this.itemsSeleccionados().map(r => r.idDetalle)) : new Set());
   }
 
   subtotalReq(req: any): number {
     return Math.round((req.cantidadPendiente || 1) * (req.precioUnitario || 0) * 100) / 100;
   }
 
+  async filtrarProveedores(event: any): Promise<void> {
+    const query = String(event.query ?? '').trim();
+    if (!query || query.length < 3) {
+      this.proveedoresSugeridos = [];
+      return;
+    }
+    this.cargandoProveedores.set(true);
+    try {
+      const body = { ruc: this.rucEmpresa, busqueda: query, estado: 'ACTIVO' };
+      const resp: any = await lastValueFrom(this.maestrasService.getProveedores(body));
+      let lista = Array.isArray(resp) ? resp : (resp.resultado || resp.data || []);
+      const queryLower = query.toLowerCase();
+      lista = lista.filter((p: any) => {
+        const nombre = String(p.proveedor ?? p.nombre ?? p.razonSocial ?? '').toLowerCase();
+        const ruc = String(p.ruc ?? p.rucproveedor ?? p.documento ?? '').toLowerCase();
+        return nombre.includes(queryLower) || ruc.includes(queryLower);
+      });
+      this.proveedoresSugeridos = lista.map((p: any) => ({
+        id: String(p.idproveedor ?? p.id ?? p.ruc ?? p.documento ?? ''),
+        nombre: String(p.proveedor ?? p.nombre ?? p.razonSocial ?? ''),
+        ruc: String(p.ruc ?? p.rucproveedor ?? p.documento ?? ''),
+        email: String(p.email ?? p.correo ?? p.Email ?? p.Correo ?? '').trim(),
+        telefono: String(p.telefono ?? p.Telefono ?? '').trim(),
+        monedaPago: String(p.MonedaPago ?? p.monedaPago ?? '').toUpperCase(),
+        tipoPago: String(p.TipoPago ?? p.tipoPago ?? '').toUpperCase(),
+        formaPago: String(p.FormadePago ?? p.formadePago ?? p.formaPago ?? ''),
+        diasEntrega: parseInt(p.NumeroDiasEntrega ?? p.numeroDiasEntrega ?? p.DiasEntrega ?? p.diasEntrega ?? '30', 10) || 30
+      }));
+    } catch (err) {
+      this.proveedoresSugeridos = [];
+    } finally {
+      this.cargandoProveedores.set(false);
+    }
+  }
+
+  seleccionarProveedor(event: any): void {
+    const prov = event?.value ?? event;
+    this.proveedorSeleccionado = prov;
+    if (!prov) return;
+
+    this.osFormProveedor.proveedor = prov.id;
+    this.osFormProveedor.rucProveedor = prov.ruc;
+    this.osFormProveedor.nombreProveedor = prov.nombre;
+    this.osFormProveedor.emailProveedor = prov.email || '';
+    this.osFormProveedor.telefonoProveedor = prov.telefono || '';
+    this.osFormProveedor.moneda = prov.monedaPago === 'EX' ? 'USD' : 'PEN';
+    this.osFormProveedor.condicionesPago = this.mapearAFormaPago(prov.formaPago) || this.mapearAFormaPago(prov.tipoPago) || this.formasPago[0]?.idformapago || 'Contado';
+    this.osFormProveedor.formaPago = this.mapearATipoPago(prov.tipoPago) || this.mapearATipoPago(prov.formaPago) || this.tiposPago[0]?.TipoPago || 'Transferencia';
+    this.osFormProveedor.plazoEjecucion = prov.diasEntrega ?? 30;
+    this.proveedorInput = prov.nombre;
+  }
+
+  limpiarProveedor(): void {
+    this.proveedorSeleccionado = null;
+    this.proveedorInput = '';
+    this.osFormProveedor.proveedor = '';
+    this.osFormProveedor.rucProveedor = '';
+    this.osFormProveedor.nombreProveedor = '';
+    this.osFormProveedor.emailProveedor = '';
+    this.osFormProveedor.telefonoProveedor = '';
+    this.osFormProveedor.moneda = 'PEN';
+    this.osFormProveedor.condicionesPago = '';
+    this.osFormProveedor.formaPago = '';
+    this.osFormProveedor.plazoEjecucion = 30;
+  }
+
+  private normalizarTexto(texto: string): string {
+    return String(texto ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  }
+
+  private mapearAFormaPago(valor: string): string {
+    if (!valor || !this.formasPago.length) return valor;
+    const v = this.normalizarTexto(valor);
+    const match = this.formasPago.find(fp =>
+      this.normalizarTexto(fp.formapago) === v ||
+      this.normalizarTexto(fp.idformapago) === v
+    );
+    return match?.idformapago || valor;
+  }
+
+  private mapearATipoPago(valor: string): string {
+    if (!valor || !this.tiposPago.length) return valor;
+    const v = this.normalizarTexto(valor);
+    const match = this.tiposPago.find(tp =>
+      this.normalizarTexto(tp.Descripcion) === v ||
+      this.normalizarTexto(tp.TipoPago) === v
+    );
+    return match?.TipoPago || valor;
+  }
+
+  condicionPagoExiste(valor: string): boolean {
+    return this.formasPago.some(fp => fp.idformapago === valor);
+  }
+
+  formaPagoExiste(valor: string): boolean {
+    return this.tiposPago.some(tp => tp.TipoPago === valor);
+  }
+
   get montoTotalSeleccion(): number {
-    return this.itemsSeleccionados().reduce((s, r) => s + this.subtotalReq(r), 0);
+    return this.itemsSeleccionadosParaOS().reduce((s, r) => s + this.subtotalReq(r), 0);
   }
 
   async generarOSIndividuales() {
     if (!this.osFormProveedor.nombreProveedor || !this.osFormProveedor.rucProveedor) {
       this.alertService.showAlert('Atención', 'Complete RUC y nombre del proveedor.', 'warning'); return;
     }
-    const seleccionados = this.itemsSeleccionados();
+    const seleccionados = this.itemsSeleccionadosParaOS();
     if (seleccionados.length === 0) {
-      this.alertService.showAlert('Atención', 'No hay requerimientos seleccionados.', 'warning'); return;
+      this.alertService.showAlert('Atención', 'Seleccione al menos un requerimiento para generar OS.', 'warning'); return;
     }
     const sinPrecio = seleccionados.filter(r => !r.precioUnitario || r.precioUnitario <= 0);
     if (sinPrecio.length > 0) {
@@ -218,7 +391,8 @@ export class ConsolidacionServiciosComponent implements OnInit {
           idArea: req.idarea,
           dniJefeArea: req.dniJefeArea || '',
           nombreJefeArea: req.nombreJefeArea || '',
-          usuarioGenera: this.usuario?.documentoidentidad
+          usuarioGenera: this.usuario?.documentoidentidad,
+          rucEmpresa: this.rucEmpresa
         };
         const resp: any = await lastValueFrom(
           this.http.post(`${this.baseUrl}/api/logistica/crear-os-individual`, payload)

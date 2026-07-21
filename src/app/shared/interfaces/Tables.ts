@@ -223,6 +223,7 @@ export interface ItemComodity {
   descripcion: string;
   almacen: string;
   um: string;
+  afectoIGV?: string;
 }
 
 export interface Clasificacion {
@@ -248,6 +249,7 @@ export interface DetalleRequerimiento {
   labor: string;
   esActivoFijo: boolean;
   activoFijo: string;
+  afectoIGV?: string;
   estado: number;
   atendida?: string;
   // 🔥 NUEVO → DISTRIBUCIÓN CONTABLE
@@ -638,14 +640,21 @@ export interface DetalleListaStock {
 export interface Stock {
   id?: number;
   codigo: string;
+  codigoItem?: string;
   almacen: string;
   cantidad: number;
   stockDisponible?: number;
   stockActual?: number;
   stockComprometido?: number;
+  stockMinimo?: number;
+  stockMaximo?: number;
   descripcion: string;
+  descripcionItem?: string;
   unidadMedida: string;
+  costoPromedio?: number;
   ultimaActualizacion: string;
+  companiaSocio?: string;
+  idItem?: number;
 }
 
 export interface MovimientoStock {
@@ -659,6 +668,36 @@ export interface MovimientoStock {
   referenciaDocumento?: string;
   usuario: string;
   motivo?: string;
+}
+
+export interface SyncMeta {
+  id?: number;
+  clave: string;
+  fechaSync: string;
+  hash: string;
+  cantidadRegistros: number;
+}
+
+export interface KardexCache {
+  id?: number;
+  clave: string;
+  companiaSocio: string;
+  filtros: any;
+  movimientos: any[];
+  fechaSync: string;
+  hash: string;
+  cantidadRegistros: number;
+}
+
+export interface TransaccionesCache {
+  id?: number;
+  clave: string;
+  companiaSocio: string;
+  filtros: any;
+  transacciones: any[];
+  fechaSync: string;
+  hash: string;
+  cantidadRegistros: number;
 }
 
 export interface SolicitudCompra {
@@ -1008,6 +1047,7 @@ export interface DetalleExcelPreview {
   ceco: string;
   labor: string;
   activofijo: string;
+  afectoIGV?: string;
   errores: ErrorExcel[];
   error: boolean;
 }
@@ -1354,6 +1394,19 @@ export interface OrdenServicioConSeguimiento {
   
   // Detalle de la orden
   detalle?: any[];
+
+  // Referencia al requerimiento de servicio origen
+  idRequerimientoOrigen?: string;
+  idDetalleRequerimiento?: number;
+  numeroRequerimiento?: string;
+  area?: string;
+  codigo?: string;
+  cantidad?: number;
+  unidadMedida?: string;
+  precioReferencial?: number;
+  turno?: string;
+  labor?: string;
+  cultivo?: string;
 }
 
 /**

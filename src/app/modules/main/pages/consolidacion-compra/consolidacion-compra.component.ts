@@ -4,17 +4,29 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { TableModule } from 'primeng/table';
+import { PaginatorModule } from 'primeng/paginator';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AutoCompleteModule } from 'primeng/autocomplete';
+import { SelectModule } from 'primeng/select';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { Usuario } from '@/app/shared/interfaces/Tables';
 import { environment } from '@/environments/environment';
 import { MaestrasService } from '@/app/modules/main/services/maestras.service';
+import { OrdenPdfService } from '@/app/modules/main/pages/consolidacion-compras/orden-pdf.service';
+import { TipoCambioService } from '@/app/services/tipo-cambio.service';
 import * as XLSX from 'xlsx';
 import FileSaver from 'file-saver';
 
-interface Proveedor { id: string; nombre: string; ruc: string; }
+interface Proveedor {
+  id: string;
+  nombre: string;
+  ruc: string;
+  monedaPago?: string;
+  tipoPago?: string;
+  formaPago?: string;
+  diasEntrega?: number;
+}
 interface LineaReq {
   id: number;
   req: string;
@@ -34,6 +46,7 @@ interface LineaReq {
   cantidad: number;
   cantidadPendiente: number;
   ultimaOC: number;
+  afectoIGV?: boolean;
   ruc: string;
   razonSocial: string;
   ceco: string;
@@ -48,12 +61,20 @@ interface LineaReq {
 }
 interface GrupoCorp { key: string; cod: string; desc: string; um: string; linea: string; familia: string; subfamilia: string; HP: number; BH: number; CAO: number; ultimaOC: number; ids: number[]; }
 interface GrupoReq { req: string; empresa: string; area: string; solicitante: string; fecha: string; detalles: LineaReq[]; expandido: boolean; }
-interface EmitirEmpresa { emp: string; items: (LineaReq & { precio: number })[]; subtotal: number; igv: number; total: number; }
+interface EmitirEmpresa {
+  emp: string;
+  items: (LineaReq & { precio: number })[];
+  subtotal: number;
+  igv: number;
+  total: number;
+  almacen: string;
+  rucEmpresa: string;
+}
 
 @Component({
   selector: 'app-consolidacion-compra',
   standalone: true,
-  imports: [CommonModule, FormsModule, TableModule, CheckboxModule, AutoCompleteModule],
+  imports: [CommonModule, FormsModule, TableModule, PaginatorModule, CheckboxModule, AutoCompleteModule, SelectModule],
   templateUrl: './consolidacion-compra.component.html',
   styleUrls: ['./consolidacion-compra.component.scss']
 })
@@ -68,9 +89,21 @@ export class ConsolidacionCompraComponent implements OnInit {
   cargandoProveedores = signal(false);
   cargandoItemsMaestra = signal(false);
   guardandoOC = signal(false);
+  cargandoOCs = signal(false);
 
   // Datos reales
   empresas = signal<any[]>([]);
+  ordenesCompra = signal<any[]>([]);
+  currentOCTab: 'TODOS' | 'PENDIENTES' | 'APROBADAS' | 'CERRADAS' = 'TODOS';
+  ocTabStates: Record<'TODOS' | 'PENDIENTES' | 'APROBADAS' | 'CERRADAS', string[]> = {
+    TODOS: [],
+    PENDIENTES: ['PENDIENTE', 'PENDIENTE_APROBACION'],
+    APROBADAS: ['APROBADA'],
+    CERRADAS: ['ENVIADA', 'ANULADA']
+  };
+  filtroEmpresaOC = '';
+  filtroNumeroOC = '';
+  filtroProveedorOC = '';
   proveedores = signal<Proveedor[]>([]);
   itemsMaestra = signal<any[]>([]);
   requerimientosCompletos = signal<any[]>([]);
@@ -82,9 +115,12 @@ export class ConsolidacionCompraComponent implements OnInit {
   seleccionados = new Set<number>();
   costosProveedor: Record<number, string> = {};
   proveedorPorItem: Record<number, string> = {};
+  afectoIGVPorItem: Record<number, boolean> = {};
   seleccionadosCorp = new Set<string>();
   currentTab = 'TODOS';
+  private aplicarFiltrosTimeout: any = null;
   proveedorGlobal: Proveedor | null = null;
+  proveedorGlobalInput: string = '';
   proveedoresSugeridos: Proveedor[] = [];
   expandedRows: Record<string, boolean> = {};
 
@@ -112,13 +148,37 @@ export class ConsolidacionCompraComponent implements OnInit {
   totalCorp = 0;
 
   modalOCAbierto = false;
+  modalDetalleOCAbierto = false;
+  modalAdjuntosOCAbierto = false;
+  editandoDetalleOC = false;
+  ordenActual: any = null;
+  adjuntosOC: any[] = [];
+  archivoAdjuntoOC: File | null = null;
+  descripcionAdjuntoOC = '';
+  subiendoAdjuntoOC = false;
+  ocFormEdicion: any = {};
+  ocIdEdicion: number | null = null;
+  busquedaProveedor = '';
+  proveedoresSugeridosEdicion: any[] = [];
+  cargandoProveedoresEdicion = false;
+  mostrarSugerenciasProveedor = false;
+  proveedorSeleccionadoEdicion: any = null;
+  formasPago: any[] = [];
+  tiposPago: any[] = [];
+  almacenes: any[] = [];
+  almacenesOC: any[] = [];
+  almacenesPorEmpresa: Map<string, any[]> = new Map();
   ocProv = '';
   ocRuc = '';
   ocCondPago = 'Contado';
+  ocFormaPago = 'Transferencia';
   ocPlazo = 7;
   ocMoneda = 'PEN';
+  ocMonedaAnterior = 'PEN';
   ocLugar = 'Almacén central Grupo Hass';
+  ocFechaEntrega = '';
   ocObs = '';
+  tipoCambioOC = 1;
   emitirOCEmpresas: EmitirEmpresa[] = [];
 
   toasts: { msg: string; type: string }[] = [];
@@ -128,17 +188,26 @@ export class ConsolidacionCompraComponent implements OnInit {
     private dexieService: DexieService,
     private maestrasService: MaestrasService,
     private alertService: AlertService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private pdfService: OrdenPdfService,
+    private tipoCambioService: TipoCambioService
   ) { }
 
   async ngOnInit(): Promise<void> {
     console.log('[ConsolidacionCompra] ngOnInit');
     this.usuario = (await this.dexieService.obtenerPrimerUsuario()) ?? null;
     console.log('[ConsolidacionCompra] usuario:', this.usuario?.ruc, this.usuario?.idrol);
-    await this.cargarEmpresas();
-    await this.cargarProveedores();
+    // Carga crítica de las tablas primero para mostrar el módulo rápido
     await this.cargarRequerimientosCompletos();
     await this.cargarRequerimientos();
+    // Catálogos en segundo plano (no bloquean la UI inicial)
+    this.cargarEmpresas();
+    this.cargarItemsMaestra();
+    Promise.all([
+      this.cargarFormasPago(),
+      this.cargarTiposPago(),
+      this.cargarAlmacenes()
+    ]);
   }
 
   async cargarEmpresas(): Promise<void> {
@@ -156,7 +225,7 @@ export class ConsolidacionCompraComponent implements OnInit {
         if (razon.includes('hass')) this.empCodigoPorRuc[ruc] = 'HP';
         else if (razon.includes('berry')) this.empCodigoPorRuc[ruc] = 'BH';
         else if (razon.includes('olmos')) this.empCodigoPorRuc[ruc] = 'CAO';
-        else this.empCodigoPorRuc[ruc] = this.empCodigoPorRuc[ruc] || 'HP';
+        // No asignar por defecto; dejar que mapearRequerimientos use razonSocial como fallback
       }
     } catch (err) {
       console.error('[ConsolidacionCompra] error cargarEmpresas:', err);
@@ -167,14 +236,20 @@ export class ConsolidacionCompraComponent implements OnInit {
     }
   }
 
-  codigoEmpresaPorRuc(ruc: string): string {
-    return this.empCodigoPorRuc[String(ruc ?? '').trim()] || 'HP';
+  codigoEmpresaPorRuc(ruc: string, razonSocial?: string): string {
+    const key = String(ruc ?? '').trim();
+    const razon = String(razonSocial ?? '').trim();
+    return this.empresaPorRazonSocial(razon) || this.empCodigoPorRuc[key] || 'HP';
   }
 
-  nombreEmpresaPorRuc(ruc: string): string {
+  nombreEmpresaPorRuc(ruc: string, razonSocial?: string): string {
     const key = String(ruc ?? '').trim();
+    const razon = String(razonSocial ?? '').trim();
     const emp = this.empresas().find(e => String(e.ruc ?? '').trim() === key);
-    return String(emp?.razonSocial ?? emp?.nombre ?? this.empNombres[this.codigoEmpresaPorRuc(key)] ?? (key || '—')).trim();
+    if (emp?.razonSocial || emp?.nombre) {
+      return String(emp.razonSocial ?? emp.nombre).trim();
+    }
+    return razon || this.empNombres[this.codigoEmpresaPorRuc(key, razon)] || key || '—';
   }
 
   detallePorRequerimiento(req: any): LineaReq[] {
@@ -191,6 +266,32 @@ export class ConsolidacionCompraComponent implements OnInit {
     const key = String(req?.numeroRequerimiento ?? '');
     if (!key) return;
     this.expandedRows[key] = !this.expandedRows[key];
+  }
+
+  async cargarItemsMaestra(): Promise<void> {
+    this.cargandoItemsMaestra.set(true);
+    try {
+      const resp: any = await lastValueFrom(this.http.post(`${this.baseUrl}/api/logistica/listar-item`, {}));
+      const raw = Array.isArray(resp) ? resp : (resp?.id ? JSON.parse(resp.id) : []);
+      this.itemsMaestra.set(raw);
+      console.log('[ConsolidacionCompra] items maestra cargados:', raw.length);
+    } catch (err) {
+      console.error('[ConsolidacionCompra] error cargarItemsMaestra:', err);
+      this.itemsMaestra.set([]);
+    } finally {
+      this.cargandoItemsMaestra.set(false);
+    }
+  }
+
+  public esAfectoIGV(cod: string): boolean {
+    const items = this.itemsMaestra();
+    if (!items.length) return true;
+    const item = items.find((i: any) => String(i.item ?? i.codigo ?? '').trim() === String(cod).trim());
+    return String(item?.afectoImpuestoVentasFlag ?? '').toUpperCase() === 'S';
+  }
+
+  public obtenerAfectoIGV(r: any): boolean {
+    return r.afectoIGV ?? this.afectoIGVPorItem[r.id] ?? this.esAfectoIGV(r.cod);
   }
 
   async cargarProveedores(): Promise<void> {
@@ -210,7 +311,11 @@ export class ConsolidacionCompraComponent implements OnInit {
       this.proveedores.set(lista.map((p: any) => ({
         id: String(p.idproveedor ?? p.id ?? p.ruc ?? p.documento ?? ''),
         nombre: String(p.proveedor ?? p.nombre ?? p.razonSocial ?? p.nombreProveedor ?? ''),
-        ruc: String(p.ruc ?? p.rucproveedor ?? p.documento ?? '')
+        ruc: String(p.ruc ?? p.rucproveedor ?? p.documento ?? ''),
+        monedaPago: String(p.MonedaPago ?? p.monedaPago ?? '').toUpperCase(),
+        tipoPago: String(p.TipoPago ?? p.tipoPago ?? '').toUpperCase(),
+        formaPago: String(p.FormadePago ?? p.formadePago ?? p.formaPago ?? ''),
+        diasEntrega: parseInt(p.NumeroDiasEntrega ?? p.numeroDiasEntrega ?? p.DiasEntrega ?? p.diasEntrega ?? '7', 10) || 7
       })));
     } catch (err) {
       console.error('[ConsolidacionCompra] error cargarProveedores:', err);
@@ -224,12 +329,16 @@ export class ConsolidacionCompraComponent implements OnInit {
     console.log('[ConsolidacionCompra] cargarRequerimientosCompletos inicio');
     this.cargandoReqsCompletos.set(true);
     try {
+      const roles = (this.usuario?.idrol ?? this.usuario?.rol ?? '').toString();
+      const esAdmin = ['TILOGIST', 'ADLOGIST', 'JLOLOGIST', 'JEMLOGIST', 'LOLOGIST'].some(r => roles.includes(r));
+      const body = {
+        ruc: esAdmin ? '' : (this.usuario?.ruc ?? ''),
+        busqueda: '',
+        soloSinOC: true
+      };
+      console.log('[ConsolidacionCompra] body completos:', body);
       const resp: any = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/api/logistica/listar-requerimientos-completos`, {
-          ruc: this.usuario?.ruc ?? '',
-          busqueda: '',
-          soloSinOC: true
-        })
+        this.http.post(`${this.baseUrl}/api/logistica/listar-requerimientos-completos`, body)
       );
       console.log('[ConsolidacionCompra] resp completos:', resp);
       const items = Array.isArray(resp) ? resp : [];
@@ -250,7 +359,7 @@ export class ConsolidacionCompraComponent implements OnInit {
     this.cargandoReqs.set(true);
     try {
       const roles = (this.usuario?.idrol ?? this.usuario?.rol ?? '').toString();
-      const esAdmin = ['TILOGIST', 'ADLOGIST', 'JLOLOGIST'].some(r => roles.includes(r));
+      const esAdmin = ['TILOGIST', 'ADLOGIST', 'JLOLOGIST', 'JEMLOGIST', 'LOLOGIST'].some(r => roles.includes(r));
       const body = {
         ruc: esAdmin ? '' : (this.usuario?.ruc ?? ''),
         busqueda: '',
@@ -280,10 +389,11 @@ export class ConsolidacionCompraComponent implements OnInit {
   }
 
   mapearRequerimientos(items: any[]): LineaReq[] {
-    return items.map((item, idx) => {
+    const mapped = items.map((item, idx) => {
       const ruc = String(item.ruc ?? '').trim();
       const razon = String(item.razonSocial ?? '').trim();
-      const empresa = this.empCodigoPorRuc[ruc] || this.empresaPorRazonSocial(razon) || 'HP';
+      // Priorizar razonSocial del API (viene del requerimiento) sobre el cache de empresas
+      const empresa = this.empresaPorRazonSocial(razon) || this.empCodigoPorRuc[ruc] || 'HP';
       return {
         id: item.idDetalle ?? idx + 1,
         idDetalle: item.idDetalle ?? idx + 1,
@@ -316,6 +426,8 @@ export class ConsolidacionCompraComponent implements OnInit {
         estadoProceso: item.estadoProceso
       };
     });
+    console.log('[ConsolidacionCompra] mapearRequerimientos:', mapped.length, 'items. Muestra:', mapped.slice(0, 3).map(m => ({ ruc: m.ruc, razonSocial: m.razonSocial, empresa: m.empresa })));
+    return mapped;
   }
 
   empresaPorRazonSocial(razon: string): string | undefined {
@@ -343,6 +455,13 @@ export class ConsolidacionCompraComponent implements OnInit {
   }
 
   aplicarFiltros(): void {
+    if (this.aplicarFiltrosTimeout) clearTimeout(this.aplicarFiltrosTimeout);
+    this.aplicarFiltrosTimeout = setTimeout(() => {
+      this.aplicarFiltrosInterno();
+    }, 120);
+  }
+
+  private aplicarFiltrosInterno(): void {
     const fBuscar = this.filtroBuscar.toLowerCase();
     const filtrados = this.datos.filter(d => {
       return (!this.filtroItem || d.cod === this.filtroItem) &&
@@ -356,6 +475,7 @@ export class ConsolidacionCompraComponent implements OnInit {
     this.renderEmpresa('BH', filtrados.filter(d => d.empresa === 'BH'));
     this.renderEmpresa('CAO', filtrados.filter(d => d.empresa === 'CAO'));
     this.renderCorporativo(filtrados);
+    console.log('[ConsolidacionCompra] aplicarFiltros - total:', filtrados.length, 'HP:', this.cntHP, 'BH:', this.cntBH, 'CAO:', this.cntCAO);
   }
 
   renderTodos(rows: LineaReq[]): void {
@@ -416,12 +536,634 @@ export class ConsolidacionCompraComponent implements OnInit {
 
   proveedorTexto(ids: number[]): string {
     const provs = [...new Set(ids.map(id => this.proveedorPorItem[id]).filter(Boolean))];
-    if (provs.length === 1) return this.proveedores().find((p: Proveedor) => p.id === provs[0])?.nombre || '—';
+    if (provs.length === 1) return provs[0] || '—';
     return provs.length > 1 ? 'Varios' : '—';
   }
 
   switchTab(emp: string): void {
     this.currentTab = emp;
+    if (emp === 'OC') {
+      this.cargarOrdenesCompra();
+    }
+  }
+
+  async cargarOrdenesCompra(): Promise<void> {
+    this.cargandoOCs.set(true);
+    try {
+      const body = {
+        estado: '',
+        usuario: this.usuario?.documentoidentidad || ''
+      };
+      console.log('[ConsolidacionCompra] cargarOrdenesCompra body:', body);
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/listar-ocs-por-estado`, body)
+      );
+      const ocs = Array.isArray(resp) ? resp : [];
+      console.log('[ConsolidacionCompra] resp OC:', ocs);
+      this.ordenesCompra.set(ocs);
+      this.cdr.markForCheck();
+    } catch (err) {
+      console.error('[ConsolidacionCompra] error cargarOrdenesCompra:', err);
+      this.ordenesCompra.set([]);
+      this.alertService.showAlert('Error', 'No se pudieron cargar las órdenes de compra.', 'error');
+      this.cdr.markForCheck();
+    } finally {
+      this.cargandoOCs.set(false);
+    }
+  }
+
+  empresaOC(oc: any): string {
+    const ruc = String(oc?.rucProveedor ?? oc?.rucEmpresa ?? '').trim();
+    const razon = String(oc?.razonSocialProveedor ?? oc?.razonSocialEmpresa ?? '').trim();
+    return this.codigoEmpresaPorRuc(ruc, razon);
+  }
+
+  ordenesCompraFiltradas(): any[] {
+    return this.ordenesCompra().filter(oc => {
+      const emp = this.empresaOC(oc);
+      const matchEmp = !this.filtroEmpresaOC || this.filtroEmpresaOC === 'TODAS' || emp === this.filtroEmpresaOC;
+      const num = String(oc?.numeroOrden ?? oc?.numeroOrdenSpring ?? '').toLowerCase();
+      const matchNum = !this.filtroNumeroOC || num.includes(this.filtroNumeroOC.toLowerCase());
+      const prov = String(oc?.nombreProveedor ?? '').toLowerCase();
+      const matchProv = !this.filtroProveedorOC || prov.includes(this.filtroProveedorOC.toLowerCase());
+      const estados = this.ocTabStates[this.currentOCTab];
+      const matchEstado = !estados?.length || estados.includes(oc?.estado);
+      return matchEmp && matchNum && matchProv && matchEstado;
+    });
+  }
+
+  contarOCTab(tab: 'TODOS' | 'PENDIENTES' | 'APROBADAS' | 'CERRADAS'): number {
+    const estados = this.ocTabStates[tab];
+    if (!estados?.length) return this.ordenesCompra().length;
+    return this.ordenesCompra().filter(oc => estados.includes(oc?.estado)).length;
+  }
+
+  cambiarOCTab(tab: 'TODOS' | 'PENDIENTES' | 'APROBADAS' | 'CERRADAS'): void {
+    this.currentOCTab = tab;
+    this.aplicarFiltrosOC();
+  }
+
+  aplicarFiltrosOC(): void {
+    this.cdr.markForCheck();
+  }
+
+  async verDetalleOC(oc: any): Promise<void> {
+    this.ordenActual = oc;
+    this.editandoDetalleOC = false;
+    this.ocFormEdicion = {};
+    await this.cargarAdjuntosOC(oc.idOrden, 'OC');
+    this.modalDetalleOCAbierto = true;
+    this.cdr.markForCheck();
+  }
+
+  async iniciarEdicionDetalleOC(): Promise<void> {
+    if (!this.ordenActual) return;
+    this.editandoDetalleOC = true;
+    this.ocIdEdicion = this.ordenActual.idOrden;
+    try {
+      await Promise.all([this.cargarFormasPago(), this.cargarTiposPago(), this.cargarAlmacenes()]);
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/obtener-detalle-oc`, { idOrden: this.ordenActual.idOrden })
+      );
+      if (!resp || resp.error) {
+        this.alertService.showAlert('Error', resp?.error || 'No se pudo cargar la OC.', 'error');
+        this.editandoDetalleOC = false;
+        this.ocIdEdicion = null;
+        return;
+      }
+      const items = Array.isArray(resp.itemsJson)
+        ? resp.itemsJson
+        : (resp.itemsJson ? JSON.parse(resp.itemsJson) : []);
+      this.ocFormEdicion = {
+        rucProveedor: resp.rucProveedor || this.ordenActual.rucProveedor || '',
+        nombreProveedor: resp.nombreProveedor || this.ordenActual.nombreProveedor || '',
+        emailProveedor: resp.emailProveedor || '',
+        telefonoProveedor: resp.telefonoProveedor || '',
+        direccionProveedor: resp.direccionProveedor || '',
+        moneda: resp.moneda || this.ordenActual.moneda || 'PEN',
+        tipoCambio: resp.tipoCambio || 1,
+        fechaEntregaEstimada: resp.fechaEntregaEstimada ? resp.fechaEntregaEstimada.substring(0, 10) : '',
+        diasEntrega: 0,
+        condicionesPago: resp.condicionesPago || '',
+        formaPago: resp.formaPago || '',
+        almacen: resp.almacen || '',
+        rucEmpresaOC: '',
+        lugarEntrega: resp.lugarEntrega || '',
+        observaciones: resp.observaciones || '',
+        clasificacion: resp.clasificacion || 'LOC',
+        incoterm: resp.incoterm || '',
+        items: items.map((i: any) => ({
+          idDetalle: i.idDetalle,
+          codigo: i.codigo,
+          descripcion: i.descripcion,
+          cantidad: i.cantidad,
+          unidadMedida: i.unidadMedida,
+          precioUnitario: i.precioUnitario,
+          reduccion: i.reduccion || 0,
+          descuento: i.descuento || 0,
+          ceco: i.ceco,
+          proyecto: i.proyecto,
+          idConsolidacion: i.idConsolidacion
+        })),
+        subtotal: resp.subtotal || 0,
+        igv: resp.igv || 0,
+        totalOrden: resp.totalOrden || 0,
+        totalDescuento: 0
+      };
+      this.proveedorSeleccionadoEdicion = {
+        ruc: this.ocFormEdicion.rucProveedor,
+        proveedor: this.ocFormEdicion.nombreProveedor
+      };
+      this.busquedaProveedor = this.ocFormEdicion.nombreProveedor;
+      this.calcularTotalesOC();
+    } catch (e: any) {
+      this.alertService.showAlert('Error', e?.message || 'Error al cargar detalle.', 'error');
+      this.editandoDetalleOC = false;
+      this.ocIdEdicion = null;
+    }
+    this.cdr.markForCheck();
+  }
+
+  async cargarFormasPago(): Promise<void> {
+    try {
+      const resp: any = await lastValueFrom(this.maestrasService.getFormasPago({ ruc: this.usuario?.ruc }));
+      this.formasPago = Array.isArray(resp) ? resp : (resp.resultado || resp.data || []);
+    } catch { this.formasPago = []; }
+  }
+
+  async cargarTiposPago(): Promise<void> {
+    try {
+      const resp: any = await lastValueFrom(this.maestrasService.getTiposPago({ ruc: this.usuario?.ruc }));
+      this.tiposPago = Array.isArray(resp) ? resp : (resp.resultado || resp.data || []);
+    } catch { this.tiposPago = []; }
+  }
+
+  async cargarAlmacenes(): Promise<void> {
+    try {
+      const resp: any = await lastValueFrom(
+        this.maestrasService.getAlmacenes([{ ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA' }])
+      );
+      this.almacenes = Array.isArray(resp) ? resp : (resp.resultado || resp.data || []);
+    } catch { this.almacenes = []; }
+  }
+
+  async cargarAlmacenesPorRuc(ruc: string): Promise<void> {
+    const key = String(ruc ?? '').trim();
+    if (!key || this.almacenesPorEmpresa.has(key)) return;
+    try {
+      const resp: any = await lastValueFrom(
+        this.maestrasService.getAlmacenes([{ ruc: key, aplicacion: 'LOGISTICA' }])
+      );
+      const lista = Array.isArray(resp) ? resp : (resp.resultado || resp.data || []);
+      this.almacenesPorEmpresa.set(key, lista);
+      this.cdr.markForCheck();
+    } catch {
+      this.almacenesPorEmpresa.set(key, []);
+    }
+  }
+
+  simboloMoneda(moneda: string): string {
+    return moneda === 'USD' ? '$' : 'S/';
+  }
+
+  subtotalItem(item: any): number {
+    const cantidad = +item.cantidad || 0;
+    const precio = +item.precioUnitario || 0;
+    const reduccion = +item.reduccion || 0;
+    const descuento = +item.descuento || 0;
+    let base = cantidad * precio - reduccion;
+    if (descuento > 0) base = base * (1 - descuento / 100);
+    return base > 0 ? base : 0;
+  }
+
+  onReduccionChange(item: any): void {
+    if (+item.reduccion > 0) item.descuento = 0;
+    this.calcularTotalesOC();
+  }
+
+  onDescuentoChange(item: any): void {
+    if (+item.descuento > 0) item.reduccion = 0;
+    this.calcularTotalesOC();
+  }
+
+  calcularTotalesOC(): void {
+    if (!this.ocFormEdicion.items) return;
+    let subtotal = 0;
+    let totalDescuento = 0;
+    this.ocFormEdicion.items.forEach((item: any) => {
+      const cantidad = +item.cantidad || 0;
+      const precio = +item.precioUnitario || 0;
+      const reduccion = +item.reduccion || 0;
+      const descuento = +item.descuento || 0;
+      const baseBruto = cantidad * precio;
+      let baseItem = baseBruto - reduccion;
+      if (descuento > 0) {
+        const desc = baseItem * (descuento / 100);
+        baseItem -= desc;
+        totalDescuento += reduccion + desc;
+      } else {
+        totalDescuento += reduccion;
+      }
+      subtotal += baseItem > 0 ? baseItem : 0;
+    });
+    this.ocFormEdicion.subtotal = subtotal;
+    this.ocFormEdicion.igv = subtotal * 0.18;
+    this.ocFormEdicion.totalOrden = subtotal + this.ocFormEdicion.igv;
+    this.ocFormEdicion.totalDescuento = totalDescuento;
+    this.cdr.markForCheck();
+  }
+
+  calcularFechaEntrega(): void {
+    const dias = +(this.ocFormEdicion.diasEntrega || 0);
+    if (dias > 0) {
+      const fecha = new Date();
+      fecha.setDate(fecha.getDate() + dias);
+      this.ocFormEdicion.fechaEntregaEstimada = fecha.toISOString().substring(0, 10);
+    }
+  }
+
+  buscarProveedoresEdicion(): void {
+    const q = this.busquedaProveedor.trim();
+    if (q.length < 3) {
+      this.proveedoresSugeridosEdicion = [];
+      return;
+    }
+    this.cargandoProveedoresEdicion = true;
+    lastValueFrom(this.http.post(`${this.baseUrl}/api/logistica/buscar-proveedores`, { busqueda: q }))
+      .then((resp: any) => {
+        this.proveedoresSugeridosEdicion = Array.isArray(resp) ? resp : (resp.resultado || resp.data || []);
+        this.mostrarSugerenciasProveedor = true;
+        this.cargandoProveedoresEdicion = false;
+        this.cdr.markForCheck();
+      })
+      .catch(() => {
+        this.proveedoresSugeridosEdicion = [];
+        this.cargandoProveedoresEdicion = false;
+        this.cdr.markForCheck();
+      });
+  }
+
+  cerrarSugerenciasProveedor(): void {
+    setTimeout(() => {
+      this.mostrarSugerenciasProveedor = false;
+      this.cdr.markForCheck();
+    }, 200);
+  }
+
+  seleccionarProveedorEdicion(prov: any): void {
+    this.proveedorSeleccionadoEdicion = prov;
+    this.ocFormEdicion.rucProveedor = prov.ruc || prov.documento || '';
+    this.ocFormEdicion.nombreProveedor = prov.proveedor || prov.nombre || '';
+    this.ocFormEdicion.emailProveedor = prov.email || '';
+    this.ocFormEdicion.telefonoProveedor = prov.telefono || '';
+    this.ocFormEdicion.direccionProveedor = prov.direccion || '';
+    this.busquedaProveedor = prov.proveedor || prov.nombre || '';
+    this.mostrarSugerenciasProveedor = false;
+    this.cdr.markForCheck();
+  }
+
+  limpiarProveedorEdicion(): void {
+    this.proveedorSeleccionadoEdicion = null;
+    this.ocFormEdicion.rucProveedor = '';
+    this.ocFormEdicion.nombreProveedor = '';
+    this.ocFormEdicion.emailProveedor = '';
+    this.ocFormEdicion.telefonoProveedor = '';
+    this.ocFormEdicion.direccionProveedor = '';
+    this.busquedaProveedor = '';
+    this.cdr.markForCheck();
+  }
+
+  distribucionContableEdicion(): any[] {
+    if (!this.ocFormEdicion.items) return [];
+    const map = new Map<string, any>();
+    const totalCantidad = this.ocFormEdicion.items.reduce((s: number, i: any) => s + (+i.cantidad || 0), 0) || 1;
+    this.ocFormEdicion.items.forEach((it: any) => {
+      const key = it.ceco || 'SIN CECO';
+      if (!map.has(key)) {
+        map.set(key, { area: it.ceco, ceco: it.ceco, proyecto: it.proyecto || '', cantidad: 0 });
+      }
+      map.get(key).cantidad += (+it.cantidad || 0);
+    });
+    return Array.from(map.values()).map(d => ({ ...d, porcentaje: (d.cantidad / totalCantidad) * 100 }));
+  }
+
+  async guardarEdicionDetalleOC(): Promise<void> {
+    if (!this.ocFormEdicion.nombreProveedor || !this.ocFormEdicion.rucProveedor || !this.ocFormEdicion.emailProveedor) {
+      this.alertService.showAlert('Atención', 'Complete los datos del proveedor (RUC, Nombre, Email).', 'warning');
+      return;
+    }
+    if (!this.ocFormEdicion.lugarEntrega || !this.ocFormEdicion.fechaEntregaEstimada) {
+      this.alertService.showAlert('Atención', 'Indique el lugar de entrega y la fecha estimada.', 'warning');
+      return;
+    }
+    if (this.ocFormEdicion.items.some((i: any) => !i.precioUnitario || parseFloat(i.precioUnitario) <= 0)) {
+      this.alertService.showAlert('Atención', 'Todos los ítems deben tener precio unitario mayor a 0.', 'warning');
+      return;
+    }
+    this.guardandoOC.set(true);
+    try {
+      const payload = {
+        ...this.ocFormEdicion,
+        idOrden: this.ocIdEdicion,
+        usuarioModifica: this.usuario?.documentoidentidad
+      };
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/actualizar-oc-borrador`, payload)
+      );
+      if (resp?.success) {
+        this.alertService.showAlert('OC Actualizada', 'La orden de compra fue actualizada correctamente.', 'success');
+        this.editandoDetalleOC = false;
+        this.ocFormEdicion = {};
+        this.ocIdEdicion = null;
+        this.proveedorSeleccionadoEdicion = null;
+        this.busquedaProveedor = '';
+        await this.cargarOrdenesCompra();
+      } else {
+        this.alertService.showAlert('Error', resp?.mensaje || 'Error al actualizar.', 'error');
+      }
+    } catch (e: any) {
+      this.alertService.showAlert('Error', e?.message || 'Error al actualizar.', 'error');
+    } finally {
+      this.guardandoOC.set(false);
+      this.cdr.markForCheck();
+    }
+  }
+
+  cancelarEdicionDetalleOC(): void {
+    this.editandoDetalleOC = false;
+    this.ocFormEdicion = {};
+    this.ocIdEdicion = null;
+    this.proveedorSeleccionadoEdicion = null;
+    this.busquedaProveedor = '';
+    this.cdr.markForCheck();
+  }
+
+  cerrarModalDetalleOC(): void {
+    this.modalDetalleOCAbierto = false;
+    this.ordenActual = null;
+    this.adjuntosOC = [];
+    this.editandoDetalleOC = false;
+    this.ocFormEdicion = {};
+    this.cdr.markForCheck();
+  }
+
+  private parseAdjuntosResponse(resp: any): any[] {
+    if (!resp) return [];
+    if (Array.isArray(resp)) return resp;
+    if (resp.resultado && Array.isArray(resp.resultado)) return resp.resultado;
+    if (resp.adjuntos && Array.isArray(resp.adjuntos)) return resp.adjuntos;
+    if (typeof resp === 'object') {
+      const keys = Object.keys(resp).filter(k => Array.isArray(resp[k]));
+      if (keys.length) return resp[keys[0]];
+    }
+    return [];
+  }
+
+  async cargarAdjuntosOC(idOrden: number, tipo: string): Promise<void> {
+    try {
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/listar-adjuntos-oc`, { idOrden, tipoOrden: tipo })
+      );
+      this.adjuntosOC = this.parseAdjuntosResponse(resp);
+    } catch {
+      this.adjuntosOC = [];
+    }
+  }
+
+  async enviarOCAprobacion(oc: any): Promise<void> {
+    let skipAdjuntos = false;
+    try {
+      const idrol = this.usuario?.idrol || '';
+      if (idrol) {
+        const respPerm: any = await lastValueFrom(
+          this.http.post(`${this.baseUrl}/api/logistica/verificar-permiso`, { idrol, clave: 'SKIP_ADJUNTOS_OC' })
+        );
+        skipAdjuntos = respPerm?.valor === '1';
+      }
+    } catch { skipAdjuntos = false; }
+
+    if (!skipAdjuntos) {
+      try {
+        const respAdj: any = await lastValueFrom(
+          this.http.post(`${this.baseUrl}/api/logistica/listar-adjuntos-oc`, { idOrden: oc.idOrden, tipoOrden: 'OC' })
+        );
+        const adjuntos = this.parseAdjuntosResponse(respAdj);
+        const tienePdf = adjuntos.some((a: any) => {
+          const tipo = (a.tipoArchivo || '').toLowerCase();
+          const nombre = (a.nombreArchivo || '').toLowerCase();
+          return tipo === 'pdf' || tipo === 'application/pdf' || nombre.endsWith('.pdf');
+        });
+        const tieneExcel = adjuntos.some((a: any) => {
+          const tipo = (a.tipoArchivo || '').toLowerCase();
+          const nombre = (a.nombreArchivo || '').toLowerCase();
+          return tipo === 'excel' || tipo.includes('excel') || tipo.includes('spreadsheet') ||
+                 nombre.endsWith('.xlsx') || nombre.endsWith('.xls');
+        });
+        if (!tienePdf || !tieneExcel) {
+          const faltantes: string[] = [];
+          if (!tienePdf) faltantes.push('PDF de la orden de compra');
+          if (!tieneExcel) faltantes.push('Excel del cuadro comparativo');
+          this.alertService.showAlert('Adjuntos requeridos', `Para enviar a aprobación debe adjuntar:\n\n${faltantes.join('\n')}\n\nAbra el detalle de la OC y suba los archivos.`, 'warning');
+          return;
+        }
+      } catch {
+        this.alertService.showAlert('Error', 'No se pudo verificar los adjuntos.', 'error');
+        return;
+      }
+    }
+
+    const ok = await this.alertService.showConfirm('Enviar a Aprobación',
+      `¿Confirma enviar la OC ${oc.numeroOrden} a aprobación? Monto: ${oc.moneda} ${oc.totalOrden}`, 'question');
+    if (!ok) return;
+    try {
+      this.alertService.mostrarModalCarga();
+      const idConsolidacion = oc.idConsolidacion || oc.codigoConsolidacion || oc.consolidacionId ||
+                                (oc.items && oc.items.length > 0 ? oc.items[0]?.idConsolidacion : null);
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/enviar-oc-aprobacion`, {
+          idOrden: oc.idOrden,
+          idConsolidacion: idConsolidacion,
+          usuarioGenera: this.usuario?.documentoidentidad
+        })
+      );
+      this.alertService.cerrarModalCarga();
+      const esExito = resp?.success === 1 || resp?.success === true || resp?.errorgeneral === 0;
+      if (esExito) {
+        const mensajeSync = resp?.numeroOrdenSpring ? ` Sincronizada con SPRING: ${resp.numeroOrdenSpring}` : '';
+        this.alertService.showAlert('Éxito', `OC enviada a aprobación.${mensajeSync}`, 'success');
+        await this.cargarOrdenesCompra();
+      } else {
+        this.alertService.showAlert('Error', resp?.mensaje || 'Error.', 'error');
+      }
+    } catch (e: any) {
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert('Error', e?.message || 'Error inesperado.', 'error');
+    }
+  }
+
+  async abrirAdjuntosOC(oc: any): Promise<void> {
+    this.ordenActual = oc;
+    this.archivoAdjuntoOC = null;
+    this.descripcionAdjuntoOC = '';
+    await this.cargarAdjuntosOC(oc.idOrden, 'OC');
+    this.modalAdjuntosOCAbierto = true;
+    this.cdr.markForCheck();
+  }
+
+  cerrarModalAdjuntosOC(): void {
+    this.modalAdjuntosOCAbierto = false;
+    this.ordenActual = null;
+    this.adjuntosOC = [];
+    this.archivoAdjuntoOC = null;
+    this.descripcionAdjuntoOC = '';
+    this.cdr.markForCheck();
+  }
+
+  onArchivoAdjuntoOCChange(event: any): void {
+    const files = event?.target?.files;
+    if (files && files.length > 0) {
+      this.archivoAdjuntoOC = files[0];
+    }
+  }
+
+  private obtenerTipoArchivo(nombre: string): string {
+    const ext = (nombre.split('.').pop() || '').toLowerCase();
+    if (ext === 'pdf') return 'application/pdf';
+    if (ext === 'xlsx' || ext === 'xls') return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    if (ext === 'doc' || ext === 'docx') return 'application/msword';
+    if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+    if (ext === 'png') return 'image/png';
+    return 'application/octet-stream';
+  }
+
+  private fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || '').split(',')[1] || '');
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async subirAdjuntoOC(): Promise<void> {
+    if (!this.archivoAdjuntoOC || !this.ordenActual) return;
+    this.subiendoAdjuntoOC = true;
+    try {
+      const b64 = await this.fileToBase64(this.archivoAdjuntoOC);
+      const tipoArchivo = this.obtenerTipoArchivo(this.archivoAdjuntoOC.name);
+      const idOrden = this.ordenActual?.idOrden;
+      const numeroOrdenSpring = this.ordenActual?.numeroOrdenSpring;
+      const companiaSocio = this.ordenActual?.companiaSocioSpring;
+      const rutaServidor = `\\\\172.16.20.24\\SpringGestionDoc\\TEMPORAL\\WH\\${this.archivoAdjuntoOC.name}`;
+      const payload: any = {
+        idOrden,
+        tipoOrden: 'OC',
+        nombreArchivo: this.archivoAdjuntoOC.name,
+        tipoArchivo,
+        tamano: this.archivoAdjuntoOC.size,
+        descripcion: this.descripcionAdjuntoOC || this.archivoAdjuntoOC.name,
+        contenidoB64: b64,
+        urlArchivo: rutaServidor,
+        usuarioSube: this.usuario?.documentoidentidad,
+        idempresa: this.usuario?.idempresa,
+        companiaSocio
+      };
+      if (numeroOrdenSpring) payload.numeroOrdenSpring = numeroOrdenSpring;
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/guardar-adjunto-oc`, payload)
+      );
+      if (resp?.success) {
+        this.archivoAdjuntoOC = null;
+        this.descripcionAdjuntoOC = '';
+        await this.cargarAdjuntosOC(this.ordenActual?.idOrden, 'OC');
+        await this.cargarOrdenesCompra();
+        this.alertService.showAlert('Éxito', 'Archivo adjunto subido correctamente.', 'success');
+      } else {
+        this.alertService.showAlert('Error', resp?.mensaje || 'Error al subir adjunto.', 'error');
+      }
+    } catch (e: any) {
+      this.alertService.showAlert('Error', e?.message || 'Error al subir adjunto.', 'error');
+    } finally {
+      this.subiendoAdjuntoOC = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  async eliminarAdjuntoOC(idAdjunto: number): Promise<void> {
+    const ok = await this.alertService.showConfirm('Eliminar adjunto', '¿Confirma eliminar este adjunto?', 'question');
+    if (!ok) return;
+    try {
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/eliminar-adjunto-oc`, { idAdjunto })
+      );
+      if (resp?.success) {
+        await this.cargarAdjuntosOC(this.ordenActual?.idOrden, 'OC');
+        await this.cargarOrdenesCompra();
+        this.alertService.showAlert('Éxito', 'Adjunto eliminado.', 'success');
+      } else {
+        this.alertService.showAlert('Error', resp?.mensaje || 'Error al eliminar.', 'error');
+      }
+    } catch (e: any) {
+      this.alertService.showAlert('Error', e?.message || 'Error al eliminar.', 'error');
+    }
+  }
+
+  async verPdfOC(oc: any): Promise<void> {
+    try {
+      const empresa: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/obtener-config-empresa`, { ruc: oc.rucEmpresa || '' })
+      );
+      const html = this.pdfService.buildOCHtml(oc, empresa);
+      this.pdfService.imprimirOrdenHtml(html, oc.numeroOrden);
+    } catch {
+      this.alertService.showAlert('Aviso', 'No se pudo cargar la configuración de empresa para el PDF.', 'warning');
+    }
+  }
+
+  async verPdfOCFormateado(oc: any): Promise<void> {
+    try {
+      const empresa: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/obtener-config-empresa`, { ruc: oc.rucEmpresa || '' })
+      );
+      if (empresa?.logoBase64) {
+        const html = this.pdfService.buildOCHtml(oc, empresa);
+        this.pdfService.imprimirOrdenHtml(html, oc.numeroOrden);
+      } else {
+        this.verPdfOC(oc);
+      }
+    } catch {
+      this.verPdfOC(oc);
+    }
+  }
+
+  async confirmarEnvioOC(oc: any): Promise<void> {
+    const ok = await this.alertService.showConfirm('Confirmar Envío al Proveedor',
+      `¿Confirma enviar la OC ${oc.numeroOrden}?`, 'question');
+    if (!ok) return;
+    try {
+      this.alertService.mostrarModalCarga();
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/confirmar-envio-oc`, {
+          idOrden: oc.idOrden,
+          usuario: this.usuario?.documentoidentidad
+        })
+      );
+      this.alertService.cerrarModalCarga();
+      const esExito = resp?.success === 1 || resp?.success === true || resp?.errorgeneral === 0;
+      if (esExito) {
+        this.alertService.showAlert('Éxito', resp?.mensaje || 'OC confirmada como enviada.', 'success');
+        await this.cargarOrdenesCompra();
+      } else {
+        this.alertService.showAlert('Error', resp?.mensaje || 'Error.', 'error');
+      }
+    } catch (e: any) {
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert('Error', e?.message || 'Error inesperado.', 'error');
+    }
+  }
+
+  editarOC(oc: any): void {
+    this.verDetalleOC(oc);
   }
 
   toggleAll(emp: string, checked: boolean): void {
@@ -464,33 +1206,72 @@ export class ConsolidacionCompraComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  setProveedorGlobal(): void {
-    const val = this.proveedorGlobal;
+  setProveedorGlobal(event: any): void {
+    const val: Proveedor = event?.value ?? event;
+    this.proveedorGlobal = val ?? null;
+    this.proveedorGlobalInput = val?.nombre ?? '';
     if (!val) {
       this.aplicarFiltros();
       return;
     }
     this.corpGrupos.filter(g => this.seleccionadosCorp.has(g.key)).forEach(g => {
-      g.ids.forEach(id => this.proveedorPorItem[id] = val.id);
+      g.ids.forEach(id => this.proveedorPorItem[id] = val.nombre);
     });
+    this.ocMoneda = val.monedaPago === 'EX' ? 'USD' : 'PEN';
+    this.ocCondPago = val.formaPago || this.formasPago[0]?.idformapago || 'Contado';
+    this.ocFormaPago = val.tipoPago || this.tiposPago[0]?.TipoPago || 'Transferencia';
+    this.ocPlazo = val.diasEntrega ?? 7;
+    this.calcularFechaEntregaOC();
     this.aplicarFiltros();
     this.toast('Proveedor asignado a ' + this.seleccionadosCorp.size + ' grupo(s) seleccionado(s)', 'ok');
   }
 
-  filtrarProveedores(event: any): void {
-    const query = String(event.query ?? '').toLowerCase().trim();
-    const todos = this.proveedores();
-    if (!query) {
-      this.proveedoresSugeridos = todos;
+  calcularFechaEntregaOC(): void {
+    const dias = parseInt(String(this.ocPlazo), 10) || 0;
+    if (dias <= 0) {
+      this.ocFechaEntrega = '';
       return;
     }
-    this.proveedoresSugeridos = todos.filter(p =>
-      p.nombre.toLowerCase().includes(query) ||
-      p.ruc.toLowerCase().includes(query)
-    );
+    const hoy = new Date();
+    const fecha = new Date(hoy);
+    fecha.setDate(hoy.getDate() + dias + 1);
+    this.ocFechaEntrega = fecha.toISOString().split('T')[0];
   }
 
-  exportarExcel(): void {
+  async filtrarProveedores(event: any): Promise<void> {
+    const query = String(event.query ?? '').trim();
+    if (!query || query.length < 3) {
+      this.proveedoresSugeridos = this.proveedores();
+      return;
+    }
+    try {
+      const body = { ruc: this.usuario?.ruc, busqueda: query, estado: 'ACTIVO' };
+      const resp: any = await lastValueFrom(this.maestrasService.getProveedores(body));
+      let lista = Array.isArray(resp) ? resp : [];
+      const queryLower = query.toLowerCase();
+      lista = lista.filter((p: any) => {
+        const nombre = String(p.proveedor ?? p.nombre ?? '').toLowerCase();
+        const ruc = String(p.ruc ?? p.documento ?? '').toLowerCase();
+        return nombre.includes(queryLower) || ruc.includes(queryLower);
+      });
+      this.proveedoresSugeridos = lista.map((p: any) => ({
+        id: String(p.idproveedor ?? p.id ?? p.ruc ?? p.documento ?? ''),
+        nombre: String(p.proveedor ?? p.nombre ?? p.razonSocial ?? ''),
+        ruc: String(p.ruc ?? p.rucproveedor ?? p.documento ?? ''),
+        monedaPago: String(p.MonedaPago ?? p.monedaPago ?? '').toUpperCase(),
+        tipoPago: String(p.TipoPago ?? p.tipoPago ?? '').toUpperCase(),
+        formaPago: String(p.FormadePago ?? p.formadePago ?? p.formaPago ?? ''),
+        diasEntrega: parseInt(p.NumeroDiasEntrega ?? p.numeroDiasEntrega ?? p.DiasEntrega ?? p.diasEntrega ?? '7', 10) || 7
+      }));
+    } catch {
+      this.proveedoresSugeridos = [];
+    }
+  }
+
+  async exportarExcel(): Promise<void> {
+    if (!this.itemsMaestra().length) {
+      await this.cargarItemsMaestra();
+    }
     const map = new Map<string, GrupoCorp>();
     this.datos.forEach(r => {
       const key = this.corpKey(r);
@@ -502,26 +1283,37 @@ export class ConsolidacionCompraComponent implements OnInit {
       g.ids.push(r.id);
     });
     const grupos = Array.from(map.values());
-    const headers = ['Código', 'Descripción', 'UM', 'Cant. HP', 'Cant. BH', 'Cant. CAO', 'Total', 'Última OC (S/)', 'P.U. (S/) sin IGV', 'Subtotal (S/)'];
+    const headers = ['Código', 'Descripción', 'UM', 'Línea', 'Familia', 'Subfamilia', 'Cant. HP', 'Cant. BH', 'Cant. CAO', 'Total', 'Última OC (S/)', 'Afecto IGV', 'P.U. (S/) sin IGV', 'Subtotal (S/)'];
+    // const headers = ['Código', 'Descripción', 'UM', 'Línea', 'Familia', 'Subfamilia', 'Cant. HP', 'Cant. BH', 'Cant. CAO', 'Total', 'Última OC (S/)', 'Afecto IGV', 'P.U. (S/) sin IGV'];
     const wsData: any[] = [headers];
     grupos.forEach((g, idx) => {
       const rowNum = idx + 2;
       const total = g.HP + g.BH + g.CAO;
       const precio = g.ids.map(id => this.costosProveedor[id]).find(v => v !== undefined && v !== null && v !== '') || '';
+      const afecto = this.esAfectoIGV(g.cod);
+      g.ids.forEach(id => {
+        this.afectoIGVPorItem[id] = afecto;
+        this.datos.filter(d => d.id === id).forEach(d => d.afectoIGV = afecto);
+      });
       wsData.push([
         g.cod,
         g.desc,
         g.um,
+        g.linea,
+        g.familia,
+        g.subfamilia,
         g.HP || 0,
         g.BH || 0,
         g.CAO || 0,
         total,
         g.ultimaOC.toFixed(2),
+        afecto ? 'SI' : 'NO',
         (parseFloat(precio) || 0) || '',
-        { f: `I${rowNum}*G${rowNum}` }
+        { f: `N${rowNum}*J${rowNum}` }
       ]);
     });
     const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!autofilter'] = { ref: `A1:N${wsData.length}` };
     ws['!cols'] = headers.map(() => ({ wch: 16 }));
     (ws['!cols'] as any)[1] = { wch: 38 };
     const wb = XLSX.utils.book_new();
@@ -552,6 +1344,7 @@ export class ConsolidacionCompraComponent implements OnInit {
       const cabecera = json[idxCabecera].map(h => String(h).trim().toLowerCase());
       const idxCod = cabecera.indexOf('código');
       const idxPrecio = cabecera.indexOf('p.u. (s/) sin igv');
+      const idxAfecto = cabecera.indexOf('afecto igv');
       if (idxCod < 0 || idxPrecio < 0) { this.toast('Formato no válido. Debe tener columnas Código y P.U. (S/) sin IGV', 'err'); return; }
       let count = 0;
       json.slice(idxCabecera + 1).forEach(row => {
@@ -560,7 +1353,15 @@ export class ConsolidacionCompraComponent implements OnInit {
         if (cod && precio > 0) {
           const ids = this.datos.filter(d => d.cod === cod).map(d => d.id);
           if (ids.length) {
-            ids.forEach(id => this.costosProveedor[id] = String(precio));
+            ids.forEach(id => {
+              this.costosProveedor[id] = String(precio);
+              if (idxAfecto >= 0) {
+                const val = String(row[idxAfecto] || '').trim().toUpperCase();
+                const afecto = val === 'SI' || val === 'S' || val === 'YES' || val === 'AFECTO';
+                this.afectoIGVPorItem[id] = afecto;
+                this.datos.filter(d => d.id === id).forEach(d => d.afectoIGV = afecto);
+              }
+            });
             count += ids.length;
           }
         }
@@ -573,7 +1374,7 @@ export class ConsolidacionCompraComponent implements OnInit {
     reader.readAsArrayBuffer(file);
   }
 
-  emitirOC(): void {
+  async emitirOC(): Promise<void> {
     if (this.seleccionadosCorp.size === 0) { this.toast('Selecciona al menos un ítem en el corporativo', 'err'); return; }
     if (!this.proveedorGlobal) { this.toast('Selecciona un proveedor global', 'err'); return; }
 
@@ -593,50 +1394,219 @@ export class ConsolidacionCompraComponent implements OnInit {
     });
 
     this.emitirOCEmpresas = [];
+    const rucsEmpresas = new Set<string>();
     ['HP', 'BH', 'CAO'].forEach(emp => {
       const items = porEmp[emp];
       if (!items.length) return;
+      const primerItem = items[0];
+      const rucEmpresa = String(primerItem?.ruc ?? '').trim();
+      const almacenDefault = primerItem?.almacen || this.almacenesPorRuc(rucEmpresa)[0]?.idalmacen || '';
       this.emitirOCEmpresas.push({
         emp,
         items: items.map(r => ({ ...r, precio: parseFloat(this.costosProveedor[r.id]) || r.ultimaOC })),
         subtotal: 0,
         igv: 0,
-        total: 0
+        total: 0,
+        almacen: almacenDefault,
+        rucEmpresa
       });
+      if (rucEmpresa) rucsEmpresas.add(rucEmpresa);
     });
 
+    // Precargar almacenes por empresa en paralelo antes de abrir el modal
+    await Promise.all(Array.from(rucsEmpresas).map(ruc => this.cargarAlmacenesPorRuc(ruc)));
+
     this.modalOCAbierto = true;
+    this.ocMonedaAnterior = this.ocMoneda;
+    this.cargarTipoCambioOC();
     this.recalcEmitirOC();
+  }
+
+  almacenesPorRuc(ruc: string): any[] {
+    const key = String(ruc ?? '').trim();
+    if (!key) return this.almacenes;
+    if (this.almacenesPorEmpresa.has(key)) {
+      return this.almacenesPorEmpresa.get(key)!;
+    }
+    // Trigger carga asíncrona mientras tanto devuelve lo que tengamos filtrado
+    this.cargarAlmacenesPorRuc(key);
+    return this.almacenes.filter(a => String(a.ruc ?? a.Ruc ?? '').trim() === key);
+  }
+
+  async cargarTipoCambioOC(): Promise<void> {
+    if (this.ocMoneda !== 'USD') {
+      this.tipoCambioOC = 1;
+      return;
+    }
+    try {
+      const fecha = this.tipoCambioService.fechaHoyString();
+      const resp: any = await this.tipoCambioService.obtenerTipoCambio(fecha);
+      this.tipoCambioOC = resp?.tipoCambio ? parseFloat(resp.tipoCambio) : 1;
+    } catch {
+      this.tipoCambioOC = 1;
+    }
+  }
+
+  async onMonedaChange(): Promise<void> {
+    await this.cargarTipoCambioOC();
+    const tc = this.tipoCambioOC || 1;
+    const anterior = this.ocMonedaAnterior || 'PEN';
+    const actual = this.ocMoneda || 'PEN';
+    if (anterior !== actual && tc > 0) {
+      this.emitirOCEmpresas.forEach(empBox => {
+        empBox.items.forEach(r => {
+          const precio = parseFloat(String(r.precio)) || 0;
+          if (!precio) return;
+          if (anterior === 'PEN' && actual === 'USD') {
+            r.precio = +(precio / tc).toFixed(4);
+          } else if (anterior === 'USD' && actual === 'PEN') {
+            r.precio = +(precio * tc).toFixed(2);
+          }
+        });
+      });
+    }
+    this.ocMonedaAnterior = actual;
+    this.recalcEmitirOC();
+  }
+
+  mostrarUltimaOC(item: any): string {
+    const tc = this.tipoCambioOC || 1;
+    const valor = parseFloat(String(item?.ultimaOC ?? 0)) || 0;
+    if (this.ocMoneda === 'USD' && tc > 0) {
+      return (valor / tc).toFixed(2);
+    }
+    return valor.toFixed(2);
   }
 
   recalcEmitirOC(): void {
     this.emitirOCEmpresas.forEach(empBox => {
       let subtotal = 0;
+      let igv = 0;
       empBox.items.forEach(r => {
-        subtotal += r.cantidad * r.precio;
-        this.costosProveedor[r.id] = String(r.precio);
+        const lineSubtotal = r.cantidad * r.precio;
+        const afecto = this.obtenerAfectoIGV(r);
+        subtotal += lineSubtotal;
+        if (afecto) {
+          igv += lineSubtotal * 0.18;
+        }
       });
       empBox.subtotal = subtotal;
-      empBox.igv = subtotal * 0.18;
-      empBox.total = subtotal + empBox.igv;
+      empBox.igv = igv;
+      empBox.total = subtotal + igv;
     });
   }
 
-  confirmarOC(): void {
+  async confirmarOC(): Promise<void> {
     const prov = this.proveedorGlobal;
     if (!prov) return;
 
     this.recalcEmitirOC();
-    const resumen = this.emitirOCEmpresas.map(e => ({ emp: e.emp, total: e.total }));
 
-    this.modalOCAbierto = false;
-    let msg = `OC creadas para ${resumen.length} empresa(s) con proveedor ${prov.nombre}. `;
-    msg += resumen.map(r => `${r.emp}: S/ ${r.total.toFixed(2)}`).join(' · ');
-    this.toast(msg, 'ok');
+    if (this.emitirOCEmpresas.length === 0) {
+      this.toast('No hay empresas con ítems seleccionados', 'err');
+      return;
+    }
 
-    this.seleccionadosCorp.clear();
-    this.proveedorGlobal = null;
-    this.aplicarFiltros();
+    if (this.emitirOCEmpresas.some(e => e.items.some(r => !r.precio || r.precio <= 0))) {
+      this.toast('Todos los ítems deben tener precio mayor a 0', 'err');
+      return;
+    }
+    if (this.emitirOCEmpresas.some(e => !e.almacen)) {
+      this.toast('Seleccione el almacén para cada empresa', 'err');
+      return;
+    }
+    if (!this.ocLugar) {
+      this.toast('Seleccione el lugar de entrega', 'err');
+      return;
+    }
+    if (!this.ocFechaEntrega) {
+      this.toast('Indique la fecha de entrega estimada', 'err');
+      return;
+    }
+
+    this.guardandoOC.set(true);
+    const creadas: string[] = [];
+    const errores: string[] = [];
+
+    try {
+      for (const empBox of this.emitirOCEmpresas) {
+        const primerItem = empBox.items[0];
+        const empresaMatch = this.empresas().find(e =>
+          String(e.ruc ?? '').trim() === String(primerItem?.ruc ?? '').trim()
+        );
+        const idempresa = empresaMatch?.idempresa || this.usuario?.idempresa || '000008';
+        const payload = {
+          idConsolidacion: primerItem?.IdConsolidacion || null,
+          idempresa,
+          rucEmpresa: primerItem?.ruc || empresaMatch?.ruc || '',
+          proveedor: prov.id,
+          nombreProveedor: prov.nombre,
+          rucProveedor: prov.ruc,
+          emailProveedor: '',
+          telefonoProveedor: '',
+          direccionProveedor: '',
+          moneda: this.ocMoneda,
+          tipoCambio: this.tipoCambioOC,
+          almacen: empBox.almacen || primerItem?.almacen || '',
+          lugarEntrega: this.ocLugar,
+          fechaEntregaEstimada: this.ocFechaEntrega,
+          condicionesPago: this.ocCondPago,
+          formaPago: this.ocFormaPago,
+          observaciones: this.ocObs,
+          usuarioGenera: this.usuario?.documentoidentidad,
+          nombreRegistra: this.usuario?.nombre || '',
+          clasificacion: 'LOC',
+          incoterm: '',
+          items: empBox.items.map(r => ({
+            codigo: r.cod || '',
+            descripcion: r.desc || '',
+            cantidad: r.cantidad || 0,
+            unidadMedida: r.um || 'UND',
+            precioUnitario: r.precio || 0,
+            descuento: 0,
+            proyecto: r.proyecto || '',
+            ceco: r.ceco || '',
+            observaciones: '',
+            idDetalle: r.idDetalle || null,
+            afectoIGV: this.obtenerAfectoIGV(r)
+          }))
+        };
+
+        try {
+          const resp: any = await lastValueFrom(
+            this.http.post(`${this.baseUrl}/api/logistica/crear-oc-borrador`, payload)
+          );
+          if (resp?.success) {
+            creadas.push(`${empBox.emp}: ${resp.numeroOC}`);
+          } else {
+            errores.push(`${empBox.emp}: ${resp?.mensaje || 'Error al crear OC'}`);
+          }
+        } catch (e: any) {
+          errores.push(`${empBox.emp}: ${e?.message || 'Error de red'}`);
+        }
+      }
+
+      if (creadas.length > 0) {
+        this.alertService.showAlert('OC Creadas',
+          `Se crearon ${creadas.length} OC(s) en borrador:\n${creadas.join('\n')}\n\nAdjunte los documentos y envíe a aprobación.`, 'success');
+      }
+      if (errores.length > 0) {
+        this.alertService.showAlert('Errores', errores.join('\n'), 'warning');
+      }
+
+      this.modalOCAbierto = false;
+      this.seleccionadosCorp.clear();
+      this.proveedorGlobal = null;
+      this.emitirOCEmpresas = [];
+      await this.cargarRequerimientos();
+      this.currentTab = 'OC';
+      await this.cargarOrdenesCompra();
+    } catch (e: any) {
+      this.alertService.showAlert('Error', e?.message || 'Error inesperado al crear OC.', 'error');
+    } finally {
+      this.guardandoOC.set(false);
+      this.cdr.markForCheck();
+    }
   }
 
   cerrarModal(): void {
