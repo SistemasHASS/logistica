@@ -69,6 +69,7 @@ interface EmitirEmpresa {
   total: number;
   almacen: string;
   rucEmpresa: string;
+  idempresa: string;
 }
 
 @Component({
@@ -110,6 +111,10 @@ export class ConsolidacionCompraComponent implements OnInit {
   datos: LineaReq[] = [];
 
   empNombres: Record<string, string> = { HP: 'Hass Peru S.A.', BH: 'Berry Harvest S.A.', CAO: 'Corp Agricola Olmos S.A.' };
+  // idempresa de 6 dígitos y RUC de 8 dígitos para SPRING
+  idEmpresaPorCodigo: Record<string, string> = { HP: '000008', BH: '000006', CAO: '000010' };
+  rucEmpresaPorCodigo: Record<string, string> = { HP: '00000800', BH: '00000600', CAO: '00001000' };
+  codigoEmpresaPorIdempresa: Record<string, string> = { '000008': 'HP', '000006': 'BH', '000010': 'CAO', '8': 'HP', '6': 'BH', '10': 'CAO' };
   empCodigoPorRuc: Record<string, string> = {};
 
   seleccionados = new Set<number>();
@@ -181,6 +186,13 @@ export class ConsolidacionCompraComponent implements OnInit {
   tipoCambioOC = 1;
   emitirOCEmpresas: EmitirEmpresa[] = [];
 
+  // Cotización OC multiempresa
+  cotizacionActiva: any = null;
+  cotizacionesPendientes: any[] = [];
+  mostrarPanelCotizaciones = false;
+  cargandoCotizaciones = false;
+  cotizacionVer: any = null;
+
   toasts: { msg: string; type: string }[] = [];
 
   constructor(
@@ -200,6 +212,7 @@ export class ConsolidacionCompraComponent implements OnInit {
     // Carga crítica de las tablas primero para mostrar el módulo rápido
     await this.cargarRequerimientosCompletos();
     await this.cargarRequerimientos();
+    this.cargarCotizacionesOC();
     // Catálogos en segundo plano (no bloquean la UI inicial)
     this.cargarEmpresas();
     this.cargarItemsMaestra();
@@ -220,12 +233,12 @@ export class ConsolidacionCompraComponent implements OnInit {
       this.empCodigoPorRuc = {};
       for (const e of lista) {
         const ruc = String(e.ruc ?? '').trim();
-        const razon = String(e.razonSocial ?? '').toLowerCase().trim();
+        const razon = String(e.razonsocial ?? e.razonSocial ?? e.nombre ?? '').toLowerCase().trim();
         if (!ruc) continue;
-        if (razon.includes('hass')) this.empCodigoPorRuc[ruc] = 'HP';
-        else if (razon.includes('berry')) this.empCodigoPorRuc[ruc] = 'BH';
-        else if (razon.includes('olmos')) this.empCodigoPorRuc[ruc] = 'CAO';
-        // No asignar por defecto; dejar que mapearRequerimientos use razonSocial como fallback
+        // Mapeo por RUC conocido primero, luego por razón social
+        this.empCodigoPorRuc[ruc] = this.codigoEmpresaPorRucDirecto(ruc)
+          || (razon.includes('hass') ? 'HP' : razon.includes('berry') ? 'BH' : razon.includes('olmos') ? 'CAO' : undefined)
+          || this.empCodigoPorRuc[ruc];
       }
     } catch (err) {
       console.error('[ConsolidacionCompra] error cargarEmpresas:', err);
@@ -236,10 +249,21 @@ export class ConsolidacionCompraComponent implements OnInit {
     }
   }
 
+  private codigoEmpresaPorRucDirecto(ruc: string): string | undefined {
+    const key = String(ruc ?? '').trim();
+    if (key === '20481121966' || key === '00000800' || key === '000008') return 'HP';
+    if (key === '20563196387' || key === '00000600' || key === '000006') return 'BH';
+    if (key === '20610773274' || key === '00001000' || key === '000010') return 'CAO';
+    return undefined;
+  }
+
   codigoEmpresaPorRuc(ruc: string, razonSocial?: string): string {
     const key = String(ruc ?? '').trim();
     const razon = String(razonSocial ?? '').trim();
-    return this.empresaPorRazonSocial(razon) || this.empCodigoPorRuc[key] || 'HP';
+    return this.codigoEmpresaPorRucDirecto(key)
+      || this.empresaPorRazonSocial(razon)
+      || this.empCodigoPorRuc[key]
+      || 'HP';
   }
 
   nombreEmpresaPorRuc(ruc: string, razonSocial?: string): string {
@@ -392,8 +416,11 @@ export class ConsolidacionCompraComponent implements OnInit {
     const mapped = items.map((item, idx) => {
       const ruc = String(item.ruc ?? '').trim();
       const razon = String(item.razonSocial ?? '').trim();
-      // Priorizar razonSocial del API (viene del requerimiento) sobre el cache de empresas
-      const empresa = this.empresaPorRazonSocial(razon) || this.empCodigoPorRuc[ruc] || 'HP';
+      // Priorizar RUC conocido, luego razonSocial del API y cache de empresas
+      const empresa = this.codigoEmpresaPorRucDirecto(ruc)
+        || this.empresaPorRazonSocial(razon)
+        || this.empCodigoPorRuc[ruc]
+        || 'HP';
       return {
         id: item.idDetalle ?? idx + 1,
         idDetalle: item.idDetalle ?? idx + 1,
@@ -573,8 +600,12 @@ export class ConsolidacionCompraComponent implements OnInit {
   }
 
   empresaOC(oc: any): string {
-    const ruc = String(oc?.rucProveedor ?? oc?.rucEmpresa ?? '').trim();
-    const razon = String(oc?.razonSocialProveedor ?? oc?.razonSocialEmpresa ?? '').trim();
+    const idempresa = String(oc?.idempresa ?? '').trim();
+    if (idempresa && this.codigoEmpresaPorIdempresa[idempresa]) {
+      return this.codigoEmpresaPorIdempresa[idempresa];
+    }
+    const ruc = String(oc?.rucEmpresa ?? oc?.rucProveedor ?? '').trim();
+    const razon = String(oc?.razonSocialEmpresa ?? oc?.razonSocialProveedor ?? '').trim();
     return this.codigoEmpresaPorRuc(ruc, razon);
   }
 
@@ -1269,65 +1300,147 @@ export class ConsolidacionCompraComponent implements OnInit {
   }
 
   async exportarExcel(): Promise<void> {
-    if (!this.itemsMaestra().length) {
-      await this.cargarItemsMaestra();
-    }
-    const map = new Map<string, GrupoCorp>();
-    this.datos.forEach(r => {
-      const key = this.corpKey(r);
-      if (!map.has(key)) {
-        map.set(key, { key, cod: r.cod, desc: r.desc, um: r.um, linea: r.linea, familia: r.familia, subfamilia: r.subfamilia, HP: 0, BH: 0, CAO: 0, ultimaOC: r.ultimaOC, ids: [] });
-      }
-      const g = map.get(key)!;
-      (g as any)[r.empresa] += r.cantidad;
-      g.ids.push(r.id);
+    if (!this.proveedorGlobal) { this.toast('Selecciona un proveedor global antes de exportar', 'err'); return; }
+    if (this.seleccionadosCorp.size === 0) { this.toast('Selecciona al menos un ítem corporativo', 'err'); return; }
+
+    const selectedIds: number[] = [];
+    this.corpGrupos.filter(g => this.seleccionadosCorp.has(g.key)).forEach(g => selectedIds.push(...g.ids));
+    if (selectedIds.length === 0) { this.toast('No hay ítems seleccionados', 'err'); return; }
+
+    const itemsParaCotizar = selectedIds.map(id => {
+      const r = this.datos.find(d => d.id === id)!;
+      return {
+        idDetalleOrigen: r.idDetalle,
+        tipoOrigen: 'ITEM',
+        idRequerimiento: r.idrequerimiento,
+        empresa: r.empresa,
+        codigo: r.cod,
+        descripcion: r.desc,
+        unidadMedida: r.um,
+        linea: r.linea,
+        familia: r.familia,
+        subfamilia: r.subfamilia,
+        ceco: r.ceco,
+        proyecto: r.proyecto,
+        almacen: r.almacen,
+        observaciones: '',
+        cantidad: r.cantidad,
+        afectoIGV: this.obtenerAfectoIGV(r)
+      };
     });
-    const grupos = Array.from(map.values());
-    const headers = ['Código', 'Descripción', 'UM', 'Línea', 'Familia', 'Subfamilia', 'Cant. HP', 'Cant. BH', 'Cant. CAO', 'Total', 'Última OC (S/)', 'Afecto IGV', 'P.U. (S/) sin IGV', 'Subtotal (S/)'];
-    // const headers = ['Código', 'Descripción', 'UM', 'Línea', 'Familia', 'Subfamilia', 'Cant. HP', 'Cant. BH', 'Cant. CAO', 'Total', 'Última OC (S/)', 'Afecto IGV', 'P.U. (S/) sin IGV'];
-    const wsData: any[] = [headers];
-    grupos.forEach((g, idx) => {
-      const rowNum = idx + 2;
-      const total = g.HP + g.BH + g.CAO;
-      const precio = g.ids.map(id => this.costosProveedor[id]).find(v => v !== undefined && v !== null && v !== '') || '';
-      const afecto = this.esAfectoIGV(g.cod);
-      g.ids.forEach(id => {
-        this.afectoIGVPorItem[id] = afecto;
-        this.datos.filter(d => d.id === id).forEach(d => d.afectoIGV = afecto);
-      });
+
+    try {
+      const body = {
+        usuario: this.usuario?.documentoidentidad || this.usuario?.nombre || '',
+        rucProveedor: this.proveedorGlobal.ruc,
+        nombreProveedor: this.proveedorGlobal.nombre,
+        moneda: this.ocMoneda,
+        observaciones: this.ocObs,
+        items: itemsParaCotizar
+      };
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/consolidacion/crear-cotizacion-oc`, body)
+      );
+      if (!resp?.success) {
+        this.toast(resp?.mensaje || 'No se pudo crear la cotización', 'err');
+        return;
+      }
+
+      // Armar el detalle de la cotización directamente desde los grupos seleccionados (sin esperar otra llamada al backend).
+      const detalleExcel = this.corpGrupos
+        .filter(g => this.seleccionadosCorp.has(g.key))
+        .map(g => {
+          const r = this.datos.find(d => d.id === g.ids[0]);
+          return {
+            codigo: g.cod,
+            descripcion: g.desc,
+            unidadMedida: g.um,
+            linea: g.linea,
+            familia: g.familia,
+            subfamilia: g.subfamilia,
+            cantHP: g.HP,
+            cantBH: g.BH,
+            cantCAO: g.CAO,
+            precioHP: '',
+            precioBH: '',
+            precioCAO: '',
+            afectoIGV: r ? this.obtenerAfectoIGV(r) : true
+          };
+        });
+
+      const cotizacionDescarga = {
+        cabecera: {
+          codigo: resp.codigo || '',
+          nombreProveedor: this.proveedorGlobal?.nombre || '',
+          moneda: this.ocMoneda
+        },
+        detalle: detalleExcel
+      };
+
+      this.seleccionadosCorp.clear();
+      this.generarExcelCotizacion(cotizacionDescarga);
+
+      // Recargar datos en segundo plano para refrescar la UI (no bloquean la descarga).
+      this.cargarCotizacionActiva({ idCotizacion: resp.idCotizacion }, false);
+      this.cargarCotizacionesOC();
+      this.cargarRequerimientos();
+    } catch (e: any) {
+      console.error('[exportarExcel] error crear cotizacion:', e);
+      this.toast('Error al crear cotización: ' + (e?.message || ''), 'err');
+    }
+  }
+
+  generarExcelCotizacion(cot: any): void {
+    if (typeof cot?.detalle === 'string') {
+      try { cot.detalle = JSON.parse(cot.detalle); } catch { cot.detalle = []; }
+    }
+    if (!cot?.detalle?.length) { this.toast('La cotización no tiene detalle', 'warn'); return; }
+
+    const headers = [
+      'Código', 'Descripción', 'UM', 'Línea', 'Familia', 'Subfamilia',
+      'Cant. HP', 'Cant. BH', 'Cant. CAO', 'Total', 'Afecto IGV',
+      'P.U. HP (S/) sin IGV', 'P.U. BH (S/) sin IGV', 'P.U. CAO (S/) sin IGV',
+      'Subtotal HP (S/)', 'Subtotal BH (S/)', 'Subtotal CAO (S/)'
+    ];
+    const wsData: any[] = [
+      ['COTIZACION:', cot?.cabecera?.codigo || ''],
+      ['PROVEEDOR:', cot?.cabecera?.nombreProveedor || ''],
+      ['MONEDA:', cot?.cabecera?.moneda || 'PEN'],
+      headers
+    ];
+
+    cot.detalle.forEach((g: any, idx: number) => {
+      const rowNum = idx + 5;
+      const afecto = g.afectoIGV ? 'SI' : 'NO';
+      const precioHP = g.precioHP || '';
+      const precioBH = g.precioBH || '';
+      const precioCAO = g.precioCAO || '';
       wsData.push([
-        g.cod,
-        g.desc,
-        g.um,
-        g.linea,
-        g.familia,
-        g.subfamilia,
-        g.HP || 0,
-        g.BH || 0,
-        g.CAO || 0,
-        total,
-        g.ultimaOC.toFixed(2),
-        afecto ? 'SI' : 'NO',
-        (parseFloat(precio) || 0) || '',
-        { f: `N${rowNum}*J${rowNum}` }
+        g.codigo, g.descripcion, g.unidadMedida, g.linea, g.familia, g.subfamilia,
+        g.cantHP || 0, g.cantBH || 0, g.cantCAO || 0, (g.cantHP || 0) + (g.cantBH || 0) + (g.cantCAO || 0), afecto,
+        precioHP, precioBH, precioCAO,
+        { f: `L${rowNum}*G${rowNum}` },
+        { f: `M${rowNum}*H${rowNum}` },
+        { f: `N${rowNum}*I${rowNum}` }
       ]);
     });
+
     const ws = XLSX.utils.aoa_to_sheet(wsData);
-    ws['!autofilter'] = { ref: `A1:N${wsData.length}` };
+    ws['!autofilter'] = { ref: `A4:Q${wsData.length}` };
     ws['!cols'] = headers.map(() => ({ wch: 16 }));
     (ws['!cols'] as any)[1] = { wch: 38 };
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Cotización');
     const fecha = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `cotizacion_corporativa_${fecha}.xlsx`);
-    this.toast('Cotización exportada en Excel (.xlsx) con fórmulas de subtotal', 'ok');
+    XLSX.writeFile(wb, `cotizacion_oc_${cot?.cabecera?.codigo || fecha}.xlsx`);
+    this.toast('Cotización exportada en Excel con precios por empresa', 'ok');
   }
 
   importarCotizacion(input: HTMLInputElement): void {
     const file = input.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const data = new Uint8Array(e.target?.result as ArrayBuffer);
       let workbook: XLSX.WorkBook;
       try {
@@ -1339,53 +1452,246 @@ export class ConsolidacionCompraComponent implements OnInit {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as any[][];
       if (!json.length) { this.toast('Archivo vacío', 'err'); return; }
+
+      // Buscar código de cotización
+      const codigoCotizacion = this.extraerCodigoCotizacion(json);
+      if (!codigoCotizacion) {
+        this.toast('No se encontró el código de cotización en el Excel. Use el archivo descargado.', 'err');
+        return;
+      }
+
       const idxCabecera = json.findIndex(row => row.some(c => String(c).toLowerCase().includes('código')));
       if (idxCabecera < 0) { this.toast('Formato no válido. Debe tener columna Código', 'err'); return; }
       const cabecera = json[idxCabecera].map(h => String(h).trim().toLowerCase());
       const idxCod = cabecera.indexOf('código');
-      const idxPrecio = cabecera.indexOf('p.u. (s/) sin igv');
-      const idxAfecto = cabecera.indexOf('afecto igv');
-      if (idxCod < 0 || idxPrecio < 0) { this.toast('Formato no válido. Debe tener columnas Código y P.U. (S/) sin IGV', 'err'); return; }
-      let count = 0;
+      const idxPrecioHP = cabecera.findIndex(h => h.includes('p.u.') && h.includes('hp'));
+      const idxPrecioBH = cabecera.findIndex(h => h.includes('p.u.') && h.includes('bh'));
+      const idxPrecioCAO = cabecera.findIndex(h => h.includes('p.u.') && h.includes('cao'));
+      if (idxCod < 0) { this.toast('Formato no válido. Debe tener columna Código', 'err'); return; }
+      if (idxPrecioHP < 0 && idxPrecioBH < 0 && idxPrecioCAO < 0) {
+        this.toast('Formato no válido. Debe tener al menos una columna P.U. HP/BH/CAO', 'err');
+        return;
+      }
+
+      const precios: { codigo: string; empresa: string; precio: number }[] = [];
       json.slice(idxCabecera + 1).forEach(row => {
         const cod = String(row[idxCod] || '').trim();
-        const precio = parseFloat(row[idxPrecio]) || 0;
-        if (cod && precio > 0) {
-          const ids = this.datos.filter(d => d.cod === cod).map(d => d.id);
-          if (ids.length) {
-            ids.forEach(id => {
-              this.costosProveedor[id] = String(precio);
-              if (idxAfecto >= 0) {
-                const val = String(row[idxAfecto] || '').trim().toUpperCase();
-                const afecto = val === 'SI' || val === 'S' || val === 'YES' || val === 'AFECTO';
-                this.afectoIGVPorItem[id] = afecto;
-                this.datos.filter(d => d.id === id).forEach(d => d.afectoIGV = afecto);
-              }
-            });
-            count += ids.length;
-          }
-        }
+        if (!cod) return;
+        const pushPrecio = (emp: string, idx: number) => {
+          const val = parseFloat(row[idx]);
+          if (val > 0) precios.push({ codigo: cod, empresa: emp, precio: val });
+        };
+        if (idxPrecioHP >= 0) pushPrecio('HP', idxPrecioHP);
+        if (idxPrecioBH >= 0) pushPrecio('BH', idxPrecioBH);
+        if (idxPrecioCAO >= 0) pushPrecio('CAO', idxPrecioCAO);
       });
+
+      if (precios.length === 0) {
+        this.toast('No se encontraron precios mayores a 0 en el archivo', 'warn');
+        input.value = '';
+        return;
+      }
+
+      try {
+        const resp: any = await lastValueFrom(
+          this.http.post(`${this.baseUrl}/api/consolidacion/guardar-precios-cotizacion-oc`, {
+            codigo: codigoCotizacion,
+            precios
+          })
+        );
+        if (resp?.success) {
+          await this.cargarCotizacionActiva({ codigo: codigoCotizacion });
+          this.cargarCotizacionesOC();
+          this.toast(`Precios cargados: ${precios.length} precio(s)`, 'ok');
+        } else {
+          this.toast(resp?.mensaje || 'Error al cargar precios', 'err');
+        }
+      } catch (e: any) {
+        console.error('[importarCotizacion] error:', e);
+        this.toast('Error al guardar precios: ' + (e?.message || ''), 'err');
+      }
       input.value = '';
-      this.aplicarFiltros();
-      if (count) this.toast('Cotización cargada: ' + count + ' línea(s) con precio asignado', 'ok');
-      else this.toast('No se encontraron códigos coincidentes en el archivo', 'warn');
     };
     reader.readAsArrayBuffer(file);
   }
 
-  async emitirOC(): Promise<void> {
-    if (this.seleccionadosCorp.size === 0) { this.toast('Selecciona al menos un ítem en el corporativo', 'err'); return; }
-    if (!this.proveedorGlobal) { this.toast('Selecciona un proveedor global', 'err'); return; }
+  extraerCodigoCotizacion(json: any[][]): string | null {
+    for (const row of json) {
+      const celda0 = String(row[0] || '').trim().toUpperCase();
+      if (celda0.includes('COTIZACION')) {
+        const cod = String(row[1] || '').trim();
+        if (cod.startsWith('COT-OC-')) return cod;
+      }
+    }
+    // Buscar en cualquier celda
+    for (const row of json) {
+      for (const cell of row) {
+        const s = String(cell).trim();
+        if (s.startsWith('COT-OC-')) return s;
+      }
+    }
+    return null;
+  }
 
+  async cargarCotizacionActiva(filtro: { idCotizacion?: number; codigo?: string }, cargarProveedores = true): Promise<void> {
+    try {
+      const body: any = {};
+      if (filtro.idCotizacion) body.idCotizacion = filtro.idCotizacion;
+      if (filtro.codigo) body.codigo = filtro.codigo;
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/consolidacion/obtener-cotizacion-oc`, body)
+      );
+      if (resp?.success) {
+        this.cotizacionActiva = resp;
+        if (cargarProveedores) {
+          // Asegurar proveedor global con el id real del catálogo
+          await this.cargarProveedores();
+          const proveedorMatch = this.proveedores().find(p => p.ruc === resp.cabecera?.rucProveedor);
+          this.proveedorGlobal = proveedorMatch
+            || { id: resp.cabecera?.rucProveedor, nombre: resp.cabecera?.nombreProveedor, ruc: resp.cabecera?.rucProveedor } as any;
+        }
+      } else {
+        this.cotizacionActiva = null;
+      }
+      this.cdr.markForCheck();
+    } catch (e) {
+      this.cotizacionActiva = null;
+    }
+  }
+
+  async cargarCotizacionesOC(): Promise<void> {
+    this.cargandoCotizaciones = true;
+    try {
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/consolidacion/listar-cotizaciones-oc`, {
+          estado: '', top: 200
+        })
+      );
+      this.cotizacionesPendientes = Array.isArray(resp) ? resp : (resp?.resultado || []);
+      this.cdr.markForCheck();
+    } catch (err) {
+      console.error('[cargarCotizacionesOC] error:', err);
+      this.cotizacionesPendientes = [];
+    } finally {
+      this.cargandoCotizaciones = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  seleccionarCotizacion(cot: any): void {
+    this.cargarCotizacionActiva({ idCotizacion: cot.idCotizacion });
+    this.mostrarPanelCotizaciones = false;
+  }
+
+  async anularCotizacion(cot: any): Promise<void> {
+    try {
+      const resp: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/consolidacion/anular-cotizacion-oc`, {
+          idCotizacion: cot.idCotizacion, motivo: 'Anulado por usuario'
+        })
+      );
+      if (resp?.success) {
+        this.toast('Cotización anulada y líneas liberadas', 'ok');
+        if (this.cotizacionActiva?.cabecera?.idCotizacion === cot.idCotizacion) this.cotizacionActiva = null;
+        this.cargarCotizacionesOC();
+        this.cargarRequerimientos();
+      } else {
+        this.toast(resp?.mensaje || 'Error al anular', 'err');
+      }
+    } catch (e: any) {
+      this.toast('Error al anular cotización: ' + (e?.message || ''), 'err');
+    }
+  }
+
+  async emitirOC(): Promise<void> {
     const prov = this.proveedorGlobal;
+    if (!prov) { this.toast('Selecciona un proveedor global', 'err'); return; }
+
     this.ocProv = prov.nombre;
     this.ocRuc = prov.ruc;
 
+    // Preferir flujo por cotización activa congelada
+    if (this.cotizacionActiva?.cabecera?.estado === 'COTIZADA') {
+      await this.cargarCotizacionActiva({ idCotizacion: this.cotizacionActiva.cabecera.idCotizacion });
+      const rawItems = Array.isArray(this.cotizacionActiva.items) ? this.cotizacionActiva.items : [];
+      if (!rawItems.length) { this.toast('La cotización activa no tiene ítems', 'err'); return; }
+
+      // Precios por código+empresa desde el detalle agrupado
+      const precioMap: Record<string, Record<string, number>> = {};
+      (this.cotizacionActiva.detalle || []).forEach((g: any) => {
+        precioMap[g.codigo] = {
+          HP: g.precioHP || 0,
+          BH: g.precioBH || 0,
+          CAO: g.precioCAO || 0
+        };
+      });
+
+      const porEmp: Record<string, (LineaReq & { precio: number })[]> = { HP: [], BH: [], CAO: [] };
+      rawItems.forEach((it: any) => {
+        const emp = String(it.empresa || '').toUpperCase();
+        if (!porEmp[emp]) return;
+        const precio = precioMap[it.codigo]?.[emp] || it.precioUnitario || 0;
+        porEmp[emp].push({
+          id: it.idDetalleOrigen,
+          idDetalle: it.idDetalleOrigen,
+          idrequerimiento: it.idRequerimiento,
+          req: '',
+          area: '',
+          solicitante: '',
+          fecha: '',
+          empresa: emp,
+          cod: it.codigo,
+          desc: it.descripcion,
+          um: it.unidadMedida || 'UND',
+          lineaCodigo: '',
+          linea: it.linea || '',
+          familiaCodigo: '',
+          familia: it.familia || '',
+          subfamiliaCodigo: '',
+          subfamilia: it.subfamilia || '',
+          cantidad: it.cantidad,
+          cantidadPendiente: it.cantidad,
+          ultimaOC: 0,
+          afectoIGV: !!it.afectoIGV,
+          ruc: '',
+          razonSocial: '',
+          ceco: it.ceco || '',
+          proyecto: it.proyecto || '',
+          almacen: it.almacen || '',
+          precio
+        } as any);
+      });
+
+      this.emitirOCEmpresas = [];
+      const rucsEmpresas = new Set<string>();
+      ['HP', 'BH', 'CAO'].forEach(emp => {
+        const items = porEmp[emp];
+        if (!items.length) return;
+        const idempresa = this.idEmpresaPorCodigo[emp];
+        const rucEmpresa = this.rucEmpresaPorCodigo[emp];
+        const almacenDefault = items[0]?.almacen || this.almacenesPorRuc(rucEmpresa)[0]?.idalmacen || '';
+        this.emitirOCEmpresas.push({ emp, items, subtotal: 0, igv: 0, total: 0, almacen: almacenDefault, rucEmpresa, idempresa });
+        rucsEmpresas.add(rucEmpresa);
+      });
+
+      if (this.emitirOCEmpresas.some(e => e.items.some(r => !r.precio || r.precio <= 0))) {
+        this.toast('La cotización activa aún no tiene todos los precios por empresa', 'err');
+        return;
+      }
+
+      await Promise.all(Array.from(rucsEmpresas).map(ruc => this.cargarAlmacenesPorRuc(ruc)));
+      this.modalOCAbierto = true;
+      this.ocMonedaAnterior = this.ocMoneda;
+      this.cargarTipoCambioOC();
+      this.recalcEmitirOC();
+      return;
+    }
+
+    // Flujo legacy: selección directa de ítems
+    if (this.seleccionadosCorp.size === 0) { this.toast('Selecciona al menos un ítem en el corporativo', 'err'); return; }
+
     const selectedIds: number[] = [];
-    this.corpGrupos.filter(g => this.seleccionadosCorp.has(g.key)).forEach(g => {
-      selectedIds.push(...g.ids);
-    });
+    this.corpGrupos.filter(g => this.seleccionadosCorp.has(g.key)).forEach(g => selectedIds.push(...g.ids));
 
     const porEmp: Record<string, LineaReq[]> = { HP: [], BH: [], CAO: [] };
     selectedIds.forEach(id => {
@@ -1399,7 +1705,8 @@ export class ConsolidacionCompraComponent implements OnInit {
       const items = porEmp[emp];
       if (!items.length) return;
       const primerItem = items[0];
-      const rucEmpresa = String(primerItem?.ruc ?? '').trim();
+      const idempresa = this.idEmpresaPorCodigo[emp] || String(primerItem?.ruc ?? '').trim();
+      const rucEmpresa = String(primerItem?.ruc ?? '').trim() || this.rucEmpresaPorCodigo[emp];
       const almacenDefault = primerItem?.almacen || this.almacenesPorRuc(rucEmpresa)[0]?.idalmacen || '';
       this.emitirOCEmpresas.push({
         emp,
@@ -1408,12 +1715,12 @@ export class ConsolidacionCompraComponent implements OnInit {
         igv: 0,
         total: 0,
         almacen: almacenDefault,
-        rucEmpresa
+        rucEmpresa,
+        idempresa
       });
       if (rucEmpresa) rucsEmpresas.add(rucEmpresa);
     });
 
-    // Precargar almacenes por empresa en paralelo antes de abrir el modal
     await Promise.all(Array.from(rucsEmpresas).map(ruc => this.cargarAlmacenesPorRuc(ruc)));
 
     this.modalOCAbierto = true;
@@ -1532,13 +1839,13 @@ export class ConsolidacionCompraComponent implements OnInit {
       for (const empBox of this.emitirOCEmpresas) {
         const primerItem = empBox.items[0];
         const empresaMatch = this.empresas().find(e =>
-          String(e.ruc ?? '').trim() === String(primerItem?.ruc ?? '').trim()
+          String(e.ruc ?? '').trim() === empBox.rucEmpresa
         );
-        const idempresa = empresaMatch?.idempresa || this.usuario?.idempresa || '000008';
+        const idempresa = empBox.idempresa || this.idEmpresaPorCodigo[empBox.emp] || empresaMatch?.idempresa || this.usuario?.idempresa || '000008';
         const payload = {
           idConsolidacion: primerItem?.IdConsolidacion || null,
           idempresa,
-          rucEmpresa: primerItem?.ruc || empresaMatch?.ruc || '',
+          rucEmpresa: empBox.rucEmpresa || empresaMatch?.ruc || '',
           proveedor: prov.id,
           nombreProveedor: prov.nombre,
           rucProveedor: prov.ruc,
@@ -1592,6 +1899,21 @@ export class ConsolidacionCompraComponent implements OnInit {
       }
       if (errores.length > 0) {
         this.alertService.showAlert('Errores', errores.join('\n'), 'warning');
+      }
+
+      // Cerrar cotización activa si se generaron OCs
+      if (creadas.length > 0 && this.cotizacionActiva?.cabecera?.idCotizacion) {
+        try {
+          await lastValueFrom(
+            this.http.post(`${this.baseUrl}/api/consolidacion/cerrar-cotizacion-oc`, {
+              idCotizacion: this.cotizacionActiva.cabecera.idCotizacion
+            })
+          );
+          this.cotizacionActiva = null;
+          this.cargarCotizacionesOC();
+        } catch (cerrarErr) {
+          console.error('[confirmarOC] error cerrando cotizacion:', cerrarErr);
+        }
       }
 
       this.modalOCAbierto = false;

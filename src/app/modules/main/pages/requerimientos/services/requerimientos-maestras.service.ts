@@ -393,6 +393,7 @@ export class RequerimientosMaestrasService {
 
   async cargarDatosParaCompra() {
     try {
+      if (!this.almacenes?.length) await this.ListarAlmacenes();
       if (!this.cecos?.length) await this.ListarCecos();
       if (!this.labores?.length) await this.ListarLabores();
       if (!this.proyectos?.length) await this.ListarProyectos();

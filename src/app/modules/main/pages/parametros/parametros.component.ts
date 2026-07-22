@@ -1384,7 +1384,7 @@ export class ParametrosComponent implements OnInit {
 
     console.log('👤 Rol del usuario:', this.usuario.idrol);
 
-    // 🔥 EMLOGIST → TODOS
+    // 🔥 EMLOGIST → TODOS (almacenes destino)
     if (this.usuario.idrol === 'EMLOGIST') {
       console.log('📦 Rol EMLOGIST detectado, cargando almacenes de destino');
       const destino = await this.dexieService.showAlmacenesDestino();
@@ -1393,10 +1393,26 @@ export class ParametrosComponent implements OnInit {
       return;
     }
 
-    // 🔐 LOLOGIST / OPLOGIST → SOLO UNO
-    console.log('🔐 Rol LOLOGIST/OPLOGIST detectado, asignando primer almacén');
-    // const almacenUsuario = almacenes[0];
-    // this.almacenes = [almacenes[0]];
+    // � COMPRA → TODOS los almacenes para que el usuario escoja
+    if (this.configuracion.idTipoItem === 'COMPRA') {
+      console.log('� COMPRA: cargando TODOS los almacenes');
+      this.almacenes = almacenes;
+
+      // Pre-seleccionar almacén principal si no hay uno configurado
+      if (!this.configuracion.idalmacen) {
+        const almentrada = almacenes.find((c: any) => c.almentrada === 'S');
+        if (almentrada) {
+          this.configuracion.idalmacen = String(almentrada.idalmacen);
+          console.log('✅ Auto-seleccionado almacén principal:', this.configuracion.idalmacen);
+        }
+      }
+
+      console.log('🛒 ALMACENES COMPRA:', this.almacenes.length);
+      return;
+    }
+
+    // 🥤 CONSUMO → SOLO el almacén principal (almentrada = 'S')
+    console.log('🥤 CONSUMO: asignando almacén principal');
     const almentrada = almacenes.find((c: any) => c.almentrada === "S"); 
     this.almacenes = almentrada ? [almentrada] : almacenes.slice(0, 1);
 

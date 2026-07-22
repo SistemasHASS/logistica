@@ -481,15 +481,15 @@
                   <b class="texto-error">*</b> Almacén
                 </label>
                 <div class="col-lg-9">
-                  <select [(ngModel)]="configuracion.idalmacen" name="almacen" class="form-select mb-2" [ngClass]="{
-                      'is-invalid': showValidation && !configuracion.idalmacen,
-                      'is-valid': configuracion.idalmacen
-                    }">
-                    <option [ngValue]="''" disabled>Seleccione una opción</option>
-                    <option *ngFor="let a of almacenes" [ngValue]="a?.idalmacen" [hidden]="!a">
-                      {{ a?.almacen }}
-                    </option>
-                  </select>
+                  <app-dropdown
+                    [(ngModel)]="configuracion.idalmacen"
+                    [data]="almacenes"
+                    [valueField]="'idalmacen'"
+                    [optionLabel]="'almacen'"
+                    [editable]="true"
+                    [required]="true"
+                    [textShow2]="'un almacén'"
+                  ></app-dropdown>
                 </div>
               </div>
             </fieldset>

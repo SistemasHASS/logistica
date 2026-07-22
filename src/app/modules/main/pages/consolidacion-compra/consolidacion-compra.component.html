@@ -263,9 +263,68 @@
 
       <div class="cot-upload">
         <input type="file" #fileCot accept=".csv,.xlsx,.xls" style="display:none" (change)="importarCotizacion(fileCot)">
-        <button class="btn-export" (click)="exportarExcel()"><i class='bx bx-download'></i> Exportar cotización Excel</button>
+        <button class="btn-export" (click)="exportarExcel()" [disabled]="!proveedorGlobal || seleccionadosCorp.size === 0"><i class='bx bx-download'></i> Exportar cotización Excel</button>
         <button class="btn-upload" (click)="fileCot.click()"><i class='bx bx-upload'></i> Cargar cotización con precios</button>
-        <small class="hint">Descarga la plantilla, llena el precio del proveedor y súbela para completar los precios.</small>
+        <button class="btn-gen" (click)="mostrarPanelCotizaciones = true"><i class='bx bx-list-ul'></i> Cotizaciones</button>
+        <small class="hint">Exporta la plantilla con 3 columnas de precio (HP/BH/CAO), el proveedor la llena y luego se carga. La cotización queda congelada mientras espera.</small>
+      </div>
+
+      <!-- Cotización activa -->
+      <div *ngIf="cotizacionActiva" class="quote-banner card mb-3 p-3 border-primary">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <strong>Cotización activa: {{ cotizacionActiva?.cabecera?.codigo }}</strong>
+            <span class="badge ms-2" [class.bg-warning]="cotizacionActiva?.cabecera?.estado === 'EN_COTIZACION'" [class.bg-success]="cotizacionActiva?.cabecera?.estado === 'COTIZADA'">{{ cotizacionActiva?.cabecera?.estado }}</span>
+            <div class="small text-muted">Proveedor: {{ cotizacionActiva?.cabecera?.nombreProveedor }} | Moneda: {{ cotizacionActiva?.cabecera?.moneda }}</div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn-export btn-sm" (click)="generarExcelCotizacion(cotizacionActiva)"><i class='bx bx-download'></i> Descargar Excel</button>
+            <button class="btn-gen btn-sm" *ngIf="cotizacionActiva?.cabecera?.estado === 'COTIZADA'" (click)="emitirOC()"><i class='bx bx-file'></i> Generar OC por empresa</button>
+            <button class="btn-sm btn-outline-danger" (click)="anularCotizacion(cotizacionActiva.cabecera)"><i class='bx bx-trash'></i> Anular</button>
+          </div>
+        </div>
+        <div class="mt-2 small" *ngIf="cotizacionActiva?.detalle?.length">
+          <table class="table table-sm table-bordered mb-0">
+            <thead><tr><th>Código</th><th>Descripción</th><th>Cant. HP</th><th>Cant. BH</th><th>Cant. CAO</th><th>P.U. HP</th><th>P.U. BH</th><th>P.U. CAO</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let d of cotizacionActiva.detalle">
+                <td>{{ d.codigo }}</td><td>{{ d.descripcion }}</td>
+                <td class="text-end">{{ d.cantHP || '—' }}</td><td class="text-end">{{ d.cantBH || '—' }}</td><td class="text-end">{{ d.cantCAO || '—' }}</td>
+                <td class="text-end">{{ d.precioHP ? ('S/ ' + d.precioHP.toFixed(4)) : '—' }}</td>
+                <td class="text-end">{{ d.precioBH ? ('S/ ' + d.precioBH.toFixed(4)) : '—' }}</td>
+                <td class="text-end">{{ d.precioCAO ? ('S/ ' + d.precioCAO.toFixed(4)) : '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Panel de cotizaciones -->
+      <div *ngIf="mostrarPanelCotizaciones" class="modal-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1050;display:flex;align-items:center;justify-content:center;" (click)="mostrarPanelCotizaciones = false">
+        <div class="card" style="width:90%;max-width:900px;max-height:80vh;overflow:auto;" (click)="$event.stopPropagation()">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Cotizaciones OC</strong>
+            <button class="btn-close" (click)="mostrarPanelCotizaciones = false"></button>
+          </div>
+          <div class="card-body">
+            <p-table [value]="cotizacionesPendientes" [paginator]="true" [rows]="10" responsiveLayout="scroll" styleClass="p-datatable-sm">
+              <ng-template pTemplate="header">
+                <tr><th>Código</th><th>Proveedor</th><th>Moneda</th><th>Estado</th><th>Items</th><th>Con precio</th><th>Fecha</th><th></th></tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-c>
+                <tr>
+                  <td>{{ c.codigo }}</td><td>{{ c.nombreProveedor }}</td><td>{{ c.moneda }}</td>
+                  <td><span class="badge" [class.bg-warning]="c.estado === 'EN_COTIZACION'" [class.bg-success]="c.estado === 'COTIZADA'" [class.bg-secondary]="c.estado === 'EN_OC'">{{ c.estado }}</span></td>
+                  <td>{{ c.totalItems }}</td><td>{{ c.itemsConPrecio }}</td><td>{{ c.fechaExport | date:'short' }}</td>
+                  <td>
+                    <button class="btn-gen btn-sm me-1" (click)="seleccionarCotizacion(c)">Cargar</button>
+                    <button class="btn-sm btn-outline-danger" (click)="anularCotizacion(c)">Anular</button>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </div>
       </div>
 
       <div class="tw">

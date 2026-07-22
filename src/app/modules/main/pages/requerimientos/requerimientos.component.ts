@@ -1180,6 +1180,7 @@ export class RequerimientosComponent implements OnInit, OnDestroy {
     this.itemSvc.requerimiento.itemtipo = this.requerimiento.itemtipo;
     await this.itemSvc.onTipoChange();
     this.TipoSelecionado = this.itemSvc.TipoSelecionado;
+    this.almacenes = this.maestrasSvc.almacenes;
     this.almacenSeleccionado = this.maestrasSvc.almacenSeleccionado;
     this.almacenOrigen = this.maestrasSvc.almacenOrigen;
     this.almacenDestino = this.maestrasSvc.almacenDestino;
@@ -1375,6 +1376,7 @@ export class RequerimientosComponent implements OnInit, OnDestroy {
     this.modalAbierto = this.itemSvc.modalAbierto;
     this.modoEdicion = this.itemSvc.modoEdicion;
     this.TipoSelecionado = this.itemSvc.TipoSelecionado;
+    this.almacenes = this.maestrasSvc.almacenes;
     this.almacenSeleccionado = this.maestrasSvc.almacenSeleccionado;
     this.almacenOrigen = this.maestrasSvc.almacenOrigen;
     this.almacenDestino = this.maestrasSvc.almacenDestino;
@@ -1384,6 +1386,8 @@ export class RequerimientosComponent implements OnInit, OnDestroy {
 
     console.log('🆕 Nuevo requerimiento creado:', {
       tipo: this.TipoSelecionado,
+      almacenes: this.almacenes.length,
+      almacenSeleccionado: this.almacenSeleccionado,
       almacenOrigen: this.almacenOrigen,
       almacenDestino: this.almacenDestino,
     });
