@@ -165,7 +165,19 @@ export class RequerimientosMaestrasService {
   async ListarProyectos() { this.proyectos = await this.dexieService.showProyectos(); }
   async ListarTurnos() { this.turnos = await this.dexieService.showTurnos(); }
   async ListarLabores() { this.labores = await this.dexieService.showLabores(); }
-  async ListarCecos() { this.cecos = await this.dexieService.showCecos(); }
+  async ListarCecos() {
+    // El maestro de CECOs trae una fila por cada combinación
+    // CECO-LABOR-PROYECTO; para los dropdowns de CECO se debe listar
+    // cada CECO una sola vez (evita CECOs repetidos en Consumo y Compras).
+    const cecos = await this.dexieService.showCecos();
+    const vistos = new Set<string>();
+    this.cecos = (cecos || []).filter((c: any) => {
+      const clave = c?.costcenter?.trim?.() ?? c?.costcenter;
+      if (clave === undefined || clave === null || vistos.has(clave)) return false;
+      vistos.add(clave);
+      return true;
+    });
+  }
   async ListarClasificaciones() { this.clasificaciones = await this.dexieService.showClasificaciones(); }
   async ListarProveedores() {
     this.proveedoresServicios = await this.dexieService.showProveedores();

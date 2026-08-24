@@ -125,10 +125,10 @@
                   <b class="texto-error">*</b> Empresa
                 </label>
                 <div class="col-lg-9">
-                  <select [(ngModel)]="configuracion.idempresa" name="empresa" class="form-select mb-2" [ngClass]="{
+                  <select [(ngModel)]="configuracion.idempresa" (ngModelChange)="onEmpresaChange()" name="empresa" class="form-select mb-2" [ngClass]="{
                       'is-invalid': showValidation && !configuracion.idempresa,
                       'is-valid': configuracion.idempresa
-                    }" disabled>
+                    }">
                     <option [ngValue]="''">Seleccione una opción</option>
                     <option *ngFor="let t of empresas" [ngValue]="t.ruc">
                       {{ t.razonsocial }}
@@ -334,10 +334,10 @@
                   <b class="texto-error">*</b> Empresa
                 </label>
                 <div class="col-lg-9">
-                  <select [(ngModel)]="configuracion.idempresa" name="empresa" class="form-select mb-2" [ngClass]="{
+                  <select [(ngModel)]="configuracion.idempresa" (ngModelChange)="onEmpresaChange()" name="empresa" class="form-select mb-2" [ngClass]="{
                       'is-invalid': showValidation && !configuracion.idempresa,
                       'is-valid': configuracion.idempresa
-                    }" disabled>
+                    }">
                     <option [ngValue]="''">Seleccione una opción</option>
                     <option *ngFor="let t of empresas" [ngValue]="t.ruc">
                       {{ t.razonsocial }}

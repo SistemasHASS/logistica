@@ -1193,8 +1193,13 @@ export class ConsolidacionCompraComponent implements OnInit {
     }
   }
 
-  editarOC(oc: any): void {
-    this.verDetalleOC(oc);
+  // Antes "Editar OC" en la lista solo abría el detalle en modo lectura,
+  // y el usuario tenía que pulsar otra vez "Editar" dentro del modal para
+  // recién poder modificar los campos (doble paso para editar). Ahora el
+  // botón de la lista entra directo al modo edición.
+  async editarOC(oc: any): Promise<void> {
+    await this.verDetalleOC(oc);
+    await this.iniciarEdicionDetalleOC();
   }
 
   toggleAll(emp: string, checked: boolean): void {
@@ -1814,14 +1819,6 @@ export class ConsolidacionCompraComponent implements OnInit {
       return;
     }
 
-    if (this.emitirOCEmpresas.some(e => e.items.some(r => !r.precio || r.precio <= 0))) {
-      this.toast('Todos los ítems deben tener precio mayor a 0', 'err');
-      return;
-    }
-    if (this.emitirOCEmpresas.some(e => !e.almacen)) {
-      this.toast('Seleccione el almacén para cada empresa', 'err');
-      return;
-    }
     if (!this.ocLugar) {
       this.toast('Seleccione el lugar de entrega', 'err');
       return;
@@ -1836,7 +1833,21 @@ export class ConsolidacionCompraComponent implements OnInit {
     const errores: string[] = [];
 
     try {
+      // Antes, si UNA sola empresa tenía un ítem sin precio o sin almacén,
+      // se bloqueaba la emisión de OC para las TRES empresas (el usuario
+      // no podía emitir la OC de la razón social que sí estaba completa).
+      // Ahora cada empresa se valida y se emite de forma independiente:
+      // la(s) empresa(s) con datos incompletos se omiten y se informan,
+      // pero no impiden emitir la OC de las empresas que sí están listas.
       for (const empBox of this.emitirOCEmpresas) {
+        if (empBox.items.some(r => !r.precio || r.precio <= 0)) {
+          errores.push(`${empBox.emp}: todos los ítems deben tener precio mayor a 0`);
+          continue;
+        }
+        if (!empBox.almacen) {
+          errores.push(`${empBox.emp}: seleccione el almacén de esta empresa`);
+          continue;
+        }
         const primerItem = empBox.items[0];
         const empresaMatch = this.empresas().find(e =>
           String(e.ruc ?? '').trim() === empBox.rucEmpresa

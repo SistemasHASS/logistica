@@ -794,13 +794,22 @@
 }
 
 // Input precio editable en tabla detalle (flujo directo)
+// Antes 90px: con valores de más de 2 dígitos enteros o con decimales
+// (ej. 1,720.50) el texto quedaba recortado y parecía que el campo no
+// aceptaba más dígitos. Se amplía el ancho y se permite crecer un poco
+// más al enfocar para que el valor completo sea siempre visible.
 .input-precio {
-  width: 90px;
+  width: 130px;
+  min-width: 110px;
   padding: 2px 6px;
   font-size: 0.82rem;
   height: 28px;
   text-align: right;
   display: inline-block;
+
+  &:focus {
+    width: 150px;
+  }
 }
 
 // Input group para búsqueda de items

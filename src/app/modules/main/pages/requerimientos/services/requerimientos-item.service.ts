@@ -15,6 +15,8 @@ import { PrioridadSpring, TipoRequerimiento } from '@/app/shared/interfaces/Prio
 import { RequerimientosMaestrasService } from './requerimientos-maestras.service';
 import { TransferenciaService } from '@/app/modules/main/services/transferencia.service';
 import { RequerimientosSyncService } from './requerimientos-sync.service';
+import { AdjuntosService } from '@/app/modules/main/services/adjuntos.service';
+import { SolicitudCompraAdjunto } from '@/app/shared/interfaces/Tables';
 
 @Injectable({ providedIn: 'root' })
 export class RequerimientosItemService {
@@ -81,7 +83,45 @@ export class RequerimientosItemService {
     private maestras: RequerimientosMaestrasService,
     private transferenciaService: TransferenciaService,
     private syncService: RequerimientosSyncService,
+    private adjuntosService: AdjuntosService,
   ) {}
+
+  // ── Adjuntos del requerimiento de COMPRA en edición ─────────────────────
+  // Estado compartido (antes vivía solo en TabItemComponent y nunca se
+  // enviaba al backend): ahora vive aquí para que guardarRequerimiento()
+  // pueda persistirlo al terminar de guardar.
+  adjuntosCompra: SolicitudCompraAdjunto[] = [];
+
+  async persistirAdjuntosRequerimiento(idRequerimiento: string): Promise<void> {
+    if (!this.adjuntosCompra.length) return;
+    for (const adj of this.adjuntosCompra) {
+      try {
+        const contenidoBase64 = adj.file ? await this.adjuntosService.fileToBase64(adj.file) : '';
+        await firstValueFrom(this.adjuntosService.guardarAdjuntoRequerimiento({
+          idRequerimiento,
+          nombreArchivo: adj.nombreArchivo,
+          tipoArchivo: adj.tipoArchivo,
+          tamanoArchivo: adj.tamanoArchivo,
+          descripcion: adj.descripcion || '',
+          contenidoBase64,
+          usuarioCreacion: this.maestras.usuario?.documentoidentidad || '',
+        }));
+      } catch {
+        // Best-effort: si no hay conexión el adjunto no queda registrado en el
+        // servidor; no se bloquea el guardado del requerimiento por esto.
+      }
+    }
+    this.adjuntosCompra = [];
+  }
+
+  async listarAdjuntosRequerimiento(idRequerimiento: string): Promise<SolicitudCompraAdjunto[]> {
+    try {
+      const resp: any = await firstValueFrom(this.adjuntosService.listarAdjuntosRequerimiento(idRequerimiento));
+      return Array.isArray(resp) ? resp : [];
+    } catch {
+      return [];
+    }
+  }
 
   get usuario() { return this.maestras.usuario; }
 
@@ -705,6 +745,7 @@ export class RequerimientosItemService {
           }).toPromise();
         }
       } catch { }
+      await this.persistirAdjuntosRequerimiento(req.idrequerimiento);
       this.alertService.cerrarModalCarga();
       this.ordenar();
       this.contarContadores();

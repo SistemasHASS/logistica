@@ -49,32 +49,38 @@
 
   <ul class="nav custom-tabs mb-3" role="tablist">
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="currentTab === 'TODOS'" (click)="switchTab('TODOS')" type="button">
+      <button class="nav-link" [class.active]="currentTab === 'TODOS'" (click)="switchTab('TODOS')" type="button"
+        title="Requerimientos pendientes de OC (cada unidad = 1 requerimiento)">
         <i class='bx bx-list-ul me-1'></i> Todos <span class="tab-badge ms-1">{{ cntTODOS }}</span>
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="currentTab === 'HP'" (click)="switchTab('HP')" type="button">
+      <button class="nav-link" [class.active]="currentTab === 'HP'" (click)="switchTab('HP')" type="button"
+        title="Ítems pendientes de consolidar de Hass Perú (cada unidad = 1 línea de detalle)">
         <i class='bx bx-buildings me-1'></i> HP <span class="tab-badge ms-1">{{ cntHP }}</span>
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="currentTab === 'BH'" (click)="switchTab('BH')" type="button">
+      <button class="nav-link" [class.active]="currentTab === 'BH'" (click)="switchTab('BH')" type="button"
+        title="Ítems pendientes de consolidar de BH (cada unidad = 1 línea de detalle)">
         <i class='bx bx-buildings me-1'></i> BH <span class="tab-badge ms-1">{{ cntBH }}</span>
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="currentTab === 'CAO'" (click)="switchTab('CAO')" type="button">
+      <button class="nav-link" [class.active]="currentTab === 'CAO'" (click)="switchTab('CAO')" type="button"
+        title="Ítems pendientes de consolidar de CAO (cada unidad = 1 línea de detalle)">
         <i class='bx bx-buildings me-1'></i> CAO <span class="tab-badge ms-1">{{ cntCAO }}</span>
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="currentTab === 'CORP'" (click)="switchTab('CORP')" type="button">
+      <button class="nav-link" [class.active]="currentTab === 'CORP'" (click)="switchTab('CORP')" type="button"
+        title="Productos agrupados entre las 3 empresas (cada unidad = 1 código de producto consolidado)">
         <i class='bx bx-globe me-1'></i> Corporativo <span class="tab-badge ms-1">{{ cntCORP }}</span>
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="currentTab === 'OC'" (click)="switchTab('OC')" type="button">
+      <button class="nav-link" [class.active]="currentTab === 'OC'" (click)="switchTab('OC')" type="button"
+        title="Órdenes de compra ya emitidas (cada unidad = 1 orden de compra)">
         <i class='bx bx-file me-1'></i> Órdenes de Compra <span class="tab-badge ms-1">{{ ordenesCompra().length }}</span>
       </button>
     </li>
@@ -127,8 +133,14 @@
               <td class="text-end fw-bold">{{ req.totalItems }}</td>
               <td class="text-end fw-bold">{{ req.cantidadTotal | number:'1.2-2' }}</td>
               <td>
-                <span *ngIf="req.codigoConsolidacion; else sinConsolidar" class="badge bg-success">{{ req.codigoConsolidacion }}</span>
-                <ng-template #sinConsolidar><span class="badge bg-secondary">Sin consolidar</span></ng-template>
+                <span *ngIf="req.codigoConsolidacion; else sinConsolidar" class="badge bg-success"
+                  title="Este requerimiento ya fue incluido en la consolidación {{ req.codigoConsolidacion }}">{{ req.codigoConsolidacion }}</span>
+                <ng-template #sinConsolidar>
+                  <span class="badge bg-secondary"
+                    title="Todavía no se generó una Orden de Compra para este requerimiento. Para consolidarlo, ve a la pestaña de su empresa (HP/BH/CAO) o a Corporativo, selecciona sus ítems y usa 'Emitir OC'.">
+                    Sin consolidar
+                  </span>
+                </ng-template>
               </td>
               <td>
                 <span class="chip {{ codigoEmpresaPorRuc(req.ruc, req.razonSocial) }}">{{ codigoEmpresaPorRuc(req.ruc, req.razonSocial) }}</span>

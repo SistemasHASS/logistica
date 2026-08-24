@@ -447,6 +447,27 @@ export class ParametrosComponent implements OnInit {
     }
   }
 
+  // El combo Empresa estaba deshabilitado y Fundo/Cultivo/CECO se
+  // calculaban siempre a partir de la empresa "de origen" del usuario
+  // (this.usuario.ruc), por lo que solo se podían ver los fondos de esa
+  // única empresa (ej. HP) aunque el usuario tuviera más empresas
+  // autorizadas. Al habilitar el combo, este handler recarga Fundo y
+  // Cultivo según la empresa realmente seleccionada.
+  async onEmpresaChange() {
+    this.configuracion.idfundo = '';
+    this.configuracion.idcultivo = '';
+    this.configuracion.idturno = '';
+    this.configuracion.idceco = '';
+    this.configuracion.idlabor = '';
+    this.configuracion.idproyecto = '';
+    this.filteredTurnos = [];
+    this.filteredCecos = [];
+    this.filteredLabores = [];
+    this.filteredProyectos = [];
+    await this.ListarFundos();
+    await this.ListarCultivos();
+  }
+
   async onCultivoChange() {
     console.log('🔄 Cultivo cambiado:', this.configuracion.idcultivo);
     console.log('🔄 Tipo Item actual:', this.configuracion.idTipoItem);
@@ -853,13 +874,24 @@ export class ParametrosComponent implements OnInit {
         ?.ruc || '';
   }
 
+  // Devuelve la empresa actualmente seleccionada en Parámetros. Antes cada
+  // Listar* recalculaba SIEMPRE la empresa "de origen" a partir de
+  // this.usuario.ruc, ignorando lo elegido en el combo Empresa; por eso
+  // Fundo/Cultivo quedaban atados a una sola empresa (ej. HP) sin importar
+  // qué empresa autorizada eligiera el usuario.
+  private empresaSeleccionada(): any {
+    const idempresa = this.configuracion.idempresa;
+    return (
+      this.empresas.find((empresa: any) => empresa.ruc === idempresa) ||
+      this.empresas.find((empresa: any) => empresa.ruc === this.usuario.ruc)
+    );
+  }
+
   async ListarFundos() {
     const fundos = await this.dexieService.showFundos();
-    const empresa = this.empresas.find(
-      (empresa: any) => empresa.ruc === this.usuario.ruc
-    );
+    const empresa = this.empresaSeleccionada();
     this.fundos = fundos.filter(
-      (fundo: any) => fundo.empresa === empresa.empresa
+      (fundo: any) => fundo.empresa === empresa?.empresa
     );
     if (this.fundos.length == 1) {
       this.configuracion.idfundo = this.fundos[0].codigoFundo;
@@ -868,11 +900,9 @@ export class ParametrosComponent implements OnInit {
 
   async ListarCultivos() {
     const cultivos = await this.dexieService.showCultivos();
-    const empresa = this.empresas.find(
-      (empresa: any) => empresa.ruc === this.usuario.ruc
-    );
+    const empresa = this.empresaSeleccionada();
     this.cultivos = cultivos.filter(
-      (cultivo: any) => cultivo.empresa === empresa.empresa
+      (cultivo: any) => cultivo.empresa === empresa?.empresa
     );
     if (this.cultivos.length == 1) {
       this.configuracion.idcultivo = this.cultivos[0].codigo;
@@ -881,10 +911,8 @@ export class ParametrosComponent implements OnInit {
 
   async ListarAreas() {
     const areas = await this.dexieService.showAreas();
-    const empresa = this.empresas.find(
-      (empresa: any) => empresa.ruc === this.usuario.ruc
-    );
-    this.areas = areas.filter((area: any) => area.ruc === empresa.ruc);
+    const empresa = this.empresaSeleccionada();
+    this.areas = areas.filter((area: any) => area.ruc === empresa?.ruc);
     if (this.areas.length == 1) {
       this.configuracion.idarea = this.areas[0].idarea;
     }
@@ -961,8 +989,13 @@ export class ParametrosComponent implements OnInit {
 
   async ListarCecos() {
     const cecos = await this.dexieService.showCecos();
-    this.cecos = cecos;
-    console.log('Cecos: ', cecos);
+    // El maestro de CECOs trae una fila por cada combinación
+    // CECO-LABOR-PROYECTO (necesaria para los combos de Labor/Proyecto),
+    // pero el dropdown de CECO solo debe listar cada CECO una vez:
+    // sin este filtro el mismo CECO aparece repetido varias veces en
+    // Consumo y en Compras.
+    this.cecos = this.deduplicarCecosPorCostcenter(cecos);
+    console.log('Cecos: ', this.cecos);
     // if (this.cecos.length == 1) {
     //   this.configuracion.idceco = this.cecos[0].id;
     //   // this.configuracion.idceco = this.cecos[0].costcenter;
@@ -971,6 +1004,18 @@ export class ParametrosComponent implements OnInit {
     this.configuracion.idceco = this.cecos[0].costcenter;
     }
     console.log(this.configuracion.idceco);
+  }
+
+  private deduplicarCecosPorCostcenter(lista: Ceco[]): Ceco[] {
+    const vistos = new Set<string>();
+    const resultado: Ceco[] = [];
+    for (const c of lista || []) {
+      const clave = (c as any)?.costcenter?.trim?.() ?? (c as any)?.costcenter;
+      if (clave === undefined || clave === null || vistos.has(clave)) continue;
+      vistos.add(clave);
+      resultado.push(c);
+    }
+    return resultado;
   }
 
   async ListarTipoGastos() {

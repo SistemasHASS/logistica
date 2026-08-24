@@ -116,8 +116,16 @@ export class TabItemComponent {
 
   // ─── Sub-tab state (Detalles / Adjuntar Archivos) ─────────────────────
   subTabActivo: 'detalles' | 'adjuntos' = 'detalles';
-  adjuntosCompra: SolicitudCompraAdjunto[] = [];
+  // El listado vive en itemSvc para que guardarRequerimiento() pueda
+  // persistirlo en el servidor al terminar de guardar (antes se perdía).
+  get adjuntosCompra(): SolicitudCompraAdjunto[] { return this.itemSvc.adjuntosCompra; }
+  set adjuntosCompra(v: SolicitudCompraAdjunto[]) { this.itemSvc.adjuntosCompra = v; }
   @ViewChild('adjuntoInput') adjuntoInputRef!: ElementRef<HTMLInputElement>;
+
+  // ─── Visualizar adjuntos de un requerimiento ya guardado (lista) ───────
+  modalAdjuntosVisible = false;
+  adjuntosVisualizando: SolicitudCompraAdjunto[] = [];
+  cargandoAdjuntosVisualizacion = false;
 
   // ─── @Output: acciones que necesitan sincronizar estado en el padre ─────
   @Output() tipoChange = new EventEmitter<string>();
@@ -186,6 +194,22 @@ export class TabItemComponent {
   editarRequerimientoSelect(data: any[]) { this.editarSelectEvt.emit(data); }
   copiarRequerimientoSelect(data: any[]) { this.copiarSelectEvt.emit(data); }
   eliminarRequerimientoSelect(data: any[]) { this.eliminarSelectEvt.emit(data); }
+
+  // ─── Visualizar adjuntos de un requerimiento (reemplaza "Copiar requerimiento") ───
+  async visualizarAdjuntos(i: number): Promise<void> {
+    const req = this.requerimientosFiltrados[i];
+    if (!req) return;
+    this.adjuntosVisualizando = [];
+    this.cargandoAdjuntosVisualizacion = true;
+    this.modalAdjuntosVisible = true;
+    this.adjuntosVisualizando = await this.itemSvc.listarAdjuntosRequerimiento(req.idrequerimiento);
+    this.cargandoAdjuntosVisualizacion = false;
+  }
+
+  cerrarModalAdjuntosVisualizacion(): void {
+    this.modalAdjuntosVisible = false;
+    this.adjuntosVisualizando = [];
+  }
   onCheckChange(e: any, item: any) { this.checkChangeEvt.emit({event: e, row: item}); }
   sincronizarPendientes() { this.sincronizarEvt.emit(); }
 

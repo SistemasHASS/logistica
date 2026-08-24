@@ -44,12 +44,13 @@
                     <th style="min-width: 20px" pSortableColumn="item">Editar</th>
                     <th style="min-width: 100px" pSortableColumn="item">#Req</th>
                     <th style="min-width: 100px" pSortableColumn="item">Fecha</th>
-                    <th style="min-width: 90px; display:none" pSortableColumn="itemtipo">Tipo</th>
+                    <th style="min-width: 90px" pSortableColumn="itemtipo">Tipo</th>
                     <!-- <th style="min-width: 100px" pSortableColumn="descripcionLocal">Fundo</th> -->
                     <th style="min-width: 100px" pSortableColumn="unidadCodigo">Almacen</th>
                     <th style="min-width: 120px" pSortableColumn="idarea">Área</th>
                     <th style="min-width: 120px" pSortableColumn="descripcionLocal">Descripcion</th>
                     <th style="min-width: 80px" pSortableColumn="descripcionLocal">Detalles</th>
+                    <th style="min-width: 100px" pSortableColumn="nrodocumento">Usuario creador</th>
                     <th style="min-width: 100px" pSortableColumn="descripcionLocal">Estado</th>
                     <th style="min-width: 30px">Acciones</th>
                   </tr>
@@ -72,7 +73,7 @@
                       <span class="p-column-title">Fecha</span>
                       {{ c.fecha | date: "dd/MM/yyyy" }}
                     </td>
-                    <td style="display:none">
+                    <td>
                       <span class="p-column-title">Tipo</span>
                       <span class="badge" [ngClass]="{
                         'bg-primary': c.itemtipo === 'COMPRA',
@@ -105,15 +106,20 @@
                       <span class="badge bg-secondary">{{ c.detalle?.length || 0 }}</span>
                     </td>
                     <td>
+                      <span class="p-column-title">Usuario creador</span>
+                      {{ c.nrodocumento }}
+                    </td>
+                    <td>
                       <span class="p-column-title">Estado</span>
-                      <span class="badge" [ngClass]="c.estado === 1 ? 'enviado-badge' : 'sinenviar-badge'">
+                      <span class="badge" [ngClass]="c.estado === 1 ? 'enviado-badge' : 'sinenviar-badge'"
+                        [title]="esEnviado(c) ? 'El requerimiento fue enviado y está pendiente de consolidación/aprobación' : 'El requerimiento aún no fue enviado (sincronizado)'">
                         {{ esEnviado(c) ? "Enviado" : "Sin enviar" }}
                       </span>
                     </td>
                     <td>
                       <span class="p-column-title">Acción</span>
-                      <button class="btn btn-sm btn-info me-1" title="Copiar requerimiento" (click)="copiarRequerimiento(i)">
-                        <i class="icon-copy"></i>
+                      <button class="btn btn-sm btn-info me-1" title="Visualizar adjuntos" (click)="visualizarAdjuntos(i)">
+                        <i class="bi bi-paperclip"></i>
                       </button>
                       <button class="btn btn-sm btn-danger" title="Eliminar requerimiento" (click)="eliminarRequerimiento(i)">
                         <i class="icon-trash"></i>
@@ -124,7 +130,7 @@
 
                 <ng-template pTemplate="emptymessage">
                   <tr>
-                    <td colspan="10" class="text-center">No hay registros</td>
+                    <td colspan="11" class="text-center">No hay registros</td>
                   </tr>
                 </ng-template>
               </p-table>
@@ -575,3 +581,44 @@
   (validarFilaEvt)="validarFila($event)"
   (lineasCambiadasEvt)="onLineasCambiadas($event)"
 ></app-modal-carga-masiva>
+
+<!-- Modal: Visualizar adjuntos de un requerimiento ya guardado -->
+<div class="modal-backdrop" *ngIf="modalAdjuntosVisible">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title"><i class="bi bi-paperclip me-2"></i>Adjuntos del requerimiento</h5>
+      <button type="button" class="btn-close" (click)="cerrarModalAdjuntosVisualizacion()"></button>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="cargandoAdjuntosVisualizacion" class="text-center text-muted py-4">Cargando adjuntos...</div>
+      <div *ngIf="!cargandoAdjuntosVisualizacion && adjuntosVisualizando.length === 0" class="text-center text-muted py-4 border rounded">
+        No hay archivos adjuntos registrados para este requerimiento.
+      </div>
+      <div class="table-responsive" *ngIf="!cargandoAdjuntosVisualizacion && adjuntosVisualizando.length > 0">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Archivo</th>
+              <th>Descripción</th>
+              <th>Tamaño</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let adj of adjuntosVisualizando">
+              <td><i [class]="getAdjuntoIcon(adj.tipoArchivo)" style="font-size: 1.2rem;"></i></td>
+              <td>{{ adj.nombreArchivo }}</td>
+              <td class="text-muted small">{{ adj.descripcion }}</td>
+              <td class="text-muted small">{{ formatAdjuntoSize(adj.tamanoArchivo) }}</td>
+              <td class="text-muted small">{{ adj.fechaCreacion }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="cerrarModalAdjuntosVisualizacion()">Cerrar</button>
+    </div>
+  </div>
+</div>
