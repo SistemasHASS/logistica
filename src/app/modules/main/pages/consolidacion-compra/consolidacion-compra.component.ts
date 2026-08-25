@@ -22,6 +22,9 @@ interface Proveedor {
   id: string;
   nombre: string;
   ruc: string;
+  direccion?: string;
+  telefono?: string;
+  email?: string;
   monedaPago?: string;
   tipoPago?: string;
   formaPago?: string;
@@ -251,19 +254,32 @@ export class ConsolidacionCompraComponent implements OnInit {
 
   private codigoEmpresaPorRucDirecto(ruc: string): string | undefined {
     const key = String(ruc ?? '').trim();
-    if (key === '20481121966' || key === '00000800' || key === '000008') return 'HP';
-    if (key === '20563196387' || key === '00000600' || key === '000006') return 'BH';
-    if (key === '20610773274' || key === '00001000' || key === '000010') return 'CAO';
+    if (key === '20481121966' || key === '00000800' || key === '000008') return 'HP';        // Hass Peru S.A.
+    if (key === '20610773274' || key === '00000600' || key === '000006') return 'BH';        // Berry Harvest S.A.
+    if (key === '20563196387' || key === '00001000' || key === '000010') return 'CAO';       // Corp Agricola Olmos
     return undefined;
   }
 
   codigoEmpresaPorRuc(ruc: string, razonSocial?: string): string {
     const key = String(ruc ?? '').trim();
     const razon = String(razonSocial ?? '').trim();
-    return this.codigoEmpresaPorRucDirecto(key)
+    // Priorizar RUC sobre razón social: el RUC es más confiable
+    // que el nombre, que puede estar truncado o repetido entre empresas.
+    return this.empCodigoPorRuc[key]
+      || this.codigoEmpresaPorRucDirecto(key)
       || this.empresaPorRazonSocial(razon)
-      || this.empCodigoPorRuc[key]
       || 'HP';
+  }
+
+  buscarEmpresaPorCodigo(codigo: string): any {
+    const cod = String(codigo ?? '').toUpperCase();
+    return this.empresas().find(e => {
+      const razon = String(e.razonSocial ?? e.nombre ?? '').toLowerCase();
+      const ruc = String(e.ruc ?? '').trim();
+      return (cod === 'HP' && (razon.includes('hass') || ruc === '20481121966' || ruc === '00000800')) ||
+             (cod === 'BH' && (razon.includes('berry') || ruc === '20610773274' || ruc === '00000600')) ||
+             (cod === 'CAO' && (razon.includes('olmos') || ruc === '20563196387' || ruc === '00001000'));
+    });
   }
 
   nombreEmpresaPorRuc(ruc: string, razonSocial?: string): string {
@@ -332,15 +348,25 @@ export class ConsolidacionCompraComponent implements OnInit {
       );
       console.log('[ConsolidacionCompra] resp proveedores:', resp);
       const lista = Array.isArray(resp) ? resp : [];
-      this.proveedores.set(lista.map((p: any) => ({
-        id: String(p.idproveedor ?? p.id ?? p.ruc ?? p.documento ?? ''),
-        nombre: String(p.proveedor ?? p.nombre ?? p.razonSocial ?? p.nombreProveedor ?? ''),
-        ruc: String(p.ruc ?? p.rucproveedor ?? p.documento ?? ''),
-        monedaPago: String(p.MonedaPago ?? p.monedaPago ?? '').toUpperCase(),
-        tipoPago: String(p.TipoPago ?? p.tipoPago ?? '').toUpperCase(),
-        formaPago: String(p.FormadePago ?? p.formadePago ?? p.formaPago ?? ''),
-        diasEntrega: parseInt(p.NumeroDiasEntrega ?? p.numeroDiasEntrega ?? p.DiasEntrega ?? p.diasEntrega ?? '7', 10) || 7
-      })));
+      this.proveedores.set(lista.map((p: any) => {
+        const ruc11 = [
+          p.rucproveedor, p.RucProveedor, p.Ruc, p.RUC, p.NUMRUC, p.NumeroRuc, p.numeroRuc,
+          p.NumeroDocumento, p.numeroDocumento, p.Documento, p.documento
+        ].map(v => String(v ?? '').trim()).find(v => /^\d{11}$/.test(v));
+        const ruc = ruc11 || String(p.ruc ?? p.Ruc ?? p.RUC ?? p.documento ?? '').trim();
+        return {
+          id: String(p.idproveedor ?? p.id ?? p.codigo ?? p.ruc ?? ''),
+          nombre: String(p.proveedor ?? p.nombre ?? p.razonSocial ?? p.RazonSocial ?? p.nombreProveedor ?? ''),
+          ruc,
+          direccion: String(p.Direccion ?? p.direccion ?? p.direccionProveedor ?? ''),
+          telefono: String(p.Telefono ?? p.telefono ?? ''),
+          email: String(p.Email ?? p.email ?? p.correo ?? ''),
+          monedaPago: String(p.MonedaPago ?? p.monedaPago ?? '').toUpperCase(),
+          tipoPago: String(p.TipoPago ?? p.tipoPago ?? '').toUpperCase(),
+          formaPago: String(p.FormadePago ?? p.formadePago ?? p.formaPago ?? ''),
+          diasEntrega: parseInt(p.NumeroDiasEntrega ?? p.numeroDiasEntrega ?? p.DiasEntrega ?? p.diasEntrega ?? '7', 10) || 7
+        };
+      }));
     } catch (err) {
       console.error('[ConsolidacionCompra] error cargarProveedores:', err);
       this.proveedores.set([]);
@@ -678,7 +704,7 @@ export class ConsolidacionCompraComponent implements OnInit {
         condicionesPago: resp.condicionesPago || '',
         formaPago: resp.formaPago || '',
         almacen: resp.almacen || '',
-        rucEmpresaOC: '',
+        rucEmpresaOC: resp.rucEmpresa || this.ordenActual.rucEmpresa || '',
         lugarEntrega: resp.lugarEntrega || '',
         observaciones: resp.observaciones || '',
         clasificacion: resp.clasificacion || 'LOC',
@@ -701,6 +727,9 @@ export class ConsolidacionCompraComponent implements OnInit {
         totalOrden: resp.totalOrden || 0,
         totalDescuento: 0
       };
+      if (this.ocFormEdicion.rucEmpresaOC) {
+        await this.cargarAlmacenesPorRuc(this.ocFormEdicion.rucEmpresaOC);
+      }
       this.proveedorSeleccionadoEdicion = {
         ruc: this.ocFormEdicion.rucProveedor,
         proveedor: this.ocFormEdicion.nombreProveedor
@@ -746,9 +775,11 @@ export class ConsolidacionCompraComponent implements OnInit {
         this.maestrasService.getAlmacenes([{ ruc: key, aplicacion: 'LOGISTICA' }])
       );
       const lista = Array.isArray(resp) ? resp : (resp.resultado || resp.data || []);
+      console.log('[cargarAlmacenesPorRuc] ruc:', key, 'resp:', resp, 'lista:', lista.length);
       this.almacenesPorEmpresa.set(key, lista);
       this.cdr.markForCheck();
-    } catch {
+    } catch (e: any) {
+      console.error('[cargarAlmacenesPorRuc] error ruc:', key, e);
       this.almacenesPorEmpresa.set(key, []);
     }
   }
@@ -1241,6 +1272,7 @@ export class ConsolidacionCompraComponent implements OnInit {
     const val: Proveedor = event?.value ?? event;
     this.proveedorGlobal = val ?? null;
     this.proveedorGlobalInput = val?.nombre ?? '';
+    console.log('[setProveedorGlobal] proveedorGlobal:', this.proveedorGlobal, 'puedeEmitirOC:', this.puedeEmitirOC());
     if (!val) {
       this.aplicarFiltros();
       return;
@@ -1299,9 +1331,28 @@ export class ConsolidacionCompraComponent implements OnInit {
     }
   }
 
+  puedeExportarExcelCotizacion(): boolean {
+    return this.seleccionadosCorp.size > 0;
+  }
+
+  puedeEmitirOC(): boolean {
+    const estadoCab = String(this.cotizacionActiva?.cabecera?.estado ?? '').trim();
+    const estadoDir = String(this.cotizacionActiva?.estado ?? '').trim();
+    const ok = !!this.proveedorGlobal && (
+      estadoCab === 'COTIZADA' ||
+      estadoDir === 'COTIZADA' ||
+      this.seleccionadosCorp.size > 0
+    );
+    console.log('[puedeEmitirOC] proveedorGlobal:', !!this.proveedorGlobal, 'estadoCab:', estadoCab, 'estadoDir:', estadoDir, 'seleccionadosCorp:', this.seleccionadosCorp.size, 'result:', ok);
+    return ok;
+  }
+
   async exportarExcel(): Promise<void> {
-    if (!this.proveedorGlobal) { this.toast('Selecciona un proveedor global antes de exportar', 'err'); return; }
-    if (this.seleccionadosCorp.size === 0) { this.toast('Selecciona al menos un ítem corporativo', 'err'); return; }
+    console.log('[exportarExcel] click', { seleccionadosCorp: this.seleccionadosCorp.size });
+    if (this.seleccionadosCorp.size === 0) {
+      this.toast('Selecciona al menos un ítem corporativo', 'err');
+      return;
+    }
 
     const selectedIds: number[] = [];
     this.corpGrupos.filter(g => this.seleccionadosCorp.has(g.key)).forEach(g => selectedIds.push(...g.ids));
@@ -1310,9 +1361,9 @@ export class ConsolidacionCompraComponent implements OnInit {
     const itemsParaCotizar = selectedIds.map(id => {
       const r = this.datos.find(d => d.id === id)!;
       return {
-        idDetalleOrigen: r.idDetalle,
+        idDetalleOrigen: r.idDetalle ?? 0,
         tipoOrigen: 'ITEM',
-        idRequerimiento: r.idrequerimiento,
+        idRequerimiento: r.idrequerimiento ?? 0,
         empresa: r.empresa,
         codigo: r.cod,
         descripcion: r.desc,
@@ -1332,9 +1383,9 @@ export class ConsolidacionCompraComponent implements OnInit {
     try {
       const body = {
         usuario: this.usuario?.documentoidentidad || this.usuario?.nombre || '',
-        rucProveedor: this.proveedorGlobal.ruc,
-        nombreProveedor: this.proveedorGlobal.nombre,
-        moneda: this.ocMoneda,
+        rucProveedor: '',
+        nombreProveedor: '',
+        moneda: this.ocMoneda || 'PEN',
         observaciones: this.ocObs,
         items: itemsParaCotizar
       };
@@ -1346,7 +1397,6 @@ export class ConsolidacionCompraComponent implements OnInit {
         return;
       }
 
-      // Armar el detalle de la cotización directamente desde los grupos seleccionados (sin esperar otra llamada al backend).
       const detalleExcel = this.corpGrupos
         .filter(g => this.seleccionadosCorp.has(g.key))
         .map(g => {
@@ -1371,18 +1421,17 @@ export class ConsolidacionCompraComponent implements OnInit {
       const cotizacionDescarga = {
         cabecera: {
           codigo: resp.codigo || '',
-          nombreProveedor: this.proveedorGlobal?.nombre || '',
-          moneda: this.ocMoneda
+          nombreProveedor: '',
+          moneda: this.ocMoneda || 'PEN'
         },
         detalle: detalleExcel
       };
 
-      this.seleccionadosCorp.clear();
       this.generarExcelCotizacion(cotizacionDescarga);
 
-      // Recargar datos en segundo plano para refrescar la UI (no bloquean la descarga).
-      this.cargarCotizacionActiva({ idCotizacion: resp.idCotizacion }, false);
-      this.cargarCotizacionesOC();
+      // Los items pasan a estar en cotización activa; limpiar selección y recargar lista.
+      this.seleccionadosCorp.clear();
+      this.aplicarFiltros();
       this.cargarRequerimientos();
     } catch (e: any) {
       console.error('[exportarExcel] error crear cotizacion:', e);
@@ -1453,8 +1502,22 @@ export class ConsolidacionCompraComponent implements OnInit {
       const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as any[][];
       if (!json.length) { this.toast('Archivo vacío', 'err'); return; }
 
-      // Buscar código de cotización
-      const codigoCotizacion = this.extraerCodigoCotizacion(json);
+      const codigoCotizacion = ((): string | null => {
+        for (const row of json) {
+          const celda0 = String(row[0] || '').trim().toUpperCase();
+          if (celda0.includes('COTIZACION')) {
+            const cod = String(row[1] || '').trim();
+            if (cod.startsWith('COT-OC-')) return cod;
+          }
+        }
+        for (const row of json) {
+          for (const cell of row) {
+            const s = String(cell).trim();
+            if (s.startsWith('COT-OC-')) return s;
+          }
+        }
+        return null;
+      })();
       if (!codigoCotizacion) {
         this.toast('No se encontró el código de cotización en el Excel. Use el archivo descargado.', 'err');
         return;
@@ -1501,6 +1564,7 @@ export class ConsolidacionCompraComponent implements OnInit {
         );
         if (resp?.success) {
           await this.cargarCotizacionActiva({ codigo: codigoCotizacion });
+          console.log('[importarCotizacion] cotizacionActiva cargada:', this.cotizacionActiva?.cabecera);
           this.cargarCotizacionesOC();
           this.toast(`Precios cargados: ${precios.length} precio(s)`, 'ok');
         } else {
@@ -1515,24 +1579,6 @@ export class ConsolidacionCompraComponent implements OnInit {
     reader.readAsArrayBuffer(file);
   }
 
-  extraerCodigoCotizacion(json: any[][]): string | null {
-    for (const row of json) {
-      const celda0 = String(row[0] || '').trim().toUpperCase();
-      if (celda0.includes('COTIZACION')) {
-        const cod = String(row[1] || '').trim();
-        if (cod.startsWith('COT-OC-')) return cod;
-      }
-    }
-    // Buscar en cualquier celda
-    for (const row of json) {
-      for (const cell of row) {
-        const s = String(cell).trim();
-        if (s.startsWith('COT-OC-')) return s;
-      }
-    }
-    return null;
-  }
-
   async cargarCotizacionActiva(filtro: { idCotizacion?: number; codigo?: string }, cargarProveedores = true): Promise<void> {
     try {
       const body: any = {};
@@ -1543,6 +1589,18 @@ export class ConsolidacionCompraComponent implements OnInit {
       );
       if (resp?.success) {
         this.cotizacionActiva = resp;
+        // Si el backend devuelve subobjetos JSON como strings, parsearlos.
+        if (this.cotizacionActiva) {
+          if (typeof this.cotizacionActiva.cabecera === 'string') {
+            try { this.cotizacionActiva.cabecera = JSON.parse(this.cotizacionActiva.cabecera); } catch { }
+          }
+          if (typeof this.cotizacionActiva.detalle === 'string') {
+            try { this.cotizacionActiva.detalle = JSON.parse(this.cotizacionActiva.detalle); } catch { }
+          }
+          if (typeof this.cotizacionActiva.items === 'string') {
+            try { this.cotizacionActiva.items = JSON.parse(this.cotizacionActiva.items); } catch { }
+          }
+        }
         if (cargarProveedores) {
           // Asegurar proveedor global con el id real del catálogo
           await this.cargarProveedores();
@@ -1610,6 +1668,9 @@ export class ConsolidacionCompraComponent implements OnInit {
     this.ocProv = prov.nombre;
     this.ocRuc = prov.ruc;
 
+    // Asegurar catálogo de empresas antes de armar las OC
+    await this.cargarEmpresas();
+
     // Preferir flujo por cotización activa congelada
     if (this.cotizacionActiva?.cabecera?.estado === 'COTIZADA') {
       await this.cargarCotizacionActiva({ idCotizacion: this.cotizacionActiva.cabecera.idCotizacion });
@@ -1667,8 +1728,9 @@ export class ConsolidacionCompraComponent implements OnInit {
       ['HP', 'BH', 'CAO'].forEach(emp => {
         const items = porEmp[emp];
         if (!items.length) return;
-        const idempresa = this.idEmpresaPorCodigo[emp];
-        const rucEmpresa = this.rucEmpresaPorCodigo[emp];
+        const empresa = this.buscarEmpresaPorCodigo(emp);
+        const idempresa = empresa?.idempresa || this.idEmpresaPorCodigo[emp];
+        const rucEmpresa = String(empresa?.ruc || '').trim() || this.rucEmpresaPorCodigo[emp];
         const almacenDefault = items[0]?.almacen || this.almacenesPorRuc(rucEmpresa)[0]?.idalmacen || '';
         this.emitirOCEmpresas.push({ emp, items, subtotal: 0, igv: 0, total: 0, almacen: almacenDefault, rucEmpresa, idempresa });
         rucsEmpresas.add(rucEmpresa);
@@ -1733,11 +1795,15 @@ export class ConsolidacionCompraComponent implements OnInit {
     const key = String(ruc ?? '').trim();
     if (!key) return this.almacenes;
     if (this.almacenesPorEmpresa.has(key)) {
-      return this.almacenesPorEmpresa.get(key)!;
+      const lista = this.almacenesPorEmpresa.get(key)!;
+      if (lista.length > 0) return lista;
+      // Si la búsqueda por RUC devolvió vacío, ofrecer la lista general mientras se recarga
+      return this.almacenes;
     }
     // Trigger carga asíncrona mientras tanto devuelve lo que tengamos filtrado
     this.cargarAlmacenesPorRuc(key);
-    return this.almacenes.filter(a => String(a.ruc ?? a.Ruc ?? '').trim() === key);
+    const filtrados = this.almacenes.filter(a => String(a.ruc ?? a.Ruc ?? '').trim() === key);
+    return filtrados.length > 0 ? filtrados : this.almacenes;
   }
 
   async cargarTipoCambioOC(): Promise<void> {
@@ -1837,21 +1903,28 @@ export class ConsolidacionCompraComponent implements OnInit {
 
     try {
       for (const empBox of this.emitirOCEmpresas) {
+        console.log('[confirmarOC] empBox:', empBox);
         const primerItem = empBox.items[0];
         const empresaMatch = this.empresas().find(e =>
           String(e.ruc ?? '').trim() === empBox.rucEmpresa
         );
-        const idempresa = empBox.idempresa || this.idEmpresaPorCodigo[empBox.emp] || empresaMatch?.idempresa || this.usuario?.idempresa || '000008';
+        console.log('[confirmarOC] empresaMatch:', empresaMatch);
+        const idempresa = empresaMatch?.idempresa || empBox.idempresa || this.idEmpresaPorCodigo[empBox.emp] || this.usuario?.idempresa || '';
+        const rucEmpresa = String(empresaMatch?.ruc || empBox.rucEmpresa || '').trim();
+        if (!rucEmpresa || !idempresa) {
+          this.toast(`No se pudo identificar la empresa ${empBox.emp} para crear la OC`, 'err');
+          continue;
+        }
         const payload = {
           idConsolidacion: primerItem?.IdConsolidacion || null,
           idempresa,
-          rucEmpresa: empBox.rucEmpresa || empresaMatch?.ruc || '',
+          rucEmpresa,
           proveedor: prov.id,
           nombreProveedor: prov.nombre,
           rucProveedor: prov.ruc,
-          emailProveedor: '',
-          telefonoProveedor: '',
-          direccionProveedor: '',
+          emailProveedor: prov.email || '',
+          telefonoProveedor: prov.telefono || '',
+          direccionProveedor: prov.direccion || '',
           moneda: this.ocMoneda,
           tipoCambio: this.tipoCambioOC,
           almacen: empBox.almacen || primerItem?.almacen || '',
@@ -1861,7 +1934,7 @@ export class ConsolidacionCompraComponent implements OnInit {
           formaPago: this.ocFormaPago,
           observaciones: this.ocObs,
           usuarioGenera: this.usuario?.documentoidentidad,
-          nombreRegistra: this.usuario?.nombre || '',
+          nombreRegistra: this.usuario?.razonSocial || this.usuario?.nombre || '',
           clasificacion: 'LOC',
           incoterm: '',
           items: empBox.items.map(r => ({
@@ -1879,6 +1952,7 @@ export class ConsolidacionCompraComponent implements OnInit {
           }))
         };
 
+        console.log('[confirmarOC] payload:', payload);
         try {
           const resp: any = await lastValueFrom(
             this.http.post(`${this.baseUrl}/api/logistica/crear-oc-borrador`, payload)

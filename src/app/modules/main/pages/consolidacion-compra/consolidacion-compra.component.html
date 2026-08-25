@@ -258,12 +258,12 @@
           </p-autoComplete>
         </div>
         <span class="sel-count">{{ seleccionadosCorp.size }} ítems seleccionados</span>
-        <button class="btn-gen" [disabled]="seleccionadosCorp.size === 0 || !proveedorGlobal" (click)="emitirOC()"><i class='bx bx-file'></i> Emitir OC Corporativa</button>
+        <button class="btn-gen" [disabled]="!puedeEmitirOC()" [title]="puedeEmitirOC() ? 'Generar OC por empresa' : 'Selecciona un proveedor y una cotización con precios o ítems seleccionados'" (click)="emitirOC()"><i class='bx bx-file'></i> Emitir OC Corporativa</button>
       </div>
 
       <div class="cot-upload">
         <input type="file" #fileCot accept=".csv,.xlsx,.xls" style="display:none" (change)="importarCotizacion(fileCot)">
-        <button class="btn-export" (click)="exportarExcel()" [disabled]="!proveedorGlobal || seleccionadosCorp.size === 0"><i class='bx bx-download'></i> Exportar cotización Excel</button>
+        <button class="btn-export" (click)="exportarExcel()" [class.disabled]="!puedeExportarExcelCotizacion()" [title]="puedeExportarExcelCotizacion() ? 'Exportar plantilla Excel con los ítems seleccionados' : 'Selecciona al menos un ítem corporativo con el check'"><i class='bx bx-download'></i> Exportar cotización Excel</button>
         <button class="btn-upload" (click)="fileCot.click()"><i class='bx bx-upload'></i> Cargar cotización con precios</button>
         <button class="btn-gen" (click)="mostrarPanelCotizaciones = true"><i class='bx bx-list-ul'></i> Cotizaciones</button>
         <small class="hint">Exporta la plantilla con 3 columnas de precio (HP/BH/CAO), el proveedor la llena y luego se carga. La cotización queda congelada mientras espera.</small>
@@ -435,7 +435,7 @@
               <th>Número SPRING</th>
               <th>Empresa</th>
               <th>Proveedor</th>
-              <th>RUC</th>
+              <th>RUC Empresa</th>
               <th class="text-end">Total</th>
               <th>Fecha</th>
               <th>Estado</th>
@@ -455,7 +455,7 @@
                 <small>{{ empNombres[empresaOC(oc)] }}</small>
               </td>
               <td>{{ oc.nombreProveedor }}</td>
-              <td>{{ oc.rucProveedor }}</td>
+              <td>{{ oc.rucEmpresa || '—' }}</td>
               <td class="text-end">{{ oc.moneda }} {{ oc.totalOrden | number:'1.2-2' }}</td>
               <td>{{ oc.fechaCreacion | date:'dd/MM/yyyy' }}</td>
               <td><span class="badge" [class.bg-secondary]="oc.estado === 'PENDIENTE'" [class.bg-warning]="oc.estado === 'PENDIENTE_APROBACION'" [class.bg-success]="oc.estado === 'APROBADA'" [class.bg-primary]="oc.estado === 'ENVIADA'" [class.bg-danger]="oc.estado === 'ANULADA'">{{ oc.estado }}</span></td>
@@ -579,7 +579,7 @@
             <div class="col-md-3"><label class="form-label small fw-bold">Almacén *</label>
               <select class="form-select form-select-sm" [(ngModel)]="ocFormEdicion.almacen">
                 <option value="">-- Seleccione --</option>
-                <option *ngFor="let alm of almacenes" [value]="alm.idalmacen">{{ alm.almacen }}</option>
+                <option *ngFor="let alm of almacenesPorRuc(ocFormEdicion.rucEmpresaOC)" [value]="alm.idalmacen">{{ alm.almacen }}</option>
               </select>
             </div>
             <div class="col-md-3"><label class="form-label small fw-bold">Lugar Entrega *</label>
@@ -903,6 +903,19 @@
             <div class="oc-total-row"><span>Subtotal:</span><span>{{ simboloMoneda(ocMoneda) }} {{ empBox.subtotal.toFixed(2) }}</span></div>
             <div class="oc-total-row"><span>IGV (18%):</span><span>{{ simboloMoneda(ocMoneda) }} {{ empBox.igv.toFixed(2) }}</span></div>
             <div class="oc-total-row grand"><span>TOTAL:</span><span>{{ simboloMoneda(ocMoneda) }} {{ empBox.total.toFixed(2) }}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="oc-resumen-confirmar" style="padding:0.75rem 1rem; background:#f4f4f8; border-top:1px solid #e0e0e0;">
+      <div class="small fw-bold mb-1 text-dark">Se crearán las siguientes OC por empresa:</div>
+      <div class="row g-2">
+        <div class="col-md-6" *ngFor="let empBox of emitirOCEmpresas">
+          <div class="d-flex align-items-center gap-2 small">
+            <i class='bx bx-building-house text-primary'></i>
+            <span>{{ nombreEmpresaPorRuc(empBox.rucEmpresa, empNombres[empBox.emp]) }}</span>
+            <span class="text-muted">— RUC: {{ empBox.rucEmpresa }}</span>
+            <span class="ms-auto fw-semibold">{{ simboloMoneda(ocMoneda) }} {{ empBox.total.toFixed(2) }}</span>
           </div>
         </div>
       </div>

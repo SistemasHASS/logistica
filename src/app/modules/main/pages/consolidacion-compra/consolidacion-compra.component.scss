@@ -67,6 +67,7 @@ body{background:#f0f2f7;font-family:'Segoe UI',sans-serif;margin:0;padding:20px}
 .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}
 .btn-export{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:1.5px solid #2E7D32;border-radius:7px;background:#2E7D32;color:#fff;font-size:.79rem;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(46,125,50,.25);transition:none}
 .btn-export:hover{background:#1b5e20;box-shadow:0 3px 8px rgba(46,125,50,.35)}
+.btn-export.disabled{opacity:.5;cursor:not-allowed}
 .btn-gen{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border:none;border-radius:7px;background:#1565C0;color:#fff;font-size:.8rem;font-weight:700;cursor:pointer}
 .btn-gen:hover{background:#0D47A1}
 .btn-gen:disabled{opacity:.5;cursor:not-allowed}
