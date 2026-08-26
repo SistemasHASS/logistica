@@ -176,7 +176,7 @@ export class AprobacionesOCComponent implements OnInit {
   async cargarContadores() {
     try {
       const contadores = await this.aprobacionOCService
-        .obtenerContadores(this.usuario.documentoidentidad)
+        .obtenerContadores(this.usuario.documentoidentidad, this.usuario.idrol)
         .toPromise();
 
       if (contadores) {

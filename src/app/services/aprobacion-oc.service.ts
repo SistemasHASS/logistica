@@ -96,10 +96,10 @@ export class AprobacionOCService {
   /**
    * Obtener contadores de aprobaciones
    */
-  obtenerContadores(documentoIdentidad?: string): Observable<any> {
+  obtenerContadores(documentoIdentidad?: string, rol?: string): Observable<any> {
     return this.http.post(
       `${this.baseUrl}/api/logistica/aprobacion-oc/contadores`,
-      { documentoIdentidad },
+      { documentoIdentidad, rol },
       { headers: this.headers }
     ).pipe(
       map(response => response),
