@@ -1207,7 +1207,9 @@ export class ConsolidacionCompraComponent implements OnInit {
       const resp: any = await lastValueFrom(
         this.http.post(`${this.baseUrl}/api/logistica/confirmar-envio-oc`, {
           idOrden: oc.idOrden,
-          usuario: this.usuario?.documentoidentidad
+          usuario: this.usuario?.documentoidentidad,
+          destinatario: oc.emailProveedor,
+          pdfUrl: oc.pdfUrl
         })
       );
       this.alertService.cerrarModalCarga();
