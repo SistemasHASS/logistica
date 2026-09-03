@@ -96,6 +96,7 @@ export class AdminLogisticaLayoutComponent implements OnInit {
     { route: 'almacen',               label: 'Plantillas Almacén',         icon: 'bx bx-store-alt',    clave: 'ADMINLG_MENU_ALMACEN',         fallback: () => this.isAdmin() },
     { route: 'conformidad-servicio',  label: 'Conformidad Servicio',       icon: 'bx bx-check-shield', clave: 'ADMINLG_MENU_CONFORMIDAD',     fallback: () => this.isAdmin() },
     { route: 'permisos-rol',          label: 'Permisos por Rol',           icon: 'bx bx-shield',       clave: 'ADMINLG_MENU_PERMISOS_ROL',   fallback: () => this.isAdmin() },
+    { route: 'migracion-adjuntos',   label: 'Migrar Adjuntos',            icon: 'bx bx-refresh',      clave: 'ADMINLG_MENU_MIGRAR_ADJUNTOS', fallback: () => this.isAdmin() },
   ];
 
   menuItems = computed(() => {
@@ -104,7 +105,10 @@ export class AdminLogisticaLayoutComponent implements OnInit {
     this.permisosService.permisosCargados();
     return this._ITEMS_DEF.map(item => ({
       ...item,
-      visible: listo ? this._tienePermiso(item.clave, item.fallback()) : true,
+      visible: listo
+        ? (item.clave === 'ADMINLG_MENU_MIGRAR_ADJUNTOS' && this.isAdmin())
+          || this._tienePermiso(item.clave, item.fallback())
+        : true,
     }));
   });
 }

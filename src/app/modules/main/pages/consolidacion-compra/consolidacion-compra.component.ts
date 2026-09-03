@@ -1114,9 +1114,7 @@ export class ConsolidacionCompraComponent implements OnInit {
       const b64 = await this.fileToBase64(this.archivoAdjuntoOC);
       const tipoArchivo = this.obtenerTipoArchivo(this.archivoAdjuntoOC.name);
       const idOrden = this.ordenActual?.idOrden;
-      const numeroOrdenSpring = this.ordenActual?.numeroOrdenSpring;
-      const companiaSocio = this.ordenActual?.companiaSocioSpring;
-      const rutaServidor = `\\\\172.16.20.24\\SpringGestionDoc\\TEMPORAL\\WH\\${this.archivoAdjuntoOC.name}`;
+      const idempresa = this.ordenActual?.idempresa ?? this.usuario?.idempresa;
       const payload: any = {
         idOrden,
         tipoOrden: 'OC',
@@ -1125,12 +1123,9 @@ export class ConsolidacionCompraComponent implements OnInit {
         tamano: this.archivoAdjuntoOC.size,
         descripcion: this.descripcionAdjuntoOC || this.archivoAdjuntoOC.name,
         contenidoB64: b64,
-        urlArchivo: rutaServidor,
         usuarioSube: this.usuario?.documentoidentidad,
-        idempresa: this.usuario?.idempresa,
-        companiaSocio
+        idempresa
       };
-      if (numeroOrdenSpring) payload.numeroOrdenSpring = numeroOrdenSpring;
       const resp: any = await lastValueFrom(
         this.http.post(`${this.baseUrl}/api/logistica/guardar-adjunto-oc`, payload)
       );

@@ -87,6 +87,10 @@ export const adminLogisticaRoutes: Routes = [
         path: 'permisos-rol',
         loadComponent: () => import('./tabs/permisos-rol/permisos-rol.component').then(m => m.PermisosRolComponent)
       },
+      {
+        path: 'migracion-adjuntos',
+        loadComponent: () => import('./tabs/migracion-adjuntos/migracion-adjuntos.component').then(m => m.MigracionAdjuntosComponent)
+      },
     ]
   }
 ];

@@ -545,25 +545,17 @@ export class ConsolidacionServiciosComponent implements OnInit {
     this.subiendoAdjunto.set(true);
     try {
       const b64 = await this.fileToBase64(this.archivoSeleccionado);
-      const numeroOrdenSpring = this.osActual()?.numeroOrdenSpring;
-      const companiaSocio = this.osActual()?.companiaSocioSpring;
-      const rutaServidor = `\\\\172.16.20.24\\SpringGestionDoc\\TEMPORAL\\WH\\${this.archivoSeleccionado.name}`;
+      const idempresa = this.osActual()?.idempresa ?? this.usuario?.idempresa;
       const payload: any = {
         idOrden: this.osActual()?.idOS, tipoOrden: 'OS',
         nombreArchivo: this.archivoSeleccionado.name,
         tipoArchivo: this.archivoSeleccionado.type,
         tamano: this.archivoSeleccionado.size,
         contenidoB64: b64,
-        descripcion: this.adjuntoDescripcion,
+        descripcion: this.adjuntoDescripcion || this.archivoSeleccionado.name,
         usuarioSube: this.usuario?.documentoidentidad,
-        idempresa: this.usuario?.idempresa,
-        companiaSocio: companiaSocio,
-        urlArchivo: rutaServidor,
-        rutaLocal: this.rutaLocalArchivo || this.archivoSeleccionado.name
+        idempresa
       };
-      if (numeroOrdenSpring) {
-        payload.numeroOrdenSpring = numeroOrdenSpring;
-      }
       const resp: any = await lastValueFrom(
         this.http.post(`${this.baseUrl}/api/logistica/guardar-adjunto-oc`, payload)
       );

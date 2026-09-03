@@ -1,0 +1,74 @@
+<div class="container-fluid py-4">
+  <div class="card">
+    <div class="card-header">
+      <h4 class="mb-0"><i class="bx bx-refresh me-2"></i>Migrar adjuntos a SPRING</h4>
+      <p class="text-muted mb-0">Reprocesa los adjuntos de OC que ya tienen número de orden SPRING pero aún no están registrados en GD_Archivo / SY_DocumentoAnexos.</p>
+    </div>
+
+    <div class="card-body">
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <label class="form-label">idOrden (opcional)</label>
+          <input pInputText type="text" class="form-control" placeholder="Todas las OC" [(ngModel)]="idOrden" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Tipo de orden</label>
+          <select class="form-select" [(ngModel)]="tipoOrden">
+            @for (t of tiposOrden; track t.value) {
+              <option [value]="t.value">{{ t.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Usuario</label>
+          <input pInputText type="text" class="form-control" [(ngModel)]="usuario" />
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button pButton type="button" label="Reprocesar adjuntos" icon="bx bx-refresh" class="p-button-primary" [disabled]="loading()" (click)="reprocesar()"></button>
+        </div>
+      </div>
+
+      @if (exito()) {
+        <div class="alert alert-success">{{ exito() }}</div>
+      }
+      @if (error()) {
+        <div class="alert alert-danger">{{ error() }}</div>
+      }
+
+      @if (loading()) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2">Procesando...</p>
+        </div>
+      } @else if (resultados().length > 0) {
+        <p class="text-muted">Total OC revisadas: <strong>{{ totalOCs() }}</strong> | Con adjuntos pendientes: <strong>{{ resultados().length }}</strong></p>
+        <p-table [value]="resultados()" [paginator]="true" [rows]="10">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>idOrden</th>
+              <th>Número</th>
+              <th>Número SPRING</th>
+              <th class="text-center">Adjuntos</th>
+              <th class="text-center">Éxitos</th>
+              <th class="text-center">Errores</th>
+              <th>Mensaje</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-r>
+            <tr>
+              <td>{{ r.idOrden }}</td>
+              <td>{{ r.numeroOrden }}</td>
+              <td>{{ r.numeroOrdenSpring }}</td>
+              <td class="text-center">{{ r.totalAdjuntos }}</td>
+              <td class="text-center text-success">{{ r.exitos }}</td>
+              <td class="text-center" [class.text-danger]="r.errores > 0">{{ r.errores }}</td>
+              <td>{{ r.mensaje }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      } @else if (exito()) {
+        <div class="alert alert-info">No se encontraron OC con adjuntos pendientes de registro en SPRING.</div>
+      }
+    </div>
+  </div>
+</div>

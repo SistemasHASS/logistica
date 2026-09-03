@@ -1274,20 +1274,13 @@ export class ConsolidacionComprasComponent implements OnInit {
     if (!file) return;
     try {
       const b64 = await this.fileToBase64(file);
-      const urlArchivo = `\\\\172.16.20.24\\SpringGestionDoc\\TEMPORAL\\WH\\${file.name}`;
-      const oc = this.ordenActual();
       const resp: any = await lastValueFrom(
         this.http.post(`${this.baseUrl}/api/logistica/actualizar-adjunto-oc`, {
           idAdjunto,
           contenidoB64: b64,
-          urlArchivo,
           nombreArchivo: file.name,
           tipoOrden: this.tipoOrdenActual(),
-          usuarioSube: this.usuario?.documentoidentidad,
-          idempresa: this.usuario?.idempresa,
-          companiaSocio: oc?.companiaSocioSpring,
-          numeroOrdenSpring: oc?.numeroOrdenSpring,
-          rutaLocal: file.name
+          usuarioSube: this.usuario?.documentoidentidad
         })
       );
       if (resp?.success) {
@@ -1309,10 +1302,7 @@ export class ConsolidacionComprasComponent implements OnInit {
       const b64 = await this.fileToBase64(this.archivoSeleccionado);
       const tipoArchivo = this.obtenerTipoArchivo(this.archivoSeleccionado.name);
       const idOrden = this.ordenActual()?.idOrden;
-      const numeroOrdenSpring = this.ordenActual()?.numeroOrdenSpring;
-      const companiaSocio = this.ordenActual()?.companiaSocioSpring;
-      console.log('DEBUG subirAdjunto - idOrden:', idOrden, 'tipo:', typeof idOrden, 'ordenActual:', this.ordenActual());
-      const rutaServidor = `\\\\172.16.20.24\\SpringGestionDoc\\TEMPORAL\\WH\\${this.archivoSeleccionado.name}`;
+      const idempresa = this.ordenActual()?.idempresa ?? this.usuario?.idempresa;
       const payload: any = {
         idOrden: idOrden,
         tipoOrden: this.tipoOrdenActual(),
@@ -1320,16 +1310,10 @@ export class ConsolidacionComprasComponent implements OnInit {
         tipoArchivo: tipoArchivo,
         tamano: this.archivoSeleccionado.size,
         contenidoB64: b64,
-        descripcion: this.adjuntoDescripcion,
+        descripcion: this.adjuntoDescripcion || this.archivoSeleccionado.name,
         usuarioSube: this.usuario?.documentoidentidad,
-        idempresa: this.usuario?.idempresa,
-        companiaSocio: companiaSocio,
-        urlArchivo: rutaServidor,
-        rutaLocal: this.rutaLocalArchivo || this.archivoSeleccionado.name
+        idempresa
       };
-      if (numeroOrdenSpring) {
-        payload.numeroOrdenSpring = numeroOrdenSpring;
-      }
       const resp: any = await lastValueFrom(
         this.http.post(`${this.baseUrl}/api/logistica/guardar-adjunto-oc`, payload)
       );
