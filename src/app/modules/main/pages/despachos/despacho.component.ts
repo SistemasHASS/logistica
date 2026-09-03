@@ -2378,7 +2378,7 @@ export class DespachoComponent implements OnInit {
     const ahora = new Date();
     const fechaFormateada =
       ahora.toISOString().slice(0, 10) + ' ' + ahora.toTimeString().slice(0, 8);
-    const companiaSocio   = ((req.ruc || this.usuario?.idempresa || '').padStart(6, '0')) + '00';
+    const companiaSocio   = ((this.usuario?.idempresa || '').padStart(6, '0')) + '00';
     const requisicionNum  = (req.RequisicionNumero || '').padStart(10, '0');
     const primerDetalle   = detalleAtendido[0];
     const proyectoAfe     = this.proyectos?.find(

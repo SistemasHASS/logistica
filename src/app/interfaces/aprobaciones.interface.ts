@@ -56,6 +56,7 @@ export interface RequerimientoPendiente {
   puedeAprobar?: number;  // Agregado
   detalles?: any[];  // Agregado - Detalles de ítems
   detalle?: any[];  // Agregado - Para compatibilidad con Mis Requerimientos
+  items?: any[];  // Agregado - Detalles completos del endpoint de detalle
   idclasificacion?: string;  // Agregado - Necesario para sincronización SPRING
   idalmacen?: string;  // Agregado
   idfundo?: string;    // Agregado
@@ -70,6 +71,7 @@ export interface RequerimientoConAprobacion {
   usuarioSolicitud: string;
   fechaRegistro: string;
   tipoRequerimiento?: string;
+  itemtipo?: string;
   idarea: number;
   nombreArea: string;
   aprobadorAsignado?: string;
@@ -94,6 +96,8 @@ export interface DetalleItem {
   descripcionItem?: string;
   tipoclasificacion?: string;
   cantidad: number;
+  idproyecto?: string;
+  proyecto?: string;
   ceco?: string;
   idcentrocosto?: string;
   turno?: string;

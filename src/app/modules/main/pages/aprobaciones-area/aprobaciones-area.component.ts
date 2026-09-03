@@ -97,6 +97,7 @@ export class AprobacionesAreaComponent implements OnInit {
   // Modal de detalle de requerimientos pendientes (con selección)
   displayDetallePendientesModal = false;
   requerimientoDetallePendientes: any = null;
+  loadingDetallePendientes = false;
   detallePendientesTab: 'items' | 'servicios' | 'adjuntos' | 'historial-anulaciones' = 'items';
   detallesPendientesSeleccionados: Set<number> = new Set<number>();
   detallesPendientesAprobados: Set<number> = new Set<number>();
@@ -1844,18 +1845,58 @@ export class AprobacionesAreaComponent implements OnInit {
   //================================================
   //DETALLE DE REQUERIMIENTO PENDIENTE DE APROBACION
   //================================================
-  verDetallePendientes(requerimiento: any) {
+  async verDetallePendientes(requerimiento: any) {
     this.requerimientoDetallePendientes = requerimiento;
+    this.loadingDetallePendientes = true;
+    this.displayDetallePendientesModal = true;
+
+    // Cargar los items completos del endpoint con detalle
+    try {
+      const response = await this.aprobacionesAreaService
+        .obtenerRequerimientosPendientesAreaDetalle({
+          documentoidentidad: this.usuario.documentoidentidad,
+          ruc: this.usuario.ruc,
+        })
+        .toPromise();
+
+      const lista = Array.isArray(response)
+        ? response
+        : response?.resultado || [];
+
+      const encontrado = lista.find(
+        (r: any) =>
+          (r.idRequerimiento || r.idrequerimiento) ===
+          (requerimiento.idrequerimiento || requerimiento.idRequerimiento),
+      );
+
+      if (encontrado && (encontrado.items || []).length > 0) {
+        this.requerimientoDetallePendientes = {
+          ...requerimiento,
+          items: encontrado.items,
+        };
+      }
+    } catch (error) {
+      console.error('Error cargando detalle de pendientes:', error);
+    } finally {
+      this.loadingDetallePendientes = false;
+    }
+
     // Detectar si es servicio y abrir el tab correspondiente
-    const clas = (requerimiento?.idClasificacion || requerimiento?.idclasificacion || '').toString().toUpperCase();
-    const esServicio = clas === 'SER' || clas === 'COM' || clas === 'ACT' || clas === 'ACM';
+    const clas = (
+      this.requerimientoDetallePendientes?.idClasificacion ||
+      this.requerimientoDetallePendientes?.idclasificacion ||
+      ''
+    )
+      .toString()
+      .toUpperCase();
+    const esServicio =
+      clas === 'SER' || clas === 'COM' || clas === 'ACT' || clas === 'ACM';
     this.detallePendientesTab = esServicio ? 'servicios' : 'items';
     this.detallesPendientesSeleccionados = new Set<number>();
     this.detallesPendientesAprobados = new Set<number>();
     // Seleccionar todos por defecto
     const dets = this.getDetallesPendientes();
     dets.forEach((_, i) => this.detallesPendientesSeleccionados.add(i));
-    this.displayDetallePendientesModal = true;
     // Cargar adjuntos
     this.cargarAdjuntos();
   }
@@ -1863,7 +1904,7 @@ export class AprobacionesAreaComponent implements OnInit {
   getDetallesPendientes(): any[] {
     const r = this.requerimientoDetallePendientes;
     if (!r) return [];
-    return r.detalles || r.detalle || [];
+    return r.items || r.detalles || r.detalle || [];
   }
 
   /** Devuelve solo los detalles de tipo ítem (si es requerimiento de ítems). */
@@ -2118,6 +2159,11 @@ export class AprobacionesAreaComponent implements OnInit {
   esRequerimientoCompra(req: any): boolean {
     const tipo = (req?.itemtipo || req?.tipoRequerimiento || '').toString().toUpperCase();
     return tipo === 'COMPRA';
+  }
+
+  esRequerimientoConsumo(req: any): boolean {
+    const tipo = (req?.itemtipo || req?.tipoRequerimiento || '').toString().toUpperCase();
+    return tipo === 'CONSUMO';
   }
 
   getDetalleItems(requerimiento: any): any[] {

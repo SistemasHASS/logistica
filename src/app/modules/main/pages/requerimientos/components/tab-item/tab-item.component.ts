@@ -104,8 +104,19 @@ export class TabItemComponent {
   @Input() turnosParaCarga: any[] = [];
 
   get requerimientosFiltrados(): any[] {
-    if (!this.TipoSelecionado) return this.requerimientos;
-    return this.requerimientos.filter((r: any) => r.itemtipo === this.TipoSelecionado);
+    console.log('🧩 TipoSelecionado en tab-item:', this.TipoSelecionado);
+    console.log('🧩 Requerimientos brutos:', this.requerimientos.map((r: any) => ({ id: r.idrequerimiento, itemtipo: r.itemtipo })));
+    if (!this.TipoSelecionado) {
+      console.log('🧩 Sin filtro, devolviendo todos:', this.requerimientos.length);
+      return this.requerimientos;
+    }
+    const tipo = String(this.TipoSelecionado).trim().toUpperCase();
+    const filtrados = this.requerimientos.filter((r: any) =>
+      String(r?.itemtipo || '').trim().toUpperCase() === tipo,
+    );
+    console.log('🧩 Filtrados:', filtrados.length, 'de', this.requerimientos.length, 'para tipo:', tipo);
+    console.log('🧩 IDs filtrados:', filtrados.map((r: any) => r.idrequerimiento));
+    return filtrados;
   }
 
   // ─── Bulk-load state (managed entirely in this component) ────────────────
@@ -118,6 +129,33 @@ export class TabItemComponent {
   subTabActivo: 'detalles' | 'adjuntos' = 'detalles';
   adjuntosCompra: SolicitudCompraAdjunto[] = [];
   @ViewChild('adjuntoInput') adjuntoInputRef!: ElementRef<HTMLInputElement>;
+
+  // Fuerza que el producto seleccionado sea el objeto del maestro y sincroniza código
+  onProductoSelect(event: any) {
+    const item = event || this.itemSvc.lineaTemp.producto;
+    console.log('🟢 onProductoSelect event:', event, 'item:', item);
+    if (item && typeof item === 'object') {
+      this.itemSvc.lineaTemp.producto = item;
+      this.itemSvc.lineaTemp.codigo = item.codigo || '';
+    }
+    console.log('🟢 lineaTemp después de seleccionar:', this.itemSvc.lineaTemp);
+    this.itemSvc.actualizarUnidadMedidaDesdeProducto();
+  }
+
+  // Helpers para mostrar código/descripción de detalles guardados como string u objeto
+  obtenerCodigoDetalle(item: any): string {
+    if (item?.codigo) return item.codigo;
+    if (typeof item?.producto === 'object' && item.producto?.codigo) return item.producto.codigo;
+    return '';
+  }
+
+  obtenerDescripcionDetalle(item: any): string {
+    const prod = item?.producto;
+    if (!prod) return '';
+    if (typeof prod === 'string') return prod;
+    if (typeof prod === 'object') return prod.descripcion || prod.codigo || String(prod);
+    return String(prod);
+  }
 
   // ─── @Output: acciones que necesitan sincronizar estado en el padre ─────
   @Output() tipoChange = new EventEmitter<string>();
@@ -141,6 +179,7 @@ export class TabItemComponent {
   @Output() checkChangeEvt = new EventEmitter<{event: any; row: any}>();
   @Output() sincronizarEvt = new EventEmitter<void>();
   @Output() areaDetectadaEvt = new EventEmitter<string>();
+  @Output() detallesChange = new EventEmitter<any[]>();
 
   // ─── Grupo B: acciones que notifican al padre ─────────────────────────────
   guardar() { this.guardarEvt.emit(); }
@@ -192,8 +231,14 @@ export class TabItemComponent {
   // ─── Grupo A: llaman directo al servicio ─────────────────────────────────
   abrirModal() { this.itemSvc.abrirModal(); }
   cerrarModal() { this.itemSvc.cerrarModal(); }
-  guardarEdicionLinea() { this.itemSvc.guardarEdicionLinea(); }
-  registrarTodasLasLineas() { this.itemSvc.registrarTodasLasLineas(); }
+  guardarEdicionLinea() {
+    this.itemSvc.guardarEdicionLinea();
+    this.detallesChange.emit(this.itemSvc.detalles);
+  }
+  registrarTodasLasLineas() {
+    this.itemSvc.registrarTodasLasLineas();
+    this.detallesChange.emit(this.itemSvc.detalles);
+  }
   insertarLineaEnTabla() { this.itemSvc.insertarLineaEnTabla(); }
   editarLineaTemporal(i: number) { this.itemSvc.editarLineaTemporal(i); }
   eliminarLineaTemporal(i: number) { this.itemSvc.eliminarLineaTemporal(i); }
@@ -203,14 +248,21 @@ export class TabItemComponent {
   onLaborChangeModal() { this.itemSvc.onLaborChangeModal(); }
   actualizarUnidadMedidaDesdeProducto() { this.itemSvc.actualizarUnidadMedidaDesdeProducto(); }
   editarLinea(i: number) { this.itemSvc.editarLinea(i); }
-  copiarLinea(i: number) { this.itemSvc.copiarLinea(i); }
-  eliminarLinea(i: number) { this.itemSvc.eliminarLinea(i); }
+  copiarLinea(i: number) {
+    this.itemSvc.copiarLinea(i);
+    this.detallesChange.emit(this.itemSvc.detalles);
+  }
+  eliminarLinea(i: number) {
+    this.itemSvc.eliminarLinea(i);
+    this.detallesChange.emit(this.itemSvc.detalles);
+  }
   guardarDetalleMasivo() {
     const result = this.itemSvc.guardarDetalleMasivo(this.lineasPreview, this.puedeGuardar);
     if (result !== null) {
       this.modalVisible = false;
       this.lineasPreview = [];
       this.resetFileInput();
+      this.detallesChange.emit(this.itemSvc.detalles);
       this.cargaMasivaGuardadaEvt.emit();
     }
   }

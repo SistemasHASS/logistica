@@ -96,6 +96,11 @@ export class RequerimientosComponent implements OnInit, OnDestroy {
     return tipo === 'COMPRA' || tipo === 'SERVICIO';
   }
 
+  // Tabs Activos Fijos y Activos Menores solo visibles cuando se configuró COMPRA en Parámetros
+  get mostrarTabsActivosFijos(): boolean {
+    return localStorage.getItem('tipoRequerimientoConfig') === 'COMPRA';
+  }
+
   get tabActivaInicial(): 'ITEM' | 'COMMODITY' | 'ACTIVOFIJO' | 'ACTIVOFIJOMENOR' {
     return this.esModoServicio ? 'COMMODITY' : 'ITEM';
   }
@@ -645,26 +650,29 @@ export class RequerimientosComponent implements OnInit, OnDestroy {
 
     console.log('🔧 Tipo configurado:', tipoConfigurado, '| localStorage:', tipoLocalStorage, '| Rol:', rol);
 
-    // Si el localStorage indica SERVICIO o COMPRA, el tab COMMODITY ya está activo — no cambiar a ITEM
-    if (tipoLocalStorage === 'SERVICIO') {
-      // SERVICIO: forzar tab COMMODITY, sin tocar ITEM
+    // Priorizar localStorage (compatibilidad con flujo anterior), luego configuración guardada
+    const tipoActivo = (tipoLocalStorage || tipoConfigurado || '').toString().toUpperCase().trim();
+    console.log('🔧 tipoActivo final:', tipoActivo);
+
+    if (tipoActivo === 'SERVICIO') {
+      // SERVICIO: forzar tab COMMODITY
       this.tabActiva = 'COMMODITY';
-      console.log('✅ Establecido modo SERVICIO (localStorage)');
-    } else if (tipoLocalStorage === 'COMPRA') {
-      // COMPRA desde Parámetros: tab ITEM para crear reqs ITEM tipo COMPRA
+      console.log('✅ Establecido modo SERVICIO');
+    } else if (tipoActivo === 'COMPRA') {
+      // COMPRA: tab ITEM para crear reqs ITEM tipo COMPRA
       this.TipoSelecionado = 'COMPRA';
       this.requerimiento.itemtipo = 'COMPRA';
       this.tabActiva = 'ITEM';
       this.opcionesPrioridadITEM = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
-      console.log('✅ Establecido tipo COMPRA (localStorage)');
-    } else if (tipoConfigurado === 'TRANSFERENCIA' && puedeTransferencia) {
+      console.log('✅ Establecido tipo COMPRA');
+    } else if (tipoActivo === 'TRANSFERENCIA' && puedeTransferencia) {
       // TRANSFERENCIA: LOLOGIST, OPLOGIST y ALLOGIST
       this.TipoSelecionado = 'TRANSFERENCIA';
       this.requerimiento.itemtipo = 'TRANSFERENCIA';
       this.tabActiva = 'ITEM';
       this.opcionesPrioridadITEM = this.prioridadService.obtenerOpcionesPrioridad('TRANSFERENCIA');
       console.log('✅ Establecido tipo TRANSFERENCIA');
-    } else if (tipoConfigurado === 'CONSUMO') {
+    } else if (tipoActivo === 'CONSUMO') {
       // CONSUMO
       this.TipoSelecionado = 'CONSUMO';
       this.requerimiento.itemtipo = 'CONSUMO';
@@ -680,7 +688,13 @@ export class RequerimientosComponent implements OnInit, OnDestroy {
       console.log('✅ Establecido tipo COMPRA (ALLOGIST)');
     }
 
+    console.log('🔧 TipoSelecionado final en ngOnInit:', this.TipoSelecionado);
+
     await this.ListarItems();
+
+    // Limpiar posibles detalles duplicados previamente acumulados en IndexedDB
+    await this.dexieService.limpiarDetallesDuplicados();
+
     await this.cargarRequerimientos();
 
     // Sincronizar estados con el servidor (online inmediato / offline al restaurar)
@@ -2121,6 +2135,18 @@ export class RequerimientosComponent implements OnInit, OnDestroy {
       alert('Debe agregar detalles antes de guardar');
       return;
     }
+    // Si hay una línea en edición en el modal, guardarla primero
+    if (this.modalAbierto && this.editIndex >= 0) {
+      this.itemSvc.lineaTemp = this.lineaTemp;
+      this.itemSvc.editIndex = this.editIndex;
+      this.itemSvc.detalles = this.detalles;
+      this.itemSvc.TipoSelecionado = this.TipoSelecionado;
+      await this.itemSvc.guardarLinea();
+      this.detalles = this.itemSvc.detalles;
+      this.lineaTemp = this.itemSvc.lineaTemp;
+      this.modalAbierto = this.itemSvc.modalAbierto;
+      this.editIndex = this.itemSvc.editIndex;
+    }
     this.itemSvc.requerimiento.glosa = this.glosa;
     this.itemSvc.glosa = this.glosa;
     this.itemSvc.TipoSelecionado = this.TipoSelecionado;
@@ -2152,6 +2178,18 @@ export class RequerimientosComponent implements OnInit, OnDestroy {
   }
 
   async guardarEdicion() {
+    // Si hay una línea en edición en el modal, guardarla primero
+    if (this.modalAbierto && this.editIndex >= 0) {
+      this.itemSvc.lineaTemp = this.lineaTemp;
+      this.itemSvc.editIndex = this.editIndex;
+      this.itemSvc.detalles = this.detalles;
+      this.itemSvc.TipoSelecionado = this.TipoSelecionado;
+      await this.itemSvc.guardarLinea();
+      this.detalles = this.itemSvc.detalles;
+      this.lineaTemp = this.itemSvc.lineaTemp;
+      this.modalAbierto = this.itemSvc.modalAbierto;
+      this.editIndex = this.itemSvc.editIndex;
+    }
     this.itemSvc.requerimiento = { ...this.requerimiento };
     this.itemSvc.detalles = this.detalles;
     this.itemSvc.glosa = this.glosa;
@@ -2179,7 +2217,14 @@ export class RequerimientosComponent implements OnInit, OnDestroy {
     this.SeleccionaTipoGasto = this.itemSvc.SeleccionaTipoGasto;
   }
 
-  async editarRequerimiento(index: number) {
+  async editarRequerimiento(idOrIndex: string | number) {
+    let index: number;
+    if (typeof idOrIndex === 'string') {
+      index = this.itemSvc.requerimientos.findIndex((r: any) => r.idrequerimiento === idOrIndex);
+    } else {
+      index = idOrIndex;
+    }
+    if (index < 0 || index >= this.itemSvc.requerimientos.length) return;
     const req = this.itemSvc.requerimientos[index];
     // ALLOGIST solo puede editar requerimientos de COMPRA
     if (this.esAlmacen && req?.itemtipo !== 'COMPRA') {

@@ -154,6 +154,9 @@ export class RequerimientosItemService {
           !this.syncService.debeOcultar(r.estados),
       );
     const items = filtrar(await this.dexieService.showRequerimiento());
+    items.forEach((r: any) => {
+      if (r.itemtipo) r.itemtipo = String(r.itemtipo).trim().toUpperCase();
+    });
     this.ordenarLista(items);
     const commodity = filtrar(await this.dexieService.showRequerimientoCommodity());
     this.ordenarLista(commodity);
@@ -186,9 +189,14 @@ export class RequerimientosItemService {
 
   async nuevo() {
     this.detalles = [];
+    this.lineasTemporales = [];
     this.glosa = await this.maestras.generarGlosaAutomatica();
     this.modalAbierto = false;
     this.modoEdicion = false;
+    this.editIndex = -1;
+    this.editingTempIndex = -1;
+    this.enModoEdicion = false;
+    this.permitirEditarParametros = false;
     const cfg = this.maestras.configuracion;
     const rol = this.usuario.idrol;
     const puedeTransferencia = rol === 'LOLOGIST' || rol === 'OPLOGIST' || rol === 'ALLOGIST';
@@ -438,9 +446,21 @@ export class RequerimientosItemService {
 
   // â”€â”€ Modal de lÃ­neas ITEM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async abrirModal() {
-    if (this.editIndex === -1) {
-      await this.maestras.cargarConfiguracion();
-      if (this.maestras.configuracion?.idceco) {
+    // Forzar modo nuevo detalle y limpiar estado de edición anterior
+    this.editIndex = -1;
+    this.enModoEdicion = false;
+    this.editingTempIndex = -1;
+    this.permitirEditarParametros = false;
+    this.lineasTemporales = [];
+    await this.maestras.cargarConfiguracion();
+    if (this.TipoSelecionado === 'CONSUMO' || this.TipoSelecionado === 'COMPRA' || this.TipoSelecionado === 'TRANSFERENCIA') {
+      // Mostrar las líneas ya guardadas para poder agregar/editar en el mismo modal
+      this.lineasTemporales = (this.detalles || []).map((d) => ({
+        ...d,
+        descripcion: (d.producto || d.descripcion || '') as string,
+      }));
+    }
+    if (this.maestras.configuracion?.idceco) {
         this.maestras.cecoSeleccionado = (await this.dexieService.getCecoById(this.maestras.configuracion.idceco)) as Ceco | null;
         if (!this.maestras.cecoSeleccionado) {
           this.maestras.cecoSeleccionado = this.maestras.cecos.find(
@@ -467,7 +487,6 @@ export class RequerimientosItemService {
         labor: this.maestras.laborSeleccionado?.labor ?? '',
         esActivoFijo: false, activoFijo: '', afectoIGV: 'S',
       };
-    }
     this.modalAbierto = true;
   }
 
@@ -648,6 +667,7 @@ export class RequerimientosItemService {
         : (this.maestras.almacenes.find((a) => a.idalmacen == this.maestras.almacenSeleccionado)?.idalmacen || '');
       const idreq = this.modoEdicion ? this.requerimiento.idrequerimiento
         : this.maestras.usuario.sociedad + this.maestras.usuario.documentoidentidad + this.utilsService.formatoAnioMesDiaHoraMinSec();
+      const detallesConIdReq = this.detalles.map((d) => ({ ...d, idrequerimiento: idreq }));
       const req: Requerimiento = {
         idrequerimiento: idreq,
         ruc: this.maestras.usuario.ruc,
@@ -672,8 +692,10 @@ export class RequerimientosItemService {
         disabled: false,
         checked: false,
         despachado: false,
-        detalle: [...this.detalles],
+        detalle: detallesConIdReq,
       };
+      await this.dexieService.detalles.where('idrequerimiento').equals(idreq).delete();
+      await this.dexieService.detalles.bulkPut(detallesConIdReq);
       if (this.modoEdicion) {
         await this.dexieService.requerimientos.where('idrequerimiento').equals(req.idrequerimiento).delete();
         await this.dexieService.requerimientos.put({ ...req, modificado: 1 } as any);
@@ -740,7 +762,9 @@ export class RequerimientosItemService {
     this.maestras.sincronizando = true;
     this.maestras.progreso = 0;
     const prioridadFinal: PrioridadSpring = (this.SeleccionaPrioridadITEM || this.requerimiento.prioridad || '1') as PrioridadSpring;
-    const idReq = this.maestras.usuario.sociedad + this.maestras.usuario.documentoidentidad + this.utilsService.formatoAnioMesDiaHoraMinSec();
+    const idReq = this.modoEdicion && this.requerimiento.idrequerimiento
+      ? this.requerimiento.idrequerimiento
+      : this.maestras.usuario.sociedad + this.maestras.usuario.documentoidentidad + this.utilsService.formatoAnioMesDiaHoraMinSec();
 
     // TRANSFERENCIA: flujo especial → crear requerimiento de transferencia + migrar a SPRING automáticamente como APROBADA
     if (this.TipoSelecionado === 'TRANSFERENCIA') {
@@ -884,10 +908,16 @@ export class RequerimientosItemService {
     this.enModoEdicion = true;
     const det = this.detalles[index];
     let producto: any = null;
-    if (det.codigo) producto = this.maestras.items.find((it: any) => it.codigo === det.codigo);
-    if (!producto && det.producto) producto = this.maestras.items.find((it: any) => it.descripcion === det.producto);
+    const codigoDet = det.codigo || (typeof det.producto === 'object' ? det.producto?.codigo : '');
+    const descripcionDet = typeof det.producto === 'string'
+      ? det.producto
+      : (typeof det.producto === 'object' ? det.producto?.descripcion : '');
+    if (codigoDet) producto = this.maestras.items.find((it: any) => it.codigo === codigoDet);
+    if (!producto && descripcionDet) producto = this.maestras.items.find((it: any) => it.descripcion === descripcionDet);
+    console.log('🔍 editarLinea det:', det, 'producto encontrado:', producto, 'items count:', this.maestras.items.length);
     this.lineaTemp = {
       ...det,
+      codigo: producto ? producto.codigo : (det.codigo || ''),
       producto: producto ? { ...producto } : null,
       proyecto: det.proyecto || '',
       ceco: det.ceco || '',
@@ -1355,8 +1385,9 @@ export class RequerimientosItemService {
       this.alertService.showAlertError('Error', 'Existen errores, corrijalos antes de guardar');
       return null;
     }
+    const idReqActual = this.requerimiento?.idrequerimiento || '';
     const nuevos: DetalleRequerimiento[] = lineasPreview.map((l) => ({
-      idrequerimiento: '',
+      idrequerimiento: idReqActual,
       codigo: l.codigo,
       producto: l.descripcion,
       descripcion: l.descripcion,
@@ -1377,10 +1408,21 @@ export class RequerimientosItemService {
   }
 
   async guardarLinea() {
-    const prod = this.lineaTemp.producto;
-    if (!prod || !prod.codigo) {
-      this.alertService.showAlert('Campo requerido', 'Debes seleccionar un producto.', 'warning'); return;
+    let prod: any = this.lineaTemp.producto;
+    const codigoFromTemp = this.lineaTemp.codigo || (typeof prod === 'object' ? prod?.codigo : '');
+    const descFromTemp = typeof prod === 'string'
+      ? prod
+      : (typeof prod === 'object' ? prod?.descripcion : '');
+    const productoEncontrado = this.maestras.items.find((it: any) =>
+      (codigoFromTemp && it.codigo === codigoFromTemp) ||
+      (descFromTemp && it.descripcion === descFromTemp)
+    );
+    console.log('💾 guardarLinea lineaTemp:', this.lineaTemp, 'prod:', prod, 'encontrado:', productoEncontrado);
+    if (!prod || !productoEncontrado) {
+      console.warn('❌ guardarLinea rechazado: producto no seleccionado o no encontrado');
+      this.alertService.showAlert('Campo requerido', 'Debes seleccionar un producto del listado.', 'warning'); return;
     }
+    prod = productoEncontrado;
     if (!this.lineaTemp.cantidad || this.lineaTemp.cantidad <= 0) {
       this.alertService.showAlert('Campo inválido', 'La cantidad debe ser mayor a 0.', 'warning'); return;
     }
@@ -1401,8 +1443,9 @@ export class RequerimientosItemService {
       this.alertService.showAlert('Advertencia', 'Debe ingresar el codigo de activo fijo.', 'warning'); return;
     }
     const productoSeleccionado = this.maestras.items.find((it: any) => it.codigo === prod.codigo);
+    const idReqActual = this.requerimiento?.idrequerimiento || '';
     const nuevaLinea: DetalleRequerimiento = {
-      idrequerimiento: '',
+      idrequerimiento: idReqActual,
       codigo: prod.codigo,
       producto: productoSeleccionado?.descripcion ?? prod.descripcion ?? '',
       descripcion: '',
@@ -1426,8 +1469,16 @@ export class RequerimientosItemService {
       const idNuevo = await this.dexieService.detalles.add({ ...nuevaLinea });
       this.detalles.push({ id: idNuevo, ...nuevaLinea });
     }
+    // Sincronizar detalles con la cabecera activa y marcar modificado
+    this.requerimiento.detalle = [...this.detalles];
+    if (this.requerimiento.id) {
+      await this.dexieService.requerimientos.update(this.requerimiento.id, { detalle: this.detalles, modificado: 1 });
+    }
+    const idxReq = this.requerimientos.findIndex((r) => r.idrequerimiento === this.requerimiento.idrequerimiento);
+    if (idxReq >= 0) this.requerimientos[idxReq].detalle = [...this.detalles];
     this.cerrarModal();
     this.alertService.showAlert('Éxito', 'Linea guardada correctamente.', 'success');
+    console.log('💾 guardarLinea final - detalles:', this.detalles);
   }
 
   insertarLineaEnTabla() {
@@ -1442,7 +1493,7 @@ export class RequerimientosItemService {
     const descripcion = this.obtenerDescripcionProducto(this.lineaTemp.producto) || '';
     const codigoProducto = (typeof this.lineaTemp.producto === 'string' ? this.lineaTemp.producto : this.lineaTemp.producto?.codigo) || this.lineaTemp.codigo || '';
     const nuevaLinea: any = {
-      idrequerimiento: '',
+      idrequerimiento: this.requerimiento?.idrequerimiento || '',
       codigo: codigoProducto,
       producto: descripcion,
       descripcion,
@@ -1480,7 +1531,8 @@ export class RequerimientosItemService {
       this.alertService.showAlert('Validación', 'Debe agregar al menos una linea', 'warning');
       return;
     }
-    this.lineasTemporales.forEach((linea) => this.detalles.push(linea));
+    // El modal trabaja sobre el listado completo (existentes + nuevas)
+    this.detalles = [...this.lineasTemporales];
     this.alertService.showAlert('Éxito', `${this.lineasTemporales.length} linea(s) agregada(s) correctamente`, 'success');
     this.cerrarModal();
   }

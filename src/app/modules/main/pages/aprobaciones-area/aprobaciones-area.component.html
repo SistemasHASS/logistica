@@ -79,7 +79,7 @@
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link" [class.active]="activeTabIndex === 1" (click)="activeTabIndex = 1; cargarMisRequerimientos()" type="button">
-            <i class="bx bx-user me-1"></i> Mis Requerimientos
+            <i class="bx bx-user me-1"></i> Aprobados
             <span class="tab-badge ms-1">{{ misRequerimientos.length }}</span>
           </button>
         </li>
@@ -464,7 +464,7 @@
 
 <!-- Modal de Detalle -->
 <p-dialog [(visible)]="displayDetalleModal" [modal]="true" [style]="{width: '800px'}"
-          header="Detalle del Requerimiento">
+          [header]="'Detalle del Requerimiento - ' + ((requerimientoDetalle?.itemtipo === 'CONSUMO' || requerimientoDetalle?.tipoRequerimiento === 'CONSUMO') ? 'CONSUMO' : 'COMPRA')">
   <div *ngIf="requerimientoDetalle">
     <div class="row mb-3">
       <div class="col-md-6">
@@ -512,8 +512,9 @@
             <th>Descripción</th>
             <th>Producto</th>
             <th>Cantidad</th>
+            <th>Proyecto</th>
             <th>Centro Costo</th>
-            <th>Turno</th>
+            <th *ngIf="esRequerimientoConsumo(requerimientoDetalle)">Turno</th>
             <th *ngIf="requerimientoDetalle.detalles">Labor</th>
           </tr>
         </ng-template>
@@ -523,14 +524,15 @@
             <td>{{ det.descripcionItem || det.descripcion || 'Sin descripción' }}</td>
             <td>{{ det.idproducto || det.producto }}</td>
             <td>{{ det.cantidad }}</td>
+            <td>{{ det.idproyecto || det.proyecto }}</td>
             <td>{{ det.idcentrocosto || det.ceco }}</td>
-            <td>{{ det.idturno || det.turno }}</td>
+            <td *ngIf="esRequerimientoConsumo(requerimientoDetalle)">{{ det.idturno || det.turno }}</td>
             <td *ngIf="requerimientoDetalle.detalles">{{ det.idlabor }}</td>
           </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td [attr.colspan]="requerimientoDetalle.detalles ? 7 : 6" class="text-center">No hay detalles para mostrar</td>
+            <td [attr.colspan]="(esRequerimientoConsumo(requerimientoDetalle) ? 1 : 0) + (requerimientoDetalle.detalles ? 6 : 5)" class="text-center">No hay detalles para mostrar</td>
           </tr>
         </ng-template>
       </p-table>
@@ -668,6 +670,11 @@
           (onHide)="cerrarDetallePendientes()"
           styleClass="modal-detalle-pendientes">
   <div *ngIf="requerimientoDetallePendientes" class="p-2">
+    <div *ngIf="loadingDetallePendientes" class="text-center py-3">
+      <p-progressBar mode="indeterminate" [style]="{ height: '6px' }"></p-progressBar>
+      <small class="text-muted">Cargando detalle...</small>
+    </div>
+
     <!-- Cabecera -->
     <div class="row g-3 mb-3">
       <!-- <div class="col-12 col-md-6 col-lg-4">

@@ -1,11 +1,11 @@
 <div class="container mt-3">
       <h2>
         Requerimientos Items
-        <span *ngIf="TipoSelecionado" class="badge ms-2" [ngClass]="{
+        <!-- <span *ngIf="TipoSelecionado" class="badge ms-2" [ngClass]="{
           'bg-primary': TipoSelecionado === 'COMPRA',
           'bg-success': TipoSelecionado === 'CONSUMO',
           'bg-warning text-dark': TipoSelecionado === 'TRANSFERENCIA'
-        }" style="display:none">{{ TipoSelecionado }}</span>
+        }">{{ TipoSelecionado }}</span> -->
       </h2>
 
       <!-- ===================== -->
@@ -44,7 +44,7 @@
                     <th style="min-width: 20px" pSortableColumn="item">Editar</th>
                     <th style="min-width: 100px" pSortableColumn="item">#Req</th>
                     <th style="min-width: 100px" pSortableColumn="item">Fecha</th>
-                    <th style="min-width: 90px; display:none" pSortableColumn="itemtipo">Tipo</th>
+                    <!-- <th style="min-width: 90px" pSortableColumn="itemtipo">Tipo</th> -->
                     <!-- <th style="min-width: 100px" pSortableColumn="descripcionLocal">Fundo</th> -->
                     <th style="min-width: 100px" pSortableColumn="unidadCodigo">Almacen</th>
                     <th style="min-width: 120px" pSortableColumn="idarea">Área</th>
@@ -60,7 +60,7 @@
                     <td><span class="p-column-title">#</span>{{ i + 1 }}</td>
                     <td>
                       <span class="p-column-title">Editar</span>
-                      <button class="btn btn-sm btn-warning me-2" (click)="editarRequerimiento(i)">
+                      <button class="btn btn-sm btn-warning me-2" (click)="editarRequerimiento(c.idrequerimiento)">
                         <i class="icon-pencil"></i>
                       </button>
                     </td>
@@ -72,14 +72,14 @@
                       <span class="p-column-title">Fecha</span>
                       {{ c.fecha | date: "dd/MM/yyyy" }}
                     </td>
-                    <td style="display:none">
+                    <!-- <td>
                       <span class="p-column-title">Tipo</span>
                       <span class="badge" [ngClass]="{
                         'bg-primary': c.itemtipo === 'COMPRA',
                         'bg-success': c.itemtipo === 'CONSUMO',
                         'bg-warning text-dark': c.itemtipo === 'TRANSFERENCIA'
-                      }">{{ c.itemtipo }}</span>
-                    </td>
+                      }">{{ c.itemtipo || '-' }}</span>
+                    </td> -->
                     <!-- <td>
                       <span class="p-column-title">Fundo</span>
                       {{ getDescripcionFundo(c.idfundo) }}
@@ -124,7 +124,7 @@
 
                 <ng-template pTemplate="emptymessage">
                   <tr>
-                    <td colspan="10" class="text-center">No hay registros</td>
+                    <td colspan="11" class="text-center">No hay registros</td>
                   </tr>
                 </ng-template>
               </p-table>
@@ -132,7 +132,7 @@
 
             <!-- Cards mobile -->
             <div *ngIf="modoItemPrincipal">
-              @for (item of requerimientos; track $index) {
+              @for (item of requerimientosFiltrados; track $index) {
                 <div class="card cardFor" [ngClass]="{ cerrado: item.estado, nocerrado: !item.estado }">
                   <input type="checkbox" class="checked" [checked]="item.checked"
                     (change)="onCheckChange($event, item)" [disabled]="item.eliminado === 1" />
@@ -358,8 +358,8 @@
                             <i class="icon-pencil"></i>
                           </button>
                         </td>
-                        <td>{{ item.codigo }}</td>
-                        <td>{{ item.producto }}</td>
+                        <td>{{ obtenerCodigoDetalle(item) }}</td>
+                        <td>{{ obtenerDescripcionDetalle(item) }}</td>
                         <td>{{ item.cantidad }}</td>
                         <td>{{ item.proyecto }}</td>
                         <td>{{ item.ceco }}</td>
@@ -479,8 +479,8 @@
                           <i class="icon-pencil"></i>
                         </button>
                       </td>
-                      <td>{{ item.codigo }}</td>
-                      <td>{{ item.producto }}</td>
+                      <td>{{ obtenerCodigoDetalle(item) }}</td>
+                      <td>{{ obtenerDescripcionDetalle(item) }}</td>
                       <td>{{ item.cantidad }}</td>
                       <td>{{ item.proyecto }}</td>
                       <td>{{ item.ceco }}</td>
@@ -558,7 +558,7 @@
   (turnoChangeEvt)="onTurnoChangeModal()"
   (cecoChangeEvt)="onCecoChangeModal()"
   (laborChangeEvt)="onLaborChangeModal()"
-  (productoSelectEvt)="actualizarUnidadMedidaDesdeProducto()"
+  (productoSelectEvt)="onProductoSelect($event)"
 ></app-modal-detalle-item>
 
 <!-- Modal carga masiva Excel (componente separado) -->

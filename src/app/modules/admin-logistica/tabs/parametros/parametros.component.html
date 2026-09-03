@@ -25,100 +25,188 @@
     </div>
   }
 
-  <div class="row g-4">
-    <!-- Parámetros de Aprobación -->
-    <div class="col-lg-6">
-      <p-card header="Aprobaciones">
-        <form [formGroup]="form">
-          <div class="mb-3">
-            <label class="form-label">Monto Límite Directo (S/)</label>
-            <input type="number" class="form-control" formControlName="montoLimiteDirecto" min="0" step="100">
-            <div class="form-text">Monto máximo que puede aprobar un jefe de área directamente</div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Monto Requiere Aprobación (S/)</label>
-            <input type="number" class="form-control" formControlName="requiereAprobacionMonto" min="0" step="100">
-            <div class="form-text">A partir de este monto se requiere aprobación adicional</div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Días Máximo para Aprobación</label>
-            <input type="number" class="form-control" formControlName="diasMaximoAprobacion" min="1" max="30">
-            <div class="form-text">Días máximos que tiene un aprobador para responder</div>
-          </div>
-        </form>
-      </p-card>
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted mt-2">Cargando parámetros...</p>
     </div>
-
-    <!-- Parámetros de Compra -->
-    <div class="col-lg-6">
-      <p-card header="Configuración de Compras">
-        <form [formGroup]="form">
-          <div class="mb-3">
-            <label class="form-label">Días de Entrega Default</label>
-            <input type="number" class="form-control" formControlName="diasEntregaDefault" min="1">
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Días de Crédito Default</label>
-            <input type="number" class="form-control" formControlName="diasCreditoDefault" min="0">
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Moneda Default</label>
-            <select class="form-select" formControlName="monedaDefault">
-              @for (moneda of monedas; track moneda.codigo) {
-                <option [value]="moneda.codigo">{{ moneda.nombre }}</option>
-              }
-            </select>
-          </div>
-        </form>
-      </p-card>
-    </div>
-
-    <!-- Parámetros de Sistema -->
-    <div class="col-lg-6">
-      <p-card header="Configuración del Sistema">
-        <form [formGroup]="form">
-          <div class="mb-3">
-            <label class="form-label">Horario de Corte</label>
-            <input type="time" class="form-control" formControlName="horarioCorte">
-            <div class="form-text">Hora límite para procesos automáticos del día</div>
-          </div>
-
-          <div class="mb-3">
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" id="enviarNotificaciones" formControlName="enviarNotificaciones">
-              <label class="form-check-label" for="enviarNotificaciones">Enviar notificaciones por email</label>
+  } @else {
+    <div class="row g-4">
+      <!-- Parámetros de Aprobación -->
+      <div class="col-lg-6">
+        <p-card header="Aprobaciones">
+          <form [formGroup]="form">
+            <div class="mb-3">
+              <label class="form-label">Monto Límite Directo (S/)</label>
+              <input type="number" class="form-control" formControlName="montoLimiteDirecto" min="0" step="100">
+              <div class="form-text">Monto máximo que puede aprobar un jefe de área directamente</div>
             </div>
-          </div>
 
-          <div class="mb-3">
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" id="consolidacionAutomatica" formControlName="consolidacionAutomatica">
-              <label class="form-check-label" for="consolidacionAutomatica">Habilitar consolidación automática</label>
+            <div class="mb-3">
+              <label class="form-label">Monto Requiere Aprobación (S/)</label>
+              <input type="number" class="form-control" formControlName="requiereAprobacionMonto" min="0" step="100">
+              <div class="form-text">A partir de este monto se requiere aprobación adicional</div>
             </div>
-          </div>
-        </form>
-      </p-card>
+
+            <div class="mb-3">
+              <label class="form-label">Días Máximo para Aprobación</label>
+              <input type="number" class="form-control" formControlName="diasMaximoAprobacion" min="1" max="30">
+              <div class="form-text">Días máximos que tiene un aprobador para responder</div>
+            </div>
+          </form>
+        </p-card>
+      </div>
+
+      <!-- Parámetros de Compra -->
+      <div class="col-lg-6">
+        <p-card header="Configuración de Compras">
+          <form [formGroup]="form">
+            <div class="mb-3">
+              <label class="form-label">Días de Entrega Default</label>
+              <input type="number" class="form-control" formControlName="diasEntregaDefault" min="1">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Días de Crédito Default</label>
+              <input type="number" class="form-control" formControlName="diasCreditoDefault" min="0">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Moneda Default</label>
+              <select class="form-select" formControlName="monedaDefault">
+                @for (moneda of monedas; track moneda.codigo) {
+                  <option [value]="moneda.codigo">{{ moneda.nombre }}</option>
+                }
+              </select>
+            </div>
+          </form>
+        </p-card>
+      </div>
+
+      <!-- Parámetros de Sistema -->
+      <div class="col-lg-6">
+        <p-card header="Configuración del Sistema">
+          <form [formGroup]="form">
+            <div class="mb-3">
+              <label class="form-label">Horario de Corte</label>
+              <input type="time" class="form-control" formControlName="horarioCorte">
+              <div class="form-text">Hora límite para procesos automáticos del día</div>
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="enviarNotificaciones" formControlName="enviarNotificaciones">
+                <label class="form-check-label" for="enviarNotificaciones">Enviar notificaciones por email</label>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="consolidacionAutomatica" formControlName="consolidacionAutomatica">
+                <label class="form-check-label" for="consolidacionAutomatica">Habilitar consolidación automática</label>
+              </div>
+            </div>
+          </form>
+        </p-card>
+      </div>
+
+      <!-- Límites -->
+      <div class="col-lg-6">
+        <p-card header="Límites del Sistema">
+          <form [formGroup]="form">
+            <div class="mb-3">
+              <label class="form-label">Máximo Items por Requerimiento</label>
+              <input type="number" class="form-control" formControlName="maximoItemsPorReq" min="1" max="100">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Máximo OC en Borrador por Usuario</label>
+              <input type="number" class="form-control" formControlName="maximoOCBorrador" min="1" max="50">
+            </div>
+          </form>
+        </p-card>
+      </div>
     </div>
 
-    <!-- Límites -->
-    <div class="col-lg-6">
-      <p-card header="Límites del Sistema">
-        <form [formGroup]="form">
-          <div class="mb-3">
-            <label class="form-label">Máximo Items por Requerimiento</label>
-            <input type="number" class="form-control" formControlName="maximoItemsPorReq" min="1" max="100">
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Máximo OC en Borrador por Usuario</label>
-            <input type="number" class="form-control" formControlName="maximoOCBorrador" min="1" max="50">
-          </div>
-        </form>
-      </p-card>
+    <!-- Lista completa de parámetros -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <p-card header="Lista de Parámetros">
+          <p-table [value]="parametros()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]" styleClass="p-datatable-sm p-datatable-striped parametros-table">
+            <ng-template pTemplate="header">
+              <tr>
+                <th class="table-dark" style="width: 120px;">Categoría</th>
+                <th class="table-dark" style="width: 180px;">Parámetro</th>
+                <th class="table-dark">Descripción</th>
+                <th class="table-dark" style="width: 220px;">Valor</th>
+                <th class="table-dark text-center" style="width: 120px;">Acciones</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-item>
+              <tr>
+                <td>
+                  <span class="badge bg-secondary">{{ item.categoria }}</span>
+                </td>
+                <td class="fw-semibold">{{ item.parametro }}</td>
+                <td class="text-muted">{{ item.descripcion }}</td>
+                <td>
+                  @if (editandoId() === item.parametro) {
+                    @switch (tipoInput(item.parametro)) {
+                      @case ('number') {
+                        <input type="number" class="form-control form-control-sm" [value]="valorEdicion()" (input)="valorEdicion.set($any($event.target).value)">
+                      }
+                      @case ('time') {
+                        <input type="time" class="form-control form-control-sm" [value]="valorEdicion()" (input)="valorEdicion.set($any($event.target).value)">
+                      }
+                      @case ('select') {
+                        <select class="form-select form-select-sm" [value]="valorEdicion()" (change)="valorEdicion.set($any($event.target).value)">
+                          @for (moneda of monedas; track moneda.codigo) {
+                            <option [value]="moneda.codigo">{{ moneda.nombre }}</option>
+                          }
+                        </select>
+                      }
+                      @case ('checkbox') {
+                        <div class="form-check form-switch">
+                          <input class="form-check-input" type="checkbox" [checked]="valorEdicion() === '1' || valorEdicion().toLowerCase() === 'true'" (change)="valorEdicion.set($any($event.target).checked ? '1' : '0')">
+                        </div>
+                      }
+                      @default {
+                        <input type="text" class="form-control form-control-sm" [value]="valorEdicion()" (input)="valorEdicion.set($any($event.target).value)">
+                      }
+                    }
+                  } @else {
+                    @switch (tipoInput(item.parametro)) {
+                      @case ('checkbox') {
+                        <span class="badge" [class.bg-success]="valorBooleano(item)" [class.bg-secondary]="!valorBooleano(item)">
+                          {{ valorBooleano(item) ? 'Sí' : 'No' }}
+                        </span>
+                      }
+                      @case ('select') {
+                        {{ monedaNombre(item.valor) }}
+                      }
+                      @default {
+                        {{ item.valor }}
+                      }
+                    }
+                  }
+                </td>
+                <td class="text-center">
+                  @if (item.editable) {
+                    @if (editandoId() === item.parametro) {
+                      <button pButton class="p-button-sm p-button-success me-1" (click)="guardarParametro(item)" icon="bx bx-check" pTooltip="Guardar" tooltipPosition="top"></button>
+                      <button pButton class="p-button-sm p-button-secondary" (click)="cancelarEdicion()" icon="bx bx-x" pTooltip="Cancelar" tooltipPosition="top"></button>
+                    } @else {
+                      <button pButton class="p-button-sm p-button-outlined" (click)="editarParametro(item)" icon="bx bx-edit-alt" pTooltip="Editar" tooltipPosition="top"></button>
+                    }
+                  } @else {
+                    <span class="badge bg-light text-dark border">Solo lectura</span>
+                  }
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </p-card>
+      </div>
     </div>
-  </div>
+  }
 </div>

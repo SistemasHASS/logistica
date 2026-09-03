@@ -827,6 +827,39 @@ export class ParametrosComponent implements OnInit {
     }
 
     // ====================================================
+    // LIMPIAR DETALLES ANTIGUOS PARA EVITAR DUPLICADOS
+    // ====================================================
+    const idsReqItems = [...new Set(reqItems.map((r) => r.idrequerimiento))];
+    const idsReqCom = [...new Set(reqCom.map((r) => r.idrequerimiento))];
+    const idsReqAF = [...new Set(reqAF.map((r) => r.idrequerimiento))];
+    const idsReqAFM = [...new Set(reqAFM.map((r) => r.idrequerimiento))];
+
+    if (idsReqItems.length) {
+      await this.dexieService.detalles
+        .where('idrequerimiento')
+        .anyOf(idsReqItems)
+        .delete();
+    }
+    if (idsReqCom.length) {
+      await this.dexieService.detallesCommodity
+        .where('idrequerimiento')
+        .anyOf(idsReqCom)
+        .delete();
+    }
+    if (idsReqAF.length) {
+      await this.dexieService.detallesActivoFijo
+        .where('idrequerimiento')
+        .anyOf(idsReqAF)
+        .delete();
+    }
+    if (idsReqAFM.length) {
+      await this.dexieService.detallesActivoFijoMenor
+        .where('idrequerimiento')
+        .anyOf(idsReqAFM)
+        .delete();
+    }
+
+    // ====================================================
     // GUARDADO POR ARREGLOS (bulkPut)
     // ====================================================
 

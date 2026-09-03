@@ -1,3 +1,10 @@
 .parametros-container {
-  // Estilos específicos si son necesarios
+  .parametros-table {
+    ::ng-deep {
+      .p-datatable-thead > tr > th {
+        background-color: #212529 !important;
+        color: #fff !important;
+      }
+    }
+  }
 }

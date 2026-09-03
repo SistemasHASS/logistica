@@ -47,6 +47,9 @@ interface LineaReq {
   subfamiliaCodigo: string;
   subfamilia: string;
   cantidad: number;
+  cantidadOriginal?: number;
+  incrementoLogistica?: number;
+  porcentajeIncremento?: number;
   cantidadPendiente: number;
   ultimaOC: number;
   afectoIGV?: boolean;
@@ -128,7 +131,6 @@ export class ConsolidacionCompraComponent implements OnInit {
   currentTab = 'TODOS';
   private aplicarFiltrosTimeout: any = null;
   proveedorGlobal: Proveedor | null = null;
-  proveedorGlobalInput: string = '';
   proveedoresSugeridos: Proveedor[] = [];
   expandedRows: Record<string, boolean> = {};
 
@@ -187,6 +189,7 @@ export class ConsolidacionCompraComponent implements OnInit {
   ocFechaEntrega = '';
   ocObs = '';
   tipoCambioOC = 1;
+  porcentajeIncrementoOC = 10;
   emitirOCEmpresas: EmitirEmpresa[] = [];
 
   // Cotización OC multiempresa
@@ -219,11 +222,25 @@ export class ConsolidacionCompraComponent implements OnInit {
     // Catálogos en segundo plano (no bloquean la UI inicial)
     this.cargarEmpresas();
     this.cargarItemsMaestra();
+    this.cargarPorcentajeIncrementoOC();
     Promise.all([
       this.cargarFormasPago(),
       this.cargarTiposPago(),
       this.cargarAlmacenes()
     ]);
+  }
+
+  async cargarPorcentajeIncrementoOC(): Promise<void> {
+    try {
+      const resp: any = await lastValueFrom(
+        this.http.get(`${this.baseUrl}/api/logistica/admin-logistica/parametros`)
+      );
+      const porcentaje = Number(resp?.porcentajeIncrementoOC);
+      this.porcentajeIncrementoOC = Number.isFinite(porcentaje) && porcentaje >= 0 && porcentaje <= 100 ? porcentaje : 10;
+    } catch {
+      this.porcentajeIncrementoOC = 10;
+    }
+    this.cdr.markForCheck();
   }
 
   async cargarEmpresas(): Promise<void> {
@@ -713,6 +730,9 @@ export class ConsolidacionCompraComponent implements OnInit {
           idDetalle: i.idDetalle,
           codigo: i.codigo,
           descripcion: i.descripcion,
+          cantidadOriginal: i.cantidadOriginal ?? i.cantidad,
+          incrementoLogistica: i.incrementoLogistica ?? 0,
+          porcentajeIncremento: this.porcentajeIncrementoOC,
           cantidad: i.cantidad,
           unidadMedida: i.unidadMedida,
           precioUnitario: i.precioUnitario,
@@ -805,6 +825,12 @@ export class ConsolidacionCompraComponent implements OnInit {
 
   onDescuentoChange(item: any): void {
     if (+item.descuento > 0) item.reduccion = 0;
+    this.calcularTotalesOC();
+  }
+
+  onIncrementoEdicionChange(item: any): void {
+    item.incrementoLogistica = Number(item.incrementoLogistica) || 0;
+    item.cantidad = this.cantidadTotalItem(item);
     this.calcularTotalesOC();
   }
 
@@ -916,6 +942,10 @@ export class ConsolidacionCompraComponent implements OnInit {
     }
     if (!this.ocFormEdicion.lugarEntrega || !this.ocFormEdicion.fechaEntregaEstimada) {
       this.alertService.showAlert('Atención', 'Indique el lugar de entrega y la fecha estimada.', 'warning');
+      return;
+    }
+    if (this.ocFormEdicion.items.some((i: any) => this.incrementoInvalido(i))) {
+      this.alertService.showAlert('Atención', `El incremento de logística no puede superar el porcentaje permitido de cada ítem.`, 'warning');
       return;
     }
     if (this.ocFormEdicion.items.some((i: any) => !i.precioUnitario || parseFloat(i.precioUnitario) <= 0)) {
@@ -1266,9 +1296,8 @@ export class ConsolidacionCompraComponent implements OnInit {
   }
 
   setProveedorGlobal(event: any): void {
-    const val: Proveedor = event?.value ?? event;
+    const val: Proveedor | null = event?.value ?? event ?? null;
     this.proveedorGlobal = val ?? null;
-    this.proveedorGlobalInput = val?.nombre ?? '';
     console.log('[setProveedorGlobal] proveedorGlobal:', this.proveedorGlobal, 'puedeEmitirOC:', this.puedeEmitirOC());
     if (!val) {
       this.aplicarFiltros();
@@ -1599,11 +1628,20 @@ export class ConsolidacionCompraComponent implements OnInit {
           }
         }
         if (cargarProveedores) {
-          // Asegurar proveedor global con el id real del catálogo
           await this.cargarProveedores();
-          const proveedorMatch = this.proveedores().find(p => p.ruc === resp.cabecera?.rucProveedor);
-          this.proveedorGlobal = proveedorMatch
-            || { id: resp.cabecera?.rucProveedor, nombre: resp.cabecera?.nombreProveedor, ruc: resp.cabecera?.rucProveedor } as any;
+          const cabecera = this.cotizacionActiva?.cabecera;
+          const rucProveedor = String(cabecera?.rucProveedor ?? '').trim();
+          const nombreProveedor = String(cabecera?.nombreProveedor ?? '').trim();
+          if (rucProveedor || nombreProveedor) {
+            const proveedorMatch = this.proveedores().find(p => p.ruc === rucProveedor);
+            this.proveedorGlobal = proveedorMatch || {
+              id: rucProveedor,
+              nombre: nombreProveedor,
+              ruc: rucProveedor
+            };
+          } else if (!this.proveedorGlobal?.nombre) {
+            this.proveedorGlobal = null;
+          }
         }
       } else {
         this.cotizacionActiva = null;
@@ -1848,11 +1886,39 @@ export class ConsolidacionCompraComponent implements OnInit {
     return valor.toFixed(2);
   }
 
+  cantidadOriginalItem(item: any): number {
+    return Number(item?.cantidadOriginal ?? item?.cantidad ?? 0) || 0;
+  }
+
+  incrementoMaximoItem(item: any): number {
+    const porcentaje = Number(item?.porcentajeIncremento ?? this.porcentajeIncrementoOC);
+    return this.cantidadOriginalItem(item) * porcentaje / 100;
+  }
+
+  cantidadTotalItem(item: any): number {
+    return this.cantidadOriginalItem(item) + (Number(item?.incrementoLogistica) || 0);
+  }
+
+  incrementoInvalido(item: any): boolean {
+    const incremento = Number(item?.incrementoLogistica) || 0;
+    return incremento < 0 || incremento > this.incrementoMaximoItem(item);
+  }
+
+  onIncrementoChange(item: any): void {
+    item.incrementoLogistica = Number(item.incrementoLogistica) || 0;
+    item.cantidad = this.cantidadTotalItem(item);
+    this.recalcEmitirOC();
+  }
+
   recalcEmitirOC(): void {
     this.emitirOCEmpresas.forEach(empBox => {
       let subtotal = 0;
       let igv = 0;
       empBox.items.forEach(r => {
+        r.cantidadOriginal = this.cantidadOriginalItem(r);
+        r.incrementoLogistica = Number(r.incrementoLogistica) || 0;
+        r.porcentajeIncremento = Number(r.porcentajeIncremento ?? this.porcentajeIncrementoOC);
+        r.cantidad = this.cantidadTotalItem(r);
         const lineSubtotal = r.cantidad * r.precio;
         const afecto = this.obtenerAfectoIGV(r);
         subtotal += lineSubtotal;
@@ -1879,6 +1945,10 @@ export class ConsolidacionCompraComponent implements OnInit {
 
     if (this.emitirOCEmpresas.some(e => e.items.some(r => !r.precio || r.precio <= 0))) {
       this.toast('Todos los ítems deben tener precio mayor a 0', 'err');
+      return;
+    }
+    if (this.emitirOCEmpresas.some(e => e.items.some(r => this.incrementoInvalido(r)))) {
+      this.toast(`El incremento de logística no puede superar el ${this.porcentajeIncrementoOC}% de la cantidad original`, 'err');
       return;
     }
     if (this.emitirOCEmpresas.some(e => !e.almacen)) {
@@ -1937,7 +2007,10 @@ export class ConsolidacionCompraComponent implements OnInit {
           items: empBox.items.map(r => ({
             codigo: r.cod || '',
             descripcion: r.desc || '',
-            cantidad: r.cantidad || 0,
+            cantidadOriginal: this.cantidadOriginalItem(r),
+            incrementoLogistica: Number(r.incrementoLogistica) || 0,
+            porcentajeIncremento: this.porcentajeIncrementoOC,
+            cantidad: this.cantidadTotalItem(r),
             unidadMedida: r.um || 'UND',
             precioUnitario: r.precio || 0,
             descuento: 0,

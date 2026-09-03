@@ -38,6 +38,7 @@ export const MODULOS_MENU: ModuloMenu[] = [
   { route: 'pdf',                   label: 'Formato PDF',                icon: 'bx bxs-file-pdf',    clavePermiso: 'ADMINLG_MENU_PDF' },
   { route: 'empresa',               label: 'Empresa',                    icon: 'bx bx-buildings',    clavePermiso: 'ADMINLG_MENU_EMPRESA' },
   { route: 'parametros',            label: 'Parámetros',                 icon: 'bx bx-cog',          clavePermiso: 'ADMINLG_MENU_PARAMETROS' },
+  { route: 'incremento-oc',          label: 'Incremento Cantidad OC',     icon: 'bx bx-trending-up',  clavePermiso: 'ADMINLG_MENU_INCREMENTO_OC' },
   { route: 'aprobadores',           label: 'Aprobadores',                icon: 'bx bx-user-check',   clavePermiso: 'ADMINLG_MENU_APROBADORES' },
   { route: 'auditoria',             label: 'Auditoría',                  icon: 'bx bx-history',      clavePermiso: 'ADMINLG_MENU_AUDITORIA' },
   { route: 'almacen',               label: 'Plantillas Almacén',         icon: 'bx bx-store-alt',    clavePermiso: 'ADMINLG_MENU_ALMACEN' },

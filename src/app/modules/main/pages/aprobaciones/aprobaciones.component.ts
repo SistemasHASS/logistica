@@ -116,6 +116,33 @@ export class AprobacionesComponent {
     });
   }
 
+  private obtenerDetallesUnicos(detalles: any[]): any[] {
+    const detallesUnicos = new Map<string, any>();
+
+    detalles.forEach(detalle => {
+      const identificador = detalle.idOriginal ?? detalle.iddetalle ?? detalle.idDetalle;
+      const key = identificador != null
+        ? `${detalle.idrequerimiento ?? ''}-${identificador}`
+        : [
+            detalle.idrequerimiento,
+            detalle.codigo,
+            detalle.descripcion ?? detalle.producto,
+            detalle.cantidad,
+            detalle.proyecto ?? detalle.idproyecto,
+            detalle.ceco ?? detalle.idcentrocosto,
+            detalle.turno ?? detalle.idturno,
+            detalle.labor ?? detalle.idlabor,
+            detalle.activoFijo
+          ].map(valor => valor ?? '').join('|');
+
+      if (!detallesUnicos.has(key)) {
+        detallesUnicos.set(key, detalle);
+      }
+    });
+
+    return Array.from(detallesUnicos.values());
+  }
+
   /**
    * Limpia los detalles duplicados en Dexie
    * Agrupa por idrequerimiento y mantiene solo los registros únicos
@@ -130,24 +157,15 @@ export class AprobacionesComponent {
         return;
       }
       
-      // Agrupar por idrequerimiento y eliminar duplicados en memoria
-      const detallesUnicos = new Map<string, any>();
-      
-      todosLosDetalles.forEach(detalle => {
-        const key = `${detalle.idrequerimiento}-${detalle.codigo}-${detalle.descripcion}`;
-        if (!detallesUnicos.has(key)) {
-          detallesUnicos.set(key, detalle);
-        }
-      });
-      
-      const duplicadosCount = todosLosDetalles.length - detallesUnicos.size;
+      const detallesUnicos = this.obtenerDetallesUnicos(todosLosDetalles);
+      const duplicadosCount = todosLosDetalles.length - detallesUnicos.length;
       
       if (duplicadosCount > 0) {
         console.log(`🧹 Encontrados ${duplicadosCount} duplicados. Limpiando...`);
         
         // Operación en bloque: limpiar y reinsertar
         await this.dexieService.detalles.clear();
-        await this.dexieService.detalles.bulkAdd(Array.from(detallesUnicos.values()));
+        await this.dexieService.detalles.bulkAdd(detallesUnicos);
         
         console.log(`✅ ${duplicadosCount} duplicados eliminados`);
       } else {
@@ -456,12 +474,17 @@ export class AprobacionesComponent {
         if (!!resp && resp.length) {
           console.log(`� Recibidos ${resp.length} requerimientos del backend`);
           
+          const requerimientosSinDuplicados = resp.map((req: any) => ({
+            ...req,
+            detalle: this.obtenerDetallesUnicos(req.detalle || [])
+          }));
+
           // Guardar requerimientos
-          await this.dexieService.saveRequerimientos(resp);
+          await this.dexieService.saveRequerimientos(requerimientosSinDuplicados);
           
           // Procesar detalles en lote
           const detallesParaAgregar: any[] = [];
-          const requerimientosConDetalle = resp.filter((req: any) => req.detalle && req.detalle.length);
+          const requerimientosConDetalle = requerimientosSinDuplicados.filter((req: any) => req.detalle.length);
           
           for (const req of requerimientosConDetalle) {
             // Eliminar detalles existentes
@@ -863,7 +886,7 @@ export class AprobacionesComponent {
 
     // Cargar el detalle del requerimiento desde Dexie
     if (req.detalle && req.detalle.length > 0) {
-      this.detalleRequerimiento = req.detalle;
+      this.detalleRequerimiento = this.obtenerDetallesUnicos(req.detalle);
     } else {
       // Si no está en memoria, buscar en Dexie
       // this.detalleRequerimiento = await this.dexieService.detalles
@@ -875,7 +898,7 @@ export class AprobacionesComponent {
         .equals(req.idrequerimiento)
         .toArray();
 
-      this.detalleRequerimiento = detalleDexie || [];
+      this.detalleRequerimiento = this.obtenerDetallesUnicos(detalleDexie || []);
     }
 
     // ✔ Mostrar alerta si NO hay detalle

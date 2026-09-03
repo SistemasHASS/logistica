@@ -91,6 +91,7 @@ export class AdminLogisticaLayoutComponent implements OnInit {
     { route: 'pdf',                   label: 'Formato PDF',                icon: 'bx bxs-file-pdf',    clave: 'ADMINLG_MENU_PDF',             fallback: () => true },
     { route: 'empresa',               label: 'Empresa',                    icon: 'bx bx-buildings',    clave: 'ADMINLG_MENU_EMPRESA',         fallback: () => this.isAdmin() },
     { route: 'parametros',            label: 'Parámetros',                 icon: 'bx bx-cog',          clave: 'ADMINLG_MENU_PARAMETROS',      fallback: () => this.isAdmin() },
+    { route: 'incremento-oc',          label: 'Incremento Cantidad OC',     icon: 'bx bx-trending-up',  clave: 'ADMINLG_MENU_INCREMENTO_OC',   fallback: () => this.isAdmin() },
     { route: 'aprobadores',           label: 'Aprobadores',                icon: 'bx bx-user-check',   clave: 'ADMINLG_MENU_APROBADORES',     fallback: () => this.isAdmin() },
     { route: 'auditoria',             label: 'Auditoría',                  icon: 'bx bx-history',      clave: 'ADMINLG_MENU_AUDITORIA',       fallback: () => this.isAdmin() },
     { route: 'almacen',               label: 'Plantillas Almacén',         icon: 'bx bx-store-alt',    clave: 'ADMINLG_MENU_ALMACEN',         fallback: () => this.isAdmin() },
@@ -106,7 +107,7 @@ export class AdminLogisticaLayoutComponent implements OnInit {
     return this._ITEMS_DEF.map(item => ({
       ...item,
       visible: listo
-        ? (item.clave === 'ADMINLG_MENU_MIGRAR_ADJUNTOS' && this.isAdmin())
+        ? ((item.clave === 'ADMINLG_MENU_MIGRAR_ADJUNTOS' || item.clave === 'ADMINLG_MENU_INCREMENTO_OC') && this.isAdmin())
           || this._tienePermiso(item.clave, item.fallback())
         : true,
     }));

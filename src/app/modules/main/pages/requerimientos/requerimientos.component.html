@@ -32,6 +32,7 @@
           </button>
         </li>
         }
+        @if (mostrarTabsActivosFijos) {
         <li class="nav-item">
           <button class="nav-link" [ngClass]="{ active: tabActiva === 'ACTIVOFIJO' }" (click)="cambiarTab('ACTIVOFIJO')">
             <i class="bx bx-building me-2"></i>
@@ -44,6 +45,7 @@
             Activos Menores
           </button>
         </li>
+        }
         }
       }
     </ul>
@@ -76,6 +78,7 @@
       (checkChangeEvt)="onCheckChange($event.event, $event.row)"
       (sincronizarEvt)="sincronizarPendientes()"
       (areaDetectadaEvt)="maestrasSvc.areaSeleccionada = $event"
+      (detallesChange)="detalles = $event"
       [requerimientos]="requerimientos"
       [loading]="loading"
       [sinenviar]="sinenviar"

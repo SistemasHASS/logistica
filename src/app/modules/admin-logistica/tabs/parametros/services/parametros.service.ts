@@ -3,6 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@/environments/environment';
 
+export interface Parametro {
+  parametro: string;
+  valor: string;
+  descripcion: string;
+  categoria: string;
+  editable: boolean;
+}
+
 export interface ParametrosConfig {
   montoLimiteDirecto: number;
   requiereAprobacionMonto: number;
@@ -17,6 +25,8 @@ export interface ParametrosConfig {
   maximoOCBorrador: number;
 }
 
+export type ParametrosRecord = Record<string, string>;
+
 @Injectable({
   providedIn: 'root'
 })
@@ -25,11 +35,15 @@ export class ParametrosService {
 
   constructor(private http: HttpClient) {}
 
-  getParametros(): Observable<ParametrosConfig> {
-    return this.http.get<ParametrosConfig>(`${this.baseUrl}/api/logistica/admin-logistica/parametros`);
+  getParametros(): Observable<Parametro[]> {
+    return this.http.get<Parametro[]>(`${this.baseUrl}/api/logistica/admin-logistica/parametros`);
   }
 
-  saveParametros(config: ParametrosConfig): Observable<any> {
+  saveParametros(config: ParametrosRecord): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/logistica/admin-logistica/parametros`, config);
+  }
+
+  saveParametro(parametro: string, valor: string): Observable<any> {
+    return this.saveParametros({ [parametro]: valor });
   }
 }

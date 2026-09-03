@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockup: Incremento 10% en OC</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0d6efd;
+      --success: #198754;
+      --warning: #f59e0b;
+      --danger: #dc3545;
+      --gray: #6c757d;
+      --bg: #f8f9fa;
+      --panel-bg: #ffffff;
+      --border: #dee2e6;
+    }
+    body {
+      background: var(--bg);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 2rem 0;
+    }
+    .mockup-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .mockup-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2c3e50;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .tag {
+      font-size: .7rem;
+      padding: .15rem .5rem;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .tag-global { background: #e0f2fe; color: #0369a1; }
+    .tag-linea { background: #dcfce7; color: #15803d; }
+    .tag-mixta { background: #fef3c7; color: #b45309; }
+    .tag-confirm { background: #ede9fe; color: #6d28d9; }
+    .tag-masiva { background: #ffe4e6; color: #be123c; }
+
+    /* Estilos simulando la app actual */
+    .oc-modal {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .oc-modal-hd {
+      background: #f1f5f9;
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .oc-modal-ft {
+      background: #f8fafc;
+      padding: .75rem 1rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: .5rem;
+    }
+    .oc-modal-body { padding: 1rem; }
+    .table-items th, .table-items td {
+      font-size: .85rem;
+      vertical-align: middle;
+    }
+    .chip {
+      display: inline-block;
+      padding: .15rem .5rem;
+      border-radius: 4px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+    .chip-HP { background: #dbeafe; color: #1e40af; }
+    .input-cant { width: 90px; text-align: right; }
+    .input-small { width: 80px; text-align: right; }
+    .totales-box {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 6px;
+      padding: .75rem;
+      font-size: .9rem;
+    }
+    .diff-up { color: var(--success); font-weight: 600; }
+    .diff-down { color: var(--danger); font-weight: 600; }
+    .alt-nav .nav-link {
+      color: #475569;
+      font-weight: 500;
+    }
+    .alt-nav .nav-link.active {
+      background: #fff;
+      color: var(--primary);
+      border-color: var(--border) var(--border) #fff;
+      font-weight: 600;
+    }
+    .pros-cons dt { font-weight: 600; color: #334155; }
+    .pros-cons dd { margin-bottom: .5rem; }
+    .wizard-step {
+      padding: 1rem;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      background: #fff;
+      min-height: 240px;
+    }
+    .resumen-item {
+      display: flex;
+      justify-content: space-between;
+      padding: .4rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row mb-4">
+      <div class="col">
+        <h2 class="fw-bold">Incremento del 10% en cantidades de OC</h2>
+        <p class="text-muted mb-1">Mockup interactivo — alternativas de UI para permitir ampliar la cantidad ordenada hasta un 10% adicional una vez creada la OC.</p>
+        <p class="text-muted small">Regla de negocio: cantidad máxima permitida = <code>cantidad original × 1.10</code>. La ampliación debe quedar registrada y afectar totales/IGV.</p>
+      </div>
+    </div>
+
+    <ul class="nav nav-tabs alt-nav mb-4" id="altTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="a-tab" data-bs-toggle="tab" data-bs-target="#alt-a" type="button" role="tab">A. Acción global</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="b-tab" data-bs-toggle="tab" data-bs-target="#alt-b" type="button" role="tab">B. Por línea</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="c-tab" data-bs-toggle="tab" data-bs-target="#alt-c" type="button" role="tab">C. Cantidad editable con tope</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="d-tab" data-bs-toggle="tab" data-bs-target="#alt-d" type="button" role="tab">D. Wizard de confirmación</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="e-tab" data-bs-toggle="tab" data-bs-target="#alt-e" type="button" role="tab">E. Acción masiva en tabla</button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="altTabContent">
+      <!-- ALTERNATIVA A: Acción global -->
+      <div class="tab-pane fade show active" id="alt-a" role="tabpanel">
+        <div class="mockup-card">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <div class="mockup-title"><i class='bx bx-globe'></i> Alternativa A: Acción global "+10%"</div>
+              <p class="text-muted small mt-1">Un botón en el header del modal aplica el incremento a <strong>todos</strong> los ítems al mismo tiempo.</p>
+            </div>
+            <span class="tag tag-global">GLOBAL</span>
+          </div>
+
+          <div class="oc-modal mx-auto" style="max-width:900px">
+            <div class="oc-modal-hd">
+              <h6 class="m-0 fw-bold"><i class='bx bx-file'></i> Editar Orden de Compra</h6>
+              <button class="btn btn-sm btn-outline-secondary border-0"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="oc-modal-body">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="text-primary fw-bold mb-0">Ítems de la Orden</h6>
+                <button class="btn btn-sm btn-success" onclick="aplicarGlobal('a')">
+                  <i class='bx bx-plus'></i> Aplicar +10% a todos los ítems
+                </button>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm table-striped table-bordered table-items" id="tabla-a">
+                  <thead class="table-light"><tr><th>Código</th><th>Descripción</th><th class="text-end">Cant. original</th><th class="text-end">Cant. OC</th><th>UM</th><th class="text-end">P. Unit.</th><th class="text-end">Subtotal</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <div class="totales-box mt-2" id="totales-a"></div>
+            </div>
+            <div class="oc-modal-ft">
+              <button class="btn btn-secondary btn-sm">Cancelar</button>
+              <button class="btn btn-primary btn-sm"><i class='bx bx-save'></i> Guardar cambios</button>
+            </div>
+          </div>
+
+          <div class="mt-4 row pros-cons">
+            <div class="col-md-6">
+              <dl>
+                <dt><i class='bx bx-check-circle text-success'></i> Ventajas</dt>
+                <dd>Rápida para ampliar toda la OC si el proveedor acepta un 10% extra en todos los ítems.</dd>
+                <dd>Mínima fricción: un solo clic.</dd>
+                <dd>Ideal cuando la ampliación es una política común (merma, tolerancia).</dd>
+              </dl>
+            </div>
+            <div class="col-md-6">
+              <dl>
+                <dt><i class='bx bx-x-circle text-danger'></i> Desventajas</dt>
+                <dd>No permite elegir ítems individuales.</dd>
+                <dd>Puede generar montos mayores no deseados si solo algunos productos necesitan ampliación.</dd>
+                <dd>Menos trazabilidad de cuál ítem se amplió y por qué.</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALTERNATIVA B: Por línea -->
+      <div class="tab-pane fade" id="alt-b" role="tabpanel">
+        <div class="mockup-card">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <div class="mockup-title"><i class='bx bx-list-check'></i> Alternativa B: Toggle por línea</div>
+              <p class="text-muted small mt-1">Cada ítem tiene un interruptor para activar el 10% adicional. Solo los ítems marcados se amplían.</p>
+            </div>
+            <span class="tag tag-linea">POR LÍNEA</span>
+          </div>
+
+          <div class="oc-modal mx-auto" style="max-width:950px">
+            <div class="oc-modal-hd"><h6 class="m-0 fw-bold"><i class='bx bx-file'></i> Editar Orden de Compra</h6></div>
+            <div class="oc-modal-body">
+              <h6 class="text-primary fw-bold">Ítems de la Orden</h6>
+              <div class="table-responsive">
+                <table class="table table-sm table-striped table-bordered table-items" id="tabla-b">
+                  <thead class="table-light"><tr><th></th><th>Código</th><th>Descripción</th><th class="text-end">Cant. original</th><th class="text-end">Cant. OC</th><th>UM</th><th class="text-end">P. Unit.</th><th class="text-end">Subtotal</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <div class="totales-box mt-2" id="totales-b"></div>
+            </div>
+            <div class="oc-modal-ft">
+              <button class="btn btn-secondary btn-sm">Cancelar</button>
+              <button class="btn btn-primary btn-sm"><i class='bx bx-save'></i> Guardar cambios</button>
+            </div>
+          </div>
+
+          <div class="mt-4 row pros-cons">
+            <div class="col-md-6">
+              <dl>
+                <dt><i class='bx bx-check-circle text-success'></i> Ventajas</dt>
+                <dd>Control granular: el usuario decide ítem por ítem.</dd>
+                <dd>Reduce el riesgo de ampliar cantidades innecesarias.</dd>
+                <dd>Fácil auditar qué líneas tuvieron incremento.</dd>
+              </dl>
+            </div>
+            <div class="col-md-6">
+              <dl>
+                <dt><i class='bx bx-x-circle text-danger'></i> Desventajas</dt>
+                <dd>Más clics si se desea ampliar muchos ítems.</dd>
+                <dd>Requiere validación backend ítem por ítem.</dd>
+                <dd>El usuario podría no entender que el 10% es sobre la cantidad original.</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALTERNATIVA C: Cantidad editable con tope -->
+      <div class="tab-pane fade" id="alt-c" role="tabpanel">
+        <div class="mockup-card">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <div class="mockup-title"><i class='bx bx-edit'></i> Alternativa C: Cantidad editable con límite del 10%</div>
+              <p class="text-muted small mt-1">El usuario edita directamente la cantidad. El sistema muestra un límite máximo y bloquea valores que lo excedan.</p>
+            </div>
+            <span class="tag tag-mixta">CONTROLADA</span>
+          </div>
+
+          <div class="oc-modal mx-auto" style="max-width:950px">
+            <div class="oc-modal-hd"><h6 class="m-0 fw-bold"><i class='bx bx-file'></i> Editar Orden de Compra</h6></div>
+            <div class="oc-modal-body">
+              <h6 class="text-primary fw-bold">Ítems de la Orden</h6>
+              <div class="table-responsive">
+                <table class="table table-sm table-striped table-bordered table-items" id="tabla-c">
+                  <thead class="table-light"><tr><th>Código</th><th>Descripción</th><th class="text-end">Cant. original</th><th class="text-end">Cant. OC</th><th class="text-end text-nowrap">Máx. (+10%)</th><th>UM</th><th class="text-end">P. Unit.</th><th class="text-end">Subtotal</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <div class="totales-box mt-2" id="totales-c"></div>
+            </div>
+            <div class="oc-modal-ft">
+              <button class="btn btn-secondary btn-sm">Cancelar</button>
+              <button class="btn btn-primary btn-sm" id="btn-guardar-c"><i class='bx bx-save'></i> Guardar cambios</button>
+            </div>
+          </div>
+
+          <div class="mt-4 row pros-cons">
+            <div class="col-md-6">
+              <dl>
+                <dt><i class='bx bx-check-circle text-success'></i> Ventajas</dt>
+                <dd>Flexibilidad: el usuario elige cuánto ampliar, hasta el tope.</dd>
+                <dd>Regla visible en pantalla (cantidad máxima permitida).</dd>
+                <dd>Permite amplios menores al 10% si no se necesita todo el margen.</dd>
+              </dl>
+            </div>
+            <div class="col-md-6">
+              <dl>
+                <dt><i class='bx bx-x-circle text-danger'></i> Desventajas</dt>
+                <dd>Más columnas y complejidad visual en la tabla.</dd>
+                <dd>Requiere validación en tiempo real y mensajes de error claros.</dd>
+                <dd>El usuario podría confundir cantidad OC con cantidad máxima.</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALTERNATIVA D: Wizard -->
+      <div class="tab-pane fade" id="alt-d" role="tabpanel">
+        <div class="mockup-card">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <div class="mockup-title"><i class='bx bx-walk'></i> Alternativa D: Wizard de ampliación</div>
+              <p class="text-muted small mt-1">Flujo guiado: selección de ítems → revisión del impacto → confirmación. Ideal para trazabilidad y aprobaciones.</p>
+            </div>
+            <span class="tag tag-confirm">WIZARD</span>
+          </div>
+
+          <div class="wizard mx-auto" style="max-width:700px">
+            <div class="d-flex justify-content-between mb-3">
+              <div class="text-center flex-fill">
+                <div class="badge bg-primary rounded-pill mb-1" id="step-badge-1">1</div>
+                <div class="small fw-semibold">Seleccionar ítems</div>
+              </div>
+              <div class="text-center flex-fill">
+                <div class="badge bg-secondary rounded-pill mb-1" id="step-badge-2">2</div>
+                <div class="small text-muted">Revisar impacto</div>
+              </div>
+              <div class="text-center flex-fill">
+                <div class="badge bg-secondary rounded-pill mb-1" id="step-badge-3">3</div>
+                <div class="small text-muted">Confirmar</div>
+              </div>
+            </div>
+
+            <div class="wizard-step" id="wizard-body">
+              <!-- contenido dinámico -->
+            </div>
+
+            <div class="d-flex justify-content-between mt-3">
+              <button class="btn btn-secondary btn-sm" id="wizard-prev" onclick="wizardPrev()" disabled>Anterior</button>
+              <button class="btn btn-primary btn-sm" id="wizard-next" onclick="wizardNext()">Siguiente</button>
+            </div>
+          </div>
+
+          <div class="mt-4 row pros-cons">
+            <div class="col-md-6">
+              <dl>
+                <dt><i class='bx bx-check-circle text-success'></i> Ventajas</dt>
+                <dd>Mejor trazabilidad y control de cambios.</dd>
+                <dd>Fuerza al usuario a revisar el impacto antes de guardar.</dd>
+                <dd>Permite adjuntar justificación o requerir aprobación.</dd>
+              </dl>
+            </div>
+            <div class="col-md-6">
+              <dl>
+                <dt><i class='bx bx-x-circle text-danger'></i> Desventajas</dt>
+                <dd>Flujo más largo para una acción simple.</dd>
+                <dd>Mayor esfuerzo de desarrollo.</dd>
+                <dd>Puede resultar excesivo si el incremento es una operación frecuente.</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALTERNATIVA E: Acción masiva en tabla -->
+      <div class="tab-pane fade" id="alt-e" role="tabpanel">
+        <div class="mockup-card">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <div class="mockup-title"><i class='bx bx-table'></i> Alternativa E: Acción masiva desde la tabla de OC</div>
+              <p class="text-muted small mt-1">En la lista principal de OC se muestra un indicador si ya se usó el 10% y un botón masivo para aplicarlo rápidamente.</p>
+            </div>
+            <span class="tag tag-masiva">MASIVA</span>
+          </div>
+
+          <div class="table-responsive mx-auto" style="max-width:900px">
+            <table class="table table-sm table-striped table-bordered align-middle">
+              <thead class="table-light">
+                <tr><th>#</th><th>Número OC</th><th>Empresa</th><th>Proveedor</th><th class="text-end">Total</th><th>Estado</th><th>Ampliación</th><th>Acciones</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td><strong>OC-2026-001</strong></td>
+                  <td><span class="chip chip-HP">HP</span></td>
+                  <td>Proveedor Alpha S.A.</td>
+                  <td class="text-end">PEN 12,500.00</td>
+                  <td><span class="badge bg-success">APROBADA</span></td>
+                  <td class="text-center"><span class="badge bg-light text-dark border">Sin usar</span></td>
+                  <td><button class="btn btn-sm btn-outline-success" onclick="alert('Aquí se abriría diálogo de +10% masivo')">+10%</button></td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td><strong>OC-2026-002</strong></td>
+                  <td><span class="chip chip-HP">HP</span></td>
+                  <td>Proveedor Beta S.A.</td>
+                  <td class="text-end">PEN 8,200.00</td>
+                  <td><span class="badge bg-primary">ENVIADA</span></td>
+                  <td class="text-center"><span class="badge bg-success">Usado</span></td>
+                  <td><button class="btn btn-sm btn-outline-secondary" disabled>+10%</button></td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td><strong>OC-2026-003</strong></td>
+                  <td><span class="chip chip-HP">HP</span></td>
+                  <td>Proveedor Gamma S.A.</td>
+                  <td class="text-end">PEN 23,100.00</td>
+                  <td><span class="badge bg-warning text-dark">PENDIENTE</span></td>
+                  <td class="text-center"><span class="badge bg-light text-dark border">Sin usar</span></td>
+                  <td><button class="btn btn-sm btn-outline-success" onclick="alert('Aquí se abriría diálogo de +10% masivo')">+10%</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-4 row pros-cons">
+            <div class="col-md-6">
+              <dl>
+                <dt><i class='bx bx-check-circle text-success'></i> Ventajas</dt>
+                <dd>Visibilidad del estado del 10% en el listado.</dd>
+                <dd>Acceso rápido sin entrar al detalle.</dd>
+                <dd>Útil para compradores que gestionan muchas OC.</dd>
+              </dl>
+            </div>
+            <div class="col-md-6">
+              <dl>
+                <dt><i class='bx bx-x-circle text-danger'></i> Desventajas</dt>
+                <dd>Menos contexto de ítems; puede aplicarse a toda la OC sin revisar.</dd>
+                <dd>Se requiere un segundo paso si se quiere granularidad.</dd>
+                <dd>Ocupa espacio en la columna de acciones.</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recomendación -->
+    <div class="mockup-card mt-4 bg-light">
+      <h5 class="fw-bold mb-3"><i class='bx bx-bulb'></i> Recomendación práctica</h5>
+      <p>Considerando que la OC ya está creada y el incremento del 10% es una <strong>excepción controlada</strong>, la combinación más equilibrada es:</p>
+      <ol>
+        <li><strong>Alternativa C</strong> como mecanismo principal: cantidad editable con tope del 10%, validación en tiempo real y bloqueo al excederse.</li>
+        <li><strong>Alternativa B</strong> como atajo: un toggle por línea que, al activarse, lleva automáticamente la cantidad OC al máximo permitido.</li>
+        <li><strong>Alternativa D</strong> para OC ya aprobadas/enviadas: un wizard que registre la ampliación, justificación y requiera confirmación para evitar desfases con el proveedor.</li>
+      </ol>
+      <p class="mb-0 text-muted small">La regla <code>cantidadOC ≤ cantidadOriginal × 1.10</code> debe validarse tanto en el cliente como en el backend, y guardarse un histórico con usuario, fecha y monto anterior/nuevo.</p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Datos de ejemplo
+    const itemsBase = [
+      { codigo: 'INS-001', descripcion: 'Insumo agrícola A', um: 'KG', precio: 12.50, cantidad: 100 },
+      { codigo: 'INS-002', descripcion: 'Fertilizante especial B', um: 'BLS', precio: 85.00, cantidad: 50 },
+      { codigo: 'INS-003', descripcion: 'Semilla certificada C', um: 'KG', precio: 45.30, cantidad: 200 },
+    ];
+
+    // Estado por alternativa
+    const state = {
+      a: { items: itemsBase.map(i => ({...i, cantidadOC: i.cantidad, ampliado: false})) },
+      b: { items: itemsBase.map(i => ({...i, cantidadOC: i.cantidad, ampliado: false})) },
+      c: { items: itemsBase.map(i => ({...i, cantidadOC: i.cantidad, max: Math.round(i.cantidad * 1.1 * 1000)/1000})) },
+      d: { step: 1, items: itemsBase.map(i => ({...i, seleccionado: false, cantidadOC: i.cantidad, max: Math.round(i.cantidad * 1.1 * 1000)/1000})) }
+    };
+
+    const fmt = n => n.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 3});
+    const round3 = n => Math.round(n * 1000) / 1000;
+
+    function renderTabla(alt) {
+      const tbody = document.querySelector(`#tabla-${alt} tbody`);
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      let subtotal = 0;
+
+      state[alt].items.forEach((item, idx) => {
+        const st = item.cantidadOC * item.precio;
+        subtotal += st;
+        const diff = item.cantidadOC - item.cantidad;
+        const tr = document.createElement('tr');
+
+        if (alt === 'a') {
+          tr.innerHTML = `
+            <td><small>${item.codigo}</small></td>
+            <td><small>${item.descripcion}</small></td>
+            <td class="text-end">${fmt(item.cantidad)}</td>
+            <td class="text-end ${diff ? (diff > 0 ? 'diff-up' : 'diff-down') : ''}">${fmt(item.cantidadOC)} ${diff ? `<i class='bx bx-up-arrow-alt'></i>` : ''}</td>
+            <td><small>${item.um}</small></td>
+            <td class="text-end">${fmt(item.precio)}</td>
+            <td class="text-end fw-bold">${fmt(st)}</td>
+          `;
+        } else if (alt === 'b') {
+          tr.innerHTML = `
+            <td class="text-center"><input class="form-check-input" type="checkbox" ${item.ampliado ? 'checked' : ''} onchange="toggleAmpliar('b', ${idx})"></td>
+            <td><small>${item.codigo}</small></td>
+            <td><small>${item.descripcion}</small></td>
+            <td class="text-end">${fmt(item.cantidad)}</td>
+            <td class="text-end ${diff ? 'diff-up' : ''}">${fmt(item.cantidadOC)}</td>
+            <td><small>${item.um}</small></td>
+            <td class="text-end">${fmt(item.precio)}</td>
+            <td class="text-end fw-bold">${fmt(st)}</td>
+          `;
+        } else if (alt === 'c') {
+          tr.innerHTML = `
+            <td><small>${item.codigo}</small></td>
+            <td><small>${item.descripcion}</small></td>
+            <td class="text-end">${fmt(item.cantidad)}</td>
+            <td class="text-end">
+              <input type="number" class="form-control form-control-sm input-cant ${item.cantidadOC > item.max ? 'is-invalid' : ''}" value="${item.cantidadOC}" step="0.001" onchange="cambiarCantidadC(${idx}, this.value)" oninput="cambiarCantidadC(${idx}, this.value, true)">
+            </td>
+            <td class="text-end text-nowrap">${fmt(item.max)}</td>
+            <td><small>${item.um}</small></td>
+            <td class="text-end">${fmt(item.precio)}</td>
+            <td class="text-end fw-bold">${fmt(st)}</td>
+          `;
+        }
+        tbody.appendChild(tr);
+      });
+
+      const igv = subtotal * 0.18;
+      const total = subtotal + igv;
+      document.getElementById(`totales-${alt}`).innerHTML = `
+        <div class="row text-end">
+          <div class="col-4"><span class="text-muted">Subtotal:</span> <strong>${fmt(subtotal)}</strong></div>
+          <div class="col-4"><span class="text-muted">IGV (18%):</span> <strong>${fmt(igv)}</strong></div>
+          <div class="col-4"><span class="text-muted">Total:</span> <strong class="fs-5">${fmt(total)}</strong></div>
+        </div>
+      `;
+    }
+
+    function aplicarGlobal(alt) {
+      state[alt].items.forEach(i => {
+        i.cantidadOC = round3(i.cantidad * 1.10);
+        i.ampliado = true;
+      });
+      renderTabla(alt);
+    }
+
+    function toggleAmpliar(alt, idx) {
+      const item = state[alt].items[idx];
+      item.ampliado = !item.ampliado;
+      item.cantidadOC = item.ampliado ? round3(item.cantidad * 1.10) : item.cantidad;
+      renderTabla(alt);
+    }
+
+    function cambiarCantidadC(idx, value, soloValidar = false) {
+      const item = state.c.items[idx];
+      const val = round3(parseFloat(value) || 0);
+      item.cantidadOC = val;
+      renderTabla('c');
+      if (!soloValidar && val > item.max) {
+        setTimeout(() => alert(`La cantidad no puede superar el máximo permitido: ${fmt(item.max)}`), 10);
+      }
+      document.getElementById('btn-guardar-c').disabled = state.c.items.some(i => i.cantidadOC > i.max);
+    }
+
+    // Wizard
+    function renderWizard() {
+      const body = document.getElementById('wizard-body');
+      const st = state.d;
+      const selected = st.items.filter(i => i.seleccionado);
+      const subtotalOriginal = st.items.reduce((s, i) => s + i.cantidad * i.precio, 0);
+      const subtotalNuevo = st.items.reduce((s, i) => s + i.cantidadOC * i.precio, 0);
+
+      // Badges
+      [1,2,3].forEach(n => {
+        const badge = document.getElementById(`step-badge-${n}`);
+        badge.className = 'badge rounded-pill mb-1 ' + (st.step === n ? 'bg-primary' : (st.step > n ? 'bg-success' : 'bg-secondary'));
+      });
+      document.getElementById('wizard-prev').disabled = st.step === 1;
+      document.getElementById('wizard-next').innerHTML = st.step === 3 ? 'Confirmar ampliación <i class="bx bx-check"></i>' : 'Siguiente';
+
+      if (st.step === 1) {
+        body.innerHTML = `
+          <h6 class="fw-bold mb-3">Selecciona los ítems a ampliar</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-striped table-bordered">
+              <thead class="table-light"><tr><th></th><th>Código</th><th>Descripción</th><th class="text-end">Cant. original</th><th>UM</th></tr></thead>
+              <tbody>
+                ${st.items.map((item, idx) => `
+                  <tr>
+                    <td class="text-center"><input class="form-check-input" type="checkbox" ${item.seleccionado ? 'checked' : ''} onchange="toggleWizard(${idx})"></td>
+                    <td><small>${item.codigo}</small></td>
+                    <td><small>${item.descripcion}</small></td>
+                    <td class="text-end">${fmt(item.cantidad)}</td>
+                    <td><small>${item.um}</small></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="text-muted small">${selected.length} ítem(s) seleccionado(s).</div>
+        `;
+      } else if (st.step === 2) {
+        body.innerHTML = `
+          <h6 class="fw-bold mb-3">Revisar cantidades ampliadas</h6>
+          ${selected.length === 0 ? '<div class="alert alert-warning">No has seleccionado ítems.</div>' : `
+          <div class="table-responsive">
+            <table class="table table-sm table-striped table-bordered">
+              <thead class="table-light"><tr><th>Código</th><th class="text-end">Original</th><th class="text-end">Ampliada (+10%)</th><th class="text-end">Diferencia</th></tr></thead>
+              <tbody>
+                ${selected.map(item => `
+                  <tr>
+                    <td><small>${item.codigo}</small></td>
+                    <td class="text-end">${fmt(item.cantidad)}</td>
+                    <td class="text-end fw-bold diff-up">${fmt(item.cantidadOC)}</td>
+                    <td class="text-end">+${fmt(item.cantidadOC - item.cantidad)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="totales-box">
+            <div class="resumen-item"><span>Subtotal original</span><strong>${fmt(subtotalOriginal)}</strong></div>
+            <div class="resumen-item"><span>Subtotal con ampliación</span><strong class="diff-up">${fmt(subtotalNuevo)}</strong></div>
+            <div class="resumen-item"><span>Incremento total</span><strong class="diff-up">+${fmt(subtotalNuevo - subtotalOriginal)}</strong></div>
+          </div>
+          <div class="mt-3">
+            <label class="form-label small fw-bold">Justificación / observación</label>
+            <textarea class="form-control form-control-sm" rows="2" placeholder="Ej. Tolerancia por merma esperada en transporte..."></textarea>
+          </div>`}
+        `;
+      } else {
+        body.innerHTML = `
+          <h6 class="fw-bold mb-3">Confirmar ampliación</h6>
+          <div class="alert alert-info">
+            <i class='bx bx-info-circle'></i> Se ampliará la cantidad de <strong>${selected.length}</strong> ítem(s) hasta un máximo del 10%.
+          </div>
+          <div class="totales-box">
+            <div class="resumen-item"><span>Total original OC</span><strong>${fmt(subtotalOriginal * 1.18)}</strong></div>
+            <div class="resumen-item"><span>Total nuevo OC</span><strong class="diff-up">${fmt(subtotalNuevo * 1.18)}</strong></div>
+            <div class="resumen-item"><span>Usuario</span><strong>usuario@logistica</strong></div>
+            <div class="resumen-item"><span>Fecha</span><strong>${new Date().toLocaleDateString('es-PE')}</strong></div>
+          </div>
+        `;
+      }
+    }
+
+    function toggleWizard(idx) {
+      const item = state.d.items[idx];
+      item.seleccionado = !item.seleccionado;
+      item.cantidadOC = item.seleccionado ? round3(item.cantidad * 1.10) : item.cantidad;
+      renderWizard();
+    }
+
+    function wizardNext() {
+      if (state.d.step === 1 && !state.d.items.some(i => i.seleccionado)) {
+        alert('Selecciona al menos un ítem.'); return;
+      }
+      if (state.d.step < 3) { state.d.step++; renderWizard(); }
+      else { alert('Ampliación confirmada (simulación).'); state.d.step = 1; state.d.items.forEach(i => { i.seleccionado = false; i.cantidadOC = i.cantidad; }); renderWizard(); }
+    }
+
+    function wizardPrev() {
+      if (state.d.step > 1) { state.d.step--; renderWizard(); }
+    }
+
+    // Inicializar
+    ['a','b','c'].forEach(renderTabla);
+    renderWizard();
+  </script>
+</body>
+</html>

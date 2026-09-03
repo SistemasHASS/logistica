@@ -55,6 +55,10 @@ export const adminLogisticaRoutes: Routes = [
         path: 'parametros', 
         loadComponent: () => import('./tabs/parametros/parametros.component').then(m => m.ParametrosComponent) 
       },
+      {
+        path: 'incremento-oc',
+        loadComponent: () => import('./tabs/incremento-oc/incremento-oc.component').then(m => m.IncrementoOcComponent)
+      },
       { 
         path: 'aprobadores', 
         loadComponent: () => import('./tabs/aprobadores/aprobadores.component').then(m => m.AprobadoresComponent) 

@@ -1208,15 +1208,83 @@ export class DexieService extends Dexie {
         (d) => d.idrequerimiento === req.idrequerimiento,
       );
 
+      // Deduplicar detalles: preferir id/idOriginal, sino por contenido completo
+      const vistos = new Set<string>();
+      const detUnicos = det.filter((d) => {
+        const clave =
+          d.id ?? d.idOriginal ??
+          JSON.stringify({
+            idrequerimiento: d.idrequerimiento,
+            codigo: d.codigo,
+            producto: d.producto ?? d.idproducto ?? '',
+            descripcion: d.descripcion ?? d.iddescripcion ?? '',
+            cantidad: d.cantidad,
+            proyecto: d.proyecto ?? d.idproyecto ?? '',
+            ceco: d.ceco ?? d.idcentrocosto ?? '',
+            turno: d.turno ?? d.idturno ?? '',
+            labor: d.labor ?? d.idlabor ?? '',
+          });
+        if (vistos.has(clave)) return false;
+        vistos.add(clave);
+        return true;
+      });
+
       // Usar detalles de tabla separada si existen, si no usar el detalle embebido
-      const detallesFinal = det.length > 0 ? det : req.detalle || [];
+      const detallesFinal = detUnicos.length > 0 ? detUnicos : req.detalle || [];
 
       return {
         ...req,
         detalle: detallesFinal,
-        detalles: det,
+        detalles: detUnicos,
       };
     });
+  }
+
+  /**
+   * Limpia filas duplicadas de las tablas de detalles de requerimientos.
+   * Agrupa por idrequerimiento + contenido y deja solo un registro por grupo.
+   */
+  async limpiarDetallesDuplicados() {
+    const limpiarTabla = async (tabla: Dexie.Table<any, any>, campos: string[]) => {
+      const todos = await tabla.toArray();
+      if (!todos.length) return 0;
+
+      const vistos = new Set<string>();
+      const unicos: any[] = [];
+      const idsEliminar: any[] = [];
+
+      for (const d of todos) {
+        const parteContenido = campos.reduce((acc, campo) => {
+          acc[campo] = d[campo] ?? '';
+          return acc;
+        }, {} as any);
+        const clave = `${d.idrequerimiento ?? ''}|${JSON.stringify(parteContenido)}`;
+        if (vistos.has(clave)) {
+          if (d.id != null) idsEliminar.push(d.id);
+        } else {
+          vistos.add(clave);
+          unicos.push(d);
+        }
+      }
+
+      if (idsEliminar.length) {
+        await tabla.bulkDelete(idsEliminar);
+      }
+      return idsEliminar.length;
+    };
+
+    const eliminados = await Promise.all([
+      limpiarTabla(this.detalles, ['codigo', 'producto', 'descripcion', 'cantidad', 'proyecto', 'ceco', 'turno', 'labor']),
+      limpiarTabla(this.detallesCommodity, ['codigo', 'descripcion', 'cantidad', 'proyecto', 'ceco', 'turno', 'labor']),
+      limpiarTabla(this.detallesActivoFijo, ['codigo', 'descripcion', 'cantidad', 'proyecto', 'ceco', 'turno', 'labor']),
+      limpiarTabla(this.detallesActivoFijoMenor, ['codigo', 'descripcion', 'cantidad', 'proyecto', 'ceco', 'turno', 'labor']),
+    ]);
+
+    const total = eliminados.reduce((a, b) => a + b, 0);
+    if (total > 0) {
+      console.log(`🧹 Dexie: ${total} detalles duplicados eliminados.`);
+    }
+    return total;
   }
 
   //--------------------- Maestras ---------------------
