@@ -605,6 +605,43 @@
 
           <!-- Info y tabla -->
           <div class="col-md-7">
+            <div class="card border-0 shadow-sm mb-3" style="font-size:12px">
+              <div class="card-body py-2 px-3">
+                <div class="row g-2">
+                  <div class="col-sm-6">
+                    <span class="text-muted">Tipo:</span>
+                    <span class="badge ms-1 text-white"
+                      [class.bg-success]="notaDetalle()!.tipo === 'NI'"
+                      [class.bg-danger]="notaDetalle()!.tipo === 'NS'">
+                      {{ notaDetalle()!.tipo }}
+                    </span>
+                  </div>
+                  <div class="col-sm-6">
+                    <span class="text-muted">N° Nota:</span>
+                    <span class="fw-semibold ms-1">{{ notaDetalle()!.numeroNota }}</span>
+                  </div>
+                  <div class="col-sm-6">
+                    <span class="text-muted">Fecha:</span>
+                    <span class="ms-1">{{ formatFecha(notaDetalle()!.fecha) }}</span>
+                  </div>
+                  <div class="col-sm-6">
+                    <span class="text-muted">Almacén:</span>
+                    <span class="ms-1">{{ notaDetalle()!.almacen }}</span>
+                  </div>
+                  <div class="col-12">
+                    <span class="text-muted">Referencia:</span>
+                    <span class="ms-1">{{ notaDetalle()!.referencia }} <small class="text-muted">{{ notaDetalle()!.descripcionRef }}</small></span>
+                  </div>
+                  @if (notaDetalle()!.usuarioPropietario) {
+                    <div class="col-12">
+                      <span class="text-muted">Solicitante / Propietario:</span>
+                      <span class="ms-1">{{ notaDetalle()!.usuarioPropietario }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
             <table class="table table-sm table-bordered" style="font-size:12px">
               <thead class="table-light">
                 <tr><th>#</th><th>Código</th><th>Descripción</th><th>Unid.</th><th>Cantidad</th><th>C.Costo</th></tr>

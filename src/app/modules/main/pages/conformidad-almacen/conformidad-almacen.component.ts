@@ -110,6 +110,9 @@ export class ConformidadAlmacenComponent implements OnInit {
     // Definir tab inicial según rol
     if (this.esOplogist()) this.tabActivo.set('NS');
 
+    // ALLOGIST solo visualiza historial (no firma)
+    if (this.esAllogist()) this.seccion.set('historial');
+
     // Cargar plantillas desde BD con ruc de la empresa del usuario
     this.cargarPlantillas(user?.ruc ?? '');
 
@@ -119,7 +122,8 @@ export class ConformidadAlmacenComponent implements OnInit {
 
   setTab(tipo: TipoNota): void {
     this.tabActivo.set(tipo);
-    this.seccion.set('pendientes');
+    // ALLOGIST solo visualiza historial; los demás operan pendientes/historial
+    this.seccion.set(this.esAllogist() ? 'historial' : 'pendientes');
     this.recargarListas();
   }
 
@@ -134,7 +138,9 @@ export class ConformidadAlmacenComponent implements OnInit {
 
   async recargarListas(): Promise<void> {
     const tipo = this.tabActivo();
-    const idusuario = this.usuario()?.documentoidentidad ?? '';
+    // ALLOGIST visualiza TODAS las notas sin filtro de propietario;
+    // LOLOGIST/OPLOGIST solo ven las asignadas a su usuario.
+    const idusuario = this.esAllogist() ? '' : this.usuario()?.documentoidentidad ?? '';
     this.cargando.set(true);
     this.errorCarga.set(null);
     try {
