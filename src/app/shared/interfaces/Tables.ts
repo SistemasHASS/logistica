@@ -136,6 +136,7 @@ export interface Almacen {
   id: number;
   idalmacen: string;
   almacen: string;
+  almentrada: string;
 }
 
 export interface AlmacenDestino {

@@ -73,6 +73,7 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
     items: [
       { id: 'requerimientos',      nombre: 'Requerimientos',        icono: 'icon icon-stack',  ruta: './requerimientos',      activo: true, orden: 1 },
       { id: 'saldo-requerimiento', nombre: 'Saldo de Requerimiento',icono: 'icon icon-balance', ruta: './saldo-requerimiento', activo: true, orden: 2 },
+      { id: 'parametros',      nombre: 'Parámetros',      icono: 'icon icon-equalizer',      ruta: './parametros',      activo: true, orden: 3 },
     ]
   },
   {
@@ -128,7 +129,7 @@ const MODULOS_POR_ROL: Record<string, string[]> = {
   JEMLOGIST: ['catalogo-items', 'dashboard-jemlogist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'consolidacion-servicios', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'aprobaciones-oc', 'aprobaciones-os', 'aprobaciones-area', 'reporte-aprobaciones-area'],
   LOLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'saldo-requerimiento', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'consolidacion-servicios', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'reporte-aprobaciones-area'],
   EMLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'conformidad-servicios', 'aprobaciones-area'],
-  OPLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'conformidad-almacen', 'catalogo-items'],
+  OPLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'notificaciones', 'parametros','requerimientos', 'conformidad-almacen', 'catalogo-items'],
   ALLOGIST:  ['catalogo-items', 'dashboard-despacho', 'notificaciones', 'parametros', 'requerimientos', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'reporte-despachos'],
   APLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'dashboard-aprobaciones-area', 'notificaciones', 'aprobaciones-area', 'reporte-aprobaciones-area', 'catalogo-items'],
   FINANZAS:  ['catalogo-items', 'dashboard-finanzas', 'aprobaciones-oc', 'aprobaciones-os'],

@@ -1257,8 +1257,8 @@ export class AprobacionesAreaComponent implements OnInit {
           FechaRequerida: new Date(req.fecha).toISOString(),
           FechaPreparacion: new Date().toISOString(),
           FechaAprobacion: req.fechaAprobacion ? new Date(req.fechaAprobacion).toISOString() : new Date().toISOString(),
-          PreparadaPor: -1,
-          AprobadaPor: -1,
+          PreparadaPor: req.solicitante,
+          AprobadaPor: this.usuario.documentoidentidad,
           // PrecioTotal: 0.0,
           // ✅ Corregido: Usar prioridad del requerimiento
           PrioridadCodigo: String(
