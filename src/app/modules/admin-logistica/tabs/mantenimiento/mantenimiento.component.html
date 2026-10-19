@@ -1,0 +1,249 @@
+<div class="container-fluid py-4">
+  <div class="card border-danger">
+    <div class="card-header bg-danger text-white">
+      <h4 class="mb-0"><i class="bx bx-trash me-2"></i>Limpiar data transaccional</h4>
+      <p class="mb-0 mt-1" style="opacity:.9">
+        Elimina TODA la data del flujo (requerimientos, consolidaciones, cotizaciones, OC/OS,
+        aprobaciones, recepciones, despachos, kardex, stock) para iniciar desde cero.
+        Se conservan usuarios, áreas, flujos de aprobación, permisos y maestros.
+      </p>
+    </div>
+
+    <div class="card-body">
+      <div class="alert alert-warning d-flex align-items-center">
+        <i class="bx bx-error-circle fs-4 me-2"></i>
+        <div>
+          <strong>Operación irreversible.</strong> Antes de borrar se genera un backup
+          automático de la base de datos en la carpeta de backups del servidor.
+        </div>
+      </div>
+
+      <!-- Paso 1: Preview -->
+      <div class="mb-4">
+        <h6 class="fw-bold">1. Revisar data actual</h6>
+        <button pButton type="button" label="Ver resumen de data"
+                icon="bx bx-search" class="p-button-info"
+                [disabled]="loadingPreview() || loading()" (click)="cargarPreview()"></button>
+      </div>
+
+      @if (loadingPreview()) {
+        <div class="text-center py-4">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2">Consultando...</p>
+        </div>
+      } @else if (preview().length > 0 && !ejecutado()) {
+        <p class="text-muted">Total de filas a eliminar: <strong>{{ totalFilas() }}</strong></p>
+        <p-table [value]="preview()" [paginator]="true" [rows]="15" styleClass="p-datatable-sm mb-4">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Tabla</th>
+              <th class="text-end">Filas</th>
+              <th class="text-center" style="width:90px">Detalle</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-r>
+            <tr>
+              <td>{{ r.tabla }}</td>
+              <td class="text-end">{{ r.filas }}</td>
+              <td class="text-center">
+                <button pButton type="button" icon="bx bx-search"
+                        class="p-button-rounded p-button-text p-button-sm"
+                        title="Ver registros" (click)="verDetalle(r.tabla)"></button>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      } @else if (!ejecutado()) {
+        <p class="text-muted">No se cargó el resumen aún o todas las tablas están vacías.</p>
+      }
+
+      <!-- Paso 2: Confirmación -->
+      <div class="mb-4 p-3 border border-danger rounded">
+        <h6 class="fw-bold text-danger">2. Confirmar y ejecutar</h6>
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label">Escriba <strong>LIMPIAR</strong> para habilitar</label>
+            <input pInputText type="text" class="form-control"
+                   [(ngModel)]="confirmacion" [disabled]="loading()"
+                   placeholder="LIMPIAR" autocomplete="off" />
+          </div>
+          <div class="col-md-4">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="chkCorrelativos"
+                     [(ngModel)]="resetearCorrelativos" [disabled]="loading()" />
+              <label class="form-check-label" for="chkCorrelativos">
+                Resetear correlativos (numeración desde 0)
+              </label>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <button pButton type="button" label="Ejecutar limpieza"
+                    icon="bx bx-trash" class="p-button-danger"
+                    [disabled]="!puedeLimpiar()" (click)="ejecutar()"></button>
+          </div>
+        </div>
+      </div>
+
+      @if (loading()) {
+        <div class="text-center py-4">
+          <div class="spinner-border text-danger" role="status"></div>
+          <p class="mt-2">Generando backup y limpiando data... esto puede tardar unos minutos.</p>
+        </div>
+      }
+
+      @if (exito()) {
+        <div class="alert alert-success">
+          <i class="bx bx-check-circle me-1"></i>{{ exito() }}
+          @if (backupFile()) {
+            <div class="mt-1"><small>Backup generado: <code>{{ backupFile() }}</code></small></div>
+          }
+        </div>
+      }
+      @if (error()) {
+        <div class="alert alert-danger"><i class="bx bx-error me-1"></i>{{ error() }}</div>
+      }
+
+      @if (ejecutado() && resultado().length > 0) {
+        <h6 class="fw-bold mt-4">Resultado de la limpieza</h6>
+        <p-table [value]="resultado()" [paginator]="true" [rows]="15" styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Tabla</th>
+              <th class="text-end">Filas eliminadas</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-r>
+            <tr>
+              <td>{{ r.tabla }}</td>
+              <td class="text-end">{{ r.filas }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+    </div>
+  </div>
+
+  <!-- Restaurar desde backup -->
+  <div class="card border-warning mt-4">
+    <div class="card-header bg-warning">
+      <h4 class="mb-0"><i class="bx bx-undo me-2"></i>Restaurar data desde backup</h4>
+      <p class="mb-0 mt-1">
+        Recupera la data transaccional tal como estaba antes de una limpieza.
+        Reemplaza la data actual del flujo; usuarios y configuración NO se tocan.
+      </p>
+    </div>
+
+    <div class="card-body">
+      <div class="mb-3">
+        <button pButton type="button" label="Ver backups disponibles"
+                icon="bx bx-list-ul" class="p-button-warning"
+                [disabled]="loadingBackups() || loadingRestaurar()" (click)="cargarBackups()"></button>
+      </div>
+
+      @if (loadingBackups()) {
+        <div class="text-center py-4">
+          <div class="spinner-border text-warning" role="status"></div>
+          <p class="mt-2">Consultando backups...</p>
+        </div>
+      } @else if (backups().length > 0) {
+        <p-table [value]="backups()" [paginator]="true" [rows]="5" styleClass="p-datatable-sm mb-4">
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width:50px"></th>
+              <th>Fecha</th>
+              <th>Archivo</th>
+              <th>Usuario</th>
+              <th class="text-end">Filas respaldadas</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-b>
+            <tr [class.table-warning]="backupSeleccionado() === b.backupFile">
+              <td class="text-center">
+                <input type="radio" name="backupSel" [value]="b.backupFile"
+                       [(ngModel)]="backupSeleccionado" [disabled]="loadingRestaurar()" />
+              </td>
+              <td>{{ b.fechaEjecucion | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td><code>{{ nombreArchivo(b.backupFile) }}</code></td>
+              <td>{{ b.usuario }}</td>
+              <td class="text-end">{{ b.totalFilas }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      } @else if (loadingBackups() === false && backups().length === 0) {
+        <p class="text-muted">Presiona "Ver backups disponibles" para listar los respaldos generados por limpiezas anteriores.</p>
+      }
+
+      <div class="p-3 border border-warning rounded">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label">Escriba <strong>RESTAURAR</strong> para habilitar</label>
+            <input pInputText type="text" class="form-control"
+                   [(ngModel)]="confirmacionRestaurar" [disabled]="loadingRestaurar()"
+                   placeholder="RESTAURAR" autocomplete="off" />
+          </div>
+          <div class="col-md-4">
+            <small class="text-muted">
+              La data transaccional actual será reemplazada por la del backup seleccionado.
+            </small>
+          </div>
+          <div class="col-md-4">
+            <button pButton type="button" label="Ejecutar restauración"
+                    icon="bx bx-undo" class="p-button-warning"
+                    [disabled]="!puedeRestaurar()" (click)="restaurar()"></button>
+          </div>
+        </div>
+      </div>
+
+      @if (loadingRestaurar()) {
+        <div class="text-center py-4">
+          <div class="spinner-border text-warning" role="status"></div>
+          <p class="mt-2">Restaurando data... esto puede tardar unos minutos.</p>
+        </div>
+      }
+
+      @if (exitoRestaurar()) {
+        <div class="alert alert-success mt-3">
+          <i class="bx bx-check-circle me-1"></i>{{ exitoRestaurar() }}
+        </div>
+      }
+      @if (errorRestaurar()) {
+        <div class="alert alert-danger mt-3"><i class="bx bx-error me-1"></i>{{ errorRestaurar() }}</div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Dialog detalle de registros -->
+<p-dialog [(visible)]="detalleVisible" [modal]="true" [style]="{width: '90vw', maxWidth: '1200px'}"
+          [draggable]="false" [resizable]="false" [header]="'Registros: ' + detalleTabla() + ' (máx. 50)'">
+  @if (loadingDetalle()) {
+    <div class="text-center py-4">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="mt-2">Cargando registros...</p>
+    </div>
+  } @else if (detalleRegistros().length === 0) {
+    <div class="alert alert-info mb-0">La tabla no tiene registros.</div>
+  } @else {
+    <div style="max-height:65vh; overflow:auto">
+      <table class="table table-sm table-striped table-hover mb-0" style="font-size:.8rem">
+        <thead style="position:sticky; top:0">
+          <tr>
+            @for (col of detalleColumnas(); track col) {
+              <th style="white-space:nowrap; background-color:#212529; color:#fff !important">{{ col }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of detalleRegistros(); track $index) {
+            <tr>
+              @for (col of detalleColumnas(); track col) {
+                <td style="max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap"
+                    [title]="row[col]">{{ row[col] }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</p-dialog>

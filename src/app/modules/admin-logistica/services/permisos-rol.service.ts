@@ -45,6 +45,7 @@ export const MODULOS_MENU: ModuloMenu[] = [
   { route: 'conformidad-servicio',  label: 'Conformidad Servicio',       icon: 'bx bx-check-shield', clavePermiso: 'ADMINLG_MENU_CONFORMIDAD' },
   { route: 'permisos-rol',          label: 'Permisos por Rol',           icon: 'bx bx-shield',       clavePermiso: 'ADMINLG_MENU_PERMISOS_ROL' },
   { route: 'migracion-adjuntos',   label: 'Migrar Adjuntos',            icon: 'bx bx-refresh',      clavePermiso: 'ADMINLG_MENU_MIGRAR_ADJUNTOS' },
+  { route: 'mantenimiento',        label: 'Mantenimiento',              icon: 'bx bx-trash',        clavePermiso: 'ADMINLG_MENU_MANTENIMIENTO' },
 ];
 
 export const ROLES_SISTEMA = [

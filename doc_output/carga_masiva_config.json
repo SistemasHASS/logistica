@@ -1,0 +1,432 @@
+{
+  "usuarioCreacion": "CARGA_MASIVA_EXCEL",
+  "areas": [
+    {
+      "ruc": "20481121966",
+      "nombre": "RIEGO",
+      "descripcion": "RIEGO",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "LABORES",
+      "descripcion": "LABORES",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "BPM",
+      "descripcion": "BPM",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "SST",
+      "descripcion": "SST",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "ALMACÉN",
+      "descripcion": "ALMACÉN",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "SERVICIO DE TRANSPORTE",
+      "descripcion": "SERVICIO DE TRANSPORTE",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "ACOPIOS",
+      "descripcion": "ACOPIOS",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "LOGISTICA",
+      "descripcion": "LOGISTICA",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "LICITACIONES",
+      "descripcion": "LICITACIONES",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "COSTOS",
+      "descripcion": "COSTOS",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "SISTEMAS",
+      "descripcion": "SISTEMAS",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "TESORERÍA",
+      "descripcion": "TESORERÍA",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "CONTABILIDAD",
+      "descripcion": "CONTABILIDAD",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "ADMINISTRACIÓN Y FINANZAS",
+      "descripcion": "ADMINISTRACIÓN Y FINANZAS",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "GERENCIA",
+      "descripcion": "GERENCIA",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "RECURSOS HUMANOS",
+      "descripcion": "RECURSOS HUMANOS",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "nombre": "COMERCIO EXTERIOR",
+      "descripcion": "COMERCIO EXTERIOR",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20610773274",
+      "nombre": "ALMACÉN",
+      "descripcion": "ALMACÉN",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20610773274",
+      "nombre": "ACOPIOS",
+      "descripcion": "ACOPIOS",
+      "mostrarAdmision": 1,
+      "activo": 1
+    },
+    {
+      "ruc": "20610773274",
+      "nombre": "BPA",
+      "descripcion": "BPA",
+      "mostrarAdmision": 1,
+      "activo": 1
+    }
+  ],
+  "usuariosAcceso": [
+    {
+      "ruc": "20481121966",
+      "usuario": "48073280",
+      "clave": "CLAVE_INICIAL",
+      "nombre": "JULCA BARRANTES JULIO CESAR",
+      "email": "jjulca@hassperu.com",
+      "idrol": "APLOGIST",
+      "rol": "Aprobador Consumo",
+      "nrodocumento": "48073280",
+      "idempresa": "000008",
+      "activo": 1
+    }
+  ],
+  "usuariosPorArea": [
+    {
+      "ruc": "20481121966",
+      "documentoidentidad": "48073280",
+      "nombreCompleto": "JULCA BARRANTES JULIO CESAR",
+      "idarea": 15,
+      "idsubarea": null,
+      "rol": "APLOGIST",
+      "esJefeArea": 1,
+      "esAprobador": 1,
+      "email": null,
+      "telefono": null,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "documentoidentidad": "76019678",
+      "nombreCompleto": "CARRANZA LLANOS ANTONY JUNIOR",
+      "idarea": 15,
+      "idsubarea": null,
+      "rol": "APLOGIST",
+      "esJefeArea": 1,
+      "esAprobador": 1,
+      "email": null,
+      "telefono": null,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "documentoidentidad": "081279",
+      "nombreCompleto": "REYES RUIZ PABLO",
+      "idarea": 5,
+      "idsubarea": null,
+      "rol": "APLOGIST",
+      "esJefeArea": 1,
+      "esAprobador": 1,
+      "email": null,
+      "telefono": null,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "documentoidentidad": "60796",
+      "nombreCompleto": "SALVADOR PALACIOS EMILI LEONOR",
+      "idarea": 5,
+      "idsubarea": null,
+      "rol": "APLOGIST",
+      "esJefeArea": 1,
+      "esAprobador": 1,
+      "email": null,
+      "telefono": null,
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "documentoidentidad": "74895320",
+      "nombreCompleto": "MIRANDA FLORES DANIEL MARCOS",
+      "idarea": null,
+      "idsubarea": null,
+      "rol": "APLOGIST",
+      "esJefeArea": 1,
+      "esAprobador": 1,
+      "email": null,
+      "telefono": null,
+      "activo": 1
+    },
+    {
+      "ruc": "20610773274",
+      "documentoidentidad": "47857722",
+      "nombreCompleto": "GUTIERREZ GUZMAN LUISA MARIA",
+      "idarea": null,
+      "idsubarea": null,
+      "rol": "APLOGIST",
+      "esJefeArea": 1,
+      "esAprobador": 1,
+      "email": null,
+      "telefono": null,
+      "activo": 1
+    },
+    {
+      "ruc": "20610773274",
+      "documentoidentidad": "47227505",
+      "nombreCompleto": "GUEVARA CONTRERAS FRANKLIN IVAN",
+      "idarea": null,
+      "idsubarea": null,
+      "rol": "APLOGIST",
+      "esJefeArea": 1,
+      "esAprobador": 1,
+      "email": null,
+      "telefono": null,
+      "activo": 1
+    }
+  ],
+  "flujoReq": [
+    {
+      "ruc": "20481121966",
+      "idarea": 1,
+      "tipoRequerimiento": "CONSUMO",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "idarea": 1,
+      "tipoRequerimiento": "COMPRA",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "idarea": 1,
+      "tipoRequerimiento": "SERVICIO",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "idarea": 2,
+      "tipoRequerimiento": "CONSUMO",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "idarea": 2,
+      "tipoRequerimiento": "COMPRA",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "idarea": 2,
+      "tipoRequerimiento": "SERVICIO",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "idarea": 3,
+      "tipoRequerimiento": "CONSUMO",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "idarea": 3,
+      "tipoRequerimiento": "COMPRA",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "idarea": 3,
+      "tipoRequerimiento": "SERVICIO",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "idarea": 4,
+      "tipoRequerimiento": "CONSUMO",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "idarea": 4,
+      "tipoRequerimiento": "COMPRA",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "idarea": 4,
+      "tipoRequerimiento": "SERVICIO",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "idarea": 5,
+      "tipoRequerimiento": "CONSUMO",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "idarea": 5,
+      "tipoRequerimiento": "COMPRA",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    },
+    {
+      "ruc": "20481121966",
+      "idarea": 5,
+      "tipoRequerimiento": "SERVICIO",
+      "rolAprobador": "JEFE_AREA",
+      "activo": 1
+    }
+  ],
+  "flujoOC": [
+    {
+      "montoMinimo": 0,
+      "montoMaximo": 10000,
+      "nivel": 1,
+      "rolAprobador": "FINANZAS",
+      "nombreRol": "Finanzas",
+      "descripcion": "Aprobación OC hasta S/ 10,000",
+      "activo": 1
+    },
+    {
+      "montoMinimo": 10001,
+      "montoMaximo": 50000,
+      "nivel": 1,
+      "rolAprobador": "FINANZAS",
+      "nombreRol": "Finanzas",
+      "descripcion": "Aprobación OC S/ 10,001 - 50,000",
+      "activo": 1
+    },
+    {
+      "montoMinimo": 50001,
+      "montoMaximo": 999999999,
+      "nivel": 1,
+      "rolAprobador": "FINANZAS",
+      "nombreRol": "Finanzas",
+      "descripcion": "Aprobación OC mayor a S/ 50,000",
+      "activo": 1
+    }
+  ],
+  "aprobadoresOC": [
+    {
+      "documentoIdentidad": "DNI_AQUI",
+      "nombreCompleto": "NOMBRE APROBADOR OC",
+      "email": "correo@empresa.com",
+      "rol": "FINANZAS",
+      "montoMinimo": 0,
+      "montoMaximo": 999999999,
+      "nivel": 1,
+      "activo": 1
+    }
+  ],
+  "flujoOS": [
+    {
+      "nombre": "OS hasta S/ 10,000",
+      "montoDesde": 0,
+      "montoHasta": 10000,
+      "niveles": 1,
+      "activo": 1
+    },
+    {
+      "nombre": "OS S/ 10,001 a S/ 50,000",
+      "montoDesde": 10001,
+      "montoHasta": 50000,
+      "niveles": 1,
+      "activo": 1
+    },
+    {
+      "nombre": "OS mayor a S/ 50,000",
+      "montoDesde": 50001,
+      "montoHasta": 999999999,
+      "niveles": 1,
+      "activo": 1
+    }
+  ],
+  "aprobadoresOS": [
+    {
+      "documentoIdentidad": "DNI_AQUI",
+      "nombre": "NOMBRE APROBADOR OS",
+      "rol": "FINANZAS",
+      "nivelMaximo": 3,
+      "activo": 1
+    }
+  ]
+}
