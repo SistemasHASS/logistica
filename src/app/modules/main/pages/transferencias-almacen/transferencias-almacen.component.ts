@@ -166,6 +166,7 @@ export class TransferenciasAlmacenComponent implements OnInit {
         almacenDestino: this.transferenciasSeleccionada.almacenDestino,
         usuario: this.usuario.usuario,
         observacionesAlmacen: this.observacionesAlmacen,
+        idempresa: this.usuario.idempresa,
       });
 
       const parsed = this.parsearRespuesta(resp);

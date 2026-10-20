@@ -21,7 +21,7 @@
               <i class="bx bx-shopping-bag me-2"></i>COMPRAS
             </button>
           </li>
-          <li class="nav-item" role="presentation" *ngIf="esLogist || esAllogist || esJloLogist">
+          <li class="nav-item" role="presentation" *ngIf="esLogist || esAllogist || esJloLogist || esAdlogist">
             <button class="nav-link" [class.active]="activeTab === 'transferencia'" 
                     id="transferencia-tab" data-bs-toggle="tab" data-bs-target="#transferencia" 
                     type="button" role="tab" aria-controls="transferencia" 
@@ -501,7 +501,7 @@
       <!-- TAB TRANSFERENCIA -->
       <div class="tab-pane fade" [class.show]="activeTab === 'transferencia'" [class.active]="activeTab === 'transferencia'"
            id="transferencia" role="tabpanel" aria-labelledby="transferencia-tab"
-           *ngIf="esLogist || esAllogist || esJloLogist">
+           *ngIf="esLogist || esAllogist || esJloLogist || esAdlogist">
 
         <div class="alert alert-warning mb-4">
           <i class="bx bx-transfer me-2"></i>

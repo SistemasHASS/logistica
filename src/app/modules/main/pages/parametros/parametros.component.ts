@@ -220,7 +220,6 @@ export class ParametrosComponent implements OnInit {
       console.log('📦 Cambiado a tab CONSUMO - Tipo: CONSUMO');
     } else if (tab === 'transferencia') {
       this.configuracion.idTipoItem = 'TRANSFERENCIA';
-      this.cargarAlmacenesDestinoVirtual();
       console.log('🔁 Cambiado a tab TRANSFERENCIA - Tipo: TRANSFERENCIA');
     }
     
@@ -381,7 +380,7 @@ export class ParametrosComponent implements OnInit {
 
     console.log('🔧 Tipo Item base:', this.tipoItem);
 
-    // 🔐 LOLOGIST, ALLOGIST, JLOLOGIST, ADLOGIST pueden TRANSFERENCIA
+    // 🔐 LOLOGIST, ALLOGIST, JLOLOGIST y ADLOGIST pueden TRANSFERENCIA
     if (this.esLogist || this.esAllogist || this.esJloLogist || this.esAdlogist) {
       this.tipoItem.push({
         id: 'TRANSFERENCIA',
@@ -1368,6 +1367,7 @@ export class ParametrosComponent implements OnInit {
     console.log('🎭 Rol:', this.usuario.idrol);
 
     this.almacenes = [];
+    const idalmacenGuardado = this.configuracion.idalmacen;
     this.configuracion.idalmacen = '';
 
     // ===============================
@@ -1375,9 +1375,9 @@ export class ParametrosComponent implements OnInit {
     // ===============================
     if (this.configuracion.idTipoItem === 'TRANSFERENCIA') {
 
-      // LOLOGIST, OPLOGIST y ALLOGIST
+      // LOLOGIST, ALLOGIST, JLOLOGIST y ADLOGIST
       const rol = this.usuario.idrol;
-      if (rol !== 'LOLOGIST' && rol !== 'OPLOGIST' && rol !== 'ALLOGIST') {
+      if (rol !== 'LOLOGIST' && rol !== 'ALLOGIST' && rol !== 'JLOLOGIST' && rol !== 'ADLOGIST') {
         console.warn('⛔ Transferencia no permitida para este rol');
         return;
       }
@@ -1386,16 +1386,18 @@ export class ParametrosComponent implements OnInit {
       const todosAlmacenes = await this.dexieService.showAlmacenes();
       this.almacenes = todosAlmacenes || [];
 
-      // Por defecto seleccionar el almacén principal (almentrada = 'S') si no hay uno configurado
-      if (!this.configuracion.idalmacen) {
+      // Restaurar el almacén origen guardado; si no hay, preseleccionar el principal (almentrada = 'S')
+      if (idalmacenGuardado) {
+        this.configuracion.idalmacen = idalmacenGuardado;
+      } else {
         const almacenPrincipal = todosAlmacenes.find((c: any) => c.almentrada === 'S');
         if (almacenPrincipal) {
           this.configuracion.idalmacen = String(almacenPrincipal.idalmacen);
         }
       }
 
-      // Almacén destino: también TODOS los almacenes físicos
-      this.almacenesDestino = todosAlmacenes || [];
+      // Almacén destino: almacenes de destino virtual (misma tabla que usa Requerimientos)
+      await this.cargarAlmacenesDestinoVirtual();
 
       console.log('🔁 ALMACENES ORIGEN (todos):', this.almacenes.length);
       console.log('🔁 ALMACÉN ORIGEN seleccionado:', this.configuracion.idalmacen);

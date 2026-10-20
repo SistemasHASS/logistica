@@ -666,7 +666,7 @@ export class RequerimientosComponent implements OnInit, OnDestroy {
       this.opcionesPrioridadITEM = this.prioridadService.obtenerOpcionesPrioridad('COMPRA');
       console.log('✅ Establecido tipo COMPRA');
     } else if (tipoActivo === 'TRANSFERENCIA' && puedeTransferencia) {
-      // TRANSFERENCIA: LOLOGIST, OPLOGIST y ALLOGIST
+      // TRANSFERENCIA: LOLOGIST, ALLOGIST, JLOLOGIST y ADLOGIST
       this.TipoSelecionado = 'TRANSFERENCIA';
       this.requerimiento.itemtipo = 'TRANSFERENCIA';
       this.tabActiva = 'ITEM';

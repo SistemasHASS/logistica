@@ -199,7 +199,7 @@ export class RequerimientosItemService {
     this.permitirEditarParametros = false;
     const cfg = this.maestras.configuracion;
     const rol = this.usuario.idrol;
-    const puedeTransferencia = rol === 'LOLOGIST' || rol === 'OPLOGIST' || rol === 'ALLOGIST';
+    const puedeTransferencia = rol === 'LOLOGIST' || rol === 'ALLOGIST' || rol === 'JLOLOGIST' || rol === 'ADLOGIST';
 
     console.log('🆕 NUEVO REQUERIMIENTO - Configuración:', {
       idTipoItem: cfg?.idTipoItem,
@@ -210,7 +210,7 @@ export class RequerimientosItemService {
     });
 
     if (cfg?.idTipoItem) {
-      // Validar que solo LOLOGIST y ALLOGIST puedan hacer TRANSFERENCIAS
+      // Validar que solo LOLOGIST, ALLOGIST, JLOLOGIST y ADLOGIST puedan hacer TRANSFERENCIAS
       if (cfg.idTipoItem === 'TRANSFERENCIA' && !puedeTransferencia) {
         console.log('🚫 TRANSFERENCIA no permitida para este rol, cambiando a COMPRA');
         this.TipoSelecionado = 'COMPRA';
@@ -1640,9 +1640,19 @@ export class RequerimientosItemService {
         almacenCodigo = almacenCompleto?.idalmacen ?? ('H' + almacenCodigo.padStart(3, '0'));
       }
 
+      let almacenDestinoCodigo = this.maestras.almacenDestino || '';
+      if (almacenDestinoCodigo && almacenDestinoCodigo.length <= 3 && !isNaN(Number(almacenDestinoCodigo))) {
+        const almDest = almacenes.find((a: any) => a.idalmacen == almacenDestinoCodigo || a.almacen == almacenDestinoCodigo);
+        almacenDestinoCodigo = almDest?.idalmacen ?? ('H' + almacenDestinoCodigo.padStart(3, '0'));
+      }
+
+      // Multiempresa: idempresa a 6 digitos + '00' (000008 -> '00000800')
+      const companiaSocio = String(usuario.idempresa ?? '000008').padStart(6, '0') + '00';
+      const unidadNegocio = companiaSocio === '00000800' ? '0001' : '0002';
+
       const payloadSpring = [
         {
-          CompaniaSocio: (usuario.idempresa ?? '') + '00',
+          CompaniaSocio: companiaSocio,
           RequisicionNumero: '',
           Clasificacion: 'TRA',
           ComprasAlmacenFlag: 'A',
@@ -1651,14 +1661,14 @@ export class RequerimientosItemService {
           FechaRequerida: new Date().toISOString(),
           FechaPreparacion: new Date().toISOString(),
           FechaAprobacion: new Date().toISOString(),
-          PreparadaPor: -1,
-          AprobadaPor: -1,
+          PreparadaPor: usuario.documentoidentidad,
+          AprobadaPor: usuario.documentoidentidad,
           PrecioTotal: 0,
           PrioridadCodigo: String(prioridad ?? '1'),
           DefaultPrime: centroCostoDefault,
           DefaultAfe: proyectoAfeDefault,
           CuantiaMonetariaPendienteFlag: 'N',
-          UnidadNegocio: '0001',
+          UnidadNegocio: unidadNegocio,
           UnidadReplicacion: 'TRUJ',
           LocalForeignFlag: 'L',
           Comentarios: this.requerimiento.glosa || '',
@@ -1672,6 +1682,7 @@ export class RequerimientosItemService {
           ClienteNumeroPedido: '',
           ViaTransporte: 'T',
           OrigenGeneracionFlag: 'L',
+          DireccionDestino: almacenDestinoCodigo,
           origen: 'app_logistica',
           detalle: detalle.map((d: any, index: number) => {
             const ceco = cecos.find((c: any) => c.localname === d.ceco || c.idceco === d.ceco);
@@ -1708,21 +1719,34 @@ export class RequerimientosItemService {
               origen: 'app_logistica',
             };
           }),
-          distribucion: [
-            {
-              Secuencia: 1,
+          distribucion: detalle.map((d: any, index: number) => {
+            const ceco = cecos.find((c: any) => c.localname === d.ceco || c.idceco === d.ceco);
+            const labor = this.maestras.labores?.find((l: any) => l.labor === d.labor);
+            const proyecto = proyectos.find((p: any) => p.proyectoio === d.proyecto);
+            const itemEncontrado = (this.maestras.items || []).find((i: any) => i.item === d.codigo);
+            const turno = this.maestras.turnos?.find((t: any) => t.nombreTurno === d.turno);
+
+            // Sucursal = idfundo a 4 dígitos (ej. '0801'), fallback: últimos 2 de idempresa + '01'
+            let sucursalFormateada = this.requerimiento.idfundo;
+            if (!sucursalFormateada || sucursalFormateada.length < 4) {
+              sucursalFormateada = String(usuario.idempresa ?? '').slice(-2) + '01';
+            }
+            sucursalFormateada = String(sucursalFormateada).substring(0, 4).padStart(4, '0');
+
+            return {
+              Secuencia: index + 1,
               Linea: 1,
-              Account: accountDefault,
-              Afe: proyectoAfeDefault,
+              Account: itemEncontrado?.cuentaGasto || ceco?.ccontable || accountDefault,
+              Afe: proyecto?.afe ?? proyectoAfeDefault,
               Monto: '100.00',
-              CentroCostoDestino: centroCostoDefault,
-              Sucursal: '0801',
+              CentroCostoDestino: labor?.idlabor ?? (ceco?.costcenter || centroCostoDefault),
+              Sucursal: sucursalFormateada,
               CampoReferencia: this.SeleccionaTipoGasto || 'GA',
               ReferenciaFiscal01: '',
-              ReferenciaFiscal02: '',
+              ReferenciaFiscal02: turno?.idturno ?? String(usuario.idempresa ?? '').slice(-4),
               origen: 'app_logistica',
-            },
-          ],
+            };
+          }),
         },
       ];
 
