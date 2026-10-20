@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AdminLogisticaAuthService } from '../auth/services/admin-logistica-auth.service';
+import { environment } from 'src/environments/environment';
 import { PermisosRolService } from '../services/permisos-rol.service';
 import moment from 'moment';
 
@@ -52,6 +53,14 @@ export class AdminLogisticaLayoutComponent implements OnInit {
   logout() {
     this.authService.logout();
     this.router.navigate(['/admin-logistica/login']);
+  }
+
+  // Portal de documentación. Link real (href + target=_blank): no depende de
+  // window.open ni del bloqueador de popups. Filtrado por el rol logueado.
+  get urlAyuda(): string {
+    const rol = (this.authService.currentUser()?.idrol ?? '').split(',')[0].trim();
+    const base = `${environment.docsUrl}/docs/manuales-roles/portal-usuario.html`;
+    return rol ? `${base}?rol=${encodeURIComponent(rol)}&solo=1` : base;
   }
 
   isAdmin(): boolean {

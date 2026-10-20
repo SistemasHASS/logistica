@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MANUAL ADMINISTRACION CLASICA — Sistema Logistica</title>
+<style>
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
+  nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+            padding:12px 24px; background:#0f172a; border-bottom:1px solid #1e293b; }
+  nav.top a.volver { color:#60a5fa; text-decoration:none; font-size:14px; white-space:nowrap; }
+  nav.top a.volver:hover { text-decoration:underline; }
+  nav.top .t { font-size:15px; font-weight:600; color:#e2e8f0; flex:1; min-width:200px;
+               overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  nav.top a.btn { font-size:12px; color:#cbd5e1; text-decoration:none; background:#1e293b;
+                  border:1px solid #334155; border-radius:6px; padding:6px 12px; white-space:nowrap; }
+  nav.top a.btn:hover { border-color:#60a5fa; color:#93c5fd; }
+  article { max-width:900px; margin:0 auto; padding:32px 24px 60px; background:#fff; min-height:100vh; }
+  h1,h2,h3,h4 { margin:1.4em 0 .5em; line-height:1.3; color:#0f172a; }
+  h1 { font-size:26px; border-bottom:2px solid #e2e8f0; padding-bottom:8px; }
+  h2 { font-size:21px; border-bottom:1px solid #e2e8f0; padding-bottom:6px; }
+  h3 { font-size:17px; }
+  p, li { line-height:1.65; font-size:15px; }
+  ul, ol { padding-left:26px; margin:.6em 0; }
+  a { color:#2563eb; }
+  code { background:#f1f5f9; border-radius:4px; padding:1px 6px; font-size:13px; color:#be185d; }
+  pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow:auto; margin:.8em 0; }
+  pre code { background:none; color:inherit; padding:0; }
+  table { border-collapse:collapse; margin:.9em 0; width:100%; font-size:14px; }
+  th, td { border:1px solid #cbd5e1; padding:7px 10px; text-align:left; }
+  th { background:#f1f5f9; }
+  tr:nth-child(even) td { background:#f8fafc; }
+  img { max-width:100%; border:1px solid #e2e8f0; border-radius:6px; margin:.6em 0; }
+  blockquote { border-left:4px solid #cbd5e1; padding:4px 16px; color:#475569; margin:.8em 0; }
+  hr { border:none; border-top:1px solid #e2e8f0; margin:1.6em 0; }
+  @media (max-width:700px) {
+    nav.top { padding:10px 12px; gap:8px; }
+    nav.top .t { font-size:13px; min-width:120px; }
+    article { padding:22px 14px 50px; }
+    table { display:block; overflow-x:auto; }
+    pre { font-size:12px; }
+  }
+</style>
+<script src="../solo-rol.js"></script>
+</head>
+<body>
+<nav class="top">
+  <a class="volver" href="../index.html">&#8592; Portal</a>
+  <span class="t">MANUAL ADMINISTRACION CLASICA</span>
+  <a class="btn" href="../visor-docx.html?doc=docx/MANUAL_ADMINISTRACION_CLASICA.docx">Ver Word</a><a class="btn" href="../docx/MANUAL_ADMINISTRACION_CLASICA.docx">&#11015; .docx</a>
+  <a class="btn" href="../MANUAL_ADMINISTRACION_CLASICA.md">Fuente .md</a>
+</nav>
+<article>
+<h1 id="manual-del-módulo-de-administración-clásica-administracion">Manual del Módulo de Administración Clásica (<code>/administracion</code>)</h1>
+<p><strong>Versión:</strong> 1.0 — Octubre 2026 <strong>Audiencia:</strong> TILOGIST, ADLOGIST (acceso con login adicional)</p>
+<hr />
+<h2 id="índice">Índice</h2>
+<ol type="1">
+<li><a href="#1-acceso">Acceso</a></li>
+<li><a href="#2-panel-y-usuarios">Panel y usuarios</a></li>
+<li><a href="#3-estructura-organizacional">Estructura organizacional</a></li>
+<li><a href="#4-aprobaciones-y-flujos">Aprobaciones y flujos</a></li>
+<li><a href="#5-correo-y-plantillas">Correo y plantillas</a></li>
+<li><a href="#6-apariencia-y-branding">Apariencia y branding</a></li>
+<li><a href="#7-permisos-y-menús">Permisos y menús</a></li>
+<li><a href="#8-empresas-y-sincronización">Empresas y sincronización</a></li>
+<li><a href="#9-diferencias-con-la-consola-admin-logistica">Diferencias con la consola <code>/admin-logistica</code></a></li>
+</ol>
+<hr />
+<h2 id="1-acceso">1. Acceso</h2>
+<table>
+<thead>
+<tr>
+<th>Paso</th>
+<th>Detalle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Login</td>
+<td><code>/admin-login</code> → genera <code>ADMIN_TOKEN</code> en localStorage</td>
+</tr>
+<tr>
+<td>Ruta</td>
+<td><code>/administracion</code> (lazy module, <code>AdminGuard</code>)</td>
+</tr>
+<tr>
+<td>Sin token</td>
+<td>Redirige a <code>/admin-login</code></td>
+</tr>
+<tr>
+<td>Layout</td>
+<td><code>AdminLayoutComponent</code> con menú propio</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>A diferencia de la consola <code>/admin-logistica</code> (que valida rol), aquí el control es el token de admin-login. En la práctica lo usan TILOGIST y ADLOGIST.</p>
+</blockquote>
+<h2 id="2-panel-y-usuarios">2. Panel y usuarios</h2>
+<h3 id="21-dashboard--administraciondashboard">2.1 Dashboard — <code>/administracion/dashboard</code></h3>
+<p>Panel del módulo: resumen de usuarios, roles y configuración.</p>
+<h3 id="22-usuarios--admin-usuarios">2.2 Usuarios — <code>admin-usuarios</code></h3>
+<p>CRUD de usuarios de la app: alta, edición, cambio de rol, activar/desactivar.</p>
+<ol type="1">
+<li>Lista de usuarios → buscar por nombre/usuario.</li>
+<li><strong>Nuevo</strong> o editar → datos + <code>idrol</code>.</li>
+<li>Guardar.</li>
+</ol>
+<h3 id="23-roles--admin-roles">2.3 Roles — <code>admin-roles</code></h3>
+<p>Mantenedor del catálogo de roles (los <code>idrol</code> disponibles para asignar).</p>
+<h3 id="24-perfiles--admin-perfiles">2.4 Perfiles — <code>admin-perfiles</code></h3>
+<p>Perfiles de acceso (agrupaciones de permisos históricos del sistema).</p>
+<h2 id="3-estructura-organizacional">3. Estructura organizacional</h2>
+<h3 id="31-áreas--admin-areas">3.1 Áreas — <code>admin-areas</code></h3>
+<p>CRUD de áreas: nombre, empresa, estado.</p>
+<h3 id="32-usuarios-por-área--usuarios-por-area">3.2 Usuarios por Área — <code>usuarios-por-area</code></h3>
+<p>Asignación usuario ↔︎ área. Es la base para que APLOGIST reciba solo los requerimientos de su área.</p>
+<ol type="1">
+<li>Seleccionar área → ver usuarios asignados.</li>
+<li>Agregar/quitar usuarios → guardar.</li>
+</ol>
+<h2 id="4-aprobaciones-y-flujos">4. Aprobaciones y flujos</h2>
+<h3 id="41-flujos--admin-flujos">4.1 Flujos — <code>admin-flujos</code></h3>
+<p>Definición de flujos de aprobación (secuencia de niveles y aprobadores por tipo de documento).</p>
+<h3 id="42-aprobadores--admin-aprobadores">4.2 Aprobadores — <code>admin-aprobadores</code></h3>
+<p>Mantenedor de aprobadores: quién aprueba en cada nivel del flujo.</p>
+<h2 id="5-correo-y-plantillas">5. Correo y plantillas</h2>
+<h3 id="51-proveedores-email--admin-proveedores-email">5.1 Proveedores Email — <code>admin-proveedores-email</code></h3>
+<p>Correos de proveedores para envío automático de OC/notificaciones.</p>
+<h3 id="52-config-smtp--admin-config-smtp">5.2 Config SMTP — <code>admin-config-smtp</code></h3>
+<p>Servidor de correo saliente: host, puerto, credenciales, remitente. <strong>Cambiar con cuidado</strong> — afecta todos los envíos.</p>
+<h3 id="53-plantilla-correo--admin-plantilla-correo">5.3 Plantilla Correo — <code>admin-plantilla-correo</code></h3>
+<p>Cuerpo/asunto de los correos automáticos (variables del documento).</p>
+<h3 id="54-plantilla-pdf--admin-plantilla-pdf">5.4 Plantilla PDF — <code>admin-plantilla-pdf</code></h3>
+<p>Diseño del PDF de órdenes: cabecera, signatarios, pie.</p>
+<h2 id="6-apariencia-y-branding">6. Apariencia y branding</h2>
+<h3 id="61-configuración-de-colores--configuracion-colores">6.1 Configuración de Colores — <code>configuracion-colores</code></h3>
+<p>Paleta de colores de la app por empresa.</p>
+<h3 id="62-config-branding--admin-config-branding">6.2 Config Branding — <code>admin-config-branding</code></h3>
+<p>Logo, nombre y assets de marca por empresa.</p>
+<h2 id="7-permisos-y-menús">7. Permisos y menús</h2>
+<h3 id="71-permisos-roles--admin-permisos-roles">7.1 Permisos Roles — <code>admin-permisos-roles</code></h3>
+<p>Permisos por rol del módulo clásico (distinto de <code>ADMINLG_*</code> de la consola nueva).</p>
+<h3 id="72-menús-layout--admin-menus-layout">7.2 Menús Layout — <code>admin-menus-layout</code></h3>
+<p>Tipo de layout del menú por rol (accordion, nav, list) — escribe las claves <code>MENU_TYPE</code>/<code>LAYOUT_*</code> en <code>LOGISTICA_ConfiguracionPermiso</code>.</p>
+<h3 id="73-menús-dinámicos--admin-menus-dinamicos">7.3 Menús Dinámicos — <code>admin-menus-dinamicos</code></h3>
+<p>Editor de <code>MENU_JSON</code> por rol: grupos, ítems, iconos, rutas, orden, activo/inactivo.</p>
+<h3 id="74-permisos-menú-dinámico--admin-permisos-menu-dinamico">7.4 Permisos Menú Dinámico — <code>admin-permisos-menu-dinamico</code></h3>
+<p>Permisos finos sobre los ítems del menú dinámico (<code>ITEMS_VISIBLES</code>).</p>
+<h3 id="75-plantillas-menú--admin-plantillas-menu">7.5 Plantillas Menú — <code>admin-plantillas-menu</code></h3>
+<p>Plantillas reutilizables de menú para aplicar a varios roles de una vez.</p>
+<h2 id="8-empresas-y-sincronización">8. Empresas y sincronización</h2>
+<h3 id="81-empresas--admin-empresas">8.1 Empresas — <code>admin-empresas</code></h3>
+<p>CRUD de empresas del grupo (multiempresa).</p>
+<h3 id="82-plantilla-almacén--admin-plantilla-almacen">8.2 Plantilla Almacén — <code>admin-plantilla-almacen</code></h3>
+<p>Plantillas de almacén por empresa.</p>
+<h3 id="83-versión-api--admin-version-api">8.3 Versión API — <code>admin-version-api</code></h3>
+<p>Versión de la API desplegada — útil para verificar despliegues y el control de versiones de la app (<code>updateMode</code>).</p>
+<h3 id="84-sincronización--admin-sincronizacion">8.4 Sincronización — <code>admin-sincronizacion</code></h3>
+<p>Herramientas de sincronización de maestras/datos hacia los clientes.</p>
+<h2 id="9-diferencias-con-la-consola-admin-logistica">9. Diferencias con la consola <code>/admin-logistica</code></h2>
+<table>
+<thead>
+<tr>
+<th>Tema</th>
+<th><code>/administracion</code> (clásica)</th>
+<th><code>/admin-logistica</code> (consola)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Login</td>
+<td><code>/admin-login</code> + token</td>
+<td>Login propio con usuario</td>
+</tr>
+<tr>
+<td>Enfoque</td>
+<td>Configuración histórica completa</td>
+<td>Administración logística + aprobaciones</td>
+</tr>
+<tr>
+<td>Aprobaciones</td>
+<td>No</td>
+<td>Sí (bandeja, consumo, SC, SS)</td>
+</tr>
+<tr>
+<td>Menús/branding</td>
+<td>Sí (editor completo)</td>
+<td>No (solo permisos <code>ADMINLG_*</code>)</td>
+</tr>
+<tr>
+<td>Usuarios</td>
+<td>CRUD general</td>
+<td>CRUD con restricción por rol</td>
+</tr>
+<tr>
+<td>Recomendado para</td>
+<td>Setup inicial, correo, branding</td>
+<td>Operación diaria de administración</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Regla práctica:</strong> configuración de correo, plantillas, branding y menús → módulo clásico. Aprobaciones, usuarios por área, flujos y permisos de consola → <code>/admin-logistica</code>.</p>
+</blockquote>
+<hr />
+<p><em>Ver también: <a href="MANUAL_ROLES_SISTEMA_COMPLETO.html">Manual maestro de roles</a> · <a href="MANUAL_CONSOLA_ADMIN_LOGISTICA.html">Consola Admin Logística</a></em></p>
+
+</article>
+</body>
+</html>

@@ -69,6 +69,7 @@
     bottom: 0 !important;
     // background: #238664 !important; /* Mismo color que el menú */
     z-index: 10 !important;
+    padding: 10px 14px !important; /* compactar footer (2 botones: Ayuda + Cerrar) */
   }
   @media(max-width: 500px){
     .currentPath{

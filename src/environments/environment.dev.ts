@@ -7,5 +7,7 @@ export const environment = {
   // baseUrl: 'https://localhost:7140',
   baseUrl: 'http://localhost:5213',
   // baserUrl: 'https://apilogistica.agroapps.net:7018',
-  apiMaestra: 'https://apimaestra.agroapps.net:7003'
+  apiMaestra: 'https://apimaestra.agroapps.net:7003',
+  // Portal de documentación (botón Ayuda). En dev apunta al subsitio publicado en QAS.
+  docsUrl: 'https://logisticaqas.agroapps.net:7642/documentacion'
 }

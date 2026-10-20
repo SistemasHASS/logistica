@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glosario Navegable — Sistema Logística</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#f8fafc; color:#1e293b; }
+  header { background:#0f172a; color:#e2e8f0; padding:32px 48px 20px; position:sticky; top:0; z-index:20; }
+  h1 { font-size:24px; } header p { color:#94a3b8; margin-top:4px; font-size:14px; }
+  .buscador { margin-top:14px; }
+  input[type=search] { width:100%; max-width:480px; background:#1e293b; border:1px solid #334155;
+    color:#e2e8f0; border-radius:8px; padding:10px 14px; font-size:15px; }
+  .az { display:flex; flex-wrap:wrap; gap:4px; padding:10px 48px; background:#fff;
+        border-bottom:1px solid #e2e8f0; position:sticky; top:118px; z-index:10; }
+  .az a { padding:4px 9px; border-radius:6px; font-size:13px; font-weight:600; color:#475569;
+          text-decoration:none; }
+  .az a:hover { background:#2563eb; color:#fff; }
+  .az a.off { opacity:.25; pointer-events:none; }
+  main { padding:24px 48px 60px; max-width:1100px; }
+  .grupo h2 { font-size:13px; letter-spacing:2px; text-transform:uppercase; color:#2563eb;
+              margin:26px 0 10px; border-bottom:2px solid #2563eb; padding-bottom:6px; }
+  dl { display:grid; gap:8px; }
+  .term { background:#fff; border:1px solid #e2e8f0; border-left:4px solid #2563eb;
+          border-radius:0 8px 8px 0; padding:12px 16px; }
+  .term dt { font-weight:700; font-size:15px; }
+  .term dt .cat { font-weight:400; font-size:11px; color:#94a3b8; margin-left:8px; }
+  .term dd { margin-top:4px; font-size:14px; color:#475569; line-height:1.5; }
+  .vacio { color:#64748b; text-align:center; padding:40px; display:none; }
+  @media print { header .buscador, .az { display:none; } header{position:static} }
+  @media (max-width:700px) {
+    header { padding:20px 16px 12px; position:static; }
+    h1 { font-size:20px; }
+    .az { position:sticky; top:0; padding:8px 10px; overflow-x:auto; flex-wrap:nowrap;
+          scrollbar-width:thin; }
+    .az a { flex:0 0 auto; }
+    main { padding:16px 12px 50px; }
+    .term { padding:10px 12px; }
+  }
+</style>
+<script src="solo-rol.js"></script>
+</head>
+<body>
+<header>
+  <h1>Glosario — Sistema Logística</h1>
+  <p>Términos usados en la app, manuales y videos. Busca o navega por letra / categoría.</p>
+  <div class="buscador"><input type="search" id="q" placeholder="Buscar término… (ej. kardex, OC, conformidad)"></div>
+</header>
+<nav class="az" id="az"></nav>
+<main id="main"></main>
+<div class="vacio" id="vacio">Sin términos para esa búsqueda.</div>
+
+<script>
+// [término, definición, categoría]
+const T = [
+["Requerimiento (Req.)","Solicitud de material o servicio creada por el usuario. Es el punto de partida de todo el flujo: se aprueba por área, se consolida y termina en compra o despacho.","Documentos"],
+["SC — Solicitud de Compra","Documento interno que agrupa líneas aprobadas listas para comprar. Previa a la cotización y a la OC.","Documentos"],
+["SS — Solicitud de Servicio","Igual que la SC pero para contratación de servicios.","Documentos"],
+["OC — Orden de Compra","Documento formal emitido al proveedor después de la cotización ganadora y las aprobaciones del flujo.","Documentos"],
+["OS — Orden de Servicio","Documento formal para contratar un servicio a un proveedor.","Documentos"],
+["Cotización","Oferta registrada de un proveedor. Se cargan varias, se comparan y se elige la ganadora que origina la OC.","Documentos"],
+["Consolidación","Agrupar líneas aprobadas de varios requerimientos en una sola compra.","Documentos"],
+["Consolidación Corporativa","Consolidación que junta requerimientos de varias empresas del grupo para negociar mejor precio.","Documentos"],
+["Despacho","Salida física de material del almacén hacia el solicitante. Queda pendiente de conformidad.","Documentos"],
+["Recepción","Ingreso físico de mercadería de una OC al almacén. Actualiza stock y kardex.","Documentos"],
+["Conformidad","Confirmación del receptor de que recibió correctamente el material (de despacho) o el servicio.","Documentos"],
+["Devolución de consumo","Material que el usuario devuelve porque no lo utilizó.","Documentos"],
+["Devolución a proveedor","Material que almacén devuelve al proveedor por fallas o exceso.","Documentos"],
+["Reingreso","Material que retorna al stock del almacén. Requiere aprobación del jefe de área (APLOGIST).","Documentos"],
+["Transferencia","Movimiento de stock entre dos almacenes.","Documentos"],
+["Bandeja","Lista de documentos pendientes de tu acción (aprobar, revisar).","Documentos"],
+
+["Ítem","Producto o material individual que se solicita o almacena.","Maestras"],
+["Commodity","Tipo de requerimiento asociado a labores o servicios de campo.","Maestras"],
+["Activo fijo","Bien de capital: maquinaria, equipos, inmuebles.","Maestras"],
+["Activo menor","Bien de bajo valor: herramientas menores, accesorios.","Maestras"],
+["Maestras","Datos base descargados al equipo al sincronizar: ítems, almacenes, áreas, centros de costo, labores, unidades de medida.","Maestras"],
+["Ceco","Centro de costo — unidad organizacional que asume el gasto del requerimiento.","Maestras"],
+["Labor","Actividad agrícola u operativa a la que se imputa el consumo.","Maestras"],
+["Fundo","Unidad agrícola o campo de la empresa.","Maestras"],
+["Almacén destino","Almacén que recibe o atiende el requerimiento.","Maestras"],
+["Lista de stock","Lista predefinida de ítems para despachos frecuentes.","Maestras"],
+["Unidad de medida","Magnitud en que se solicita/almacena un ítem (unidad, caja, kg, lt…).","Maestras"],
+
+["Pendiente","Documento creado que espera la acción del siguiente nivel.","Estados"],
+["Aprobado / Rechazado","Resultado de la revisión en cada nivel del flujo.","Estados"],
+["Saldo de requerimiento","Cantidad de un requerimiento aún no atendida.","Estados"],
+["Saldos pendientes","Líneas aprobadas sin consolidar — generan la notificación periódica.","Estados"],
+["Kardex","Historial de movimientos de cada ítem: entradas, salidas y saldos.","Estados"],
+["Sincronizar","Enviar los datos locales al servidor y descargar las maestras actualizadas. Obligatorio antes de crear requerimientos.","Estados"],
+["Auditoría","Registro de quién hizo qué y cuándo — consultable en la consola admin.","Estados"],
+
+["idrol","Código del rol del usuario (OPLOGIST, ALLOGIST, etc.). Define qué pantallas y menú ves.","Roles y acceso"],
+["Rol múltiple","Un usuario con varios roles separados por coma, ej. LOLOGIST,ALLOGIST. Los guards evalúan 'contiene'.","Roles y acceso"],
+["Guard","Regla del sistema que decide si tu rol puede entrar a una pantalla.","Roles y acceso"],
+["MENU_JSON","Configuración en base de datos que define el menú lateral de cada rol.","Roles y acceso"],
+["ITEMS_VISIBLES","Clave que filtra qué ítems del menú por defecto ve un rol.","Roles y acceso"],
+["ADMINLG_*","Claves de permiso que controlan las pestañas de la consola /admin-logistica.","Roles y acceso"],
+["Consola admin","/admin-logistica — administración logística, aprobaciones y configuración con login propio.","Roles y acceso"],
+["Administración clásica","/administracion — módulo histórico de configuración (correo, branding, menús). Entra por /admin-login.","Roles y acceso"],
+["Aprobador","Usuario que valida un documento en un nivel del flujo.","Roles y acceso"],
+["Flujo de aprobación","Secuencia de niveles que debe pasar un documento hasta aprobarse.","Roles y acceso"],
+["ADMIN_TOKEN","Token en sesión que habilita el módulo /administracion tras el admin-login.","Roles y acceso"],
+
+["IndexedDB / Dexie","Base de datos local del navegador donde se guarda tu sesión y los pendientes sin sincronizar.","Técnicos"],
+["API Maestra","Servicio central de usuarios usado en el login.","Técnicos"],
+["API Logística","Servicio del módulo (environment.baseUrl) al que llaman las pantallas.","Técnicos"],
+["Offline-first","Diseño que permite trabajar sin internet y sincronizar después.","Técnicos"],
+["Login de consola","La consola /admin-logistica tiene autenticación propia, independiente del login de la app.","Técnicos"],
+["Cierre de sesión bloqueado","El sistema impide cerrar sesión si tienes requerimientos sin sincronizar.","Técnicos"],
+];
+
+const main = document.getElementById('main');
+const az = document.getElementById('az');
+const CATS = ["Documentos","Maestras","Estados","Roles y acceso","Técnicos"];
+
+function letra(t){ return t.normalize('NFD').replace(/[\u0300-\u036f]/g,'')[0].toUpperCase(); }
+
+function renderAZ(){
+  const usadas = new Set(T.map(t => letra(t[0])));
+  az.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l =>
+    `<a href="#L${l}" class="${usadas.has(l)?'':'off'}">${l}</a>`).join('');
+}
+
+function render(){
+  const q = document.getElementById('q').value.toLowerCase();
+  const vis = T.filter(t => (t[0]+' '+t[1]).toLowerCase().includes(q));
+  const porLetra = {};
+  vis.forEach(t => { const l = letra(t[0]); (porLetra[l] = porLetra[l]||[]).push(t); });
+  main.innerHTML = '';
+  for (const l of Object.keys(porLetra).sort()) {
+    main.innerHTML += `<div class="grupo" id="L${l}"><h2>${l}</h2><dl>` +
+      porLetra[l].sort((a,b)=>a[0].localeCompare(b[0])).map(t =>
+        `<div class="term"><dt>${t[0]}<span class="cat">${t[2]}</span></dt><dd>${t[1]}</dd></div>`
+      ).join('') + '</dl></div>';
+  }
+  document.getElementById('vacio').style.display = vis.length ? 'none' : 'block';
+}
+renderAZ(); render();
+document.getElementById('q').addEventListener('input', render);
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="640" viewBox="0 0 1480 640" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect width="1480" height="640" fill="#0f172a" rx="12"/>
+  <text x="40" y="46" fill="#e2e8f0" font-size="26" font-weight="700">Flujo end-to-end — Sistema Logística</text>
+  <text x="40" y="74" fill="#94a3b8" font-size="14">Del requerimiento a la conformidad: quién hace qué, en qué orden</text>
+
+  <!-- Swimlanes -->
+  <g font-size="13" font-weight="700">
+    <rect x="20" y="95" width="200" height="470" rx="10" fill="#16a34a22" stroke="#16a34a"/>
+    <text x="120" y="122" fill="#4ade80" text-anchor="middle">SOLICITANTE</text>
+    <text x="120" y="140" fill="#4ade80" text-anchor="middle" font-size="11">OPLOGIST · EMLOGIST</text>
+
+    <rect x="240" y="95" width="200" height="470" rx="10" fill="#9333ea22" stroke="#9333ea"/>
+    <text x="340" y="122" fill="#c084fc" text-anchor="middle">JEFE DE ÁREA</text>
+    <text x="340" y="140" fill="#c084fc" text-anchor="middle" font-size="11">APLOGIST</text>
+
+    <rect x="460" y="95" width="240" height="470" rx="10" fill="#2563eb22" stroke="#2563eb"/>
+    <text x="580" y="122" fill="#60a5fa" text-anchor="middle">LOGÍSTICA / COMPRAS</text>
+    <text x="580" y="140" fill="#60a5fa" text-anchor="middle" font-size="11">LOLOGIST · JLOLOGIST</text>
+
+    <rect x="720" y="95" width="240" height="470" rx="10" fill="#b91c1c22" stroke="#b91c1c"/>
+    <text x="840" y="122" fill="#f87171" text-anchor="middle">APROBADORES ORDEN</text>
+    <text x="840" y="140" fill="#f87171" text-anchor="middle" font-size="11">JLOLOGIST · JEMLOGIST · FINANZAS · GERENTE</text>
+
+    <rect x="980" y="95" width="220" height="470" rx="10" fill="#ca8a0422" stroke="#ca8a04"/>
+    <text x="1090" y="122" fill="#facc15" text-anchor="middle">ALMACÉN</text>
+    <text x="1090" y="140" fill="#facc15" text-anchor="middle" font-size="11">ALLOGIST</text>
+
+    <rect x="1220" y="95" width="240" height="470" rx="10" fill="#0d948822" stroke="#0d9488"/>
+    <text x="1340" y="122" fill="#2dd4bf" text-anchor="middle">CIERRE / CONTROL</text>
+    <text x="1340" y="140" fill="#2dd4bf" text-anchor="middle" font-size="11">Solicitante + Reportes</text>
+  </g>
+
+  <!-- Steps -->
+  <g font-size="14" font-weight="600" fill="#e2e8f0">
+    <rect x="45" y="230" width="150" height="66" rx="8" fill="#16a34a" />
+    <text x="120" y="258" text-anchor="middle" fill="#fff">1. Crear</text>
+    <text x="120" y="278" text-anchor="middle" fill="#fff" font-size="12">Requerimiento</text>
+
+    <rect x="265" y="230" width="150" height="66" rx="8" fill="#9333ea"/>
+    <text x="340" y="258" text-anchor="middle" fill="#fff">2. Aprobar</text>
+    <text x="340" y="278" text-anchor="middle" fill="#fff" font-size="12">por área</text>
+
+    <rect x="485" y="180" width="190" height="60" rx="8" fill="#2563eb"/>
+    <text x="580" y="206" text-anchor="middle" fill="#fff">3. Consolidar</text>
+    <text x="580" y="226" text-anchor="middle" fill="#fff" font-size="12">líneas aprobadas</text>
+
+    <rect x="485" y="290" width="190" height="60" rx="8" fill="#2563eb"/>
+    <text x="580" y="316" text-anchor="middle" fill="#fff">4. Cotizar + SC</text>
+    <text x="580" y="336" text-anchor="middle" fill="#fff" font-size="12">elegir ganadora</text>
+
+    <rect x="485" y="400" width="190" height="60" rx="8" fill="#2563eb"/>
+    <text x="580" y="426" text-anchor="middle" fill="#fff">5. Emitir OC / OS</text>
+    <text x="580" y="446" text-anchor="middle" fill="#fff" font-size="12">enviar a aprobación</text>
+
+    <rect x="745" y="290" width="190" height="60" rx="8" fill="#b91c1c"/>
+    <text x="840" y="316" text-anchor="middle" fill="#fff">6. Aprobar orden</text>
+    <text x="840" y="336" text-anchor="middle" fill="#fff" font-size="12">según nivel del flujo</text>
+
+    <rect x="1005" y="180" width="170" height="60" rx="8" fill="#ca8a04"/>
+    <text x="1090" y="206" text-anchor="middle" fill="#fff">7. Recepcionar</text>
+    <text x="1090" y="226" text-anchor="middle" fill="#fff" font-size="12">OC → stock</text>
+
+    <rect x="1005" y="290" width="170" height="60" rx="8" fill="#ca8a04"/>
+    <text x="1090" y="316" text-anchor="middle" fill="#fff">8. Despachar</text>
+    <text x="1090" y="336" text-anchor="middle" fill="#fff" font-size="12">al solicitante</text>
+
+    <rect x="1005" y="400" width="170" height="60" rx="8" fill="#ca8a04"/>
+    <text x="1090" y="426" text-anchor="middle" fill="#fff">Kardex / Inventario</text>
+    <text x="1090" y="446" text-anchor="middle" fill="#fff" font-size="12">movimientos y saldos</text>
+
+    <rect x="1245" y="230" width="190" height="66" rx="8" fill="#0d9488"/>
+    <text x="1340" y="258" text-anchor="middle" fill="#fff">9. Conformidad</text>
+    <text x="1340" y="278" text-anchor="middle" fill="#fff" font-size="12">solicitante confirma</text>
+
+    <rect x="1245" y="360" width="190" height="60" rx="8" fill="#0d948866" stroke="#0d9488"/>
+    <text x="1340" y="386" text-anchor="middle" fill="#e2e8f0">10. Reportes</text>
+    <text x="1340" y="406" text-anchor="middle" fill="#94a3b8" font-size="12">compras · saldos · despachos</text>
+  </g>
+
+  <!-- Arrows -->
+  <g stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arr)">
+    <path d="M195,263 L258,263"/>
+    <path d="M415,263 L478,215"/>
+    <path d="M580,243 L580,282"/>
+    <path d="M580,353 L580,392"/>
+    <path d="M675,430 L738,330"/>
+    <path d="M935,320 L998,215"/>
+    <path d="M1090,243 L1090,282"/>
+    <path d="M1175,320 L1238,268"/>
+    <path d="M1090,353 L1090,392"/>
+  </g>
+
+  <!-- Reject path -->
+  <path d="M340,300 Q340,480 120,480 Q120,420 118,310" stroke="#ef4444" stroke-width="2" fill="none" stroke-dasharray="6,5" marker-end="url(#arr)"/>
+  <text x="300" y="510" fill="#ef4444" font-size="12" font-style="italic">rechazo → devuelve al solicitante</text>
+
+  <!-- Side flows -->
+  <g font-size="12" fill="#94a3b8">
+    <text x="45" y="530">Paralelos:</text>
+    <text x="45" y="552">· Devolución de consumo → reingreso (APLOGIST aprueba)</text>
+    <text x="45" y="574">· Devolución a proveedor y evaluación (ALLOGIST/LOLOGIST)</text>
+    <text x="45" y="596">· Servicios: SS → OS → conformidad de servicio</text>
+  </g>
+  <text x="1420" y="612" fill="#475569" font-size="11" text-anchor="end">docs/manuales-roles · 2026</text>
+</svg>

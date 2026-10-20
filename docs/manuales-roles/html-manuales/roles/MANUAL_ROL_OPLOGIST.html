@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MANUAL ROL OPLOGIST — Sistema Logistica</title>
+<style>
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
+  nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+            padding:12px 24px; background:#0f172a; border-bottom:1px solid #1e293b; }
+  nav.top a.volver { color:#60a5fa; text-decoration:none; font-size:14px; white-space:nowrap; }
+  nav.top a.volver:hover { text-decoration:underline; }
+  nav.top .t { font-size:15px; font-weight:600; color:#e2e8f0; flex:1; min-width:200px;
+               overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  nav.top a.btn { font-size:12px; color:#cbd5e1; text-decoration:none; background:#1e293b;
+                  border:1px solid #334155; border-radius:6px; padding:6px 12px; white-space:nowrap; }
+  nav.top a.btn:hover { border-color:#60a5fa; color:#93c5fd; }
+  article { max-width:900px; margin:0 auto; padding:32px 24px 60px; background:#fff; min-height:100vh; }
+  h1,h2,h3,h4 { margin:1.4em 0 .5em; line-height:1.3; color:#0f172a; }
+  h1 { font-size:26px; border-bottom:2px solid #e2e8f0; padding-bottom:8px; }
+  h2 { font-size:21px; border-bottom:1px solid #e2e8f0; padding-bottom:6px; }
+  h3 { font-size:17px; }
+  p, li { line-height:1.65; font-size:15px; }
+  ul, ol { padding-left:26px; margin:.6em 0; }
+  a { color:#2563eb; }
+  code { background:#f1f5f9; border-radius:4px; padding:1px 6px; font-size:13px; color:#be185d; }
+  pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow:auto; margin:.8em 0; }
+  pre code { background:none; color:inherit; padding:0; }
+  table { border-collapse:collapse; margin:.9em 0; width:100%; font-size:14px; }
+  th, td { border:1px solid #cbd5e1; padding:7px 10px; text-align:left; }
+  th { background:#f1f5f9; }
+  tr:nth-child(even) td { background:#f8fafc; }
+  img { max-width:100%; border:1px solid #e2e8f0; border-radius:6px; margin:.6em 0; }
+  blockquote { border-left:4px solid #cbd5e1; padding:4px 16px; color:#475569; margin:.8em 0; }
+  hr { border:none; border-top:1px solid #e2e8f0; margin:1.6em 0; }
+  @media (max-width:700px) {
+    nav.top { padding:10px 12px; gap:8px; }
+    nav.top .t { font-size:13px; min-width:120px; }
+    article { padding:22px 14px 50px; }
+    table { display:block; overflow-x:auto; }
+    pre { font-size:12px; }
+  }
+</style>
+<script src="../../solo-rol.js"></script>
+</head>
+<body>
+<nav class="top">
+  <a class="volver" href="../../index.html">&#8592; Portal</a>
+  <span class="t">MANUAL ROL OPLOGIST</span>
+  <a class="btn" href="../../visor-docx.html?doc=docx/MANUAL_ROL_OPLOGIST.docx">Ver Word</a><a class="btn" href="../../docx/MANUAL_ROL_OPLOGIST.docx">&#11015; .docx</a>
+  <a class="btn" href="../../roles/MANUAL_ROL_OPLOGIST.md">Fuente .md</a>
+</nav>
+<article>
+<h1 id="manual-de-usuario--operativo-campo-oplogist">Manual de Usuario — Operativo Campo (OPLOGIST)</h1>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Código de rol</td>
+<td><code>OPLOGIST</code></td>
+</tr>
+<tr>
+<td>Nombre</td>
+<td>Operativo de Campo / Solicitante</td>
+</tr>
+<tr>
+<td>Pantalla inicial</td>
+<td>Mis Requerimientos (<code>/main/dashboard-oplogist</code>)</td>
+</tr>
+<tr>
+<td>Video tutorial</td>
+<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_OPLOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_OPLOGIST.html</a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
+<p>Eres el <strong>usuario de campo</strong>: solicitas materiales, insumos, activos y servicios desde tu fundo/área. Trabajas incluso <strong>sin conexión</strong>: todo se guarda localmente y se sincroniza después.</p>
+<h2 id="2-acceso">2. Acceso</h2>
+<p>Login → <strong>Mis Requerimientos</strong>: panel con el estado de tus solicitudes (pendientes, aprobadas, en compra, despachadas).</p>
+<p><img src="../../../capturas_manual/12_dashboard_operativo.png" alt="Dashboard operativo" /></p>
+<h2 id="3-pantallas-disponibles">3. Pantallas disponibles</h2>
+<table>
+<thead>
+<tr>
+<th>Pantalla</th>
+<th>Qué haces</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mis Requerimientos (dashboard)</td>
+<td>Estado de tus solicitudes</td>
+</tr>
+<tr>
+<td>Parámetros</td>
+<td><strong>Sincronizar maestras</strong> — paso obligatorio antes de crear requerimientos</td>
+</tr>
+<tr>
+<td>Notificaciones</td>
+<td>Avisos del sistema</td>
+</tr>
+<tr>
+<td>Requerimientos</td>
+<td>Crear solicitudes de ítems, commodities, activos fijos, activos menores, transferencias, consumo</td>
+</tr>
+<tr>
+<td>Conformidad de Despacho</td>
+<td>Confirmas que recibiste el material despachado</td>
+</tr>
+<tr>
+<td>Conformidad de Servicios</td>
+<td>Confirmas que el servicio se ejecutó</td>
+</tr>
+<tr>
+<td>Devoluciones de Consumo</td>
+<td>Devuelves material no utilizado</td>
+</tr>
+<tr>
+<td>Reingresos</td>
+<td>Solicitas reingreso de material al almacén</td>
+</tr>
+<tr>
+<td>Reporte Requerimientos / Logístico / Catálogo</td>
+<td>Consultas</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
+<h3 id="preparar-tu-equipo-una-vez--periódico">Preparar tu equipo (una vez / periódico)</h3>
+<ol type="1">
+<li>Menú → <strong>Parámetros</strong>.</li>
+<li><strong>Sincronizar</strong>: descarga empresas, fundos, almacenes, áreas, cultivos, centros de costo, labores, ítems…</li>
+<li>Sin esto, la pantalla Requerimientos te pedirá sincronizar primero.</li>
+</ol>
+<p><img src="../../../capturas_manual/05_parametros.png" alt="Parámetros" /></p>
+<h3 id="crear-un-requerimiento">Crear un requerimiento</h3>
+<ol type="1">
+<li><strong>Requerimientos → Nuevo</strong>.</li>
+<li>Tipo: Ítem / Commodity / Activo Fijo / Activo Menor / Transferencia / Consumo.</li>
+<li>Cabecera: área, almacén destino, fecha requerida, glosa.</li>
+<li>Agrega líneas (ítem, cantidad, unidad, centro de costo/labor si aplica).</li>
+<li><strong>Guardar</strong> → queda en estado “pendiente de sincronizar” si no hay red.</li>
+<li><strong>Sincroniza</strong> cuando tengas conexión → tu requerimiento pasa a aprobación del jefe de área (APLOGIST).</li>
+</ol>
+<h3 id="confirmar-recepción-conformidad">Confirmar recepción (conformidad)</h3>
+<p>Cuando el almacén despache tu pedido: <strong>Conformidad de Despacho</strong> → abre el despacho → confirma cantidades recibidas u observa diferencias.</p>
+<h3 id="devolver-o-reingresar-material">Devolver o reingresar material</h3>
+<ul>
+<li><strong>Devoluciones de Consumo</strong>: material que no usaste y devuelves.</li>
+<li><strong>Reingresos</strong>: material que retorna al almacén (requiere aprobación del jefe de área).</li>
+</ul>
+<h2 id="5-restricciones">5. Restricciones</h2>
+<ul>
+<li>Solo ves <strong>tus propios flujos</strong>: no hay compras, almacén, aprobaciones ni administración.</li>
+</ul>
+<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
+<table>
+<thead>
+<tr>
+<th>Problema</th>
+<th>Solución</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>“Falta configurar”</td>
+<td>Sincroniza en Parámetros primero</td>
+</tr>
+<tr>
+<td>No puedo cerrar sesión</td>
+<td>Tienes requerimientos sin sincronizar — sincronízalos primero</td>
+</tr>
+<tr>
+<td>Mi requerimiento no avanza</td>
+<td>Revisa su estado: debe estar sincronizado y luego aprobado por tu jefe de área</td>
+</tr>
+<tr>
+<td>Trabajé sin internet</td>
+<td>Normal: todo se guardó local; sincroniza al recuperar conexión</td>
+</tr>
+</tbody>
+</table>
+
+</article>
+</body>
+</html>

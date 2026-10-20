@@ -6,5 +6,7 @@ export const environment = {
   showUpdateModal: true,   // true | false
   versionControlApi: 'MAESTRA', // 'LOGISTICA' | 'MAESTRA' (default; override runtime en localStorage)
   baseUrl: 'https://apilogistica.agroapps.net:7018',
-  apiMaestra: 'https://apimaestra.agroapps.net:7003'
+  apiMaestra: 'https://apimaestra.agroapps.net:7003',
+  // Portal de documentación publicado como subsitio del mismo sitio IIS.
+  docsUrl: '/documentacion'
 };

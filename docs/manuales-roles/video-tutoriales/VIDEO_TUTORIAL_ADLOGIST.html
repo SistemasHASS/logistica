@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Tutorial — Admin Logística (ADLOGIST)</title>
+<style>
+  :root {
+    --accent: #ea580c;
+    --bg: #0f172a; --panel: #1e293b; --panel2: #16213b;
+    --text: #e2e8f0; --muted: #94a3b8; --border: #334155;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text);
+         display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+  header { background:var(--panel); border-bottom:2px solid var(--accent);
+           padding:12px 24px; display:flex; align-items:center; gap:16px; }
+  .badge { background:var(--accent); color:#fff; font-weight:700; padding:4px 12px;
+           border-radius:6px; font-size:13px; letter-spacing:1px; }
+  header h1 { font-size:18px; font-weight:600; }
+  header .duracion { margin-left:auto; color:var(--muted); font-size:13px; }
+  main { flex:1; display:flex; overflow:hidden; }
+  .slide { flex:1; display:none; flex-direction:column; padding:32px 48px; overflow-y:auto; }
+  .slide.active { display:flex; }
+  .escena { color:var(--accent); font-size:12px; font-weight:700; letter-spacing:2px;
+            text-transform:uppercase; margin-bottom:8px; }
+  .slide h2 { font-size:30px; margin-bottom:20px; }
+  .contenido { display:flex; gap:32px; flex:1; }
+  .col-izq { flex:1.1; display:flex; flex-direction:column; gap:16px; }
+  .col-der { flex:1; display:flex; align-items:flex-start; justify-content:center; }
+  .locucion { background:var(--panel2); border-left:4px solid var(--accent);
+              padding:16px 20px; border-radius:0 8px 8px 0; }
+  .locucion::before { content:'🎙 NARRACIÓN'; display:block; color:var(--accent);
+                       font-size:11px; font-weight:700; letter-spacing:1px; margin-bottom:8px; }
+  .locucion p { font-size:16px; line-height:1.6; font-style:italic; }
+  .pasos { background:var(--panel); border-radius:8px; padding:16px 20px; }
+  .pasos h3 { font-size:13px; color:var(--muted); letter-spacing:1px; margin-bottom:10px;
+              text-transform:uppercase; }
+  .pasos li { list-style:none; padding:8px 0 8px 30px; position:relative; font-size:15px;
+              border-bottom:1px solid var(--border); }
+  .pasos li:last-child { border-bottom:none; }
+  .pasos li::before { content:counter(step); counter-increment:step;
+      position:absolute; left:0; top:6px; width:20px; height:20px; background:var(--accent);
+      color:#fff; border-radius:50%; font-size:11px; font-weight:700;
+      display:flex; align-items:center; justify-content:center; }
+  .pasos ol { counter-reset:step; }
+  .captura { max-width:100%; max-height:420px; border-radius:10px;
+             border:2px solid var(--border); box-shadow:0 8px 30px rgba(0,0,0,.5); }
+  .captura-missing { border:2px dashed var(--border); border-radius:10px; padding:60px 30px;
+             color:var(--muted); text-align:center; font-size:14px; }
+  footer { background:var(--panel); padding:12px 24px; display:flex; align-items:center; gap:16px; }
+  .btn { background:var(--accent); color:#fff; border:none; padding:10px 22px; border-radius:6px;
+         font-size:14px; font-weight:600; cursor:pointer; }
+  .btn:hover { filter:brightness(1.15); }
+  .btn.sec { background:var(--border); }
+  .progreso-wrap { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .progreso { height:100%; background:var(--accent); width:0%; transition:width .3s; }
+  .contador { color:var(--muted); font-size:13px; min-width:80px; text-align:center; }
+  .ayuda { color:var(--muted); font-size:11px; }
+  @media (max-width:820px) {
+    header { padding:10px 12px; gap:8px; }
+    header h1 { font-size:14px; }
+    .badge { font-size:11px; padding:3px 8px; }
+    .duracion { display:none; }
+    .slide { padding:18px 14px; }
+    .slide h2 { font-size:21px; margin-bottom:12px; }
+    .contenido { flex-direction:column; gap:14px; }
+    .captura { max-height:none; }
+    footer { padding:10px 10px; gap:8px; flex-wrap:wrap; }
+    .ayuda { display:none; }
+    .contador { min-width:60px; font-size:12px; }
+    .btn { padding:8px 14px; font-size:13px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="badge">ADLOGIST</span>
+  <h1>Video Tutorial — Admin Logística</h1>
+  <span class="duracion">Duración estimada: ~8 min</span>
+</header>
+<main>
+<section class="slide">
+    <div class="escena">Escena 1</div>
+    <h2>Bienvenida</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Bienvenido al tutorial del rol Administrador de Logística. Combinas operación del flujo con la configuración funcional del sistema.</p></div>
+        
+      </div>
+      <div class="col-der"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 2</div>
+    <h2>Inicio de sesión</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Ingresa con tu cuenta. El sistema te lleva al Dashboard Admin Logística.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Abrir la app</li>
+          <li>Login con usuario y contraseña</li>
+          <li>Verificar el Dashboard Admin Logística</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/01_login.png" alt="Inicio de sesión" onerror="this.outerHTML='<div class=captura-missing>Captura: 01_login.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 3</div>
+    <h2>Recorrido por tu menú</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Tu menú acordeón incluye paneles, requerimientos, compras, aprobaciones y reportes.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Abrir grupo Mi Panel → dashboards disponibles</li>
+          <li>Abrir Compras → ver el flujo completo</li>
+          <li>Abrir Aprobaciones → Aprobación OC y por Área</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/02_dashboard_admin.png" alt="Recorrido por tu menú" onerror="this.outerHTML='<div class=captura-missing>Captura: 02_dashboard_admin.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 4</div>
+    <h2>Aprobar requerimientos por área</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Cuando cubres a un jefe de área, apruebas sus requerimientos desde Aprobaciones por Área.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Menú Aprobaciones → Aprobaciones por Área</li>
+          <li>Abrir un requerimiento pendiente</li>
+          <li>Revisar ítems y cantidades</li>
+          <li>Aprobar o Rechazar con motivo</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/16_aprobaciones_area.png" alt="Aprobar requerimientos por área" onerror="this.outerHTML='<div class=captura-missing>Captura: 16_aprobaciones_area.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 5</div>
+    <h2>Aprobar una Orden de Compra</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Las OC llegan a tu bandeja para validación.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Aprobaciones → Aprobación OC</li>
+          <li>Abrir la OC</li>
+          <li>Revisar líneas, montos y adjuntos</li>
+          <li>Aprobar o Rechazar</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/18_aprobaciones_oc.png" alt="Aprobar una Orden de Compra" onerror="this.outerHTML='<div class=captura-missing>Captura: 18_aprobaciones_oc.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 6</div>
+    <h2>Consola de administración</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>En /admin-logistica gestionas usuarios (todos menos TILOGIST), áreas, flujos de aprobación, permisos y parámetros.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Login en /admin-logistica</li>
+          <li>Pestaña Usuarios → crear usuario</li>
+          <li>Pestaña Flujo Aprobación Área → definir aprobadores</li>
+          <li>Pestaña Permisos por Rol → ajustar claves</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/09_admin_logistica.png" alt="Consola de administración" onerror="this.outerHTML='<div class=captura-missing>Captura: 09_admin_logistica.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 7</div>
+    <h2>Cierre</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Ya conoces las dos caras de tu rol: operar el flujo y administrar la configuración. Consulta el manual escrito para el detalle.</p></div>
+        
+      </div>
+      <div class="col-der"></div>
+    </div>
+  </section>
+</main>
+<footer>
+  <button class="btn sec" onclick="anterior()">◀ Anterior</button>
+  <button class="btn" onclick="siguiente()">Siguiente ▶</button>
+  <button class="btn sec" id="btnPlay" onclick="togglePlay()">▶ Reproducir</button>
+  <div class="progreso-wrap"><div class="progreso" id="prog"></div></div>
+  <span class="contador" id="contador"></span>
+  <span class="ayuda">← → navegar · Espacio: siguiente · P: reproducir</span>
+</footer>
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let actual = 0, timer = null;
+  function mostrar(i) {
+    actual = Math.max(0, Math.min(i, slides.length - 1));
+    slides.forEach((s, k) => s.classList.toggle('active', k === actual));
+    document.getElementById('prog').style.width = ((actual + 1) / slides.length * 100) + '%';
+    document.getElementById('contador').textContent = (actual + 1) + ' / ' + slides.length;
+  }
+  function siguiente() { mostrar(actual + 1); }
+  function anterior() { mostrar(actual - 1); }
+  function togglePlay() {
+    const b = document.getElementById('btnPlay');
+    if (timer) { clearInterval(timer); timer = null; b.textContent = '▶ Reproducir'; return; }
+    b.textContent = '⏸ Pausar';
+    timer = setInterval(() => {
+      if (actual >= slides.length - 1) { togglePlay(); return; }
+      siguiente();
+    }, 12000);
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); siguiente(); }
+    if (e.key === 'ArrowLeft') anterior();
+    if (e.key.toLowerCase() === 'p') togglePlay();
+  });
+  mostrar(0);
+</script>
+</body>
+</html>

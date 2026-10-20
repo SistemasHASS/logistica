@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MANUAL ROL LOLOGIST — Sistema Logistica</title>
+<style>
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
+  nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+            padding:12px 24px; background:#0f172a; border-bottom:1px solid #1e293b; }
+  nav.top a.volver { color:#60a5fa; text-decoration:none; font-size:14px; white-space:nowrap; }
+  nav.top a.volver:hover { text-decoration:underline; }
+  nav.top .t { font-size:15px; font-weight:600; color:#e2e8f0; flex:1; min-width:200px;
+               overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  nav.top a.btn { font-size:12px; color:#cbd5e1; text-decoration:none; background:#1e293b;
+                  border:1px solid #334155; border-radius:6px; padding:6px 12px; white-space:nowrap; }
+  nav.top a.btn:hover { border-color:#60a5fa; color:#93c5fd; }
+  article { max-width:900px; margin:0 auto; padding:32px 24px 60px; background:#fff; min-height:100vh; }
+  h1,h2,h3,h4 { margin:1.4em 0 .5em; line-height:1.3; color:#0f172a; }
+  h1 { font-size:26px; border-bottom:2px solid #e2e8f0; padding-bottom:8px; }
+  h2 { font-size:21px; border-bottom:1px solid #e2e8f0; padding-bottom:6px; }
+  h3 { font-size:17px; }
+  p, li { line-height:1.65; font-size:15px; }
+  ul, ol { padding-left:26px; margin:.6em 0; }
+  a { color:#2563eb; }
+  code { background:#f1f5f9; border-radius:4px; padding:1px 6px; font-size:13px; color:#be185d; }
+  pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow:auto; margin:.8em 0; }
+  pre code { background:none; color:inherit; padding:0; }
+  table { border-collapse:collapse; margin:.9em 0; width:100%; font-size:14px; }
+  th, td { border:1px solid #cbd5e1; padding:7px 10px; text-align:left; }
+  th { background:#f1f5f9; }
+  tr:nth-child(even) td { background:#f8fafc; }
+  img { max-width:100%; border:1px solid #e2e8f0; border-radius:6px; margin:.6em 0; }
+  blockquote { border-left:4px solid #cbd5e1; padding:4px 16px; color:#475569; margin:.8em 0; }
+  hr { border:none; border-top:1px solid #e2e8f0; margin:1.6em 0; }
+  @media (max-width:700px) {
+    nav.top { padding:10px 12px; gap:8px; }
+    nav.top .t { font-size:13px; min-width:120px; }
+    article { padding:22px 14px 50px; }
+    table { display:block; overflow-x:auto; }
+    pre { font-size:12px; }
+  }
+</style>
+<script src="../../solo-rol.js"></script>
+</head>
+<body>
+<nav class="top">
+  <a class="volver" href="../../index.html">&#8592; Portal</a>
+  <span class="t">MANUAL ROL LOLOGIST</span>
+  <a class="btn" href="../../visor-docx.html?doc=docx/MANUAL_ROL_LOLOGIST.docx">Ver Word</a><a class="btn" href="../../docx/MANUAL_ROL_LOLOGIST.docx">&#11015; .docx</a>
+  <a class="btn" href="../../roles/MANUAL_ROL_LOLOGIST.md">Fuente .md</a>
+</nav>
+<article>
+<h1 id="manual-de-usuario--operador-logística-lologist">Manual de Usuario — Operador Logística (LOLOGIST)</h1>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Código de rol</td>
+<td><code>LOLOGIST</code></td>
+</tr>
+<tr>
+<td>Nombre</td>
+<td>Operador de Logística</td>
+</tr>
+<tr>
+<td>Pantalla inicial</td>
+<td>Dashboard Logística (<code>/main/dashboard-logistica</code>)</td>
+</tr>
+<tr>
+<td>Video tutorial</td>
+<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_LOLOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_LOLOGIST.html</a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
+<p>Eres el <strong>rol operativo más completo</strong>: ejecutas todo el ciclo de compras (consolidación, cotización, SC, OC/SS/OS) <strong>y</strong> operas el almacén (despachos, recepción, kardex, inventario, transferencias, devoluciones). No apruebas — ejecutas.</p>
+<h2 id="2-acceso">2. Acceso</h2>
+<p>Login → <strong>Dashboard Logística</strong>: vista de requerimientos aprobados pendientes de consolidar, compras en curso, OC por estado y alertas.</p>
+<p><img src="../../../capturas_manual/35_dashboard_logistica.png" alt="Dashboard logística" /></p>
+<h2 id="3-pantallas-disponibles">3. Pantallas disponibles</h2>
+<table>
+<thead>
+<tr>
+<th>Grupo</th>
+<th>Pantallas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Panel</td>
+<td>Dashboard Logística, Jef. Logística, Jef. Licitaciones, Compras, Operativo, Despacho</td>
+</tr>
+<tr>
+<td>Configuración</td>
+<td>Parámetros, Notificaciones</td>
+</tr>
+<tr>
+<td>Requerimientos</td>
+<td>Requerimientos, Saldo de Requerimiento</td>
+</tr>
+<tr>
+<td>Compras</td>
+<td>Solicitudes de Compra, Consolidación Requerimientos/Compras/Corporativa/Servicios, Cotizaciones, Órdenes de Compra, Solicitudes de Servicio, Órdenes de Servicio, Conformidad de Servicios</td>
+</tr>
+<tr>
+<td>Almacén</td>
+<td>Despachos, Recepción de Mercadería, Conformidad de Despacho, Kardex, Gestión de Inventario, Listas de Stock, Transferencias, Devoluciones a Proveedores y de Consumo, Reingresos, Evaluación de Proveedores</td>
+</tr>
+<tr>
+<td>Maestros</td>
+<td>Maestro Proveedores, Catálogo de Ítems</td>
+</tr>
+<tr>
+<td>Reportes</td>
+<td>Reportes Compras, Requerimientos, Saldos, Despachos, Logístico</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
+<h3 id="del-requerimiento-aprobado-a-la-orden-de-compra">Del requerimiento aprobado a la Orden de Compra</h3>
+<ol type="1">
+<li><strong>Consolidación de Requerimientos</strong> → agrupa líneas aprobadas.</li>
+<li><strong>Solicitudes de Compra</strong> → genera la SC con adjuntos.</li>
+<li><strong>Cotizaciones</strong> → registra cotizaciones de proveedores y selecciona la ganadora.</li>
+<li><strong>Órdenes de Compra</strong> → genera la OC, envía a aprobación (JLOLOGIST/JEMLOGIST/FINANZAS/GERENTE).</li>
+<li>Sigue el estado en <strong>Órdenes de Compra</strong> hasta aprobada.</li>
+</ol>
+<p><img src="../../../capturas_manual/36_solicitudes_compra.png" alt="Solicitudes de compra" /></p>
+<h3 id="consolidación-corporativa">Consolidación corporativa</h3>
+<p><strong>Consolidación Corporativa</strong> → combina requerimientos de varias empresas/fundos en una sola compra para mejorar precio.</p>
+<h3 id="recepcionar-mercadería">Recepcionar mercadería</h3>
+<ol type="1">
+<li><strong>Recepción de Mercadería</strong> → busca la OC aprobada.</li>
+<li>Ingresa cantidades recibidas, lotes/fechas si aplica, documentos.</li>
+<li>Confirma → actualiza stock y kardex automáticamente.</li>
+</ol>
+<p><img src="../../../capturas_manual/24_recepcion_mercaderia.png" alt="Recepción" /></p>
+<h3 id="despachar-a-un-solicitante">Despachar a un solicitante</h3>
+<p><strong>Despachos</strong> → selecciona requerimiento/lista de stock → confirma salida → queda pendiente de <strong>Conformidad de Despacho</strong> por el solicitante.</p>
+<h3 id="otros-flujos-de-almacén">Otros flujos de almacén</h3>
+<ul>
+<li><strong>Transferencias</strong>: mover stock entre almacenes.</li>
+<li><strong>Devoluciones a Proveedores</strong>: registrar devolución por recepción con problemas.</li>
+<li><strong>Devoluciones de Consumo</strong>: registrar material devuelto por usuarios.</li>
+<li><strong>Evaluación de Proveedores</strong>: calificar desempeño del proveedor.</li>
+</ul>
+<h2 id="5-restricciones">5. Restricciones</h2>
+<ul>
+<li>No apruebas requerimientos por área ni OC/OS (es jefatura/finanzas/gerencia).</li>
+<li>No gestionas usuarios ni configuración.</li>
+</ul>
+<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
+<table>
+<thead>
+<tr>
+<th>Problema</th>
+<th>Solución</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Una línea no aparece para consolidar</td>
+<td>Debe estar aprobada por el área (APLOGIST)</td>
+</tr>
+<tr>
+<td>No puedo emitir la OC</td>
+<td>Revisa que la cotización ganadora esté seleccionada</td>
+</tr>
+<tr>
+<td>Stock no cuadra</td>
+<td>Revisa Kardex → movimientos; verifica recepciones/despachos pendientes</td>
+</tr>
+</tbody>
+</table>
+
+</article>
+</body>
+</html>

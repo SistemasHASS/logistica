@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal de Documentación — Sistema Logística</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#e2e8f0; min-height:100vh; }
+  header { padding:40px 48px 24px; border-bottom:1px solid #1e293b; }
+  h1 { font-size:28px; } header p { color:#94a3b8; margin-top:6px; }
+  main { padding:32px 48px; max-width:1200px; }
+  h2 { font-size:15px; letter-spacing:2px; text-transform:uppercase; color:#64748b; margin:32px 0 14px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+  .item { display:flex; gap:14px; align-items:flex-start; background:#1e293b; border:1px solid #334155;
+          border-radius:10px; padding:16px; text-decoration:none; color:#e2e8f0; }
+  .item:hover { border-color:#60a5fa; background:#243349; }
+  .item .ico { font-size:22px; }
+  .item b { display:block; font-size:15px; }
+  .item small { color:#94a3b8; display:block; margin-top:3px; line-height:1.4; }
+  .card { position:relative; background:#1e293b; border:1px solid #334155; border-radius:10px; }
+  .card:hover { border-color:#60a5fa; background:#243349; }
+  .card .main { display:flex; gap:14px; align-items:flex-start; padding:16px; text-decoration:none; color:#e2e8f0; }
+  .badges { position:absolute; top:10px; right:10px; display:flex; gap:6px; z-index:1; }
+  .docx { font-size:11px; color:#60a5fa; text-decoration:none; background:#0f172a;
+          border:1px solid #334155; padding:2px 8px; border-radius:6px; }
+  .docx:hover { border-color:#60a5fa; color:#93c5fd; }
+  .code { font-family:monospace; background:#0f172a; border-radius:4px; padding:1px 6px; font-size:12px; }
+  .links { margin-top:8px; font-size:12px; }
+  .links a { color:#60a5fa; text-decoration:none; margin-right:10px; }
+  footer { padding:24px 48px; color:#475569; font-size:12px; border-top:1px solid #1e293b; }
+  @media (max-width:700px) {
+    header { padding:26px 18px 14px; }
+    h1 { font-size:22px; }
+    main { padding:20px 16px; }
+    h2 { margin:26px 0 12px; }
+    .grid { grid-template-columns:1fr; }
+    .item, .card .main { padding:13px; }
+    .badges { position:static; padding:0 13px 12px; justify-content:flex-end; }
+    footer { padding:18px 16px; }
+  }
+</style>
+<script src="solo-rol.js"></script>
+</head>
+<body>
+<header>
+  <h1>Portal de Documentación — Sistema Logística</h1>
+  <p>Manuales, video tutoriales narrados, cheat sheets y guías de referencia · Octubre 2026</p>
+</header>
+<main>
+
+<a class="item" href="portal-usuario.html" style="border-left:4px solid #3b82f6"><span class="ico">👤</span><span><b>Portal del Usuario</b><small>Centro de ayuda orientado al usuario final: selecciona tu rol y accede a tu video, manual y tarjeta rápida — ideal para compartir con personal no técnico</small></span></a>
+
+<h2>🚀 Empieza aquí</h2>
+<div class="grid">
+  <div class="card"><a class="main" href="html-manuales/GUIA_PRIMEROS_PASOS.html"><span class="ico">🚀</span><span><b>Guía de Primeros Pasos</b><small>Onboarding del día 1: acceso, sincronización, primera tarea por rol</small></span></a><div class="badges"><a class="docx" href="visor-docx.html?doc=docx/GUIA_PRIMEROS_PASOS.docx">Ver Word</a><a class="docx" href="docx/GUIA_PRIMEROS_PASOS.docx">⬇</a></div></div>
+  <a class="item" href="video-tutoriales/mp4/VIDEO_TUTORIAL_GENERAL.mp4"><span class="ico">🎬</span><span><b>Video: Introducción al Sistema</b><small>MP4 narrado ~7 min — login, menú, notificaciones, offline, cierre</small></span></a>
+  <a class="item" href="video-tutoriales/mp4/VIDEO_TUTORIAL_FLUJO.mp4"><span class="ico">🎬</span><span><b>Video: Flujo Completo del Proceso</b><small>MP4 narrado ~9 min — del requerimiento a la conformidad</small></span></a>
+  <a class="item" href="flujo-interactivo.html"><span class="ico">🗺️</span><span><b>Flujo Interactivo</b><small>Diagrama dinámico: clic en cada paso para ver responsable, pantalla y qué pasa si se rechaza · filtro por rol · modo reproducción</small></span></a>
+  <a class="item" href="diagrama-flujo.svg"><span class="ico">🖼️</span><span><b>Diagrama estático</b><small>Versión imprimible/proyectable del flujo (SVG + PNG)</small></span></a>
+</div>
+
+<h2>📘 Manuales principales</h2>
+<div class="grid">
+  <div class="card"><a class="main" href="html-manuales/MANUAL_ROLES_SISTEMA_COMPLETO.html"><span class="ico">📕</span><span><b>Manual de Roles — Completo</b><small>11 roles, matriz de acceso, guards, flujo end-to-end</small></span></a><div class="badges"><a class="docx" href="visor-docx.html?doc=docx/MANUAL_ROLES_SISTEMA_COMPLETO.docx">Ver Word</a><a class="docx" href="docx/MANUAL_ROLES_SISTEMA_COMPLETO.docx">⬇</a></div></div>
+  <div class="card"><a class="main" href="html-manuales/MANUAL_CONSOLA_ADMIN_LOGISTICA.html"><span class="ico">📗</span><span><b>Consola Admin Logística</b><small>Las 21 pestañas de /admin-logistica paso a paso</small></span></a><div class="badges"><a class="docx" href="visor-docx.html?doc=docx/MANUAL_CONSOLA_ADMIN_LOGISTICA.docx">Ver Word</a><a class="docx" href="docx/MANUAL_CONSOLA_ADMIN_LOGISTICA.docx">⬇</a></div></div>
+  <div class="card"><a class="main" href="html-manuales/MANUAL_ADMINISTRACION_CLASICA.html"><span class="ico">📙</span><span><b>Administración Clásica</b><small>Las 22 pantallas de /administracion + /admin-login</small></span></a><div class="badges"><a class="docx" href="visor-docx.html?doc=docx/MANUAL_ADMINISTRACION_CLASICA.docx">Ver Word</a><a class="docx" href="docx/MANUAL_ADMINISTRACION_CLASICA.docx">⬇</a></div></div>
+</div>
+
+<h2>🎬 Video tutoriales MP4 narrados</h2>
+<div class="grid" id="videos"></div>
+
+<h2>📄 Manuales por rol</h2>
+<div class="grid" id="roles"></div>
+
+<h2>🧰 Referencias rápidas</h2>
+<div class="grid">
+  <a class="item" href="cheat-sheets.html"><span class="ico">📌</span><span><b>Cheat Sheets por rol</b><small>Tarjetas imprimibles de 1 página con lo esencial de cada rol</small></span></a>
+  <a class="item" href="anexo.html"><span class="ico">🗂️</span><span><b>Anexo — Inventario Documental</b><small>Catálogo navegable con TODA la documentación del proyecto (~70 docs con buscador)</small></span></a>
+  <div class="card"><a class="main" href="html-manuales/FAQ_TROUBLESHOOTING.html"><span class="ico">❓</span><span><b>FAQ y Troubleshooting</b><small>Problemas comunes y soluciones por síntoma</small></span></a><div class="badges"><a class="docx" href="visor-docx.html?doc=docx/FAQ_TROUBLESHOOTING.docx">Ver Word</a><a class="docx" href="docx/FAQ_TROUBLESHOOTING.docx">⬇</a></div></div>
+  <div class="card"><a class="main" href="glosario.html"><span class="ico">📖</span><span><b>Glosario navegable</b><small>~50 términos con explicación, buscador e índice A–Z</small></span></a><div class="badges"><a class="docx" href="visor-docx.html?doc=docx/GLOSARIO.docx">Ver Word</a><a class="docx" href="docx/GLOSARIO.docx">⬇</a></div></div>
+  <a class="item" href="video-tutoriales/index.html"><span class="ico">🖥️</span><span><b>Tutoriales interactivos HTML</b><small>Versión navegable de los videos (sin audio)</small></span></a>
+</div>
+
+</main>
+<footer>Generado desde el código fuente del proyecto · Sistema Logística</footer>
+
+<script>
+const roles = [
+  ["TILOGIST","Admin Sistema"],["ADLOGIST","Admin Logística"],["JLOLOGIST","Jefe Logística"],
+  ["JEMLOGIST","Jefe Licitaciones"],["LOLOGIST","Operador Logística"],["EMLOGIST","Operador Licitaciones"],
+  ["ALLOGIST","Almacén"],["OPLOGIST","Operativo Campo"],["APLOGIST","Aprobador Consumo"],
+  ["FINANZAS","Finanzas"],["GERENTE","Gerente"]
+];
+document.getElementById('videos').innerHTML =
+  `<a class="item" href="video-tutoriales/mp4/VIDEO_TUTORIAL_ADMINPANEL.mp4"><span class="ico">🎬</span><span><b>Panel de Administración</b><small>Ambas consolas admin ~15 min</small></span></a>` +
+  roles.map(([c,n]) =>
+   `<a class="item" href="video-tutoriales/mp4/VIDEO_TUTORIAL_${c}.mp4"><span class="ico">🎬</span><span><b>${n}</b><small><span class="code">${c}</span> — video narrado</small></span></a>`).join('');
+document.getElementById('roles').innerHTML = roles.map(([c,n]) =>
+   `<div class="card"><a class="main" href="html-manuales/roles/MANUAL_ROL_${c}.html"><span class="ico">📄</span><span><b>${n}</b><small><span class="code">${c}</span></small></span></a><div class="badges"><a class="docx" href="visor-docx.html?doc=docx/MANUAL_ROL_${c}.docx">Ver Word</a><a class="docx" href="docx/MANUAL_ROL_${c}.docx">⬇</a></div></div>`).join('');
+</script>
+</body>
+</html>

@@ -7,6 +7,21 @@ Este directorio contiene la documentación automática generada del proyecto.
 - **FRONTEND.md** - Documentación completa del frontend Angular
 - **BACKEND.md** - Documentación completa del backend .NET API
 
+## Documentación Manual Actualizada
+
+Además de la documentación automática, este directorio contiene documentos manuales actualizados al 2026-09-14:
+
+- **DOCUMENTACION_FRONTEND_LOGISTICA.md** - Visión general actual del frontend, rutas, guards, roles, servicios, IndexedDB, notificaciones y versionamiento.
+- **MAPA_MODULOS_FRONTEND_LOGISTICA.md** - Mapa práctico para ubicar pantallas, servicios, rutas internas, administración clásica y Admin Logística.
+- **FLUJO_COMPLETO_APP_LOGISTICA.md** - Flujo funcional completo desde login, requerimientos y aprobaciones hasta compras, servicios, almacén, kardex y reportes.
+- **MANUAL_FUNCIONAMIENTO_APP_LOGISTICA.md** - Manual para usuarios, soporte y operación diaria del sistema.
+- **GUIA_TECNICA_INSTALACION_DESPLIEGUE.md** - Guía técnica para instalar, configurar, compilar, desplegar y validar frontend/backend.
+
+En el repositorio del API también se agregaron:
+
+- **api_logistica/docs/DOCUMENTACION_API_LOGISTICA.md** - Documentación general del backend.
+- **api_logistica/docs/CATALOGO_ENDPOINTS_API_LOGISTICA.md** - Catálogo agrupado de endpoints por controlador.
+
 ## 🚀 Comandos de Generación
 
 ### Generar documentación del Frontend

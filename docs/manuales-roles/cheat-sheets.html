@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cheat Sheets — Roles Sistema Logística</title>
+<style>
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#f1f5f9; margin:0; padding:24px; }
+  h1 { text-align:center; color:#0f172a; margin-bottom:4px; }
+  .sub { text-align:center; color:#64748b; margin-bottom:24px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:18px; }
+  .card { background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.12); page-break-inside:avoid; }
+  .card .head { color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
+  .card .head b { font-size:16px; }
+  .card .head code { font-size:11px; background:rgba(255,255,255,.25); padding:2px 8px; border-radius:4px; }
+  .card .body { padding:14px 16px; font-size:13px; color:#1e293b; }
+  .card h4 { margin:10px 0 4px; font-size:11px; letter-spacing:1px; color:#64748b; text-transform:uppercase; }
+  .card ul { margin:0; padding-left:18px; }
+  .card li { margin:3px 0; }
+  .tag { display:inline-block; background:#e2e8f0; border-radius:4px; padding:2px 8px; font-size:11px; margin:2px 4px 2px 0; }
+  @media (max-width:700px) {
+    body { padding:14px; }
+    .grid { grid-template-columns:1fr; gap:12px; }
+    h1 { font-size:20px; }
+  }
+  @media print {
+    body { background:#fff; padding:0; }
+    .grid { grid-template-columns:1fr 1fr; gap:10px; }
+    .card { box-shadow:none; border:1px solid #cbd5e1; }
+  }
+</style>
+<script src="solo-rol.js"></script>
+</head>
+<body>
+<h1>Cheat Sheets — Sistema Logística</h1>
+<p class="sub" id="sub">Tarjeta de referencia rápida por rol · imprimible (Ctrl+P, cada tarjeta cabe en media página)</p>
+<script>
+// ?rol=CODIGO -> muestra solo la tarjeta de ese rol (usado por el portal del usuario en modo "solo mi rol")
+document.addEventListener('DOMContentLoaded', function(){
+  const rol = new URLSearchParams(location.search).get('rol');
+  if (!rol) return;
+  let encontrado = false;
+  document.querySelectorAll('.card').forEach(c => {
+    const code = c.querySelector('.head code')?.textContent.trim();
+    const show = code === rol;
+    c.style.display = show ? '' : 'none';
+    if (show) encontrado = true;
+  });
+  if (encontrado) {
+    document.getElementById('sub').textContent =
+      'Tu tarjeta de referencia rápida — rol ' + rol + ' · imprimible (Ctrl+P)';
+    const verTodos = document.createElement('p');
+    verTodos.style.textAlign = 'center';
+    verTodos.innerHTML = '<a href="cheat-sheets.html" style="color:#2563eb">Ver las tarjetas de todos los roles</a>';
+    document.getElementById('sub').after(verTodos);
+  }
+});
+</script>
+<div class="grid">
+
+<div class="card"><div class="head" style="background:#dc2626"><b>Admin Sistema</b><code>TILOGIST</code></div><div class="body">
+<h4>Entras a</h4>Dashboard Admin Sistema
+<h4>Tus tareas</h4><ul>
+<li>Crear usuarios de <b>cualquier</b> rol (único que crea TILOGIST)</li>
+<li>Consola /admin-logistica: permisos, áreas, flujos, auditoría</li>
+<li>/administracion: correo SMTP, plantillas, branding, menús</li></ul>
+<h4>No puedes</h4><span class="tag">Aprobaciones por área</span><span class="tag">Reingresos</span><span class="tag">Pantallas de almacén físico</span>
+<h4>Escalas a</h4>Soporte TI interno
+</div></div>
+
+<div class="card"><div class="head" style="background:#ea580c"><b>Admin Logística</b><code>ADLOGIST</code></div><div class="body">
+<h4>Entras a</h4>Dashboard Admin Logística
+<h4>Tus tareas</h4><ul>
+<li>Configurar usuarios (menos TILOGIST), áreas y flujos</li>
+<li>Aprobar requerimientos, OC y OS</li>
+<li>Operar compras y conformidades si hace falta</li></ul>
+<h4>No puedes</h4><span class="tag">Despachos/Kardex</span><span class="tag">Crear TILOGIST</span>
+<h4>Escalas a</h4>TILOGIST
+</div></div>
+
+<div class="card"><div class="head" style="background:#7c3aed"><b>Jefe Logística</b><code>JLOLOGIST</code></div><div class="body">
+<h4>Entras a</h4>Dashboard Logística (menú acordeón propio)
+<h4>Tus tareas</h4><ul>
+<li>Aprobar requerimientos por área</li>
+<li>Supervisar consolidación, cotizaciones y OC/OS</li>
+<li>Aprobar OC/OS · crear usuarios operativos en consola</li></ul>
+<h4>No puedes</h4><span class="tag">Almacén físico</span><span class="tag">Reingresos</span><span class="tag">Config del sistema</span>
+<h4>Escalas a</h4>ADLOGIST
+</div></div>
+
+<div class="card"><div class="head" style="background:#0d9488"><b>Jefe Licitaciones</b><code>JEMLOGIST</code></div><div class="body">
+<h4>Entras a</h4>Dashboard Jef. Licitaciones
+<h4>Tus tareas</h4><ul>
+<li>Aprobar/rechazar OC y OS</li>
+<li>Conformidad de servicios</li>
+<li>Supervisar dashboard operativo y finanzas</li></ul>
+<h4>No puedes</h4><span class="tag">Crear requerimientos</span><span class="tag">Compras</span><span class="tag">Almacén</span>
+<h4>Escalas a</h4>JLOLOGIST / ADLOGIST
+</div></div>
+
+<div class="card"><div class="head" style="background:#2563eb"><b>Operador Logística</b><code>LOLOGIST</code></div><div class="body">
+<h4>Entras a</h4>Dashboard Logística
+<h4>Tus tareas</h4><ul>
+<li>Consolidar líneas aprobadas → SC → cotización → OC/OS</li>
+<li>Recepcionar, despachar, kardex, transferencias</li>
+<li>Devoluciones y evaluación de proveedores</li></ul>
+<h4>No puedes</h4><span class="tag">Aprobar nada</span><span class="tag">Usuarios/config</span>
+<h4>Escalas a</h4>JLOLOGIST
+</div></div>
+
+<div class="card"><div class="head" style="background:#0891b2"><b>Operador Licitaciones</b><code>EMLOGIST</code></div><div class="body">
+<h4>Entras a</h4>Dashboard Operativo
+<h4>Tus tareas</h4><ul>
+<li><b>Sincronizar primero</b> en Parámetros</li>
+<li>Crear requerimientos de empaque/licitaciones</li>
+<li>Conformar despachos y servicios · devoluciones/reingresos</li></ul>
+<h4>No puedes</h4><span class="tag">Compras</span><span class="tag">Aprobaciones</span><span class="tag">Almacén</span>
+<h4>Escalas a</h4>JLOLOGIST
+</div></div>
+
+<div class="card"><div class="head" style="background:#ca8a04"><b>Almacén</b><code>ALLOGIST</code></div><div class="body">
+<h4>Entras a</h4>Gestión de Despachos
+<h4>Tus tareas</h4><ul>
+<li>Despachar y recepcionar mercadería</li>
+<li>Kardex, inventario, listas de stock, transferencias</li>
+<li>Aprobar devoluciones de consumo · evaluar proveedores</li></ul>
+<h4>No puedes</h4><span class="tag">Compras/OC</span><span class="tag">Aprob. área</span><span class="tag">Admin</span>
+<h4>Escalas a</h4>LOLOGIST / JLOLOGIST
+</div></div>
+
+<div class="card"><div class="head" style="background:#16a34a"><b>Operativo Campo</b><code>OPLOGIST</code></div><div class="body">
+<h4>Entras a</h4>Mis Requerimientos
+<h4>Tus tareas</h4><ul>
+<li><b>Sincronizar</b> maestras en Parámetros (obligatorio)</li>
+<li>Crear requerimientos (ítems, commodities, activos)</li>
+<li>Conformar recepción · devolver material no usado</li></ul>
+<h4>No puedes</h4><span class="tag">Todo lo demás</span>
+<h4>Escalas a</h4>Tu jefe de área (APLOGIST)
+</div></div>
+
+<div class="card"><div class="head" style="background:#9333ea"><b>Aprobador / Jefe Área</b><code>APLOGIST</code></div><div class="body">
+<h4>Entras a</h4>Dashboard Aprobaciones por Área
+<h4>Tus tareas</h4><ul>
+<li>Aprobar/rechazar requerimientos de tu(s) área(s)</li>
+<li>Aprobar reingresos de material</li>
+<li>Revisar reportes de tu gestión</li></ul>
+<h4>No puedes</h4><span class="tag">Crear requerimientos</span><span class="tag">Compras/Almacén</span>
+<h4>Escalas a</h4>JLOLOGIST / ADLOGIST
+</div></div>
+
+<div class="card"><div class="head" style="background:#475569"><b>Finanzas</b><code>FINANZAS</code></div><div class="body">
+<h4>Entras a</h4>Dashboard Finanzas
+<h4>Tus tareas</h4><ul>
+<li>Aprobar/rechazar OC (control presupuestal)</li>
+<li>Aprobar/rechazar OS</li>
+<li>Consultar reportes abiertos</li></ul>
+<h4>No puedes</h4><span class="tag">Todo lo operativo</span>
+<h4>Escalas a</h4>Gerencia / JLOLOGIST
+</div></div>
+
+<div class="card"><div class="head" style="background:#b91c1c"><b>Gerente</b><code>GERENTE</code></div><div class="body">
+<h4>Entras a</h4>Menú configurado (dashboard + aprobaciones)
+<h4>Tus tareas</h4><ul>
+<li>Aprobación de alto nivel: OC y OS</li>
+<li>Supervisar Dashboard Finanzas</li></ul>
+<h4>No puedes</h4><span class="tag">Todo lo operativo</span>
+<h4>Nota</h4>Si no ves menú, pide a TI configurar MENU_JSON de GERENTE
+</div></div>
+
+</div>
+<p class="sub" style="margin-top:24px">docs/manuales-roles · Sistema Logística · 2026</p>
+</body>
+</html>

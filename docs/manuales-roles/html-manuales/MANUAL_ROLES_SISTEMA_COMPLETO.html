@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MANUAL ROLES SISTEMA COMPLETO — Sistema Logistica</title>
+<style>
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
+  nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+            padding:12px 24px; background:#0f172a; border-bottom:1px solid #1e293b; }
+  nav.top a.volver { color:#60a5fa; text-decoration:none; font-size:14px; white-space:nowrap; }
+  nav.top a.volver:hover { text-decoration:underline; }
+  nav.top .t { font-size:15px; font-weight:600; color:#e2e8f0; flex:1; min-width:200px;
+               overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  nav.top a.btn { font-size:12px; color:#cbd5e1; text-decoration:none; background:#1e293b;
+                  border:1px solid #334155; border-radius:6px; padding:6px 12px; white-space:nowrap; }
+  nav.top a.btn:hover { border-color:#60a5fa; color:#93c5fd; }
+  article { max-width:900px; margin:0 auto; padding:32px 24px 60px; background:#fff; min-height:100vh; }
+  h1,h2,h3,h4 { margin:1.4em 0 .5em; line-height:1.3; color:#0f172a; }
+  h1 { font-size:26px; border-bottom:2px solid #e2e8f0; padding-bottom:8px; }
+  h2 { font-size:21px; border-bottom:1px solid #e2e8f0; padding-bottom:6px; }
+  h3 { font-size:17px; }
+  p, li { line-height:1.65; font-size:15px; }
+  ul, ol { padding-left:26px; margin:.6em 0; }
+  a { color:#2563eb; }
+  code { background:#f1f5f9; border-radius:4px; padding:1px 6px; font-size:13px; color:#be185d; }
+  pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow:auto; margin:.8em 0; }
+  pre code { background:none; color:inherit; padding:0; }
+  table { border-collapse:collapse; margin:.9em 0; width:100%; font-size:14px; }
+  th, td { border:1px solid #cbd5e1; padding:7px 10px; text-align:left; }
+  th { background:#f1f5f9; }
+  tr:nth-child(even) td { background:#f8fafc; }
+  img { max-width:100%; border:1px solid #e2e8f0; border-radius:6px; margin:.6em 0; }
+  blockquote { border-left:4px solid #cbd5e1; padding:4px 16px; color:#475569; margin:.8em 0; }
+  hr { border:none; border-top:1px solid #e2e8f0; margin:1.6em 0; }
+  @media (max-width:700px) {
+    nav.top { padding:10px 12px; gap:8px; }
+    nav.top .t { font-size:13px; min-width:120px; }
+    article { padding:22px 14px 50px; }
+    table { display:block; overflow-x:auto; }
+    pre { font-size:12px; }
+  }
+</style>
+<script src="../solo-rol.js"></script>
+</head>
+<body>
+<nav class="top">
+  <a class="volver" href="../index.html">&#8592; Portal</a>
+  <span class="t">MANUAL ROLES SISTEMA COMPLETO</span>
+  <a class="btn" href="../visor-docx.html?doc=docx/MANUAL_ROLES_SISTEMA_COMPLETO.docx">Ver Word</a><a class="btn" href="../docx/MANUAL_ROLES_SISTEMA_COMPLETO.docx">&#11015; .docx</a>
+  <a class="btn" href="../MANUAL_ROLES_SISTEMA_COMPLETO.md">Fuente .md</a>
+</nav>
+<article>
+<h1 id="manual-de-roles-del-sistema-logística">Manual de Roles del Sistema Logística</h1>
+<p><strong>Versión:</strong> 1.0 <strong>Fecha:</strong> Octubre 2026 <strong>Proyecto:</strong> App Logística (Frontend Angular + API Logística) <strong>Audiencia:</strong> Usuarios finales, jefaturas, administradores y soporte TI</p>
+<hr />
+<h2 id="índice">Índice</h2>
+<ol type="1">
+<li><a href="#1-introducción">Introducción</a></li>
+<li><a href="#2-formas-de-acceso-al-sistema">Formas de acceso al sistema</a></li>
+<li><a href="#3-catálogo-de-roles">Catálogo de roles</a></li>
+<li><a href="#4-arquitectura-de-permisos">Arquitectura de permisos</a></li>
+<li><a href="#5-pantalla-de-inicio-por-rol">Pantalla de inicio por rol</a></li>
+<li><a href="#6-matriz-de-acceso-rol--módulo">Matriz de acceso rol × módulo</a></li>
+<li><a href="#7-descripción-funcional-de-cada-rol">Descripción funcional de cada rol</a></li>
+<li><a href="#8-flujo-de-proceso-end-to-end">Flujo de proceso end-to-end y participación por rol</a></li>
+<li><a href="#9-consola-de-administración-admin-logistica">Consola de administración <code>/admin-logistica</code></a></li>
+<li><a href="#10-módulo-de-administración-clásica">Módulo de administración clásica <code>/administracion</code></a></li>
+<li><a href="#11-funciones-transversales">Funciones transversales</a></li>
+<li><a href="#12-observaciones-técnicas-conocidas">Observaciones técnicas conocidas</a></li>
+<li><a href="#13-manuales-individuales-y-video-tutoriales">Manuales individuales y video tutoriales</a></li>
+</ol>
+<hr />
+<h2 id="1-introducción">1. Introducción</h2>
+<p>El Sistema Logística cubre el ciclo operativo completo: <strong>requerimiento → aprobación → consolidación → cotización → orden de compra/servicio → recepción → despacho → conformidad → kardex e inventario → reportes</strong>.</p>
+<p>El acceso a cada pantalla está controlado por el <strong>rol del usuario</strong> (<code>idrol</code>), asignado al momento de crear la cuenta. Un usuario puede tener uno o varios roles (separados por coma en el campo <code>idrol</code>).</p>
+<p>Los permisos se aplican en tres niveles:</p>
+<table>
+<thead>
+<tr>
+<th>Nivel</th>
+<th>Mecanismo</th>
+<th>Dónde se define</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Acceso a pantallas (rutas)</td>
+<td>Guards de Angular</td>
+<td>Código fuente (<code>app.routes.ts</code> + guards)</td>
+</tr>
+<tr>
+<td>Menú lateral visible</td>
+<td>Configuración en BD</td>
+<td>Tabla <code>LOGISTICA_ConfiguracionPermiso</code> (claves <code>MENU_*</code>)</td>
+</tr>
+<tr>
+<td>Opciones de la consola admin</td>
+<td>Permisos por rol en BD</td>
+<td>Claves <code>ADMINLG_MENU_*</code> (editables desde <em>Permisos por Rol</em>)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-formas-de-acceso-al-sistema">2. Formas de acceso al sistema</h2>
+<p>El sistema tiene <strong>tres puntos de entrada</strong> distintos:</p>
+<table>
+<thead>
+<tr>
+<th>Entrada</th>
+<th>URL</th>
+<th>Para quién</th>
+<th>Autenticación</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>App operativa</td>
+<td><code>/auth/login</code></td>
+<td>Todos los roles operativos</td>
+<td>API Maestra (usuario/contraseña corporativa)</td>
+</tr>
+<tr>
+<td>Consola Admin Logística</td>
+<td><code>/admin-logistica/login</code></td>
+<td>TILOGIST, ADLOGIST, JLOLOGIST</td>
+<td>Login propio de la consola</td>
+</tr>
+<tr>
+<td>Administración clásica</td>
+<td><code>/admin-login</code></td>
+<td>Administradores del sistema</td>
+<td>Genera <code>ADMIN_TOKEN</code> en sesión</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../../capturas_manual/01_login.png" alt="Login" /></p>
+<p><strong>Después del login</strong> el sistema:</p>
+<ol type="1">
+<li>Valida credenciales contra la API Maestra.</li>
+<li>Guarda al usuario en la base local (IndexedDB/Dexie).</li>
+<li>Carga la configuración de menú del rol desde la BD.</li>
+<li>Redirige automáticamente al dashboard que corresponde al rol.</li>
+<li>Activa el contador de notificaciones (se actualiza cada 30 segundos).</li>
+</ol>
+<blockquote>
+<p><strong>Importante:</strong> antes de cerrar sesión se deben sincronizar los requerimientos pendientes. Si existen registros sin sincronizar, el sistema bloquea el cierre de sesión y muestra un aviso con el detalle.</p>
+</blockquote>
+<hr />
+<h2 id="3-catálogo-de-roles">3. Catálogo de roles</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Código (<code>idrol</code>)</th>
+<th>Nombre</th>
+<th>Perfil / Área típica</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>TILOGIST</code></td>
+<td>Admin Sistema</td>
+<td>Soporte TI / Sistemas</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>ADLOGIST</code></td>
+<td>Admin Logística</td>
+<td>Administrador funcional del módulo</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>JLOLOGIST</code></td>
+<td>Jefe Logística</td>
+<td>Jefatura de logística</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>JEMLOGIST</code></td>
+<td>Jefe Licitaciones</td>
+<td>Jefatura de licitaciones / empaque</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>LOLOGIST</code></td>
+<td>Operador Logística</td>
+<td>Analista de compras/logística</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>EMLOGIST</code></td>
+<td>Operador Licitaciones</td>
+<td>Operador de empaque/licitaciones</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>ALLOGIST</code></td>
+<td>Almacén</td>
+<td>Personal de almacén</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>OPLOGIST</code></td>
+<td>Operativo Campo</td>
+<td>Usuario de campo que solicita</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>APLOGIST</code></td>
+<td>Aprobador Consumo</td>
+<td>Jefe de área que aprueba requerimientos</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>FINANZAS</code></td>
+<td>Finanzas</td>
+<td>Área financiera (aprobación de órdenes)</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>GERENTE</code></td>
+<td>Gerente</td>
+<td>Gerencia (aprobación de alto nivel)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Jerarquía para administración de usuarios:</strong></p>
+<ul>
+<li><code>TILOGIST</code> puede crear usuarios de <strong>todos</strong> los roles.</li>
+<li><code>ADLOGIST</code> puede crear usuarios de todos los roles <strong>excepto TILOGIST</strong>.</li>
+<li><code>JLOLOGIST</code> solo puede crear usuarios de roles operativos: <code>LOLOGIST</code>, <code>EMLOGIST</code>, <code>ALLOGIST</code>, <code>OPLOGIST</code>, <code>APLOGIST</code>.</li>
+<li><code>JLOLOGIST</code> no puede ver usuarios con rol <code>JLOLOGIST</code> ni <code>ADLOGIST</code> en las listas.</li>
+</ul>
+<hr />
+<h2 id="4-arquitectura-de-permisos">4. Arquitectura de permisos</h2>
+<h3 id="41-guards-de-rutas-nivel-código">4.1 Guards de rutas (nivel código)</h3>
+<table>
+<thead>
+<tr>
+<th>Guard</th>
+<th>Roles que pasan</th>
+<th>Pantallas que protege</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AdministradorGuard</code></td>
+<td>TILOGIST, ADLOGIST</td>
+<td>Maestros, Aprobadores, dashboards TI/Admin</td>
+</tr>
+<tr>
+<td><code>AdminGuard</code></td>
+<td>Sesión admin (<code>ADMIN_TOKEN</code>)</td>
+<td>Todo <code>/administracion</code></td>
+</tr>
+<tr>
+<td><code>LogisticoGuard</code></td>
+<td>LOLOGIST, TILOGIST, ADLOGIST, JLOLOGIST</td>
+<td>Compras, cotizaciones, OC/OS, consolidaciones, reportes compras</td>
+</tr>
+<tr>
+<td><code>OperativoLogisticoGuard</code></td>
+<td>OPLOGIST, LOLOGIST, EMLOGIST, JEMLOGIST, JLOLOGIST, APLOGIST, ADLOGIST, ALLOGIST</td>
+<td>Dashboard operativo</td>
+</tr>
+<tr>
+<td><code>OperativoEmpaqueGuard</code></td>
+<td>OPLOGIST, EMLOGIST + Logístico + Almacén</td>
+<td>Requerimientos, Parámetros, Notificaciones</td>
+</tr>
+<tr>
+<td><code>AlmacenGuard</code></td>
+<td>ALLOGIST, LOLOGIST</td>
+<td>Despachos, recepción, kardex, inventario, transferencias, devoluciones a proveedores</td>
+</tr>
+<tr>
+<td><code>AprobadorGuard</code></td>
+<td>APLOGIST, ADLOGIST, JLOLOGIST</td>
+<td>Aprobaciones por área y sus reportes</td>
+</tr>
+<tr>
+<td><code>AprobadorOCGuard</code></td>
+<td>TILOGIST, ADLOGIST, JLOLOGIST, JEMLOGIST, FINANZAS, GERENTE</td>
+<td>Aprobación OC/OS, dashboard finanzas</td>
+</tr>
+<tr>
+<td><code>DevolucionConsumoGuard</code></td>
+<td>TILOGIST, ADLOGIST, JLOLOGIST, ALLOGIST, OPLOGIST, EMLOGIST, LOLOGIST, APLOGIST</td>
+<td>Devoluciones de consumo, conformidad de almacén</td>
+</tr>
+<tr>
+<td><code>ReingresoGuard</code></td>
+<td>APLOGIST, ALLOGIST, ADLOGIST, OPLOGIST, EMLOGIST, LOLOGIST</td>
+<td>Reingresos</td>
+</tr>
+<tr>
+<td><code>JefeAreaGuard</code></td>
+<td>APLOGIST</td>
+<td>Aprobar/rechazar reingresos</td>
+</tr>
+<tr>
+<td><code>JefeAlmacenGuard</code></td>
+<td>ALLOGIST, ADLOGIST</td>
+<td>Aprobar/rechazar/anular devoluciones</td>
+</tr>
+<tr>
+<td><code>ConformidadServiciosGuard</code></td>
+<td>LOLOGIST, TILOGIST, ADLOGIST, OPLOGIST, EMLOGIST, JEMLOGIST, JLOLOGIST</td>
+<td>Conformidad de servicios</td>
+</tr>
+<tr>
+<td><code>ConfigGuard</code></td>
+<td>Cualquier rol</td>
+<td>Exige tener configuración sincronizada</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42-menú-dinámico-por-rol-nivel-bd">4.2 Menú dinámico por rol (nivel BD)</h3>
+<p>La tabla <code>LOGISTICA_ConfiguracionPermiso</code> guarda, por <code>idrol</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Clave</th>
+<th>Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MENU_TYPE</code></td>
+<td>Tipo visual: <code>accordion</code>, <code>nav</code>, <code>list</code></td>
+</tr>
+<tr>
+<td><code>MENU_JSON</code></td>
+<td>Estructura completa del menú (grupos e ítems)</td>
+</tr>
+<tr>
+<td><code>ITEMS_VISIBLES</code></td>
+<td>Lista de ítems del menú por defecto a mostrar</td>
+</tr>
+<tr>
+<td><code>LAYOUT_ACCORDION</code></td>
+<td><code>1</code> activa el menú acordeón</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Excepción:</strong> <code>JLOLOGIST</code> usa un menú propio definido en el componente <code>DynamicMenuComponent</code> (no depende de <code>MENU_JSON</code>).</p>
+</blockquote>
+<h3 id="43-permisos-de-la-consola-admin-adminlg_">4.3 Permisos de la consola admin (<code>ADMINLG_*</code>)</h3>
+<p>Cada pestaña de <code>/admin-logistica</code> tiene una clave (<code>ADMINLG_MENU_USUARIOS</code>, <code>ADMINLG_MENU_AUDITORIA</code>, etc.) editable desde la propia consola en <strong>Permisos por Rol</strong>. Si no hay valor en BD, se aplica un comportamiento por defecto:</p>
+<ul>
+<li><code>TILOGIST</code> y <code>ADLOGIST</code> ven todas las pestañas.</li>
+<li><code>JLOLOGIST</code> ve: Dashboard, Bandeja, Aprobar Consumo, Maestros, Proveedores, Usuarios (solo roles operativos) y Formato PDF. <strong>No</strong> ve Aprobar SC/SS ni las pestañas de configuración.</li>
+</ul>
+<hr />
+<h2 id="5-pantalla-de-inicio-por-rol">5. Pantalla de inicio por rol</h2>
+<p>Al entrar a <code>/main</code>, el sistema redirige automáticamente:</p>
+<table>
+<thead>
+<tr>
+<th>Rol</th>
+<th>Pantalla inicial</th>
+<th>Captura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TILOGIST</code></td>
+<td>Dashboard Admin Sistema (<code>dashboard-tilogist</code>)</td>
+<td>02_dashboard_admin.png</td>
+</tr>
+<tr>
+<td><code>ADLOGIST</code></td>
+<td>Dashboard Admin Logística (<code>dashboard-adlogist</code>)</td>
+<td>02_dashboard_admin.png</td>
+</tr>
+<tr>
+<td><code>JLOLOGIST</code></td>
+<td>Dashboard Logística (<code>dashboard-logistica</code>)</td>
+<td>35_dashboard_logistica.png</td>
+</tr>
+<tr>
+<td><code>JEMLOGIST</code></td>
+<td>Dashboard Jef. Licitaciones (<code>dashboard-jemlogist</code>)</td>
+<td>52_dashboard_jemlogist.png</td>
+</tr>
+<tr>
+<td><code>LOLOGIST</code></td>
+<td>Dashboard Logística (<code>dashboard-logistica</code>)</td>
+<td>35_dashboard_logistica.png</td>
+</tr>
+<tr>
+<td><code>EMLOGIST</code></td>
+<td>Dashboard Logística (<code>dashboard-logistica</code>)</td>
+<td>35_dashboard_logistica.png</td>
+</tr>
+<tr>
+<td><code>OPLOGIST</code></td>
+<td>Mis Requerimientos (<code>dashboard-oplogist</code>)</td>
+<td>12_dashboard_operativo.png</td>
+</tr>
+<tr>
+<td><code>ALLOGIST</code></td>
+<td>Gestión de Despachos (<code>despachos</code>)</td>
+<td>23_despachos.png</td>
+</tr>
+<tr>
+<td><code>APLOGIST</code></td>
+<td>Dashboard Aprobaciones por Área</td>
+<td>15_dashboard_aprobaciones_area.png</td>
+</tr>
+<tr>
+<td><code>FINANZAS</code></td>
+<td>Dashboard Finanzas</td>
+<td>53_dashboard_finanzas.png</td>
+</tr>
+<tr>
+<td><code>GERENTE</code></td>
+<td>Menú configurado en BD (sin redirect fijo)</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6-matriz-de-acceso-rol--módulo">6. Matriz de acceso rol × módulo</h2>
+<p>Leyenda: ✅ acceso · ⛔ sin acceso · 🔓 sin restricción (todo usuario autenticado)</p>
+<table>
+<thead>
+<tr>
+<th>Módulo / Pantalla</th>
+<th style="text-align: center;">TI</th>
+<th style="text-align: center;">AD</th>
+<th style="text-align: center;">JL</th>
+<th style="text-align: center;">JEM</th>
+<th style="text-align: center;">LO</th>
+<th style="text-align: center;">EM</th>
+<th style="text-align: center;">AL</th>
+<th style="text-align: center;">OP</th>
+<th style="text-align: center;">AP</th>
+<th style="text-align: center;">FIN</th>
+<th style="text-align: center;">GER</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Panel / Dashboards</strong></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td>Dashboard Admin Sistema</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Dashboard Admin Logística</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Dashboard Logística</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Dashboard Jef. Logística</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Dashboard Jef. Licitaciones</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Dashboard Compras</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Dashboard Operativo</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Dashboard Despacho</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Dashboard Finanzas</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td>Dashboard Aprob. Área</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td><strong>Configuración</strong></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td>Parámetros</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Notificaciones</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td><strong>Requerimientos</strong></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td>Requerimientos (crear)</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Saldo de Requerimiento</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+</tr>
+<tr>
+<td><strong>Compras &amp; Órdenes</strong></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td>Solicitudes de Compra</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Consolidación Requerimientos</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Consolidación Compras</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Consolidación Corporativa</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Cotizaciones</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Órdenes de Compra</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Solicitudes de Servicio</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Consolidación Servicios</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Órdenes de Servicio</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Conformidad de Servicios</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td><strong>Almacén &amp; Stock</strong></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td>Despachos</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Recepción de Mercadería</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Conformidad de Despacho</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Kardex e Inventario</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Gestión de Inventario</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Listas de Stock</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Transferencias de Almacén</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Devoluciones a Proveedores</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Devoluciones de Consumo</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Reingresos</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Evaluación de Proveedores</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td><strong>Aprobaciones</strong></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td>Aprobaciones por Área (req.)</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Reporte Aprob. Área</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Reporte Requerimientos Aprobados</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Aprobación OC</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td>Aprobación OS</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td><strong>Maestros &amp; Catálogos</strong></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td>Maestros (ítems/commodities)</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Maestro Proveedores</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Aprobadores (mantenedor)</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Catálogo de Ítems</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+</tr>
+<tr>
+<td><strong>Reportes</strong></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td>Reportes de Compras</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Reporte Requerimientos</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+</tr>
+<tr>
+<td>Reporte Logístico</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+<td style="text-align: center;">🔓</td>
+</tr>
+<tr>
+<td>Reporte de Saldos</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td>Reporte de Despachos</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td><strong>Consolas admin</strong></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td><code>/administracion</code> (clásica)</td>
+<td style="text-align: center;">✅*</td>
+<td style="text-align: center;">✅*</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+<tr>
+<td><code>/admin-logistica</code> (consola)</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅**</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+<td style="text-align: center;">⛔</td>
+</tr>
+</tbody>
+</table>
+<p>* Requiere login adicional en <code>/admin-login</code>. ** <code>JLOLOGIST</code> entra con menú reducido (sin pestañas de configuración ni Aprobar SC/SS por defecto; ampliable con permisos <code>ADMINLG_*</code>).</p>
+<blockquote>
+<p>La matriz refleja los <strong>guards del código fuente</strong>. El menú lateral que ve cada usuario puede ser más corto según la configuración <code>MENU_JSON</code>/<code>ITEMS_VISIBLES</code> en BD.</p>
+</blockquote>
+<hr />
+<h2 id="7-descripción-funcional-de-cada-rol">7. Descripción funcional de cada rol</h2>
+<h3 id="71-tilogist--admin-sistema">7.1 TILOGIST — Admin Sistema</h3>
+<p><strong>Propósito:</strong> soporte técnico y administración total de la plataforma.</p>
+<ul>
+<li>Accede a los dashboards de administración (TI y Logística) y a casi todas las pantallas operativas excepto almacén físico y aprobaciones por área.</li>
+<li>Administra <strong>todos</strong> los roles de usuario, permisos <code>ADMINLG_*</code>, menús dinámicos, branding, SMTP, plantillas de correo/PDF, auditoría y sincronización.</li>
+<li>Es el único rol que puede crear otros <code>TILOGIST</code>.</li>
+<li>Entra a ambas consolas: <code>/administracion</code> (clásica) y <code>/admin-logistica</code>.</li>
+</ul>
+<p>Manual: <a href="roles/MANUAL_ROL_TILOGIST.html">roles/MANUAL_ROL_TILOGIST.md</a></p>
+<h3 id="72-adlogist--admin-logística">7.2 ADLOGIST — Admin Logística</h3>
+<p><strong>Propósito:</strong> administrador funcional del módulo logístico.</p>
+<ul>
+<li>Mismas facultades de configuración que TILOGIST salvo crear cuentas TILOGIST.</li>
+<li>Además opera requerimientos, compras, aprobaciones por área, aprobaciones OC/OS, devoluciones, reingresos y conformidades.</li>
+<li>No accede a pantallas físicas de almacén (despachos, kardex, recepción) ni al dashboard operativo de campo… salvo <code>dashboard-oplogist</code> que sí está permitido.</li>
+<li>Gestiona usuarios de todos los roles excepto TILOGIST.</li>
+</ul>
+<p>Manual: <a href="roles/MANUAL_ROL_ADLOGIST.html">roles/MANUAL_ROL_ADLOGIST.md</a></p>
+<h3 id="73-jlologist--jefe-logística">7.3 JLOLOGIST — Jefe Logística</h3>
+<p><strong>Propósito:</strong> supervisar y aprobar el ciclo logístico completo.</p>
+<ul>
+<li>Único rol con <strong>menú propio</strong> (no configurable por <code>MENU_JSON</code>).</li>
+<li>Aprueba requerimientos por área, OC y OS; gestiona compras, cotizaciones, consolidaciones y conformidades.</li>
+<li>Puede crear usuarios operativos (LOLOGIST, EMLOGIST, ALLOGIST, OPLOGIST, APLOGIST) desde la consola admin.</li>
+<li>No accede a pantallas de almacén físico ni reingresos.</li>
+</ul>
+<p>Manual: <a href="roles/MANUAL_ROL_JLOLOGIST.html">roles/MANUAL_ROL_JLOLOGIST.md</a></p>
+<h3 id="74-jemlogist--jefe-licitaciones">7.4 JEMLOGIST — Jefe Licitaciones</h3>
+<p><strong>Propósito:</strong> jefatura del área de licitaciones/empaque; aprueba órdenes.</p>
+<ul>
+<li>Aprueba y rechaza OC y OS (junto a Finanzas y Gerente).</li>
+<li>Ve el dashboard operativo, dashboard de licitaciones y conformidad de servicios.</li>
+<li>Participa en devoluciones de consumo.</li>
+<li>No crea requerimientos ni gestiona compras directamente.</li>
+</ul>
+<p>Manual: <a href="roles/MANUAL_ROL_JEMLOGIST.html">roles/MANUAL_ROL_JEMLOGIST.md</a></p>
+<h3 id="75-lologist--operador-logística">7.5 LOLOGIST — Operador Logística</h3>
+<p><strong>Propósito:</strong> ejecutar el ciclo de compras y operar el almacén.</p>
+<ul>
+<li>Rol <strong>más operativo del sistema</strong>: cubre requerimientos, solicitudes de compra y servicio, consolidaciones (incluida corporativa), cotizaciones, OC/OS, conformidades.</li>
+<li>Es el único rol operativo con acceso completo a almacén: despachos, recepción, kardex, inventario, transferencias, devoluciones y evaluación de proveedores.</li>
+<li>No aprueba: ni requerimientos por área ni OC/OS.</li>
+</ul>
+<p>Manual: <a href="roles/MANUAL_ROL_LOLOGIST.html">roles/MANUAL_ROL_LOLOGIST.md</a></p>
+<h3 id="76-emlogist--operador-licitaciones">7.6 EMLOGIST — Operador Licitaciones</h3>
+<p><strong>Propósito:</strong> crear y gestionar requerimientos del área de empaque/licitaciones.</p>
+<ul>
+<li>Crea requerimientos (ítems, commodities, activos), revisa notificaciones y su dashboard operativo.</li>
+<li>Da conformidad de servicios, registra devoluciones de consumo y reingresos.</li>
+<li>No gestiona compras ni aprueba órdenes.</li>
+</ul>
+<p>Manual: <a href="roles/MANUAL_ROL_EMLOGIST.html">roles/MANUAL_ROL_EMLOGIST.md</a></p>
+<h3 id="77-allogist--almacén">7.7 ALLOGIST — Almacén</h3>
+<p><strong>Propósito:</strong> ejecutar la operación física del almacén.</p>
+<ul>
+<li>Pantalla inicial: <strong>Gestión de Despachos</strong>.</li>
+<li>Despacha, recepciona mercadería, mueve kardex, inventario, transferencias, listas de stock, devoluciones a proveedores y de consumo, reingresos y evaluación de proveedores.</li>
+<li>Actúa como <strong>Jefe de Almacén</strong>: puede aprobar/rechazar/anular devoluciones de consumo (<code>JefeAlmacenGuard</code>).</li>
+<li>Puede crear requerimientos y gestionar el maestro de proveedores.</li>
+</ul>
+<p>Manual: <a href="roles/MANUAL_ROL_ALLOGIST.html">roles/MANUAL_ROL_ALLOGIST.md</a></p>
+<h3 id="78-oplogist--operativo-campo">7.8 OPLOGIST — Operativo Campo</h3>
+<p><strong>Propósito:</strong> usuario solicitante en campo/fundo.</p>
+<ul>
+<li>Pantalla inicial: <strong>Mis Requerimientos</strong>.</li>
+<li>Crea requerimientos de ítems, commodities, activos fijos y menores; trabaja offline y sincroniza desde Parámetros.</li>
+<li>Da conformidad de despacho y de servicios; registra devoluciones de consumo y reingresos de material.</li>
+<li>No ve compras, almacén ni aprobaciones.</li>
+</ul>
+<p>Manual: <a href="roles/MANUAL_ROL_OPLOGIST.html">roles/MANUAL_ROL_OPLOGIST.md</a></p>
+<h3 id="79-aplogist--aprobador-consumo-jefe-de-área">7.9 APLOGIST — Aprobador Consumo (Jefe de Área)</h3>
+<p><strong>Propósito:</strong> aprobar o rechazar los requerimientos de su área.</p>
+<ul>
+<li>Pantalla inicial: <strong>Dashboard de Aprobaciones por Área</strong> con pendientes e historial.</li>
+<li>Aprueba/rechaza requerimientos y <strong>reingresos</strong> (es el único con <code>JefeAreaGuard</code>).</li>
+<li>Consulta reportes de aprobaciones de su área y conformidad de despacho.</li>
+<li>No crea requerimientos ni ve compras/almacén.</li>
+</ul>
+<p>Manual: <a href="roles/MANUAL_ROL_APLOGIST.html">roles/MANUAL_ROL_APLOGIST.md</a></p>
+<h3 id="710-finanzas--finanzas">7.10 FINANZAS — Finanzas</h3>
+<p><strong>Propósito:</strong> control financiero de las órdenes.</p>
+<ul>
+<li>Pantalla inicial: <strong>Dashboard Finanzas</strong>.</li>
+<li>Aprueba/rechaza Órdenes de Compra y Órdenes de Servicio.</li>
+<li>Rol de alcance reducido: solo aprobación de órdenes + reportes sin restricción.</li>
+</ul>
+<p>Manual: <a href="roles/MANUAL_ROL_FINANZAS.html">roles/MANUAL_ROL_FINANZAS.md</a></p>
+<h3 id="711-gerente--gerente">7.11 GERENTE — Gerente</h3>
+<p><strong>Propósito:</strong> aprobación de alto nivel y supervisión.</p>
+<ul>
+<li>Aprueba/rechaza OC y OS junto a Finanzas y jefaturas.</li>
+<li>Ve el Dashboard Finanzas y los reportes abiertos.</li>
+<li>Su menú se define 100% por configuración BD (recomendado: dashboard + aprobaciones + reportes).</li>
+</ul>
+<p>Manual: <a href="roles/MANUAL_ROL_GERENTE.html">roles/MANUAL_ROL_GERENTE.md</a></p>
+<hr />
+<h2 id="8-flujo-de-proceso-end-to-end">8. Flujo de proceso end-to-end</h2>
+<pre class="text"><code>OPLOGIST/EMLOGIST/ALLOGIST   APLOGIST (área)    JLOLOGIST          LOLOGIST            ALLOGIST         FINANZAS/JEMLOGIST/GERENTE
+        │                        │                 │                  │                   │                      │
+  1. Crea requerimiento ────────►│                 │                  │                   │                      │
+                                 2. Aprueba ──────►│                  │                   │                      │
+                                                   3. Supervisa ────►│                   │                      │
+                                                                     4. Consolida +      │                      │
+                                                                        cotiza + SC      │                      │
+                                                                     5. Genera OC ───────┼──────────────────────►│ 6. Aprueba OC
+                                                                     7. Recepción ◄──────┤                      │
+                                                                        (proveedor)      │                      │
+                                                                     8. Despacha ───────►│ 9. Conforma consumo  │
+                                                                                         │ 10. Kardex/stock     │</code></pre>
+<table>
+<thead>
+<tr>
+<th>Paso</th>
+<th>Acción</th>
+<th>Rol responsable</th>
+<th>Pantalla</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Crear requerimiento</td>
+<td>OPLOGIST, EMLOGIST, LOLOGIST, ALLOGIST, ADLOGIST, JLOLOGIST, TILOGIST</td>
+<td>Requerimientos</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Aprobar por área</td>
+<td>APLOGIST (ADLOGIST, JLOLOGIST también)</td>
+<td>Aprobaciones por Área</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Supervisar flujo</td>
+<td>JLOLOGIST</td>
+<td>Dashboard Logística</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Consolidar + cotizar + SC</td>
+<td>LOLOGIST, JLOLOGIST, ADLOGIST</td>
+<td>Consolidación / Cotizaciones</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Generar OC/OS</td>
+<td>LOLOGIST</td>
+<td>Órdenes de Compra/Servicio</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Aprobar OC/OS</td>
+<td>JLOLOGIST, JEMLOGIST, FINANZAS, GERENTE</td>
+<td>Aprobación OC/OS</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Recepcionar mercadería</td>
+<td>ALLOGIST, LOLOGIST</td>
+<td>Recepción de Mercadería</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Despachar</td>
+<td>ALLOGIST, LOLOGIST</td>
+<td>Despachos</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Conformidad</td>
+<td>Solicitante (OPLOGIST/EMLOGIST/…)</td>
+<td>Conformidad de Despacho</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Inventario/kardex</td>
+<td>ALLOGIST, LOLOGIST</td>
+<td>Kardex e Inventario</td>
+</tr>
+</tbody>
+</table>
+<p>Flujos paralelos: <strong>devoluciones</strong> (consumo → APLOGIST aprueba reingreso; proveedor → ALLOGIST) y <strong>evaluación de proveedores</strong> (ALLOGIST/LOLOGIST).</p>
+<hr />
+<h2 id="9-consola-de-administración-admin-logistica">9. Consola de administración <code>/admin-logistica</code></h2>
+<p>Consola separada con login propio. Pestañas y su clave de permiso:</p>
+<table>
+<thead>
+<tr>
+<th>Pestaña</th>
+<th>Clave de permiso</th>
+<th>Visible por defecto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dashboard</td>
+<td><code>ADMINLG_MENU_DASHBOARD</code></td>
+<td>Todos</td>
+</tr>
+<tr>
+<td>Bandeja Aprobaciones</td>
+<td><code>ADMINLG_MENU_BANDEJA</code></td>
+<td>Todos</td>
+</tr>
+<tr>
+<td>Aprobar Consumo</td>
+<td><code>ADMINLG_MENU_APROBAR_CONSUMO</code></td>
+<td>Todos</td>
+</tr>
+<tr>
+<td>Aprobar Solicitud Compra</td>
+<td><code>ADMINLG_MENU_APROBAR_SC</code></td>
+<td>TILOGIST, ADLOGIST</td>
+</tr>
+<tr>
+<td>Aprobar Solicitud Servicio</td>
+<td><code>ADMINLG_MENU_APROBAR_SS</code></td>
+<td>TILOGIST, ADLOGIST</td>
+</tr>
+<tr>
+<td>Maestros</td>
+<td><code>ADMINLG_MENU_MAESTROS</code></td>
+<td>Todos</td>
+</tr>
+<tr>
+<td>Gestión Proveedores</td>
+<td><code>ADMINLG_MENU_PROVEEDORES</code></td>
+<td>Todos</td>
+</tr>
+<tr>
+<td>Usuarios</td>
+<td><code>ADMINLG_MENU_USUARIOS</code></td>
+<td>Quienes pueden crear usuarios</td>
+</tr>
+<tr>
+<td>Áreas</td>
+<td><code>ADMINLG_MENU_AREAS</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Usuarios por Área</td>
+<td><code>ADMINLG_MENU_USUARIO_AREA</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Flujo Aprobación Área</td>
+<td><code>ADMINLG_MENU_FLUJO_AREA</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Formato PDF</td>
+<td><code>ADMINLG_MENU_PDF</code></td>
+<td>Todos</td>
+</tr>
+<tr>
+<td>Empresa</td>
+<td><code>ADMINLG_MENU_EMPRESA</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Parámetros</td>
+<td><code>ADMINLG_MENU_PARAMETROS</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Incremento Cantidad OC</td>
+<td><code>ADMINLG_MENU_INCREMENTO_OC</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Aprobadores</td>
+<td><code>ADMINLG_MENU_APROBADORES</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Auditoría</td>
+<td><code>ADMINLG_MENU_AUDITORIA</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Plantillas Almacén</td>
+<td><code>ADMINLG_MENU_ALMACEN</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Conformidad Servicio</td>
+<td><code>ADMINLG_MENU_CONFORMIDAD</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Permisos por Rol</td>
+<td><code>ADMINLG_MENU_PERMISOS_ROL</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Migrar Adjuntos</td>
+<td><code>ADMINLG_MENU_MIGRAR_ADJUNTOS</code></td>
+<td>Admin</td>
+</tr>
+</tbody>
+</table>
+<p><em>(“Admin” = TILOGIST o ADLOGIST. Los permisos se pueden ajustar por rol en la pestaña <strong>Permisos por Rol</strong>.)</em></p>
+<hr />
+<h2 id="10-módulo-de-administración-clásica">10. Módulo de administración clásica</h2>
+<p><code>/administracion</code> requiere login adicional en <code>/admin-login</code>. Incluye: dashboard admin, usuarios, roles, áreas, perfiles, flujos, aprobadores, usuarios por área, versión de API, correo de proveedores, SMTP, plantillas de correo y PDF, colores, permisos de roles, menús dinámicos y plantillas de menú, empresas, branding y sincronización.</p>
+<p><img src="../../capturas_manual/10_administracion.png" alt="Administración" /></p>
+<hr />
+<h2 id="11-funciones-transversales">11. Funciones transversales</h2>
+<table>
+<thead>
+<tr>
+<th>Función</th>
+<th>Detalle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Notificaciones</td>
+<td>Contador en el menú, refresco cada 30 s, toast clickeable cuando hay saldos pendientes</td>
+</tr>
+<tr>
+<td>Trabajo offline</td>
+<td>Requerimientos y maestras se guardan en IndexedDB; se sincronizan desde Parámetros</td>
+</tr>
+<tr>
+<td>Cierre de sesión bloqueado</td>
+<td>Si hay requerimientos sin sincronizar, el sistema impide salir hasta sincronizarlos</td>
+</tr>
+<tr>
+<td>Adjuntos</td>
+<td>SC y SS aceptan archivos adjuntos; existe pestaña “Migrar Adjuntos” en la consola</td>
+</tr>
+<tr>
+<td>Multiempresa</td>
+<td>La configuración de empresa/branding/PDF se gestiona por empresa</td>
+</tr>
+<tr>
+<td>Auditoría</td>
+<td>La consola registra acciones administrativas (pestaña Auditoría)</td>
+</tr>
+<tr>
+<td>Reportes abiertos</td>
+<td>Reporte Logístico, Reporte Requerimientos y Catálogo de Ítems no tienen guard: cualquier usuario autenticado puede entrar</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="12-observaciones-técnicas-conocidas">12. Observaciones técnicas conocidas</h2>
+<ol type="1">
+<li><strong>EMLOGIST</strong> redirige a <code>dashboard-logistica</code>, pero ese dashboard exige rol logístico. Si el usuario no tiene menú configurado en BD puede quedar sin pantalla inicial válida — configurar <code>MENU_JSON</code> para EMLOGIST apuntando a <code>dashboard-oplogist</code>.</li>
+<li><strong>GERENTE</strong> no tiene redirect definido: su entrada depende del <code>MENU_JSON</code> configurado en BD.</li>
+<li><strong>TILOGIST</strong> no ve aprobaciones por área ni reingresos (los guards no lo incluyen); para esos flujos usar ADLOGIST.</li>
+<li><strong>JLOLOGIST</strong> es el único rol con menú hardcodeado; los cambios de menú para este rol se hacen en <code>DynamicMenuComponent</code>.</li>
+<li>Un usuario puede tener <strong>varios roles</strong> en <code>idrol</code> separados por coma (ej. <code>LOLOGIST,ALLOGIST</code>); los guards evalúan “contiene”.</li>
+<li>El orden de evaluación del redirect es por <code>includes</code>: un usuario <code>TILOGIST,LOLOGIST</code> entrará siempre al dashboard TI.</li>
+</ol>
+<hr />
+<h2 id="13-manuales-individuales-y-video-tutoriales">13. Manuales individuales y video tutoriales</h2>
+<h3 id="manuales-por-rol-markdown--word">Manuales por rol (Markdown + Word)</h3>
+<table>
+<thead>
+<tr>
+<th>Rol</th>
+<th>Manual</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TILOGIST</td>
+<td><a href="roles/MANUAL_ROL_TILOGIST.html">MANUAL_ROL_TILOGIST.md</a></td>
+</tr>
+<tr>
+<td>ADLOGIST</td>
+<td><a href="roles/MANUAL_ROL_ADLOGIST.html">MANUAL_ROL_ADLOGIST.md</a></td>
+</tr>
+<tr>
+<td>JLOLOGIST</td>
+<td><a href="roles/MANUAL_ROL_JLOLOGIST.html">MANUAL_ROL_JLOLOGIST.md</a></td>
+</tr>
+<tr>
+<td>JEMLOGIST</td>
+<td><a href="roles/MANUAL_ROL_JEMLOGIST.html">MANUAL_ROL_JEMLOGIST.md</a></td>
+</tr>
+<tr>
+<td>LOLOGIST</td>
+<td><a href="roles/MANUAL_ROL_LOLOGIST.html">MANUAL_ROL_LOLOGIST.md</a></td>
+</tr>
+<tr>
+<td>EMLOGIST</td>
+<td><a href="roles/MANUAL_ROL_EMLOGIST.html">MANUAL_ROL_EMLOGIST.md</a></td>
+</tr>
+<tr>
+<td>ALLOGIST</td>
+<td><a href="roles/MANUAL_ROL_ALLOGIST.html">MANUAL_ROL_ALLOGIST.md</a></td>
+</tr>
+<tr>
+<td>OPLOGIST</td>
+<td><a href="roles/MANUAL_ROL_OPLOGIST.html">MANUAL_ROL_OPLOGIST.md</a></td>
+</tr>
+<tr>
+<td>APLOGIST</td>
+<td><a href="roles/MANUAL_ROL_APLOGIST.html">MANUAL_ROL_APLOGIST.md</a></td>
+</tr>
+<tr>
+<td>FINANZAS</td>
+<td><a href="roles/MANUAL_ROL_FINANZAS.html">MANUAL_ROL_FINANZAS.md</a></td>
+</tr>
+<tr>
+<td>GERENTE</td>
+<td><a href="roles/MANUAL_ROL_GERENTE.html">MANUAL_ROL_GERENTE.md</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="video-tutoriales-interactivos-html">Video tutoriales interactivos (HTML)</h3>
+<p>Abrir <code>video-tutoriales/index.html</code> en el navegador: cada rol tiene una presentación guiada paso a paso con narración y capturas reales del sistema.</p>
+<hr />
+<p><em>Documento generado a partir del código fuente (<code>app.routes.ts</code>, guards, <code>admin-logistica</code>, <code>LOGISTICA_ConfiguracionPermiso</code>) — Octubre 2026.</em></p>
+
+</article>
+</body>
+</html>
