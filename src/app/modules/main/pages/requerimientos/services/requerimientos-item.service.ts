@@ -1724,7 +1724,14 @@ export class RequerimientosItemService {
             const labor = this.maestras.labores?.find((l: any) => l.labor === d.labor);
             const proyecto = proyectos.find((p: any) => p.proyectoio === d.proyecto);
             const itemEncontrado = (this.maestras.items || []).find((i: any) => i.item === d.codigo);
-            const turno = this.maestras.turnos?.find((t: any) => t.nombreTurno === d.turno);
+            // Relacionar el turno del requerimiento con la maestra (get-turnos) para obtener codTurno
+            const turnoValor = (d.turno || '').toString();
+            const turno = this.maestras.turnos?.find((t: any) =>
+              t.nombreTurno === turnoValor ||
+              t.codTurno === turnoValor ||
+              String(t.turno) === turnoValor ||
+              String(t.id) === turnoValor
+            );
 
             // Sucursal = idfundo a 4 dígitos (ej. '0801'), fallback: últimos 2 de idempresa + '01'
             let sucursalFormateada = this.requerimiento.idfundo;
@@ -1742,8 +1749,8 @@ export class RequerimientosItemService {
               CentroCostoDestino: labor?.idlabor ?? (ceco?.costcenter || centroCostoDefault),
               Sucursal: sucursalFormateada,
               CampoReferencia: this.SeleccionaTipoGasto || 'GA',
-              ReferenciaFiscal01: '',
-              ReferenciaFiscal02: turno?.idturno ?? String(usuario.idempresa ?? '').slice(-4),
+              ReferenciaFiscal01: turno?.codTurno ?? '',
+              ReferenciaFiscal02: sucursalFormateada,
               origen: 'app_logistica',
             };
           }),

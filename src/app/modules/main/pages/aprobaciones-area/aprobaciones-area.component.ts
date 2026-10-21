@@ -1198,10 +1198,14 @@ export class AprobacionesAreaComponent implements OnInit {
       // ✅ CORRECCIÓN: Para COMPRA, usar centroCostoDefault si no hay labor
       const ccostodestino = labores?.idlabor ?? centroCostoDefault;
 
-      const turnos = this.turnos.find((t) => t.nombreTurno === first?.idturno);
+      const turnos = this.turnos.find((t: any) =>
+        t.nombreTurno === first?.idturno ||
+        t.codTurno === first?.idturno ||
+        String(t.turno) === String(first?.idturno)
+      );
       // console.log('turno', turnos);
-      // ✅ CORRECCIÓN: Para COMPRA, usar código de empresa si no hay turno
-      const turno = turnos?.idturno ?? this.usuario.idempresa.substring(this.usuario.idempresa.length - 4);
+      // ✅ CORRECCIÓN: usar codTurno de la maestra; fallback código de empresa si no hay turno
+      const turno = turnos?.codTurno ?? this.usuario.idempresa.substring(this.usuario.idempresa.length - 4);
 
       // ✅ Determinar clasificación usando todos los nombres de campo posibles
       // El SP ahora devuelve idclasificacion (lowercase). También soportar variantes legacy.
@@ -1415,10 +1419,18 @@ export class AprobacionesAreaComponent implements OnInit {
               const itemCentroCostoDestino = itemLabor?.idlabor ?? itemCentroCosto;
               console.log('  🎯 CentroCostoDestino (labor o ceco):', itemCentroCostoDestino);
               
-              const itemTurno = this.turnos.find((t) => t.nombreTurno === (d.idturno || d.turno));
+              // ✅ Relacionar idturno del requerimiento con la maestra de turnos
+              // (API Maestra get-turnos) para obtener el codTurno (ej: "INV28")
+              const turnoValor = (d.idturno || d.turno || '').toString();
+              const itemTurno = this.turnos.find((t: any) =>
+                t.nombreTurno === turnoValor ||
+                t.codTurno === turnoValor ||
+                String(t.turno) === turnoValor ||
+                String(t.id) === turnoValor
+              );
               console.log('  ⏰ Turno encontrado:', itemTurno);
-              const itemTurnoId = itemTurno?.idturno ?? this.usuario.idempresa.substring(this.usuario.idempresa.length - 4);
-              console.log('  ⏰ Turno ID:', itemTurnoId);
+              const itemCodTurno = itemTurno?.codTurno ?? '';
+              console.log('  ⏰ codTurno:', itemCodTurno);
               
               // ✅ CORRECCIÓN: Formatear Sucursal a 4 dígitos (ej: 000008 -> 0801)
               let sucursalFormateada = requerimientoCompleto.idfundo;
@@ -1444,10 +1456,10 @@ export class AprobacionesAreaComponent implements OnInit {
                 Sucursal: sucursalFormateada,
                 // ✅ Limitar longitud de campo referencia a 20 caracteres
                 CampoReferencia: 'PL',
-                // ✅ Limitar longitud de referencias fiscales a 50 caracteres
-                ReferenciaFiscal01: '',
-                // ✅ CORRECCIÓN: Usar turno específico del item
-                ReferenciaFiscal02: itemTurnoId,
+                // ✅ ReferenciaFiscal01: codTurno de la maestra (INV28, etc.)
+                ReferenciaFiscal01: itemCodTurno,
+                // ✅ ReferenciaFiscal02: idfundo del requerimiento
+                ReferenciaFiscal02: sucursalFormateada,
                 origen: origenapp,
               };
               
@@ -1694,12 +1706,14 @@ export class AprobacionesAreaComponent implements OnInit {
             l.localname === d.labor
           );
           
-          // Buscar código de turno
-          const turnoEncontrado = this.turnos.find(t => 
-            t.idturno === d.idturno || 
-            t.idturno === d.turno ||
-            t.localname === d.idturno ||
-            t.localname === d.turno
+          // Buscar código de turno: el idturno del requerimiento guarda el
+          // nombreTurno; se relaciona con la maestra (get-turnos) para obtener codTurno
+          const turnoValorDet = (d.idturno || d.turno || '').toString();
+          const turnoEncontrado = this.turnos.find((t: any) =>
+            t.nombreTurno === turnoValorDet ||
+            t.codTurno === turnoValorDet ||
+            String(t.turno) === turnoValorDet ||
+            String(t.id) === turnoValorDet
           );
           
           // Buscar código de proyecto
@@ -1719,7 +1733,7 @@ export class AprobacionesAreaComponent implements OnInit {
             centroCosto: detalleCeco?.costcenter || d.idcentrocosto || d.ceco || '',
             proyecto: proyectoEncontrado?.proyectoio || d.idproyecto || d.proyecto || '',
             labor: laborEncontrada?.idlabor || d.idlabor || d.labor || '',
-            turno: turnoEncontrado?.idturno || d.idturno || d.turno || ''
+            turno: turnoEncontrado?.codTurno || d.idturno || d.turno || ''
           };
 
           console.log(`✅ Detalle ${index + 1} mapeado:`, {
