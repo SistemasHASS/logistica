@@ -132,17 +132,15 @@ export class AprobacionesAreaComponent implements OnInit {
 
   get requerimientosPendientesFiltrados(): RequerimientoPendiente[] {
     if (this.filtroTipoPendiente === 'TODOS') return this.requerimientosPendientes;
-    return this.requerimientosPendientes.filter(req => {
-      const tipo = (req.itemtipo || req.tipoRequerimiento || '').toString().toUpperCase();
-      return tipo === this.filtroTipoPendiente;
-    });
+    return this.requerimientosPendientes.filter(
+      req => this.tipoRequerimientoLabel(req) === this.filtroTipoPendiente
+    );
   }
 
   contarPendientesPorTipo(tipo: 'COMPRA' | 'CONSUMO' | 'SERVICIO'): number {
-    return this.requerimientosPendientes.filter(req => {
-      const t = (req.itemtipo || req.tipoRequerimiento || '').toString().toUpperCase();
-      return t === tipo;
-    }).length;
+    return this.requerimientosPendientes.filter(
+      req => this.tipoRequerimientoLabel(req) === tipo
+    ).length;
   }
 
   constructor(
@@ -1869,10 +1867,40 @@ export class AprobacionesAreaComponent implements OnInit {
           (requerimiento.idrequerimiento || requerimiento.idRequerimiento),
       );
 
-      if (encontrado && (encontrado.items || []).length > 0) {
+      const detallesEncontrados =
+        encontrado?.items || encontrado?.detalles || encontrado?.detalle || [];
+      if (encontrado && detallesEncontrados.length > 0) {
+        // Combinar con los detalles del listado: el SP de detalle puede no
+        // devolver idproyecto/idlabor/etc., preservamos los del listado.
+        const detallesOriginales: any[] =
+          requerimiento.items ||
+          requerimiento.detalles ||
+          requerimiento.detalle ||
+          [];
+        const camposOpcionales = [
+          'idproyecto', 'idlabor', 'idcentrocosto', 'idturno',
+          'proyecto', 'labor', 'ceco', 'turno',
+        ];
+        const detallesCombinados = detallesEncontrados.map((d: any, i: number) => {
+          const original =
+            detallesOriginales.find(
+              (o: any) => o?.id != null && d?.id != null && o.id === d.id,
+            ) ||
+            detallesOriginales.find((o: any) => o?.codigo === d?.codigo) ||
+            detallesOriginales[i] ||
+            {};
+          const merged = { ...original, ...d };
+          camposOpcionales.forEach((k) => {
+            if ((merged[k] === undefined || merged[k] === null || merged[k] === '') && original[k]) {
+              merged[k] = original[k];
+            }
+          });
+          return merged;
+        });
         this.requerimientoDetallePendientes = {
           ...requerimiento,
-          items: encontrado.items,
+          items: detallesCombinados,
+          detalles: detallesCombinados,
         };
       }
     } catch (error) {
@@ -1907,9 +1935,8 @@ export class AprobacionesAreaComponent implements OnInit {
     return r.items || r.detalles || r.detalle || [];
   }
 
-  /** Devuelve solo los detalles de tipo ítem (si es requerimiento de ítems). */
+  /** Devuelve los detalles del requerimiento pendiente (ítems o servicios). */
   getDetallesItemsPendientes(): any[] {
-    if (this.esRequerimientoServicio) return [];
     return this.getDetallesPendientes();
   }
 
@@ -1919,12 +1946,58 @@ export class AprobacionesAreaComponent implements OnInit {
     return this.getDetallesPendientes();
   }
 
+  /**
+   * Etiqueta del tipo de requerimiento: SERVICIO | CONSUMO | COMPRA | TRANSFERENCIA.
+   * Es SERVICIO si itemtipo='SERVICIO' o la clasificación es de commodity
+   * (SER/COM/ACT/ACM). En otro caso se usa itemtipo/tipoRequerimiento.
+   */
+  tipoRequerimientoLabel(req: any): string {
+    const itemtipo = (req?.itemtipo || req?.tipoRequerimiento || '')
+      .toString()
+      .toUpperCase();
+    const clas = (req?.idClasificacion || req?.idclasificacion || '')
+      .toString()
+      .toUpperCase();
+    if (itemtipo === 'SERVICIO' || ['SER', 'COM', 'ACT', 'ACM'].includes(clas)) {
+      return 'SERVICIO';
+    }
+    return itemtipo || 'COMPRA';
+  }
+
+  /** Devuelve true si el requerimiento es de servicios (COMMODITY / ACTIVO FIJO / ACTIVO MENOR / SERVICIO). */
+  esRequerimientoServicioReq(req: any): boolean {
+    return this.tipoRequerimientoLabel(req) === 'SERVICIO';
+  }
+
   /** Devuelve true si el requerimiento pendiente es de tipo servicio (COMMODITY / ACTIVO FIJO / ACTIVO MENOR). */
   get esRequerimientoServicio(): boolean {
-    const clas = (this.requerimientoDetallePendientes?.idClasificacion
-      || this.requerimientoDetallePendientes?.idclasificacion
-      || '').toString().toUpperCase();
-    return clas === 'SER' || clas === 'COM' || clas === 'ACT' || clas === 'ACM';
+    return this.esRequerimientoServicioReq(this.requerimientoDetallePendientes);
+  }
+
+  /** Nombre del proyecto de una línea de detalle (resuelve código/AFE a nombre via maestras). */
+  nombreProyectoDetalle(det: any): string {
+    const valor = (det?.idproyecto || det?.proyecto || '').toString();
+    if (!valor) return '';
+    const p = this.proyectos?.find(
+      (x: any) =>
+        x.proyectoio === valor ||
+        x.afe === valor ||
+        String(x.id) === valor,
+    );
+    return p?.proyectoio || valor;
+  }
+
+  /** Nombre de la labor de una línea de detalle (resuelve código a nombre via maestras). */
+  nombreLaborDetalle(det: any): string {
+    const valor = (det?.idlabor || det?.labor || '').toString();
+    if (!valor) return '';
+    const l = this.labores?.find(
+      (x: any) =>
+        x.labor === valor ||
+        x.idlabor === valor ||
+        String(x.id) === valor,
+    );
+    return l?.labor || valor;
   }
 
   isDetallePendienteSeleccionado(i: number): boolean {

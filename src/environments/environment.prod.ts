@@ -9,8 +9,8 @@ export const environment = {
   // baseUrl: 'https://localhost:7140',
   // baseUrl: 'http://localhost:5213',
   // baseUrl: 'https://apilogistica.agroapps.net:7018',
-  baseUrl: 'https://apiqaslogistica.agroapps.net:7641/',
+  baseUrl: 'https://apiqaslogistica.agroapps.net:7641',
   apiMaestra: 'https://apimaestra.agroapps.net:7003',
   // Portal de documentación publicado como subsitio del mismo sitio IIS.
-  docsUrl: '/documentacion'
+  docsUrl: 'https://logisticaqas.agroapps.net:7642/documentacion'
 };

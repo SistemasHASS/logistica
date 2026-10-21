@@ -6,7 +6,8 @@ export const environment = {
   showUpdateModal: true,   // true | false
   //versionControlApi: 'LOGISTICA', // 'LOGISTICA' | 'MAESTRA' (default; override runtime en localStorage)
   versionControlApi: 'MAESTRA', // 'LOGISTICA' | 'MAESTRA' (default; override runtime en localStorage)
-  baseUrl: 'https://apilogistica.agroapps.net:7018',
+  // baseUrl: 'https://apilogistica.agroapps.net:7018',
+  baseUrl: 'https://apiqaslogistica.agroapps.net:7641',
   // baseUrl: 'http://localhost:5213',
   apiMaestra: 'https://apimaestra.agroapps.net:7003',
   // Portal de documentación (botón Ayuda). En dev apunta al subsitio publicado en QAS.

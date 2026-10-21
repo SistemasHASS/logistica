@@ -464,7 +464,7 @@
 
 <!-- Modal de Detalle -->
 <p-dialog [(visible)]="displayDetalleModal" [modal]="true" [style]="{width: '800px'}"
-          [header]="'Detalle del Requerimiento - ' + ((requerimientoDetalle?.itemtipo === 'CONSUMO' || requerimientoDetalle?.tipoRequerimiento === 'CONSUMO') ? 'CONSUMO' : 'COMPRA')">
+          [header]="'Detalle del Requerimiento - ' + tipoRequerimientoLabel(requerimientoDetalle)">
   <div *ngIf="requerimientoDetalle">
     <div class="row mb-3">
       <div class="col-md-6">
@@ -493,6 +493,14 @@
         <strong>Área:</strong> {{ requerimientoDetalle.nombreArea }}
       </div>
     </div>
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <strong>Tipo:</strong>
+        <p-tag [severity]="esRequerimientoServicioReq(requerimientoDetalle) ? 'info' : (esRequerimientoConsumo(requerimientoDetalle) ? 'success' : 'secondary')">
+          {{ tipoRequerimientoLabel(requerimientoDetalle) }}
+        </p-tag>
+      </div>
+    </div>
     <div class="row mb-3" *ngIf="requerimientoDetalle.glosa">
       <div class="col-12">
         <strong>Descripción:</strong> {{ requerimientoDetalle.glosa }}
@@ -502,7 +510,7 @@
     <!-- Tabla de detalles -->
     <div class="mt-4">
       <div class="d-flex justify-content-between align-items-center mb-2">
-        <h5 class="mb-0">Ítems del Requerimiento</h5>
+        <h5 class="mb-0">{{ esRequerimientoServicioReq(requerimientoDetalle) ? 'Servicios' : 'Ítems' }} del Requerimiento</h5>
         <span class="badge bg-info">{{ (requerimientoDetalle.detalles || requerimientoDetalle.detalle)?.length || 0 }} líneas</span>
       </div>
       <p-table [value]="requerimientoDetalle.detalles || requerimientoDetalle.detalle" [paginator]="true" [rows]="5" styleClass="p-datatable-sm">
@@ -510,7 +518,7 @@
           <tr>
             <th>Código</th>
             <th>Descripción</th>
-            <th>Producto</th>
+            <th>{{ esRequerimientoServicioReq(requerimientoDetalle) ? 'Servicio' : 'Producto' }}</th>
             <th>Cantidad</th>
             <th>Proyecto</th>
             <th>Centro Costo</th>
@@ -524,10 +532,10 @@
             <td>{{ det.descripcionItem || det.descripcion || 'Sin descripción' }}</td>
             <td>{{ det.idproducto || det.producto }}</td>
             <td>{{ det.cantidad }}</td>
-            <td>{{ det.idproyecto || det.proyecto }}</td>
+            <td>{{ nombreProyectoDetalle(det) }}</td>
             <td>{{ det.idcentrocosto || det.ceco }}</td>
             <td *ngIf="esRequerimientoConsumo(requerimientoDetalle)">{{ det.idturno || det.turno }}</td>
-            <td *ngIf="requerimientoDetalle.detalles">{{ det.idlabor }}</td>
+            <td *ngIf="requerimientoDetalle.detalles">{{ nombreLaborDetalle(det) }}</td>
           </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">
@@ -666,7 +674,7 @@
 <p-dialog [(visible)]="displayDetallePendientesModal" [modal]="true"
           [style]="{width: '95vw', maxWidth: '1000px'}"
           [breakpoints]="{'960px': '95vw', '640px': '100vw'}"
-          [header]="'Detalle del Requerimiento - ' + ((requerimientoDetallePendientes?.itemtipo === 'CONSUMO' || requerimientoDetallePendientes?.tipoRequerimiento === 'CONSUMO') ? 'CONSUMO' : 'COMPRA')"
+          [header]="'Detalle del Requerimiento - ' + tipoRequerimientoLabel(requerimientoDetallePendientes)"
           (onHide)="cerrarDetallePendientes()"
           styleClass="modal-detalle-pendientes">
   <div *ngIf="requerimientoDetallePendientes" class="p-2">
@@ -701,6 +709,12 @@
         <div class="text-muted small">Estado</div>
         <p-tag severity="warn">{{ requerimientoDetallePendientes.estados || 'PENDIENTE' }}</p-tag>
       </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="text-muted small">Tipo</div>
+        <p-tag [severity]="esRequerimientoServicio ? 'info' : (esRequerimientoConsumo(requerimientoDetallePendientes) ? 'success' : 'secondary')">
+          {{ tipoRequerimientoLabel(requerimientoDetallePendientes) }}
+        </p-tag>
+      </div>
       <div class="col-12">
         <div class="text-muted small">Descripción</div>
         <div class="fw-semibold text-break">{{ requerimientoDetallePendientes.glosa || '-' }}</div>
@@ -712,7 +726,7 @@
     <!-- Ítems -->
     <div class="table-responsive">
       <div class="d-flex justify-content-between align-items-center mb-2">
-        <h6 class="mb-0">Ítems</h6>
+        <h6 class="mb-0">{{ esRequerimientoServicio ? 'Servicios' : 'Ítems' }}</h6>
         <span class="badge bg-info text-white">{{ getDetallesItemsPendientes().length || 0 }} líneas</span>
       </div>
       <p-table [value]="getDetallesItemsPendientes()" [paginator]="true" [rows]="5"
@@ -755,9 +769,9 @@
             <td *ngIf="esRequerimientoCompra(requerimientoDetallePendientes)" class="text-end fw-semibold">
               {{ formatMoneda(calcularMontoDetalle(det)) }}
             </td>
-            <td>{{ det.idproyecto || det.proyecto }}</td>
+            <td>{{ nombreProyectoDetalle(det) }}</td>
             <td>{{ det.idcentrocosto || det.ceco }}</td>
-            <td>{{ det.idlabor || det.labor }}</td>
+            <td>{{ nombreLaborDetalle(det) }}</td>
             <td>{{ requerimientoDetallePendientes.nombreArea }}</td>
             <td>
               <button pButton type="button" icon="bx bx-check"
