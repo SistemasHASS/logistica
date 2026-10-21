@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MANUAL ROL ALLOGIST — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <style>
   body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
   nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
@@ -51,130 +52,254 @@
   <a class="btn" href="../../roles/MANUAL_ROL_ALLOGIST.md">Fuente .md</a>
 </nav>
 <article>
-<h1 id="manual-de-usuario--almacén-allogist">Manual de Usuario — Almacén (ALLOGIST)</h1>
-<table>
-<thead>
-<tr>
-<th>Campo</th>
-<th>Valor</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Código de rol</td>
-<td><code>ALLOGIST</code></td>
-</tr>
-<tr>
-<td>Nombre</td>
-<td>Personal / Jefe de Almacén</td>
-</tr>
-<tr>
-<td>Pantalla inicial</td>
-<td>Gestión de Despachos (<code>/main/despachos</code>)</td>
-</tr>
-<tr>
-<td>Video tutorial</td>
-<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_ALLOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_ALLOGIST.html</a></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
-<p>Eres el <strong>responsable del almacén</strong>: despachas material, recepcionas mercadería de las OC, mantienes el kardex y el inventario, gestionas transferencias, devoluciones y evalúas proveedores. También actúas como <strong>aprobador de almacén</strong> para devoluciones de consumo.</p>
-<h2 id="2-acceso">2. Acceso</h2>
-<p>Login → entras directo a <strong>Gestión de Despachos</strong>.</p>
-<p><img src="../../../capturas_manual/23_despachos.png" alt="Despachos" /></p>
-<h2 id="3-pantallas-disponibles">3. Pantallas disponibles</h2>
-<table>
-<thead>
-<tr>
-<th>Grupo</th>
-<th>Pantallas</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Panel</td>
-<td>Dashboard Operativo, Dashboard Despacho</td>
-</tr>
-<tr>
-<td>Configuración</td>
-<td>Parámetros, Notificaciones</td>
-</tr>
-<tr>
-<td>Requerimientos</td>
-<td>Requerimientos, Saldo de Requerimiento</td>
-</tr>
-<tr>
-<td>Almacén</td>
-<td>Despachos, Recepción de Mercadería, Conformidad de Despacho, Kardex e Inventario, Gestión de Inventario, Listas de Stock, Transferencias, Devoluciones a Proveedores, Devoluciones de Consumo, Reingresos</td>
-</tr>
-<tr>
-<td>Proveedores</td>
-<td>Maestro Proveedores, Evaluación de Proveedores</td>
-</tr>
-<tr>
-<td>Reportes</td>
-<td>Reporte de Saldos, Reporte de Despachos, Requerimientos, Logístico, Catálogo</td>
-</tr>
-</tbody>
-</table>
-<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
-<h3 id="despachar-material">Despachar material</h3>
-<ol type="1">
-<li><strong>Despachos</strong> → lista de requerimientos/listas listos para despacho.</li>
-<li>Abre el documento, verifica stock disponible.</li>
-<li>Confirma el despacho → queda pendiente de conformidad por el solicitante.</li>
-</ol>
-<h3 id="recepcionar-una-oc">Recepcionar una OC</h3>
-<ol type="1">
-<li><strong>Recepción de Mercadería</strong> → busca la OC aprobada.</li>
-<li>Registra cantidades, lotes y documentos de la recepción.</li>
-<li>Confirma → ingresa a stock y se refleja en kardex.</li>
-</ol>
-<h3 id="gestionar-kardex-e-inventario">Gestionar kardex e inventario</h3>
-<ul>
-<li><strong>Kardex</strong>: consulta movimientos por ítem (entradas/salidas/saldos).</li>
-<li><strong>Gestión de Inventario</strong>: ajustes y conteos.</li>
-<li><strong>Listas de Stock</strong>: armar listas predefinidas de despacho.</li>
-<li><strong>Transferencias</strong>: mover stock entre almacenes.</li>
-</ul>
-<h3 id="procesar-devoluciones">Procesar devoluciones</h3>
-<ul>
-<li><strong>De consumo</strong>: revisa devoluciones de usuarios → <strong>aprueba/rechaza/anula</strong> (eres Jefe de Almacén).</li>
-<li><strong>A proveedores</strong>: registra devolución por recepción defectuosa.</li>
-<li><strong>Reingresos</strong>: procesa material que vuelve al almacén.</li>
-</ul>
-<h3 id="evaluar-proveedores">Evaluar proveedores</h3>
-<p><strong>Evaluación de Proveedores</strong> → califica criterios (plazo, calidad, documentación) por OC recepcionada.</p>
-<h2 id="5-restricciones">5. Restricciones</h2>
-<ul>
-<li>No ves compras, cotizaciones, OC ni aprobaciones por área.</li>
-<li>No gestionas usuarios ni configuración del sistema.</li>
-</ul>
-<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
-<table>
-<thead>
-<tr>
-<th>Problema</th>
-<th>Solución</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>No hay stock para despachar</td>
-<td>Verifica recepciones pendientes y kardex del ítem</td>
-</tr>
-<tr>
-<td>Una devolución no aparece</td>
-<td>El usuario debe registrarla primero en Devoluciones de Consumo</td>
-</tr>
-<tr>
-<td>Diferencias en inventario</td>
-<td>Usa Gestión de Inventario para ajuste con justificación</td>
-</tr>
-</tbody>
-</table>
+<h1 id="manual-de-usuario--almacén-allogist">Manual de Usuario — Almacén (ALLOGIST)</h1>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Campo</th>
+
+<th>Valor</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Código de rol</td>
+
+<td><code>ALLOGIST</code></td>
+
+</tr>
+
+<tr>
+
+<td>Nombre</td>
+
+<td>Personal / Jefe de Almacén</td>
+
+</tr>
+
+<tr>
+
+<td>Pantalla inicial</td>
+
+<td>Gestión de Despachos (<code>/main/despachos</code>)</td>
+
+</tr>
+
+<tr>
+
+<td>Video tutorial</td>
+
+<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_ALLOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_ALLOGIST.html</a></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<hr />
+
+<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
+
+<p>Eres el <strong>responsable del almacén</strong>: despachas material, recepcionas mercadería de las OC, mantienes el kardex y el inventario, gestionas transferencias, devoluciones y evalúas proveedores. También actúas como <strong>aprobador de almacén</strong> para devoluciones de consumo.</p>
+
+<h2 id="2-acceso">2. Acceso</h2>
+
+<p>Login → entras directo a <strong>Gestión de Despachos</strong>.</p>
+
+<p><img src="../../../capturas_manual/23_despachos.png" alt="Despachos" /></p>
+
+<h2 id="3-pantallas-disponibles">3. Pantallas disponibles</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Grupo</th>
+
+<th>Pantallas</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Panel</td>
+
+<td>Dashboard Operativo, Dashboard Despacho</td>
+
+</tr>
+
+<tr>
+
+<td>Configuración</td>
+
+<td>Parámetros, Notificaciones</td>
+
+</tr>
+
+<tr>
+
+<td>Requerimientos</td>
+
+<td>Requerimientos, Saldo de Requerimiento</td>
+
+</tr>
+
+<tr>
+
+<td>Almacén</td>
+
+<td>Despachos, Recepción de Mercadería, Conformidad de Despacho, Kardex e Inventario, Gestión de Inventario, Listas de Stock, Transferencias, Devoluciones a Proveedores, Devoluciones de Consumo, Reingresos</td>
+
+</tr>
+
+<tr>
+
+<td>Proveedores</td>
+
+<td>Maestro Proveedores, Evaluación de Proveedores</td>
+
+</tr>
+
+<tr>
+
+<td>Reportes</td>
+
+<td>Reporte de Saldos, Reporte de Despachos, Requerimientos, Logístico, Catálogo</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
+
+<h3 id="despachar-material">Despachar material</h3>
+
+<ol type="1">
+
+<li><strong>Despachos</strong> → lista de requerimientos/listas listos para despacho.</li>
+
+<li>Abre el documento, verifica stock disponible.</li>
+
+<li>Confirma el despacho → queda pendiente de conformidad por el solicitante.</li>
+
+</ol>
+
+<h3 id="recepcionar-una-oc">Recepcionar una OC</h3>
+
+<ol type="1">
+
+<li><strong>Recepción de Mercadería</strong> → busca la OC aprobada.</li>
+
+<li>Registra cantidades, lotes y documentos de la recepción.</li>
+
+<li>Confirma → ingresa a stock y se refleja en kardex.</li>
+
+</ol>
+
+<h3 id="gestionar-kardex-e-inventario">Gestionar kardex e inventario</h3>
+
+<ul>
+
+<li><strong>Kardex</strong>: consulta movimientos por ítem (entradas/salidas/saldos).</li>
+
+<li><strong>Gestión de Inventario</strong>: ajustes y conteos.</li>
+
+<li><strong>Listas de Stock</strong>: armar listas predefinidas de despacho.</li>
+
+<li><strong>Transferencias</strong>: mover stock entre almacenes.</li>
+
+</ul>
+
+<h3 id="procesar-devoluciones">Procesar devoluciones</h3>
+
+<ul>
+
+<li><strong>De consumo</strong>: revisa devoluciones de usuarios → <strong>aprueba/rechaza/anula</strong> (eres Jefe de Almacén).</li>
+
+<li><strong>A proveedores</strong>: registra devolución por recepción defectuosa.</li>
+
+<li><strong>Reingresos</strong>: procesa material que vuelve al almacén.</li>
+
+</ul>
+
+<h3 id="evaluar-proveedores">Evaluar proveedores</h3>
+
+<p><strong>Evaluación de Proveedores</strong> → califica criterios (plazo, calidad, documentación) por OC recepcionada.</p>
+
+<h2 id="5-restricciones">5. Restricciones</h2>
+
+<ul>
+
+<li>No ves compras, cotizaciones, OC ni aprobaciones por área.</li>
+
+<li>No gestionas usuarios ni configuración del sistema.</li>
+
+</ul>
+
+<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>No hay stock para despachar</td>
+
+<td>Verifica recepciones pendientes y kardex del ítem</td>
+
+</tr>
+
+<tr>
+
+<td>Una devolución no aparece</td>
+
+<td>El usuario debe registrarla primero en Devoluciones de Consumo</td>
+
+</tr>
+
+<tr>
+
+<td>Diferencias en inventario</td>
+
+<td>Usa Gestión de Inventario para ajuste con justificación</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
 
 </article>
 </body>

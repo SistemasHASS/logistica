@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MANUAL ROL ADLOGIST — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <style>
   body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
   nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
@@ -51,153 +52,300 @@
   <a class="btn" href="../../roles/MANUAL_ROL_ADLOGIST.md">Fuente .md</a>
 </nav>
 <article>
-<h1 id="manual-de-usuario--admin-logística-adlogist">Manual de Usuario — Admin Logística (ADLOGIST)</h1>
-<table>
-<thead>
-<tr>
-<th>Campo</th>
-<th>Valor</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Código de rol</td>
-<td><code>ADLOGIST</code></td>
-</tr>
-<tr>
-<td>Nombre</td>
-<td>Administrador de Logística (funcional)</td>
-</tr>
-<tr>
-<td>Pantalla inicial</td>
-<td>Dashboard Admin Logística (<code>/main/dashboard-adlogist</code>)</td>
-</tr>
-<tr>
-<td>Consolas</td>
-<td><code>/administracion</code> (con <code>/admin-login</code>) y <code>/admin-logistica</code></td>
-</tr>
-<tr>
-<td>Video tutorial</td>
-<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_ADLOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_ADLOGIST.html</a></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
-<p>Eres el <strong>administrador funcional</strong> del módulo. Combinas dos mundos: configuras el sistema (usuarios, áreas, flujos, permisos, menús) y además puedes operar casi todo el flujo logístico (requerimientos, compras, aprobaciones, devoluciones, conformidades).</p>
-<h2 id="2-acceso">2. Acceso</h2>
-<ol type="1">
-<li>Login de la app → te lleva a <strong>Dashboard Admin Logística</strong>.</li>
-<li>Consola administrativa: <code>/admin-logistica/login</code>.</li>
-<li>Administración clásica: <code>/admin-login</code> → <code>/administracion</code>.</li>
-</ol>
-<h2 id="3-tu-panel-de-inicio">3. Tu panel de inicio</h2>
-<p><strong>Dashboard Admin Logística</strong>: resumen de requerimientos, solicitudes, aprobaciones pendientes, usuarios y estado general del módulo.</p>
-<h2 id="4-pantallas-disponibles">4. Pantallas disponibles</h2>
-<table>
-<thead>
-<tr>
-<th>Grupo</th>
-<th>Pantallas</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Panel</td>
-<td>Dashboards: Admin Logística, Admin Sistema, Logística, Jef. Logística, Jef. Licitaciones, Compras, Finanzas, Operativo, Aprobaciones por Área</td>
-</tr>
-<tr>
-<td>Configuración</td>
-<td>Parámetros, Notificaciones</td>
-</tr>
-<tr>
-<td>Requerimientos</td>
-<td>Requerimientos, Saldo de Requerimiento</td>
-</tr>
-<tr>
-<td>Compras</td>
-<td>Solicitudes de Compra, Consolidación (Req./Compras/Corporativa/Servicios), Cotizaciones, Órdenes de Compra, Solicitudes de Servicio, Órdenes de Servicio, Conformidad de Servicios</td>
-</tr>
-<tr>
-<td>Almacén</td>
-<td>Conformidad de Despacho, Devoluciones de Consumo, Reingresos</td>
-</tr>
-<tr>
-<td>Aprobaciones</td>
-<td>Aprobaciones por Área, Aprobación OC, Aprobación OS</td>
-</tr>
-<tr>
-<td>Maestros</td>
-<td>Ítems, Commodities, Maestro Proveedores, Aprobadores</td>
-</tr>
-<tr>
-<td>Reportes</td>
-<td>Reportes Compras, Requerimientos, Logístico, Aprobaciones Área, Aprobados</td>
-</tr>
-</tbody>
-</table>
-<h2 id="5-consola-admin-logistica">5. Consola <code>/admin-logistica</code></h2>
-<p>Ves <strong>todas las pestañas</strong> igual que TILOGIST, con una diferencia: <strong>no puedes crear usuarios con rol TILOGIST</strong>.</p>
-<p>Pestañas clave para tu gestión:</p>
-<ul>
-<li><strong>Usuarios</strong>: crea/edita usuarios de todos los roles excepto TILOGIST.</li>
-<li><strong>Áreas / Usuarios por Área / Flujo Aprobación Área</strong>: define qué APLOGIST aprueba cada área.</li>
-<li><strong>Aprobadores</strong>: asignación de aprobadores por flujo de OC/OS.</li>
-<li><strong>Permisos por Rol</strong>: ajusta las claves <code>ADMINLG_MENU_*</code> de cada rol.</li>
-<li><strong>Empresa / Parámetros / Formato PDF / Plantillas Almacén / Conformidad</strong>: configuración funcional.</li>
-<li><strong>Auditoría</strong>: trazabilidad.</li>
-</ul>
-<h2 id="6-procedimientos-frecuentes">6. Procedimientos frecuentes</h2>
-<h3 id="aprobar-un-requerimiento-por-área-cuando-cubres-a-un-jefe">Aprobar un requerimiento por área (cuando cubres a un jefe)</h3>
-<ol type="1">
-<li>Menú → <strong>Aprobaciones → Aprobaciones por Área</strong>.</li>
-<li>Filtra por área/estado, abre el requerimiento.</li>
-<li>Revisa ítems y cantidades → <strong>Aprobar</strong> o <strong>Rechazar</strong> con motivo.</li>
-</ol>
-<p><img src="../../../capturas_manual/16_aprobaciones_area.png" alt="Aprobaciones área" /></p>
-<h3 id="aprobar-una-orden-de-compra">Aprobar una Orden de Compra</h3>
-<ol type="1">
-<li><strong>Aprobaciones → Aprobación OC</strong>.</li>
-<li>Abre la OC, revisa líneas, montos y adjuntos.</li>
-<li><strong>Aprobar</strong> o <strong>Rechazar</strong> con comentario. El estado se refleja en Órdenes de Compra.</li>
-</ol>
-<p><img src="../../../capturas_manual/18_aprobaciones_oc.png" alt="Aprobación OC" /></p>
-<h3 id="configurar-el-flujo-de-aprobación-de-un-área">Configurar el flujo de aprobación de un área</h3>
-<ol type="1">
-<li>Consola <code>/admin-logistica</code> → <strong>Flujo Aprobación Área</strong>.</li>
-<li>Selecciona el área, define los niveles y el aprobador (APLOGIST) de cada nivel.</li>
-<li>Guarda y verifica con un requerimiento de prueba.</li>
-</ol>
-<h3 id="crear-usuarios-operativos">Crear usuarios operativos</h3>
-<p>Consola → <strong>Usuarios</strong> → Nuevo → asigna rol (puedes crear todos excepto TILOGIST).</p>
-<h2 id="7-restricciones">7. Restricciones</h2>
-<ul>
-<li>Sin acceso a pantallas físicas de almacén: <strong>Despachos, Recepción, Kardex, Inventario, Listas de Stock, Transferencias, Devoluciones a Proveedores, Evaluación</strong> (esas son de ALLOGIST/LOLOGIST).</li>
-<li>No puedes crear usuarios <code>TILOGIST</code>.</li>
-</ul>
-<h2 id="8-problemas-comunes">8. Problemas comunes</h2>
-<table>
-<thead>
-<tr>
-<th>Problema</th>
-<th>Solución</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Necesito ver un despacho</td>
-<td>Pide acceso a un usuario ALLOGIST/LOLOGIST o usa reportes</td>
-</tr>
-<tr>
-<td>Un aprobador no ve pendientes</td>
-<td>Verifica en <strong>Usuarios por Área</strong> que esté asignado al área correcta</td>
-</tr>
-<tr>
-<td>Menú incompleto</td>
-<td>Revisa <code>ITEMS_VISIBLES</code>/<code>MENU_JSON</code> del rol en BD</td>
-</tr>
-</tbody>
-</table>
+<h1 id="manual-de-usuario--admin-logística-adlogist">Manual de Usuario — Admin Logística (ADLOGIST)</h1>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Campo</th>
+
+<th>Valor</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Código de rol</td>
+
+<td><code>ADLOGIST</code></td>
+
+</tr>
+
+<tr>
+
+<td>Nombre</td>
+
+<td>Administrador de Logística (funcional)</td>
+
+</tr>
+
+<tr>
+
+<td>Pantalla inicial</td>
+
+<td>Dashboard Admin Logística (<code>/main/dashboard-adlogist</code>)</td>
+
+</tr>
+
+<tr>
+
+<td>Consolas</td>
+
+<td><code>/administracion</code> (con <code>/admin-login</code>) y <code>/admin-logistica</code></td>
+
+</tr>
+
+<tr>
+
+<td>Video tutorial</td>
+
+<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_ADLOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_ADLOGIST.html</a></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<hr />
+
+<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
+
+<p>Eres el <strong>administrador funcional</strong> del módulo. Combinas dos mundos: configuras el sistema (usuarios, áreas, flujos, permisos, menús) y además puedes operar casi todo el flujo logístico (requerimientos, compras, aprobaciones, devoluciones, conformidades).</p>
+
+<h2 id="2-acceso">2. Acceso</h2>
+
+<ol type="1">
+
+<li>Login de la app → te lleva a <strong>Dashboard Admin Logística</strong>.</li>
+
+<li>Consola administrativa: <code>/admin-logistica/login</code>.</li>
+
+<li>Administración clásica: <code>/admin-login</code> → <code>/administracion</code>.</li>
+
+</ol>
+
+<h2 id="3-tu-panel-de-inicio">3. Tu panel de inicio</h2>
+
+<p><strong>Dashboard Admin Logística</strong>: resumen de requerimientos, solicitudes, aprobaciones pendientes, usuarios y estado general del módulo.</p>
+
+<h2 id="4-pantallas-disponibles">4. Pantallas disponibles</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Grupo</th>
+
+<th>Pantallas</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Panel</td>
+
+<td>Dashboards: Admin Logística, Admin Sistema, Logística, Jef. Logística, Jef. Licitaciones, Compras, Finanzas, Operativo, Aprobaciones por Área</td>
+
+</tr>
+
+<tr>
+
+<td>Configuración</td>
+
+<td>Parámetros, Notificaciones</td>
+
+</tr>
+
+<tr>
+
+<td>Requerimientos</td>
+
+<td>Requerimientos, Saldo de Requerimiento</td>
+
+</tr>
+
+<tr>
+
+<td>Compras</td>
+
+<td>Solicitudes de Compra, Consolidación (Req./Compras/Corporativa/Servicios), Cotizaciones, Órdenes de Compra, Solicitudes de Servicio, Órdenes de Servicio, Conformidad de Servicios</td>
+
+</tr>
+
+<tr>
+
+<td>Almacén</td>
+
+<td>Conformidad de Despacho, Devoluciones de Consumo, Reingresos</td>
+
+</tr>
+
+<tr>
+
+<td>Aprobaciones</td>
+
+<td>Aprobaciones por Área, Aprobación OC, Aprobación OS</td>
+
+</tr>
+
+<tr>
+
+<td>Maestros</td>
+
+<td>Ítems, Commodities, Maestro Proveedores, Aprobadores</td>
+
+</tr>
+
+<tr>
+
+<td>Reportes</td>
+
+<td>Reportes Compras, Requerimientos, Logístico, Aprobaciones Área, Aprobados</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="5-consola-admin-logistica">5. Consola <code>/admin-logistica</code></h2>
+
+<p>Ves <strong>todas las pestañas</strong> igual que TILOGIST, con una diferencia: <strong>no puedes crear usuarios con rol TILOGIST</strong>.</p>
+
+<p>Pestañas clave para tu gestión:</p>
+
+<ul>
+
+<li><strong>Usuarios</strong>: crea/edita usuarios de todos los roles excepto TILOGIST.</li>
+
+<li><strong>Áreas / Usuarios por Área / Flujo Aprobación Área</strong>: define qué APLOGIST aprueba cada área.</li>
+
+<li><strong>Aprobadores</strong>: asignación de aprobadores por flujo de OC/OS.</li>
+
+<li><strong>Permisos por Rol</strong>: ajusta las claves <code>ADMINLG_MENU_*</code> de cada rol.</li>
+
+<li><strong>Empresa / Parámetros / Formato PDF / Plantillas Almacén / Conformidad</strong>: configuración funcional.</li>
+
+<li><strong>Auditoría</strong>: trazabilidad.</li>
+
+</ul>
+
+<h2 id="6-procedimientos-frecuentes">6. Procedimientos frecuentes</h2>
+
+<h3 id="aprobar-un-requerimiento-por-área-cuando-cubres-a-un-jefe">Aprobar un requerimiento por área (cuando cubres a un jefe)</h3>
+
+<ol type="1">
+
+<li>Menú → <strong>Aprobaciones → Aprobaciones por Área</strong>.</li>
+
+<li>Filtra por área/estado, abre el requerimiento.</li>
+
+<li>Revisa ítems y cantidades → <strong>Aprobar</strong> o <strong>Rechazar</strong> con motivo.</li>
+
+</ol>
+
+<p><img src="../../../capturas_manual/16_aprobaciones_area.png" alt="Aprobaciones área" /></p>
+
+<h3 id="aprobar-una-orden-de-compra">Aprobar una Orden de Compra</h3>
+
+<ol type="1">
+
+<li><strong>Aprobaciones → Aprobación OC</strong>.</li>
+
+<li>Abre la OC, revisa líneas, montos y adjuntos.</li>
+
+<li><strong>Aprobar</strong> o <strong>Rechazar</strong> con comentario. El estado se refleja en Órdenes de Compra.</li>
+
+</ol>
+
+<p><img src="../../../capturas_manual/18_aprobaciones_oc.png" alt="Aprobación OC" /></p>
+
+<h3 id="configurar-el-flujo-de-aprobación-de-un-área">Configurar el flujo de aprobación de un área</h3>
+
+<ol type="1">
+
+<li>Consola <code>/admin-logistica</code> → <strong>Flujo Aprobación Área</strong>.</li>
+
+<li>Selecciona el área, define los niveles y el aprobador (APLOGIST) de cada nivel.</li>
+
+<li>Guarda y verifica con un requerimiento de prueba.</li>
+
+</ol>
+
+<h3 id="crear-usuarios-operativos">Crear usuarios operativos</h3>
+
+<p>Consola → <strong>Usuarios</strong> → Nuevo → asigna rol (puedes crear todos excepto TILOGIST).</p>
+
+<h2 id="7-restricciones">7. Restricciones</h2>
+
+<ul>
+
+<li>Sin acceso a pantallas físicas de almacén: <strong>Despachos, Recepción, Kardex, Inventario, Listas de Stock, Transferencias, Devoluciones a Proveedores, Evaluación</strong> (esas son de ALLOGIST/LOLOGIST).</li>
+
+<li>No puedes crear usuarios <code>TILOGIST</code>.</li>
+
+</ul>
+
+<h2 id="8-problemas-comunes">8. Problemas comunes</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Necesito ver un despacho</td>
+
+<td>Pide acceso a un usuario ALLOGIST/LOLOGIST o usa reportes</td>
+
+</tr>
+
+<tr>
+
+<td>Un aprobador no ve pendientes</td>
+
+<td>Verifica en <strong>Usuarios por Área</strong> que esté asignado al área correcta</td>
+
+</tr>
+
+<tr>
+
+<td>Menú incompleto</td>
+
+<td>Revisa <code>ITEMS_VISIBLES</code>/<code>MENU_JSON</code> del rol en BD</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
 
 </article>
 </body>

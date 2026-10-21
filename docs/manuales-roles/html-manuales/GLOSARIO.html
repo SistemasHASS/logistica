@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GLOSARIO — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <style>
   body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
   nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
@@ -51,252 +52,498 @@
   <a class="btn" href="../GLOSARIO.md">Fuente .md</a>
 </nav>
 <article>
-<h1 id="glosario--sistema-logística">Glosario — Sistema Logística</h1>
-<p>Términos usados en la aplicación, manuales y videos.</p>
-<hr />
-<h2 id="documentos-del-proceso">Documentos del proceso</h2>
-<table>
-<thead>
-<tr>
-<th>Término</th>
-<th>Significado</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Requerimiento (Req.)</strong></td>
-<td>Solicitud de material/servicio creada por el usuario. Punto de partida de todo el flujo</td>
-</tr>
-<tr>
-<td><strong>SC — Solicitud de Compra</strong></td>
-<td>Documento interno que agrupa lo aprobado para comprar. Previa a la cotización/OC</td>
-</tr>
-<tr>
-<td><strong>SS — Solicitud de Servicio</strong></td>
-<td>Igual que la SC pero para servicios</td>
-</tr>
-<tr>
-<td><strong>OC — Orden de Compra</strong></td>
-<td>Documento formal emitido al proveedor tras cotización y aprobaciones</td>
-</tr>
-<tr>
-<td><strong>OS — Orden de Servicio</strong></td>
-<td>Documento formal para contratar un servicio</td>
-</tr>
-<tr>
-<td><strong>Cotización</strong></td>
-<td>Oferta registrada de un proveedor; se comparan y se elige ganadora</td>
-</tr>
-<tr>
-<td><strong>Consolidación</strong></td>
-<td>Agrupar líneas de varios requerimientos aprobados en una sola compra</td>
-</tr>
-<tr>
-<td><strong>Consolidación Corporativa</strong></td>
-<td>Consolidación entre varias empresas del grupo para mejorar precio</td>
-</tr>
-<tr>
-<td><strong>Despacho</strong></td>
-<td>Salida física de material del almacén hacia el solicitante</td>
-</tr>
-<tr>
-<td><strong>Recepción</strong></td>
-<td>Ingreso físico de mercadería de una OC al almacén</td>
-</tr>
-<tr>
-<td><strong>Conformidad</strong></td>
-<td>Confirmación del receptor de que recibió bien el material o servicio</td>
-</tr>
-<tr>
-<td><strong>Devolución de consumo</strong></td>
-<td>Material que el usuario devuelve porque no lo usó</td>
-</tr>
-<tr>
-<td><strong>Devolución a proveedor</strong></td>
-<td>Material que almacén devuelve al proveedor (fallas/exceso)</td>
-</tr>
-<tr>
-<td><strong>Reingreso</strong></td>
-<td>Material que retorna al stock del almacén (requiere aprobación del jefe de área)</td>
-</tr>
-<tr>
-<td><strong>Transferencia</strong></td>
-<td>Movimiento de stock entre dos almacenes</td>
-</tr>
-</tbody>
-</table>
-<h2 id="catálogos-y-maestras">Catálogos y maestras</h2>
-<table>
-<thead>
-<tr>
-<th>Término</th>
-<th>Significado</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Ítem</strong></td>
-<td>Producto/material individual que se solicita o almacena</td>
-</tr>
-<tr>
-<td><strong>Commodity</strong></td>
-<td>Tipo de requerimiento asociado a labores/servicios de campo</td>
-</tr>
-<tr>
-<td><strong>Activo fijo</strong></td>
-<td>Bien de capital (maquinaria, equipos)</td>
-</tr>
-<tr>
-<td><strong>Activo menor</strong></td>
-<td>Bien de bajo valor (herramientas menores)</td>
-</tr>
-<tr>
-<td><strong>Maestras</strong></td>
-<td>Datos base descargados al equipo: ítems, almacenes, áreas, centros de costo, labores, unidades</td>
-</tr>
-<tr>
-<td><strong>Ceco</strong></td>
-<td>Centro de costo — unidad que asume el gasto</td>
-</tr>
-<tr>
-<td><strong>Labor</strong></td>
-<td>Actividad agrícola/operativa a la que se imputa el consumo</td>
-</tr>
-<tr>
-<td><strong>Fundo</strong></td>
-<td>Unidad agrícola/campo de la empresa</td>
-</tr>
-<tr>
-<td><strong>Almacén destino</strong></td>
-<td>Almacén que recibirá o atenderá el requerimiento</td>
-</tr>
-<tr>
-<td><strong>Lista de stock</strong></td>
-<td>Lista predefinida de ítems para despachos frecuentes</td>
-</tr>
-</tbody>
-</table>
-<h2 id="estados-y-control">Estados y control</h2>
-<table>
-<thead>
-<tr>
-<th>Término</th>
-<th>Significado</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Pendiente</strong></td>
-<td>Documento creado/esperando acción del siguiente nivel</td>
-</tr>
-<tr>
-<td><strong>Aprobado / Rechazado</strong></td>
-<td>Resultado de la revisión en cada nivel</td>
-</tr>
-<tr>
-<td><strong>Saldo de requerimiento</strong></td>
-<td>Cantidad de un requerimiento aún no atendida</td>
-</tr>
-<tr>
-<td><strong>Saldos pendientes</strong></td>
-<td>Aprobados sin consolidar — generan notificación</td>
-</tr>
-<tr>
-<td><strong>Kardex</strong></td>
-<td>Historial de movimientos de cada ítem (entradas, salidas, saldos)</td>
-</tr>
-<tr>
-<td><strong>Sincronizar</strong></td>
-<td>Enviar datos locales al servidor y bajar maestras actualizadas</td>
-</tr>
-<tr>
-<td><strong>Auditoría</strong></td>
-<td>Registro de quién hizo qué y cuándo</td>
-</tr>
-</tbody>
-</table>
-<h2 id="roles-y-accesos">Roles y accesos</h2>
-<table>
-<thead>
-<tr>
-<th>Término</th>
-<th>Significado</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>idrol</strong></td>
-<td>Código del rol del usuario (OPLOGIST, ALLOGIST, etc.)</td>
-</tr>
-<tr>
-<td><strong>Rol múltiple</strong></td>
-<td>Varios roles en un usuario, separados por coma: <code>LOLOGIST,ALLOGIST</code></td>
-</tr>
-<tr>
-<td><strong>Guard</strong></td>
-<td>Regla que decide si tu rol puede entrar a una pantalla</td>
-</tr>
-<tr>
-<td><strong>MENU_JSON</strong></td>
-<td>Configuración en BD que define el menú lateral de un rol</td>
-</tr>
-<tr>
-<td><strong>ADMINLG_</strong>*</td>
-<td>Claves de permiso para las pestañas de la consola admin</td>
-</tr>
-<tr>
-<td><strong>Admin clásica</strong></td>
-<td>Módulo <code>/administracion</code> — configuración histórica (correo, branding, menús)</td>
-</tr>
-<tr>
-<td><strong>Consola admin</strong></td>
-<td><code>/admin-logistica</code> — administración logística y aprobaciones</td>
-</tr>
-<tr>
-<td><strong>Aprobador</strong></td>
-<td>Usuario que valida un documento en un nivel del flujo</td>
-</tr>
-<tr>
-<td><strong>Flujo de aprobación</strong></td>
-<td>Secuencia de niveles que debe pasar un documento</td>
-</tr>
-<tr>
-<td><strong>Bandeja</strong></td>
-<td>Lista de documentos pendientes de tu acción</td>
-</tr>
-</tbody>
-</table>
-<h2 id="técnicos-frecuentes-en-soporte">Técnicos (frecuentes en soporte)</h2>
-<table>
-<thead>
-<tr>
-<th>Término</th>
-<th>Significado</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>IndexedDB / Dexie</strong></td>
-<td>Base de datos local del navegador donde se guarda tu sesión y pendientes</td>
-</tr>
-<tr>
-<td><strong>API Maestra</strong></td>
-<td>Servicio central de usuarios (login)</td>
-</tr>
-<tr>
-<td><strong>API Logística</strong></td>
-<td>Servicio del módulo (<code>baseUrl</code>)</td>
-</tr>
-<tr>
-<td><strong>Offline-first</strong></td>
-<td>Diseño que permite trabajar sin internet y sincronizar después</td>
-</tr>
-<tr>
-<td><strong>ADMIN_TOKEN</strong></td>
-<td>Token que habilita el módulo <code>/administracion</code> tras <code>/admin-login</code></td>
-</tr>
-</tbody>
-</table>
+<h1 id="glosario--sistema-logística">Glosario — Sistema Logística</h1>
+
+<p>Términos usados en la aplicación, manuales y videos.</p>
+
+<hr />
+
+<h2 id="documentos-del-proceso">Documentos del proceso</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Término</th>
+
+<th>Significado</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td><strong>Requerimiento (Req.)</strong></td>
+
+<td>Solicitud de material/servicio creada por el usuario. Punto de partida de todo el flujo</td>
+
+</tr>
+
+<tr>
+
+<td><strong>SC — Solicitud de Compra</strong></td>
+
+<td>Documento interno que agrupa lo aprobado para comprar. Previa a la cotización/OC</td>
+
+</tr>
+
+<tr>
+
+<td><strong>SS — Solicitud de Servicio</strong></td>
+
+<td>Igual que la SC pero para servicios</td>
+
+</tr>
+
+<tr>
+
+<td><strong>OC — Orden de Compra</strong></td>
+
+<td>Documento formal emitido al proveedor tras cotización y aprobaciones</td>
+
+</tr>
+
+<tr>
+
+<td><strong>OS — Orden de Servicio</strong></td>
+
+<td>Documento formal para contratar un servicio</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Cotización</strong></td>
+
+<td>Oferta registrada de un proveedor; se comparan y se elige ganadora</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Consolidación</strong></td>
+
+<td>Agrupar líneas de varios requerimientos aprobados en una sola compra</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Consolidación Corporativa</strong></td>
+
+<td>Consolidación entre varias empresas del grupo para mejorar precio</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Despacho</strong></td>
+
+<td>Salida física de material del almacén hacia el solicitante</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Recepción</strong></td>
+
+<td>Ingreso físico de mercadería de una OC al almacén</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Conformidad</strong></td>
+
+<td>Confirmación del receptor de que recibió bien el material o servicio</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Devolución de consumo</strong></td>
+
+<td>Material que el usuario devuelve porque no lo usó</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Devolución a proveedor</strong></td>
+
+<td>Material que almacén devuelve al proveedor (fallas/exceso)</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Reingreso</strong></td>
+
+<td>Material que retorna al stock del almacén (requiere aprobación del jefe de área)</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Transferencia</strong></td>
+
+<td>Movimiento de stock entre dos almacenes</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="catálogos-y-maestras">Catálogos y maestras</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Término</th>
+
+<th>Significado</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td><strong>Ítem</strong></td>
+
+<td>Producto/material individual que se solicita o almacena</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Commodity</strong></td>
+
+<td>Tipo de requerimiento asociado a labores/servicios de campo</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Activo fijo</strong></td>
+
+<td>Bien de capital (maquinaria, equipos)</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Activo menor</strong></td>
+
+<td>Bien de bajo valor (herramientas menores)</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Maestras</strong></td>
+
+<td>Datos base descargados al equipo: ítems, almacenes, áreas, centros de costo, labores, unidades</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Ceco</strong></td>
+
+<td>Centro de costo — unidad que asume el gasto</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Labor</strong></td>
+
+<td>Actividad agrícola/operativa a la que se imputa el consumo</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Fundo</strong></td>
+
+<td>Unidad agrícola/campo de la empresa</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Almacén destino</strong></td>
+
+<td>Almacén que recibirá o atenderá el requerimiento</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Lista de stock</strong></td>
+
+<td>Lista predefinida de ítems para despachos frecuentes</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="estados-y-control">Estados y control</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Término</th>
+
+<th>Significado</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td><strong>Pendiente</strong></td>
+
+<td>Documento creado/esperando acción del siguiente nivel</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Aprobado / Rechazado</strong></td>
+
+<td>Resultado de la revisión en cada nivel</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Saldo de requerimiento</strong></td>
+
+<td>Cantidad de un requerimiento aún no atendida</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Saldos pendientes</strong></td>
+
+<td>Aprobados sin consolidar — generan notificación</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Kardex</strong></td>
+
+<td>Historial de movimientos de cada ítem (entradas, salidas, saldos)</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Sincronizar</strong></td>
+
+<td>Enviar datos locales al servidor y bajar maestras actualizadas</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Auditoría</strong></td>
+
+<td>Registro de quién hizo qué y cuándo</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="roles-y-accesos">Roles y accesos</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Término</th>
+
+<th>Significado</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td><strong>idrol</strong></td>
+
+<td>Código del rol del usuario (OPLOGIST, ALLOGIST, etc.)</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Rol múltiple</strong></td>
+
+<td>Varios roles en un usuario, separados por coma: <code>LOLOGIST,ALLOGIST</code></td>
+
+</tr>
+
+<tr>
+
+<td><strong>Guard</strong></td>
+
+<td>Regla que decide si tu rol puede entrar a una pantalla</td>
+
+</tr>
+
+<tr>
+
+<td><strong>MENU_JSON</strong></td>
+
+<td>Configuración en BD que define el menú lateral de un rol</td>
+
+</tr>
+
+<tr>
+
+<td><strong>ADMINLG_</strong>*</td>
+
+<td>Claves de permiso para las pestañas de la consola admin</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Admin clásica</strong></td>
+
+<td>Módulo <code>/administracion</code> — configuración histórica (correo, branding, menús)</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Consola admin</strong></td>
+
+<td><code>/admin-logistica</code> — administración logística y aprobaciones</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Aprobador</strong></td>
+
+<td>Usuario que valida un documento en un nivel del flujo</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Flujo de aprobación</strong></td>
+
+<td>Secuencia de niveles que debe pasar un documento</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Bandeja</strong></td>
+
+<td>Lista de documentos pendientes de tu acción</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="técnicos-frecuentes-en-soporte">Técnicos (frecuentes en soporte)</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Término</th>
+
+<th>Significado</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td><strong>IndexedDB / Dexie</strong></td>
+
+<td>Base de datos local del navegador donde se guarda tu sesión y pendientes</td>
+
+</tr>
+
+<tr>
+
+<td><strong>API Maestra</strong></td>
+
+<td>Servicio central de usuarios (login)</td>
+
+</tr>
+
+<tr>
+
+<td><strong>API Logística</strong></td>
+
+<td>Servicio del módulo (<code>baseUrl</code>)</td>
+
+</tr>
+
+<tr>
+
+<td><strong>Offline-first</strong></td>
+
+<td>Diseño que permite trabajar sin internet y sincronizar después</td>
+
+</tr>
+
+<tr>
+
+<td><strong>ADMIN_TOKEN</strong></td>
+
+<td>Token que habilita el módulo <code>/administracion</code> tras <code>/admin-login</code></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
 
 </article>
 </body>

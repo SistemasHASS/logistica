@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MANUAL ROL TILOGIST — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <style>
   body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
   nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
@@ -51,176 +52,346 @@
   <a class="btn" href="../../roles/MANUAL_ROL_TILOGIST.md">Fuente .md</a>
 </nav>
 <article>
-<h1 id="manual-de-usuario--admin-sistema-tilogist">Manual de Usuario — Admin Sistema (TILOGIST)</h1>
-<table>
-<thead>
-<tr>
-<th>Campo</th>
-<th>Valor</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Código de rol</td>
-<td><code>TILOGIST</code></td>
-</tr>
-<tr>
-<td>Nombre</td>
-<td>Admin Sistema / TI Logística</td>
-</tr>
-<tr>
-<td>Pantalla inicial</td>
-<td>Dashboard Admin Sistema (<code>/main/dashboard-tilogist</code>)</td>
-</tr>
-<tr>
-<td>Consolas</td>
-<td><code>/administracion</code> (con <code>/admin-login</code>) y <code>/admin-logistica</code></td>
-</tr>
-<tr>
-<td>Video tutorial</td>
-<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_TILOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_TILOGIST.html</a></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
-<p>Eres el <strong>administrador técnico</strong> de la plataforma Logística. Tu rol es el de mayor alcance: configuras usuarios de todos los roles, permisos, menús, parámetros, correo, plantillas, branding y auditoría.</p>
-<h2 id="2-acceso">2. Acceso</h2>
-<ol type="1">
-<li>Ingresa a la URL de la aplicación → pantalla de login.</li>
-<li>Escribe tu usuario y contraseña corporativos.</li>
-<li>El sistema te lleva automáticamente al <strong>Dashboard Admin Sistema</strong>.</li>
-</ol>
-<p><img src="../../../capturas_manual/01_login.png" alt="Login" /></p>
-<p>Para entrar a la consola de administración logística, abre <code>/admin-logistica/login</code> e inicia sesión con tu cuenta.</p>
-<h2 id="3-tu-panel-de-inicio">3. Tu panel de inicio</h2>
-<p>El <strong>Dashboard Admin Sistema</strong> muestra indicadores generales: usuarios activos, empresas configuradas, estado de sincronización y accesos rápidos a la administración.</p>
-<p><img src="../../../capturas_manual/02_dashboard_admin.png" alt="Dashboard admin" /></p>
-<h2 id="4-pantallas-disponibles">4. Pantallas disponibles</h2>
-<table>
-<thead>
-<tr>
-<th>Grupo</th>
-<th>Pantalla</th>
-<th>Qué haces ahí</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Panel</td>
-<td>Dashboard Admin Sistema / Admin Logística / Logística / Jef. Logística / Jef. Licitaciones / Compras / Finanzas / Operativo</td>
-<td>Indicadores y supervisión</td>
-</tr>
-<tr>
-<td>Configuración</td>
-<td>Parámetros</td>
-<td>Sincronizar maestras y configuración local</td>
-</tr>
-<tr>
-<td>Configuración</td>
-<td>Notificaciones</td>
-<td>Ver avisos de saldos pendientes</td>
-</tr>
-<tr>
-<td>Requerimientos</td>
-<td>Requerimientos / Saldo</td>
-<td>Crear y revisar requerimientos (testing/soporte)</td>
-</tr>
-<tr>
-<td>Compras</td>
-<td>Solicitudes de Compra, Consolidaciones, Cotizaciones, OC</td>
-<td>Supervisión del flujo de compras</td>
-</tr>
-<tr>
-<td>Compras</td>
-<td>Solicitudes y Órdenes de Servicio, Conformidad</td>
-<td>Supervisión del flujo de servicios</td>
-</tr>
-<tr>
-<td>Almacén</td>
-<td>Devoluciones de Consumo, Conformidad de Despacho</td>
-<td>Soporte del flujo de consumo</td>
-</tr>
-<tr>
-<td>Aprobaciones</td>
-<td>Aprobación OC / OS</td>
-<td>Soporte en aprobación de órdenes</td>
-</tr>
-<tr>
-<td>Maestros</td>
-<td>Ítems, Commodities, Proveedores, Aprobadores</td>
-<td>Mantenimiento de catálogos</td>
-</tr>
-<tr>
-<td>Reportes</td>
-<td>Reportes de Compras, Requerimientos, Logístico</td>
-<td>Consulta y exportación</td>
-</tr>
-</tbody>
-</table>
-<h2 id="5-consola-admin-logistica--todas-las-pestañas">5. Consola <code>/admin-logistica</code> — todas las pestañas</h2>
-<p>Como TILOGIST ves <strong>todas</strong> las pestañas:</p>
-<ul>
-<li><strong>Dashboard / Bandeja / Aprobar Consumo / Aprobar SC / Aprobar SS</strong> — gestión de aprobaciones.</li>
-<li><strong>Maestros / Gestión Proveedores</strong> — catálogos.</li>
-<li><strong>Usuarios</strong> — crear y editar usuarios de <strong>cualquier rol</strong> (eres el único que puede crear otros TILOGIST).</li>
-<li><strong>Áreas / Usuarios por Área / Flujo Aprobación Área</strong> — estructura organizacional y flujos de aprobación.</li>
-<li><strong>Formato PDF / Empresa / Parámetros / Plantillas Almacén</strong> — configuración por empresa.</li>
-<li><strong>Incremento Cantidad OC</strong> — autorizar incrementos de cantidad en OC.</li>
-<li><strong>Aprobadores</strong> — asignar aprobadores por flujo.</li>
-<li><strong>Auditoría</strong> — trazabilidad de acciones.</li>
-<li><strong>Conformidad Servicio</strong> — configuración de la conformidad.</li>
-<li><strong>Permisos por Rol</strong> — asignar/quitar las claves <code>ADMINLG_MENU_*</code> a cada rol.</li>
-<li><strong>Migrar Adjuntos</strong> — utilidad de migración de adjuntos a servidor.</li>
-</ul>
-<p><img src="../../../capturas_manual/09_admin_logistica.png" alt="Admin logística" /></p>
-<h2 id="6-módulo-administracion-clásico">6. Módulo <code>/administracion</code> (clásico)</h2>
-<p>Acceso previo por <code>/admin-login</code>. Incluye: usuarios, roles, áreas, perfiles, flujos, aprobadores, usuarios por área, versión de API, e-mail de proveedores, SMTP, plantillas de correo y PDF, colores, permisos de roles, menús dinámicos y plantillas de menú, empresas, branding y sincronización.</p>
-<p><img src="../../../capturas_manual/10_administracion.png" alt="Administración" /></p>
-<h2 id="7-procedimientos-frecuentes">7. Procedimientos frecuentes</h2>
-<h3 id="crear-un-usuario-nuevo">Crear un usuario nuevo</h3>
-<ol type="1">
-<li>Entra a <code>/admin-logistica</code> → pestaña <strong>Usuarios</strong>.</li>
-<li>Clic en <strong>Nuevo usuario</strong>.</li>
-<li>Completa datos y selecciona el rol (<code>idrol</code>). Puedes asignar <strong>varios roles</strong> separados por coma (ej. <code>LOLOGIST,ALLOGIST</code>).</li>
-<li>Guarda. El usuario ya puede iniciar sesión en la app operativa.</li>
-</ol>
-<h3 id="configurar-el-menú-de-un-rol">Configurar el menú de un rol</h3>
-<ol type="1">
-<li>Pestaña <strong>Permisos por Rol</strong> → selecciona el rol.</li>
-<li>O desde BD: tabla <code>LOGISTICA_ConfiguracionPermiso</code>, claves <code>MENU_TYPE</code>, <code>MENU_JSON</code>, <code>ITEMS_VISIBLES</code>, <code>LAYOUT_ACCORDION</code>.</li>
-<li>Guarda e informa al usuario que recargue la página (el menú se recarga automáticamente por evento <code>storage</code>).</li>
-</ol>
-<h3 id="revisar-auditoría">Revisar auditoría</h3>
-<p>Pestaña <strong>Auditoría</strong> → filtra por usuario, fecha o acción.</p>
-<h2 id="8-restricciones">8. Restricciones</h2>
-<ul>
-<li>No ves <strong>aprobaciones por área</strong> ni <strong>reingresos</strong> (esos guards solo admiten APLOGIST/ADLOGIST/JLOLOGIST y roles operativos). Para esos flujos usa una cuenta ADLOGIST.</li>
-<li>No ves pantallas físicas de almacén (despachos, kardex, recepción) con el rol TILOGIST puro.</li>
-</ul>
-<h2 id="9-problemas-comunes">9. Problemas comunes</h2>
-<table>
-<thead>
-<tr>
-<th>Problema</th>
-<th>Solución</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Un usuario no ve un menú</td>
-<td>Revisa <code>LOGISTICA_ConfiguracionPermiso</code> para su <code>idrol</code> o asígnale la clave en Permisos por Rol</td>
-</tr>
-<tr>
-<td>No puedo cerrar sesión</td>
-<td>Hay requerimientos sin sincronizar: ve a Parámetros → Sincronizar</td>
-</tr>
-<tr>
-<td>Cambios de menú no se ven</td>
-<td>Pedir al usuario cerrar sesión y volver a entrar, o usar F5</td>
-</tr>
-</tbody>
-</table>
+<h1 id="manual-de-usuario--admin-sistema-tilogist">Manual de Usuario — Admin Sistema (TILOGIST)</h1>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Campo</th>
+
+<th>Valor</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Código de rol</td>
+
+<td><code>TILOGIST</code></td>
+
+</tr>
+
+<tr>
+
+<td>Nombre</td>
+
+<td>Admin Sistema / TI Logística</td>
+
+</tr>
+
+<tr>
+
+<td>Pantalla inicial</td>
+
+<td>Dashboard Admin Sistema (<code>/main/dashboard-tilogist</code>)</td>
+
+</tr>
+
+<tr>
+
+<td>Consolas</td>
+
+<td><code>/administracion</code> (con <code>/admin-login</code>) y <code>/admin-logistica</code></td>
+
+</tr>
+
+<tr>
+
+<td>Video tutorial</td>
+
+<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_TILOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_TILOGIST.html</a></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<hr />
+
+<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
+
+<p>Eres el <strong>administrador técnico</strong> de la plataforma Logística. Tu rol es el de mayor alcance: configuras usuarios de todos los roles, permisos, menús, parámetros, correo, plantillas, branding y auditoría.</p>
+
+<h2 id="2-acceso">2. Acceso</h2>
+
+<ol type="1">
+
+<li>Ingresa a la URL de la aplicación → pantalla de login.</li>
+
+<li>Escribe tu usuario y contraseña corporativos.</li>
+
+<li>El sistema te lleva automáticamente al <strong>Dashboard Admin Sistema</strong>.</li>
+
+</ol>
+
+<p><img src="../../../capturas_manual/01_login.png" alt="Login" /></p>
+
+<p>Para entrar a la consola de administración logística, abre <code>/admin-logistica/login</code> e inicia sesión con tu cuenta.</p>
+
+<h2 id="3-tu-panel-de-inicio">3. Tu panel de inicio</h2>
+
+<p>El <strong>Dashboard Admin Sistema</strong> muestra indicadores generales: usuarios activos, empresas configuradas, estado de sincronización y accesos rápidos a la administración.</p>
+
+<p><img src="../../../capturas_manual/02_dashboard_admin.png" alt="Dashboard admin" /></p>
+
+<h2 id="4-pantallas-disponibles">4. Pantallas disponibles</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Grupo</th>
+
+<th>Pantalla</th>
+
+<th>Qué haces ahí</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Panel</td>
+
+<td>Dashboard Admin Sistema / Admin Logística / Logística / Jef. Logística / Jef. Licitaciones / Compras / Finanzas / Operativo</td>
+
+<td>Indicadores y supervisión</td>
+
+</tr>
+
+<tr>
+
+<td>Configuración</td>
+
+<td>Parámetros</td>
+
+<td>Sincronizar maestras y configuración local</td>
+
+</tr>
+
+<tr>
+
+<td>Configuración</td>
+
+<td>Notificaciones</td>
+
+<td>Ver avisos de saldos pendientes</td>
+
+</tr>
+
+<tr>
+
+<td>Requerimientos</td>
+
+<td>Requerimientos / Saldo</td>
+
+<td>Crear y revisar requerimientos (testing/soporte)</td>
+
+</tr>
+
+<tr>
+
+<td>Compras</td>
+
+<td>Solicitudes de Compra, Consolidaciones, Cotizaciones, OC</td>
+
+<td>Supervisión del flujo de compras</td>
+
+</tr>
+
+<tr>
+
+<td>Compras</td>
+
+<td>Solicitudes y Órdenes de Servicio, Conformidad</td>
+
+<td>Supervisión del flujo de servicios</td>
+
+</tr>
+
+<tr>
+
+<td>Almacén</td>
+
+<td>Devoluciones de Consumo, Conformidad de Despacho</td>
+
+<td>Soporte del flujo de consumo</td>
+
+</tr>
+
+<tr>
+
+<td>Aprobaciones</td>
+
+<td>Aprobación OC / OS</td>
+
+<td>Soporte en aprobación de órdenes</td>
+
+</tr>
+
+<tr>
+
+<td>Maestros</td>
+
+<td>Ítems, Commodities, Proveedores, Aprobadores</td>
+
+<td>Mantenimiento de catálogos</td>
+
+</tr>
+
+<tr>
+
+<td>Reportes</td>
+
+<td>Reportes de Compras, Requerimientos, Logístico</td>
+
+<td>Consulta y exportación</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="5-consola-admin-logistica--todas-las-pestañas">5. Consola <code>/admin-logistica</code> — todas las pestañas</h2>
+
+<p>Como TILOGIST ves <strong>todas</strong> las pestañas:</p>
+
+<ul>
+
+<li><strong>Dashboard / Bandeja / Aprobar Consumo / Aprobar SC / Aprobar SS</strong> — gestión de aprobaciones.</li>
+
+<li><strong>Maestros / Gestión Proveedores</strong> — catálogos.</li>
+
+<li><strong>Usuarios</strong> — crear y editar usuarios de <strong>cualquier rol</strong> (eres el único que puede crear otros TILOGIST).</li>
+
+<li><strong>Áreas / Usuarios por Área / Flujo Aprobación Área</strong> — estructura organizacional y flujos de aprobación.</li>
+
+<li><strong>Formato PDF / Empresa / Parámetros / Plantillas Almacén</strong> — configuración por empresa.</li>
+
+<li><strong>Incremento Cantidad OC</strong> — autorizar incrementos de cantidad en OC.</li>
+
+<li><strong>Aprobadores</strong> — asignar aprobadores por flujo.</li>
+
+<li><strong>Auditoría</strong> — trazabilidad de acciones.</li>
+
+<li><strong>Conformidad Servicio</strong> — configuración de la conformidad.</li>
+
+<li><strong>Permisos por Rol</strong> — asignar/quitar las claves <code>ADMINLG_MENU_*</code> a cada rol.</li>
+
+<li><strong>Migrar Adjuntos</strong> — utilidad de migración de adjuntos a servidor.</li>
+
+</ul>
+
+<p><img src="../../../capturas_manual/09_admin_logistica.png" alt="Admin logística" /></p>
+
+<h2 id="6-módulo-administracion-clásico">6. Módulo <code>/administracion</code> (clásico)</h2>
+
+<p>Acceso previo por <code>/admin-login</code>. Incluye: usuarios, roles, áreas, perfiles, flujos, aprobadores, usuarios por área, versión de API, e-mail de proveedores, SMTP, plantillas de correo y PDF, colores, permisos de roles, menús dinámicos y plantillas de menú, empresas, branding y sincronización.</p>
+
+<p><img src="../../../capturas_manual/10_administracion.png" alt="Administración" /></p>
+
+<h2 id="7-procedimientos-frecuentes">7. Procedimientos frecuentes</h2>
+
+<h3 id="crear-un-usuario-nuevo">Crear un usuario nuevo</h3>
+
+<ol type="1">
+
+<li>Entra a <code>/admin-logistica</code> → pestaña <strong>Usuarios</strong>.</li>
+
+<li>Clic en <strong>Nuevo usuario</strong>.</li>
+
+<li>Completa datos y selecciona el rol (<code>idrol</code>). Puedes asignar <strong>varios roles</strong> separados por coma (ej. <code>LOLOGIST,ALLOGIST</code>).</li>
+
+<li>Guarda. El usuario ya puede iniciar sesión en la app operativa.</li>
+
+</ol>
+
+<h3 id="configurar-el-menú-de-un-rol">Configurar el menú de un rol</h3>
+
+<ol type="1">
+
+<li>Pestaña <strong>Permisos por Rol</strong> → selecciona el rol.</li>
+
+<li>O desde BD: tabla <code>LOGISTICA_ConfiguracionPermiso</code>, claves <code>MENU_TYPE</code>, <code>MENU_JSON</code>, <code>ITEMS_VISIBLES</code>, <code>LAYOUT_ACCORDION</code>.</li>
+
+<li>Guarda e informa al usuario que recargue la página (el menú se recarga automáticamente por evento <code>storage</code>).</li>
+
+</ol>
+
+<h3 id="revisar-auditoría">Revisar auditoría</h3>
+
+<p>Pestaña <strong>Auditoría</strong> → filtra por usuario, fecha o acción.</p>
+
+<h2 id="8-restricciones">8. Restricciones</h2>
+
+<ul>
+
+<li>No ves <strong>aprobaciones por área</strong> ni <strong>reingresos</strong> (esos guards solo admiten APLOGIST/ADLOGIST/JLOLOGIST y roles operativos). Para esos flujos usa una cuenta ADLOGIST.</li>
+
+<li>No ves pantallas físicas de almacén (despachos, kardex, recepción) con el rol TILOGIST puro.</li>
+
+</ul>
+
+<h2 id="9-problemas-comunes">9. Problemas comunes</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Un usuario no ve un menú</td>
+
+<td>Revisa <code>LOGISTICA_ConfiguracionPermiso</code> para su <code>idrol</code> o asígnale la clave en Permisos por Rol</td>
+
+</tr>
+
+<tr>
+
+<td>No puedo cerrar sesión</td>
+
+<td>Hay requerimientos sin sincronizar: ve a Parámetros → Sincronizar</td>
+
+</tr>
+
+<tr>
+
+<td>Cambios de menú no se ven</td>
+
+<td>Pedir al usuario cerrar sesión y volver a entrar, o usar F5</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
 
 </article>
 </body>

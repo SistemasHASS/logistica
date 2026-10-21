@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MANUAL ROL OPLOGIST — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <style>
   body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
   nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
@@ -51,141 +52,276 @@
   <a class="btn" href="../../roles/MANUAL_ROL_OPLOGIST.md">Fuente .md</a>
 </nav>
 <article>
-<h1 id="manual-de-usuario--operativo-campo-oplogist">Manual de Usuario — Operativo Campo (OPLOGIST)</h1>
-<table>
-<thead>
-<tr>
-<th>Campo</th>
-<th>Valor</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Código de rol</td>
-<td><code>OPLOGIST</code></td>
-</tr>
-<tr>
-<td>Nombre</td>
-<td>Operativo de Campo / Solicitante</td>
-</tr>
-<tr>
-<td>Pantalla inicial</td>
-<td>Mis Requerimientos (<code>/main/dashboard-oplogist</code>)</td>
-</tr>
-<tr>
-<td>Video tutorial</td>
-<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_OPLOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_OPLOGIST.html</a></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
-<p>Eres el <strong>usuario de campo</strong>: solicitas materiales, insumos, activos y servicios desde tu fundo/área. Trabajas incluso <strong>sin conexión</strong>: todo se guarda localmente y se sincroniza después.</p>
-<h2 id="2-acceso">2. Acceso</h2>
-<p>Login → <strong>Mis Requerimientos</strong>: panel con el estado de tus solicitudes (pendientes, aprobadas, en compra, despachadas).</p>
-<p><img src="../../../capturas_manual/12_dashboard_operativo.png" alt="Dashboard operativo" /></p>
-<h2 id="3-pantallas-disponibles">3. Pantallas disponibles</h2>
-<table>
-<thead>
-<tr>
-<th>Pantalla</th>
-<th>Qué haces</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Mis Requerimientos (dashboard)</td>
-<td>Estado de tus solicitudes</td>
-</tr>
-<tr>
-<td>Parámetros</td>
-<td><strong>Sincronizar maestras</strong> — paso obligatorio antes de crear requerimientos</td>
-</tr>
-<tr>
-<td>Notificaciones</td>
-<td>Avisos del sistema</td>
-</tr>
-<tr>
-<td>Requerimientos</td>
-<td>Crear solicitudes de ítems, commodities, activos fijos, activos menores, transferencias, consumo</td>
-</tr>
-<tr>
-<td>Conformidad de Despacho</td>
-<td>Confirmas que recibiste el material despachado</td>
-</tr>
-<tr>
-<td>Conformidad de Servicios</td>
-<td>Confirmas que el servicio se ejecutó</td>
-</tr>
-<tr>
-<td>Devoluciones de Consumo</td>
-<td>Devuelves material no utilizado</td>
-</tr>
-<tr>
-<td>Reingresos</td>
-<td>Solicitas reingreso de material al almacén</td>
-</tr>
-<tr>
-<td>Reporte Requerimientos / Logístico / Catálogo</td>
-<td>Consultas</td>
-</tr>
-</tbody>
-</table>
-<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
-<h3 id="preparar-tu-equipo-una-vez--periódico">Preparar tu equipo (una vez / periódico)</h3>
-<ol type="1">
-<li>Menú → <strong>Parámetros</strong>.</li>
-<li><strong>Sincronizar</strong>: descarga empresas, fundos, almacenes, áreas, cultivos, centros de costo, labores, ítems…</li>
-<li>Sin esto, la pantalla Requerimientos te pedirá sincronizar primero.</li>
-</ol>
-<p><img src="../../../capturas_manual/05_parametros.png" alt="Parámetros" /></p>
-<h3 id="crear-un-requerimiento">Crear un requerimiento</h3>
-<ol type="1">
-<li><strong>Requerimientos → Nuevo</strong>.</li>
-<li>Tipo: Ítem / Commodity / Activo Fijo / Activo Menor / Transferencia / Consumo.</li>
-<li>Cabecera: área, almacén destino, fecha requerida, glosa.</li>
-<li>Agrega líneas (ítem, cantidad, unidad, centro de costo/labor si aplica).</li>
-<li><strong>Guardar</strong> → queda en estado “pendiente de sincronizar” si no hay red.</li>
-<li><strong>Sincroniza</strong> cuando tengas conexión → tu requerimiento pasa a aprobación del jefe de área (APLOGIST).</li>
-</ol>
-<h3 id="confirmar-recepción-conformidad">Confirmar recepción (conformidad)</h3>
-<p>Cuando el almacén despache tu pedido: <strong>Conformidad de Despacho</strong> → abre el despacho → confirma cantidades recibidas u observa diferencias.</p>
-<h3 id="devolver-o-reingresar-material">Devolver o reingresar material</h3>
-<ul>
-<li><strong>Devoluciones de Consumo</strong>: material que no usaste y devuelves.</li>
-<li><strong>Reingresos</strong>: material que retorna al almacén (requiere aprobación del jefe de área).</li>
-</ul>
-<h2 id="5-restricciones">5. Restricciones</h2>
-<ul>
-<li>Solo ves <strong>tus propios flujos</strong>: no hay compras, almacén, aprobaciones ni administración.</li>
-</ul>
-<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
-<table>
-<thead>
-<tr>
-<th>Problema</th>
-<th>Solución</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>“Falta configurar”</td>
-<td>Sincroniza en Parámetros primero</td>
-</tr>
-<tr>
-<td>No puedo cerrar sesión</td>
-<td>Tienes requerimientos sin sincronizar — sincronízalos primero</td>
-</tr>
-<tr>
-<td>Mi requerimiento no avanza</td>
-<td>Revisa su estado: debe estar sincronizado y luego aprobado por tu jefe de área</td>
-</tr>
-<tr>
-<td>Trabajé sin internet</td>
-<td>Normal: todo se guardó local; sincroniza al recuperar conexión</td>
-</tr>
-</tbody>
-</table>
+<h1 id="manual-de-usuario--operativo-campo-oplogist">Manual de Usuario — Operativo Campo (OPLOGIST)</h1>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Campo</th>
+
+<th>Valor</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Código de rol</td>
+
+<td><code>OPLOGIST</code></td>
+
+</tr>
+
+<tr>
+
+<td>Nombre</td>
+
+<td>Operativo de Campo / Solicitante</td>
+
+</tr>
+
+<tr>
+
+<td>Pantalla inicial</td>
+
+<td>Mis Requerimientos (<code>/main/dashboard-oplogist</code>)</td>
+
+</tr>
+
+<tr>
+
+<td>Video tutorial</td>
+
+<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_OPLOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_OPLOGIST.html</a></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<hr />
+
+<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
+
+<p>Eres el <strong>usuario de campo</strong>: solicitas materiales, insumos, activos y servicios desde tu fundo/área. Trabajas incluso <strong>sin conexión</strong>: todo se guarda localmente y se sincroniza después.</p>
+
+<h2 id="2-acceso">2. Acceso</h2>
+
+<p>Login → <strong>Mis Requerimientos</strong>: panel con el estado de tus solicitudes (pendientes, aprobadas, en compra, despachadas).</p>
+
+<p><img src="../../../capturas_manual/12_dashboard_operativo.png" alt="Dashboard operativo" /></p>
+
+<h2 id="3-pantallas-disponibles">3. Pantallas disponibles</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Pantalla</th>
+
+<th>Qué haces</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Mis Requerimientos (dashboard)</td>
+
+<td>Estado de tus solicitudes</td>
+
+</tr>
+
+<tr>
+
+<td>Parámetros</td>
+
+<td><strong>Sincronizar maestras</strong> — paso obligatorio antes de crear requerimientos</td>
+
+</tr>
+
+<tr>
+
+<td>Notificaciones</td>
+
+<td>Avisos del sistema</td>
+
+</tr>
+
+<tr>
+
+<td>Requerimientos</td>
+
+<td>Crear solicitudes de ítems, commodities, activos fijos, activos menores, transferencias, consumo</td>
+
+</tr>
+
+<tr>
+
+<td>Conformidad de Despacho</td>
+
+<td>Confirmas que recibiste el material despachado</td>
+
+</tr>
+
+<tr>
+
+<td>Conformidad de Servicios</td>
+
+<td>Confirmas que el servicio se ejecutó</td>
+
+</tr>
+
+<tr>
+
+<td>Devoluciones de Consumo</td>
+
+<td>Devuelves material no utilizado</td>
+
+</tr>
+
+<tr>
+
+<td>Reingresos</td>
+
+<td>Solicitas reingreso de material al almacén</td>
+
+</tr>
+
+<tr>
+
+<td>Reporte Requerimientos / Logístico / Catálogo</td>
+
+<td>Consultas</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
+
+<h3 id="preparar-tu-equipo-una-vez--periódico">Preparar tu equipo (una vez / periódico)</h3>
+
+<ol type="1">
+
+<li>Menú → <strong>Parámetros</strong>.</li>
+
+<li><strong>Sincronizar</strong>: descarga empresas, fundos, almacenes, áreas, cultivos, centros de costo, labores, ítems…</li>
+
+<li>Sin esto, la pantalla Requerimientos te pedirá sincronizar primero.</li>
+
+</ol>
+
+<p><img src="../../../capturas_manual/05_parametros.png" alt="Parámetros" /></p>
+
+<h3 id="crear-un-requerimiento">Crear un requerimiento</h3>
+
+<ol type="1">
+
+<li><strong>Requerimientos → Nuevo</strong>.</li>
+
+<li>Tipo: Ítem / Commodity / Activo Fijo / Activo Menor / Transferencia / Consumo.</li>
+
+<li>Cabecera: área, almacén destino, fecha requerida, glosa.</li>
+
+<li>Agrega líneas (ítem, cantidad, unidad, centro de costo/labor si aplica).</li>
+
+<li><strong>Guardar</strong> → queda en estado “pendiente de sincronizar” si no hay red.</li>
+
+<li><strong>Sincroniza</strong> cuando tengas conexión → tu requerimiento pasa a aprobación del jefe de área (APLOGIST).</li>
+
+</ol>
+
+<h3 id="confirmar-recepción-conformidad">Confirmar recepción (conformidad)</h3>
+
+<p>Cuando el almacén despache tu pedido: <strong>Conformidad de Despacho</strong> → abre el despacho → confirma cantidades recibidas u observa diferencias.</p>
+
+<h3 id="devolver-o-reingresar-material">Devolver o reingresar material</h3>
+
+<ul>
+
+<li><strong>Devoluciones de Consumo</strong>: material que no usaste y devuelves.</li>
+
+<li><strong>Reingresos</strong>: material que retorna al almacén (requiere aprobación del jefe de área).</li>
+
+</ul>
+
+<h2 id="5-restricciones">5. Restricciones</h2>
+
+<ul>
+
+<li>Solo ves <strong>tus propios flujos</strong>: no hay compras, almacén, aprobaciones ni administración.</li>
+
+</ul>
+
+<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>“Falta configurar”</td>
+
+<td>Sincroniza en Parámetros primero</td>
+
+</tr>
+
+<tr>
+
+<td>No puedo cerrar sesión</td>
+
+<td>Tienes requerimientos sin sincronizar — sincronízalos primero</td>
+
+</tr>
+
+<tr>
+
+<td>Mi requerimiento no avanza</td>
+
+<td>Revisa su estado: debe estar sincronizado y luego aprobado por tu jefe de área</td>
+
+</tr>
+
+<tr>
+
+<td>Trabajé sin internet</td>
+
+<td>Normal: todo se guardó local; sincroniza al recuperar conexión</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
 
 </article>
 </body>

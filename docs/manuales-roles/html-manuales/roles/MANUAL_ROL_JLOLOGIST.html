@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MANUAL ROL JLOLOGIST — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <style>
   body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
   nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
@@ -51,150 +52,294 @@
   <a class="btn" href="../../roles/MANUAL_ROL_JLOLOGIST.md">Fuente .md</a>
 </nav>
 <article>
-<h1 id="manual-de-usuario--jefe-logística-jlologist">Manual de Usuario — Jefe Logística (JLOLOGIST)</h1>
-<table>
-<thead>
-<tr>
-<th>Campo</th>
-<th>Valor</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Código de rol</td>
-<td><code>JLOLOGIST</code></td>
-</tr>
-<tr>
-<td>Nombre</td>
-<td>Jefe de Logística</td>
-</tr>
-<tr>
-<td>Pantalla inicial</td>
-<td>Dashboard Logística (<code>/main/dashboard-logistica</code>)</td>
-</tr>
-<tr>
-<td>Menú</td>
-<td>Propio (hardcodeado, tipo acordeón) — no usa <code>MENU_JSON</code></td>
-</tr>
-<tr>
-<td>Consola</td>
-<td><code>/admin-logistica</code> con menú reducido</td>
-</tr>
-<tr>
-<td>Video tutorial</td>
-<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_JLOLOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_JLOLOGIST.html</a></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
-<p>Eres la <strong>jefatura de logística</strong>: supervisas el ciclo completo — apruebas requerimientos por área, apruebas órdenes de compra y servicio, gestionas compras, cotizaciones y consolidaciones. Además puedes dar de alta usuarios operativos.</p>
-<blockquote>
-<p>Tu menú es especial: se muestra como <strong>acordeón</strong> con grupos (Panel, Configuración, Requerimientos, Compras, Almacén, Aprobaciones, Reportes, Consultas) y se define en el sistema, no por BD.</p>
-</blockquote>
-<h2 id="2-acceso">2. Acceso</h2>
-<ol type="1">
-<li>Login → entras a <strong>Dashboard Logística</strong> (35_dashboard_logistica.png).</li>
-<li>Consola: <code>/admin-logistica/login</code> → ves pestañas operativas (Dashboard, Bandeja, Aprobar Consumo, Maestros, Proveedores, Usuarios, Formato PDF).</li>
-</ol>
-<p><img src="../../../capturas_manual/35_dashboard_logistica.png" alt="Dashboard logística" /></p>
-<h2 id="3-tu-menú-acordeón">3. Tu menú (acordeón)</h2>
-<table>
-<thead>
-<tr>
-<th>Grupo</th>
-<th>Ítems</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Mi Panel</td>
-<td>Dashboard Jef. Logística, Mi Dashboard, Dashboard Logística, Dashboard Compras, Dashboard Jef. Licitaciones, Dashboard Finanzas</td>
-</tr>
-<tr>
-<td>Configuración</td>
-<td>Notificaciones, Parámetros</td>
-</tr>
-<tr>
-<td>Requerimientos</td>
-<td>Requerimientos, Saldo de Requerimiento</td>
-</tr>
-<tr>
-<td>Compras &amp; Órdenes</td>
-<td>Solicitudes de Compra, Órdenes de Compra, Consolidaciones, Solicitudes/Órdenes de Servicio, Cotizaciones, Conformidad de Servicios</td>
-</tr>
-<tr>
-<td>Almacén &amp; Stock</td>
-<td>Conformidad de Despacho, Devoluciones de Consumo</td>
-</tr>
-<tr>
-<td>Aprobaciones</td>
-<td>Aprobación OC, Aprobación OS, Aprobaciones por Área, Dashboard Aprobaciones</td>
-</tr>
-<tr>
-<td>Reportes</td>
-<td>Reportes Compras, Requerimientos, Aprobaciones Área, Aprobados, Logístico</td>
-</tr>
-<tr>
-<td>Consultas</td>
-<td>Catálogo de Ítems</td>
-</tr>
-</tbody>
-</table>
-<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
-<h3 id="aprobar-requerimientos-de-un-área">Aprobar requerimientos de un área</h3>
-<ol type="1">
-<li><strong>Aprobaciones → Aprobaciones por Área</strong>.</li>
-<li>Abre el requerimiento pendiente, revisa ítems/cantidades.</li>
-<li><strong>Aprobar</strong> o <strong>Rechazar</strong> indicando motivo.</li>
-</ol>
-<h3 id="consolidar-y-generar-una-orden-de-compra">Consolidar y generar una Orden de Compra</h3>
-<ol type="1">
-<li><strong>Compras → Consolidación Compras</strong>: selecciona líneas aprobadas.</li>
-<li>Genera la <strong>Solicitud de Compra</strong> o cotiza primero en <strong>Cotizaciones</strong>.</li>
-<li>En <strong>Órdenes de Compra</strong> genera la OC, adjunta documentos y envía a aprobación.</li>
-</ol>
-<p><img src="../../../capturas_manual/38_consolidacion_compras.png" alt="Consolidación" /></p>
-<h3 id="aprobar-una-oc--os">Aprobar una OC / OS</h3>
-<ol type="1">
-<li><strong>Aprobaciones → Aprobación OC</strong> (u OS).</li>
-<li>Revisa líneas, proveedor, montos y PDF de la orden.</li>
-<li><strong>Aprobar</strong> o <strong>Rechazar</strong> con comentario → notifica al siguiente nivel.</li>
-</ol>
-<h3 id="crear-un-usuario-operativo">Crear un usuario operativo</h3>
-<p>Consola <code>/admin-logistica</code> → <strong>Usuarios</strong> → Nuevo. Roles disponibles para ti: <code>LOLOGIST</code>, <code>EMLOGIST</code>, <code>ALLOGIST</code>, <code>OPLOGIST</code>, <code>APLOGIST</code>.</p>
-<blockquote>
-<p>No verás usuarios con rol JLOLOGIST ni ADLOGIST en las listas — es por seguridad.</p>
-</blockquote>
-<h2 id="5-restricciones">5. Restricciones</h2>
-<ul>
-<li>No accedes a despachos, recepción, kardex ni reingresos (rol de almacén).</li>
-<li>En la consola no ves las pestañas de configuración (Áreas, Empresa, Parámetros, Auditoría, Permisos) salvo que un admin te las habilite con claves <code>ADMINLG_*</code>.</li>
-<li>No ves Aprobar SC / Aprobar SS en la consola por defecto.</li>
-</ul>
-<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
-<table>
-<thead>
-<tr>
-<th>Problema</th>
-<th>Solución</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>No veo la opción de consolidar</td>
-<td>Verifica que el requerimiento esté aprobado por el área (APLOGIST)</td>
-</tr>
-<tr>
-<td>La OC no pasa a siguiente estado</td>
-<td>Falta aprobación de Finanzas/Gerencia según el flujo configurado</td>
-</tr>
-<tr>
-<td>Quiero ver el stock</td>
-<td>El kardex es de ALLOGIST/LOLOGIST; usa Reporte de Saldos si está disponible o solicita acceso</td>
-</tr>
-</tbody>
-</table>
+<h1 id="manual-de-usuario--jefe-logística-jlologist">Manual de Usuario — Jefe Logística (JLOLOGIST)</h1>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Campo</th>
+
+<th>Valor</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Código de rol</td>
+
+<td><code>JLOLOGIST</code></td>
+
+</tr>
+
+<tr>
+
+<td>Nombre</td>
+
+<td>Jefe de Logística</td>
+
+</tr>
+
+<tr>
+
+<td>Pantalla inicial</td>
+
+<td>Dashboard Logística (<code>/main/dashboard-logistica</code>)</td>
+
+</tr>
+
+<tr>
+
+<td>Menú</td>
+
+<td>Propio (hardcodeado, tipo acordeón) — no usa <code>MENU_JSON</code></td>
+
+</tr>
+
+<tr>
+
+<td>Consola</td>
+
+<td><code>/admin-logistica</code> con menú reducido</td>
+
+</tr>
+
+<tr>
+
+<td>Video tutorial</td>
+
+<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_JLOLOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_JLOLOGIST.html</a></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<hr />
+
+<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
+
+<p>Eres la <strong>jefatura de logística</strong>: supervisas el ciclo completo — apruebas requerimientos por área, apruebas órdenes de compra y servicio, gestionas compras, cotizaciones y consolidaciones. Además puedes dar de alta usuarios operativos.</p>
+
+<blockquote>
+
+<p>Tu menú es especial: se muestra como <strong>acordeón</strong> con grupos (Panel, Configuración, Requerimientos, Compras, Almacén, Aprobaciones, Reportes, Consultas) y se define en el sistema, no por BD.</p>
+
+</blockquote>
+
+<h2 id="2-acceso">2. Acceso</h2>
+
+<ol type="1">
+
+<li>Login → entras a <strong>Dashboard Logística</strong> (35_dashboard_logistica.png).</li>
+
+<li>Consola: <code>/admin-logistica/login</code> → ves pestañas operativas (Dashboard, Bandeja, Aprobar Consumo, Maestros, Proveedores, Usuarios, Formato PDF).</li>
+
+</ol>
+
+<p><img src="../../../capturas_manual/35_dashboard_logistica.png" alt="Dashboard logística" /></p>
+
+<h2 id="3-tu-menú-acordeón">3. Tu menú (acordeón)</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Grupo</th>
+
+<th>Ítems</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Mi Panel</td>
+
+<td>Dashboard Jef. Logística, Mi Dashboard, Dashboard Logística, Dashboard Compras, Dashboard Jef. Licitaciones, Dashboard Finanzas</td>
+
+</tr>
+
+<tr>
+
+<td>Configuración</td>
+
+<td>Notificaciones, Parámetros</td>
+
+</tr>
+
+<tr>
+
+<td>Requerimientos</td>
+
+<td>Requerimientos, Saldo de Requerimiento</td>
+
+</tr>
+
+<tr>
+
+<td>Compras &amp; Órdenes</td>
+
+<td>Solicitudes de Compra, Órdenes de Compra, Consolidaciones, Solicitudes/Órdenes de Servicio, Cotizaciones, Conformidad de Servicios</td>
+
+</tr>
+
+<tr>
+
+<td>Almacén &amp; Stock</td>
+
+<td>Conformidad de Despacho, Devoluciones de Consumo</td>
+
+</tr>
+
+<tr>
+
+<td>Aprobaciones</td>
+
+<td>Aprobación OC, Aprobación OS, Aprobaciones por Área, Dashboard Aprobaciones</td>
+
+</tr>
+
+<tr>
+
+<td>Reportes</td>
+
+<td>Reportes Compras, Requerimientos, Aprobaciones Área, Aprobados, Logístico</td>
+
+</tr>
+
+<tr>
+
+<td>Consultas</td>
+
+<td>Catálogo de Ítems</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
+
+<h3 id="aprobar-requerimientos-de-un-área">Aprobar requerimientos de un área</h3>
+
+<ol type="1">
+
+<li><strong>Aprobaciones → Aprobaciones por Área</strong>.</li>
+
+<li>Abre el requerimiento pendiente, revisa ítems/cantidades.</li>
+
+<li><strong>Aprobar</strong> o <strong>Rechazar</strong> indicando motivo.</li>
+
+</ol>
+
+<h3 id="consolidar-y-generar-una-orden-de-compra">Consolidar y generar una Orden de Compra</h3>
+
+<ol type="1">
+
+<li><strong>Compras → Consolidación Compras</strong>: selecciona líneas aprobadas.</li>
+
+<li>Genera la <strong>Solicitud de Compra</strong> o cotiza primero en <strong>Cotizaciones</strong>.</li>
+
+<li>En <strong>Órdenes de Compra</strong> genera la OC, adjunta documentos y envía a aprobación.</li>
+
+</ol>
+
+<p><img src="../../../capturas_manual/38_consolidacion_compras.png" alt="Consolidación" /></p>
+
+<h3 id="aprobar-una-oc--os">Aprobar una OC / OS</h3>
+
+<ol type="1">
+
+<li><strong>Aprobaciones → Aprobación OC</strong> (u OS).</li>
+
+<li>Revisa líneas, proveedor, montos y PDF de la orden.</li>
+
+<li><strong>Aprobar</strong> o <strong>Rechazar</strong> con comentario → notifica al siguiente nivel.</li>
+
+</ol>
+
+<h3 id="crear-un-usuario-operativo">Crear un usuario operativo</h3>
+
+<p>Consola <code>/admin-logistica</code> → <strong>Usuarios</strong> → Nuevo. Roles disponibles para ti: <code>LOLOGIST</code>, <code>EMLOGIST</code>, <code>ALLOGIST</code>, <code>OPLOGIST</code>, <code>APLOGIST</code>.</p>
+
+<blockquote>
+
+<p>No verás usuarios con rol JLOLOGIST ni ADLOGIST en las listas — es por seguridad.</p>
+
+</blockquote>
+
+<h2 id="5-restricciones">5. Restricciones</h2>
+
+<ul>
+
+<li>No accedes a despachos, recepción, kardex ni reingresos (rol de almacén).</li>
+
+<li>En la consola no ves las pestañas de configuración (Áreas, Empresa, Parámetros, Auditoría, Permisos) salvo que un admin te las habilite con claves <code>ADMINLG_*</code>.</li>
+
+<li>No ves Aprobar SC / Aprobar SS en la consola por defecto.</li>
+
+</ul>
+
+<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>No veo la opción de consolidar</td>
+
+<td>Verifica que el requerimiento esté aprobado por el área (APLOGIST)</td>
+
+</tr>
+
+<tr>
+
+<td>La OC no pasa a siguiente estado</td>
+
+<td>Falta aprobación de Finanzas/Gerencia según el flujo configurado</td>
+
+</tr>
+
+<tr>
+
+<td>Quiero ver el stock</td>
+
+<td>El kardex es de ALLOGIST/LOLOGIST; usa Reporte de Saldos si está disponible o solicita acceso</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
 
 </article>
 </body>

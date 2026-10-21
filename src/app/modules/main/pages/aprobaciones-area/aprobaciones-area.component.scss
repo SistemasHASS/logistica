@@ -207,6 +207,21 @@
       padding: 1rem 1.5rem;
     }
   }
+
+  // Tooltips de PrimeNG (texto blanco sobre fondo oscuro)
+  .p-tooltip {
+    .p-tooltip-text {
+      background-color: #212529;
+      color: #fff;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+
+    .p-tooltip-arrow {
+      border-top-color: #212529;
+    }
+  }
 }
 
 // Responsive

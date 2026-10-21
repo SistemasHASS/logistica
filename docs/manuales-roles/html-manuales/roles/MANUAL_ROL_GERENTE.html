@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MANUAL ROL GERENTE — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <style>
   body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
   nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
@@ -51,98 +52,190 @@
   <a class="btn" href="../../roles/MANUAL_ROL_GERENTE.md">Fuente .md</a>
 </nav>
 <article>
-<h1 id="manual-de-usuario--gerente-gerente">Manual de Usuario — Gerente (GERENTE)</h1>
-<table>
-<thead>
-<tr>
-<th>Campo</th>
-<th>Valor</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Código de rol</td>
-<td><code>GERENTE</code></td>
-</tr>
-<tr>
-<td>Nombre</td>
-<td>Gerencia</td>
-</tr>
-<tr>
-<td>Pantalla inicial</td>
-<td>Definida por menú configurado en BD (recomendado: dashboard + aprobaciones)</td>
-</tr>
-<tr>
-<td>Video tutorial</td>
-<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_GERENTE.html">../video-tutoriales/VIDEO_TUTORIAL_GERENTE.html</a></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
-<p>Eres la <strong>gerencia</strong>: das el visto bueno final a las Órdenes de Compra y Órdenes de Servicio de mayor relevancia y supervisas indicadores financieros.</p>
-<h2 id="2-acceso">2. Acceso</h2>
-<p>Login → el sistema muestra el menú configurado para tu rol. Si al entrar no ves opciones, pide al administrador que configure el menú de GERENTE (se recomienda: Dashboard + Aprobaciones + Reportes).</p>
-<h2 id="3-pantallas-disponibles">3. Pantallas disponibles</h2>
-<table>
-<thead>
-<tr>
-<th>Pantalla</th>
-<th>Qué haces</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Dashboard Finanzas</td>
-<td>Indicadores de órdenes y gasto</td>
-</tr>
-<tr>
-<td>Aprobación OC</td>
-<td>Aprobar/rechazar órdenes de compra</td>
-</tr>
-<tr>
-<td>Aprobación OS</td>
-<td>Aprobar/rechazar órdenes de servicio</td>
-</tr>
-<tr>
-<td>Reporte Requerimientos / Logístico / Catálogo</td>
-<td>Consultas abiertas</td>
-</tr>
-</tbody>
-</table>
-<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
-<h3 id="aprobar-una-orden-de-compra">Aprobar una Orden de Compra</h3>
-<ol type="1">
-<li><strong>Aprobación OC</strong> → lista de pendientes.</li>
-<li>Abre la orden: proveedor, líneas, monto total, cotizaciones adjuntas, trazabilidad de la solicitud.</li>
-<li><strong>Aprobar</strong> (la orden continúa a emisión) o <strong>Rechazar</strong> con motivo.</li>
-</ol>
-<h3 id="aprobar-una-orden-de-servicio">Aprobar una Orden de Servicio</h3>
-<p>Mismo flujo en <strong>Aprobación OS</strong>.</p>
-<h2 id="5-restricciones">5. Restricciones</h2>
-<ul>
-<li>Alcance de aprobación y consulta únicamente; no operas requerimientos, compras ni almacén.</li>
-<li>Tu menú depende totalmente de la configuración en BD — coordina con TI para ajustarlo.</li>
-</ul>
-<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
-<table>
-<thead>
-<tr>
-<th>Problema</th>
-<th>Solución</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Entro y no veo menú</td>
-<td>El rol GERENTE no tiene redirect propio: pide a TI configurar <code>MENU_JSON</code>/<code>ITEMS_VISIBLES</code></td>
-</tr>
-<tr>
-<td>Quiero ver más reportes</td>
-<td>Los reportes abiertos están disponibles; reportes adicionales requieren configuración del menú</td>
-</tr>
-</tbody>
-</table>
+<h1 id="manual-de-usuario--gerente-gerente">Manual de Usuario — Gerente (GERENTE)</h1>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Campo</th>
+
+<th>Valor</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Código de rol</td>
+
+<td><code>GERENTE</code></td>
+
+</tr>
+
+<tr>
+
+<td>Nombre</td>
+
+<td>Gerencia</td>
+
+</tr>
+
+<tr>
+
+<td>Pantalla inicial</td>
+
+<td>Definida por menú configurado en BD (recomendado: dashboard + aprobaciones)</td>
+
+</tr>
+
+<tr>
+
+<td>Video tutorial</td>
+
+<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_GERENTE.html">../video-tutoriales/VIDEO_TUTORIAL_GERENTE.html</a></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<hr />
+
+<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
+
+<p>Eres la <strong>gerencia</strong>: das el visto bueno final a las Órdenes de Compra y Órdenes de Servicio de mayor relevancia y supervisas indicadores financieros.</p>
+
+<h2 id="2-acceso">2. Acceso</h2>
+
+<p>Login → el sistema muestra el menú configurado para tu rol. Si al entrar no ves opciones, pide al administrador que configure el menú de GERENTE (se recomienda: Dashboard + Aprobaciones + Reportes).</p>
+
+<h2 id="3-pantallas-disponibles">3. Pantallas disponibles</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Pantalla</th>
+
+<th>Qué haces</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Dashboard Finanzas</td>
+
+<td>Indicadores de órdenes y gasto</td>
+
+</tr>
+
+<tr>
+
+<td>Aprobación OC</td>
+
+<td>Aprobar/rechazar órdenes de compra</td>
+
+</tr>
+
+<tr>
+
+<td>Aprobación OS</td>
+
+<td>Aprobar/rechazar órdenes de servicio</td>
+
+</tr>
+
+<tr>
+
+<td>Reporte Requerimientos / Logístico / Catálogo</td>
+
+<td>Consultas abiertas</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
+
+<h3 id="aprobar-una-orden-de-compra">Aprobar una Orden de Compra</h3>
+
+<ol type="1">
+
+<li><strong>Aprobación OC</strong> → lista de pendientes.</li>
+
+<li>Abre la orden: proveedor, líneas, monto total, cotizaciones adjuntas, trazabilidad de la solicitud.</li>
+
+<li><strong>Aprobar</strong> (la orden continúa a emisión) o <strong>Rechazar</strong> con motivo.</li>
+
+</ol>
+
+<h3 id="aprobar-una-orden-de-servicio">Aprobar una Orden de Servicio</h3>
+
+<p>Mismo flujo en <strong>Aprobación OS</strong>.</p>
+
+<h2 id="5-restricciones">5. Restricciones</h2>
+
+<ul>
+
+<li>Alcance de aprobación y consulta únicamente; no operas requerimientos, compras ni almacén.</li>
+
+<li>Tu menú depende totalmente de la configuración en BD — coordina con TI para ajustarlo.</li>
+
+</ul>
+
+<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Entro y no veo menú</td>
+
+<td>El rol GERENTE no tiene redirect propio: pide a TI configurar <code>MENU_JSON</code>/<code>ITEMS_VISIBLES</code></td>
+
+</tr>
+
+<tr>
+
+<td>Quiero ver más reportes</td>
+
+<td>Los reportes abiertos están disponibles; reportes adicionales requieren configuración del menú</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
 
 </article>
 </body>

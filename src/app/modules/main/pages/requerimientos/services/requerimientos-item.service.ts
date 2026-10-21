@@ -707,10 +707,11 @@ export class RequerimientosItemService {
         this.requerimientos.push({ ...req });
       }
       try {
-        if (req.idarea) {
+        // TRANSFERENCIA no requiere aprobación: se crea como APROBADA y migra
+        // directo a SPRING vía el endpoint de transferencias
+        if (req.idarea && req.itemtipo !== 'TRANSFERENCIA') {
           const idrol = this.maestras.usuario?.idrol ?? '';
           const tipoAprobacion = req.itemtipo === 'CONSUMO' ? 'CONSUMO'
-            : req.itemtipo === 'TRANSFERENCIA' ? 'TRANSFERENCIA'
             : req.itemtipo === 'COMPRA'
               ? (idrol.includes('APLOGIST') && !idrol.includes('JLOLOGIST') ? 'COMPRA_AREA' : 'COMPRA')
             : 'ITEM';
@@ -800,7 +801,17 @@ export class RequerimientosItemService {
           this.alertService.showAlertError('Error', parsed.mensaje || parsed.error);
         } else {
           // Migrar a SPRING automáticamente (sin pasar por aprobación)
-          await this.migrarTransferenciaASPRING(idReq, prioridadFinal);
+          await this.migrarTransferenciaASPRING(
+            {
+              idrequerimiento: idReq,
+              detalle: this.requerimiento.detalle,
+              glosa: this.requerimiento.glosa,
+              idfundo: this.requerimiento.idfundo,
+              almacenOrigen: this.maestras.almacenOrigen,
+              almacenDestino: this.maestras.almacenDestino,
+            },
+            prioridadFinal,
+          );
           await this.dexieService.requerimientos.update(this.requerimiento.id!, { estado: 1 });
           await this.cargar();
           this.contarContadores();
@@ -859,7 +870,97 @@ export class RequerimientosItemService {
     if (!confirmar) return;
     this.maestras.sincronizando = true;
     this.maestras.progreso = 0;
-    const payload = pendientes.map((req: any) => ({
+
+    // TRANSFERENCIA no requiere aprobación: van por el endpoint dedicado
+    // (APROBADA automática + migración directa a SPRING), no por el SP genérico
+    const transferencias = pendientes.filter((r: any) => r.itemtipo === 'TRANSFERENCIA');
+    const normales = pendientes.filter((r: any) => r.itemtipo !== 'TRANSFERENCIA');
+
+    const idsOkTransf: string[] = [];
+    const idsErrTransf: string[] = [];
+    for (const req of transferencias) {
+      try {
+        const payloadTransf = {
+          idrequerimiento: req.idrequerimiento,
+          ruc: this.maestras.usuario.ruc,
+          idfundo: req.idfundo,
+          idarea: req.idarea,
+          idclasificacion: 'TRA',
+          prioridad: req.prioridad || '1',
+          nrodocumento: this.maestras.usuario.documentoidentidad,
+          idalmacen: req.idalmacen,
+          idalmacendestino: req.idalmacendestino,
+          glosa: req.glosa || '',
+          referenciaGasto: req.referenciaGasto || '',
+          eliminado: 0, tipo: 'ITEM', itemtipo: 'TRANSFERENCIA', estados: 'APROBADA',
+          almacenOrigen: req.idalmacen,
+          almacenDestino: req.idalmacendestino,
+          usuario: this.maestras.usuario.documentoidentidad,
+          cantidadItems: (req.detalle || []).length,
+          detalle: (req.detalle || []).map((d: any) => ({
+            codigo: d.codigo, tipoclasificacion: 'I', cantidad: d.cantidad,
+            idproducto: d.producto || '', iddescripcion: d.descripcion || '',
+            idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
+            idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
+            afectoIGV: d.afectoIGV === 'N' ? 'N' : 'S',
+          })),
+        };
+        const respTransf = await this.transferenciaService.crearRequerimientoTransferencia(payloadTransf);
+        const parsed = Array.isArray(respTransf) ? respTransf[0] : (typeof respTransf === 'string' ? JSON.parse(respTransf) : respTransf);
+        if (parsed?.error) {
+          console.error('Error creando transferencia', req.idrequerimiento, parsed);
+          idsErrTransf.push(req.idrequerimiento);
+          continue;
+        }
+        // Migrar a SPRING automáticamente (sin pasar por aprobación)
+        const okSpring = await this.migrarTransferenciaASPRING(
+          {
+            idrequerimiento: req.idrequerimiento,
+            detalle: req.detalle || [],
+            glosa: req.glosa,
+            idfundo: req.idfundo,
+            almacenOrigen: req.idalmacen,
+            almacenDestino: req.idalmacendestino,
+          },
+          (req.prioridad || '1') as PrioridadSpring,
+          true,
+        );
+        if (okSpring) {
+          idsOkTransf.push(req.idrequerimiento);
+        } else {
+          // La transferencia quedó creada como APROBADA pero sin migrar a SPRING:
+          // igual se marca sincronizada y se puede reintentar desde Aprobados
+          idsOkTransf.push(req.idrequerimiento);
+          console.error('SPRING rechazó transferencia', req.idrequerimiento);
+        }
+      } catch (e) {
+        console.error('Error sincronizando transferencia', req.idrequerimiento, e);
+        idsErrTransf.push(req.idrequerimiento);
+      }
+    }
+    if (idsOkTransf.length) {
+      await this.dexieService.requerimientos
+        .where('idrequerimiento').anyOf(idsOkTransf).modify({ estado: 1 });
+    }
+
+    if (normales.length === 0) {
+      this.alertService.showAlert(
+        idsErrTransf.length ? 'Sincronización parcial' : 'Éxito',
+        idsErrTransf.length
+          ? `Transferencias enviadas: ${idsOkTransf.length}, con error: ${idsErrTransf.length}`
+          : 'Todos los requerimientos se sincronizaron correctamente',
+        idsErrTransf.length ? 'warning' : 'success',
+      );
+      await this.cargar();
+      this.contarContadores();
+      await this.cargarPendientes();
+      this.requerimientosOmitirValidacion.clear();
+      this.maestras.progreso = 100;
+      this.maestras.sincronizando = false;
+      return;
+    }
+
+    const payload = normales.map((req: any) => ({
       idrequerimiento: req.idrequerimiento, ruc: this.maestras.usuario.ruc,
       idfundo: req.idfundo, idarea: req.idarea, idclasificacion: req.idclasificacion,
       prioridad: req.prioridad || '1', nrodocumento: this.maestras.usuario.documentoidentidad,
@@ -882,14 +983,16 @@ export class RequerimientosItemService {
         return;
       }
       const idsConError: string[] = (resultado?.detalle || []).map((d: any) => d.id.split('-')[0]);
-      const idsOk = pendientes.map((r) => r.idrequerimiento).filter((id) => !idsConError.includes(id));
+      const idsOk = normales.map((r) => r.idrequerimiento).filter((id) => !idsConError.includes(id));
       if (idsOk.length) {
         await this.dexieService.requerimientos.where('idrequerimiento').anyOf(idsOk).modify({ estado: 1 });
       }
+      const totalErr = idsConError.length + idsErrTransf.length;
+      const totalOk = idsOk.length + idsOkTransf.length;
       this.alertService.showAlert(
-        idsConError.length ? 'Sincronización parcial' : 'Éxito',
-        idsConError.length ? `Sincronizados ${idsOk.length}, con error ${idsConError.length}` : 'Todos los requerimientos se sincronizaron correctamente',
-        idsConError.length ? 'warning' : 'success',
+        totalErr ? 'Sincronización parcial' : 'Éxito',
+        totalErr ? `Sincronizados ${totalOk}, con error ${totalErr}` : 'Todos los requerimientos se sincronizaron correctamente',
+        totalErr ? 'warning' : 'success',
       );
       await this.cargar();
       this.contarContadores();
@@ -1617,10 +1720,21 @@ export class RequerimientosItemService {
   }
 
   // ── Migración automática TRANSFERENCIA → SPRING ─────────────────────────
-  private async migrarTransferenciaASPRING(idReq: string, prioridad: PrioridadSpring): Promise<void> {
+  private async migrarTransferenciaASPRING(
+    reqTransf: {
+      idrequerimiento: string;
+      detalle: any[];
+      glosa?: string;
+      idfundo?: string;
+      almacenOrigen?: string;
+      almacenDestino?: string;
+    },
+    prioridad: PrioridadSpring,
+    silencioso = false,
+  ): Promise<boolean> {
     try {
       const usuario = this.maestras.usuario;
-      const detalle = this.requerimiento.detalle;
+      const detalle = reqTransf.detalle;
       const first = detalle[0];
 
       const cecos = this.maestras.cecos || [];
@@ -1634,13 +1748,13 @@ export class RequerimientosItemService {
       const proyectoAfeDefault = proyectoFirst?.afe ?? 'FUNDO HP';
       const accountDefault = cecoFirst?.ccontable ?? '10411103';
 
-      let almacenCodigo = this.maestras.almacenOrigen || 'H001';
+      let almacenCodigo = reqTransf.almacenOrigen || 'H001';
       if (almacenCodigo && almacenCodigo.length <= 3 && !isNaN(Number(almacenCodigo))) {
         const almacenCompleto = almacenes.find((a: any) => a.idalmacen == almacenCodigo || a.almacen == almacenCodigo);
         almacenCodigo = almacenCompleto?.idalmacen ?? ('H' + almacenCodigo.padStart(3, '0'));
       }
 
-      let almacenDestinoCodigo = this.maestras.almacenDestino || '';
+      let almacenDestinoCodigo = reqTransf.almacenDestino || '';
       if (almacenDestinoCodigo && almacenDestinoCodigo.length <= 3 && !isNaN(Number(almacenDestinoCodigo))) {
         const almDest = almacenes.find((a: any) => a.idalmacen == almacenDestinoCodigo || a.almacen == almacenDestinoCodigo);
         almacenDestinoCodigo = almDest?.idalmacen ?? ('H' + almacenDestinoCodigo.padStart(3, '0'));
@@ -1671,7 +1785,7 @@ export class RequerimientosItemService {
           UnidadNegocio: unidadNegocio,
           UnidadReplicacion: 'TRUJ',
           LocalForeignFlag: 'L',
-          Comentarios: this.requerimiento.glosa || '',
+          Comentarios: reqTransf.glosa || '',
           Estado: 'AP',
           UltimoUsuario: 'MISESF',
           UltimaFechaModif: new Date().toISOString(),
@@ -1734,7 +1848,7 @@ export class RequerimientosItemService {
             );
 
             // Sucursal = idfundo a 4 dígitos (ej. '0801'), fallback: últimos 2 de idempresa + '01'
-            let sucursalFormateada = this.requerimiento.idfundo;
+            let sucursalFormateada = reqTransf.idfundo;
             if (!sucursalFormateada || sucursalFormateada.length < 4) {
               sucursalFormateada = String(usuario.idempresa ?? '').slice(-2) + '01';
             }
@@ -1762,19 +1876,27 @@ export class RequerimientosItemService {
 
       if (resultadoSpring?.errorgeneral === 0) {
         const correlativoSPRING = resultadoSpring.RequisicionNumero;
-        const payloadActualizar = [{ idrequerimiento: idReq, RequisicionNumero: correlativoSPRING }];
+        const payloadActualizar = [{ idrequerimiento: reqTransf.idrequerimiento, RequisicionNumero: correlativoSPRING }];
         this.requerimientosService.getNumeroRequerimientoPRING(payloadActualizar).subscribe({
           next: () => {},
           error: (err: any) => console.error('Error al guardar número WHRQ:', err),
         });
-        this.alertService.showAlert('Éxito', `Requerimiento de transferencia enviado a SPRING (${correlativoSPRING})`, 'success');
-      } else {
-        console.error('Error SPRING TRANSFERENCIA:', respSpring);
+        if (!silencioso) {
+          this.alertService.showAlert('Éxito', `Requerimiento de transferencia enviado a SPRING (${correlativoSPRING})`, 'success');
+        }
+        return true;
+      }
+      console.error('Error SPRING TRANSFERENCIA:', respSpring);
+      if (!silencioso) {
         this.alertService.showAlert('Aviso', 'Requerimiento creado como APROBADA pero no se pudo registrar en SPRING. Contacte a soporte.', 'warning');
       }
+      return false;
     } catch (e: any) {
       console.error('Error migrarTransferenciaASPRING:', e);
-      this.alertService.showAlert('Aviso', 'Requerimiento creado como APROBADA pero falló la migración a SPRING. Contacte a soporte.', 'warning');
+      if (!silencioso) {
+        this.alertService.showAlert('Aviso', 'Requerimiento creado como APROBADA pero falló la migración a SPRING. Contacte a soporte.', 'warning');
+      }
+      return false;
     }
   }
 

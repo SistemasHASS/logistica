@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MANUAL ROL LOLOGIST — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <style>
   body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
   nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
@@ -51,134 +52,262 @@
   <a class="btn" href="../../roles/MANUAL_ROL_LOLOGIST.md">Fuente .md</a>
 </nav>
 <article>
-<h1 id="manual-de-usuario--operador-logística-lologist">Manual de Usuario — Operador Logística (LOLOGIST)</h1>
-<table>
-<thead>
-<tr>
-<th>Campo</th>
-<th>Valor</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Código de rol</td>
-<td><code>LOLOGIST</code></td>
-</tr>
-<tr>
-<td>Nombre</td>
-<td>Operador de Logística</td>
-</tr>
-<tr>
-<td>Pantalla inicial</td>
-<td>Dashboard Logística (<code>/main/dashboard-logistica</code>)</td>
-</tr>
-<tr>
-<td>Video tutorial</td>
-<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_LOLOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_LOLOGIST.html</a></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
-<p>Eres el <strong>rol operativo más completo</strong>: ejecutas todo el ciclo de compras (consolidación, cotización, SC, OC/SS/OS) <strong>y</strong> operas el almacén (despachos, recepción, kardex, inventario, transferencias, devoluciones). No apruebas — ejecutas.</p>
-<h2 id="2-acceso">2. Acceso</h2>
-<p>Login → <strong>Dashboard Logística</strong>: vista de requerimientos aprobados pendientes de consolidar, compras en curso, OC por estado y alertas.</p>
-<p><img src="../../../capturas_manual/35_dashboard_logistica.png" alt="Dashboard logística" /></p>
-<h2 id="3-pantallas-disponibles">3. Pantallas disponibles</h2>
-<table>
-<thead>
-<tr>
-<th>Grupo</th>
-<th>Pantallas</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Panel</td>
-<td>Dashboard Logística, Jef. Logística, Jef. Licitaciones, Compras, Operativo, Despacho</td>
-</tr>
-<tr>
-<td>Configuración</td>
-<td>Parámetros, Notificaciones</td>
-</tr>
-<tr>
-<td>Requerimientos</td>
-<td>Requerimientos, Saldo de Requerimiento</td>
-</tr>
-<tr>
-<td>Compras</td>
-<td>Solicitudes de Compra, Consolidación Requerimientos/Compras/Corporativa/Servicios, Cotizaciones, Órdenes de Compra, Solicitudes de Servicio, Órdenes de Servicio, Conformidad de Servicios</td>
-</tr>
-<tr>
-<td>Almacén</td>
-<td>Despachos, Recepción de Mercadería, Conformidad de Despacho, Kardex, Gestión de Inventario, Listas de Stock, Transferencias, Devoluciones a Proveedores y de Consumo, Reingresos, Evaluación de Proveedores</td>
-</tr>
-<tr>
-<td>Maestros</td>
-<td>Maestro Proveedores, Catálogo de Ítems</td>
-</tr>
-<tr>
-<td>Reportes</td>
-<td>Reportes Compras, Requerimientos, Saldos, Despachos, Logístico</td>
-</tr>
-</tbody>
-</table>
-<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
-<h3 id="del-requerimiento-aprobado-a-la-orden-de-compra">Del requerimiento aprobado a la Orden de Compra</h3>
-<ol type="1">
-<li><strong>Consolidación de Requerimientos</strong> → agrupa líneas aprobadas.</li>
-<li><strong>Solicitudes de Compra</strong> → genera la SC con adjuntos.</li>
-<li><strong>Cotizaciones</strong> → registra cotizaciones de proveedores y selecciona la ganadora.</li>
-<li><strong>Órdenes de Compra</strong> → genera la OC, envía a aprobación (JLOLOGIST/JEMLOGIST/FINANZAS/GERENTE).</li>
-<li>Sigue el estado en <strong>Órdenes de Compra</strong> hasta aprobada.</li>
-</ol>
-<p><img src="../../../capturas_manual/36_solicitudes_compra.png" alt="Solicitudes de compra" /></p>
-<h3 id="consolidación-corporativa">Consolidación corporativa</h3>
-<p><strong>Consolidación Corporativa</strong> → combina requerimientos de varias empresas/fundos en una sola compra para mejorar precio.</p>
-<h3 id="recepcionar-mercadería">Recepcionar mercadería</h3>
-<ol type="1">
-<li><strong>Recepción de Mercadería</strong> → busca la OC aprobada.</li>
-<li>Ingresa cantidades recibidas, lotes/fechas si aplica, documentos.</li>
-<li>Confirma → actualiza stock y kardex automáticamente.</li>
-</ol>
-<p><img src="../../../capturas_manual/24_recepcion_mercaderia.png" alt="Recepción" /></p>
-<h3 id="despachar-a-un-solicitante">Despachar a un solicitante</h3>
-<p><strong>Despachos</strong> → selecciona requerimiento/lista de stock → confirma salida → queda pendiente de <strong>Conformidad de Despacho</strong> por el solicitante.</p>
-<h3 id="otros-flujos-de-almacén">Otros flujos de almacén</h3>
-<ul>
-<li><strong>Transferencias</strong>: mover stock entre almacenes.</li>
-<li><strong>Devoluciones a Proveedores</strong>: registrar devolución por recepción con problemas.</li>
-<li><strong>Devoluciones de Consumo</strong>: registrar material devuelto por usuarios.</li>
-<li><strong>Evaluación de Proveedores</strong>: calificar desempeño del proveedor.</li>
-</ul>
-<h2 id="5-restricciones">5. Restricciones</h2>
-<ul>
-<li>No apruebas requerimientos por área ni OC/OS (es jefatura/finanzas/gerencia).</li>
-<li>No gestionas usuarios ni configuración.</li>
-</ul>
-<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
-<table>
-<thead>
-<tr>
-<th>Problema</th>
-<th>Solución</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Una línea no aparece para consolidar</td>
-<td>Debe estar aprobada por el área (APLOGIST)</td>
-</tr>
-<tr>
-<td>No puedo emitir la OC</td>
-<td>Revisa que la cotización ganadora esté seleccionada</td>
-</tr>
-<tr>
-<td>Stock no cuadra</td>
-<td>Revisa Kardex → movimientos; verifica recepciones/despachos pendientes</td>
-</tr>
-</tbody>
-</table>
+<h1 id="manual-de-usuario--operador-logística-lologist">Manual de Usuario — Operador Logística (LOLOGIST)</h1>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Campo</th>
+
+<th>Valor</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Código de rol</td>
+
+<td><code>LOLOGIST</code></td>
+
+</tr>
+
+<tr>
+
+<td>Nombre</td>
+
+<td>Operador de Logística</td>
+
+</tr>
+
+<tr>
+
+<td>Pantalla inicial</td>
+
+<td>Dashboard Logística (<code>/main/dashboard-logistica</code>)</td>
+
+</tr>
+
+<tr>
+
+<td>Video tutorial</td>
+
+<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_LOLOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_LOLOGIST.html</a></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<hr />
+
+<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
+
+<p>Eres el <strong>rol operativo más completo</strong>: ejecutas todo el ciclo de compras (consolidación, cotización, SC, OC/SS/OS) <strong>y</strong> operas el almacén (despachos, recepción, kardex, inventario, transferencias, devoluciones). No apruebas — ejecutas.</p>
+
+<h2 id="2-acceso">2. Acceso</h2>
+
+<p>Login → <strong>Dashboard Logística</strong>: vista de requerimientos aprobados pendientes de consolidar, compras en curso, OC por estado y alertas.</p>
+
+<p><img src="../../../capturas_manual/35_dashboard_logistica.png" alt="Dashboard logística" /></p>
+
+<h2 id="3-pantallas-disponibles">3. Pantallas disponibles</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Grupo</th>
+
+<th>Pantallas</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Panel</td>
+
+<td>Dashboard Logística, Jef. Logística, Jef. Licitaciones, Compras, Operativo, Despacho</td>
+
+</tr>
+
+<tr>
+
+<td>Configuración</td>
+
+<td>Parámetros, Notificaciones</td>
+
+</tr>
+
+<tr>
+
+<td>Requerimientos</td>
+
+<td>Requerimientos, Saldo de Requerimiento</td>
+
+</tr>
+
+<tr>
+
+<td>Compras</td>
+
+<td>Solicitudes de Compra, Consolidación Requerimientos/Compras/Corporativa/Servicios, Cotizaciones, Órdenes de Compra, Solicitudes de Servicio, Órdenes de Servicio, Conformidad de Servicios</td>
+
+</tr>
+
+<tr>
+
+<td>Almacén</td>
+
+<td>Despachos, Recepción de Mercadería, Conformidad de Despacho, Kardex, Gestión de Inventario, Listas de Stock, Transferencias, Devoluciones a Proveedores y de Consumo, Reingresos, Evaluación de Proveedores</td>
+
+</tr>
+
+<tr>
+
+<td>Maestros</td>
+
+<td>Maestro Proveedores, Catálogo de Ítems</td>
+
+</tr>
+
+<tr>
+
+<td>Reportes</td>
+
+<td>Reportes Compras, Requerimientos, Saldos, Despachos, Logístico</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
+
+<h3 id="del-requerimiento-aprobado-a-la-orden-de-compra">Del requerimiento aprobado a la Orden de Compra</h3>
+
+<ol type="1">
+
+<li><strong>Consolidación de Requerimientos</strong> → agrupa líneas aprobadas.</li>
+
+<li><strong>Solicitudes de Compra</strong> → genera la SC con adjuntos.</li>
+
+<li><strong>Cotizaciones</strong> → registra cotizaciones de proveedores y selecciona la ganadora.</li>
+
+<li><strong>Órdenes de Compra</strong> → genera la OC, envía a aprobación (JLOLOGIST/JEMLOGIST/FINANZAS/GERENTE).</li>
+
+<li>Sigue el estado en <strong>Órdenes de Compra</strong> hasta aprobada.</li>
+
+</ol>
+
+<p><img src="../../../capturas_manual/36_solicitudes_compra.png" alt="Solicitudes de compra" /></p>
+
+<h3 id="consolidación-corporativa">Consolidación corporativa</h3>
+
+<p><strong>Consolidación Corporativa</strong> → combina requerimientos de varias empresas/fundos en una sola compra para mejorar precio.</p>
+
+<h3 id="recepcionar-mercadería">Recepcionar mercadería</h3>
+
+<ol type="1">
+
+<li><strong>Recepción de Mercadería</strong> → busca la OC aprobada.</li>
+
+<li>Ingresa cantidades recibidas, lotes/fechas si aplica, documentos.</li>
+
+<li>Confirma → actualiza stock y kardex automáticamente.</li>
+
+</ol>
+
+<p><img src="../../../capturas_manual/24_recepcion_mercaderia.png" alt="Recepción" /></p>
+
+<h3 id="despachar-a-un-solicitante">Despachar a un solicitante</h3>
+
+<p><strong>Despachos</strong> → selecciona requerimiento/lista de stock → confirma salida → queda pendiente de <strong>Conformidad de Despacho</strong> por el solicitante.</p>
+
+<h3 id="otros-flujos-de-almacén">Otros flujos de almacén</h3>
+
+<ul>
+
+<li><strong>Transferencias</strong>: mover stock entre almacenes.</li>
+
+<li><strong>Devoluciones a Proveedores</strong>: registrar devolución por recepción con problemas.</li>
+
+<li><strong>Devoluciones de Consumo</strong>: registrar material devuelto por usuarios.</li>
+
+<li><strong>Evaluación de Proveedores</strong>: calificar desempeño del proveedor.</li>
+
+</ul>
+
+<h2 id="5-restricciones">5. Restricciones</h2>
+
+<ul>
+
+<li>No apruebas requerimientos por área ni OC/OS (es jefatura/finanzas/gerencia).</li>
+
+<li>No gestionas usuarios ni configuración.</li>
+
+</ul>
+
+<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Una línea no aparece para consolidar</td>
+
+<td>Debe estar aprobada por el área (APLOGIST)</td>
+
+</tr>
+
+<tr>
+
+<td>No puedo emitir la OC</td>
+
+<td>Revisa que la cotización ganadora esté seleccionada</td>
+
+</tr>
+
+<tr>
+
+<td>Stock no cuadra</td>
+
+<td>Revisa Kardex → movimientos; verifica recepciones/despachos pendientes</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
 
 </article>
 </body>

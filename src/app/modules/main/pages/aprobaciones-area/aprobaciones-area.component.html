@@ -282,10 +282,19 @@
                   </p-tag>
                 </td>
                 <td>
-                  <button pButton type="button" icon="icon icon-eye" 
+                  <button pButton type="button" icon="icon icon-eye"
                           class="p-button-sm p-button-info text-white"
                           (click)="verDetalle(req)"
                           label="Ver">
+                  </button>
+                  <button pButton type="button" *ngIf="puedeResincronizar(req)"
+                          icon="bx bx-refresh"
+                          class="p-button-sm p-button-warning text-white ms-1"
+                          pTooltip="Aprobado sin migrar a SPRING - Reintentar sincronización"
+                          tooltipPosition="top"
+                          [loading]="resincronizandoId === req.idrequerimiento"
+                          [disabled]="!!resincronizandoId && resincronizandoId !== req.idrequerimiento"
+                          (click)="resincronizarRequerimiento(req)">
                   </button>
                 </td>
               </tr>
@@ -328,9 +337,18 @@
                   <small>{{ req.aprobacionesCompletadas }}/{{ req.totalAprobaciones }}</small>
                 </td>
                 <td>
-                  <button pButton type="button" icon="pi pi-eye" 
+                  <button pButton type="button" icon="pi pi-eye"
                           class="p-button-sm p-button-info text-white"
                           (click)="verDetalle(req)">
+                  </button>
+                  <button pButton type="button" *ngIf="puedeResincronizar(req)"
+                          icon="bx bx-refresh"
+                          class="p-button-sm p-button-warning text-white ms-1"
+                          pTooltip="Aprobado sin migrar a SPRING - Reintentar sincronización"
+                          tooltipPosition="top"
+                          [loading]="resincronizandoId === req.idrequerimiento"
+                          [disabled]="!!resincronizandoId && resincronizandoId !== req.idrequerimiento"
+                          (click)="resincronizarRequerimiento(req)">
                   </button>
                 </td>
               </tr>

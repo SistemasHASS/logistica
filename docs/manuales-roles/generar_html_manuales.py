@@ -59,6 +59,7 @@ TPL = """<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{title} — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="{up}favicon.svg">
 <style>{css}</style>
 <script src="{up}solo-rol.js"></script>
 </head>

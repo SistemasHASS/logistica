@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FAQ TROUBLESHOOTING — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <style>
   body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
   nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
@@ -51,207 +52,408 @@
   <a class="btn" href="../FAQ_TROUBLESHOOTING.md">Fuente .md</a>
 </nav>
 <article>
-<h1 id="faq-y-troubleshooting--sistema-logística">FAQ y Troubleshooting — Sistema Logística</h1>
-<p>Preguntas frecuentes y solución de problemas comunes, ordenados por síntoma.</p>
-<hr />
-<h2 id="acceso-y-sesión">Acceso y sesión</h2>
-<table>
-<thead>
-<tr>
-<th>Problema</th>
-<th>Causa</th>
-<th>Solución</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>No puedo entrar, credenciales rechazadas</td>
-<td>Usuario inexistente o contraseña errada</td>
-<td>Verifica mayúsculas; pide al admin verificar tu cuenta</td>
-</tr>
-<tr>
-<td>Entro pero no veo ningún menú</td>
-<td>Tu rol no tiene <code>MENU_JSON</code> configurado en BD</td>
-<td>Avisa al admin para configurar el menú de tu rol</td>
-</tr>
-<tr>
-<td>Entro y me devuelve al login</td>
-<td>Sesión expirada o usuario sin datos</td>
-<td>Vuelve a ingresar; si persiste, limpia caché del navegador</td>
-</tr>
-<tr>
-<td><strong>No puedo cerrar sesión</strong></td>
-<td>Tienes requerimientos sin sincronizar</td>
-<td>Ve a <strong>Parámetros → Sincronizar</strong> y reintenta</td>
-</tr>
-<tr>
-<td>Entro a una pantalla y me rebota al dashboard</td>
-<td>Tu rol no tiene permiso para esa ruta</td>
-<td>Es normal: cada rol ve solo sus módulos</td>
-</tr>
-</tbody>
-</table>
-<h2 id="requerimientos">Requerimientos</h2>
-<table>
-<thead>
-<tr>
-<th>Problema</th>
-<th>Causa</th>
-<th>Solución</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>"Falta configurar" al abrir Requerimientos</td>
-<td>No sincronizaste las maestras</td>
-<td><strong>Parámetros → Sincronizar</strong> primero</td>
-</tr>
-<tr>
-<td>Creé un requerimiento y no aparece en el sistema</td>
-<td>Quedó guardado local sin sincronizar</td>
-<td>Sincroniza desde Parámetros con conexión</td>
-</tr>
-<tr>
-<td>Mi requerimiento no avanza</td>
-<td>Falta aprobación del jefe de área</td>
-<td>Consulta su estado; el APLOGIST de tu área debe aprobarlo</td>
-</tr>
-<tr>
-<td>No encuentro un ítem al crear</td>
-<td>Maestra desactualizada o el ítem no existe</td>
-<td>Sincroniza maestras; si falta, pide a admin darlo de alta</td>
-</tr>
-<tr>
-<td>Trabajé offline, ¿se perdió algo?</td>
-<td>No — se guardó en la base local</td>
-<td>Sincroniza al recuperar conexión</td>
-</tr>
-</tbody>
-</table>
-<h2 id="aprobaciones">Aprobaciones</h2>
-<table>
-<thead>
-<tr>
-<th>Problema</th>
-<th>Causa</th>
-<th>Solución</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>(APLOGIST) No veo requerimientos</td>
-<td>No estás asignado a esa área</td>
-<td>Admin → <strong>Usuarios por Área</strong> debe asignarte</td>
-</tr>
-<tr>
-<td>(FIN/GER/JEM) Una OC no llega a mi bandeja</td>
-<td>No fue enviada a aprobación o el flujo no te incluye</td>
-<td>Confirma con LOLOGIST; admin revisa el flujo en <strong>Aprobadores</strong></td>
-</tr>
-<tr>
-<td>Rechacé algo por error</td>
-<td>El documento volvió al origen</td>
-<td>El solicitante/originador debe reenviarlo</td>
-</tr>
-<tr>
-<td>¿Cómo justifico un rechazo?</td>
-<td>—</td>
-<td>Siempre escribe el motivo: queda en auditoría y notifica al origen</td>
-</tr>
-</tbody>
-</table>
-<h2 id="compras-y-almacén">Compras y almacén</h2>
-<table>
-<thead>
-<tr>
-<th>Problema</th>
-<th>Causa</th>
-<th>Solución</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Una línea aprobada no sale para consolidar</td>
-<td>Estado o filtro incorrecto</td>
-<td>Verifica en Consolidación que esté aprobada y sin OC previa</td>
-</tr>
-<tr>
-<td>No puedo emitir la OC</td>
-<td>Falta cotización ganadora o datos</td>
-<td>Completa cotizaciones y selecciona ganadora</td>
-</tr>
-<tr>
-<td>No hay stock para despachar</td>
-<td>Recepción pendiente o saldo real en 0</td>
-<td>Revisa Recepción de Mercadería y Kardex</td>
-</tr>
-<tr>
-<td>La cantidad a recepcionar supera la OC</td>
-<td>Límite de incremento configurado</td>
-<td>Admin ajusta en <strong>Incremento Cantidad OC</strong> de la consola</td>
-</tr>
-</tbody>
-</table>
-<h2 id="notificaciones">Notificaciones</h2>
-<table>
-<thead>
-<tr>
-<th>Problema</th>
-<th>Solución</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>El contador no se actualiza</td>
-<td>Se refresca cada 30 s; fuerza con F5</td>
-</tr>
-<tr>
-<td>Sale un aviso de "saldos pendientes"</td>
-<td>Hay requerimientos aprobados sin consolidar — revísalos en Notificaciones</td>
-</tr>
-</tbody>
-</table>
-<h2 id="consolas-de-administración">Consolas de administración</h2>
-<table>
-<thead>
-<tr>
-<th>Problema</th>
-<th>Solución</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>/administracion</code> me pide login</td>
-<td>Necesitas entrar por <code>/admin-login</code> primero (genera token)</td>
-</tr>
-<tr>
-<td>No veo una pestaña en <code>/admin-logistica</code></td>
-<td>Tu rol no tiene la clave <code>ADMINLG_MENU_*</code> — un admin la habilita en <strong>Permisos por Rol</strong></td>
-</tr>
-<tr>
-<td>Cambié permisos y el usuario no ve el cambio</td>
-<td>Debe recargar la página o reingresar</td>
-</tr>
-<tr>
-<td>JLOLOGIST no ve pestañas de configuración</td>
-<td>Por defecto solo ve operativas; habilítalas con permisos</td>
-</tr>
-</tbody>
-</table>
-<h2 id="comportamientos-conocidos-no-son-errores">Comportamientos conocidos (no son errores)</h2>
-<ul>
-<li><strong>EMLOGIST</strong> puede abrir a una pantalla sin menú si su rol no tiene config en BD — el admin debe asignarle <code>MENU_JSON</code>.</li>
-<li><strong>GERENTE</strong> no tiene pantalla inicial fija — depende del menú configurado.</li>
-<li>Un usuario con <strong>varios roles</strong> (ej. <code>LOLOGIST,ALLOGIST</code>) entra al dashboard del primer rol que coincide en la regla de redirect.</li>
-<li><strong>Reporte Logístico, Reporte Requerimientos y Catálogo</strong> no tienen restricción: cualquier usuario autenticado puede verlos.</li>
-</ul>
-<h2 id="si-nada-funciona">Si nada funciona</h2>
-<ol type="1">
-<li>Verifica tu conexión a internet.</li>
-<li>F5 / Ctrl+F5 (recarga forzada).</li>
-<li>Sincroniza pendientes, cierra sesión y vuelve a entrar.</li>
-<li>Escala a soporte TI indicando: <strong>tu usuario, rol, pantalla y captura del error</strong>.</li>
-</ol>
+<h1 id="faq-y-troubleshooting--sistema-logística">FAQ y Troubleshooting — Sistema Logística</h1>
+
+<p>Preguntas frecuentes y solución de problemas comunes, ordenados por síntoma.</p>
+
+<hr />
+
+<h2 id="acceso-y-sesión">Acceso y sesión</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Causa</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>No puedo entrar, credenciales rechazadas</td>
+
+<td>Usuario inexistente o contraseña errada</td>
+
+<td>Verifica mayúsculas; pide al admin verificar tu cuenta</td>
+
+</tr>
+
+<tr>
+
+<td>Entro pero no veo ningún menú</td>
+
+<td>Tu rol no tiene <code>MENU_JSON</code> configurado en BD</td>
+
+<td>Avisa al admin para configurar el menú de tu rol</td>
+
+</tr>
+
+<tr>
+
+<td>Entro y me devuelve al login</td>
+
+<td>Sesión expirada o usuario sin datos</td>
+
+<td>Vuelve a ingresar; si persiste, limpia caché del navegador</td>
+
+</tr>
+
+<tr>
+
+<td><strong>No puedo cerrar sesión</strong></td>
+
+<td>Tienes requerimientos sin sincronizar</td>
+
+<td>Ve a <strong>Parámetros → Sincronizar</strong> y reintenta</td>
+
+</tr>
+
+<tr>
+
+<td>Entro a una pantalla y me rebota al dashboard</td>
+
+<td>Tu rol no tiene permiso para esa ruta</td>
+
+<td>Es normal: cada rol ve solo sus módulos</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="requerimientos">Requerimientos</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Causa</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>"Falta configurar" al abrir Requerimientos</td>
+
+<td>No sincronizaste las maestras</td>
+
+<td><strong>Parámetros → Sincronizar</strong> primero</td>
+
+</tr>
+
+<tr>
+
+<td>Creé un requerimiento y no aparece en el sistema</td>
+
+<td>Quedó guardado local sin sincronizar</td>
+
+<td>Sincroniza desde Parámetros con conexión</td>
+
+</tr>
+
+<tr>
+
+<td>Mi requerimiento no avanza</td>
+
+<td>Falta aprobación del jefe de área</td>
+
+<td>Consulta su estado; el APLOGIST de tu área debe aprobarlo</td>
+
+</tr>
+
+<tr>
+
+<td>No encuentro un ítem al crear</td>
+
+<td>Maestra desactualizada o el ítem no existe</td>
+
+<td>Sincroniza maestras; si falta, pide a admin darlo de alta</td>
+
+</tr>
+
+<tr>
+
+<td>Trabajé offline, ¿se perdió algo?</td>
+
+<td>No — se guardó en la base local</td>
+
+<td>Sincroniza al recuperar conexión</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="aprobaciones">Aprobaciones</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Causa</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>(APLOGIST) No veo requerimientos</td>
+
+<td>No estás asignado a esa área</td>
+
+<td>Admin → <strong>Usuarios por Área</strong> debe asignarte</td>
+
+</tr>
+
+<tr>
+
+<td>(FIN/GER/JEM) Una OC no llega a mi bandeja</td>
+
+<td>No fue enviada a aprobación o el flujo no te incluye</td>
+
+<td>Confirma con LOLOGIST; admin revisa el flujo en <strong>Aprobadores</strong></td>
+
+</tr>
+
+<tr>
+
+<td>Rechacé algo por error</td>
+
+<td>El documento volvió al origen</td>
+
+<td>El solicitante/originador debe reenviarlo</td>
+
+</tr>
+
+<tr>
+
+<td>¿Cómo justifico un rechazo?</td>
+
+<td>—</td>
+
+<td>Siempre escribe el motivo: queda en auditoría y notifica al origen</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="compras-y-almacén">Compras y almacén</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Causa</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Una línea aprobada no sale para consolidar</td>
+
+<td>Estado o filtro incorrecto</td>
+
+<td>Verifica en Consolidación que esté aprobada y sin OC previa</td>
+
+</tr>
+
+<tr>
+
+<td>No puedo emitir la OC</td>
+
+<td>Falta cotización ganadora o datos</td>
+
+<td>Completa cotizaciones y selecciona ganadora</td>
+
+</tr>
+
+<tr>
+
+<td>No hay stock para despachar</td>
+
+<td>Recepción pendiente o saldo real en 0</td>
+
+<td>Revisa Recepción de Mercadería y Kardex</td>
+
+</tr>
+
+<tr>
+
+<td>La cantidad a recepcionar supera la OC</td>
+
+<td>Límite de incremento configurado</td>
+
+<td>Admin ajusta en <strong>Incremento Cantidad OC</strong> de la consola</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="notificaciones">Notificaciones</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>El contador no se actualiza</td>
+
+<td>Se refresca cada 30 s; fuerza con F5</td>
+
+</tr>
+
+<tr>
+
+<td>Sale un aviso de "saldos pendientes"</td>
+
+<td>Hay requerimientos aprobados sin consolidar — revísalos en Notificaciones</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="consolas-de-administración">Consolas de administración</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td><code>/administracion</code> me pide login</td>
+
+<td>Necesitas entrar por <code>/admin-login</code> primero (genera token)</td>
+
+</tr>
+
+<tr>
+
+<td>No veo una pestaña en <code>/admin-logistica</code></td>
+
+<td>Tu rol no tiene la clave <code>ADMINLG_MENU_*</code> — un admin la habilita en <strong>Permisos por Rol</strong></td>
+
+</tr>
+
+<tr>
+
+<td>Cambié permisos y el usuario no ve el cambio</td>
+
+<td>Debe recargar la página o reingresar</td>
+
+</tr>
+
+<tr>
+
+<td>JLOLOGIST no ve pestañas de configuración</td>
+
+<td>Por defecto solo ve operativas; habilítalas con permisos</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="comportamientos-conocidos-no-son-errores">Comportamientos conocidos (no son errores)</h2>
+
+<ul>
+
+<li><strong>EMLOGIST</strong> puede abrir a una pantalla sin menú si su rol no tiene config en BD — el admin debe asignarle <code>MENU_JSON</code>.</li>
+
+<li><strong>GERENTE</strong> no tiene pantalla inicial fija — depende del menú configurado.</li>
+
+<li>Un usuario con <strong>varios roles</strong> (ej. <code>LOLOGIST,ALLOGIST</code>) entra al dashboard del primer rol que coincide en la regla de redirect.</li>
+
+<li><strong>Reporte Logístico, Reporte Requerimientos y Catálogo</strong> no tienen restricción: cualquier usuario autenticado puede verlos.</li>
+
+</ul>
+
+<h2 id="si-nada-funciona">Si nada funciona</h2>
+
+<ol type="1">
+
+<li>Verifica tu conexión a internet.</li>
+
+<li>F5 / Ctrl+F5 (recarga forzada).</li>
+
+<li>Sincroniza pendientes, cierra sesión y vuelve a entrar.</li>
+
+<li>Escala a soporte TI indicando: <strong>tu usuario, rol, pantalla y captura del error</strong>.</li>
+
+</ol>
+
 
 </article>
 </body>
