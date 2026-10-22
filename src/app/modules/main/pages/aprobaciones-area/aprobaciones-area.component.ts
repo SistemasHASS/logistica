@@ -8,6 +8,7 @@ import { DialogModule } from 'primeng/dialog';
 import { CardModule } from 'primeng/card';
 import { firstValueFrom } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule, Checkbox } from 'primeng/checkbox';
 import { AprobacionesService } from '@/app/services/aprobaciones.service';
 import { AprobacionesAreaService } from '@/app/modules/main/services/aprobaciones-area.service';
@@ -44,6 +45,7 @@ import { NombreCortoPipe } from '@/app/shared/pipes/nombre-corto.pipe';
     DialogModule,
     CardModule,
     ProgressBarModule,
+    TooltipModule,
     CheckboxModule,
     Checkbox,
     NumeroRequerimientoPipe,
@@ -132,17 +134,15 @@ export class AprobacionesAreaComponent implements OnInit {
 
   get requerimientosPendientesFiltrados(): RequerimientoPendiente[] {
     if (this.filtroTipoPendiente === 'TODOS') return this.requerimientosPendientes;
-    return this.requerimientosPendientes.filter(req => {
-      const tipo = (req.itemtipo || req.tipoRequerimiento || '').toString().toUpperCase();
-      return tipo === this.filtroTipoPendiente;
-    });
+    return this.requerimientosPendientes.filter(
+      req => this.tipoRequerimientoLabel(req) === this.filtroTipoPendiente
+    );
   }
 
   contarPendientesPorTipo(tipo: 'COMPRA' | 'CONSUMO' | 'SERVICIO'): number {
-    return this.requerimientosPendientes.filter(req => {
-      const t = (req.itemtipo || req.tipoRequerimiento || '').toString().toUpperCase();
-      return t === tipo;
-    }).length;
+    return this.requerimientosPendientes.filter(
+      req => this.tipoRequerimientoLabel(req) === tipo
+    ).length;
   }
 
   constructor(
@@ -1032,18 +1032,19 @@ export class AprobacionesAreaComponent implements OnInit {
       console.log('🔍 DEBUG - req.itemtipo:', req.itemtipo);
       console.log('🔍 DEBUG - req.tipoRequerimiento:', req.tipoRequerimiento);
 
-      // Verificar si el objeto ya tiene el detalle (puede venir como array directo o como propiedad detalle)
+      // Verificar si el objeto ya tiene el detalle (puede venir como array directo
+      // o como propiedad detalles/detalle/items según el SP de origen)
       let requerimientoCompleto = null;
 
-      if (
-        req.detalles &&
-        Array.isArray(req.detalles) &&
-        req.detalles.length > 0
-      ) {
-        // console.log(
-        //   '✅ El objeto ya tiene detalle en propiedad .detalle, usándolo directamente',
-        // );
-        requerimientoCompleto = req;
+      const detallesDirectos =
+        (Array.isArray(req.detalles) && req.detalles.length > 0 && req.detalles) ||
+        (Array.isArray(req.detalle) && req.detalle.length > 0 && req.detalle) ||
+        (Array.isArray(req.items) && req.items.length > 0 && req.items) ||
+        null;
+
+      if (detallesDirectos) {
+        // console.log('✅ El objeto ya tiene detalle, usándolo directamente');
+        requerimientoCompleto = { ...req, detalles: detallesDirectos };
       } else if (Array.isArray(req) && req.length > 0) {
         // console.log('✅ El objeto es un array de ítems, construyendo objeto');
         requerimientoCompleto = {
@@ -1089,8 +1090,23 @@ export class AprobacionesAreaComponent implements OnInit {
             } as any)
             .toPromise();
 
-          if (response && Array.isArray(response) && response.length > 0) {
-            requerimientoCompleto = response[0];
+          const listaApi: any[] = Array.isArray(response)
+            ? response
+            : response?.resultado || [];
+          // ✅ CORRECCIÓN: buscar EL requerimiento correcto por id (antes tomaba
+          // response[0], que podía ser OTRO requerimiento y migrarlo mal a SPRING)
+          const idBuscado = req.idrequerimiento || req.idRequerimiento;
+          const encontradoApi = listaApi.find(
+            (r: any) =>
+              (r.idRequerimiento || r.idrequerimiento) === idBuscado,
+          );
+          if (encontradoApi) {
+            const dets =
+              (Array.isArray(encontradoApi.detalles) && encontradoApi.detalles) ||
+              (Array.isArray(encontradoApi.detalle) && encontradoApi.detalle) ||
+              (Array.isArray(encontradoApi.items) && encontradoApi.items) ||
+              [];
+            requerimientoCompleto = { ...encontradoApi, detalles: dets };
           }
         } catch (error) {
           // console.log('No se pudo obtener del API, intentando desde Dexie...');
@@ -1102,8 +1118,16 @@ export class AprobacionesAreaComponent implements OnInit {
             .where('idrequerimiento')
             .equals(req.idrequerimiento || req.idRequerimiento)
             .toArray();
-          requerimientoCompleto =
+          const dexieReq: any =
             requerimientos.length > 0 ? requerimientos[0] : null;
+          if (dexieReq) {
+            const dets =
+              (Array.isArray(dexieReq.detalles) && dexieReq.detalles) ||
+              (Array.isArray(dexieReq.detalle) && dexieReq.detalle) ||
+              (Array.isArray(dexieReq.items) && dexieReq.items) ||
+              [];
+            requerimientoCompleto = { ...dexieReq, detalles: dets };
+          }
         }
 
         // Si aún no hay datos, construir con lo disponible
@@ -1115,7 +1139,11 @@ export class AprobacionesAreaComponent implements OnInit {
             idrequerimiento: req.idrequerimiento || req.idRequerimiento,
             idalmacen: req.idalmacen || 'H001',
             prioridad: req.prioridad || '3',
-            detalles: req.detalle || [], // Usar el detalle si viene en el objeto
+            detalles:
+              (Array.isArray(req.detalle) && req.detalle) ||
+              (Array.isArray(req.detalles) && req.detalles) ||
+              (Array.isArray(req.items) && req.items) ||
+              [],
           };
         }
       }
@@ -1132,8 +1160,12 @@ export class AprobacionesAreaComponent implements OnInit {
             'No se pudo obtener el detalle del requerimiento',
             'error',
           );
+          return;
         }
-        return;
+        // En modo silencioso (aprobación múltiple) lanzar para contarlo como fallo
+        throw new Error(
+          `Requerimiento ${req.idrequerimiento || req.idRequerimiento} sin detalle para sincronizar`,
+        );
       }
 
       let origenapp = 'app_logistica';
@@ -1195,15 +1227,25 @@ export class AprobacionesAreaComponent implements OnInit {
       const proyectoAfeDefault =
         this.proyectos.find((p) => p.proyectoio === first?.idproyecto)?.afe ??
         'FUNDO HP';
-      const labores = this.labores.find((l) => l.labor === first?.idlabor);
+      const laborValor = (first?.idlabor || '').toString();
+      const labores = this.labores.find((l: any) =>
+        l.labor === laborValor ||
+        l.idlabor === laborValor ||
+        l.localname === laborValor ||
+        String(l.id) === laborValor
+      );
       // console.log('labores', labores);
       // ✅ CORRECCIÓN: Para COMPRA, usar centroCostoDefault si no hay labor
       const ccostodestino = labores?.idlabor ?? centroCostoDefault;
 
-      const turnos = this.turnos.find((t) => t.nombreTurno === first?.idturno);
+      const turnos = this.turnos.find((t: any) =>
+        t.nombreTurno === first?.idturno ||
+        t.codTurno === first?.idturno ||
+        String(t.turno) === String(first?.idturno)
+      );
       // console.log('turno', turnos);
-      // ✅ CORRECCIÓN: Para COMPRA, usar código de empresa si no hay turno
-      const turno = turnos?.idturno ?? this.usuario.idempresa.substring(this.usuario.idempresa.length - 4);
+      // ✅ CORRECCIÓN: usar codTurno de la maestra; fallback código de empresa si no hay turno
+      const turno = turnos?.codTurno ?? this.usuario.idempresa.substring(this.usuario.idempresa.length - 4);
 
       // ✅ Determinar clasificación usando todos los nombres de campo posibles
       // El SP ahora devuelve idclasificacion (lowercase). También soportar variantes legacy.
@@ -1216,15 +1258,57 @@ export class AprobacionesAreaComponent implements OnInit {
       );
       const itemtipo = (requerimientoCompleto.itemtipo || req.itemtipo || '').toUpperCase();
 
-      // Determinar clasificación: priorizar valor real de BD; derivar de itemtipo solo para SER/COM
+      // Determinar clasificación: priorizar valor real de BD; si no viene
+      // (ej. lista de aprobados no devuelve idclasificacion), derivarla del
+      // detalle/maestras. SPRING rechaza Clasificacion vacía (FK a
+      // WH_ClasificacionRequOrden), por eso nunca debe ir ''.
       let clasificacion = clasificacionRaw;
       if (!clasificacion) {
-        if (itemtipo === 'SERVICIO') {
-          clasificacion = 'SER';
+        const primerDetalle = requerimientoCompleto.detalles[0] || {};
+        // tipoDetalle: 'COMMODITY'|'ACTIVOFIJO'|'ACTIVOMENOR'|'ITEM' (lista pendientes)
+        // tipoclasificacion: 'I'|'C'|'A'|'M' (logistica_dreq)
+        const tipoDetalle = (
+          primerDetalle.tipo ||
+          primerDetalle.tipoDetalle ||
+          primerDetalle.tipoclasificacion ||
+          ''
+        )
+          .toString()
+          .toUpperCase();
+
+        if (
+          itemtipo === 'SERVICIO' ||
+          tipoDetalle === 'COMMODITY' ||
+          tipoDetalle === 'ACTIVOFIJO' ||
+          tipoDetalle === 'ACTIVOMENOR' ||
+          tipoDetalle === 'C' ||
+          tipoDetalle === 'A' ||
+          tipoDetalle === 'M'
+        ) {
+          // Buscar la clasificación real del commodity en las maestras
+          const comm =
+            this.subcommodities.find(
+              (sc) => sc.commodity === primerDetalle.codigo,
+            ) ||
+            this.commodities.find(
+              (c) => c.commodity === primerDetalle.codigo,
+            );
+          clasificacion =
+            comm?.clasificacion ||
+            (tipoDetalle === 'ACTIVOFIJO' || tipoDetalle === 'A'
+              ? 'ACT'
+              : tipoDetalle === 'ACTIVOMENOR' || tipoDetalle === 'M'
+                ? 'ACM'
+                : 'SER');
         } else if (itemtipo === 'COMMODITY') {
           clasificacion = 'COM';
+        } else if (itemtipo === 'TRANSFERENCIA') {
+          clasificacion = 'TRA';
+        } else {
+          // Ítem normal: en logistica_req.idclasificacion se guarda
+          // CMP (compra) / STO (consumo) — ver requerimientos-item.service.ts
+          clasificacion = itemtipo === 'CONSUMO' ? 'STO' : 'CMP';
         }
-        // Sin fallback a 'STK' — si no hay valor, dejar vacío y que el SP lo resuelva
       }
 
       const tipoReq = (clasificacion === 'SER' || clasificacion === 'COM') ? 'COMMODITY' : 'ITEM';
@@ -1254,9 +1338,20 @@ export class AprobacionesAreaComponent implements OnInit {
           AlmacenCodigo: almacenCodigo.substring(0, 20),
           MonedaCodigo: 'LO',
           // ✅ Corregido: Formato de fecha - igual que en aprobaciones.component.ts
-          FechaRequerida: new Date(req.fecha).toISOString(),
+          FechaRequerida: this.fechaISO(
+            req.fecha,
+            req.fechaRegistro,
+            req.fecharegistro,
+            req.fechaCreacion,
+            requerimientoCompleto.fecha,
+            requerimientoCompleto.fechaRegistro,
+          ),
           FechaPreparacion: new Date().toISOString(),
-          FechaAprobacion: req.fechaAprobacion ? new Date(req.fechaAprobacion).toISOString() : new Date().toISOString(),
+          FechaAprobacion: this.fechaISO(
+            req.fechaAprobacion,
+            req.fechaaprobacion,
+            requerimientoCompleto.fechaAprobacion,
+          ),
           PreparadaPor: req.solicitante,
           AprobadaPor: this.usuario.documentoidentidad,
           // PrecioTotal: 0.0,
@@ -1291,8 +1386,8 @@ export class AprobacionesAreaComponent implements OnInit {
           // ✅ Limitar longitud de campo referencia a 20 caracteres
           DefaultCampoReferencia: 'PL'.substring(0, 20),
           RevisionTecnicaPendienteFlag: 'N',
-          // ✅ Limitar longitud de cliente número pedido a 20 caracteres
-          ClienteNumeroPedido: '0102'.substring(0, 20),
+          // ✅ ClienteNumeroPedido: idlabor (código) del requerimiento, resuelto via maestra de labores
+          ClienteNumeroPedido: (labores?.idlabor ?? '').toString().substring(0, 20),
           // ✅ Limitar longitud de vía transporte a 5 caracteres
           ViaTransporte: 'T'.substring(0, 5),
           OrigenGeneracionFlag: 'L',
@@ -1306,7 +1401,12 @@ export class AprobacionesAreaComponent implements OnInit {
               const itemCeco = this.cecos.find((c) => c.localname === (d.idcentrocosto || d.ceco));
               const itemCentroCosto = itemCeco?.costcenter ?? centroCostoDefault;
               
-              const itemLabor = this.labores.find((l) => l.labor === (d.idlabor || d.labor));
+              const itemLaborValor = (d.idlabor || d.labor || '').toString();
+              const itemLabor = this.labores.find((l: any) =>
+                l.labor === itemLaborValor ||
+                l.idlabor === itemLaborValor ||
+                String(l.id) === itemLaborValor
+              );
               const itemLoteProduccion = itemLabor?.idlabor ?? itemCentroCosto;
               
               return {
@@ -1412,15 +1512,28 @@ export class AprobacionesAreaComponent implements OnInit {
               const itemCentroCosto = itemCeco?.costcenter ?? centroCostoDefault;
               console.log('  🏢 Centro de costo:', itemCentroCosto);
               
-              const itemLabor = this.labores.find((l) => l.labor === (d.idlabor || d.labor));
+              const itemLaborValor = (d.idlabor || d.labor || '').toString();
+              const itemLabor = this.labores.find((l: any) =>
+                l.labor === itemLaborValor ||
+                l.idlabor === itemLaborValor ||
+                String(l.id) === itemLaborValor
+              );
               console.log('  👷 Labor encontrada:', itemLabor);
               const itemCentroCostoDestino = itemLabor?.idlabor ?? itemCentroCosto;
               console.log('  🎯 CentroCostoDestino (labor o ceco):', itemCentroCostoDestino);
               
-              const itemTurno = this.turnos.find((t) => t.nombreTurno === (d.idturno || d.turno));
+              // ✅ Relacionar idturno del requerimiento con la maestra de turnos
+              // (API Maestra get-turnos) para obtener el codTurno (ej: "INV28")
+              const turnoValor = (d.idturno || d.turno || '').toString();
+              const itemTurno = this.turnos.find((t: any) =>
+                t.nombreTurno === turnoValor ||
+                t.codTurno === turnoValor ||
+                String(t.turno) === turnoValor ||
+                String(t.id) === turnoValor
+              );
               console.log('  ⏰ Turno encontrado:', itemTurno);
-              const itemTurnoId = itemTurno?.idturno ?? this.usuario.idempresa.substring(this.usuario.idempresa.length - 4);
-              console.log('  ⏰ Turno ID:', itemTurnoId);
+              const itemCodTurno = itemTurno?.codTurno ?? '';
+              console.log('  ⏰ codTurno:', itemCodTurno);
               
               // ✅ CORRECCIÓN: Formatear Sucursal a 4 dígitos (ej: 000008 -> 0801)
               let sucursalFormateada = requerimientoCompleto.idfundo;
@@ -1446,10 +1559,10 @@ export class AprobacionesAreaComponent implements OnInit {
                 Sucursal: sucursalFormateada,
                 // ✅ Limitar longitud de campo referencia a 20 caracteres
                 CampoReferencia: 'PL',
-                // ✅ Limitar longitud de referencias fiscales a 50 caracteres
-                ReferenciaFiscal01: '',
-                // ✅ CORRECCIÓN: Usar turno específico del item
-                ReferenciaFiscal02: itemTurnoId,
+                // ✅ ReferenciaFiscal01: codTurno de la maestra (INV28, etc.)
+                ReferenciaFiscal01: itemCodTurno,
+                // ✅ ReferenciaFiscal02: idfundo del requerimiento
+                ReferenciaFiscal02: sucursalFormateada,
                 origen: origenapp,
               };
               
@@ -1471,62 +1584,56 @@ export class AprobacionesAreaComponent implements OnInit {
       });
       console.log('🔍 Llamando a getRegristroRequerimientoSPRING...');
 
-      this.requerimientosService
-        .getRegristroRequerimientoSPRING(requerimiento)
-        .subscribe({
-          next: (resp) => {
-            console.log('✅ Respuesta del backend:', resp);
-            const resultado = Array.isArray(resp) ? resp[0] : resp;
+      // ✅ CORRECCIÓN: esperar la respuesta real de SPRING (antes era fire-and-forget:
+      // el await resolvía al hacer subscribe y contaba como sincronizado aunque
+      // SPRING rechazara el requerimiento)
+      const resp = await firstValueFrom(
+        this.requerimientosService.getRegristroRequerimientoSPRING(requerimiento),
+      );
+      console.log('✅ Respuesta del backend:', resp);
+      const resultado = Array.isArray(resp) ? resp[0] : resp;
 
-            if (resultado?.errorgeneral === 0) {
-              const correlativoSPRING = resultado.RequisicionNumero;
-              console.log(
-                '✅ Requerimiento sincronizado correctamente a SPRING:',
-                correlativoSPRING,
-              );
+      if (resultado?.errorgeneral === 0) {
+        const correlativoSPRING = resultado.RequisicionNumero;
+        console.log(
+          '✅ Requerimiento sincronizado correctamente a SPRING:',
+          correlativoSPRING,
+        );
 
-              // Actualizar el número de requisición en la BD
-              this.actualizarRequisicionSPRING_DB(req.idrequerimiento, correlativoSPRING)
+        // Actualizar el número de requisición en la BD
+        await this.actualizarRequisicionSPRING_DB(req.idrequerimiento, correlativoSPRING);
 
-              // ✅ NUEVO: Registrar en tablas locales para consolidación (solo para commodities)
-              if (tipoReq === 'COMMODITY') {
-                this.registrarRequerimientoCommodityLocal(
-                  correlativoSPRING,
-                  requerimientoCompleto,
-                  req
-                );
-              }
+        // ✅ NUEVO: Registrar en tablas locales para consolidación (solo para commodities)
+        if (tipoReq === 'COMMODITY') {
+          this.registrarRequerimientoCommodityLocal(
+            correlativoSPRING,
+            requerimientoCompleto,
+            req
+          );
+        }
 
-              if (!silencioso) {
-                Swal.fire(
-                  'Éxito',
-                  'Requerimiento sincronizado a SPRING correctamente',
-                  'success',
-                );
-              }
-            } else {
-              if (!silencioso) {
-                Swal.fire(
-                  'Error',
-                  'Hubo un problema al sincronizar el requerimiento a SPRING',
-                  'error',
-                );
-              }
-              // console.error('Detalles del error:', resp);
-            }
-          },
-          error: (error) => {
-            console.error('❌ Error al sincronizar con SPRING:', error);
-            console.error('❌ Detalles del error:', {
-              message: error instanceof Error ? error.message : String(error),
-              status: (error as any)?.status,
-              statusText: (error as any)?.statusText
-            });
-            if (!silencioso) {
-              Swal.fire('Error', 'Error al sincronizar con SPRING', 'error');
-            }
-          },
-        });
+        if (!silencioso) {
+          Swal.fire(
+            'Éxito',
+            'Requerimiento sincronizado a SPRING correctamente',
+            'success',
+          );
+        }
+      } else {
+        console.error('❌ SPRING rechazó el requerimiento:', resp);
+        if (!silencioso) {
+          Swal.fire(
+            'Error',
+            'Hubo un problema al sincronizar el requerimiento a SPRING',
+            'error',
+          );
+        }
+        const errSpring = new Error(
+          `SPRING rechazó el requerimiento ${req.idrequerimiento}: ${JSON.stringify(resultado)}`,
+        ) as any;
+        errSpring.yaNotificado = true;
+        throw errSpring;
+      }
     } catch (error) {
       console.error('❌ Error en sincronizarRequerimientoSPRING:', error);
       console.error('❌ Detalles del error catch:', {
@@ -1534,9 +1641,10 @@ export class AprobacionesAreaComponent implements OnInit {
         status: (error as any)?.status,
         statusText: (error as any)?.statusText
       });
-      if (!silencioso) {
+      if (!silencioso && !(error as any)?.yaNotificado) {
         Swal.fire('Error', 'Error al procesar la sincronización', 'error');
       }
+      throw error;
     }
   }
 
@@ -1555,26 +1663,20 @@ export class AprobacionesAreaComponent implements OnInit {
 
       console.log('📝 Actualizando correlativo SPRING en BD:', payload);
 
-      this.requerimientosService
-        .getNumeroRequerimientoPRING(payload)
-        .subscribe({
-          next: (resp) => {
-            console.log('✅ Respuesta del backend:', resp);
-            const resultado = Array.isArray(resp) ? resp[0] : resp;
-            // La respuesta tiene 'error' no 'errorgeneral'
-            if (resultado?.error === 0) {
-              console.log(
-                '✅ Requisición actualizada correctamente en DB:',
-                resultado,
-              );
-            } else {
-              console.error('❌ Error al actualizar requisición:', resp);
-            }
-          },
-          error: (err) => {
-            console.error('❌ Error HTTP al actualizar requisición:', err);
-          },
-        });
+      const resp = await firstValueFrom(
+        this.requerimientosService.getNumeroRequerimientoPRING(payload),
+      );
+      console.log('✅ Respuesta del backend:', resp);
+      const resultado = Array.isArray(resp) ? resp[0] : resp;
+      // La respuesta tiene 'error' no 'errorgeneral'
+      if (resultado?.error === 0) {
+        console.log(
+          '✅ Requisición actualizada correctamente en DB:',
+          resultado,
+        );
+      } else {
+        console.error('❌ Error al actualizar requisición:', resp);
+      }
 
       // TODO: Implementar el método en el servicio si no existe
       // this.aprobacionesAreaService.actualizarCorrelativoSpring(payload).subscribe({
@@ -1696,12 +1798,14 @@ export class AprobacionesAreaComponent implements OnInit {
             l.localname === d.labor
           );
           
-          // Buscar código de turno
-          const turnoEncontrado = this.turnos.find(t => 
-            t.idturno === d.idturno || 
-            t.idturno === d.turno ||
-            t.localname === d.idturno ||
-            t.localname === d.turno
+          // Buscar código de turno: el idturno del requerimiento guarda el
+          // nombreTurno; se relaciona con la maestra (get-turnos) para obtener codTurno
+          const turnoValorDet = (d.idturno || d.turno || '').toString();
+          const turnoEncontrado = this.turnos.find((t: any) =>
+            t.nombreTurno === turnoValorDet ||
+            t.codTurno === turnoValorDet ||
+            String(t.turno) === turnoValorDet ||
+            String(t.id) === turnoValorDet
           );
           
           // Buscar código de proyecto
@@ -1721,7 +1825,7 @@ export class AprobacionesAreaComponent implements OnInit {
             centroCosto: detalleCeco?.costcenter || d.idcentrocosto || d.ceco || '',
             proyecto: proyectoEncontrado?.proyectoio || d.idproyecto || d.proyecto || '',
             labor: laborEncontrada?.idlabor || d.idlabor || d.labor || '',
-            turno: turnoEncontrado?.idturno || d.idturno || d.turno || ''
+            turno: turnoEncontrado?.codTurno || d.idturno || d.turno || ''
           };
 
           console.log(`✅ Detalle ${index + 1} mapeado:`, {
@@ -1805,6 +1909,20 @@ export class AprobacionesAreaComponent implements OnInit {
     return cecoMap[codigoCECO] || 'RIEGO Y FERTILIZACION';
   }
 
+  // Devuelve la primera fecha válida en ISO; si ninguna lo es, usa la fecha actual
+  fechaISO(...valores: any[]): string {
+    for (const v of valores) {
+      if (!v) {
+        continue;
+      }
+      const d = v instanceof Date ? v : new Date(v);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString();
+      }
+    }
+    return new Date().toISOString();
+  }
+
   // Método para formatear fecha a dd-mm-yyyy para SPRING
   formatDateForSpring(date: Date): string {
     const day = String(date.getDate()).padStart(2, '0');
@@ -1842,6 +1960,53 @@ export class AprobacionesAreaComponent implements OnInit {
     this.displayDetalleModal = true;
   }
 
+  // =============================================
+  // RE-SINCRONIZACIÓN A SPRING (aprobados sin migrar)
+  // =============================================
+
+  resincronizandoId: string | null = null;
+
+  /**
+   * Un requerimiento puede re-sincronizarse si está APROBADO en logística
+   * pero aún no tiene RequisicionNumero de SPRING.
+   */
+  puedeResincronizar(req: any): boolean {
+    const estado = (req?.estado || req?.estados || '')
+      .toString()
+      .toUpperCase();
+    const migrado = !!(
+      req?.RequisicionNumero ||
+      req?.requisicionNumero ||
+      req?.correlativoSpring
+    );
+    return estado === 'APROBADO' && !migrado;
+  }
+
+  async resincronizarRequerimiento(req: any) {
+    if (!req || this.resincronizandoId) {
+      return;
+    }
+    const confirmar = await this.alertService.showConfirm(
+      'Sincronizar a SPRING',
+      `El requerimiento <b>${req.idrequerimiento}</b> está aprobado pero no tiene número de requisición en SPRING.<br>¿Desea migrarlo ahora?`,
+      'warning',
+    );
+    if (!confirmar) {
+      return;
+    }
+    this.resincronizandoId = req.idrequerimiento;
+    try {
+      // sincronizarRequerimientoSPRING ya muestra el resultado (éxito/error)
+      await this.sincronizarRequerimientoSPRING(req);
+      await this.cargarDashboard();
+      await this.cargarMisRequerimientos();
+    } catch (error) {
+      console.error('❌ Error re-sincronizando requerimiento:', error);
+    } finally {
+      this.resincronizandoId = null;
+    }
+  }
+
   //================================================
   //DETALLE DE REQUERIMIENTO PENDIENTE DE APROBACION
   //================================================
@@ -1869,10 +2034,40 @@ export class AprobacionesAreaComponent implements OnInit {
           (requerimiento.idrequerimiento || requerimiento.idRequerimiento),
       );
 
-      if (encontrado && (encontrado.items || []).length > 0) {
+      const detallesEncontrados =
+        encontrado?.items || encontrado?.detalles || encontrado?.detalle || [];
+      if (encontrado && detallesEncontrados.length > 0) {
+        // Combinar con los detalles del listado: el SP de detalle puede no
+        // devolver idproyecto/idlabor/etc., preservamos los del listado.
+        const detallesOriginales: any[] =
+          requerimiento.items ||
+          requerimiento.detalles ||
+          requerimiento.detalle ||
+          [];
+        const camposOpcionales = [
+          'idproyecto', 'idlabor', 'idcentrocosto', 'idturno',
+          'proyecto', 'labor', 'ceco', 'turno',
+        ];
+        const detallesCombinados = detallesEncontrados.map((d: any, i: number) => {
+          const original =
+            detallesOriginales.find(
+              (o: any) => o?.id != null && d?.id != null && o.id === d.id,
+            ) ||
+            detallesOriginales.find((o: any) => o?.codigo === d?.codigo) ||
+            detallesOriginales[i] ||
+            {};
+          const merged = { ...original, ...d };
+          camposOpcionales.forEach((k) => {
+            if ((merged[k] === undefined || merged[k] === null || merged[k] === '') && original[k]) {
+              merged[k] = original[k];
+            }
+          });
+          return merged;
+        });
         this.requerimientoDetallePendientes = {
           ...requerimiento,
-          items: encontrado.items,
+          items: detallesCombinados,
+          detalles: detallesCombinados,
         };
       }
     } catch (error) {
@@ -1907,9 +2102,8 @@ export class AprobacionesAreaComponent implements OnInit {
     return r.items || r.detalles || r.detalle || [];
   }
 
-  /** Devuelve solo los detalles de tipo ítem (si es requerimiento de ítems). */
+  /** Devuelve los detalles del requerimiento pendiente (ítems o servicios). */
   getDetallesItemsPendientes(): any[] {
-    if (this.esRequerimientoServicio) return [];
     return this.getDetallesPendientes();
   }
 
@@ -1919,12 +2113,58 @@ export class AprobacionesAreaComponent implements OnInit {
     return this.getDetallesPendientes();
   }
 
+  /**
+   * Etiqueta del tipo de requerimiento: SERVICIO | CONSUMO | COMPRA | TRANSFERENCIA.
+   * Es SERVICIO si itemtipo='SERVICIO' o la clasificación es de commodity
+   * (SER/COM/ACT/ACM). En otro caso se usa itemtipo/tipoRequerimiento.
+   */
+  tipoRequerimientoLabel(req: any): string {
+    const itemtipo = (req?.itemtipo || req?.tipoRequerimiento || '')
+      .toString()
+      .toUpperCase();
+    const clas = (req?.idClasificacion || req?.idclasificacion || '')
+      .toString()
+      .toUpperCase();
+    if (itemtipo === 'SERVICIO' || ['SER', 'COM', 'ACT', 'ACM'].includes(clas)) {
+      return 'SERVICIO';
+    }
+    return itemtipo || 'COMPRA';
+  }
+
+  /** Devuelve true si el requerimiento es de servicios (COMMODITY / ACTIVO FIJO / ACTIVO MENOR / SERVICIO). */
+  esRequerimientoServicioReq(req: any): boolean {
+    return this.tipoRequerimientoLabel(req) === 'SERVICIO';
+  }
+
   /** Devuelve true si el requerimiento pendiente es de tipo servicio (COMMODITY / ACTIVO FIJO / ACTIVO MENOR). */
   get esRequerimientoServicio(): boolean {
-    const clas = (this.requerimientoDetallePendientes?.idClasificacion
-      || this.requerimientoDetallePendientes?.idclasificacion
-      || '').toString().toUpperCase();
-    return clas === 'SER' || clas === 'COM' || clas === 'ACT' || clas === 'ACM';
+    return this.esRequerimientoServicioReq(this.requerimientoDetallePendientes);
+  }
+
+  /** Nombre del proyecto de una línea de detalle (resuelve código/AFE a nombre via maestras). */
+  nombreProyectoDetalle(det: any): string {
+    const valor = (det?.idproyecto || det?.proyecto || '').toString();
+    if (!valor) return '';
+    const p = this.proyectos?.find(
+      (x: any) =>
+        x.proyectoio === valor ||
+        x.afe === valor ||
+        String(x.id) === valor,
+    );
+    return p?.proyectoio || valor;
+  }
+
+  /** Nombre de la labor de una línea de detalle (resuelve código a nombre via maestras). */
+  nombreLaborDetalle(det: any): string {
+    const valor = (det?.idlabor || det?.labor || '').toString();
+    if (!valor) return '';
+    const l = this.labores?.find(
+      (x: any) =>
+        x.labor === valor ||
+        x.idlabor === valor ||
+        String(x.id) === valor,
+    );
+    return l?.labor || valor;
   }
 
   isDetallePendienteSeleccionado(i: number): boolean {

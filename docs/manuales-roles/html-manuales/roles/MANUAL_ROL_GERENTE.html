@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MANUAL ROL GERENTE — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<style>
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
+  nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+            padding:12px 24px; background:#0f172a; border-bottom:1px solid #1e293b; }
+  nav.top a.volver { color:#60a5fa; text-decoration:none; font-size:14px; white-space:nowrap; }
+  nav.top a.volver:hover { text-decoration:underline; }
+  nav.top .t { font-size:15px; font-weight:600; color:#e2e8f0; flex:1; min-width:200px;
+               overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  nav.top a.btn { font-size:12px; color:#cbd5e1; text-decoration:none; background:#1e293b;
+                  border:1px solid #334155; border-radius:6px; padding:6px 12px; white-space:nowrap; }
+  nav.top a.btn:hover { border-color:#60a5fa; color:#93c5fd; }
+  article { max-width:900px; margin:0 auto; padding:32px 24px 60px; background:#fff; min-height:100vh; }
+  h1,h2,h3,h4 { margin:1.4em 0 .5em; line-height:1.3; color:#0f172a; }
+  h1 { font-size:26px; border-bottom:2px solid #e2e8f0; padding-bottom:8px; }
+  h2 { font-size:21px; border-bottom:1px solid #e2e8f0; padding-bottom:6px; }
+  h3 { font-size:17px; }
+  p, li { line-height:1.65; font-size:15px; }
+  ul, ol { padding-left:26px; margin:.6em 0; }
+  a { color:#2563eb; }
+  code { background:#f1f5f9; border-radius:4px; padding:1px 6px; font-size:13px; color:#be185d; }
+  pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow:auto; margin:.8em 0; }
+  pre code { background:none; color:inherit; padding:0; }
+  table { border-collapse:collapse; margin:.9em 0; width:100%; font-size:14px; }
+  th, td { border:1px solid #cbd5e1; padding:7px 10px; text-align:left; }
+  th { background:#f1f5f9; }
+  tr:nth-child(even) td { background:#f8fafc; }
+  img { max-width:100%; border:1px solid #e2e8f0; border-radius:6px; margin:.6em 0; }
+  blockquote { border-left:4px solid #cbd5e1; padding:4px 16px; color:#475569; margin:.8em 0; }
+  hr { border:none; border-top:1px solid #e2e8f0; margin:1.6em 0; }
+  @media (max-width:700px) {
+    nav.top { padding:10px 12px; gap:8px; }
+    nav.top .t { font-size:13px; min-width:120px; }
+    article { padding:22px 14px 50px; }
+    table { display:block; overflow-x:auto; }
+    pre { font-size:12px; }
+  }
+</style>
+<script src="../../solo-rol.js"></script>
+</head>
+<body>
+<nav class="top">
+  <a class="volver" href="../../index.html">&#8592; Portal</a>
+  <span class="t">MANUAL ROL GERENTE</span>
+  <a class="btn" href="../../visor-docx.html?doc=docx/MANUAL_ROL_GERENTE.docx">Ver Word</a><a class="btn" href="../../docx/MANUAL_ROL_GERENTE.docx">&#11015; .docx</a>
+  <a class="btn" href="../../roles/MANUAL_ROL_GERENTE.md">Fuente .md</a>
+</nav>
+<article>
+<h1 id="manual-de-usuario--gerente-gerente">Manual de Usuario — Gerente (GERENTE)</h1>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Campo</th>
+
+<th>Valor</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Código de rol</td>
+
+<td><code>GERENTE</code></td>
+
+</tr>
+
+<tr>
+
+<td>Nombre</td>
+
+<td>Gerencia</td>
+
+</tr>
+
+<tr>
+
+<td>Pantalla inicial</td>
+
+<td>Definida por menú configurado en BD (recomendado: dashboard + aprobaciones)</td>
+
+</tr>
+
+<tr>
+
+<td>Video tutorial</td>
+
+<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_GERENTE.html">../video-tutoriales/VIDEO_TUTORIAL_GERENTE.html</a></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<hr />
+
+<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
+
+<p>Eres la <strong>gerencia</strong>: das el visto bueno final a las Órdenes de Compra y Órdenes de Servicio de mayor relevancia y supervisas indicadores financieros.</p>
+
+<h2 id="2-acceso">2. Acceso</h2>
+
+<p>Login → el sistema muestra el menú configurado para tu rol. Si al entrar no ves opciones, pide al administrador que configure el menú de GERENTE (se recomienda: Dashboard + Aprobaciones + Reportes).</p>
+
+<h2 id="3-pantallas-disponibles">3. Pantallas disponibles</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Pantalla</th>
+
+<th>Qué haces</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Dashboard Finanzas</td>
+
+<td>Indicadores de órdenes y gasto</td>
+
+</tr>
+
+<tr>
+
+<td>Aprobación OC</td>
+
+<td>Aprobar/rechazar órdenes de compra</td>
+
+</tr>
+
+<tr>
+
+<td>Aprobación OS</td>
+
+<td>Aprobar/rechazar órdenes de servicio</td>
+
+</tr>
+
+<tr>
+
+<td>Reporte Requerimientos / Logístico / Catálogo</td>
+
+<td>Consultas abiertas</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
+
+<h3 id="aprobar-una-orden-de-compra">Aprobar una Orden de Compra</h3>
+
+<ol type="1">
+
+<li><strong>Aprobación OC</strong> → lista de pendientes.</li>
+
+<li>Abre la orden: proveedor, líneas, monto total, cotizaciones adjuntas, trazabilidad de la solicitud.</li>
+
+<li><strong>Aprobar</strong> (la orden continúa a emisión) o <strong>Rechazar</strong> con motivo.</li>
+
+</ol>
+
+<h3 id="aprobar-una-orden-de-servicio">Aprobar una Orden de Servicio</h3>
+
+<p>Mismo flujo en <strong>Aprobación OS</strong>.</p>
+
+<h2 id="5-restricciones">5. Restricciones</h2>
+
+<ul>
+
+<li>Alcance de aprobación y consulta únicamente; no operas requerimientos, compras ni almacén.</li>
+
+<li>Tu menú depende totalmente de la configuración en BD — coordina con TI para ajustarlo.</li>
+
+</ul>
+
+<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Entro y no veo menú</td>
+
+<td>El rol GERENTE no tiene redirect propio: pide a TI configurar <code>MENU_JSON</code>/<code>ITEMS_VISIBLES</code></td>
+
+</tr>
+
+<tr>
+
+<td>Quiero ver más reportes</td>
+
+<td>Los reportes abiertos están disponibles; reportes adicionales requieren configuración del menú</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+
+</article>
+</body>
+</html>

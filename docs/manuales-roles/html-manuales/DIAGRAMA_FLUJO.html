@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIAGRAMA FLUJO — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<style>
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
+  nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+            padding:12px 24px; background:#0f172a; border-bottom:1px solid #1e293b; }
+  nav.top a.volver { color:#60a5fa; text-decoration:none; font-size:14px; white-space:nowrap; }
+  nav.top a.volver:hover { text-decoration:underline; }
+  nav.top .t { font-size:15px; font-weight:600; color:#e2e8f0; flex:1; min-width:200px;
+               overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  nav.top a.btn { font-size:12px; color:#cbd5e1; text-decoration:none; background:#1e293b;
+                  border:1px solid #334155; border-radius:6px; padding:6px 12px; white-space:nowrap; }
+  nav.top a.btn:hover { border-color:#60a5fa; color:#93c5fd; }
+  article { max-width:900px; margin:0 auto; padding:32px 24px 60px; background:#fff; min-height:100vh; }
+  h1,h2,h3,h4 { margin:1.4em 0 .5em; line-height:1.3; color:#0f172a; }
+  h1 { font-size:26px; border-bottom:2px solid #e2e8f0; padding-bottom:8px; }
+  h2 { font-size:21px; border-bottom:1px solid #e2e8f0; padding-bottom:6px; }
+  h3 { font-size:17px; }
+  p, li { line-height:1.65; font-size:15px; }
+  ul, ol { padding-left:26px; margin:.6em 0; }
+  a { color:#2563eb; }
+  code { background:#f1f5f9; border-radius:4px; padding:1px 6px; font-size:13px; color:#be185d; }
+  pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow:auto; margin:.8em 0; }
+  pre code { background:none; color:inherit; padding:0; }
+  table { border-collapse:collapse; margin:.9em 0; width:100%; font-size:14px; }
+  th, td { border:1px solid #cbd5e1; padding:7px 10px; text-align:left; }
+  th { background:#f1f5f9; }
+  tr:nth-child(even) td { background:#f8fafc; }
+  img { max-width:100%; border:1px solid #e2e8f0; border-radius:6px; margin:.6em 0; }
+  blockquote { border-left:4px solid #cbd5e1; padding:4px 16px; color:#475569; margin:.8em 0; }
+  hr { border:none; border-top:1px solid #e2e8f0; margin:1.6em 0; }
+  @media (max-width:700px) {
+    nav.top { padding:10px 12px; gap:8px; }
+    nav.top .t { font-size:13px; min-width:120px; }
+    article { padding:22px 14px 50px; }
+    table { display:block; overflow-x:auto; }
+    pre { font-size:12px; }
+  }
+</style>
+<script src="../solo-rol.js"></script>
+</head>
+<body>
+<nav class="top">
+  <a class="volver" href="../index.html">&#8592; Portal</a>
+  <span class="t">DIAGRAMA FLUJO</span>
+  <a class="btn" href="../visor-docx.html?doc=docx/DIAGRAMA_FLUJO.docx">Ver Word</a><a class="btn" href="../docx/DIAGRAMA_FLUJO.docx">&#11015; .docx</a>
+  <a class="btn" href="../DIAGRAMA_FLUJO.md">Fuente .md</a>
+</nav>
+<article>
+<h1 id="diagrama-del-flujo-end-to-end--sistema-logística">Diagrama del Flujo End-to-End — Sistema Logística</h1>
+
+<p><img src="../diagrama-flujo.png" alt="Flujo completo del sistema" /></p>
+
+<p><em>(Versión vectorial para proyección: <a href="../diagrama-flujo.svg">diagrama-flujo.svg</a>)</em></p>
+
+<h2 id="lectura-del-diagrama">Lectura del diagrama</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Nº</th>
+
+<th>Paso</th>
+
+<th>Rol</th>
+
+<th>Pantalla</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>1</td>
+
+<td>Crear requerimiento</td>
+
+<td>OPLOGIST · EMLOGIST · LOLOGIST · ALLOGIST · ADLOGIST · JLOLOGIST</td>
+
+<td>Requerimientos</td>
+
+</tr>
+
+<tr>
+
+<td>2</td>
+
+<td>Aprobar por área</td>
+
+<td>APLOGIST (+ ADLOGIST, JLOLOGIST)</td>
+
+<td>Aprobaciones por Área</td>
+
+</tr>
+
+<tr>
+
+<td>3</td>
+
+<td>Consolidar líneas</td>
+
+<td>LOLOGIST (+ JLOLOGIST, ADLOGIST)</td>
+
+<td>Consolidación</td>
+
+</tr>
+
+<tr>
+
+<td>4</td>
+
+<td>Cotizar + SC</td>
+
+<td>LOLOGIST</td>
+
+<td>Cotizaciones / Solicitudes de Compra</td>
+
+</tr>
+
+<tr>
+
+<td>5</td>
+
+<td>Emitir OC / OS</td>
+
+<td>LOLOGIST</td>
+
+<td>Órdenes de Compra / Servicio</td>
+
+</tr>
+
+<tr>
+
+<td>6</td>
+
+<td>Aprobar orden</td>
+
+<td>JLOLOGIST · JEMLOGIST · FINANZAS · GERENTE</td>
+
+<td>Aprobación OC / OS</td>
+
+</tr>
+
+<tr>
+
+<td>7</td>
+
+<td>Recepcionar</td>
+
+<td>ALLOGIST · LOLOGIST</td>
+
+<td>Recepción de Mercadería</td>
+
+</tr>
+
+<tr>
+
+<td>8</td>
+
+<td>Despachar</td>
+
+<td>ALLOGIST · LOLOGIST</td>
+
+<td>Despachos</td>
+
+</tr>
+
+<tr>
+
+<td>9</td>
+
+<td>Conformidad</td>
+
+<td>Solicitante</td>
+
+<td>Conformidad de Despacho / Servicios</td>
+
+</tr>
+
+<tr>
+
+<td>10</td>
+
+<td>Reportes</td>
+
+<td>Según rol</td>
+
+<td>Reportes</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="flujos-paralelos">Flujos paralelos</h2>
+
+<ul>
+
+<li><strong>Devolución de consumo → reingreso</strong>: usuario devuelve → APLOGIST aprueba → ALLOGIST reingresa a stock.</li>
+
+<li><strong>Devolución a proveedor</strong>: ALLOGIST devuelve mercadería defectuosa o en exceso.</li>
+
+<li><strong>Evaluación de proveedores</strong>: ALLOGIST/LOLOGIST califican desempeño tras la recepción.</li>
+
+<li><strong>Servicios</strong>: SS → OS → conformidad de servicio (no pasa por almacén).</li>
+
+</ul>
+
+<h2 id="uso-sugerido">Uso sugerido</h2>
+
+<ul>
+
+<li>Proyección en capacitaciones (abrir <code>diagrama-flujo.svg</code> en el navegador a pantalla completa).</li>
+
+<li>Impresión tamaño A4/A3 para almacén y oficinas.</li>
+
+<li>Referencia rápida dentro del <a href="../MANUAL_ROLES_SISTEMA_COMPLETO.md#8-flujo-de-proceso-end-to-end">Manual maestro</a>.</li>
+
+</ul>
+
+
+</article>
+</body>
+</html>

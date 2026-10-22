@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MANUAL ROL APLOGIST — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<style>
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
+  nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+            padding:12px 24px; background:#0f172a; border-bottom:1px solid #1e293b; }
+  nav.top a.volver { color:#60a5fa; text-decoration:none; font-size:14px; white-space:nowrap; }
+  nav.top a.volver:hover { text-decoration:underline; }
+  nav.top .t { font-size:15px; font-weight:600; color:#e2e8f0; flex:1; min-width:200px;
+               overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  nav.top a.btn { font-size:12px; color:#cbd5e1; text-decoration:none; background:#1e293b;
+                  border:1px solid #334155; border-radius:6px; padding:6px 12px; white-space:nowrap; }
+  nav.top a.btn:hover { border-color:#60a5fa; color:#93c5fd; }
+  article { max-width:900px; margin:0 auto; padding:32px 24px 60px; background:#fff; min-height:100vh; }
+  h1,h2,h3,h4 { margin:1.4em 0 .5em; line-height:1.3; color:#0f172a; }
+  h1 { font-size:26px; border-bottom:2px solid #e2e8f0; padding-bottom:8px; }
+  h2 { font-size:21px; border-bottom:1px solid #e2e8f0; padding-bottom:6px; }
+  h3 { font-size:17px; }
+  p, li { line-height:1.65; font-size:15px; }
+  ul, ol { padding-left:26px; margin:.6em 0; }
+  a { color:#2563eb; }
+  code { background:#f1f5f9; border-radius:4px; padding:1px 6px; font-size:13px; color:#be185d; }
+  pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow:auto; margin:.8em 0; }
+  pre code { background:none; color:inherit; padding:0; }
+  table { border-collapse:collapse; margin:.9em 0; width:100%; font-size:14px; }
+  th, td { border:1px solid #cbd5e1; padding:7px 10px; text-align:left; }
+  th { background:#f1f5f9; }
+  tr:nth-child(even) td { background:#f8fafc; }
+  img { max-width:100%; border:1px solid #e2e8f0; border-radius:6px; margin:.6em 0; }
+  blockquote { border-left:4px solid #cbd5e1; padding:4px 16px; color:#475569; margin:.8em 0; }
+  hr { border:none; border-top:1px solid #e2e8f0; margin:1.6em 0; }
+  @media (max-width:700px) {
+    nav.top { padding:10px 12px; gap:8px; }
+    nav.top .t { font-size:13px; min-width:120px; }
+    article { padding:22px 14px 50px; }
+    table { display:block; overflow-x:auto; }
+    pre { font-size:12px; }
+  }
+</style>
+<script src="../../solo-rol.js"></script>
+</head>
+<body>
+<nav class="top">
+  <a class="volver" href="../../index.html">&#8592; Portal</a>
+  <span class="t">MANUAL ROL APLOGIST</span>
+  <a class="btn" href="../../visor-docx.html?doc=docx/MANUAL_ROL_APLOGIST.docx">Ver Word</a><a class="btn" href="../../docx/MANUAL_ROL_APLOGIST.docx">&#11015; .docx</a>
+  <a class="btn" href="../../roles/MANUAL_ROL_APLOGIST.md">Fuente .md</a>
+</nav>
+<article>
+<h1 id="manual-de-usuario--aprobador-consumo-aplogist">Manual de Usuario — Aprobador Consumo (APLOGIST)</h1>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Campo</th>
+
+<th>Valor</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Código de rol</td>
+
+<td><code>APLOGIST</code></td>
+
+</tr>
+
+<tr>
+
+<td>Nombre</td>
+
+<td>Aprobador de Consumo / Jefe de Área</td>
+
+</tr>
+
+<tr>
+
+<td>Pantalla inicial</td>
+
+<td>Dashboard Aprobaciones por Área (<code>/main/dashboard-aprobaciones-area</code>)</td>
+
+</tr>
+
+<tr>
+
+<td>Video tutorial</td>
+
+<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_APLOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_APLOGIST.html</a></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<hr />
+
+<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
+
+<p>Eres el <strong>jefe de área aprobador</strong>: los requerimientos que crean los usuarios de tu área llegan a tu bandeja para aprobación o rechazo. También apruebas los <strong>reingresos</strong> de material. Sin tu aprobación, el requerimiento no avanza a compras.</p>
+
+<h2 id="2-acceso">2. Acceso</h2>
+
+<p>Login → <strong>Dashboard Aprobaciones por Área</strong>: contadores de pendientes, aprobados, rechazados y acceso directo a la bandeja.</p>
+
+<p><img src="../../../capturas_manual/15_dashboard_aprobaciones_area.png" alt="Dashboard aprobaciones" /></p>
+
+<h2 id="3-pantallas-disponibles">3. Pantallas disponibles</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Pantalla</th>
+
+<th>Qué haces</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Dashboard Aprobaciones por Área</td>
+
+<td>Resumen de pendientes de tu área</td>
+
+</tr>
+
+<tr>
+
+<td>Aprobaciones / Aprobaciones por Área</td>
+
+<td>Bandeja: aprobar o rechazar requerimientos</td>
+
+</tr>
+
+<tr>
+
+<td>Reporte Aprobaciones Área</td>
+
+<td>Historial y trazabilidad de tus decisiones</td>
+
+</tr>
+
+<tr>
+
+<td>Reporte Requerimientos Aprobados</td>
+
+<td>Consulta de lo ya aprobado</td>
+
+</tr>
+
+<tr>
+
+<td>Dashboard Operativo</td>
+
+<td>Estado operativo general</td>
+
+</tr>
+
+<tr>
+
+<td>Conformidad de Despacho</td>
+
+<td>Conformar recepciones</td>
+
+</tr>
+
+<tr>
+
+<td>Devoluciones de Consumo</td>
+
+<td>Ver devoluciones registradas</td>
+
+</tr>
+
+<tr>
+
+<td>Reingresos</td>
+
+<td><strong>Aprobar/rechazar reingresos</strong> (solo tú)</td>
+
+</tr>
+
+<tr>
+
+<td>Reporte Requerimientos / Logístico / Catálogo</td>
+
+<td>Consultas</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
+
+<h3 id="aprobar-un-requerimiento">Aprobar un requerimiento</h3>
+
+<ol type="1">
+
+<li><strong>Aprobaciones por Área</strong> → lista de pendientes de tu(s) área(s).</li>
+
+<li>Abre el requerimiento: revisa solicitante, ítems, cantidades, centro de costo, adjuntos.</li>
+
+<li>Decide:
+
+<ul>
+
+<li><strong>Aprobar</strong> → pasa a logística para consolidación/compra.</li>
+
+<li><strong>Rechazar</strong> → indica el motivo; vuelve al solicitante.</li>
+
+</ul></li>
+
+</ol>
+
+<p><img src="../../../capturas_manual/16_aprobaciones_area.png" alt="Aprobaciones área" /></p>
+
+<h3 id="aprobar-un-reingreso">Aprobar un reingreso</h3>
+
+<ol type="1">
+
+<li><strong>Reingresos</strong> → solicitudes de material que vuelve al almacén.</li>
+
+<li>Revisa ítems y estado → <strong>Aprobar</strong> o <strong>Rechazar</strong>.</li>
+
+</ol>
+
+<h3 id="revisar-tu-historial">Revisar tu historial</h3>
+
+<p><strong>Reporte Aprobaciones Área</strong> → filtra por fecha/estado → exporta si necesitas respaldo.</p>
+
+<p><img src="../../../capturas_manual/20_reporte_aprobaciones_area.png" alt="Reporte aprobaciones" /></p>
+
+<h2 id="5-restricciones">5. Restricciones</h2>
+
+<ul>
+
+<li>No creas requerimientos (tu rol es aprobar).</li>
+
+<li>No ves compras, cotizaciones, órdenes ni almacén.</li>
+
+<li>Solo ves requerimientos de <strong>las áreas que te fueron asignadas</strong> (lo configura el admin en <em>Usuarios por Área</em>).</li>
+
+</ul>
+
+<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>No veo requerimientos de un área</td>
+
+<td>Pide al administrador (ADLOGIST/TILOGIST) asignarte esa área en <strong>Usuarios por Área</strong></td>
+
+</tr>
+
+<tr>
+
+<td>Rechacé por equivocación</td>
+
+<td>El solicitante debe generar un nuevo requerimiento o pedir revisión a logística</td>
+
+</tr>
+
+<tr>
+
+<td>El contador no baja</td>
+
+<td>Refresca la página; el contador se actualiza al cargar</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+
+</article>
+</body>
+</html>

@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MANUAL CONSOLA ADMIN LOGISTICA — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<style>
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
+  nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+            padding:12px 24px; background:#0f172a; border-bottom:1px solid #1e293b; }
+  nav.top a.volver { color:#60a5fa; text-decoration:none; font-size:14px; white-space:nowrap; }
+  nav.top a.volver:hover { text-decoration:underline; }
+  nav.top .t { font-size:15px; font-weight:600; color:#e2e8f0; flex:1; min-width:200px;
+               overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  nav.top a.btn { font-size:12px; color:#cbd5e1; text-decoration:none; background:#1e293b;
+                  border:1px solid #334155; border-radius:6px; padding:6px 12px; white-space:nowrap; }
+  nav.top a.btn:hover { border-color:#60a5fa; color:#93c5fd; }
+  article { max-width:900px; margin:0 auto; padding:32px 24px 60px; background:#fff; min-height:100vh; }
+  h1,h2,h3,h4 { margin:1.4em 0 .5em; line-height:1.3; color:#0f172a; }
+  h1 { font-size:26px; border-bottom:2px solid #e2e8f0; padding-bottom:8px; }
+  h2 { font-size:21px; border-bottom:1px solid #e2e8f0; padding-bottom:6px; }
+  h3 { font-size:17px; }
+  p, li { line-height:1.65; font-size:15px; }
+  ul, ol { padding-left:26px; margin:.6em 0; }
+  a { color:#2563eb; }
+  code { background:#f1f5f9; border-radius:4px; padding:1px 6px; font-size:13px; color:#be185d; }
+  pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow:auto; margin:.8em 0; }
+  pre code { background:none; color:inherit; padding:0; }
+  table { border-collapse:collapse; margin:.9em 0; width:100%; font-size:14px; }
+  th, td { border:1px solid #cbd5e1; padding:7px 10px; text-align:left; }
+  th { background:#f1f5f9; }
+  tr:nth-child(even) td { background:#f8fafc; }
+  img { max-width:100%; border:1px solid #e2e8f0; border-radius:6px; margin:.6em 0; }
+  blockquote { border-left:4px solid #cbd5e1; padding:4px 16px; color:#475569; margin:.8em 0; }
+  hr { border:none; border-top:1px solid #e2e8f0; margin:1.6em 0; }
+  @media (max-width:700px) {
+    nav.top { padding:10px 12px; gap:8px; }
+    nav.top .t { font-size:13px; min-width:120px; }
+    article { padding:22px 14px 50px; }
+    table { display:block; overflow-x:auto; }
+    pre { font-size:12px; }
+  }
+</style>
+<script src="../solo-rol.js"></script>
+</head>
+<body>
+<nav class="top">
+  <a class="volver" href="../index.html">&#8592; Portal</a>
+  <span class="t">MANUAL CONSOLA ADMIN LOGISTICA</span>
+  <a class="btn" href="../visor-docx.html?doc=docx/MANUAL_CONSOLA_ADMIN_LOGISTICA.docx">Ver Word</a><a class="btn" href="../docx/MANUAL_CONSOLA_ADMIN_LOGISTICA.docx">&#11015; .docx</a>
+  <a class="btn" href="../MANUAL_CONSOLA_ADMIN_LOGISTICA.md">Fuente .md</a>
+</nav>
+<article>
+<h1 id="manual-de-la-consola-admin-logística-admin-logistica">Manual de la Consola Admin Logística (<code>/admin-logistica</code>)</h1>
+
+<p><strong>Versión:</strong> 1.0 — Octubre 2026 <strong>Audiencia:</strong> TILOGIST, ADLOGIST, JLOLOGIST</p>
+
+<hr />
+
+<h2 id="índice">Índice</h2>
+
+<ol type="1">
+
+<li><a href="#1-acceso-a-la-consola">Acceso a la consola</a></li>
+
+<li><a href="#2-estructura-y-visibilidad-por-rol">Estructura y visibilidad por rol</a></li>
+
+<li><a href="#3-pestañas-operativas">Pestañas operativas</a></li>
+
+<li><a href="#4-pestañas-de-catálogos">Pestañas de catálogos</a></li>
+
+<li><a href="#5-pestañas-de-usuarios-y-áreas">Pestañas de usuarios y áreas</a></li>
+
+<li><a href="#6-pestañas-de-configuración">Pestañas de configuración</a></li>
+
+<li><a href="#7-pestañas-de-control">Pestañas de control</a></li>
+
+<li><a href="#8-permisos-adminlg_">Permisos ADMINLG_*</a></li>
+
+<li><a href="#9-preguntas-frecuentes">Preguntas frecuentes</a></li>
+
+</ol>
+
+<hr />
+
+<h2 id="1-acceso-a-la-consola">1. Acceso a la consola</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Paso</th>
+
+<th>Detalle</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>URL</td>
+
+<td><code>/admin-logistica/login</code></td>
+
+</tr>
+
+<tr>
+
+<td>Autenticación</td>
+
+<td>Login <strong>propio</strong> de la consola (independiente del login de la app)</td>
+
+</tr>
+
+<tr>
+
+<td>Roles con acceso</td>
+
+<td>TILOGIST, ADLOGIST, JLOLOGIST (con menú reducido)</td>
+
+</tr>
+
+<tr>
+
+<td>Guard</td>
+
+<td><code>AdminLogisticaAuthGuard</code> — sin sesión → redirige al login</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p>La sesión de la consola es independiente: cerrar sesión en la app no cierra la consola y viceversa.</p>
+
+<h2 id="2-estructura-y-visibilidad-por-rol">2. Estructura y visibilidad por rol</h2>
+
+<p>La consola es un layout con menú lateral de 21 pestañas. Cada pestaña está controlada por una clave <code>ADMINLG_MENU_*</code> almacenada en <code>LOGISTICA_ConfiguracionPermiso</code>. Si el rol no tiene la clave en BD, se aplica el <strong>valor por defecto</strong>:</p>
+
+<ul>
+
+<li><code>true</code> → visible para los 3 roles</li>
+
+<li><code>isAdmin()</code> → solo TILOGIST y ADLOGIST</li>
+
+<li><code>!isJefeLogistica()</code> → oculta para JLOLOGIST</li>
+
+<li><code>canCreateUsers()</code> → TILOGIST, ADLOGIST, JLOLOGIST</li>
+
+</ul>
+
+<h2 id="3-pestañas-operativas">3. Pestañas operativas</h2>
+
+<h3 id="31-dashboard--adminlg_menu_dashboard">3.1 Dashboard — <code>ADMINLG_MENU_DASHBOARD</code></h3>
+
+<p>Panel de control de la consola: contadores de pendientes, aprobaciones del día y accesos rápidos.</p>
+
+<p><strong>Procedimiento:</strong> revisar tarjetas → clic en una tarjeta para ir a la bandeja correspondiente.</p>
+
+<h3 id="32-bandeja-aprobaciones--adminlg_menu_bandeja">3.2 Bandeja Aprobaciones — <code>ADMINLG_MENU_BANDEJA</code></h3>
+
+<p>Bandeja unificada de documentos pendientes de aprobación (requerimientos, SC, SS).</p>
+
+<p><strong>Procedimiento:</strong></p>
+
+<ol type="1">
+
+<li>Revisar la lista de pendientes (columna estado: <code>PENDIENTE</code> / <code>RECHAZADO</code>).</li>
+
+<li>Abrir el documento para ver detalle.</li>
+
+<li>Aprobar o rechazar desde el detalle.</li>
+
+</ol>
+
+<h3 id="33-aprobar-consumo--adminlg_menu_aprobar_consumo">3.3 Aprobar Consumo — <code>ADMINLG_MENU_APROBAR_CONSUMO</code></h3>
+
+<p>Aprobación de requerimientos de <strong>consumo</strong> (salidas a almacén por consumo de área).</p>
+
+<ol type="1">
+
+<li>Lista de solicitudes de consumo pendientes.</li>
+
+<li>Revisar ítems, cantidades y área solicitante.</li>
+
+<li>Aprobar o rechazar con motivo.</li>
+
+</ol>
+
+<h3 id="34-aprobar-solicitud-compra--adminlg_menu_aprobar_sc-no-jlologist-por-defecto">3.4 Aprobar Solicitud Compra — <code>ADMINLG_MENU_APROBAR_SC</code> <em>(no JLOLOGIST por defecto)</em></h3>
+
+<p>Aprobación de <strong>Solicitudes de Compra</strong> antes de que pasen a cotización/OC.</p>
+
+<h3 id="35-aprobar-solicitud-servicio--adminlg_menu_aprobar_ss-no-jlologist-por-defecto">3.5 Aprobar Solicitud Servicio — <code>ADMINLG_MENU_APROBAR_SS</code> <em>(no JLOLOGIST por defecto)</em></h3>
+
+<p>Aprobación de <strong>Solicitudes de Servicio</strong>.</p>
+
+<h2 id="4-pestañas-de-catálogos">4. Pestañas de catálogos</h2>
+
+<h3 id="41-maestros--adminlg_menu_maestros">4.1 Maestros — <code>ADMINLG_MENU_MAESTROS</code></h3>
+
+<p>Mantenimiento de maestras del módulo: ítems, commodities, unidades de medida, etc.</p>
+
+<h3 id="42-gestión-proveedores--adminlg_menu_proveedores">4.2 Gestión Proveedores — <code>ADMINLG_MENU_PROVEEDORES</code></h3>
+
+<p>CRUD de proveedores: razón social, RUC, contactos, condiciones.</p>
+
+<h2 id="5-pestañas-de-usuarios-y-áreas">5. Pestañas de usuarios y áreas</h2>
+
+<h3 id="51-usuarios--adminlg_menu_usuarios">5.1 Usuarios — <code>ADMINLG_MENU_USUARIOS</code></h3>
+
+<p>Crear y editar usuarios de la app operativa.</p>
+
+<ol type="1">
+
+<li><strong>Nuevo usuario</strong> → completar datos personales y credenciales.</li>
+
+<li>Asignar <code>idrol</code>:
+
+<ul>
+
+<li>TILOGIST: cualquier rol.</li>
+
+<li>ADLOGIST: todos excepto TILOGIST.</li>
+
+<li>JLOLOGIST: solo LOLOGIST, EMLOGIST, ALLOGIST, OPLOGIST, APLOGIST.</li>
+
+</ul></li>
+
+<li>Roles múltiples: separar por coma (ej. <code>LOLOGIST,ALLOGIST</code>).</li>
+
+<li>Guardar. <em>(JLOLOGIST no ve usuarios JLOLOGIST ni ADLOGIST en las listas.)</em></li>
+
+</ol>
+
+<h3 id="52-áreas--adminlg_menu_areas-admin">5.2 Áreas — <code>ADMINLG_MENU_AREAS</code> <em>(admin)</em></h3>
+
+<p>CRUD de áreas organizacionales que agrupan usuarios para el flujo de aprobación.</p>
+
+<h3 id="53-usuarios-por-área--adminlg_menu_usuario_area-admin">5.3 Usuarios por Área — <code>ADMINLG_MENU_USUARIO_AREA</code> <em>(admin)</em></h3>
+
+<p>Asigna usuarios a áreas. Determina <strong>qué APLOGIST ve qué requerimientos</strong>.</p>
+
+<ol type="1">
+
+<li>Seleccionar área.</li>
+
+<li>Agregar/quitar usuarios asignados.</li>
+
+<li>Guardar → el aprobador solo verá requerimientos de sus áreas.</li>
+
+</ol>
+
+<h3 id="54-flujo-aprobación-área--adminlg_menu_flujo_area-admin">5.4 Flujo Aprobación Área — <code>ADMINLG_MENU_FLUJO_AREA</code> <em>(admin)</em></h3>
+
+<p>Define el flujo de aprobación por tipo de requerimiento: <code>CONSUMO</code>, <code>COMPRA</code>, <code>SERVICIO</code>, <code>TRANSFERENCIA</code>, con niveles <code>JEFE_AREA</code> / <code>APLOGIST</code>.</p>
+
+<ol type="1">
+
+<li>Elegir área y tipo de flujo.</li>
+
+<li>Definir niveles y aprobador de cada nivel.</li>
+
+<li>Activar el flujo → los requerimientos nuevos lo siguen.</li>
+
+</ol>
+
+<h2 id="6-pestañas-de-configuración">6. Pestañas de configuración</h2>
+
+<h3 id="61-formato-pdf--adminlg_menu_pdf">6.1 Formato PDF — <code>ADMINLG_MENU_PDF</code></h3>
+
+<p>Plantilla del PDF de órdenes: signatarios (Solicitante, Jefe de Área, Aprobado por, Gerencia/Logística, Proveedor) y datos de empresa que se imprimen.</p>
+
+<h3 id="62-empresa--adminlg_menu_empresa-admin">6.2 Empresa — <code>ADMINLG_MENU_EMPRESA</code> <em>(admin)</em></h3>
+
+<p>CRUD de empresas. Campos obligatorios: <strong>RUC y Razón Social</strong>.</p>
+
+<h3 id="63-parámetros--adminlg_menu_parametros-admin">6.3 Parámetros — <code>ADMINLG_MENU_PARAMETROS</code> <em>(admin)</em></h3>
+
+<p>Parámetros generales del módulo: moneda (<code>Soles S/</code>, <code>Dólares $</code>, <code>Euros €</code>), umbrales, valores por defecto.</p>
+
+<h3 id="64-incremento-cantidad-oc--adminlg_menu_incremento_oc-admin">6.4 Incremento Cantidad OC — <code>ADMINLG_MENU_INCREMENTO_OC</code> <em>(admin)</em></h3>
+
+<p>Configura si/cuánto se puede incrementar la cantidad de una línea de OC al recepcionar, con <strong>control de versiones</strong> (guarda nueva versión, mantiene historial, valida rango de fechas).</p>
+
+<ol type="1">
+
+<li>Revisar configuración vigente.</li>
+
+<li><strong>Guardar nueva versión</strong> con % de incremento permitido y vigencia (fecha desde/hasta).</li>
+
+<li>El historial queda auditable.</li>
+
+</ol>
+
+<h3 id="65-plantillas-almacén--adminlg_menu_almacen-admin">6.5 Plantillas Almacén — <code>ADMINLG_MENU_ALMACEN</code> <em>(admin)</em></h3>
+
+<p>Plantillas de configuración de almacenes por empresa.</p>
+
+<h3 id="66-conformidad-servicio--adminlg_menu_conformidad-admin">6.6 Conformidad Servicio — <code>ADMINLG_MENU_CONFORMIDAD</code> <em>(admin)</em></h3>
+
+<p>Configuración del proceso de conformidad de servicios.</p>
+
+<h3 id="67-migrar-adjuntos--adminlg_menu_migrar_adjuntos-admin">6.7 Migrar Adjuntos — <code>ADMINLG_MENU_MIGRAR_ADJUNTOS</code> <em>(admin)</em></h3>
+
+<p>Utilidad técnica para migrar adjuntos de OC y OS (Orden de Compra / Orden de Servicio).</p>
+
+<h2 id="7-pestañas-de-control">7. Pestañas de control</h2>
+
+<h3 id="71-aprobadores--adminlg_menu_aprobadores-admin">7.1 Aprobadores — <code>ADMINLG_MENU_APROBADORES</code> <em>(admin)</em></h3>
+
+<p>Mantenedor de aprobadores por flujo de OC/OS (niveles, orden, usuario aprobador).</p>
+
+<h3 id="72-auditoría--adminlg_menu_auditoria-admin">7.2 Auditoría — <code>ADMINLG_MENU_AUDITORIA</code> <em>(admin)</em></h3>
+
+<p>Trazabilidad de acciones administrativas.</p>
+
+<ol type="1">
+
+<li>Filtrar por tipo de acción: Inicio de Sesión, Creación, Actualización, Eliminación, Aprobación…</li>
+
+<li>Revisar usuario, fecha y detalle del cambio.</li>
+
+</ol>
+
+<h3 id="73-permisos-por-rol--adminlg_menu_permisos_rol-admin">7.3 Permisos por Rol — <code>ADMINLG_MENU_PERMISOS_ROL</code> <em>(admin)</em></h3>
+
+<p>Pantalla para asignar/quitar las claves <code>ADMINLG_MENU_*</code> a cada rol — controla qué pestañas de esta consola ve cada rol.</p>
+
+<ol type="1">
+
+<li>Seleccionar el rol (catálogo <code>ROLES_SISTEMA</code>, 11 roles).</li>
+
+<li>Activar/desactivar cada clave de menú.</li>
+
+<li>Guardar → se persiste en <code>LOGISTICA_ConfiguracionPermiso</code> (valor <code>1</code> = habilitado).</li>
+
+<li>El cambio aplica al próximo inicio de sesión del usuario afectado.</li>
+
+</ol>
+
+<h2 id="8-permisos-adminlg_">8. Permisos <code>ADMINLG_*</code></h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Clave</th>
+
+<th>Pestaña</th>
+
+<th>Defecto</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td><code>ADMINLG_MENU_DASHBOARD</code></td>
+
+<td>Dashboard</td>
+
+<td>Todos</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_BANDEJA</code></td>
+
+<td>Bandeja</td>
+
+<td>Todos</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_APROBAR_CONSUMO</code></td>
+
+<td>Aprobar Consumo</td>
+
+<td>Todos</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_APROBAR_SC</code></td>
+
+<td>Aprobar SC</td>
+
+<td>No JLOLOGIST</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_APROBAR_SS</code></td>
+
+<td>Aprobar SS</td>
+
+<td>No JLOLOGIST</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_MAESTROS</code></td>
+
+<td>Maestros</td>
+
+<td>Todos</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_PROVEEDORES</code></td>
+
+<td>Proveedores</td>
+
+<td>Todos</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_USUARIOS</code></td>
+
+<td>Usuarios</td>
+
+<td>Quien puede crear usuarios</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_AREAS</code></td>
+
+<td>Áreas</td>
+
+<td>Admin</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_USUARIO_AREA</code></td>
+
+<td>Usuarios por Área</td>
+
+<td>Admin</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_FLUJO_AREA</code></td>
+
+<td>Flujo Aprobación</td>
+
+<td>Admin</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_PDF</code></td>
+
+<td>Formato PDF</td>
+
+<td>Todos</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_EMPRESA</code></td>
+
+<td>Empresa</td>
+
+<td>Admin</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_PARAMETROS</code></td>
+
+<td>Parámetros</td>
+
+<td>Admin</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_INCREMENTO_OC</code></td>
+
+<td>Incremento OC</td>
+
+<td>Admin</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_APROBADORES</code></td>
+
+<td>Aprobadores</td>
+
+<td>Admin</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_AUDITORIA</code></td>
+
+<td>Auditoría</td>
+
+<td>Admin</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_ALMACEN</code></td>
+
+<td>Plantillas Almacén</td>
+
+<td>Admin</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_CONFORMIDAD</code></td>
+
+<td>Conformidad</td>
+
+<td>Admin</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_PERMISOS_ROL</code></td>
+
+<td>Permisos por Rol</td>
+
+<td>Admin</td>
+
+</tr>
+
+<tr>
+
+<td><code>ADMINLG_MENU_MIGRAR_ADJUNTOS</code></td>
+
+<td>Migrar Adjuntos</td>
+
+<td>Admin</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="9-preguntas-frecuentes">9. Preguntas frecuentes</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Pregunta</th>
+
+<th>Respuesta</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>¿Por qué JLOLOGIST no ve Áreas/Empresa?</td>
+
+<td>Esas pestañas son <code>isAdmin()</code>. Se le pueden habilitar en Permisos por Rol</td>
+
+</tr>
+
+<tr>
+
+<td>¿Los cambios de permisos son inmediatos?</td>
+
+<td>Aplican al recargar la consola o al próximo login</td>
+
+</tr>
+
+<tr>
+
+<td>¿Puedo darle a EMLOGIST acceso a la consola?</td>
+
+<td>No directamente: el guard de la consola solo deja entrar sesiones autenticadas de la consola y el menú depende de permisos; está pensada para TI/AD/JL</td>
+
+</tr>
+
+<tr>
+
+<td>¿Dónde veo quién cambió un permiso?</td>
+
+<td>Pestaña Auditoría → filtrar por Actualización</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+
+</article>
+</body>
+</html>

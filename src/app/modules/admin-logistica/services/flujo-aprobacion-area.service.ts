@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '@/environments/environment';
 
 export interface FlujoAprobacionArea {
   idFlujo: number;
@@ -24,7 +25,8 @@ export interface Area {
 })
 export class FlujoAprobacionAreaService {
   private http = inject(HttpClient);
-  private baseUrl = 'https://apilogistica.agroapps.net:7018/api/logistica';
+  // private baseUrl = 'https://apilogistica.agroapps.net:7018/api/logistica';
+  private baseUrl = `${environment.baseUrl}/api/logistica`;
 
   listarFlujoAprobacionArea(ruc: string, idarea?: number): Observable<any> {
     const data = idarea ? { ruc, idarea } : { ruc };

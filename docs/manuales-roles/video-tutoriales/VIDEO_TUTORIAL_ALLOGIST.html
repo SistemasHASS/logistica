@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Tutorial — Almacén (ALLOGIST)</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<style>
+  :root {
+    --accent: #ca8a04;
+    --bg: #0f172a; --panel: #1e293b; --panel2: #16213b;
+    --text: #e2e8f0; --muted: #94a3b8; --border: #334155;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text);
+         display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+  header { background:var(--panel); border-bottom:2px solid var(--accent);
+           padding:12px 24px; display:flex; align-items:center; gap:16px; }
+  .badge { background:var(--accent); color:#fff; font-weight:700; padding:4px 12px;
+           border-radius:6px; font-size:13px; letter-spacing:1px; }
+  header h1 { font-size:18px; font-weight:600; }
+  header .duracion { margin-left:auto; color:var(--muted); font-size:13px; }
+  main { flex:1; display:flex; overflow:hidden; }
+  .slide { flex:1; display:none; flex-direction:column; padding:32px 48px; overflow-y:auto; }
+  .slide.active { display:flex; }
+  .escena { color:var(--accent); font-size:12px; font-weight:700; letter-spacing:2px;
+            text-transform:uppercase; margin-bottom:8px; }
+  .slide h2 { font-size:30px; margin-bottom:20px; }
+  .contenido { display:flex; gap:32px; flex:1; }
+  .col-izq { flex:1.1; display:flex; flex-direction:column; gap:16px; }
+  .col-der { flex:1; display:flex; align-items:flex-start; justify-content:center; }
+  .locucion { background:var(--panel2); border-left:4px solid var(--accent);
+              padding:16px 20px; border-radius:0 8px 8px 0; }
+  .locucion::before { content:'🎙 NARRACIÓN'; display:block; color:var(--accent);
+                       font-size:11px; font-weight:700; letter-spacing:1px; margin-bottom:8px; }
+  .locucion p { font-size:16px; line-height:1.6; font-style:italic; }
+  .pasos { background:var(--panel); border-radius:8px; padding:16px 20px; }
+  .pasos h3 { font-size:13px; color:var(--muted); letter-spacing:1px; margin-bottom:10px;
+              text-transform:uppercase; }
+  .pasos li { list-style:none; padding:8px 0 8px 30px; position:relative; font-size:15px;
+              border-bottom:1px solid var(--border); }
+  .pasos li:last-child { border-bottom:none; }
+  .pasos li::before { content:counter(step); counter-increment:step;
+      position:absolute; left:0; top:6px; width:20px; height:20px; background:var(--accent);
+      color:#fff; border-radius:50%; font-size:11px; font-weight:700;
+      display:flex; align-items:center; justify-content:center; }
+  .pasos ol { counter-reset:step; }
+  .captura { max-width:100%; max-height:420px; border-radius:10px;
+             border:2px solid var(--border); box-shadow:0 8px 30px rgba(0,0,0,.5); }
+  .captura-missing { border:2px dashed var(--border); border-radius:10px; padding:60px 30px;
+             color:var(--muted); text-align:center; font-size:14px; }
+  footer { background:var(--panel); padding:12px 24px; display:flex; align-items:center; gap:16px; }
+  .btn { background:var(--accent); color:#fff; border:none; padding:10px 22px; border-radius:6px;
+         font-size:14px; font-weight:600; cursor:pointer; }
+  .btn:hover { filter:brightness(1.15); }
+  .btn.sec { background:var(--border); }
+  .progreso-wrap { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .progreso { height:100%; background:var(--accent); width:0%; transition:width .3s; }
+  .contador { color:var(--muted); font-size:13px; min-width:80px; text-align:center; }
+  .ayuda { color:var(--muted); font-size:11px; }
+  @media (max-width:820px) {
+    header { padding:10px 12px; gap:8px; }
+    header h1 { font-size:14px; }
+    .badge { font-size:11px; padding:3px 8px; }
+    .duracion { display:none; }
+    .slide { padding:18px 14px; }
+    .slide h2 { font-size:21px; margin-bottom:12px; }
+    .contenido { flex-direction:column; gap:14px; }
+    .captura { max-height:none; }
+    footer { padding:10px 10px; gap:8px; flex-wrap:wrap; }
+    .ayuda { display:none; }
+    .contador { min-width:60px; font-size:12px; }
+    .btn { padding:8px 14px; font-size:13px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="badge">ALLOGIST</span>
+  <h1>Video Tutorial — Almacén</h1>
+  <span class="duracion">Duración estimada: ~9 min</span>
+</header>
+<main>
+<section class="slide">
+    <div class="escena">Escena 1</div>
+    <h2>Bienvenida</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Bienvenido al tutorial del rol Almacén. Operas la parte física: despachos, recepciones, kardex e inventario.</p></div>
+        
+      </div>
+      <div class="col-der"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 2</div>
+    <h2>Inicio — Gestión de Despachos</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Tu pantalla inicial es la Gestión de Despachos: lo que está listo para salir.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Login → entras directo a Despachos</li>
+          <li>Revisar despachos pendientes</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/23_despachos.png" alt="Inicio — Gestión de Despachos" onerror="this.outerHTML='<div class=captura-missing>Captura: 23_despachos.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 3</div>
+    <h2>Despachar material</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Confirma la salida de material contra el requerimiento aprobado.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Abrir despacho pendiente</li>
+          <li>Verificar stock disponible</li>
+          <li>Confirmar despacho</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/22_dashboard_despacho.png" alt="Despachar material" onerror="this.outerHTML='<div class=captura-missing>Captura: 22_dashboard_despacho.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 4</div>
+    <h2>Recepción de mercadería</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Recepciona las OC aprobadas cuando llega el proveedor.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Recepción de Mercadería → buscar OC</li>
+          <li>Ingresar cantidades y lotes</li>
+          <li>Confirmar → entra a stock</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/24_recepcion_mercaderia.png" alt="Recepción de mercadería" onerror="this.outerHTML='<div class=captura-missing>Captura: 24_recepcion_mercaderia.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 5</div>
+    <h2>Kardex e inventario</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Controla movimientos y saldos por ítem.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Kardex → filtrar por ítem/almacén</li>
+          <li>Gestión de Inventario → ajustes y conteos</li>
+          <li>Listas de Stock → listas predefinidas</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/26_kardex.png" alt="Kardex e inventario" onerror="this.outerHTML='<div class=captura-missing>Captura: 26_kardex.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 6</div>
+    <h2>Transferencias y devoluciones</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Mueve stock entre almacenes y procesa devoluciones.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Transferencias → origen y destino</li>
+          <li>Devoluciones a Proveedores → registrar</li>
+          <li>Devoluciones de Consumo → aprobar/rechazar (eres jefe de almacén)</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/32_transferencias_almacen.png" alt="Transferencias y devoluciones" onerror="this.outerHTML='<div class=captura-missing>Captura: 32_transferencias_almacen.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 7</div>
+    <h2>Reingresos y evaluación</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Procesa reingresos y evalúa a los proveedores.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Reingresos → procesar material que retorna</li>
+          <li>Evaluación de Proveedores → calificar por criterio</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/07_evaluacion_proveedores.png" alt="Reingresos y evaluación" onerror="this.outerHTML='<div class=captura-missing>Captura: 07_evaluacion_proveedores.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 8</div>
+    <h2>Reportes y cierre</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Usa los reportes de saldos y despachos para el control diario.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Reporte de Saldos</li>
+          <li>Reporte de Despachos</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/34_reporte_despachos.png" alt="Reportes y cierre" onerror="this.outerHTML='<div class=captura-missing>Captura: 34_reporte_despachos.png</div>'"></div>
+    </div>
+  </section>
+</main>
+<footer>
+  <button class="btn sec" onclick="anterior()">◀ Anterior</button>
+  <button class="btn" onclick="siguiente()">Siguiente ▶</button>
+  <button class="btn sec" id="btnPlay" onclick="togglePlay()">▶ Reproducir</button>
+  <div class="progreso-wrap"><div class="progreso" id="prog"></div></div>
+  <span class="contador" id="contador"></span>
+  <span class="ayuda">← → navegar · Espacio: siguiente · P: reproducir</span>
+</footer>
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let actual = 0, timer = null;
+  function mostrar(i) {
+    actual = Math.max(0, Math.min(i, slides.length - 1));
+    slides.forEach((s, k) => s.classList.toggle('active', k === actual));
+    document.getElementById('prog').style.width = ((actual + 1) / slides.length * 100) + '%';
+    document.getElementById('contador').textContent = (actual + 1) + ' / ' + slides.length;
+  }
+  function siguiente() { mostrar(actual + 1); }
+  function anterior() { mostrar(actual - 1); }
+  function togglePlay() {
+    const b = document.getElementById('btnPlay');
+    if (timer) { clearInterval(timer); timer = null; b.textContent = '▶ Reproducir'; return; }
+    b.textContent = '⏸ Pausar';
+    timer = setInterval(() => {
+      if (actual >= slides.length - 1) { togglePlay(); return; }
+      siguiente();
+    }, 12000);
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); siguiente(); }
+    if (e.key === 'ArrowLeft') anterior();
+    if (e.key.toLowerCase() === 'p') togglePlay();
+  });
+  mostrar(0);
+</script>
+</body>
+</html>

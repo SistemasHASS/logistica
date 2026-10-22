@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anexo — Inventario Documental · Sistema Logística</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#e2e8f0; }
+  header { padding:36px 48px 20px; border-bottom:1px solid #1e293b; position:sticky; top:0; background:#0f172a; z-index:10; }
+  h1 { font-size:26px; } header p { color:#94a3b8; margin-top:4px; }
+  .buscador { margin-top:16px; display:flex; gap:12px; flex-wrap:wrap; }
+  input[type=search] { flex:1; min-width:260px; background:#1e293b; border:1px solid #334155; color:#e2e8f0;
+    border-radius:8px; padding:10px 14px; font-size:15px; }
+  .chip { background:#1e293b; border:1px solid #334155; color:#cbd5e1; border-radius:999px;
+          padding:8px 16px; font-size:13px; cursor:pointer; }
+  .chip:hover, .chip.on { background:#2563eb; border-color:#2563eb; color:#fff; }
+  main { padding:24px 48px 60px; max-width:1300px; }
+  .cat { margin-top:34px; }
+  .cat h2 { font-size:15px; letter-spacing:2px; text-transform:uppercase; color:#60a5fa;
+            border-bottom:1px solid #1e293b; padding-bottom:8px; margin-bottom:14px; }
+  .cat h2 .n { color:#475569; font-weight:400; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:10px; }
+  .doc { display:block; background:#1e293b; border:1px solid #334155; border-radius:8px;
+         padding:12px 14px; text-decoration:none; color:#e2e8f0; }
+  .doc:hover { border-color:#60a5fa; background:#243349; }
+  .doc b { font-size:13.5px; display:block; word-break:break-word; }
+  .doc small { color:#94a3b8; font-size:12px; display:block; margin-top:3px; line-height:1.35; }
+  .ext { float:right; font-size:10px; font-weight:700; color:#64748b; border:1px solid #334155;
+         border-radius:4px; padding:1px 6px; margin-left:8px; }
+  .vacio { color:#64748b; padding:30px; text-align:center; display:none; }
+  @media (max-width:700px) {
+    header { padding:22px 16px 12px; position:static; }
+    h1 { font-size:21px; }
+    main { padding:16px 16px 50px; }
+    .grid { grid-template-columns:1fr; }
+    .buscador { flex-direction:column; }
+    .chip { padding:6px 12px; font-size:12px; }
+  }
+</style>
+<script src="solo-rol.js"></script>
+</head>
+<body>
+<header>
+  <h1>Anexo — Inventario Documental</h1>
+  <p>Toda la documentación del Sistema Logística, navegable por categoría. Los archivos están en <code>docs/</code>.</p>
+  <div class="buscador">
+    <input type="search" id="q" placeholder="Buscar documento… (ej. kardex, flujo, menú)">
+    <span id="chips"></span>
+  </div>
+</header>
+<main id="main"></main>
+<div class="vacio" id="vacio">Sin resultados para esa búsqueda.</div>
+
+<script>
+const DOCS = [
+  // [categoría, archivo, descripción]
+  ["Capacitación (paquete nuevo)", "manuales-roles/index.html", "Portal de documentación del paquete de roles"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/MANUAL_ROLES_SISTEMA_COMPLETO.md", "Manual maestro: 11 roles, matriz de acceso, flujo end-to-end"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/GUIA_PRIMEROS_PASOS.md", "Onboarding del día 1"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/MANUAL_CONSOLA_ADMIN_LOGISTICA.md", "Las 21 pestañas de /admin-logistica"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/MANUAL_ADMINISTRACION_CLASICA.md", "Las 22 pantallas de /administracion"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/FAQ_TROUBLESHOOTING.md", "Problemas comunes y soluciones"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/GLOSARIO.md", "Términos del sistema (versión texto)"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/glosario.html", "Glosario navegable con buscador"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/cheat-sheets.html", "Tarjetas imprimibles por rol"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/diagrama-flujo.svg", "Diagrama del flujo end-to-end (estático)"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/flujo-interactivo.html", "Flujo interactivo: detalle por paso, filtros por rol, reproducción"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/roles/", "11 manuales individuales por rol"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/video-tutoriales/mp4/", "14 videos MP4 narrados"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/video-tutoriales/", "14 tutoriales HTML interactivos"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/docx/", "18 manuales en Word"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/html-manuales/", "18 manuales en HTML navegable"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/visor-docx.html", "Visor de Word en el navegador"],
+  ["Capacitación (paquete nuevo)", "manuales-roles/visor-md.html", "Visor de Markdown en el navegador"],
+
+  ["Manuales de usuario (existentes)", "MANUAL_USUARIO_LOGISTICA.docx", "Manual de usuario general"],
+  ["Manuales de usuario (existentes)", "MANUAL_FUNCIONAMIENTO_APP_LOGISTICA.md", "Funcionamiento general de la app"],
+  ["Manuales de usuario (existentes)", "MANUAL_CARGA_MASIVA_USUARIOS.docx", "Carga masiva de usuarios (también .pdf)"],
+  ["Manuales de usuario (existentes)", "GUIA_USO_APROBACIONES_POR_AREA.md", "Guía de aprobaciones por área"],
+  ["Manuales de usuario (existentes)", "GUIA_CONFIGURACION_USUARIOS_APROBACIONES.docx", "Configurar usuarios aprobadores (también .pdf)"],
+  ["Manuales de usuario (existentes)", "MODAL_ADJUNTOS_GUIA_USO.md", "Guía del modal de adjuntos"],
+  ["Manuales de usuario (existentes)", "capturas_manual/", "53 capturas de pantalla del sistema"],
+
+  ["Flujos y procesos", "FLUJO_COMPLETO_APP_LOGISTICA.md", "Flujo completo de la app"],
+  ["Flujos y procesos", "FLUJO_COMPLETO_LOGISTICA.docx", "Flujo completo (Word; también .md)"],
+  ["Flujos y procesos", "FLUJO_APROBACIONES_POR_AREA.md", "Flujo de aprobaciones por área"],
+  ["Flujos y procesos", "APROBACIONES_POR_AREA_IMPLEMENTACION.md", "Implementación de aprobaciones por área (+ _ADAPTADO)"],
+  ["Flujos y procesos", "PROPUESTA_FLUJO_APROBACION_GERENCIA.md", "Propuesta de aprobación de gerencia"],
+  ["Flujos y procesos", "FLUJO_ESTADOS_COTIZACIONES.md", "Estados del flujo de cotizaciones"],
+  ["Flujos y procesos", "ANALISIS_PROBLEMA_COTIZACIONES.md", "Análisis del problema de cotizaciones"],
+  ["Flujos y procesos", "SOLUCION_COTIZACIONES_IMPLEMENTADA.md", "Solución implementada de cotizaciones"],
+  ["Flujos y procesos", "ANALISIS_FLUJO_MONEDA_COMPLETO.md", "Análisis del flujo de moneda"],
+  ["Flujos y procesos", "FLUJO_ADJUNTOS_SOLICITUD_COMPRA.md", "Flujo de adjuntos en SC"],
+  ["Flujos y procesos", "PROCESO_APLICACION_LOGISTICA.docx", "Proceso de la aplicación"],
+
+  ["Técnica — backend y BD", "DOCUMENTACION_BASE_DE_DATOS.docx", "Documentación de la base de datos"],
+  ["Técnica — backend y BD", "DOCUMENTACION_MODELO_ER_COMPLETO.docx", "Modelo ER completo"],
+  ["Técnica — backend y BD", "DOCUMENTACION_DIAGRAMA_BD_DETALLE.docx", "Diagrama de BD en detalle"],
+  ["Técnica — backend y BD", "DOCUMENTACION_BD_CASOS_USO_FLUJOS.docx", "BD, casos de uso y flujos"],
+  ["Técnica — backend y BD", "DOCUMENTACION_ENDPOINTS_API.docx", "Endpoints del API"],
+  ["Técnica — backend y BD", "DOCUMENTACION_SPS_JSON.docx", "Stored procedures y JSON"],
+  ["Técnica — backend y BD", "ENDPOINTS_Y_STORED_PROCEDURES.xlsx", "Matriz endpoints ↔ SPs"],
+  ["Técnica — backend y BD", "DOCUMENTACION_CASOS_DE_USO.docx", "Casos de uso"],
+  ["Técnica — backend y BD", "DOCUMENTACION_FLUJOS_PROCESO.docx", "Flujos de proceso"],
+
+  ["Técnica — frontend", "DOCUMENTACION_FRONTEND_LOGISTICA.md", "Documentación del frontend"],
+  ["Técnica — frontend", "DOCUMENTACION_TECNICA_FRONTEND_LOGISTICA.docx", "Doc. técnica frontend"],
+  ["Técnica — frontend", "MAPA_MODULOS_FRONTEND_LOGISTICA.md", "Mapa de módulos, rutas y servicios"],
+  ["Técnica — frontend", "FRONTEND.md", "Notas del frontend"],
+  ["Técnica — frontend", "ESTANDAR-COLORES.md", "Estándar de colores (+ preview-estandar-tabs.html)"],
+
+  ["Implementaciones", "../IMPLEMENTACION_DESPACHOS.md", "Implementación del módulo de despachos (raíz)"],
+  ["Implementaciones", "../IMPLEMENTACION_FRONTEND_ADMIN.md", "Implementación del frontend admin (raíz)"],
+  ["Implementaciones", "IMPLEMENTACION_KARDEX.md", "Implementación del kardex"],
+  ["Implementaciones", "KARDEX_IMPLEMENTACION_COMPLETA.md", "Kardex completo"],
+  ["Implementaciones", "IMPLEMENTACION_ADJUNTOS_SOLICITUD_COMPRA.md", "Adjuntos en solicitud de compra"],
+  ["Implementaciones", "IMPLEMENTACION_ADJUNTOS_SOLICITUD_SERVICIO.md", "Adjuntos en solicitud de servicio"],
+
+  ["Configuración de menús y roles", "NOMENCLATURA_CONFIG_MENU.md", "Claves MENU_*, LAYOUT_*, ITEMS_VISIBLES"],
+  ["Configuración de menús y roles", "CONFIG_MENU_POR_TIPO.md", "Configuración por tipo de menú"],
+  ["Configuración de menús y roles", "CONFIG_MENU_TODOS_LOS_ROLES.sql", "Script: menú completo para los 10 roles"],
+  ["Configuración de menús y roles", "CONFIG_MENU_ROLES_PERSONALIZADO.sql", "Script: menús personalizados"],
+  ["Configuración de menús y roles", "FIX_MENU_ALLOGIST.sql", "Fix del menú de ALLOGIST"],
+  ["Configuración de menús y roles", "INFORME_MENU_LIST_ALLOGIST.md", "Informe del menú lista de ALLOGIST"],
+  ["Configuración de menús y roles", "INFORME_LAYOUT_DINAMICO_VS_HARDCODEADO.md", "Layout dinámico vs hardcodeado (JLOLOGIST)"],
+
+  ["Versiones y despliegue", "GUIA_TECNICA_INSTALACION_DESPLIEGUE.md", "Instalación y despliegue"],
+  ["Versiones y despliegue", "SISTEMA_CONTROL_VERSIONES_COMPLETO.md", "Sistema de control de versiones"],
+  ["Versiones y despliegue", "ARCHIVOS_CONTROL_VERSIONES.md", "Archivos del control de versiones"],
+  ["Versiones y despliegue", "deploy-versioning-usage.md", "Uso del versionado en deploy"],
+  ["Versiones y despliegue", "deployment-version-api.md", "Versión de API en despliegue"],
+
+  ["Gestión del proyecto", "ACTA_INICIO_PROYECTO_LOGISTICA.docx", "Acta de inicio"],
+  ["Gestión del proyecto", "ACTA_CIERRE_PROYECTO_LOGISTICA.docx", "Acta de cierre"],
+  ["Gestión del proyecto", "ESTADO_PROYECTO_COMPLETO.md", "Estado del proyecto"],
+  ["Gestión del proyecto", "CUADRO_MODULOS_ACTUALIZADO.md", "Cuadro de módulos"],
+  ["Gestión del proyecto", "CUADRO_MODULOS_COMPLETITUD.md", "Completitud de módulos"],
+  ["Gestión del proyecto", "../INFORME_SISTEMA_LOGISTICA_SOPORTE_TI.docx", "Informe soporte TI (raíz)"],
+  ["Gestión del proyecto", "FORMATO_TECNICO_CONFIGURACION_LOGISTICA.xlsx", "Formato técnico de configuración"],
+  ["Gestión del proyecto", "FORMATO_USUARIO_LEVANTAMIENTO_LOGISTICA.xlsx", "Formato de levantamiento de usuarios"],
+];
+
+const cats = [...new Set(DOCS.map(d => d[0]))];
+const main = document.getElementById('main');
+const chipsBox = document.getElementById('chips');
+let catActiva = null;
+
+chipsBox.innerHTML = cats.map(c => `<span class="chip" onclick="filtrarCat('${c}')">${c}</span>`).join('');
+
+function render() {
+  const q = document.getElementById('q').value.toLowerCase();
+  main.innerHTML = '';
+  let total = 0;
+  for (const cat of cats) {
+    if (catActiva && cat !== catActiva) continue;
+    const items = DOCS.filter(d => d[0] === cat &&
+      (d[1] + ' ' + d[2]).toLowerCase().includes(q));
+    if (!items.length) continue;
+    total += items.length;
+    const ext = f => (f.match(/\.(\w+)$/)?.[1] || 'dir').toUpperCase();
+    const link = f => {
+      const p = f.startsWith('manuales-roles/') ? f.slice(15) : '../' + f;
+      if (/\.docx$/i.test(f)) return 'visor-docx.html?doc=' + encodeURIComponent(p);
+      if (/\.md$/i.test(f))   return 'visor-md.html?doc=' + encodeURIComponent(p);
+      return p;
+    };
+    main.innerHTML += `<div class="cat"><h2>${cat} <span class="n">(${items.length})</span></h2>
+      <div class="grid">${items.map(d =>
+        `<a class="doc" href="${link(d[1])}"><span class="ext">${ext(d[1])}</span><b>${d[1].split('/').pop()}</b><small>${d[2]}</small></a>`
+      ).join('')}</div></div>`;
+  }
+  document.getElementById('vacio').style.display = total ? 'none' : 'block';
+}
+function filtrarCat(c) {
+  catActiva = catActiva === c ? null : c;
+  document.querySelectorAll('.chip').forEach(ch =>
+    ch.classList.toggle('on', ch.textContent === catActiva));
+  render();
+}
+document.getElementById('q').addEventListener('input', render);
+render();
+</script>
+</body>
+</html>

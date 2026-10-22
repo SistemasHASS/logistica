@@ -41,6 +41,10 @@
           <span class="user-role">{{ user()?.rol }}</span>
         </div>
       </div>
+      <a class="logout-btn help-btn" [href]="urlAyuda" target="_blank" rel="noopener noreferrer">
+        <i class="bx bx-help-circle"></i>
+        <span *ngIf="!sidebarCollapsed()">Ayuda</span>
+      </a>
       <button class="logout-btn" (click)="logout()">
         <i class="bx bx-log-out"></i>
         <span *ngIf="!sidebarCollapsed()">Cerrar Sesión</span>

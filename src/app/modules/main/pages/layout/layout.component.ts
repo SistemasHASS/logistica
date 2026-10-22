@@ -249,6 +249,14 @@ export class LayoutComponent {
     }
   }
 
+  // Portal de documentación. Link real (href + target=_blank): no depende de
+  // window.open ni del bloqueador de popups. Filtrado por el rol logueado.
+  get urlAyuda(): string {
+    const rol = (this.usuario?.idrol ?? '').split(',')[0].trim();
+    const base = `${environment.docsUrl}/docs/manuales-roles/portal-usuario.html`;
+    return rol ? `${base}?rol=${encodeURIComponent(rol)}&solo=1` : base;
+  }
+
   async logout() {
     Swal.fire({
       title: '¿Estás seguro?',
@@ -568,7 +576,7 @@ export class LayoutComponent {
 
       'reporte-despachos': 'Reporte de Despachos',
 
-      'dashboard-oplogist': 'Mis Requeimientos',
+      'dashboard-oplogist': 'Mis Requerimientos',
 
       'catalogo-items': 'Lista de Items',
 

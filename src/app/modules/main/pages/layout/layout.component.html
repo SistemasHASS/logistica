@@ -55,6 +55,9 @@
           </app-dynamic-menu>
 
           <div class="unlimited-access hide-menu position-relative mb-7 text-center">
+            <a [href]="urlAyuda" target="_blank" rel="noopener noreferrer" class="btn btn-primary mb-2">
+              <span class="d-md-block hide-menu"><i class="bx bx-help-circle mr-2"></i> Ayuda</span>
+            </a>
             <a *ngIf="isOnline" (click)="logout()" class="btn btn-danger">
               <span class="d-md-block hide-menu"><i class="icon icon-exit3 mr-2"></i> Cerrar sesion</span>
             </a>
@@ -709,6 +712,8 @@
           </li>
         </ul>
         <div class="unlimited-access hide-menu position-relative mb-7 text-center ">
+          <a [href]="urlAyuda" target="_blank" rel="noopener noreferrer" class="btn btn-primary mb-2">
+            <span class="d-md-block hide-menu"><i class="bx bx-help-circle mr-2"></i> Ayuda</span></a>
           <a *ngIf="isOnline" (click)="logout()" class="btn btn-danger">
             <span class="d-md-block hide-menu"><i class="icon icon-exit3 mr-2"></i> Cerrar sesion</span></a>
           <p *ngIf="!isOnline" class="text-danger">Modo offline..</p>

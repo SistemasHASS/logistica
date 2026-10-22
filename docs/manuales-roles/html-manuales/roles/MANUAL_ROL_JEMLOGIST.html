@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MANUAL ROL JEMLOGIST — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<style>
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
+  nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+            padding:12px 24px; background:#0f172a; border-bottom:1px solid #1e293b; }
+  nav.top a.volver { color:#60a5fa; text-decoration:none; font-size:14px; white-space:nowrap; }
+  nav.top a.volver:hover { text-decoration:underline; }
+  nav.top .t { font-size:15px; font-weight:600; color:#e2e8f0; flex:1; min-width:200px;
+               overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  nav.top a.btn { font-size:12px; color:#cbd5e1; text-decoration:none; background:#1e293b;
+                  border:1px solid #334155; border-radius:6px; padding:6px 12px; white-space:nowrap; }
+  nav.top a.btn:hover { border-color:#60a5fa; color:#93c5fd; }
+  article { max-width:900px; margin:0 auto; padding:32px 24px 60px; background:#fff; min-height:100vh; }
+  h1,h2,h3,h4 { margin:1.4em 0 .5em; line-height:1.3; color:#0f172a; }
+  h1 { font-size:26px; border-bottom:2px solid #e2e8f0; padding-bottom:8px; }
+  h2 { font-size:21px; border-bottom:1px solid #e2e8f0; padding-bottom:6px; }
+  h3 { font-size:17px; }
+  p, li { line-height:1.65; font-size:15px; }
+  ul, ol { padding-left:26px; margin:.6em 0; }
+  a { color:#2563eb; }
+  code { background:#f1f5f9; border-radius:4px; padding:1px 6px; font-size:13px; color:#be185d; }
+  pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow:auto; margin:.8em 0; }
+  pre code { background:none; color:inherit; padding:0; }
+  table { border-collapse:collapse; margin:.9em 0; width:100%; font-size:14px; }
+  th, td { border:1px solid #cbd5e1; padding:7px 10px; text-align:left; }
+  th { background:#f1f5f9; }
+  tr:nth-child(even) td { background:#f8fafc; }
+  img { max-width:100%; border:1px solid #e2e8f0; border-radius:6px; margin:.6em 0; }
+  blockquote { border-left:4px solid #cbd5e1; padding:4px 16px; color:#475569; margin:.8em 0; }
+  hr { border:none; border-top:1px solid #e2e8f0; margin:1.6em 0; }
+  @media (max-width:700px) {
+    nav.top { padding:10px 12px; gap:8px; }
+    nav.top .t { font-size:13px; min-width:120px; }
+    article { padding:22px 14px 50px; }
+    table { display:block; overflow-x:auto; }
+    pre { font-size:12px; }
+  }
+</style>
+<script src="../../solo-rol.js"></script>
+</head>
+<body>
+<nav class="top">
+  <a class="volver" href="../../index.html">&#8592; Portal</a>
+  <span class="t">MANUAL ROL JEMLOGIST</span>
+  <a class="btn" href="../../visor-docx.html?doc=docx/MANUAL_ROL_JEMLOGIST.docx">Ver Word</a><a class="btn" href="../../docx/MANUAL_ROL_JEMLOGIST.docx">&#11015; .docx</a>
+  <a class="btn" href="../../roles/MANUAL_ROL_JEMLOGIST.md">Fuente .md</a>
+</nav>
+<article>
+<h1 id="manual-de-usuario--jefe-licitaciones-jemlogist">Manual de Usuario — Jefe Licitaciones (JEMLOGIST)</h1>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Campo</th>
+
+<th>Valor</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Código de rol</td>
+
+<td><code>JEMLOGIST</code></td>
+
+</tr>
+
+<tr>
+
+<td>Nombre</td>
+
+<td>Jefe de Licitaciones / Empaque</td>
+
+</tr>
+
+<tr>
+
+<td>Pantalla inicial</td>
+
+<td>Dashboard Jef. Licitaciones (<code>/main/dashboard-jemlogist</code>)</td>
+
+</tr>
+
+<tr>
+
+<td>Video tutorial</td>
+
+<td><a href="../../video-tutoriales/VIDEO_TUTORIAL_JEMLOGIST.html">../video-tutoriales/VIDEO_TUTORIAL_JEMLOGIST.html</a></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<hr />
+
+<h2 id="1-quién-eres">1. ¿Quién eres?</h2>
+
+<p>Eres la <strong>jefatura del área de licitaciones/empaque</strong>. Tu función principal es <strong>aprobar órdenes de compra y de servicio</strong> dentro del flujo, supervisar el dashboard operativo y dar conformidad de servicios.</p>
+
+<h2 id="2-acceso">2. Acceso</h2>
+
+<p>Login → <strong>Dashboard Jef. Licitaciones</strong>: indicadores de OC/OS pendientes de tu aprobación, montos y estado de licitaciones.</p>
+
+<p><img src="../../../capturas_manual/52_dashboard_jemlogist.png" alt="Dashboard jemlogist" /></p>
+
+<h2 id="3-pantallas-disponibles">3. Pantallas disponibles</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Pantalla</th>
+
+<th>Qué haces</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Dashboard Jef. Licitaciones</td>
+
+<td>Tu panel de control</td>
+
+</tr>
+
+<tr>
+
+<td>Dashboard Operativo</td>
+
+<td>Estado de requerimientos operativos</td>
+
+</tr>
+
+<tr>
+
+<td>Dashboard Finanzas</td>
+
+<td>Visión financiera de órdenes</td>
+
+</tr>
+
+<tr>
+
+<td>Aprobación OC</td>
+
+<td>Aprobar/rechazar órdenes de compra</td>
+
+</tr>
+
+<tr>
+
+<td>Aprobación OS</td>
+
+<td>Aprobar/rechazar órdenes de servicio</td>
+
+</tr>
+
+<tr>
+
+<td>Conformidad de Servicios</td>
+
+<td>Conformar servicios ejecutados</td>
+
+</tr>
+
+<tr>
+
+<td>Devoluciones de Consumo</td>
+
+<td>Revisión de devoluciones</td>
+
+</tr>
+
+<tr>
+
+<td>Reporte Requerimientos / Logístico / Catálogo</td>
+
+<td>Consultas abiertas</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="4-procedimientos-frecuentes">4. Procedimientos frecuentes</h2>
+
+<h3 id="aprobar-una-orden-de-compra">Aprobar una Orden de Compra</h3>
+
+<ol type="1">
+
+<li>Menú → <strong>Aprobaciones → Aprobación OC</strong>.</li>
+
+<li>Lista de OC pendientes → abre la orden.</li>
+
+<li>Revisa proveedor, líneas, montos y adjuntos (cotizaciones, PDF).</li>
+
+<li><strong>Aprobar</strong> (avanza en el flujo) o <strong>Rechazar</strong> (con motivo → vuelve a logística).</li>
+
+</ol>
+
+<p><img src="../../../capturas_manual/18_aprobaciones_oc.png" alt="Aprobación OC" /></p>
+
+<h3 id="aprobar-una-orden-de-servicio">Aprobar una Orden de Servicio</h3>
+
+<p>Mismo flujo en <strong>Aprobación OS</strong>, revisando el detalle del servicio y la solicitud origen.</p>
+
+<h3 id="conformidad-de-servicio-ejecutado">Conformidad de servicio ejecutado</h3>
+
+<ol type="1">
+
+<li><strong>Conformidad de Servicios</strong> → selecciona la OS ejecutada.</li>
+
+<li>Registra la conformidad (cantidades/fechas) → queda lista para cierre.</li>
+
+</ol>
+
+<h2 id="5-restricciones">5. Restricciones</h2>
+
+<ul>
+
+<li>No creas requerimientos ni gestionas compras/cotizaciones (eso es LOLOGIST).</li>
+
+<li>No accedes a almacén, aprobaciones por área ni administración.</li>
+
+</ul>
+
+<h2 id="6-problemas-comunes">6. Problemas comunes</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Solución</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>No veo una OC pendiente</td>
+
+<td>Verifica que LOLOGIST la haya enviado a aprobación y que el flujo te incluya</td>
+
+</tr>
+
+<tr>
+
+<td>Rechacé por error</td>
+
+<td>Contacta a ADLOGIST/TILOGIST para revisar el estado y reenviar</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+
+</article>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Centro de Ayuda del Usuario — Sistema Logística</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+  * { box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#e2e8f0; margin:0; padding:0; }
+  .hero { background:linear-gradient(135deg,#1e293b,#0f172a); border-bottom:3px solid #3b82f6;
+          padding:36px 20px 28px; text-align:center; }
+  .hero .logo { width:56px; height:56px; margin-bottom:10px; }
+  .hero h1 { margin:0 0 6px; font-size:30px; }
+  .hero p { color:#94a3b8; margin:0 auto; max-width:640px; }
+  .wrap { max-width:1150px; margin:0 auto; padding:28px 20px 60px; }
+  h2.sec { font-size:19px; margin:30px 0 6px; }
+  h2.sec small { color:#64748b; font-weight:400; font-size:13px; margin-left:8px; }
+  .sub { color:#94a3b8; font-size:14px; margin:0 0 16px; }
+
+  /* paso 1: nuevo usuario */
+  .quick { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; }
+  .qcard { background:#16213b; border:1px solid #334155; border-left:4px solid #3b82f6;
+           border-radius:10px; padding:16px 18px; text-decoration:none; color:#e2e8f0; display:block; }
+  .qcard:hover { background:#1e293b; }
+  .qcard b { display:block; margin-bottom:4px; }
+  .qcard small { color:#94a3b8; }
+
+  /* paso 2: roles */
+  .grid-roles { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; }
+  .rol { background:#1e293b; border:1px solid #334155; border-top:4px solid #fff;
+         border-radius:10px; padding:16px; cursor:pointer; text-align:left; transition:.15s;
+         color:#e2e8f0; font-family:inherit; }
+  .rol:hover { background:#263349; transform:translateY(-2px); }
+  .rol.sel { outline:2px solid #fff; }
+  .rol .code { display:inline-block; color:#fff; font-size:10px; font-weight:700;
+               padding:2px 8px; border-radius:4px; letter-spacing:1px; margin-bottom:8px; }
+  .rol b { display:block; font-size:15px; }
+  .rol small { color:#94a3b8; }
+
+  /* panel detalle */
+  .detalle { display:none; margin-top:18px; background:#16213b; border:1px solid #334155;
+             border-radius:12px; padding:22px 24px; }
+  .detalle.on { display:block; }
+  .detalle .dh { display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+  .detalle .dh .code { font-size:11px; font-weight:700; padding:3px 10px; border-radius:5px; color:#fff; }
+  .detalle .dh h3 { margin:0; font-size:20px; }
+  .cols { display:grid; grid-template-columns:1.2fr .8fr; gap:18px; }
+  .box { background:#0f172a; border-radius:8px; padding:14px 16px; margin-bottom:12px; }
+  .box h4 { margin:0 0 8px; font-size:11px; letter-spacing:1px; color:#94a3b8; text-transform:uppercase; }
+  .box ul { margin:0; padding-left:18px; font-size:14px; }
+  .box li { margin:5px 0; }
+  .tag { display:inline-block; background:#1e293b; border:1px solid #334155; border-radius:4px;
+         padding:2px 8px; font-size:12px; margin:2px 4px 2px 0; }
+  .recursos a { display:flex; align-items:center; gap:10px; background:#1e293b; border:1px solid #334155;
+                border-radius:8px; padding:11px 14px; margin-bottom:8px; color:#e2e8f0;
+                text-decoration:none; font-size:14px; }
+  .recursos a:hover { background:#263349; border-color:#475569; }
+  .recursos a span.ico { font-size:17px; }
+  .recursos a small { margin-left:auto; color:#64748b; }
+
+  /* paso 3: ayuda */
+  .footer { text-align:center; color:#475569; font-size:12px; margin-top:40px; }
+  .footer a { color:#60a5fa; text-decoration:none; }
+
+  @media (max-width:700px) {
+    .hero h1 { font-size:22px; } .hero { padding:26px 14px 20px; }
+    .wrap { padding:20px 14px 40px; }
+    .grid-roles { grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:10px; }
+    .rol { padding:12px; } .rol b { font-size:13px; }
+    .cols { grid-template-columns:1fr; }
+    .detalle { padding:16px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <img class="logo" src="favicon.svg" alt="Sistema Logística">
+  <h1>Centro de Ayuda del Usuario</h1>
+  <p>Sistema Logística — Aprende a usar el sistema según tu rol. Selecciona tu puesto abajo y encontrarás tu video tutorial, manual y tarjeta rápida.</p>
+</header>
+
+<div class="wrap">
+
+  <h2 class="sec">1. ¿Primera vez en el sistema? <small>empieza por aquí</small></h2>
+  <div class="quick">
+    <a class="qcard" href="visor-md.html?doc=GUIA_PRIMEROS_PASOS.md"><b>📋 Guía de Primeros Pasos</b><small>Del alta de usuario a tu primera tarea — día 1</small></a>
+    <a class="qcard" href="video-tutoriales/VIDEO_TUTORIAL_GENERAL.html"><b>🎬 Video: Introducción</b><small>Login, menú, notificaciones y modo offline (~7 min)</small></a>
+    <a class="qcard" href="flujo-interactivo.html"><b>🔀 Flujo del proceso</b><small>Cómo viaja un requerimiento de rol en rol</small></a>
+    <a class="qcard" href="glosario.html"><b>📖 Glosario</b><small>Qué significa Req., SC, OC, kardex, conformidad…</small></a>
+  </div>
+
+  <h2 class="sec" id="secRoles">2. Selecciona tu rol</h2>
+  <p class="sub" id="subRoles">Si no sabes tu código de rol, es el que aparece en tu usuario (p.ej. OPLOGIST, APLOGIST). Pregunta a tu jefe o a TI.</p>
+  <div class="grid-roles" id="roles"></div>
+  <div class="detalle" id="detalle"></div>
+
+  <h2 class="sec">3. ¿Problemas o dudas?</h2>
+  <div class="quick" id="secAyuda">
+    <a class="qcard" href="visor-md.html?doc=FAQ_TROUBLESHOOTING.md"><b>🛠 Preguntas frecuentes</b><small>No veo el menú, sesión bloqueada, errores comunes</small></a>
+    <a class="qcard" id="cardCheat" href="cheat-sheets.html"><b>🖨 Cheat sheets</b><small>Tarjetas de una página por rol — imprimibles</small></a>
+    <a class="qcard" id="cardDocsFull" href="index.html"><b>📚 Documentación completa</b><small>Manuales técnicos, anexo y consolas admin</small></a>
+  </div>
+
+  <p class="footer">Sistema Logística · Centro de Ayuda del Usuario · ¿Falta algo? Reporta a <a href="index.html">Soporte TI</a></p>
+</div>
+
+<script>
+const ROLES = [
+  {id:'OPLOGIST',   nombre:'Operativo de Campo',           color:'#16a34a', pant:'Mis Requerimientos',
+   tareas:['Sincronizar maestras en Parámetros (obligatorio al entrar)','Crear requerimientos (ítems, commodities, activos)','Conformar recepción del material recibido','Devolver material no usado'],
+   nop:['Todo lo demás — solo creas y conformas requerimientos'], esc:'Tu jefe de área (APLOGIST)', dur:'~7 min'},
+  {id:'EMLOGIST',   nombre:'Operador Licitaciones',        color:'#0891b2', pant:'Dashboard Operativo',
+   tareas:['Sincronizar primero en Parámetros','Crear requerimientos de empaque/licitaciones','Conformar despachos y servicios','Devoluciones y reingresos'],
+   nop:['Compras','Aprobaciones','Almacén'], esc:'JLOLOGIST', dur:'~7 min'},
+  {id:'APLOGIST',   nombre:'Aprobador / Jefe de Área',     color:'#9333ea', pant:'Dashboard Aprobaciones por Área',
+   tareas:['Aprobar o rechazar requerimientos de tu(s) área(s)','Aprobar reingresos de material','Revisar reportes de tu gestión'],
+   nop:['Crear requerimientos','Compras','Almacén'], esc:'JLOLOGIST / ADLOGIST', dur:'~6 min'},
+  {id:'ALLOGIST',   nombre:'Almacén',                      color:'#ca8a04', pant:'Gestión de Despachos',
+   tareas:['Despachar y recepcionar mercadería','Kardex, inventario, listas de stock','Transferencias entre almacenes','Aprobar devoluciones de consumo y evaluar proveedores'],
+   nop:['Compras / OC','Aprobaciones por área','Administración'], esc:'LOLOGIST / JLOLOGIST', dur:'~9 min'},
+  {id:'LOLOGIST',   nombre:'Operador Logística',           color:'#2563eb', pant:'Dashboard Logística',
+   tareas:['Consolidar líneas aprobadas → SC → cotización → OC/OS','Recepcionar, despachar, kardex, transferencias','Devoluciones y evaluación de proveedores'],
+   nop:['Aprobar nada','Usuarios / configuración'], esc:'JLOLOGIST', dur:'~10 min'},
+  {id:'JLOLOGIST',  nombre:'Jefe de Logística',            color:'#7c3aed', pant:'Dashboard Logística (menú propio)',
+   tareas:['Aprobar requerimientos por área','Supervisar consolidación, cotizaciones y OC/OS','Aprobar OC/OS','Crear usuarios operativos en la consola'],
+   nop:['Almacén físico','Reingresos','Configuración del sistema'], esc:'ADLOGIST', dur:'~9 min'},
+  {id:'JEMLOGIST',  nombre:'Jefe de Licitaciones',         color:'#0d9488', pant:'Dashboard Jef. Licitaciones',
+   tareas:['Aprobar o rechazar OC y OS','Conformidad de servicios','Supervisar dashboard operativo y finanzas'],
+   nop:['Crear requerimientos','Compras','Almacén'], esc:'JLOLOGIST / ADLOGIST', dur:'~6 min'},
+  {id:'ADLOGIST',   nombre:'Administrador Logística',      color:'#ea580c', pant:'Dashboard Admin Logística',
+   tareas:['Configurar usuarios (menos TILOGIST), áreas y flujos','Aprobar requerimientos, OC y OS','Operar compras y conformidades si hace falta'],
+   nop:['Despachos / Kardex','Crear usuarios TILOGIST'], esc:'TILOGIST', dur:'~8 min'},
+  {id:'FINANZAS',   nombre:'Finanzas',                     color:'#475569', pant:'Dashboard Finanzas',
+   tareas:['Aprobar o rechazar OC (control presupuestal)','Aprobar o rechazar OS','Consultar reportes abiertos'],
+   nop:['Todo lo operativo'], esc:'Gerencia / JLOLOGIST', dur:'~5 min'},
+  {id:'GERENTE',    nombre:'Gerente',                      color:'#b91c1c', pant:'Dashboard + aprobaciones',
+   tareas:['Aprobación de alto nivel: OC y OS','Supervisar Dashboard Finanzas'],
+   nop:['Todo lo operativo'], esc:'Soporte TI', dur:'~5 min',
+   nota:'Si entras y no ves menú, pide a TI que configure el menú del rol GERENTE.'},
+  {id:'TILOGIST',   nombre:'Admin Sistema (TI)',           color:'#dc2626', pant:'Dashboard Admin Sistema',
+   tareas:['Crear usuarios de cualquier rol (único que crea TILOGIST)','Consola /admin-logistica: permisos, áreas, flujos, auditoría','/administracion: correo SMTP, plantillas, branding, menús'],
+   nop:['Aprobaciones por área','Reingresos','Pantallas de almacén físico'], esc:'Soporte TI interno', dur:'~8 min'},
+];
+
+const rolesEl = document.getElementById('roles');
+const detEl   = document.getElementById('detalle');
+
+ROLES.forEach(r => {
+  const b = document.createElement('button');
+  b.className = 'rol'; b.style.borderTopColor = r.color; b.dataset.id = r.id;
+  b.innerHTML = `<span class="code" style="background:${r.color}">${r.id}</span><b>${r.nombre}</b><small>Ver mi guía →</small>`;
+  b.onclick = () => sel(r.id);
+  rolesEl.appendChild(b);
+});
+
+function sel(id){
+  const r = ROLES.find(x => x.id === id);
+  document.querySelectorAll('.rol').forEach(x => x.classList.toggle('sel', x.dataset.id === id));
+  const nops = r.nop.map(n => `<span class="tag">${n}</span>`).join('');
+  detEl.innerHTML = `
+    <div class="dh"><span class="code" style="background:${r.color}">${r.id}</span><h3>${r.nombre}</h3></div>
+    <div class="cols">
+      <div>
+        <div class="box"><h4>Entras a</h4>${r.pant}</div>
+        <div class="box"><h4>Tus tareas principales</h4><ul>${r.tareas.map(t=>`<li>${t}</li>`).join('')}</ul></div>
+        <div class="box"><h4>No puedes</h4>${nops}</div>
+        <div class="box"><h4>Si algo no funciona, escala a</h4>${r.esc}</div>
+        ${r.nota ? `<div class="box" style="border-left:3px solid #f59e0b"><h4>Nota</h4>${r.nota}</div>` : ''}
+      </div>
+      <div class="recursos">
+        <h4 style="margin:0 0 10px;font-size:11px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase">Tu material de aprendizaje</h4>
+        <a href="video-tutoriales/VIDEO_TUTORIAL_${r.id}.html"><span class="ico">▶️</span>Tutorial interactivo<small>paso a paso</small></a>
+        <a href="video-tutoriales/mp4/VIDEO_TUTORIAL_${r.id}.mp4"><span class="ico">🎬</span>Video narrado<small>${r.dur}</small></a>
+        <a href="html-manuales/roles/MANUAL_ROL_${r.id}.html"><span class="ico">📄</span>Manual de tu rol<small>web</small></a>
+        <a href="docx/MANUAL_ROL_${r.id}.docx"><span class="ico">⬇️</span>Manual en Word<small>descargar</small></a>
+        <a href="cheat-sheets.html${solo ? '?rol=' + r.id : ''}"><span class="ico">🖨</span>Tarjeta rápida<small>imprimible</small></a>
+      </div>
+    </div>`;
+  detEl.classList.add('on');
+  detEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+// Selección por URL:
+//   portal-usuario.html#OPLOGIST           -> preselecciona el rol (se puede cambiar)
+//   portal-usuario.html?rol=OPLOGIST       -> igual por query (acepta lista "A,B")
+//   portal-usuario.html?rol=OPLOGIST&solo=1-> modo "solo mi rol": oculta el selector
+const qs = new URLSearchParams(location.search);
+const qsRol = (qs.get('rol') || '').split(/[,\s]+/).find(x => ROLES.some(r => r.id === x));
+const solo = qs.get('solo') === '1';
+
+if (solo && qsRol) {
+  // propagar el modo "solo mi rol" a todas las páginas internas (sessionStorage)
+  try { sessionStorage.setItem('docSoloRol', qsRol); } catch (e) {}
+  document.getElementById('secRoles').style.display = 'none';
+  document.getElementById('subRoles').style.display = 'none';
+  document.getElementById('roles').style.display = 'none';
+  // En modo "solo mi rol" se quita la salida a la documentación técnica completa
+  document.getElementById('cardDocsFull').remove();
+  // y la tarjeta rápida se limita al rol del usuario
+  document.getElementById('cardCheat').href = `cheat-sheets.html?rol=${qsRol}`;
+  const r = ROLES.find(x => x.id === qsRol);
+  document.querySelector('.hero p').textContent =
+    `Guía de uso del sistema para tu rol: ${r.nombre} (${r.id}).`;
+  sel(qsRol);
+} else {
+  // fuera del modo solo no debe persistir el flag
+  try { sessionStorage.removeItem('docSoloRol'); } catch (e) {}
+  if (qsRol) sel(qsRol);
+  // rol por hash (también reacciona si el hash cambia sin recargar)
+  function hashRol(){
+    const h = location.hash.slice(1);
+    if (h && ROLES.some(r => r.id === h)) sel(h);
+  }
+  hashRol();
+  window.addEventListener('hashchange', hashRol);
+}
+</script>
+</body>
+</html>

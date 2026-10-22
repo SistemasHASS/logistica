@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Tutorial — Admin Sistema (TILOGIST)</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<style>
+  :root {
+    --accent: #dc2626;
+    --bg: #0f172a; --panel: #1e293b; --panel2: #16213b;
+    --text: #e2e8f0; --muted: #94a3b8; --border: #334155;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text);
+         display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+  header { background:var(--panel); border-bottom:2px solid var(--accent);
+           padding:12px 24px; display:flex; align-items:center; gap:16px; }
+  .badge { background:var(--accent); color:#fff; font-weight:700; padding:4px 12px;
+           border-radius:6px; font-size:13px; letter-spacing:1px; }
+  header h1 { font-size:18px; font-weight:600; }
+  header .duracion { margin-left:auto; color:var(--muted); font-size:13px; }
+  main { flex:1; display:flex; overflow:hidden; }
+  .slide { flex:1; display:none; flex-direction:column; padding:32px 48px; overflow-y:auto; }
+  .slide.active { display:flex; }
+  .escena { color:var(--accent); font-size:12px; font-weight:700; letter-spacing:2px;
+            text-transform:uppercase; margin-bottom:8px; }
+  .slide h2 { font-size:30px; margin-bottom:20px; }
+  .contenido { display:flex; gap:32px; flex:1; }
+  .col-izq { flex:1.1; display:flex; flex-direction:column; gap:16px; }
+  .col-der { flex:1; display:flex; align-items:flex-start; justify-content:center; }
+  .locucion { background:var(--panel2); border-left:4px solid var(--accent);
+              padding:16px 20px; border-radius:0 8px 8px 0; }
+  .locucion::before { content:'🎙 NARRACIÓN'; display:block; color:var(--accent);
+                       font-size:11px; font-weight:700; letter-spacing:1px; margin-bottom:8px; }
+  .locucion p { font-size:16px; line-height:1.6; font-style:italic; }
+  .pasos { background:var(--panel); border-radius:8px; padding:16px 20px; }
+  .pasos h3 { font-size:13px; color:var(--muted); letter-spacing:1px; margin-bottom:10px;
+              text-transform:uppercase; }
+  .pasos li { list-style:none; padding:8px 0 8px 30px; position:relative; font-size:15px;
+              border-bottom:1px solid var(--border); }
+  .pasos li:last-child { border-bottom:none; }
+  .pasos li::before { content:counter(step); counter-increment:step;
+      position:absolute; left:0; top:6px; width:20px; height:20px; background:var(--accent);
+      color:#fff; border-radius:50%; font-size:11px; font-weight:700;
+      display:flex; align-items:center; justify-content:center; }
+  .pasos ol { counter-reset:step; }
+  .captura { max-width:100%; max-height:420px; border-radius:10px;
+             border:2px solid var(--border); box-shadow:0 8px 30px rgba(0,0,0,.5); }
+  .captura-missing { border:2px dashed var(--border); border-radius:10px; padding:60px 30px;
+             color:var(--muted); text-align:center; font-size:14px; }
+  footer { background:var(--panel); padding:12px 24px; display:flex; align-items:center; gap:16px; }
+  .btn { background:var(--accent); color:#fff; border:none; padding:10px 22px; border-radius:6px;
+         font-size:14px; font-weight:600; cursor:pointer; }
+  .btn:hover { filter:brightness(1.15); }
+  .btn.sec { background:var(--border); }
+  .progreso-wrap { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .progreso { height:100%; background:var(--accent); width:0%; transition:width .3s; }
+  .contador { color:var(--muted); font-size:13px; min-width:80px; text-align:center; }
+  .ayuda { color:var(--muted); font-size:11px; }
+  @media (max-width:820px) {
+    header { padding:10px 12px; gap:8px; }
+    header h1 { font-size:14px; }
+    .badge { font-size:11px; padding:3px 8px; }
+    .duracion { display:none; }
+    .slide { padding:18px 14px; }
+    .slide h2 { font-size:21px; margin-bottom:12px; }
+    .contenido { flex-direction:column; gap:14px; }
+    .captura { max-height:none; }
+    footer { padding:10px 10px; gap:8px; flex-wrap:wrap; }
+    .ayuda { display:none; }
+    .contador { min-width:60px; font-size:12px; }
+    .btn { padding:8px 14px; font-size:13px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="badge">TILOGIST</span>
+  <h1>Video Tutorial — Admin Sistema</h1>
+  <span class="duracion">Duración estimada: ~8 min</span>
+</header>
+<main>
+<section class="slide">
+    <div class="escena">Escena 1</div>
+    <h2>Bienvenida</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Bienvenido al video tutorial del rol Administrador de Sistema. En esta guía aprenderás a navegar por la plataforma, administrar usuarios y usar las consolas de administración.</p></div>
+        
+      </div>
+      <div class="col-der"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 2</div>
+    <h2>Inicio de sesión</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Ingresa con tu usuario y contraseña corporativos. El sistema te llevará automáticamente al Dashboard de Admin Sistema.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Abrir la URL de la aplicación</li>
+          <li>Escribir usuario y contraseña</li>
+          <li>Clic en Ingresar</li>
+          <li>Verificar que cargue el Dashboard TI</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/01_login.png" alt="Inicio de sesión" onerror="this.outerHTML='<div class=captura-missing>Captura: 01_login.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 3</div>
+    <h2>Tu panel de inicio</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>El Dashboard Admin Sistema resume el estado de la plataforma: usuarios, empresas y accesos rápidos.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Revisar tarjetas de indicadores</li>
+          <li>Ubicar el menú lateral izquierdo</li>
+          <li>Ver el contador de notificaciones arriba a la derecha</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/02_dashboard_admin.png" alt="Tu panel de inicio" onerror="this.outerHTML='<div class=captura-missing>Captura: 02_dashboard_admin.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 4</div>
+    <h2>Consola Admin Logística</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Además de la app, tienes una consola administrativa en /admin-logistica con login propio. Ahí gestionas usuarios, permisos y configuración.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Abrir /admin-logistica/login</li>
+          <li>Iniciar sesión</li>
+          <li>Recorrer las pestañas del menú lateral de la consola</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/09_admin_logistica.png" alt="Consola Admin Logística" onerror="this.outerHTML='<div class=captura-missing>Captura: 09_admin_logistica.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 5</div>
+    <h2>Crear un usuario</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Desde la pestaña Usuarios puedes crear cuentas de cualquier rol. Eres el único que puede crear otros TILOGIST.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Consola → pestaña Usuarios</li>
+          <li>Clic en Nuevo usuario</li>
+          <li>Completar datos y asignar rol (o varios separados por coma)</li>
+          <li>Guardar</li>
+        </ol></div>
+      </div>
+      <div class="col-der"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 6</div>
+    <h2>Permisos por rol</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>En Permisos por Rol asignas o quitas las claves ADMINLG que controlan qué pestañas de la consola ve cada rol.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Consola → Permisos por Rol</li>
+          <li>Seleccionar el rol</li>
+          <li>Activar/desactivar claves</li>
+          <li>Guardar cambios</li>
+        </ol></div>
+      </div>
+      <div class="col-der"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 7</div>
+    <h2>Administración clásica</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>La administración histórica está en /administracion, protegida por un login adicional en /admin-login.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Abrir /admin-login e ingresar</li>
+          <li>Explorar: usuarios, roles, áreas, flujos, SMTP, plantillas, branding</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/10_administracion.png" alt="Administración clásica" onerror="this.outerHTML='<div class=captura-missing>Captura: 10_administracion.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 8</div>
+    <h2>Buenas prácticas</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Recuerda: los cambios de menú se aplican al recargar. Nunca compartas tu cuenta admin. Revisa Auditoría ante dudas.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Usar Auditoría para rastrear cambios</li>
+          <li>Probar cambios de menú con un rol de prueba primero</li>
+        </ol></div>
+      </div>
+      <div class="col-der"></div>
+    </div>
+  </section>
+</main>
+<footer>
+  <button class="btn sec" onclick="anterior()">◀ Anterior</button>
+  <button class="btn" onclick="siguiente()">Siguiente ▶</button>
+  <button class="btn sec" id="btnPlay" onclick="togglePlay()">▶ Reproducir</button>
+  <div class="progreso-wrap"><div class="progreso" id="prog"></div></div>
+  <span class="contador" id="contador"></span>
+  <span class="ayuda">← → navegar · Espacio: siguiente · P: reproducir</span>
+</footer>
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let actual = 0, timer = null;
+  function mostrar(i) {
+    actual = Math.max(0, Math.min(i, slides.length - 1));
+    slides.forEach((s, k) => s.classList.toggle('active', k === actual));
+    document.getElementById('prog').style.width = ((actual + 1) / slides.length * 100) + '%';
+    document.getElementById('contador').textContent = (actual + 1) + ' / ' + slides.length;
+  }
+  function siguiente() { mostrar(actual + 1); }
+  function anterior() { mostrar(actual - 1); }
+  function togglePlay() {
+    const b = document.getElementById('btnPlay');
+    if (timer) { clearInterval(timer); timer = null; b.textContent = '▶ Reproducir'; return; }
+    b.textContent = '⏸ Pausar';
+    timer = setInterval(() => {
+      if (actual >= slides.length - 1) { togglePlay(); return; }
+      siguiente();
+    }, 12000);
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); siguiente(); }
+    if (e.key === 'ArrowLeft') anterior();
+    if (e.key.toLowerCase() === 'p') togglePlay();
+  });
+  mostrar(0);
+</script>
+</body>
+</html>

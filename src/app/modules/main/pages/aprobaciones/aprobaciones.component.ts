@@ -665,6 +665,22 @@ export class AprobacionesComponent {
     console.log('🔍 DEBUG - CECO para distribución:', cecoParaDistribucion);
     console.log('🔍 DEBUG - costcenter del CECO:', cecoParaDistribucion?.costcenter);
 
+    // ✅ Relacionar el turno del requerimiento con la maestra (get-turnos) para obtener codTurno
+    const turnoValor = (first.turno || first.idturno || '').toString();
+    const turnoAprob = this.turnos.find((t: any) =>
+      t.nombreTurno === turnoValor ||
+      t.codTurno === turnoValor ||
+      String(t.turno) === turnoValor ||
+      String(t.id) === turnoValor
+    );
+
+    // ✅ idfundo del requerimiento a 4 dígitos (ej. '0801'), fallback: últimos 2 de idempresa + '01'
+    let sucursalFormateada = (req as any).idfundo;
+    if (!sucursalFormateada || String(sucursalFormateada).length < 4) {
+      sucursalFormateada = String(this.usuario.idempresa ?? '').slice(-2) + '01';
+    }
+    sucursalFormateada = String(sucursalFormateada).substring(0, 4).padStart(4, '0');
+
     // ✅ CORRECCIÓN: Convertir almacén corto (001) a código completo (H001)
     let almacenCodigo = req.idalmacen || 'H001';
     console.log('🔍 DEBUG - Almacén del requerimiento:', almacenCodigo);
@@ -782,10 +798,12 @@ export class AprobacionesComponent {
               Monto: '100.00',
               // ✅ CORRECCIÓN: CentroCostoDestino debe ser el costcenter del CECO, o usar ccostodestino como fallback
               CentroCostoDestino: this.cecos.find(c => c.localname === first.ceco)?.costcenter ?? ccostodestino ?? centroCostoDefault,
-              Sucursal: '0801',
+              Sucursal: sucursalFormateada,
               CampoReferencia: req.referenciaGasto ?? 'GA',
-              ReferenciaFiscal01: '',
-              ReferenciaFiscal02: '',
+              // ✅ ReferenciaFiscal01: codTurno de la maestra (INV28, etc.)
+              ReferenciaFiscal01: turnoAprob?.codTurno ?? '',
+              // ✅ ReferenciaFiscal02: idfundo del requerimiento
+              ReferenciaFiscal02: sucursalFormateada,
               origen: origenapp
             }
           ]

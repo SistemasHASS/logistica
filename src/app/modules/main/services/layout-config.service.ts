@@ -100,6 +100,12 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
     ]
   },
   {
+    id: 'transferencias', label: 'Transferencias', icono: 'bx bx-transfer', activo: true, orden: 6.5,
+    items: [
+      { id: 'transferencias-almacen', nombre: 'Transferencias Almacén', icono: 'bx bx-transfer', ruta: './transferencias-almacen', activo: true, orden: 1 },
+    ]
+  },
+  {
     id: 'aprobaciones', label: 'Aprobaciones', icono: 'icon icon-file-check', activo: true, orden: 7,
     items: [
       { id: 'aprobaciones-oc', nombre: 'Aprobación OC', icono: 'icon icon-file-check', ruta: './aprobaciones-oc', activo: true, orden: 1 },
@@ -130,7 +136,7 @@ const MODULOS_POR_ROL: Record<string, string[]> = {
   LOLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'saldo-requerimiento', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'consolidacion-servicios', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'reporte-aprobaciones-area'],
   EMLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'conformidad-servicios', 'aprobaciones-area'],
   OPLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'notificaciones', 'parametros','requerimientos', 'conformidad-almacen', 'catalogo-items'],
-  ALLOGIST:  ['catalogo-items', 'dashboard-despacho', 'notificaciones', 'parametros', 'requerimientos', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'reporte-despachos'],
+  ALLOGIST:  ['catalogo-items', 'dashboard-despacho', 'notificaciones', 'parametros', 'requerimientos', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'reporte-despachos', 'transferencias-almacen'],
   APLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'dashboard-aprobaciones-area', 'notificaciones', 'aprobaciones-area', 'reporte-aprobaciones-area', 'catalogo-items'],
   FINANZAS:  ['catalogo-items', 'dashboard-finanzas', 'aprobaciones-oc', 'aprobaciones-os'],
   GERENTE:   ['catalogo-items', 'dashboard-oplogist', 'aprobaciones-oc', 'aprobaciones-os'],

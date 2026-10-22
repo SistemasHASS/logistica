@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GUIA PRIMEROS PASOS — Sistema Logistica</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<style>
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#1e293b; margin:0; }
+  nav.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+            padding:12px 24px; background:#0f172a; border-bottom:1px solid #1e293b; }
+  nav.top a.volver { color:#60a5fa; text-decoration:none; font-size:14px; white-space:nowrap; }
+  nav.top a.volver:hover { text-decoration:underline; }
+  nav.top .t { font-size:15px; font-weight:600; color:#e2e8f0; flex:1; min-width:200px;
+               overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  nav.top a.btn { font-size:12px; color:#cbd5e1; text-decoration:none; background:#1e293b;
+                  border:1px solid #334155; border-radius:6px; padding:6px 12px; white-space:nowrap; }
+  nav.top a.btn:hover { border-color:#60a5fa; color:#93c5fd; }
+  article { max-width:900px; margin:0 auto; padding:32px 24px 60px; background:#fff; min-height:100vh; }
+  h1,h2,h3,h4 { margin:1.4em 0 .5em; line-height:1.3; color:#0f172a; }
+  h1 { font-size:26px; border-bottom:2px solid #e2e8f0; padding-bottom:8px; }
+  h2 { font-size:21px; border-bottom:1px solid #e2e8f0; padding-bottom:6px; }
+  h3 { font-size:17px; }
+  p, li { line-height:1.65; font-size:15px; }
+  ul, ol { padding-left:26px; margin:.6em 0; }
+  a { color:#2563eb; }
+  code { background:#f1f5f9; border-radius:4px; padding:1px 6px; font-size:13px; color:#be185d; }
+  pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow:auto; margin:.8em 0; }
+  pre code { background:none; color:inherit; padding:0; }
+  table { border-collapse:collapse; margin:.9em 0; width:100%; font-size:14px; }
+  th, td { border:1px solid #cbd5e1; padding:7px 10px; text-align:left; }
+  th { background:#f1f5f9; }
+  tr:nth-child(even) td { background:#f8fafc; }
+  img { max-width:100%; border:1px solid #e2e8f0; border-radius:6px; margin:.6em 0; }
+  blockquote { border-left:4px solid #cbd5e1; padding:4px 16px; color:#475569; margin:.8em 0; }
+  hr { border:none; border-top:1px solid #e2e8f0; margin:1.6em 0; }
+  @media (max-width:700px) {
+    nav.top { padding:10px 12px; gap:8px; }
+    nav.top .t { font-size:13px; min-width:120px; }
+    article { padding:22px 14px 50px; }
+    table { display:block; overflow-x:auto; }
+    pre { font-size:12px; }
+  }
+</style>
+<script src="../solo-rol.js"></script>
+</head>
+<body>
+<nav class="top">
+  <a class="volver" href="../index.html">&#8592; Portal</a>
+  <span class="t">GUIA PRIMEROS PASOS</span>
+  <a class="btn" href="../visor-docx.html?doc=docx/GUIA_PRIMEROS_PASOS.docx">Ver Word</a><a class="btn" href="../docx/GUIA_PRIMEROS_PASOS.docx">&#11015; .docx</a>
+  <a class="btn" href="../GUIA_PRIMEROS_PASOS.md">Fuente .md</a>
+</nav>
+<article>
+<h1 id="guía-de-primeros-pasos--sistema-logística">Guía de Primeros Pasos — Sistema Logística</h1>
+
+<p><strong>Para:</strong> todo usuario nuevo del sistema <strong>Tiempo estimado:</strong> 15 minutos</p>
+
+<hr />
+
+<h2 id="índice">Índice</h2>
+
+<ol type="1">
+
+<li><a href="#1-antes-de-empezar">Antes de empezar</a></li>
+
+<li><a href="#2-día-1-tu-primer-acceso">Día 1: tu primer acceso</a></li>
+
+<li><a href="#3-conoce-tu-pantalla">Conoce tu pantalla</a></li>
+
+<li><a href="#4-sincronización-inicial">Sincronización inicial (obligatoria para operativos)</a></li>
+
+<li><a href="#5-tu-primera-tarea-según-tu-rol">Tu primera tarea según tu rol</a></li>
+
+<li><a href="#6-buenas-prácticas">Buenas prácticas desde el día 1</a></li>
+
+<li><a href="#7-a-quién-pedir-ayuda">¿A quién pedir ayuda?</a></li>
+
+</ol>
+
+<hr />
+
+<h2 id="1-antes-de-empezar">1. Antes de empezar</h2>
+
+<h3 id="cómo-obtengo-mi-usuario">¿Cómo obtengo mi usuario?</h3>
+
+<ul>
+
+<li>Tu cuenta la crea el <strong>administrador del sistema</strong> (TILOGIST) o el <strong>administrador de logística</strong> (ADLOGIST).</li>
+
+<li>Si eres personal operativo, tu <strong>Jefe de Logística</strong> (JLOLOGIST) también puede crearte la cuenta.</li>
+
+<li>Recibirás: <strong>usuario</strong> y <strong>contraseña</strong> corporativos, más tu <strong>rol</strong> asignado.</li>
+
+</ul>
+
+<h3 id="requisitos-técnicos">Requisitos técnicos</h3>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Requisito</th>
+
+<th>Detalle</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Navegador</td>
+
+<td>Chrome, Edge o Firefox actualizados</td>
+
+</tr>
+
+<tr>
+
+<td>Conexión</td>
+
+<td>Internet para login y sincronización; la app <strong>funciona offline</strong> para requerimientos</td>
+
+</tr>
+
+<tr>
+
+<td>URL</td>
+
+<td>La que indique tu área de TI</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="2-día-1-tu-primer-acceso">2. Día 1: tu primer acceso</h2>
+
+<ol type="1">
+
+<li>Abre la URL de la aplicación.</li>
+
+<li>Ingresa <strong>usuario</strong> y <strong>contraseña</strong>.</li>
+
+<li>El sistema te lleva automáticamente a <strong>tu</strong> pantalla de inicio según tu rol — no necesitas buscar nada.</li>
+
+</ol>
+
+<p><img src="../../capturas_manual/01_login.png" alt="Login" /></p>
+
+<h3 id="a-dónde-entro-según-mi-rol">¿A dónde entro según mi rol?</h3>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Tu rol</th>
+
+<th>Verás primero</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Operativo Campo (OPLOGIST)</td>
+
+<td>Mis Requerimientos</td>
+
+</tr>
+
+<tr>
+
+<td>Almacén (ALLOGIST)</td>
+
+<td>Gestión de Despachos</td>
+
+</tr>
+
+<tr>
+
+<td>Aprobador (APLOGIST)</td>
+
+<td>Dashboard de Aprobaciones por Área</td>
+
+</tr>
+
+<tr>
+
+<td>Finanzas (FINANZAS)</td>
+
+<td>Dashboard Finanzas</td>
+
+</tr>
+
+<tr>
+
+<td>Jefe Logística / Operador / Licitaciones</td>
+
+<td>Dashboard Logística</td>
+
+</tr>
+
+<tr>
+
+<td>Admin (TILOGIST/ADLOGIST)</td>
+
+<td>Dashboard de administración</td>
+
+</tr>
+
+<tr>
+
+<td>Jefe Licitaciones (JEMLOGIST)</td>
+
+<td>Dashboard Jef. Licitaciones</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<blockquote>
+
+<p><strong>Si entras y no ves menú o queda en blanco:</strong> tu rol puede no tener menú configurado. Avisa al administrador (ver §7).</p>
+
+</blockquote>
+
+<h2 id="3-conoce-tu-pantalla">3. Conoce tu pantalla</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Elemento</th>
+
+<th>Qué es</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Menú lateral (izquierda)</td>
+
+<td>Tus opciones, agrupadas por tema. Se abren/cierran como acordeón</td>
+
+</tr>
+
+<tr>
+
+<td>Campana / contador</td>
+
+<td>Notificaciones — se actualiza cada 30 segundos</td>
+
+</tr>
+
+<tr>
+
+<td>Título superior</td>
+
+<td>Nombre de la pantalla actual</td>
+
+</tr>
+
+<tr>
+
+<td>Tu nombre</td>
+
+<td>Arriba a la izquierda; ahí está también <strong>Cerrar sesión</strong></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="4-sincronización-inicial">4. Sincronización inicial</h2>
+
+<blockquote>
+
+<p><strong>Obligatorio si tu rol crea requerimientos</strong> (OPLOGIST, EMLOGIST, LOLOGIST, ALLOGIST, ADLOGIST, JLOLOGIST, TILOGIST).</p>
+
+</blockquote>
+
+<ol type="1">
+
+<li>Menú → <strong>Parámetros</strong>.</li>
+
+<li>Presiona <strong>Sincronizar</strong>.</li>
+
+<li>Espera a que descargue las maestras: ítems, almacenes, áreas, centros de costo, labores, unidades.</li>
+
+<li>Sin esto, la pantalla Requerimientos te mostrará <em>"Falta configurar"</em>.</li>
+
+</ol>
+
+<p><img src="../../capturas_manual/05_parametros.png" alt="Parámetros" /></p>
+
+<h2 id="5-tu-primera-tarea-según-tu-rol">5. Tu primera tarea según tu rol</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Rol</th>
+
+<th>Primera tarea sugerida</th>
+
+<th>Manual</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>OPLOGIST</td>
+
+<td>Crear un requerimiento de prueba</td>
+
+<td><a href="roles/MANUAL_ROL_OPLOGIST.html">manual</a></td>
+
+</tr>
+
+<tr>
+
+<td>EMLOGIST</td>
+
+<td>Igual: requerimiento + sincronizar</td>
+
+<td><a href="roles/MANUAL_ROL_EMLOGIST.html">manual</a></td>
+
+</tr>
+
+<tr>
+
+<td>APLOGIST</td>
+
+<td>Revisar la bandeja de aprobaciones</td>
+
+<td><a href="roles/MANUAL_ROL_APLOGIST.html">manual</a></td>
+
+</tr>
+
+<tr>
+
+<td>ALLOGIST</td>
+
+<td>Revisar despachos pendientes</td>
+
+<td><a href="roles/MANUAL_ROL_ALLOGIST.html">manual</a></td>
+
+</tr>
+
+<tr>
+
+<td>LOLOGIST</td>
+
+<td>Revisar consolidación de aprobados</td>
+
+<td><a href="roles/MANUAL_ROL_LOLOGIST.html">manual</a></td>
+
+</tr>
+
+<tr>
+
+<td>JLOLOGIST</td>
+
+<td>Recorrer el menú acordeón</td>
+
+<td><a href="roles/MANUAL_ROL_JLOLOGIST.html">manual</a></td>
+
+</tr>
+
+<tr>
+
+<td>JEMLOGIST</td>
+
+<td>Revisar OC/OS pendientes</td>
+
+<td><a href="roles/MANUAL_ROL_JEMLOGIST.html">manual</a></td>
+
+</tr>
+
+<tr>
+
+<td>FINANZAS / GERENTE</td>
+
+<td>Revisar órdenes pendientes</td>
+
+<td><a href="roles/MANUAL_ROL_FINANZAS.html">FIN</a> · <a href="roles/MANUAL_ROL_GERENTE.html">GER</a></td>
+
+</tr>
+
+<tr>
+
+<td>ADLOGIST / TILOGIST</td>
+
+<td>Recorrer la consola admin</td>
+
+<td><a href="roles/MANUAL_ROL_ADLOGIST.html">AD</a> · <a href="roles/MANUAL_ROL_TILOGIST.html">TI</a></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<h2 id="6-buenas-prácticas">6. Buenas prácticas</h2>
+
+<ul>
+
+<li>✅ <strong>Sincroniza al entrar y antes de salir</strong> — el sistema no te deja cerrar sesión con requerimientos sin sincronizar.</li>
+
+<li>✅ Revisa las <strong>notificaciones</strong>: avisan de saldos pendientes por consolidar.</li>
+
+<li>✅ Puedes trabajar <strong>sin internet</strong>: todo se guarda local y se envía al sincronizar.</li>
+
+<li>❌ No compartas tu usuario — las aprobaciones quedan registradas a tu nombre.</li>
+
+<li>❌ No cierres el navegador a la fuerza con pendientes sin sincronizar.</li>
+
+</ul>
+
+<h2 id="7-a-quién-pedir-ayuda">7. ¿A quién pedir ayuda?</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Problema</th>
+
+<th>Contacto</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>No tengo usuario / olvidé contraseña</td>
+
+<td>Administrador (TILOGIST/ADLOGIST)</td>
+
+</tr>
+
+<tr>
+
+<td>No veo un menú o pantalla</td>
+
+<td>Administrador — revisa permisos/menú de tu rol</td>
+
+</tr>
+
+<tr>
+
+<td>No veo requerimientos de mi área</td>
+
+<td>Admin → <em>Usuarios por Área</em></td>
+
+</tr>
+
+<tr>
+
+<td>Error técnico / bug</td>
+
+<td>Soporte TI</td>
+
+</tr>
+
+<tr>
+
+<td>Duda del proceso</td>
+
+<td>Tu jefe de área o Jefatura de Logística</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p><strong>Ver también:</strong> <a href="FAQ_TROUBLESHOOTING.html">FAQ y Troubleshooting</a> · <a href="MANUAL_ROLES_SISTEMA_COMPLETO.html">Manual maestro de roles</a></p>
+
+
+</article>
+</body>
+</html>

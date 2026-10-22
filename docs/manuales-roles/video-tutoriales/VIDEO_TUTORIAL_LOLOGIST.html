@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Tutorial — Operador Logística (LOLOGIST)</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<style>
+  :root {
+    --accent: #2563eb;
+    --bg: #0f172a; --panel: #1e293b; --panel2: #16213b;
+    --text: #e2e8f0; --muted: #94a3b8; --border: #334155;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text);
+         display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+  header { background:var(--panel); border-bottom:2px solid var(--accent);
+           padding:12px 24px; display:flex; align-items:center; gap:16px; }
+  .badge { background:var(--accent); color:#fff; font-weight:700; padding:4px 12px;
+           border-radius:6px; font-size:13px; letter-spacing:1px; }
+  header h1 { font-size:18px; font-weight:600; }
+  header .duracion { margin-left:auto; color:var(--muted); font-size:13px; }
+  main { flex:1; display:flex; overflow:hidden; }
+  .slide { flex:1; display:none; flex-direction:column; padding:32px 48px; overflow-y:auto; }
+  .slide.active { display:flex; }
+  .escena { color:var(--accent); font-size:12px; font-weight:700; letter-spacing:2px;
+            text-transform:uppercase; margin-bottom:8px; }
+  .slide h2 { font-size:30px; margin-bottom:20px; }
+  .contenido { display:flex; gap:32px; flex:1; }
+  .col-izq { flex:1.1; display:flex; flex-direction:column; gap:16px; }
+  .col-der { flex:1; display:flex; align-items:flex-start; justify-content:center; }
+  .locucion { background:var(--panel2); border-left:4px solid var(--accent);
+              padding:16px 20px; border-radius:0 8px 8px 0; }
+  .locucion::before { content:'🎙 NARRACIÓN'; display:block; color:var(--accent);
+                       font-size:11px; font-weight:700; letter-spacing:1px; margin-bottom:8px; }
+  .locucion p { font-size:16px; line-height:1.6; font-style:italic; }
+  .pasos { background:var(--panel); border-radius:8px; padding:16px 20px; }
+  .pasos h3 { font-size:13px; color:var(--muted); letter-spacing:1px; margin-bottom:10px;
+              text-transform:uppercase; }
+  .pasos li { list-style:none; padding:8px 0 8px 30px; position:relative; font-size:15px;
+              border-bottom:1px solid var(--border); }
+  .pasos li:last-child { border-bottom:none; }
+  .pasos li::before { content:counter(step); counter-increment:step;
+      position:absolute; left:0; top:6px; width:20px; height:20px; background:var(--accent);
+      color:#fff; border-radius:50%; font-size:11px; font-weight:700;
+      display:flex; align-items:center; justify-content:center; }
+  .pasos ol { counter-reset:step; }
+  .captura { max-width:100%; max-height:420px; border-radius:10px;
+             border:2px solid var(--border); box-shadow:0 8px 30px rgba(0,0,0,.5); }
+  .captura-missing { border:2px dashed var(--border); border-radius:10px; padding:60px 30px;
+             color:var(--muted); text-align:center; font-size:14px; }
+  footer { background:var(--panel); padding:12px 24px; display:flex; align-items:center; gap:16px; }
+  .btn { background:var(--accent); color:#fff; border:none; padding:10px 22px; border-radius:6px;
+         font-size:14px; font-weight:600; cursor:pointer; }
+  .btn:hover { filter:brightness(1.15); }
+  .btn.sec { background:var(--border); }
+  .progreso-wrap { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .progreso { height:100%; background:var(--accent); width:0%; transition:width .3s; }
+  .contador { color:var(--muted); font-size:13px; min-width:80px; text-align:center; }
+  .ayuda { color:var(--muted); font-size:11px; }
+  @media (max-width:820px) {
+    header { padding:10px 12px; gap:8px; }
+    header h1 { font-size:14px; }
+    .badge { font-size:11px; padding:3px 8px; }
+    .duracion { display:none; }
+    .slide { padding:18px 14px; }
+    .slide h2 { font-size:21px; margin-bottom:12px; }
+    .contenido { flex-direction:column; gap:14px; }
+    .captura { max-height:none; }
+    footer { padding:10px 10px; gap:8px; flex-wrap:wrap; }
+    .ayuda { display:none; }
+    .contador { min-width:60px; font-size:12px; }
+    .btn { padding:8px 14px; font-size:13px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="badge">LOLOGIST</span>
+  <h1>Video Tutorial — Operador Logística</h1>
+  <span class="duracion">Duración estimada: ~10 min</span>
+</header>
+<main>
+<section class="slide">
+    <div class="escena">Escena 1</div>
+    <h2>Bienvenida</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Bienvenido, Operador de Logística. Eres quien ejecuta el ciclo completo: compras y almacén.</p></div>
+        
+      </div>
+      <div class="col-der"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 2</div>
+    <h2>Inicio y dashboard</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Entras al Dashboard Logística: requerimientos aprobados por consolidar, compras en curso y alertas.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Login</li>
+          <li>Identificar pendientes de consolidación</li>
+          <li>Revisar notificaciones</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/35_dashboard_logistica.png" alt="Inicio y dashboard" onerror="this.outerHTML='<div class=captura-missing>Captura: 35_dashboard_logistica.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 3</div>
+    <h2>Consolidar requerimientos</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Agrupa las líneas aprobadas para comprar.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Consolidación Requerimientos → seleccionar líneas aprobadas</li>
+          <li>Consolidación Corporativa si aplica multiempresa</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/37_consolidacion_requerimientos.png" alt="Consolidar requerimientos" onerror="this.outerHTML='<div class=captura-missing>Captura: 37_consolidacion_requerimientos.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 4</div>
+    <h2>Solicitud de Compra y cotización</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Genera la SC, registra cotizaciones y elige ganadora.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Solicitudes de Compra → crear con adjuntos</li>
+          <li>Cotizaciones → registrar ofertas y seleccionar</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/41_cotizaciones.png" alt="Solicitud de Compra y cotización" onerror="this.outerHTML='<div class=captura-missing>Captura: 41_cotizaciones.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 5</div>
+    <h2>Generar la Orden de Compra</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Emite la OC y envíala a aprobación.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Órdenes de Compra → generar desde cotización/SC</li>
+          <li>Adjuntar documentos → enviar a aprobar</li>
+          <li>Seguir estado hasta aprobada</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/42_ordenes_compra.png" alt="Generar la Orden de Compra" onerror="this.outerHTML='<div class=captura-missing>Captura: 42_ordenes_compra.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 6</div>
+    <h2>Recepción de mercadería</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Cuando el proveedor entrega, recepcionas contra la OC.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Recepción de Mercadería → buscar OC aprobada</li>
+          <li>Ingresar cantidades, lotes y documentos</li>
+          <li>Confirmar → actualiza stock y kardex</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/24_recepcion_mercaderia.png" alt="Recepción de mercadería" onerror="this.outerHTML='<div class=captura-missing>Captura: 24_recepcion_mercaderia.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 7</div>
+    <h2>Despacho y kardex</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Despachas al solicitante y controlas el inventario.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Despachos → confirmar salida</li>
+          <li>Kardex → revisar movimientos</li>
+          <li>Transferencias / Devoluciones según necesidad</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/23_despachos.png" alt="Despacho y kardex" onerror="this.outerHTML='<div class=captura-missing>Captura: 23_despachos.png</div>'"></div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="escena">Escena 8</div>
+    <h2>Reportes y cierre</h2>
+    <div class="contenido">
+      <div class="col-izq">
+        <div class="locucion"><p>Cierra el día revisando los reportes de compras y saldos.</p></div>
+        <div class="pasos"><h3>En pantalla</h3><ol>
+          <li>Reportes de Compras</li>
+          <li>Reporte de Saldos / Despachos</li>
+        </ol></div>
+      </div>
+      <div class="col-der"><img class="captura" src="../../capturas_manual/47_reportes_compras.png" alt="Reportes y cierre" onerror="this.outerHTML='<div class=captura-missing>Captura: 47_reportes_compras.png</div>'"></div>
+    </div>
+  </section>
+</main>
+<footer>
+  <button class="btn sec" onclick="anterior()">◀ Anterior</button>
+  <button class="btn" onclick="siguiente()">Siguiente ▶</button>
+  <button class="btn sec" id="btnPlay" onclick="togglePlay()">▶ Reproducir</button>
+  <div class="progreso-wrap"><div class="progreso" id="prog"></div></div>
+  <span class="contador" id="contador"></span>
+  <span class="ayuda">← → navegar · Espacio: siguiente · P: reproducir</span>
+</footer>
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let actual = 0, timer = null;
+  function mostrar(i) {
+    actual = Math.max(0, Math.min(i, slides.length - 1));
+    slides.forEach((s, k) => s.classList.toggle('active', k === actual));
+    document.getElementById('prog').style.width = ((actual + 1) / slides.length * 100) + '%';
+    document.getElementById('contador').textContent = (actual + 1) + ' / ' + slides.length;
+  }
+  function siguiente() { mostrar(actual + 1); }
+  function anterior() { mostrar(actual - 1); }
+  function togglePlay() {
+    const b = document.getElementById('btnPlay');
+    if (timer) { clearInterval(timer); timer = null; b.textContent = '▶ Reproducir'; return; }
+    b.textContent = '⏸ Pausar';
+    timer = setInterval(() => {
+      if (actual >= slides.length - 1) { togglePlay(); return; }
+      siguiente();
+    }, 12000);
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); siguiente(); }
+    if (e.key === 'ArrowLeft') anterior();
+    if (e.key.toLowerCase() === 'p') togglePlay();
+  });
+  mostrar(0);
+</script>
+</body>
+</html>

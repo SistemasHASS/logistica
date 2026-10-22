@@ -59,6 +59,7 @@ export class TransferenciasAlmacenComponent implements OnInit {
   cargandoDetalle = false;
 
   mostrarModal = false;
+  soloLectura = false;
   observacionesAlmacen = '';
   ejecutando = false;
 
@@ -116,7 +117,8 @@ export class TransferenciasAlmacenComponent implements OnInit {
     }
   }
 
-  async abrirModal(transferencia: TransferenciaPendiente) {
+  async abrirModal(transferencia: TransferenciaPendiente, soloLectura = false) {
+    this.soloLectura = soloLectura;
     this.transferenciasSeleccionada = transferencia;
     this.observacionesAlmacen = '';
     this.detalle = [];
@@ -166,6 +168,7 @@ export class TransferenciasAlmacenComponent implements OnInit {
         almacenDestino: this.transferenciasSeleccionada.almacenDestino,
         usuario: this.usuario.usuario,
         observacionesAlmacen: this.observacionesAlmacen,
+        idempresa: this.usuario.idempresa,
       });
 
       const parsed = this.parsearRespuesta(resp);

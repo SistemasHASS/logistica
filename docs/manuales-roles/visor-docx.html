@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visor Word — Sistema Logística</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0f172a; color:#e2e8f0; min-height:100vh; }
+  header { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+           padding:12px 24px; background:#0f172a; border-bottom:1px solid #1e293b; }
+  header .volver { color:#60a5fa; text-decoration:none; font-size:14px; white-space:nowrap; }
+  header .volver:hover { text-decoration:underline; }
+  header h1 { font-size:15px; font-weight:600; color:#e2e8f0; flex:1; min-width:200px;
+              overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .acciones { display:flex; gap:8px; }
+  .btn { font-size:12px; color:#cbd5e1; text-decoration:none; background:#1e293b;
+         border:1px solid #334155; border-radius:6px; padding:6px 12px; white-space:nowrap; }
+  .btn:hover { border-color:#60a5fa; color:#93c5fd; }
+  #estado { padding:60px 24px; text-align:center; color:#94a3b8; font-size:15px; }
+  #estado.error { color:#f87171; }
+  #doc { max-width:1000px; margin:0 auto; padding:24px 16px 60px; }
+  .docx-wrapper { background:#525659; padding:24px 0; border-radius:8px; overflow-x:hidden; }
+  .docx-wrapper > section.docx { box-sizing:border-box !important; max-width:100% !important; }
+  @media (max-width:700px) {
+    header { padding:10px 12px; gap:8px; }
+    header h1 { font-size:13px; min-width:120px; }
+    #doc { padding:10px 6px 40px; }
+    .docx-wrapper { padding:12px 0; border-radius:0; }
+  }
+</style>
+<script src="solo-rol.js"></script>
+</head>
+<body>
+<header>
+  <a class="volver" href="index.html">← Portal</a>
+  <h1 id="titulo">Documento Word</h1>
+  <div class="acciones">
+    <a class="btn" id="btnDescargar" href="#">⬇ Descargar .docx</a>
+    <a class="btn" href="anexo.html">Anexo documental</a>
+  </div>
+</header>
+<div id="estado">Cargando documento…</div>
+<div id="doc"></div>
+
+<script src="lib/jszip.min.js"></script>
+<script src="lib/docx-preview.min.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const doc = params.get('doc');
+const estado = document.getElementById('estado');
+const cont = document.getElementById('doc');
+
+if (!doc) {
+  estado.textContent = 'Falta el parámetro ?doc=<archivo>.docx';
+  estado.classList.add('error');
+} else {
+  const nombre = decodeURIComponent(doc).split('/').pop();
+  document.getElementById('titulo').textContent = nombre;
+  document.title = nombre + ' — Visor Word';
+  document.getElementById('btnDescargar').href = doc;
+
+  // Reintenta subiendo un nivel si el path relativo no alcanza
+  const candidatos = [doc, '../' + doc, '../../' + doc];
+  const cargar = (i) => fetch(candidatos[i]).then(r => {
+    if (!r.ok) {
+      if (i < candidatos.length - 1) return cargar(i + 1);
+      throw new Error('HTTP ' + r.status);
+    }
+    return r;
+  });
+
+  cargar(0)
+    .then(r => r.arrayBuffer())
+    .then(buf => docx.renderAsync(buf, cont, null, {
+      className: 'docx', inWrapper: true, ignoreWidth: true,
+      ignoreHeight: true, breakPages: true, renderHeaders: true,
+      renderFooters: true, renderFootnotes: true, renderEndnotes: true
+    }))
+    .then(() => {
+      estado.style.display = 'none';
+      const w = cont.querySelector('.docx-wrapper');
+      if (w) w.scrollLeft = 0;
+    })
+    .catch(e => {
+      estado.classList.add('error');
+      estado.innerHTML = 'No se pudo mostrar <b>' + nombre + '</b> (' + e.message + ').<br><br>' +
+        '<a class="btn" href="' + doc + '">Descargar el archivo directamente</a>';
+    });
+}
+</script>
+</body>
+</html>
