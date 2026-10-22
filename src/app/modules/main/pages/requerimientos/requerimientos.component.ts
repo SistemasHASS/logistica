@@ -487,6 +487,7 @@ export class RequerimientosComponent implements OnInit, OnDestroy {
     idrequerimiento: '', // ?? SE ASIGNA AL GUARDAR CABECERA
     codigo: '',
     descripcion: '',
+    glosa: '',
     proveedor: '',
     cantidad: 0,
     proyecto: '',
@@ -1751,6 +1752,7 @@ export class RequerimientosComponent implements OnInit, OnDestroy {
       idrequerimiento: '', // ?? SE ASIGNA AL GUARDAR CABECERA
       codigo: '',
       descripcion: '',
+      glosa: '',
       proveedor: '',
       cantidad: 0,
       proyecto: this.proyectoSeleccionado

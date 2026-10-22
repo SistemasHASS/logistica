@@ -16,7 +16,7 @@
         <div class="card-body">
           <div class="row g-3">
             <!-- Subservicio -->
-            <div class="col-12">
+            <div [ngClass]="esServicio ? 'col-6' : 'col-12'">
               <label class="form-label">Subservicio <span class="text-danger">*</span></label>
               <app-dropdown
                 [data]="subservicioFiltrados"
@@ -26,6 +26,13 @@
                 [required]="true"
                 textShow2="un subservicio"
               ></app-dropdown>
+            </div>
+
+            <!-- Glosa (solo requerimientos de SERVICIO) -->
+            <div class="col-6" *ngIf="esServicio">
+              <label class="form-label">Glosa <span class="text-danger">*</span></label>
+              <textarea class="form-control" rows="2" style="height: 44.8px;" [(ngModel)]="lineaTempCommodity.glosa"
+                maxlength="300" placeholder="Ingrese la glosa del detalle"></textarea>
             </div>
 
             <!-- Cantidad -->

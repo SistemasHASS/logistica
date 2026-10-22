@@ -1111,7 +1111,7 @@ textarea {
 }
 
 // ESTILOS PARA MODAL MEJORADO
-.modal-detalle-mejorado {
+.modal-content.modal-detalle-mejorado {
   width: 95%;
   max-width: 1400px;
   margin: auto;
@@ -1160,6 +1160,7 @@ textarea {
     overflow-y: auto;
     
     .card {
+      width: 100%;
       border: 1px solid #e3e6f0;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -1307,7 +1308,7 @@ textarea {
 
 // RESPONSIVE DESIGN PARA MÓVIL
 @media (max-width: 768px) {
-  .modal-detalle-mejorado {
+  .modal-content.modal-detalle-mejorado {
     width: 98%;
     max-width: calc(100vw - 20px);
     

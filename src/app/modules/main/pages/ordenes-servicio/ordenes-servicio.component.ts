@@ -795,6 +795,7 @@ export class OrdenesServicioComponent implements OnInit {
     this.proveedorSeleccionado = prov;
     if (!prov || !this.ordenActual) return;
 
+    this.ordenActual.proveedor = prov.id;
     this.ordenActual.rucProveedor = prov.ruc;
     this.ordenActual.nombreProveedor = prov.nombre;
     this.ordenActual.emailProveedor = prov.email || '';
@@ -858,6 +859,7 @@ export class OrdenesServicioComponent implements OnInit {
     this.proveedorSeleccionado = null;
     this.proveedorInput = '';
     if (this.ordenActual) {
+      this.ordenActual.proveedor = '';
       this.ordenActual.rucProveedor = '';
       this.ordenActual.nombreProveedor = '';
       this.ordenActual.emailProveedor = '';
