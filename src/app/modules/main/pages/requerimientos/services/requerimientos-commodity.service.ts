@@ -87,9 +87,17 @@ export class RequerimientosCommodityService {
 
   private emptyDetalle(): DetalleRequerimientoCommodity {
     return {
-      idrequerimiento: '', codigo: '', descripcion: '', proveedor: '', cantidad: 0,
+      idrequerimiento: '', codigo: '', descripcion: '', glosa: '', proveedor: '', cantidad: 0,
       proyecto: '', ceco: '', turno: '', labor: '', esActivoFijo: false, activoFijo: '', estado: 0,
     };
+  }
+
+  // Descripcion que viaja al detalle (y luego a CompromisoDetalle.Descripcion en SPRING):
+  // "glosa - subservicio", acotada a 500 chars por descripcionServicio VARCHAR(500)
+  private descripcionDetalleSync(d: any): string {
+    const glosa = (d.glosa || '').trim();
+    const texto = glosa ? `${glosa} - ${d.descripcion}` : d.descripcion;
+    return (texto || '').substring(0, 500);
   }
 
   async cargar() {
@@ -291,7 +299,7 @@ export class RequerimientosCommodityService {
       prioridad: req.prioridad || '1',
       detalle: req.detalleCommodity?.map((d: any) => ({
         codigo: d.codigo, tipoclasificacion: 'C', cantidad: d.cantidad,
-        iddescripcion: d.descripcion, idproyecto: d.proyecto || '',
+        iddescripcion: this.descripcionDetalleSync(d), idproyecto: d.proyecto || '',
         idcentrocosto: d.ceco || '', idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
       })) || [],
     }));
@@ -400,8 +408,13 @@ export class RequerimientosCommodityService {
     if (!sub) {
       this.alertService.showAlert('Campo requerido', 'Debes seleccionar un subservicio válido.', 'warning'); return;
     }
+    // La glosa por línea solo es obligatoria para requerimientos de SERVICIO
+    if (this.itemTipoSeleccionado === 'SERVICIO' && !linea.glosa?.trim()) {
+      this.alertService.showAlert('Campo requerido', 'Debes ingresar una glosa para el detalle.', 'warning'); return;
+    }
     const nuevaLinea = {
       idrequerimiento: '', codigo: sub.commodity, descripcion: sub.descripcionLocal,
+      glosa: (linea.glosa || '').trim(),
       proveedor: linea.proveedor, cantidad: linea.cantidad,
       proyecto: linea.proyecto, ceco: linea.ceco, turno: linea.turno, labor: linea.labor,
       esActivoFijo: linea.esActivoFijo, activoFijo: linea.activoFijo, estado: 0,
@@ -476,7 +489,7 @@ export class RequerimientosCommodityService {
       eliminado: 0, tipo: req.tipo, itemtipo: req.itemtipo || 'COMPRA', estados: 'PENDIENTE', prioridad: req.prioridad || '1',
       detalle: req.detalleCommodity?.map((d: any) => ({
         codigo: d.codigo, tipoclasificacion: 'C', cantidad: d.cantidad,
-        iddescripcion: d.descripcion, idproyecto: d.proyecto || '',
+        iddescripcion: this.descripcionDetalleSync(d), idproyecto: d.proyecto || '',
         idcentrocosto: d.ceco || '', idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
       })) || [],
     }));
