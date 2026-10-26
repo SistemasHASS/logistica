@@ -242,6 +242,7 @@
                   <tr>
                     <th>Editar</th>
                     <th>Subservicio</th>
+                    <th *ngIf="itemTipoSeleccionado === 'SERVICIO'">Glosa</th>
                     <th>Cantidad</th>
                     <th>CECO</th>
                     <th>Turno</th>
@@ -257,6 +258,7 @@
                       </button>
                     </td>
                     <td>{{ $any(item).descripcion }}</td>
+                    <td *ngIf="itemTipoSeleccionado === 'SERVICIO'">{{ $any(item).glosa }}</td>
                     <td>{{ item.cantidad }}</td>
                     <td>{{ item.ceco }}</td>
                     <td>{{ item.turno }}</td>
@@ -271,7 +273,7 @@
                     </td>
                   </tr>
                   <tr *ngIf="detallesCommodity.length === 0">
-                    <td colspan="7" class="text-muted">No hay detalles agregados</td>
+                    <td [attr.colspan]="itemTipoSeleccionado === 'SERVICIO' ? 8 : 7" class="text-muted">No hay detalles agregados</td>
                   </tr>
                 </tbody>
               </table>
@@ -311,6 +313,7 @@
   [modalProyectoValue]="modalProyectoValue"
   [modalProyectoEditable]="modalProyectoEditable"
   [modalProyectoDisabled]="modalProyectoDisabled"
+  [esServicio]="itemTipoSeleccionado === 'SERVICIO'"
   (cerrarEvt)="cerrarModalCommodity()"
   (guardarEvt)="guardarLineaCommodity()"
   (turnoChangeEvt)="onTurnoChangeCommodity()"

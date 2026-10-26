@@ -35,6 +35,8 @@ export class ModalDetalleCommodityComponent {
   @Input() modalProyectoValue = '';
   @Input() modalProyectoEditable = false;
   @Input() modalProyectoDisabled = false;
+  // La glosa por línea solo aplica a requerimientos de SERVICIO
+  @Input() esServicio = false;
 
   // Eventos emitidos al padre
   @Output() cerrarEvt = new EventEmitter<void>();

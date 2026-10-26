@@ -404,6 +404,7 @@ export interface DetalleRequerimientoCommodity {
   idrequerimiento: string;
   codigo: string;
   descripcion: string;
+  glosa?: string;
   // servicio: string;
   // producto: string;
   proveedor: string;
