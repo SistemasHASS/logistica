@@ -231,7 +231,7 @@
                   <b class="texto-error">*</b> Proyecto
                 </label>
                 <div class="col-lg-9">
-                  <app-dropdown [(ngModel)]="configuracion.idproyecto" [editable]="true" [data]="filteredProyectos"
+                  <app-dropdown [(ngModel)]="configuracion.idproyecto" (ngModelChange)="darPartidas(true)" [editable]="true" [data]="filteredProyectos"
                     [valueField]="'afe'" [optionLabel]="'proyectoio'" [textShow]="'Proyecto'" [textShow2]="'un proyecto'"
                     [disabled]="false"
                     [required]="true">
@@ -242,7 +242,7 @@
           </div>
         </div>
 
-        <!-- ALMACÉN -->
+        <!-- ALMACÉN / PARTIDA -->
         <div class="row">
           <div class="col-6 col-lg-6 marginBottom">
             <fieldset>
@@ -260,6 +260,21 @@
                       {{ a?.almacen }}
                     </option>
                   </select>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <div class="col-6 col-lg-6 marginBottom">
+            <fieldset>
+              <div class="form-group row box-labelFloat">
+                <label class="col-lg-3 col-form-label">
+                  Partida
+                </label>
+                <div class="col-lg-9">
+                  <app-tree-select [(ngModel)]="selectedPartidaId" (ngModelChange)="onPartidaChange()"
+                    [options]="partidaTreeNodes" [singleSelection]="true"
+                    placeholder="Seleccione una partida"></app-tree-select>
+                  <small class="text-muted">Opcional - depende del Proyecto seleccionado</small>
                 </div>
               </div>
             </fieldset>
@@ -464,7 +479,7 @@
                   <b class="texto-error">*</b> Proyecto
                 </label>
                 <div class="col-lg-9">
-                  <app-dropdown [(ngModel)]="configuracion.idproyecto" [editable]="true" [data]="filteredProyectos"
+                  <app-dropdown [(ngModel)]="configuracion.idproyecto" (ngModelChange)="darPartidas(true)" [editable]="true" [data]="filteredProyectos"
                     [valueField]="'afe'" [optionLabel]="'proyectoio'" [textShow]="'Proyecto'" [textShow2]="'un proyecto'"
                     [disabled]="false"
                     [required]="true">
@@ -490,6 +505,25 @@
                     [required]="true"
                     [textShow2]="'un almacén'"
                   ></app-dropdown>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+
+        <!-- PARTIDA -->
+        <div class="row">
+          <div class="col-6 col-lg-6 marginBottom">
+            <fieldset>
+              <div class="form-group row box-labelFloat">
+                <label class="col-lg-3 col-form-label">
+                  Partida
+                </label>
+                <div class="col-lg-9">
+                  <app-tree-select [(ngModel)]="selectedPartidaId" (ngModelChange)="onPartidaChange()"
+                    [options]="partidaTreeNodes" [singleSelection]="true"
+                    placeholder="Seleccione una partida"></app-tree-select>
+                  <small class="text-muted">Opcional - depende del Proyecto seleccionado</small>
                 </div>
               </div>
             </fieldset>
@@ -640,7 +674,7 @@
           </div>
         </div>
 
-        <!-- PROYECTO -->
+        <!-- PROYECTO / PARTIDA -->
         <div class="row">
           <div class="col-6 col-lg-6 marginBottom">
             <fieldset>
@@ -649,10 +683,25 @@
                   <b class="texto-error">*</b> Proyecto
                 </label>
                 <div class="col-lg-9">
-                  <app-dropdown [(ngModel)]="configuracion.idproyecto" [editable]="true" [data]="filteredProyectos"
+                  <app-dropdown [(ngModel)]="configuracion.idproyecto" (ngModelChange)="darPartidas(true)" [editable]="true" [data]="filteredProyectos"
                     [valueField]="'afe'" [optionLabel]="'proyectoio'" [textShow]="'Proyecto'" [textShow2]="'un proyecto'"
                     [disabled]="false" [required]="true">
                   </app-dropdown>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <div class="col-6 col-lg-6 marginBottom">
+            <fieldset>
+              <div class="form-group row box-labelFloat">
+                <label class="col-lg-3 col-form-label">
+                  Partida
+                </label>
+                <div class="col-lg-9">
+                  <app-tree-select [(ngModel)]="selectedPartidaId" (ngModelChange)="onPartidaChange()"
+                    [options]="partidaTreeNodes" [singleSelection]="true"
+                    placeholder="Seleccione una partida"></app-tree-select>
+                  <small class="text-muted">Opcional - depende del Proyecto seleccionado</small>
                 </div>
               </div>
             </fieldset>

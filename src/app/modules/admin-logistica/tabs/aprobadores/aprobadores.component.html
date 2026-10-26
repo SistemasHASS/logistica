@@ -1,6 +1,315 @@
-<div class="aprobadores-container">
+<div class="container-fluid py-3">
+  <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="m-0 fw-bold">Configuración de Aprobadores</h4>
+    <div>
+      <h4 class="m-0 fw-bold">Configuración de Aprobadores</h4>
+      <small class="text-muted">Define la cadena multinivel de aprobación de Órdenes de Compra y Órdenes de Servicio: qué rol firma en cada nivel según el monto y qué persona puede firmarlo</small>
+    </div>
+    <button class="btn btn-outline-secondary" (click)="cargarTodo()">
+      <i class="bx bx-refresh"></i>
+    </button>
   </div>
-  <app-aprobadores-mantenedor></app-aprobadores-mantenedor>
+
+  <!-- Selector OC / OS -->
+  <div class="card mb-3">
+    <div class="card-body py-3">
+      <div class="d-flex gap-2 flex-wrap">
+        <button
+          class="btn"
+          [class.btn-success]="tipoOrden() === 'OC'"
+          [class.btn-outline-secondary]="tipoOrden() !== 'OC'"
+          (click)="cambiarTipoOrden('OC')">
+          <i class="bx bx-cart me-1"></i>
+          <span class="fw-semibold">Orden de Compra</span>
+        </button>
+        <button
+          class="btn"
+          [class.btn-success]="tipoOrden() === 'OS'"
+          [class.btn-outline-secondary]="tipoOrden() !== 'OS'"
+          (click)="cambiarTipoOrden('OS')">
+          <i class="bx bx-wrench me-1"></i>
+          <span class="fw-semibold">Orden de Servicio</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Flujos de aprobación (qué ROL aprueba por rango de monto y nivel) -->
+    <div class="col-lg-5">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h6 class="m-0 fw-bold">
+                <i class="bx bx-sitemap me-1 text-primary"></i>Flujos de aprobación
+              </h6>
+              <small class="text-muted">
+                Cada fila = rango de monto + nivel + rol que firma. Varios niveles en un mismo rango = aprobación multinivel.
+              </small>
+            </div>
+            <button class="btn btn-primary btn-sm" (click)="nuevoFlujo()">
+              <i class="bx bx-plus me-1"></i>Nuevo
+            </button>
+          </div>
+
+          <p-table
+            [value]="flujosActuales()"
+            [loading]="loadingFlujos()"
+            styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Rol aprobador</th>
+                <th class="text-end">Monto mín.</th>
+                <th class="text-end">Monto máx.</th>
+                <th class="text-center">Nivel</th>
+                <th>Estado</th>
+                <th class="text-end">Acciones</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-f>
+              <tr>
+                <td>
+                  <p-tag [value]="nombreRol(f.nombre)" severity="info"></p-tag>
+                  @if (f.descripcion && f.descripcion !== f.nombre) {
+                    <div><small class="text-muted">{{ f.descripcion }}</small></div>
+                  }
+                </td>
+                <td class="text-end">S/ {{ formatearMoneda(f.montoMinimo) }}</td>
+                <td class="text-end">S/ {{ formatearMoneda(f.montoMaximo) }}</td>
+                <td class="text-center">{{ f.niveles }}</td>
+                <td>
+                  <p-tag
+                    [value]="f.activo ? 'Activo' : 'Inactivo'"
+                    [severity]="f.activo ? 'success' : 'secondary'">
+                  </p-tag>
+                </td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="editarFlujo(f)">
+                    <i class="bx bx-edit"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="eliminarFlujo(f)">
+                    <i class="bx bx-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="6" class="text-center py-4">
+                  <p class="text-muted mt-2">No hay flujos de aprobación configurados</p>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Usuarios aprobadores (qué PERSONA puede firmar) -->
+    <div class="col-lg-7">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h6 class="m-0 fw-bold">
+                <i class="bx bx-user-check me-1 text-success"></i>Usuarios aprobadores
+              </h6>
+              <small class="text-muted">
+                {{ tipoOrden() === 'OC'
+                  ? 'Personas habilitadas para firmar: cada una cubre un nivel y un rango de monto.'
+                  : 'Personas habilitadas para firmar: cada una puede aprobar hasta su nivel máximo.' }}
+              </small>
+            </div>
+            <button class="btn btn-primary btn-sm" (click)="nuevoUsuario()">
+              <i class="bx bx-plus me-1"></i>Nuevo
+            </button>
+          </div>
+
+          <p-table
+            [value]="usuariosActuales()"
+            [loading]="loadingUsuarios()"
+            [paginator]="true"
+            [rows]="10"
+            styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Documento</th>
+                <th>Nombre</th>
+                <th>Rol</th>
+                @if (tipoOrden() === 'OC') {
+                  <th class="text-end">Monto mín.</th>
+                  <th class="text-end">Monto máx.</th>
+                }
+                <th class="text-center">{{ tipoOrden() === 'OC' ? 'Nivel' : 'Nivel máx.' }}</th>
+                <th>Estado</th>
+                <th class="text-end">Acciones</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-u>
+              <tr>
+                <td>{{ u.documentoIdentidad }}</td>
+                <td>{{ u.nombreCompleto }}</td>
+                <td>
+                  <p-tag [value]="nombreRol(u.rol)" severity="secondary"></p-tag>
+                </td>
+                @if (tipoOrden() === 'OC') {
+                  <td class="text-end">S/ {{ formatearMoneda(u.montoMinimo) }}</td>
+                  <td class="text-end">S/ {{ formatearMoneda(u.montoMaximo) }}</td>
+                }
+                <td class="text-center">{{ u.nivel }}</td>
+                <td>
+                  <p-tag
+                    [value]="u.activo ? 'Activo' : 'Inactivo'"
+                    [severity]="u.activo ? 'success' : 'secondary'">
+                  </p-tag>
+                </td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="editarUsuario(u)">
+                    <i class="bx bx-edit"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="eliminarUsuario(u)">
+                    <i class="bx bx-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td [attr.colspan]="tipoOrden() === 'OC' ? 8 : 6" class="text-center py-4">
+                  <i class="bx bx-user-x text-muted" style="font-size: 48px;"></i>
+                  <p class="text-muted mt-2">No hay usuarios aprobadores configurados</p>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal usuario aprobador -->
+  <p-dialog
+    [header]="(isEditingUsuario() ? 'Editar' : 'Nuevo') + ' usuario aprobador ' + tipoOrden()"
+    [(visible)]="modalUsuario"
+    [modal]="true"
+    [style]="{width: '520px'}"
+    [draggable]="false"
+    [resizable]="false">
+    @if (usuarioForm) {
+      <div class="row g-3">
+        <div class="col-6">
+          <label class="form-label">Documento de identidad *</label>
+          <input type="text" class="form-control" [(ngModel)]="usuarioForm.documentoIdentidad" placeholder="DNI">
+        </div>
+        <div class="col-6">
+          <label class="form-label">Rol *</label>
+          <select class="form-select" [(ngModel)]="usuarioForm.rol">
+            <option value="">Seleccione...</option>
+            @for (r of rolesAprobador; track r.value) {
+              <option [value]="r.value">{{ r.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Nombre completo *</label>
+          <input type="text" class="form-control" [(ngModel)]="usuarioForm.nombreCompleto">
+        </div>
+        @if (tipoOrden() === 'OC') {
+          <div class="col-12">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" [(ngModel)]="usuarioForm.email" placeholder="correo@ejemplo.com">
+          </div>
+          <div class="col-6">
+            <label class="form-label">Monto mínimo</label>
+            <input type="number" class="form-control" [(ngModel)]="usuarioForm.montoMinimo" step="0.01" min="0">
+          </div>
+          <div class="col-6">
+            <label class="form-label">Monto máximo</label>
+            <input type="number" class="form-control" [(ngModel)]="usuarioForm.montoMaximo" step="0.01" min="0">
+          </div>
+          <div class="col-6">
+            <label class="form-label">Nivel que firma</label>
+            <input type="number" class="form-control" [(ngModel)]="usuarioForm.nivel" min="1">
+            <small class="text-muted">Nivel dentro de la cadena (1 = primera firma).</small>
+          </div>
+        } @else {
+          <div class="col-6">
+            <label class="form-label">Nivel máximo que puede aprobar</label>
+            <input type="number" class="form-control" [(ngModel)]="usuarioForm.nivel" min="1">
+            <small class="text-muted">Puede firmar cualquier nivel hasta este.</small>
+          </div>
+        }
+        <div class="col-6 d-flex align-items-end">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="chkUsuarioActivo" [(ngModel)]="usuarioForm.activo">
+            <label class="form-check-label" for="chkUsuarioActivo">Activo</label>
+          </div>
+        </div>
+      </div>
+    }
+    <ng-template pTemplate="footer">
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" (click)="cerrarModalUsuario()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="guardarUsuario()" [disabled]="guardando()">
+          <i class="bx bx-save me-2"></i>{{ guardando() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Modal flujo de aprobación -->
+  <p-dialog
+    [header]="(isEditingFlujo() ? 'Editar' : 'Nuevo') + ' flujo de aprobación ' + tipoOrden()"
+    [(visible)]="modalFlujo"
+    [modal]="true"
+    [style]="{width: '520px'}"
+    [draggable]="false"
+    [resizable]="false">
+    @if (flujoForm) {
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label">Rol aprobador *</label>
+          <select class="form-select" [(ngModel)]="flujoForm.nombre">
+            <option value="">Seleccione...</option>
+            @for (r of rolesAprobador; track r.value) {
+              <option [value]="r.value">{{ r.label }}</option>
+            }
+          </select>
+          <small class="text-muted">Rol que firmará este nivel dentro del rango de monto.</small>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Descripción</label>
+          <textarea class="form-control" [(ngModel)]="flujoForm.descripcion" rows="2"></textarea>
+        </div>
+        <div class="col-6">
+          <label class="form-label">Monto mínimo</label>
+          <input type="number" class="form-control" [(ngModel)]="flujoForm.montoMinimo" step="0.01" min="0">
+        </div>
+        <div class="col-6">
+          <label class="form-label">Monto máximo</label>
+          <input type="number" class="form-control" [(ngModel)]="flujoForm.montoMaximo" step="0.01" min="0">
+        </div>
+        <div class="col-6">
+          <label class="form-label">Nivel</label>
+          <input type="number" class="form-control" [(ngModel)]="flujoForm.niveles" min="1">
+          <small class="text-muted">Nivel dentro de la cadena de firma (1 = primera firma).</small>
+        </div>
+        <div class="col-6 d-flex align-items-end">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="chkFlujoActivo" [(ngModel)]="flujoForm.activo">
+            <label class="form-check-label" for="chkFlujoActivo">Activo</label>
+          </div>
+        </div>
+      </div>
+    }
+    <ng-template pTemplate="footer">
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" (click)="cerrarModalFlujo()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="guardarFlujo()" [disabled]="guardando()">
+          <i class="bx bx-save me-2"></i>{{ guardando() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </ng-template>
+  </p-dialog>
 </div>

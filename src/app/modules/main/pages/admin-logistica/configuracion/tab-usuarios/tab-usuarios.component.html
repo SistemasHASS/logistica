@@ -22,62 +22,64 @@
   <!-- Tabla -->
   <div class="card shadow-sm border-0">
     <div class="card-body p-0">
-      @if (loading) {
-        <div class="text-center py-4 text-muted">
-          <div class="spinner-border spinner-border-sm me-2"></div>Cargando usuarios...
-        </div>
-      } @else if (usuarios.length === 0) {
-        <div class="text-center py-4 text-muted">
-          <i class="bx bx-user-x fs-3 d-block mb-2"></i>No hay usuarios registrados
-        </div>
-      } @else {
-        <div class="table-responsive">
-          <table class="table table-hover table-sm mb-0 align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>DNI</th>
-                <th>Usuario</th>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Rol</th>
-                <th class="text-center">Estado</th>
-                <th class="text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (u of usuarios; track u.id) {
-                <tr>
-                  <td class="text-muted small">{{ u.usuario }}</td>
-                  <td><span class="fw-semibold">{{ u.usuario }}</span></td>
-                  <td>{{ u.nombre }}</td>
-                  <td class="text-muted small">{{ u.email }}</td>
-                  <td>
-                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
-                      {{ getRolNombre(u.idrol) }}
-                    </span>
-                  </td>
-                  <td class="text-center">
-                    <span [class]="u.activo ? 'badge bg-success' : 'badge bg-secondary'">
-                      {{ u.activo ? 'Activo' : 'Inactivo' }}
-                    </span>
-                  </td>
-                  <td class="text-center">
-                    <button class="btn btn-outline-primary btn-sm me-1" title="Editar" (click)="abrirEditar(u)">
-                      <i class="bx bx-edit"></i>
-                    </button>
-                    <button
-                      [class]="u.activo ? 'btn btn-outline-warning btn-sm' : 'btn btn-outline-success btn-sm'"
-                      [title]="u.activo ? 'Desactivar' : 'Activar'"
-                      (click)="toggleActivo(u)">
-                      <i [class]="u.activo ? 'bx bx-block' : 'bx bx-check'"></i>
-                    </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
+      <p-table
+        [value]="usuarios"
+        [loading]="loading"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
+        styleClass="p-datatable-sm"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>DNI</th>
+            <th>Usuario</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th class="text-center">Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-u>
+          <tr>
+            <td class="text-muted small">{{ u.usuario }}</td>
+            <td><span class="fw-semibold">{{ u.usuario }}</span></td>
+            <td>{{ u.nombre }}</td>
+            <td class="text-muted small">{{ u.email }}</td>
+            <td>
+              <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
+                {{ getRolNombre(u.idrol) }}
+              </span>
+            </td>
+            <td class="text-center">
+              <p-tag [value]="u.activo ? 'Activo' : 'Inactivo'" [severity]="u.activo ? 'success' : 'secondary'"></p-tag>
+            </td>
+            <td class="text-center">
+              <div class="d-flex justify-content-center gap-1">
+                <button class="btn btn-outline-primary btn-sm" title="Editar" (click)="abrirEditar(u)">
+                  <i class="bx bx-edit"></i>
+                </button>
+                <button
+                  [class]="u.activo ? 'btn btn-outline-warning btn-sm' : 'btn btn-outline-success btn-sm'"
+                  [title]="u.activo ? 'Desactivar' : 'Activar'"
+                  (click)="toggleActivo(u)">
+                  <i [class]="u.activo ? 'bx bx-block' : 'bx bx-check'"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">
+              <i class="bx bx-user-x fs-3 d-block mb-2"></i>No hay usuarios registrados
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
     </div>
   </div>
 

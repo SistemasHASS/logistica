@@ -84,6 +84,8 @@ export class TabItemComponent {
       return this.itemSvc.filteredProyectosModal.length > 0 ? this.itemSvc.filteredProyectosModal : this.maestrasSvc.proyectos;
     return this.itemSvc.permitirEditarParametros ? this.itemSvc.filteredProyectosModal : this.maestrasSvc.proyectos;
   }
+  // Árbol de partidas filtradas por el proyecto (AFE) de la línea actual del modal
+  get partidaTreeNodesModal() { return this.itemSvc.partidaTreeNodesModal; }
   @Input() activosFijosFiltrados: any[] = [];
   @Input() items: any[] = [];
   // Valores del modal leídos desde lineaTemp del servicio
@@ -246,6 +248,8 @@ export class TabItemComponent {
   onTurnoChangeModal() { this.itemSvc.onTurnoChangeModal(); }
   onCecoChangeModal() { this.itemSvc.onCecoChangeModal(); }
   onLaborChangeModal() { this.itemSvc.onLaborChangeModal(); }
+  onProyectoChangeModal() { this.itemSvc.onProyectoChangeModal(); }
+  onPartidaChangeModal() { this.itemSvc.onPartidaChangeModal(); }
   actualizarUnidadMedidaDesdeProducto() { this.itemSvc.actualizarUnidadMedidaDesdeProducto(); }
   editarLinea(i: number) { this.itemSvc.editarLinea(i); }
   copiarLinea(i: number) {

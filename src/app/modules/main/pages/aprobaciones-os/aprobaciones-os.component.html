@@ -416,17 +416,17 @@
         >
         <ng-template pTemplate="header">
           <tr>
-            <th>Nombre</th>
+            <th>Rol aprobador</th>
             <th>Monto Desde</th>
             <th>Monto Hasta</th>
-            <th>Niveles</th>
+            <th>Nivel</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-flujo>
           <tr>
-            <td>{{ flujo.nombre }}</td>
+            <td>{{ flujo.nombreRol || flujo.nombre }}</td>
             <td>{{ formatearMoneda(flujo.montoDesde) }}</td>
             <td>{{ formatearMoneda(flujo.montoHasta) }}</td>
             <td>{{ flujo.niveles }}</td>
@@ -737,13 +737,14 @@
   <div class="modal-body" *ngIf="flujoAprobacionForm">
     <div class="row">
       <div class="col-12 mb-3">
-        <label>Nombre: *</label>
-        <input 
-          type="text" 
-          class="form-control" 
-          [(ngModel)]="flujoAprobacionForm.nombre"
-          name="nombre"
-          placeholder="Nombre del flujo">
+        <label>Rol aprobador: *</label>
+        <select class="form-control" [(ngModel)]="flujoAprobacionForm.nombre" name="nombre">
+          <option value="">Seleccione...</option>
+          <option value="LOLOGIST">Jefe de Logística</option>
+          <option value="FINANZAS">Finanzas</option>
+          <option value="GERENTE">Gerencia</option>
+        </select>
+        <small class="text-muted">Rol que firmará este nivel dentro del rango de monto.</small>
       </div>
 
       <div class="col-12 mb-3">
@@ -777,13 +778,14 @@
       </div>
 
       <div class="col-md-4 mb-3">
-        <label>Niveles:</label>
+        <label>Nivel:</label>
         <input 
           type="number" 
           class="form-control" 
           [(ngModel)]="flujoAprobacionForm.niveles"
           name="niveles"
           min="1">
+        <small class="text-muted">Nivel dentro de la cadena de firma (1 = primera firma).</small>
       </div>
 
       <div class="col-12 mb-3">

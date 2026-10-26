@@ -148,10 +148,27 @@
                     optionLabel="proyectoio"
                     valueField="proyectoio"
                     [(ngModel)]="lineaTemp.proyecto"
+                    (ngModelChange)="onProyectoChange()"
                     [editable]="modalProyectoEditable"
                     [required]="true"
                     [disabled]="modalProyectoDisabled"
                   ></app-dropdown>
+                </div>
+
+                <!-- Partida (opcional, depende del proyecto de la línea) -->
+                <div class="col-6">
+                  <label class="form-label">
+                    <i class="bx bx-list-tree me-1"></i>
+                    Partida
+                  </label>
+                  <app-tree-select
+                    [(ngModel)]="lineaTemp.partidaId"
+                    (ngModelChange)="onPartidaChange()"
+                    [options]="partidaTreeNodes"
+                    [singleSelection]="true"
+                    placeholder="Seleccione una partida"
+                  ></app-tree-select>
+                  <small class="text-muted">Opcional - depende del Proyecto</small>
                 </div>
 
                 <!-- Labor -->
@@ -248,11 +265,12 @@
                   <thead class="table-dark sticky-top">
                     <tr>
                       <th style="width: 6%">#</th>
-                      <th style="width: 28%">Producto</th>
+                      <th style="width: 24%">Producto</th>
                       <th style="width: 10%">Cant.</th>
+                      <th style="width: 12%">Partida</th>
                       <th style="width: 14%">Stock</th>
                       <th style="width: 14%">Afecto IGV</th>
-                      <th style="width: 28%">Acción</th>
+                      <th style="width: 20%">Acción</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -266,6 +284,7 @@
                       </td>
                       <td><small class="fw-bold">{{ linea.descripcion }}</small></td>
                       <td>{{ linea.cantidad }}</td>
+                      <td><small [title]="linea.partidaDescripcion || ''">{{ linea.partida || '—' }}</small></td>
                       <td>
                         <span *ngIf="linea.stockDisponible !== undefined && linea.stockDisponible !== null"
                               class="badge"

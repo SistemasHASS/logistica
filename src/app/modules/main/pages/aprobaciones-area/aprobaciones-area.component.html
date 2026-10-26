@@ -1,7 +1,7 @@
 <div class="aprobaciones-container p-4">
   <!-- Dashboard de Indicadores -->
   <!-- Vista desktop: cards -->
-  <div class="row mb-4 d-none d-md-flex" *ngIf="dashboard">
+  <div class="row mb-4 d-none d-md-flex" *ngIf="dashboard && !modoGerencia">
     <div class="col-md-3">
       <p-card>
         <div class="text-center">
@@ -41,7 +41,7 @@
   </div>
 
   <!-- Vista móvil: indicadores compactos horizontales -->
-  <div class="d-md-none mb-4" *ngIf="dashboard">
+  <div class="d-md-none mb-4" *ngIf="dashboard && !modoGerencia">
     <div class="dashboard-mobile-scroll d-flex flex-nowrap gap-2 overflow-auto pb-1">
       <div class="dashboard-mobile-item flex-shrink-0 text-center bg-white rounded-3 shadow-sm p-2 border-start border-4 border-dark">
         <i class="bx bx-clock text-warning" style="font-size: 1.25rem;"></i>
@@ -73,7 +73,7 @@
       <ul class="nav custom-tabs mb-3" role="tablist">
         <li class="nav-item" role="presentation">
           <button class="nav-link" [class.active]="activeTabIndex === 0" (click)="activeTabIndex = 0" type="button">
-            <i class="bx bx-time me-1"></i> Pendientes de Aprobación
+            <i class="bx bx-time me-1"></i> {{ modoGerencia ? 'Pendientes Gerencia' : 'Pendientes de Aprobación' }}
             <span class="tab-badge ms-1">{{ requerimientosPendientes.length }}</span>
           </button>
         </li>

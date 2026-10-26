@@ -32,6 +32,10 @@ export const adminLogisticaRoutes: Routes = [
         loadComponent: () => import('./tabs/aprobar-ss/aprobar-ss.component').then(m => m.AprobarSsComponent)
       },
       {
+        path: 'aprobar-gerencia',
+        loadComponent: () => import('./tabs/aprobar-gerencia/aprobar-gerencia.component').then(m => m.AprobarGerenciaComponent)
+      },
+      {
         path: 'maestros',
         loadComponent: () => import('./tabs/maestros/maestros.component').then(m => m.MaestrosComponent)
       },
@@ -75,9 +79,13 @@ export const adminLogisticaRoutes: Routes = [
         path: 'usuario-area', 
         loadComponent: () => import('./configuracion/usuario-area/usuario-area.component').then(m => m.UsuarioAreaComponent) 
       },
-      { 
-        path: 'flujo-aprobacion-area', 
-        loadComponent: () => import('./configuracion/flujo-aprobacion-area/flujo-aprobacion-area.component').then(m => m.FlujoAprobacionAreaComponent) 
+      {
+        path: 'flujo-aprobacion-area',
+        loadComponent: () => import('./configuracion/flujo-aprobacion-area/flujo-aprobacion-area.component').then(m => m.FlujoAprobacionAreaComponent)
+      },
+      {
+        path: 'config-flujo-aprobacion',
+        loadComponent: () => import('./configuracion/config-flujo-aprobacion/config-flujo-aprobacion.component').then(m => m.ConfigFlujoAprobacionComponent)
       },
       {
         path: 'almacen',

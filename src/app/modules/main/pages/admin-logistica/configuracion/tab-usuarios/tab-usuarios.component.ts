@@ -2,6 +2,8 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { UsuariosService } from '@/app/modules/admin-logistica/tabs/usuarios/services/usuarios.service';
 import { AdminLogisticaAuthService } from '@/app/modules/admin-logistica/auth/services/admin-logistica-auth.service';
@@ -15,7 +17,7 @@ interface EmpresaItem { ruc: string; razonSocial: string; }
 @Component({
   selector: 'app-tab-usuarios',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TableModule, TagModule],
   templateUrl: './tab-usuarios.component.html',
   styleUrl: './tab-usuarios.component.scss',
 })

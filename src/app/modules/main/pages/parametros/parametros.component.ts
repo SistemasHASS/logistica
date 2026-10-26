@@ -20,6 +20,7 @@ import {
   DetalleRequerimientoActivoFijo,
   RequerimientoActivoFijoMenor,
   DetalleRequerimientoActivoFijoMenor,
+  PartidaLocal,
 } from '@/app/shared/interfaces/Tables';
 import { MaestrasService } from '../../services/maestras.service';
 import { AuthService } from '@/app/modules/auth/services/auth.service';
@@ -28,13 +29,15 @@ import { Usuario } from '@/app/shared/interfaces/Tables';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { RequerimientosService } from '../../services/requerimientos.service';
 import { DropdownComponent } from '../../components/dropdown/dropdown.component';
+import { TreeSelectComponent, ModuloNode } from '../../components/tree-select/tree-select.component';
+import { construirArbolPartidas, filtrarPartidas } from '@/app/shared/utils/partida-tree.utils';
 import { CommodityService } from '../../services/commoditys.service';
 import { any } from '@tensorflow/tfjs';
 
 @Component({
   selector: 'app-parametros',
   standalone: true,
-  imports: [CommonModule, FormsModule, DropdownComponent],
+  imports: [CommonModule, FormsModule, DropdownComponent, TreeSelectComponent],
   templateUrl: './parametros.component.html',
   styleUrls: ['./parametros.component.scss'],
 })
@@ -70,6 +73,7 @@ export class ParametrosComponent implements OnInit {
   servicios: any[] = [];
   activosFijos: any[] = [];
   comodities: any[] = [];
+  partidas: PartidaLocal[] = [];
 
   // 🔥 TIPO ITEM DINÁMICO
   tipoItem: any[] = [];
@@ -128,6 +132,9 @@ export class ParametrosComponent implements OnInit {
   filteredFundos: Fundo[] = [];
   filteredCultivos: Cultivo[] = [];
   filteredItems: Item[] = [];
+  filteredPartidas: PartidaLocal[] = [];
+  partidaTreeNodes: ModuloNode[] = [];
+  selectedPartidaId: string = '';
 
   usuario: Usuario = {
     id: '',
@@ -164,6 +171,8 @@ export class ParametrosComponent implements OnInit {
     idtipoGasto: '',
     idactivoFijo: '',
     idTipoItem: '',
+    subpresupuesto: undefined,
+    partida: '',
   };
 
   async ngOnInit() {
@@ -320,6 +329,9 @@ export class ParametrosComponent implements OnInit {
       if (this.configuracion.idTipoItem) {
         await this.ListarAlmacenesPorRol();
       }
+
+      // Restaurar selección de partida según proyecto configurado
+      this.darPartidas();
     }
   }
 
@@ -331,6 +343,7 @@ export class ParametrosComponent implements OnInit {
     // await this.ListarAlmacenes();
     // await this.ListarAlmacenesPorRol();
     await this.ListarProyectos();
+    await this.ListarPartidas();
     await this.ListarItems();
     await this.ListarTurnos();
     await this.ListarLabores();
@@ -473,6 +486,7 @@ export class ParametrosComponent implements OnInit {
     this.filteredCecos = [];
     this.filteredLabores = [];
     this.filteredProyectos = [];
+    this.limpiarSeleccionPartida();
     
     if (this.configuracion.idcultivo) {
       console.log('📊 Total de CECOs disponibles:', this.cecos.length);
@@ -619,6 +633,17 @@ export class ParametrosComponent implements OnInit {
         if (!!resp && resp.length) {
           await this.dexieService.saveProyectos(resp);
           await this.ListarProyectos();
+        }
+      });
+
+      const partidas = this.maestrasService.getPartidas([
+        { ruc: this.usuario?.ruc },
+      ]);
+      partidas.subscribe(async (resp: any) => {
+        if (Array.isArray(resp)) {
+          await this.dexieService.savePartidas(resp);
+          await this.ListarPartidas();
+          this.darPartidas();
         }
       });
 
@@ -1037,6 +1062,51 @@ export class ParametrosComponent implements OnInit {
     }
   }
 
+  async ListarPartidas() {
+    this.partidas = await this.dexieService.showPartidas();
+  }
+
+  private limpiarSeleccionPartida() {
+    this.selectedPartidaId = '';
+    this.configuracion.subpresupuesto = undefined;
+    this.configuracion.partida = '';
+    this.filteredPartidas = [];
+    this.partidaTreeNodes = [];
+  }
+
+  darPartidas(limpiar = false) {
+    if (limpiar) { this.limpiarSeleccionPartida(); }
+    this.filteredPartidas = filtrarPartidas(this.partidas, this.configuracion.idproyecto, this.usuario?.ruc);
+    if (this.configuracion.idproyecto) {
+      const tieneSeleccionPersistida = !!this.configuracion.partida && this.configuracion.subpresupuesto != null;
+      const seleccionada = this.filteredPartidas.find((x: PartidaLocal) =>
+        x.id === this.selectedPartidaId
+        || (tieneSeleccionPersistida
+          && String(x.partida).trim() === String(this.configuracion.partida).trim()
+          && x.subpresupuesto === this.configuracion.subpresupuesto));
+      this.selectedPartidaId = seleccionada?.id ?? '';
+    } else {
+      this.selectedPartidaId = '';
+    }
+    this.partidaTreeNodes = construirArbolPartidas(this.filteredPartidas);
+    this.derivarDatosPartida();
+  }
+
+  derivarDatosPartida() {
+    const seleccionada = this.filteredPartidas.find((x: PartidaLocal) => x.id === this.selectedPartidaId);
+    if (seleccionada) {
+      this.configuracion.subpresupuesto = seleccionada.subpresupuesto;
+      this.configuracion.partida = String(seleccionada.partida ?? '').trim();
+    } else {
+      this.configuracion.subpresupuesto = undefined;
+      this.configuracion.partida = '';
+    }
+  }
+
+  onPartidaChange() {
+    this.derivarDatosPartida();
+  }
+
   async filtraCecoTurnoProyecto() {
     this.filteredTurnos.length = 0;
     this.configuracion.idturno = '';
@@ -1275,6 +1345,7 @@ export class ParametrosComponent implements OnInit {
       } else {
         console.log(`ℹ️ Hay ${this.filteredProyectos.length} proyectos disponibles para seleccionar`);
       }
+      this.darPartidas();
       return;
     }
 
@@ -1358,6 +1429,7 @@ export class ParametrosComponent implements OnInit {
     } else {
       console.log(`ℹ️ Hay ${this.filteredProyectos.length} proyectos disponibles para seleccionar`);
     }
+    this.darPartidas();
   }
 
   async ListarAlmacenesPorRol() {

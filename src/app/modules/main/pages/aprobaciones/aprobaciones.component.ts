@@ -785,6 +785,9 @@ export class AprobacionesComponent {
               UltimaFechaModif: new Date().toISOString(),
               IGVExoneradoFlag: d.afectoIGV === 'N' ? 'S' : 'N',
               GenerarContratoFlag: 'N',
+              // Partida presupuestal (opcional) → WH_RequisicionDetalle
+              PartidaPresupuestal: d.subpresupuesto != null ? String(d.subpresupuesto).padStart(4, '0') : null,
+              Partida: d.partida || null,
               origen: origenapp,
             };
           }),

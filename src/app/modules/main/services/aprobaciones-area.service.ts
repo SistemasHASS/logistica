@@ -200,6 +200,42 @@ export class AprobacionesAreaService {
   }
 
   // =============================================
+  // APROBACIÓN NIVEL 2 - GERENCIA
+  // =============================================
+
+  /**
+   * Bandeja de gerencia: solo el aprobador vigente de la empresa
+   * recibe los requerimientos en APROBACION1 de todas las áreas
+   */
+  obtenerRequerimientosPendientesGerencia(data: {
+    documentoidentidad: string;
+    ruc?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/obtener-requerimientos-pendientes-gerencia`, data).pipe(
+      catchError((error) => {
+        if (error.status === 500) {
+          return of({ resultado: [] });
+        }
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Aprueba o rechaza un requerimiento en nivel 2 (gerencia).
+   * Solo el aprobador vigente de la empresa puede procesarlo.
+   */
+  aprobarRequerimientoGerencia(data: {
+    idrequerimiento: string;
+    documentoidentidad: string;
+    accion: 'APROBADO' | 'RECHAZADO';
+    comentarios?: string;
+    ruc?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/aprobar-requerimiento-gerencia`, data);
+  }
+
+  // =============================================
   // ANULACIONES DE REQUERIMIENTOS
   // =============================================
 

@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, tap, catchError, of, forkJoin } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 export interface PermisoRol {
@@ -29,12 +29,14 @@ export const MODULOS_MENU: ModuloMenu[] = [
   { route: 'aprobar-consumo',       label: 'Aprobar Consumo',            icon: 'bx bx-check-circle', clavePermiso: 'ADMINLG_MENU_APROBAR_CONSUMO' },
   { route: 'aprobar-sc',            label: 'Aprobar Solicitud Compra',   icon: 'bx bx-shopping-bag', clavePermiso: 'ADMINLG_MENU_APROBAR_SC' },
   { route: 'aprobar-ss',            label: 'Aprobar Solicitud Servicio', icon: 'bx bx-file-find',    clavePermiso: 'ADMINLG_MENU_APROBAR_SS' },
+  { route: 'aprobar-gerencia',      label: 'Aprobar Gerencia',           icon: 'bx bx-check-double', clavePermiso: 'ADMINLG_MENU_APROBAR_GERENCIA' },
   { route: 'maestros',              label: 'Maestros',                   icon: 'bx bx-equalizer',    clavePermiso: 'ADMINLG_MENU_MAESTROS' },
   { route: 'proveedores',           label: 'Gestión Proveedores',        icon: 'bx bx-store',        clavePermiso: 'ADMINLG_MENU_PROVEEDORES' },
   { route: 'usuarios',              label: 'Usuarios',                   icon: 'bx bx-user',         clavePermiso: 'ADMINLG_MENU_USUARIOS' },
   { route: 'areas',                 label: 'Áreas',                      icon: 'bx bx-buildings',    clavePermiso: 'ADMINLG_MENU_AREAS' },
   { route: 'usuario-area',          label: 'Usuarios por Área',          icon: 'bx bx-user-check',   clavePermiso: 'ADMINLG_MENU_USUARIO_AREA' },
   { route: 'flujo-aprobacion-area', label: 'Flujo Aprobación Área',      icon: 'bx bx-git-branch',   clavePermiso: 'ADMINLG_MENU_FLUJO_AREA' },
+  { route: 'config-flujo-aprobacion', label: 'Flujo por Niveles',        icon: 'bx bx-layer',        clavePermiso: 'ADMINLG_MENU_FLUJO_NIVELES' },
   { route: 'pdf',                   label: 'Formato PDF',                icon: 'bx bxs-file-pdf',    clavePermiso: 'ADMINLG_MENU_PDF' },
   { route: 'empresa',               label: 'Empresa',                    icon: 'bx bx-buildings',    clavePermiso: 'ADMINLG_MENU_EMPRESA' },
   { route: 'parametros',            label: 'Parámetros',                 icon: 'bx bx-cog',          clavePermiso: 'ADMINLG_MENU_PARAMETROS' },
@@ -129,33 +131,12 @@ export class PermisosRolService {
   }
 
   guardarPermisosLote(idrol: string, permisos: Record<string, boolean>, usuario: string): Observable<any> {
-    const requests = Object.entries(permisos).map(([clave, valor]) =>
-      ({ idrol, clave, valor: valor ? '1' : '0', usuarioModifica: usuario })
+    // El endpoint solo acepta un permiso por llamada; enviar en paralelo
+    const saves = Object.entries(permisos).map(([clave, valor]) =>
+      this.guardarPermiso(idrol, clave, valor, usuario)
     );
-    return this.http.post(
-      `${this.baseUrl}/api/ConfiguracionPermiso/guardar-config-permiso`,
-      { permisos: requests }
-    ).pipe(
-      tap(() => {
-        const map = this._permisosCargados();
-        const set = new Set<string>(Object.entries(permisos).filter(([, v]) => v).map(([k]) => k));
-        map.set(idrol, set);
-        this._permisosCargados.set(new Map(map));
-        this._guardarCacheLocal(idrol, set);
-      }),
-      catchError(() => {
-        const requests2 = Object.entries(permisos);
-        const saves = requests2.map(([clave, valor]) =>
-          this.guardarPermiso(idrol, clave, valor, usuario)
-        );
-        const map = this._permisosCargados();
-        const set = new Set<string>(requests2.filter(([, v]) => v).map(([k]) => k));
-        map.set(idrol, set);
-        this._permisosCargados.set(new Map(map));
-        this._guardarCacheLocal(idrol, set);
-        return of(null);
-      })
-    );
+    if (saves.length === 0) return of(null);
+    return forkJoin(saves);
   }
 
   private _guardarCacheLocal(idrol: string, set: Set<string>) {

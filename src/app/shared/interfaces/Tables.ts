@@ -114,6 +114,21 @@ export interface Configuracion {
   idtipoGasto: string;
   idactivoFijo: string;
   idTipoItem: string;
+  subpresupuesto?: number;
+  partida?: string;
+}
+
+export interface Partida {
+  ruc: string;
+  proyecto: string;
+  subpresupuesto: number;
+  categoria: string;
+  partida: string;
+  partida_descripcion: string;
+}
+
+export interface PartidaLocal extends Partida {
+  id: string;
 }
 
 export interface Empresa {
@@ -253,6 +268,11 @@ export interface DetalleRequerimiento {
   afectoIGV?: string;
   estado: number;
   atendida?: string;
+  // Partida presupuestal (opcional): depende del proyecto (AFE) de la línea
+  subpresupuesto?: number;
+  partida?: string;
+  partidaDescripcion?: string;
+  partidaId?: string;
   // 🔥 NUEVO → DISTRIBUCIÓN CONTABLE
   distribucion?: DistribucionContable[];
 }

@@ -1,0 +1,263 @@
+<div class="container-fluid py-3">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="m-0 fw-bold">Configuración de Flujo de Aprobación por Niveles</h4>
+      <small class="text-muted">Activa el segundo nivel de aprobación (Gerencia) por empresa y tipo de requerimiento</small>
+    </div>
+    <button class="btn btn-outline-secondary" (click)="refresh()">
+      <i class="bx bx-refresh"></i>
+    </button>
+  </div>
+
+  <!-- Selector de Empresa -->
+  <div class="card mb-3">
+    <div class="card-body py-3">
+      <label class="fw-semibold mb-2 d-block">
+        <i class="bx bx-buildings me-1 text-success"></i>Empresa
+      </label>
+      <div class="d-flex gap-2 flex-wrap">
+        @if (empresas().length === 0) {
+          <div class="text-muted py-2">
+            <i class="bx bx-building-x me-1"></i>
+            No hay empresas disponibles
+          </div>
+        } @else {
+          @for (emp of empresas(); track emp.ruc) {
+            <button
+              class="btn"
+              [class.btn-success]="rucSeleccionado() === emp.ruc"
+              [class.btn-outline-secondary]="rucSeleccionado() !== emp.ruc"
+              (click)="onEmpresaChange(emp.ruc)">
+              <i class="bx bx-buildings me-1"></i>
+              <span class="fw-semibold">{{ emp.razonSocial || emp.nombre }}</span>
+              <small class="ms-1 opacity-75">({{ emp.ruc }})</small>
+            </button>
+          }
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Switch global -->
+  <div class="card mb-3 border-warning">
+    <div class="card-body py-3 d-flex justify-content-between align-items-center">
+      <div>
+        <label class="fw-semibold mb-0">
+          <i class="bx bx-toggle-right me-1 text-warning"></i>Aprobación nivel 2 habilitada (global)
+        </label>
+        <div><small class="text-muted">Interruptor de emergencia: si está apagado, todas las empresas usan el flujo actual de un nivel.</small></div>
+      </div>
+      <div class="form-check form-switch fs-4">
+        <input class="form-check-input" type="checkbox" role="switch" id="chkNivel2Global"
+               [checked]="nivel2Global()" (change)="toggleGlobal()" [disabled]="guardandoGlobal()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Cards por tipo -->
+  <div class="row g-3 mb-3">
+    @for (tipo of tiposConfigurables; track tipo) {
+      <div class="col-md-4">
+        <div class="card h-100" [class.border-success]="configDe(tipo).modo === 'DOS_NIVELES'">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="m-0 fw-bold">{{ tipo }}</h6>
+              <p-tag
+                [value]="configDe(tipo).modo === 'DOS_NIVELES' ? 'Dos niveles' : 'Un nivel'"
+                [severity]="configDe(tipo).modo === 'DOS_NIVELES' ? 'success' : 'secondary'">
+              </p-tag>
+            </div>
+
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio" [id]="'u-' + tipo" [name]="'modo-' + tipo"
+                     [checked]="configDe(tipo).modo === 'UN_NIVEL'"
+                     (change)="setModo(tipo, 'UN_NIVEL')">
+              <label class="form-check-label" [for]="'u-' + tipo">
+                Un nivel <small class="text-muted">(flujo actual: solo jefe de área)</small>
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" [id]="'d-' + tipo" [name]="'modo-' + tipo"
+                     [checked]="configDe(tipo).modo === 'DOS_NIVELES'"
+                     (change)="setModo(tipo, 'DOS_NIVELES')">
+              <label class="form-check-label" [for]="'d-' + tipo">
+                Dos niveles <small class="text-muted">(jefe de área → gerencia)</small>
+              </label>
+            </div>
+
+            <hr>
+            <small class="text-muted d-block">
+              <i class="bx bx-git-branch me-1"></i>
+              @if (configDe(tipo).modo === 'DOS_NIVELES') {
+                Jefe de área → <b>APROBACION1</b> → Gerencia → <b>APROBADO</b>
+              } @else {
+                Jefe de área → <b>APROBADO</b>
+              }
+            </small>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="col-md-4">
+      <div class="card h-100 bg-light">
+        <div class="card-body text-muted d-flex flex-column justify-content-center">
+          <h6 class="m-0 fw-bold mb-2">TRANSFERENCIA</h6>
+          <small><i class="bx bx-info-circle me-1"></i>No aplica — omite aprobación por diseño.</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end mb-4">
+    <button class="btn btn-primary" (click)="guardarConfiguracion()" [disabled]="guardando()">
+      <i class="bx bx-save me-2"></i>{{ guardando() ? 'Guardando...' : 'Guardar configuración' }}
+    </button>
+  </div>
+
+  <!-- Cadena de aprobadores nivel 2 -->
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h6 class="m-0 fw-bold">
+            <i class="bx bx-git-repo-forked me-1 text-primary"></i>Aprobadores Nivel 2 — cadena de delegación
+          </h6>
+          <small class="text-muted">
+            Solo el primero disponible aprueba. Si el gerente está "No disponible", la bandeja pasa al siguiente.
+            @if (aprobadorVigente()) {
+              <span class="text-success fw-semibold"> Vigente: {{ aprobadorVigente()!.nombreCompleto }}</span>
+            } @else if (aprobadores().length > 0) {
+              <span class="text-danger fw-semibold"> Sin aprobador vigente</span>
+            }
+          </small>
+        </div>
+        <button class="btn btn-primary btn-sm" (click)="abrirCrearAprobador()">
+          <i class="bx bx-plus me-1"></i>Nuevo aprobador
+        </button>
+      </div>
+
+      <p-table
+        [value]="aprobadores()"
+        [loading]="loadingAprobadores()"
+        styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width:60px">Orden</th>
+            <th>DNI</th>
+            <th>Nombre</th>
+            <th>Rol</th>
+            <th>Disponible</th>
+            <th>Estado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-a>
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <button class="btn btn-sm btn-outline-secondary px-1 py-0" (click)="moverAprobador(a, -1)" [disabled]="esPrimero(a)">
+                  <i class="bx bx-up-arrow-alt"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary px-1 py-0" (click)="moverAprobador(a, 1)" [disabled]="esUltimo(a)">
+                  <i class="bx bx-down-arrow-alt"></i>
+                </button>
+                <span class="ms-1 fw-semibold">{{ a.orden }}</span>
+              </div>
+            </td>
+            <td>{{ a.documentoidentidad }}</td>
+            <td>
+              {{ a.nombreCompleto }}
+              @if (a.esVigente) {
+                <p-tag value="Aprueba ahora" severity="success" styleClass="ms-2"></p-tag>
+              }
+            </td>
+            <td>
+              <p-tag [value]="a.rol" [severity]="a.rol === 'GERENTE' ? 'info' : 'secondary'"></p-tag>
+            </td>
+            <td>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       [checked]="a.disponible" (change)="toggleDisponible(a)">
+              </div>
+            </td>
+            <td>
+              <p-tag [value]="a.disponible ? 'Disponible' : 'No disponible'" [severity]="a.disponible ? 'success' : 'warn'"></p-tag>
+            </td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-primary me-2" (click)="abrirEditarAprobador(a)">
+                <i class="bx bx-edit"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="eliminarAprobador(a)">
+                <i class="bx bx-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center py-4">
+              <i class="bx bx-user-x text-muted" style="font-size: 48px;"></i>
+              <p class="text-muted mt-2">No hay aprobadores nivel 2 registrados en esta empresa</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Modal aprobador -->
+  <p-dialog
+    [header]="isEditingAprobador() ? 'Editar aprobador' : 'Nuevo aprobador nivel 2'"
+    [(visible)]="modalAprobador"
+    [modal]="true"
+    [style]="{width: '480px'}"
+    [draggable]="false"
+    [resizable]="false">
+    <form [formGroup]="formAprobador">
+      <div class="mb-3">
+        <label class="form-label">DNI *</label>
+        <input type="text" class="form-control" formControlName="documentoidentidad"
+               [class.is-invalid]="formAprobador.get('documentoidentidad')?.invalid && formAprobador.get('documentoidentidad')?.touched">
+        @if (formAprobador.get('documentoidentidad')?.invalid && formAprobador.get('documentoidentidad')?.touched) {
+          <div class="invalid-feedback">DNI requerido</div>
+        }
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Nombre completo *</label>
+        <input type="text" class="form-control" formControlName="nombreCompleto"
+               [class.is-invalid]="formAprobador.get('nombreCompleto')?.invalid && formAprobador.get('nombreCompleto')?.touched">
+        @if (formAprobador.get('nombreCompleto')?.invalid && formAprobador.get('nombreCompleto')?.touched) {
+          <div class="invalid-feedback">Nombre requerido</div>
+        }
+      </div>
+      <div class="row mb-3">
+        <div class="col-6">
+          <label class="form-label">Rol *</label>
+          <select class="form-select" formControlName="rol">
+            @for (r of rolesNivel2; track r.value) {
+              <option [value]="r.value">{{ r.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-6">
+          <label class="form-label">Orden *</label>
+          <input type="number" class="form-control" formControlName="orden" min="1">
+        </div>
+      </div>
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="chkDisponible" formControlName="disponible">
+        <label class="form-check-label" for="chkDisponible">Disponible para aprobar</label>
+      </div>
+    </form>
+    <ng-template pTemplate="footer">
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" (click)="cerrarModalAprobador()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="guardarAprobador()">
+          <i class="bx bx-save me-2"></i>{{ isEditingAprobador() ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </ng-template>
+  </p-dialog>
+</div>

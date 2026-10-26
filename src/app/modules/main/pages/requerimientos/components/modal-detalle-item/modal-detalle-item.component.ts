@@ -4,12 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { DropdownComponent } from '../../../../components/dropdown/dropdown.component';
 import { ProductSearchCardsComponent } from '../../../../components/product-search-cards/product-search-cards.component';
 import { ModalSolicitudItemComponent } from '../modal-solicitud-item/modal-solicitud-item.component';
+import { TreeSelectComponent, ModuloNode } from '../../../../components/tree-select/tree-select.component';
 
 @Component({
   selector: 'app-modal-detalle-item',
   standalone: true,
   styleUrls: ['../../requerimientos.component.scss'],
-  imports: [CommonModule, FormsModule, DropdownComponent, ProductSearchCardsComponent, ModalSolicitudItemComponent],
+  imports: [CommonModule, FormsModule, DropdownComponent, ProductSearchCardsComponent, ModalSolicitudItemComponent, TreeSelectComponent],
   templateUrl: './modal-detalle-item.component.html',
 })
 export class ModalDetalleItemComponent {
@@ -50,6 +51,7 @@ export class ModalDetalleItemComponent {
   @Input() modalProyectoEditable = false;
   @Input() modalProyectoDisabled = false;
   @Input() permitirEditarParametros = false;
+  @Input() partidaTreeNodes: ModuloNode[] = [];
 
   // Eventos emitidos al padre
   @Output() cerrarEvt = new EventEmitter<void>();
@@ -62,6 +64,8 @@ export class ModalDetalleItemComponent {
   @Output() turnoChangeEvt = new EventEmitter<void>();
   @Output() cecoChangeEvt = new EventEmitter<void>();
   @Output() laborChangeEvt = new EventEmitter<void>();
+  @Output() proyectoChangeEvt = new EventEmitter<void>();
+  @Output() partidaChangeEvt = new EventEmitter<void>();
   @Output() productoSelectEvt = new EventEmitter<any>();
   @Output() permitirEditarParametrosChange = new EventEmitter<boolean>();
 
@@ -134,6 +138,16 @@ export class ModalDetalleItemComponent {
   // Notifica cambio de labor
   onLaborChange() {
     this.laborChangeEvt.emit();
+  }
+
+  // Notifica cambio de proyecto (reinicia la partida de la línea)
+  onProyectoChange() {
+    this.proyectoChangeEvt.emit();
+  }
+
+  // Notifica cambio de partida presupuestal
+  onPartidaChange() {
+    this.partidaChangeEvt.emit();
   }
 
   // Notifica selección de producto

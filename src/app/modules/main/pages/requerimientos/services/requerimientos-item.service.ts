@@ -9,8 +9,10 @@ import { PrioridadRequerimientoService } from '@/app/shared/services/prioridad-r
 import * as XLSX from 'xlsx';
 import {
   Requerimiento, DetalleRequerimiento,
-  Ceco, Labor, Proyecto, DetalleExcelPreview,
+  Ceco, Labor, Proyecto, DetalleExcelPreview, PartidaLocal,
 } from '@/app/shared/interfaces/Tables';
+import { construirArbolPartidas, filtrarPartidas } from '@/app/shared/utils/partida-tree.utils';
+import { ModuloNode } from '@/app/modules/main/components/tree-select/tree-select.component';
 import { PrioridadSpring, TipoRequerimiento } from '@/app/shared/interfaces/PrioridadRequerimiento';
 import { RequerimientosMaestrasService } from './requerimientos-maestras.service';
 import { TransferenciaService } from '@/app/modules/main/services/transferencia.service';
@@ -486,7 +488,9 @@ export class RequerimientosItemService {
         turno: this.TipoSelecionado === 'COMPRA' ? '' : (this.maestras.turnoSeleccionado ?? ''),
         labor: this.maestras.laborSeleccionado?.labor ?? '',
         esActivoFijo: false, activoFijo: '', afectoIGV: 'S',
+        partidaId: '', partida: '', subpresupuesto: undefined, partidaDescripcion: '',
       };
+      this.aplicarPartidaPorDefecto();
     this.modalAbierto = true;
   }
 
@@ -521,6 +525,7 @@ export class RequerimientosItemService {
       this.filteredCecosModal = [];
     }
     this.lineaTemp.ceco = ''; this.lineaTemp.labor = ''; this.lineaTemp.proyecto = '';
+    this.limpiarPartidaLinea();
     this.filteredLaboresModal = [];
     this.filteredProyectosModal = [];
     if (this.filteredCecosModal.length === 1) {
@@ -535,6 +540,7 @@ export class RequerimientosItemService {
     const cecoObj = this.maestras.cecos.find((c) => c.localname === cecoActual);
     this.filteredLaboresModal = this.maestras.labores.filter((l) => l.ceco === (cecoObj?.costcenter || ''));
     this.lineaTemp.labor = ''; this.lineaTemp.proyecto = '';
+    this.limpiarPartidaLinea();
     this.filteredProyectosModal = [];
     if (this.filteredLaboresModal.length === 1) {
       this.lineaTemp.labor = this.filteredLaboresModal[0].labor;
@@ -556,6 +562,62 @@ export class RequerimientosItemService {
     );
     if (this.filteredProyectosModal.length === 1) {
       this.lineaTemp.proyecto = String(this.filteredProyectosModal[0].proyectoio);
+    }
+    this.aplicarPartidaPorDefecto();
+  }
+
+  // ── Partida presupuestal (opcional, depende del proyecto/AFE de la línea) ──
+  resolverAfeProyecto(proyectoLinea: string | undefined): string {
+    const valor = String(proyectoLinea ?? '').trim();
+    if (!valor) return '';
+    const proyecto = this.maestras.proyectos.find((p: any) =>
+      String(p.proyectoio ?? '').trim() === valor || String(p.afe ?? '').trim() === valor);
+    return String(proyecto?.afe ?? '').trim();
+  }
+
+  get partidasFiltradasModal(): PartidaLocal[] {
+    const afe = this.resolverAfeProyecto(this.lineaTemp?.proyecto);
+    return filtrarPartidas(this.maestras.partidas, afe, this.usuario?.ruc);
+  }
+
+  get partidaTreeNodesModal(): ModuloNode[] {
+    return construirArbolPartidas(this.partidasFiltradasModal);
+  }
+
+  private limpiarPartidaLinea() {
+    this.lineaTemp.partidaId = '';
+    this.lineaTemp.subpresupuesto = undefined;
+    this.lineaTemp.partida = '';
+    this.lineaTemp.partidaDescripcion = '';
+  }
+
+  private aplicarPartidaPorDefecto() {
+    // Hereda la partida global de Parámetros solo si el proyecto de la línea coincide
+    const global = this.maestras.partidaSeleccionada;
+    const afe = this.resolverAfeProyecto(this.lineaTemp?.proyecto);
+    if (global && afe && String(global.proyecto).trim() === afe) {
+      this.lineaTemp.partidaId = global.id;
+      this.lineaTemp.subpresupuesto = global.subpresupuesto;
+      this.lineaTemp.partida = String(global.partida ?? '').trim();
+      this.lineaTemp.partidaDescripcion = String(global.partida_descripcion ?? '').trim();
+    } else {
+      this.limpiarPartidaLinea();
+    }
+  }
+
+  onProyectoChangeModal() {
+    // El proyecto de la línea cambió: la partida seleccionada puede no aplicar
+    this.aplicarPartidaPorDefecto();
+  }
+
+  onPartidaChangeModal() {
+    const seleccionada = this.partidasFiltradasModal.find((p) => p.id === this.lineaTemp.partidaId);
+    if (seleccionada) {
+      this.lineaTemp.subpresupuesto = seleccionada.subpresupuesto;
+      this.lineaTemp.partida = String(seleccionada.partida ?? '').trim();
+      this.lineaTemp.partidaDescripcion = String(seleccionada.partida_descripcion ?? '').trim();
+    } else {
+      this.limpiarPartidaLinea();
     }
   }
 
@@ -793,6 +855,7 @@ export class RequerimientosItemService {
             idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
             idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
             afectoIGV: d.afectoIGV === 'N' ? 'N' : 'S',
+            subpresupuesto: d.subpresupuesto ?? null, partida: d.partida || '',
           })),
         };
         const resp = await this.transferenciaService.crearRequerimientoTransferencia(payloadTransf);
@@ -838,6 +901,7 @@ export class RequerimientosItemService {
         idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
         idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
         afectoIGV: d.afectoIGV === 'N' ? 'N' : 'S',
+        subpresupuesto: d.subpresupuesto ?? null, partida: d.partida || '',
       })),
     }];
     this.requerimientosService.registrarRequerimientos(payload).subscribe({
@@ -903,6 +967,7 @@ export class RequerimientosItemService {
             idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
             idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
             afectoIGV: d.afectoIGV === 'N' ? 'N' : 'S',
+            subpresupuesto: d.subpresupuesto ?? null, partida: d.partida || '',
           })),
         };
         const respTransf = await this.transferenciaService.crearRequerimientoTransferencia(payloadTransf);
@@ -973,6 +1038,7 @@ export class RequerimientosItemService {
         idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
         idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
         afectoIGV: d.afectoIGV === 'N' ? 'N' : 'S',
+        subpresupuesto: d.subpresupuesto ?? null, partida: d.partida || '',
       })),
     }));
     try {
@@ -1489,22 +1555,32 @@ export class RequerimientosItemService {
       return null;
     }
     const idReqActual = this.requerimiento?.idrequerimiento || '';
-    const nuevos: DetalleRequerimiento[] = lineasPreview.map((l) => ({
-      idrequerimiento: idReqActual,
-      codigo: l.codigo,
-      producto: l.descripcion,
-      descripcion: l.descripcion,
-      cantidad: l.cantidad,
-      unidadMedida: l.unidadMedida || 'UND',
-      proyecto: l.proyecto,
-      ceco: l.ceco,
-      turno: l.turno ?? '',
-      labor: l.labor || (this.maestras.laborSeleccionado?.labor ?? ''),
-      esActivoFijo: false,
-      activoFijo: l.activofijo,
-      afectoIGV: l.afectoIGV === 'N' ? 'N' : 'S',
-      estado: 0,
-    }));
+    const nuevos: DetalleRequerimiento[] = lineasPreview.map((l) => {
+      // Hereda la partida global de Parámetros solo si el proyecto de la línea coincide
+      const global = this.maestras.partidaSeleccionada;
+      const afeLinea = this.resolverAfeProyecto(l.proyecto);
+      const aplicaGlobal = !!global && !!afeLinea && String(global.proyecto).trim() === afeLinea;
+      return {
+        idrequerimiento: idReqActual,
+        codigo: l.codigo,
+        producto: l.descripcion,
+        descripcion: l.descripcion,
+        cantidad: l.cantidad,
+        unidadMedida: l.unidadMedida || 'UND',
+        proyecto: l.proyecto,
+        ceco: l.ceco,
+        turno: l.turno ?? '',
+        labor: l.labor || (this.maestras.laborSeleccionado?.labor ?? ''),
+        esActivoFijo: false,
+        activoFijo: l.activofijo,
+        afectoIGV: l.afectoIGV === 'N' ? 'N' : 'S',
+        partidaId: aplicaGlobal ? global!.id : '',
+        subpresupuesto: aplicaGlobal ? global!.subpresupuesto : undefined,
+        partida: aplicaGlobal ? String(global!.partida ?? '').trim() : '',
+        partidaDescripcion: aplicaGlobal ? String(global!.partida_descripcion ?? '').trim() : '',
+        estado: 0,
+      };
+    });
     this.detalles.push(...nuevos);
     this.alertService.mostrarInfo('Carga masiva guardada correctamente');
     return nuevos;
@@ -1561,6 +1637,10 @@ export class RequerimientosItemService {
       esActivoFijo: this.lineaTemp.esActivoFijo,
       activoFijo: this.lineaTemp.activoFijo,
       afectoIGV: this.lineaTemp.afectoIGV === 'N' ? 'N' : 'S',
+      partidaId: this.lineaTemp.partidaId || '',
+      subpresupuesto: this.lineaTemp.subpresupuesto ?? undefined,
+      partida: this.lineaTemp.partida || '',
+      partidaDescripcion: this.lineaTemp.partidaDescripcion || '',
       estado: 0,
     };
     if (this.editIndex >= 0) {
@@ -1606,6 +1686,10 @@ export class RequerimientosItemService {
       esActivoFijo: this.lineaTemp.esActivoFijo || false,
       activoFijo: this.lineaTemp.activoFijo || '',
       afectoIGV: this.lineaTemp.afectoIGV === 'N' ? 'N' : 'S',
+      partidaId: this.lineaTemp.partidaId || '',
+      subpresupuesto: this.lineaTemp.subpresupuesto ?? undefined,
+      partida: this.lineaTemp.partida || '',
+      partidaDescripcion: this.lineaTemp.partidaDescripcion || '',
       estado: 0,
       stockDisponible: this.stockActualLineaTemp,
     };
@@ -1830,6 +1914,9 @@ export class RequerimientosItemService {
               UltimaFechaModif: new Date().toISOString(),
               IGVExoneradoFlag: d.afectoIGV === 'N' ? 'S' : 'N',
               GenerarContratoFlag: 'N',
+              // Partida presupuestal (opcional) → WH_RequisicionDetalle
+              PartidaPresupuestal: d.subpresupuesto != null ? String(d.subpresupuesto).padStart(4, '0') : null,
+              Partida: d.partida || null,
               origen: 'app_logistica',
             };
           }),

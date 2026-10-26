@@ -343,6 +343,7 @@
                         <th>Producto</th>
                         <th>Cantidad</th>
                         <th>Proyecto</th>
+                        <th>Partida</th>
                         <th>CECO</th>
                         <th>Turno</th>
                         <th>Labor</th>
@@ -362,6 +363,7 @@
                         <td>{{ obtenerDescripcionDetalle(item) }}</td>
                         <td>{{ item.cantidad }}</td>
                         <td>{{ item.proyecto }}</td>
+                        <td [title]="item.partidaDescripcion || ''">{{ item.partida || '—' }}</td>
                         <td>{{ item.ceco }}</td>
                         <td>{{ item.turno }}</td>
                         <td>{{ item.labor }}</td>
@@ -377,7 +379,7 @@
                         </td>
                       </tr>
                       <tr *ngIf="detalles.length === 0">
-                        <td colspan="11" class="text-muted">No hay detalles agregados</td>
+                        <td colspan="12" class="text-muted">No hay detalles agregados</td>
                       </tr>
                     </tbody>
                   </table>
@@ -464,6 +466,7 @@
                       <th>Producto</th>
                       <th>Cantidad</th>
                       <th>Proyecto</th>
+                      <th>Partida</th>
                       <th>CECO</th>
                       <th>Turno</th>
                       <th>Labor</th>
@@ -483,6 +486,7 @@
                       <td>{{ obtenerDescripcionDetalle(item) }}</td>
                       <td>{{ item.cantidad }}</td>
                       <td>{{ item.proyecto }}</td>
+                      <td [title]="item.partidaDescripcion || ''">{{ item.partida || '—' }}</td>
                       <td>{{ item.ceco }}</td>
                       <td>{{ item.turno }}</td>
                       <td>{{ item.labor }}</td>
@@ -498,7 +502,7 @@
                       </td>
                     </tr>
                     <tr *ngIf="detalles.length === 0">
-                      <td colspan="11" class="text-muted">No hay detalles agregados</td>
+                      <td colspan="12" class="text-muted">No hay detalles agregados</td>
                     </tr>
                   </tbody>
                 </table>
@@ -548,6 +552,7 @@
   [modalProyectoEditable]="modalProyectoEditable"
   [modalProyectoDisabled]="modalProyectoDisabled"
   [permitirEditarParametros]="permitirEditarParametros"
+  [partidaTreeNodes]="partidaTreeNodesModal"
   (cerrarEvt)="cerrarModal()"
   (guardarEdicionEvt)="guardarEdicionLinea()"
   (registrarTodasEvt)="registrarTodasLasLineas()"
@@ -558,6 +563,8 @@
   (turnoChangeEvt)="onTurnoChangeModal()"
   (cecoChangeEvt)="onCecoChangeModal()"
   (laborChangeEvt)="onLaborChangeModal()"
+  (proyectoChangeEvt)="onProyectoChangeModal()"
+  (partidaChangeEvt)="onPartidaChangeModal()"
   (productoSelectEvt)="onProductoSelect($event)"
 ></app-modal-detalle-item>
 

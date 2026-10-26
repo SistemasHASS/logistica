@@ -382,18 +382,18 @@
           styleClass="p-datatable-striped">
           <ng-template pTemplate="header">
             <tr>
-              <th>Nombre</th>
+              <th>Rol aprobador</th>
               <th>Descripción</th>
               <th>Monto Mínimo</th>
               <th>Monto Máximo</th>
-              <th>Niveles</th>
+              <th>Nivel</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-flujo>
             <tr>
-              <td><strong>{{ flujo.nombre }}</strong></td>
+              <td><strong>{{ flujo.nombreRol || flujo.nombre }}</strong></td>
               <td>{{ flujo.descripcion || '-' }}</td>
               <td class="text-right">S/ {{ formatearMoneda(flujo.montoMinimo) }}</td>
               <td class="text-right">S/ {{ formatearMoneda(flujo.montoMaximo) }}</td>
@@ -741,12 +741,14 @@
     <div class="modal-body" *ngIf="flujoAprobacionForm">
       <div class="form-grid">
         <div class="form-group">
-          <label>Nombre: *</label>
-          <input 
-            type="text" 
-            class="form-control" 
-            [(ngModel)]="flujoAprobacionForm.nombre"
-            placeholder="Nombre del flujo">
+          <label>Rol aprobador: *</label>
+          <select class="form-control" [(ngModel)]="flujoAprobacionForm.nombre">
+            <option value="">Seleccione...</option>
+            <option value="LOLOGIST">Jefe de Logística</option>
+            <option value="FINANZAS">Finanzas</option>
+            <option value="GERENTE">Gerencia</option>
+          </select>
+          <small class="text-muted">Rol que firmará este nivel dentro del rango de monto.</small>
         </div>
 
         <div class="form-group">
@@ -777,12 +779,13 @@
         </div>
 
         <div class="form-group">
-          <label>Niveles:</label>
+          <label>Nivel:</label>
           <input 
             type="number" 
             class="form-control" 
             [(ngModel)]="flujoAprobacionForm.niveles"
             min="1">
+          <small class="text-muted">Nivel dentro de la cadena de firma (1 = primera firma).</small>
         </div>
 
         <div class="form-group">
