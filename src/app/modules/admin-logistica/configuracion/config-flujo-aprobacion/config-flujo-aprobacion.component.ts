@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } 
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
+import Swal from 'sweetalert2';
 import { ConfigFlujoAprobacionService, ConfigFlujo, AprobadorNivel2 } from '../../services/config-flujo-aprobacion.service';
 import { ParametrosService } from '../../tabs/parametros/services/parametros.service';
 import { AdminLogisticaAuthService } from '../../auth/services/admin-logistica-auth.service';
@@ -102,7 +103,7 @@ export class ConfigFlujoAprobacionComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        alert('Error al cargar configuración de flujo');
+        Swal.fire('Error', 'Error al cargar configuración de flujo', 'error');
       }
     });
   }
@@ -117,7 +118,7 @@ export class ConfigFlujoAprobacionComponent implements OnInit {
       },
       error: () => {
         this.loadingAprobadores.set(false);
-        alert('Error al cargar aprobadores nivel 2');
+        Swal.fire('Error', 'Error al cargar aprobadores nivel 2', 'error');
       }
     });
   }
@@ -146,7 +147,7 @@ export class ConfigFlujoAprobacionComponent implements OnInit {
       },
       error: () => {
         this.guardandoGlobal.set(false);
-        alert('Error al actualizar el parámetro global');
+        Swal.fire('Error', 'Error al actualizar el parámetro global', 'error');
       }
     });
   }
@@ -177,11 +178,7 @@ export class ConfigFlujoAprobacionComponent implements OnInit {
           completados++;
           if (completados === pendientes.length) {
             this.guardando.set(false);
-            if (errores.length) {
-              alert(errores.join('\n'));
-            } else {
-              alert('Configuración guardada correctamente');
-            }
+            this.mostrarResultadoGuardado(errores);
             this.cargarConfig();
           }
         },
@@ -190,10 +187,27 @@ export class ConfigFlujoAprobacionComponent implements OnInit {
           completados++;
           if (completados === pendientes.length) {
             this.guardando.set(false);
-            alert(errores.join('\n'));
+            this.mostrarResultadoGuardado(errores);
             this.cargarConfig();
           }
         }
+      });
+    }
+  }
+
+  private mostrarResultadoGuardado(errores: string[]) {
+    if (errores.length) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al guardar configuración',
+        html: errores.join('<br>')
+      });
+    } else {
+      Swal.fire({
+        icon: 'success',
+        title: 'Configuración guardada correctamente',
+        timer: 2000,
+        showConfirmButton: false
       });
     }
   }
@@ -242,28 +256,38 @@ export class ConfigFlujoAprobacionComponent implements OnInit {
       next: (res) => {
         const item = Array.isArray(res) ? res[0] : res;
         if (item && item.success === 0) {
-          alert(item.mensaje);
+          Swal.fire('Error', item.mensaje, 'error');
           return;
         }
         this.cerrarModalAprobador();
         this.cargarAprobadores();
+        Swal.fire({ icon: 'success', title: 'Aprobador guardado correctamente', timer: 2000, showConfirmButton: false });
       },
-      error: (err) => alert(err.error?.message || 'Error al guardar aprobador')
+      error: (err) => Swal.fire('Error', err.error?.message || 'Error al guardar aprobador', 'error')
     });
   }
 
   eliminarAprobador(a: AprobadorNivel2) {
-    if (!confirm(`¿Retirar a ${a.nombreCompleto} de la cadena de aprobación?`)) return;
-    this.configSvc.eliminarAprobadorNivel2(a.idAprobadorN2).subscribe({
-      next: () => this.cargarAprobadores(),
-      error: (err) => alert(err.error?.message || 'Error al eliminar aprobador')
+    Swal.fire({
+      title: '¿Retirar aprobador?',
+      text: `Se retirará a ${a.nombreCompleto} de la cadena de aprobación`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, retirar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.configSvc.eliminarAprobadorNivel2(a.idAprobadorN2).subscribe({
+        next: () => this.cargarAprobadores(),
+        error: (err) => Swal.fire('Error', err.error?.message || 'Error al eliminar aprobador', 'error')
+      });
     });
   }
 
   moverAprobador(a: AprobadorNivel2, direccion: -1 | 1) {
     this.configSvc.reordenarAprobadorNivel2(this.rucSeleccionado(), a.idAprobadorN2, direccion).subscribe({
       next: () => this.cargarAprobadores(),
-      error: (err) => alert(err.error?.message || 'Error al reordenar')
+      error: (err) => Swal.fire('Error', err.error?.message || 'Error al reordenar', 'error')
     });
   }
 
@@ -276,7 +300,7 @@ export class ConfigFlujoAprobacionComponent implements OnInit {
         }
         this.cargarAprobadores();
       },
-      error: (err) => alert(err.error?.message || 'Error al cambiar disponibilidad')
+      error: (err) => Swal.fire('Error', err.error?.message || 'Error al cambiar disponibilidad', 'error')
     });
   }
 

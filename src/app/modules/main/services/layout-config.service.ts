@@ -46,6 +46,7 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
     items: [
       { id: 'dashboard-jlologist', nombre: 'Dashboard Jef. Logística', icono: 'bx bx-line-chart',       ruta: './dashboard-jlologist',  activo: true, orden: 1 },
       { id: 'dashboard-oplogist',  nombre: 'Mi Dashboard',             icono: 'bx bx-user-check',        ruta: './dashboard-oplogist',   activo: true, orden: 2 },
+      { id: 'dashboard-gerencia',  nombre: 'Mi Dashboard',             icono: 'bx bx-bar-chart-alt-2',   ruta: './dashboard-gerencia',   activo: true, orden: 2 },
       { id: 'dashboard-logistica', nombre: 'Dashboard Logística',      icono: 'bx bx-bar-chart-alt-2',   ruta: './dashboard-logistica',  activo: true, orden: 3 },
       { id: 'dashboard-despacho',  nombre: 'Dashboard Almacén',        icono: 'bx bxs-dashboard',        ruta: './dashboard-despacho',   activo: true, orden: 4 },
       { id: 'dashboard-tilogist',  nombre: 'Dashboard TI',             icono: 'bx bxs-dashboard',        ruta: './dashboard-tilogist',   activo: true, orden: 5 },
@@ -111,6 +112,7 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
       { id: 'aprobaciones-oc', nombre: 'Aprobación OC', icono: 'icon icon-file-check', ruta: './aprobaciones-oc', activo: true, orden: 1 },
       { id: 'aprobaciones-os', nombre: 'Aprobación OS', icono: 'icon icon-file-check', ruta: './aprobaciones-os', activo: true, orden: 2 },
       { id: 'aprobaciones-area', nombre: 'Aprobaciones por Área', icono: 'icon icon-circle', ruta: './aprobaciones-area', activo: true, orden: 3 },
+      { id: 'aprobaciones-gerencia', nombre: 'Aprobación Gerencia', icono: 'icon icon-user-check', ruta: './aprobaciones-gerencia', activo: true, orden: 4 },
     ]
   },
   {
@@ -139,7 +141,7 @@ const MODULOS_POR_ROL: Record<string, string[]> = {
   ALLOGIST:  ['catalogo-items', 'dashboard-despacho', 'notificaciones', 'parametros', 'requerimientos', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'reporte-despachos', 'transferencias-almacen'],
   APLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'dashboard-aprobaciones-area', 'notificaciones', 'aprobaciones-area', 'reporte-aprobaciones-area', 'catalogo-items'],
   FINANZAS:  ['catalogo-items', 'dashboard-finanzas', 'aprobaciones-oc', 'aprobaciones-os'],
-  GERENTE:   ['catalogo-items', 'dashboard-oplogist', 'aprobaciones-oc', 'aprobaciones-os'],
+  GERENTE:   ['catalogo-items', 'dashboard-gerencia', 'aprobaciones-gerencia', 'aprobaciones-oc', 'aprobaciones-os'],
 };
 
 /** Filtra el ACCORDION_DEFAULT dejando solo los módulos permitidos para un rol (soporta roles concatenados por coma) */
@@ -383,15 +385,15 @@ export class LayoutConfigService {
   }
 
   // Roles que SIEMPRE usan menú accordion (fallback sin depender de BD)
-  private readonly ROLES_ACCORDION_DEFAULT = new Set(['JLOLOGIST']);
+  private readonly ROLES_ACCORDION_DEFAULT = new Set(['JLOLOGIST', 'GERENTE', 'FINANZAS']);
 
   /** Determina el tipo de menú a usar para un rol (soporta roles concatenados por coma) */
   getMenuType(idrol: string): MenuType {
     const config = this.getConfigParaRol(idrol);
-    if (config) return config.tipoMenu;
+    if (config?.tipoMenu && config.tipoMenu !== 'default') return config.tipoMenu;
     const roles = getRolesArray(idrol);
     if (roles.some(rol => this.accordionRoles().has(rol) || this.ROLES_ACCORDION_DEFAULT.has(rol))) return 'accordion';
-    return 'default';
+    return config?.tipoMenu ?? 'default';
   }
 
   /** Verifica si un rol usa menú dinámico configurado (soporta roles concatenados por coma) */

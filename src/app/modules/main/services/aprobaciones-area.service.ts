@@ -222,6 +222,41 @@ export class AprobacionesAreaService {
   }
 
   /**
+   * Lista los requerimientos que este aprobador N2 ya proceso
+   * (aprobados o rechazados en gerencia).
+   */
+  obtenerRequerimientosAprobadosGerencia(data: {
+    documentoidentidad: string;
+    ruc?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/obtener-requerimientos-aprobados-gerencia`, data).pipe(
+      catchError((error) => {
+        if (error.status === 500) {
+          return of({ resultado: [] });
+        }
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * KPIs del dashboard de gerencia (nivel 2).
+   */
+  dashboardGerencia(data: {
+    documentoidentidad: string;
+    ruc?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/dashboard-gerencia`, data).pipe(
+      catchError((error) => {
+        if (error.status === 500) {
+          return of({ resultado: [] });
+        }
+        throw error;
+      })
+    );
+  }
+
+  /**
    * Aprueba o rechaza un requerimiento en nivel 2 (gerencia).
    * Solo el aprobador vigente de la empresa puede procesarlo.
    */

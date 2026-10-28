@@ -239,6 +239,7 @@
         <div *ngIf="activeTabIndex === 1">
           <p-table [value]="misRequerimientos" [loading]="loadingMisRequerimientos" [showCurrentPageReport]="true"
                    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} requerimientos"
+                   emptyMessage="No hay requerimientos aprobados por gerencia"
                    [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10,25,50]" styleClass="p-datatable-sm">
             <ng-template pTemplate="header">
               <tr>

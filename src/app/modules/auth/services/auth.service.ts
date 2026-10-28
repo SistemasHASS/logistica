@@ -33,10 +33,39 @@ export class AuthService {
 
     try {
       const response = await lastValueFrom(this.http.post<any>(url, body));
+
+      // Fallback: usuarios con rol whitelist (GERENTE/FINANZAS) que tienen
+      // estado=0 en el maestro y no pueden loguear por la via normal.
+      if (this.normalizarUsuarios(response).length === 0) {
+        const rolResp = await lastValueFrom(
+          this.http.post<any>(`${this.baseUrl}/api/logistica/auth/login-rol`, {
+            usuario,
+            clave,
+            aplicacion: this.aplicaciones,
+          })
+        );
+        return this.normalizarUsuarios(rolResp);
+      }
+
       return response;
     } catch (error: any) {
       throw new Error(error.error?.message || 'Error de autenticación');
     }
+  }
+
+  private normalizarUsuarios(resp: any): any[] {
+    if (!resp) return [];
+    if (Array.isArray(resp)) {
+      // la API logistica puede devolver [[{...}]] -> aplanar un nivel
+      return resp.length === 1 && Array.isArray(resp[0]) ? resp[0] : resp;
+    }
+    if (typeof resp === 'string') {
+      try { return JSON.parse(resp); } catch { return []; }
+    }
+    if (resp.id && typeof resp.id === 'string') {
+      try { return JSON.parse(resp.id); } catch { return []; }
+    }
+    return [];
   }
   async isLoggedIn() {
     const user = await this.dexieService.showUsuario();
@@ -58,7 +87,7 @@ export class AuthService {
   async isAprobador() {
     const user = await this.getUser();
     const rol = user?.idrol ?? '';
-    return rol.includes('ADLOGIST') || rol.includes('APLOGIST') || rol.includes('JLOLOGIST');
+    return rol.includes('ADLOGIST') || rol.includes('APLOGIST') || rol.includes('JLOLOGIST') || rol.includes('GERENTE');
   }
 
   //Perfil Almacen

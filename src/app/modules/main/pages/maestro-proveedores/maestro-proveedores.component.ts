@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -70,6 +70,7 @@ export class MaestroProveedoresComponent implements OnInit {
   tiposServicio = ['BIENES', 'SERVICIOS', 'MIXTO'];
 
   private http = inject(HttpClient);
+  private cdr = inject(ChangeDetectorRef);
   private dexieService = inject(DexieService);
   private alertService = inject(AlertService);
   private baseUrl = environment.baseUrl;
@@ -143,8 +144,8 @@ export class MaestroProveedoresComponent implements OnInit {
 
       if (proveedoresApi.length > 0) {
         this.proveedores = proveedoresApi;
-        await this.dexieService.clearProveedores();
-        await this.dexieService.saveProveedores(proveedoresApi);
+        // Persistir en caché local en segundo plano, sin bloquear la UI
+        this.persistirProveedoresEnDexie(proveedoresApi);
       }
     } catch {
       console.warn('[Proveedores] API no disponible, usando Dexie como fallback.');
@@ -152,6 +153,16 @@ export class MaestroProveedoresComponent implements OnInit {
       this.cargando = false;
       this.aplicarFiltros();
       this.calcularContadores();
+      this.cdr.detectChanges();
+    }
+  }
+
+  private async persistirProveedoresEnDexie(lista: Proveedor[]) {
+    try {
+      await this.dexieService.clearProveedores();
+      await this.dexieService.saveProveedores(lista);
+    } catch (error) {
+      console.warn('[Proveedores] No se pudo guardar en caché local:', error);
     }
   }
 

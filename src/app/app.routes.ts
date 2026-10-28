@@ -4,6 +4,8 @@ import { LayoutComponent } from './modules/main/pages/layout/layout.component';
 import { ParametrosComponent } from './modules/main/pages/parametros/parametros.component';
 import { RequerimientosComponent } from './modules/main/pages/requerimientos/requerimientos.component';
 import { AprobacionesComponent } from './modules/main/pages/aprobaciones/aprobaciones.component';
+import { AprobacionesGerenciaComponent } from './modules/main/pages/aprobaciones-gerencia/aprobaciones-gerencia.component';
+import { DashboardGerenciaComponent } from './modules/main/pages/dashboard-gerencia/dashboard-gerencia.component';
 import { NotificacionesListaComponent } from './modules/main/pages/notificaciones-lista/notificaciones-lista.component';
 import { AprobadorGuard } from './modules/auth/guard/aprobador.guard';
 import { AlmacenGuard } from './modules/auth/guard/almacen.guard';
@@ -154,6 +156,8 @@ export const routes: Routes = [
       { path: 'solicitudes-servicio', component: SolicitudesServicioComponent, canActivate: [LogisticoGuard] },
       { path: 'ordenes-servicio', component: OrdenesServicioComponent, canActivate: [LogisticoGuard] },
       { path: 'aprobaciones-area', component: AprobacionesAreaComponent, canActivate: [AprobadorGuard] },
+      { path: 'aprobaciones-gerencia', component: AprobacionesGerenciaComponent, canActivate: [AprobadorGuard] },
+      { path: 'dashboard-gerencia', component: DashboardGerenciaComponent, canActivate: [AprobadorGuard] },
       { path: 'reporte-aprobaciones-area', component: ReporteAprobacionesAreaComponent, canActivate: [AprobadorGuard] },
       { path: 'reporte-aprobados', component: ReporteAprobadosComponent, canActivate: [AprobadorGuard] },
       { path: 'listas-stock', component: ListasStockComponent, canActivate: [AlmacenGuard] },

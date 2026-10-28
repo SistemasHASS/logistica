@@ -150,7 +150,11 @@ export class LoginComponent {
 
       case 'FINANZAS': // 👈 rol finanzas
         this.router.navigate(['/main/dashboard-finanzas']);
-        break;      
+        break;
+
+      case 'GERENTE': // 👈 rol gerencia - aprueba nivel 2 requerimientos y OC/OS
+        this.router.navigate(['/main/aprobaciones-gerencia']);
+        break;
 
       default:
         this.router.navigate(['/main/reporte_logistico']);

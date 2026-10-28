@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { CardModule } from 'primeng/card';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule, Checkbox } from 'primeng/checkbox';
@@ -161,6 +161,7 @@ export class AprobacionesAreaComponent implements OnInit {
     private alertService: AlertService,
     public adjuntosService: AdjuntosService,
     private notificacionApi: NotificacionApiService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -507,11 +508,35 @@ export class AprobacionesAreaComponent implements OnInit {
       });
   }
 
-  cargarMisRequerimientos() {
+  async cargarMisRequerimientos() {
     if (!this.usuario) return;
 
     this.loadingMisRequerimientos = true;
     this.misRequerimientos = [];
+
+    // En modoGerencia el tab "Aprobados" muestra lo que este aprobador N2
+    // ya proceso, no la lista de jefe de area.
+    if (this.modoGerencia) {
+      try {
+        const response: any = await lastValueFrom(
+          this.aprobacionesAreaService.obtenerRequerimientosAprobadosGerencia({
+            documentoidentidad: this.usuario.documentoidentidad,
+            ruc: this.usuario.ruc,
+          })
+        );
+        this.misRequerimientos = Array.isArray(response)
+          ? response
+          : response?.resultado ?? [];
+      } catch {
+        this.misRequerimientos = [];
+      } finally {
+        this.loadingMisRequerimientos = false;
+        // La mascara del p-table puede quedar huérfana si el flag se apaga
+        // en la misma tarea; detectChanges fuerza el flush visual.
+        this.cdr.detectChanges();
+      }
+      return;
+    }
 
     // El SP espera usuario y rol
     const data = {
@@ -1274,6 +1299,7 @@ export class AprobacionesAreaComponent implements OnInit {
       )?.cuentaGasto;
       const proyectoAfeDefault =
         this.proyectos.find((p) => p.proyectoio === first?.idproyecto)?.afe ??
+        first?.idproyecto ??
         'FUNDO HP';
       const laborValor = (first?.idlabor || '').toString();
       const labores = this.labores.find((l: any) =>
@@ -1284,7 +1310,7 @@ export class AprobacionesAreaComponent implements OnInit {
       );
       // console.log('labores', labores);
       // ✅ CORRECCIÓN: Para COMPRA, usar centroCostoDefault si no hay labor
-      const ccostodestino = labores?.idlabor ?? centroCostoDefault;
+      const ccostodestino = labores?.idlabor ?? laborValor ?? centroCostoDefault;
 
       const turnos = this.turnos.find((t: any) =>
         t.nombreTurno === first?.idturno ||
@@ -1361,6 +1387,27 @@ export class AprobacionesAreaComponent implements OnInit {
 
       const tipoReq = (clasificacion === 'SER' || clasificacion === 'COM') ? 'COMMODITY' : 'ITEM';
 
+      // ✅ Para COMMODITY/SERVICIO el detalle local puede no traer 'descripcion':
+      // resolverla desde la maestra de commodities por código
+      const descripcionCommodityPorCodigo = new Map<string, string>();
+      if (tipoReq !== 'ITEM') {
+        try {
+          const maestras = [
+            ...(await this.dexieService.comodities.toArray()),
+            ...(await this.dexieService.maestroCommoditys.toArray()),
+          ];
+          for (const c of maestras) {
+            const cod = (c as any)?.codigo ?? (c as any)?.commodity;
+            const desc = (c as any)?.descripcion ?? (c as any)?.descripcionLocal;
+            if (cod && desc && !descripcionCommodityPorCodigo.has(cod)) {
+              descripcionCommodityPorCodigo.set(cod, desc);
+            }
+          }
+        } catch (e) {
+          console.warn('[SPRING] No se pudo cargar maestra de commodities:', e);
+        }
+      }
+
       console.log('🏪 DEBUG - AlmacenCodigo FINAL antes de enviar a SPRING:', almacenCodigo);
       console.log('🏪 DEBUG - AlmacenCodigo truncado (max 20 chars):', almacenCodigo.substring(0, 20));
       console.log('🏪 DEBUG - Clasificación FINAL:', clasificacion, '(itemtipo:', itemtipo, ')');
@@ -1400,7 +1447,7 @@ export class AprobacionesAreaComponent implements OnInit {
             req.fechaaprobacion,
             requerimientoCompleto.fechaAprobacion,
           ),
-          PreparadaPor: req.solicitante,
+          PreparadaPor: req.dniregistra || req.solicitante,
           AprobadaPor: this.usuario.documentoidentidad,
           // PrecioTotal: 0.0,
           // ✅ Corregido: Usar prioridad del requerimiento
@@ -1435,7 +1482,7 @@ export class AprobacionesAreaComponent implements OnInit {
           DefaultCampoReferencia: 'PL'.substring(0, 20),
           RevisionTecnicaPendienteFlag: 'N',
           // ✅ ClienteNumeroPedido: idlabor (código) del requerimiento, resuelto via maestra de labores
-          ClienteNumeroPedido: (labores?.idlabor ?? '').toString().substring(0, 20),
+          ClienteNumeroPedido: (labores?.idlabor ?? laborValor ?? '').toString().substring(0, 20),
           // ✅ Limitar longitud de vía transporte a 5 caracteres
           ViaTransporte: 'T'.substring(0, 5),
           OrigenGeneracionFlag: 'L',
@@ -1455,7 +1502,7 @@ export class AprobacionesAreaComponent implements OnInit {
                 l.idlabor === itemLaborValor ||
                 String(l.id) === itemLaborValor
               );
-              const itemLoteProduccion = itemLabor?.idlabor ?? itemCentroCosto;
+              const itemLoteProduccion = itemLabor?.idlabor ?? (itemLaborValor || itemCentroCosto);
               
               return {
                 Secuencia: index + 1,
@@ -1469,7 +1516,12 @@ export class AprobacionesAreaComponent implements OnInit {
                 Descripcion:
                   tipoReq === 'ITEM'
                     ? d.idproducto || d.descripcion || ''
-                    : d.descripcion || '',
+                    : d.descripcion ||
+                      d.descripcionCommodity ||
+                      d.descripcionItem ||
+                      d.iddescripcion ||
+                      descripcionCommodityPorCodigo.get(d.codigo) ||
+                      '',
                 ComprasAlmacenFlag:
                   requerimientoCompleto.itemtipo === 'TRANSFERENCIA' ||
                   requerimientoCompleto.itemtipo === 'CONSUMO'
@@ -1867,7 +1919,7 @@ export class AprobacionesAreaComponent implements OnInit {
 
           const detalleResultado = {
             codigo: d.codigo,
-            descripcion: d.descripcion,
+            descripcion: d.descripcion || d.descripcionCommodity || d.descripcionItem || d.iddescripcion || '',
             cantidad: d.cantidad,
             unidadmedida: d.unidadmedida || 'UND',
             cuentaGasto: this.subcommodities.find((sc) => sc.commodity === d.codigo)?.cuentaGasto ||
