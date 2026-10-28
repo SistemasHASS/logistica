@@ -3,7 +3,7 @@
   <div class="page-header">
     <h2>Maestro de Proveedores</h2>
     <div class="header-actions">
-      <button class="btn btn-outline-secondary" (click)="cargarProveedores(true)" [disabled]="cargando" title="Actualizar desde servidor">
+      <button class="btn btn-outline-secondary" (click)="cargarProveedores()" [disabled]="cargando" title="Actualizar desde servidor">
         <i class="bx" [class.bx-refresh]="!cargando" [class.bx-loader-alt]="cargando" [class.bx-spin]="cargando"></i>
         Actualizar
       </button>
@@ -284,10 +284,9 @@
       </div>
     </div>
   </div>
-</div>
 
-<!-- MODAL DETALLE PROVEEDOR -->
-<div class="modal-overlay" *ngIf="modalDetalleAbierto" (click)="cerrarModalDetalle()">
+  <!-- MODAL DETALLE PROVEEDOR -->
+  <div class="modal-overlay" *ngIf="modalDetalleAbierto" (click)="cerrarModalDetalle()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>Detalle del Proveedor</h3>
@@ -341,6 +340,7 @@
       <button class="btn-secondary" (click)="cerrarModalDetalle()">
         Cerrar
       </button>
+    </div>
     </div>
   </div>
 </div>

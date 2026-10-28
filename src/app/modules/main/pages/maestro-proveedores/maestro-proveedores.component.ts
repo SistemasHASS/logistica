@@ -91,31 +91,23 @@ export class MaestroProveedoresComponent implements OnInit {
     return { ...p, documento: p.documento || p.RazonSocial || '' };
   }
 
-  async cargarProveedores(forzarApi = false) {
-    const debeRecargarApi = sessionStorage.getItem('proveedores_recargar_api') === '1';
-
-    // 1. Carga inmediata desde Dexie
+  async cargarProveedores() {
+    // 1. Carga inmediata desde Dexie para mostrar data mientras responde el API
     const dexieRaw = await this.dexieService.showProveedores();
     const dexieData: Proveedor[] = dexieRaw.map((p: any) => this.normalizarProveedor(p));
-    const hayDataEnDexie = dexieData.length > 0;
 
     // Detectar data corrupta: todos sin documento y sin RazonSocial
-    const dexieCorrupto = hayDataEnDexie &&
+    const dexieCorrupto = dexieData.length > 0 &&
       dexieData.every(p => !p.documento && !(p as any).RazonSocial);
 
-    if (hayDataEnDexie && !dexieCorrupto) {
+    if (dexieData.length > 0 && !dexieCorrupto) {
       this.proveedores = dexieData;
       this.aplicarFiltros();
       this.calcularContadores();
     }
 
-    // 2. Llamar API si: Dexie vacío, corrupto, forzado externamente, o hay flag de nuevo registro
-    const necesitaApi = !hayDataEnDexie || dexieCorrupto || forzarApi || debeRecargarApi;
-    if (!necesitaApi) return;
-
-    sessionStorage.removeItem('proveedores_recargar_api');
-    // Mostrar loading solo si Dexie estaba vacío (primera carga)
-    if (!hayDataEnDexie) this.cargando = true;
+    // 2. Refrescar siempre desde el API (carga automática y botón Actualizar)
+    this.cargando = true;
 
     try {
       const body = {
@@ -220,8 +212,7 @@ export class MaestroProveedoresComponent implements OnInit {
       if (resultado === 'OK') {
         this.alertService.showAlert('Éxito', mensaje, 'success');
         this.mostrarFormulario = false;
-        sessionStorage.setItem('proveedores_recargar_api', '1');
-        await this.cargarProveedores(true); // fuerza recarga API tras nuevo registro
+        await this.cargarProveedores(); // recarga API tras nuevo registro
       } else {
         this.alertService.showAlert('Error', mensaje, 'error');
       }
