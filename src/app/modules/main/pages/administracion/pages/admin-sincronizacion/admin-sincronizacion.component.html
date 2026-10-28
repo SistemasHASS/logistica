@@ -125,81 +125,87 @@
         <br><small>Asegúrate de haber ejecutado <code>LOGISTICA_SincronizacionLog.sql</code> en la BD.</small>
       </div>
 
-      <div *ngIf="!isLoading && logsFiltrados.length" class="table-responsive">
-        <table class="table table-hover table-sm mb-0 align-middle">
-          <thead class="table-light">
-            <tr>
-              <th style="width:40px">#</th>
-              <th>Estado</th>
-              <th>Tabla</th>
-              <th>Ítems</th>
-              <th>Duración</th>
-              <th>Inicio</th>
-              <th>Hace</th>
-              <th style="width:40px"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <ng-container *ngFor="let log of logsFiltrados; let i = index">
-              <tr [ngClass]="{'table-danger': log.estado === 'FALLIDO', 'table-success': log.estado === 'EXITOSO' && i === 0}">
-                <td class="text-muted small">{{ log.id }}</td>
-                <td>
-                  <span class="badge rounded-pill"
-                    [ngClass]="{
-                      'bg-success': log.estado === 'EXITOSO',
-                      'bg-danger':  log.estado === 'FALLIDO',
-                      'bg-warning text-dark': log.estado === 'EN_PROCESO'
-                    }">
-                    <i class="bx me-1"
-                      [ngClass]="{
-                        'bx-check': log.estado === 'EXITOSO',
-                        'bx-x':     log.estado === 'FALLIDO',
-                        'bx-loader-alt bx-spin': log.estado === 'EN_PROCESO'
-                      }"></i>{{ log.estado }}
-                  </span>
-                </td>
-                <td class="small"><code>{{ log.tabla }}</code></td>
-                <td class="fw-semibold">{{ log.filas ?? '-' }}</td>
-                <td class="small">{{ formatDuracion(log.duracionSegundos) }}</td>
-                <td class="small text-nowrap">{{ log.fechaInicio | date:'dd/MM/yyyy HH:mm' }}</td>
-                <td class="small text-muted text-nowrap">{{ tiempoTranscurrido(log.fechaInicio) }}</td>
-                <td>
-                  <button class="btn btn-sm btn-link p-0 text-muted" (click)="toggleExpand(log.id)"
-                    title="Ver detalle">
-                    <i class="bx" [ngClass]="expandedId === log.id ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
-                  </button>
-                </td>
-              </tr>
-              <!-- Fila expandida con detalle -->
-              <tr *ngIf="expandedId === log.id">
-                <td colspan="8" class="p-0">
-                  <div class="px-3 py-2 bg-light border-top small">
-                    <div class="row g-2">
-                      <div class="col-md-6">
-                        <strong>Mensaje:</strong>
-                        <div class="mt-1">
-                          <pre class="mb-0 text-wrap"
-                            style="font-size:11px; max-height:150px; overflow-y:auto; background:transparent; border:none; padding:0;"
-                            [ngClass]="log.estado === 'FALLIDO' ? 'text-danger' : 'text-success'">{{ log.mensaje || 'Sin mensaje registrado.' }}</pre>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="d-flex flex-column gap-1">
-                          <div><strong>Operación:</strong> <code>{{ log.operacion }}</code></div>
-                          <div><strong>Servidor:</strong> {{ log.servidor ?? '-' }}</div>
-                          <div><strong>Inicio:</strong> {{ log.fechaInicio | date:'dd/MM/yyyy HH:mm:ss' }}</div>
-                          <div><strong>Fin:</strong> {{ (log.fechaFin | date:'dd/MM/yyyy HH:mm:ss') ?? '-' }}</div>
-                          <div><strong>Duración:</strong> {{ formatDuracion(log.duracionSegundos) }}</div>
-                        </div>
-                      </div>
+      <p-table *ngIf="!isLoading && logsFiltrados.length"
+        [value]="logsFiltrados"
+        [paginator]="true"
+        [rows]="10"
+        [showCurrentPageReport]="true"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+        styleClass="p-datatable-sm"
+        responsiveLayout="scroll">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width:40px">#</th>
+            <th>Estado</th>
+            <th>Tabla</th>
+            <th>Ítems</th>
+            <th>Duración</th>
+            <th>Inicio</th>
+            <th>Hace</th>
+            <th style="width:40px"></th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-log let-i="rowIndex">
+          <tr [ngClass]="{'table-danger': log.estado === 'FALLIDO', 'table-success': log.estado === 'EXITOSO' && i === 0}">
+            <td class="text-muted small">{{ log.id }}</td>
+            <td>
+              <span class="badge rounded-pill"
+                [ngClass]="{
+                  'bg-success': log.estado === 'EXITOSO',
+                  'bg-danger':  log.estado === 'FALLIDO',
+                  'bg-warning text-dark': log.estado === 'EN_PROCESO'
+                }">
+                <i class="bx me-1"
+                  [ngClass]="{
+                    'bx-check': log.estado === 'EXITOSO',
+                    'bx-x':     log.estado === 'FALLIDO',
+                    'bx-loader-alt bx-spin': log.estado === 'EN_PROCESO'
+                  }"></i>{{ log.estado }}
+              </span>
+            </td>
+            <td class="small"><code>{{ log.tabla }}</code></td>
+            <td class="fw-semibold">{{ log.filas ?? '-' }}</td>
+            <td class="small">{{ formatDuracion(log.duracionSegundos) }}</td>
+            <td class="small text-nowrap">{{ log.fechaInicio | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="small text-muted text-nowrap">{{ tiempoTranscurrido(log.fechaInicio) }}</td>
+            <td>
+              <button class="btn btn-sm btn-link p-0 text-muted" (click)="toggleExpand(log.id)"
+                title="Ver detalle">
+                <i class="bx" [ngClass]="expandedId === log.id ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
+              </button>
+            </td>
+          </tr>
+          <!-- Fila expandida con detalle -->
+          <tr *ngIf="expandedId === log.id">
+            <td colspan="8" class="p-0">
+              <div class="px-3 py-2 bg-light border-top small">
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <strong>Mensaje:</strong>
+                    <div class="mt-1">
+                      <pre class="mb-0 text-wrap"
+                        style="font-size:11px; max-height:150px; overflow-y:auto; background:transparent; border:none; padding:0;"
+                        [ngClass]="log.estado === 'FALLIDO' ? 'text-danger' : 'text-success'">{{ log.mensaje || 'Sin mensaje registrado.' }}</pre>
                     </div>
                   </div>
-                </td>
-              </tr>
-            </ng-container>
-          </tbody>
-        </table>
-      </div>
+                  <div class="col-md-6">
+                    <div class="d-flex flex-column gap-1">
+                      <div><strong>Operación:</strong> <code>{{ log.operacion }}</code></div>
+                      <div><strong>Servidor:</strong> {{ log.servidor ?? '-' }}</div>
+                      <div><strong>Inicio:</strong> {{ log.fechaInicio | date:'dd/MM/yyyy HH:mm:ss' }}</div>
+                      <div><strong>Fin:</strong> {{ (log.fechaFin | date:'dd/MM/yyyy HH:mm:ss') ?? '-' }}</div>
+                      <div><strong>Duración:</strong> {{ formatDuracion(log.duracionSegundos) }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
     </div>
 
     <!-- Footer info -->

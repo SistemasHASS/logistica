@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, signal }
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { TableModule } from 'primeng/table';
 import { lastValueFrom } from 'rxjs';
 import { environment } from '@/environments/environment';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
@@ -40,7 +41,7 @@ const CLAVES_PERMISOS = [
   selector: 'app-admin-permisos-roles',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TableModule],
   template: `
     <div class="permisos-container">
       <div class="page-header">
@@ -59,37 +60,43 @@ const CLAVES_PERMISOS = [
               <i class='bx bx-layer'></i> {{ cat }}
             </h6>
             <div class="table-responsive">
-              <table class="tabla-permisos">
-                <thead>
+              <p-table
+                [value]="roles"
+                [paginator]="true"
+                [rows]="10"
+                [showCurrentPageReport]="true"
+                [rowsPerPageOptions]="[10, 25, 50]"
+                currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+                styleClass="p-datatable-sm"
+                responsiveLayout="scroll">
+                <ng-template pTemplate="header">
                   <tr>
                     <th class="col-rol">Rol</th>
                     @for (p of clavesDeCategoria(cat); track p.clave) {
                       <th class="col-permiso" [title]="p.descripcion">{{ p.descripcion }}</th>
                     }
                   </tr>
-                </thead>
-                <tbody>
-                  @for (rol of roles; track rol.idrol) {
-                    <tr>
-                      <td class="cell-rol">
-                        <span class="badge-rol">{{ rol.idrol }}</span>
-                        <span class="nombre-rol">{{ rol.nombre }}</span>
+                </ng-template>
+                <ng-template pTemplate="body" let-rol>
+                  <tr>
+                    <td class="cell-rol">
+                      <span class="badge-rol">{{ rol.idrol }}</span>
+                      <span class="nombre-rol">{{ rol.nombre }}</span>
+                    </td>
+                    @for (p of clavesDeCategoria(cat); track p.clave) {
+                      <td class="cell-toggle">
+                        <label class="toggle-switch" [title]="getValor(rol.idrol, p.clave) === '1' ? 'Habilitado — click para deshabilitar' : 'Deshabilitado — click para habilitar'">
+                          <input
+                            type="checkbox"
+                            [checked]="getValor(rol.idrol, p.clave) === '1'"
+                            (change)="togglePermiso(rol.idrol, p.clave, p.descripcion, $event)">
+                          <span class="slider"></span>
+                        </label>
                       </td>
-                      @for (p of clavesDeCategoria(cat); track p.clave) {
-                        <td class="cell-toggle">
-                          <label class="toggle-switch" [title]="getValor(rol.idrol, p.clave) === '1' ? 'Habilitado — click para deshabilitar' : 'Deshabilitado — click para habilitar'">
-                            <input
-                              type="checkbox"
-                              [checked]="getValor(rol.idrol, p.clave) === '1'"
-                              (change)="togglePermiso(rol.idrol, p.clave, p.descripcion, $event)">
-                            <span class="slider"></span>
-                          </label>
-                        </td>
-                      }
-                    </tr>
-                  }
-                </tbody>
-              </table>
+                    }
+                  </tr>
+                </ng-template>
+              </p-table>
             </div>
           </div>
         }

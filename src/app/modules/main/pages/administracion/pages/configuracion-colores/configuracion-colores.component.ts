@@ -13,11 +13,12 @@ import { CardModule } from 'primeng/card';
 import { TooltipModule } from 'primeng/tooltip';
 import { BadgeModule } from 'primeng/badge';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { TableModule } from 'primeng/table';
 
 @Component({
   selector: 'app-configuracion-colores',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardModule, TooltipModule, BadgeModule, ProgressBarModule],
+  imports: [CommonModule, FormsModule, CardModule, TooltipModule, BadgeModule, ProgressBarModule, TableModule],
   templateUrl: './configuracion-colores.component.html',
   styleUrl: './configuracion-colores.component.scss'
 })

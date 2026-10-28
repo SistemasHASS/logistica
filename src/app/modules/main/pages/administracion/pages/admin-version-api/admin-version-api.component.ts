@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TableModule } from 'primeng/table';
 import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import {
@@ -15,7 +16,7 @@ import { environment } from '../../../../../../../environments/environment';
 @Component({
   selector: 'app-admin-version-api',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TableModule],
   templateUrl: './admin-version-api.component.html',
   styleUrls: ['./admin-version-api.component.scss']
 })

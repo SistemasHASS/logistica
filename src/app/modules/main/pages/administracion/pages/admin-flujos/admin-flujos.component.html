@@ -10,20 +10,29 @@
 
   <!-- TABLA -->
   <div class="table-wrapper">
-    <table class="table">
-      <thead>
+    <p-table
+      [value]="flujos"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+      styleClass="p-datatable-sm"
+      responsiveLayout="scroll">
+
+      <ng-template pTemplate="header">
         <tr>
-          <th>#</th>
+          <th style="width: 60px">#</th>
           <th>Flujo</th>
           <th>Descripción</th>
           <th>Niveles</th>
           <th>Estado</th>
           <th style="width: 120px">Acciones</th>
         </tr>
-      </thead>
+      </ng-template>
 
-      <tbody>
-        <tr *ngFor="let flujo of flujos; index as i">
+      <ng-template pTemplate="body" let-flujo let-i="rowIndex">
+        <tr>
           <td>{{ i + 1 }}</td>
           <td>{{ flujo.nombre }}</td>
           <td>{{ flujo.descripcion }}</td>
@@ -39,14 +48,16 @@
             </button>
           </td>
         </tr>
+      </ng-template>
 
-        <tr *ngIf="!flujos.length">
+      <ng-template pTemplate="emptymessage">
+        <tr>
           <td colspan="6" class="empty">
             No hay flujos registrados
           </td>
         </tr>
-      </tbody>
-    </table>
+      </ng-template>
+    </p-table>
   </div>
 
 </div>

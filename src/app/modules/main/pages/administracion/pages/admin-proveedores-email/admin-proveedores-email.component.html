@@ -22,10 +22,19 @@
 
   <!-- TABLA -->
   <div class="table-wrapper">
-    <table class="table">
-      <thead>
+    <p-table
+      [value]="filteredProveedores"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+      styleClass="p-datatable-sm"
+      responsiveLayout="scroll">
+
+      <ng-template pTemplate="header">
         <tr>
-          <th>#</th>
+          <th style="width: 60px">#</th>
           <th>Empresa</th>
           <th>RUC</th>
           <th>Proveedor</th>
@@ -35,9 +44,10 @@
           <th>Estado</th>
           <th style="width: 100px">Acciones</th>
         </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let p of filteredProveedores; index as i">
+      </ng-template>
+
+      <ng-template pTemplate="body" let-p let-i="rowIndex">
+        <tr>
           <td>{{ i + 1 }}</td>
           <td>{{ p.empresa }}</td>
           <td>{{ p.ruc }}</td>
@@ -59,11 +69,14 @@
             </button>
           </td>
         </tr>
-        <tr *ngIf="!filteredProveedores.length">
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
           <td colspan="9" class="empty">No hay proveedores registrados</td>
         </tr>
-      </tbody>
-    </table>
+      </ng-template>
+    </p-table>
   </div>
 
 </div>

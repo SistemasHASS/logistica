@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, signal, inject, ChangeDetectorRef, 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { TableModule } from 'primeng/table';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
@@ -100,7 +101,7 @@ const CATEGORIA_ICONOS: Record<string, string> = {
   selector: 'app-admin-menus-layout',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, DynamicMenuComponent],
+  imports: [CommonModule, FormsModule, TableModule, DynamicMenuComponent],
   template: `
     <div class="menus-container">
 
@@ -164,8 +165,16 @@ const CATEGORIA_ICONOS: Record<string, string> = {
               <span class="cat-count">{{ menusPorCategoria(cat).length }} módulos</span>
             </div>
             <div class="tabla-wrapper">
-              <table class="tabla-menus">
-                <thead>
+              <p-table
+                [value]="menusPorCategoria(cat)"
+                [paginator]="true"
+                [rows]="10"
+                [showCurrentPageReport]="true"
+                [rowsPerPageOptions]="[10, 25, 50]"
+                currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+                styleClass="p-datatable-sm"
+                responsiveLayout="scroll">
+                <ng-template pTemplate="header">
                   <tr>
                     <th class="col-modulo">Módulo</th>
                     <th class="col-ruta">Ruta</th>
@@ -175,28 +184,26 @@ const CATEGORIA_ICONOS: Record<string, string> = {
                       </th>
                     }
                   </tr>
-                </thead>
-                <tbody>
-                  @for (m of menusPorCategoria(cat); track m.id) {
-                    <tr>
-                      <td class="cell-modulo">
-                        <span class="mod-icon"><i [class]="m.icono"></i></span>
-                        <span class="mod-nombre">{{ m.nombre }}</span>
+                </ng-template>
+                <ng-template pTemplate="body" let-m>
+                  <tr>
+                    <td class="cell-modulo">
+                      <span class="mod-icon"><i [class]="m.icono"></i></span>
+                      <span class="mod-nombre">{{ m.nombre }}</span>
+                    </td>
+                    <td class="cell-ruta"><code class="ruta-code">{{ m.ruta }}</code></td>
+                    @for (r of roles; track r.idrol) {
+                      <td class="cell-acceso">
+                        @if (tieneAcceso(m, r.idrol)) {
+                          <span class="acceso-si" [title]="r.nombre + ' tiene acceso'">✓</span>
+                        } @else {
+                          <span class="acceso-no">—</span>
+                        }
                       </td>
-                      <td class="cell-ruta"><code class="ruta-code">{{ m.ruta }}</code></td>
-                      @for (r of roles; track r.idrol) {
-                        <td class="cell-acceso">
-                          @if (tieneAcceso(m, r.idrol)) {
-                            <span class="acceso-si" [title]="r.nombre + ' tiene acceso'">✓</span>
-                          } @else {
-                            <span class="acceso-no">—</span>
-                          }
-                        </td>
-                      }
-                    </tr>
-                  }
-                </tbody>
-              </table>
+                    }
+                  </tr>
+                </ng-template>
+              </p-table>
             </div>
           </div>
         }

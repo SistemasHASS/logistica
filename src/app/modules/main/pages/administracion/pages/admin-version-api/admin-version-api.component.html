@@ -152,65 +152,71 @@
         <i class="ti ti-inbox"></i> No hay registros en el historial.
       </div>
 
-      <div *ngIf="!loadingHistory && history.length" class="table-responsive">
-        <table class="table table-hover table-sm mb-0 history-table">
-          <thead class="table-light">
-            <tr>
-              <th style="width: 30px;"></th>
-              <th>Versión</th>
-              <th>Fecha de despliegue</th>
-              <th>Hace</th>
-              <th>Desplegado por</th>
-              <th>Servidor</th>
-              <th>Ambiente</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <ng-container *ngFor="let d of history; trackBy: trackById">
-              <tr [class.table-success]="d.isActive" (click)="toggleExpand(d.id)" style="cursor: pointer;">
-                <td>
-                  <i class="ti" [class.ti-chevron-right]="expandedId !== d.id" [class.ti-chevron-down]="expandedId === d.id"></i>
-                </td>
-                <td><strong>{{ d.version }}</strong></td>
-                <td>{{ d.deployedAt | date:'dd/MM/yyyy HH:mm:ss' }}</td>
-                <td><small class="text-muted">{{ tiempoTranscurrido(d.deployedAt) }}</small></td>
-                <td>{{ d.deployedBy || '-' }}</td>
-                <td><small>{{ d.serverName || '-' }}</small></td>
-                <td><small>{{ d.environment }}</small></td>
-                <td>
-                  <span *ngIf="d.isActive" class="badge bg-success">ACTIVA</span>
-                  <span *ngIf="!d.isActive" class="badge bg-secondary">Anterior</span>
-                </td>
-              </tr>
-              <tr *ngIf="expandedId === d.id" class="detail-row">
-                <td colspan="8">
-                  <div class="detail-grid">
-                    <div><small class="text-muted">ID</small><div>{{ d.id }}</div></div>
-                    <div><small class="text-muted">App</small><div>{{ d.appName }}</div></div>
-                    <div><small class="text-muted">Ambiente</small><div>{{ d.environment }}</div></div>
-                    <div><small class="text-muted">Versión</small><div><strong>{{ d.version }}</strong></div></div>
-                    <div><small class="text-muted">Build time</small><div>{{ d.buildTime | date:'dd/MM/yyyy HH:mm:ss' }}</div></div>
-                    <div><small class="text-muted">Deployed at</small><div>{{ d.deployedAt | date:'dd/MM/yyyy HH:mm:ss' }}</div></div>
-                    <div><small class="text-muted">Deployed by</small><div>{{ d.deployedBy || '-' }}</div></div>
-                    <div><small class="text-muted">Servidor</small><div>{{ d.serverName || '-' }}</div></div>
-                    <div><small class="text-muted">¿Activa?</small>
-                      <div>
-                        <span *ngIf="d.isActive" class="badge bg-success">SI</span>
-                        <span *ngIf="!d.isActive" class="badge bg-secondary">NO</span>
-                      </div>
-                    </div>
-                    <div class="detail-notes">
-                      <small class="text-muted">Notas</small>
-                      <div>{{ d.notes || '(sin notas)' }}</div>
-                    </div>
+      <p-table *ngIf="!loadingHistory && history.length"
+        [value]="history"
+        [paginator]="true"
+        [rows]="10"
+        [showCurrentPageReport]="true"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+        styleClass="p-datatable-sm"
+        responsiveLayout="scroll">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 30px;"></th>
+            <th>Versión</th>
+            <th>Fecha de despliegue</th>
+            <th>Hace</th>
+            <th>Desplegado por</th>
+            <th>Servidor</th>
+            <th>Ambiente</th>
+            <th>Estado</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-d>
+          <tr [class.table-success]="d.isActive" (click)="toggleExpand(d.id)" style="cursor: pointer;">
+            <td>
+              <i class="ti" [class.ti-chevron-right]="expandedId !== d.id" [class.ti-chevron-down]="expandedId === d.id"></i>
+            </td>
+            <td><strong>{{ d.version }}</strong></td>
+            <td>{{ d.deployedAt | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+            <td><small class="text-muted">{{ tiempoTranscurrido(d.deployedAt) }}</small></td>
+            <td>{{ d.deployedBy || '-' }}</td>
+            <td><small>{{ d.serverName || '-' }}</small></td>
+            <td><small>{{ d.environment }}</small></td>
+            <td>
+              <span *ngIf="d.isActive" class="badge bg-success">ACTIVA</span>
+              <span *ngIf="!d.isActive" class="badge bg-secondary">Anterior</span>
+            </td>
+          </tr>
+          <tr *ngIf="expandedId === d.id" class="detail-row">
+            <td colspan="8">
+              <div class="detail-grid">
+                <div><small class="text-muted">ID</small><div>{{ d.id }}</div></div>
+                <div><small class="text-muted">App</small><div>{{ d.appName }}</div></div>
+                <div><small class="text-muted">Ambiente</small><div>{{ d.environment }}</div></div>
+                <div><small class="text-muted">Versión</small><div><strong>{{ d.version }}</strong></div></div>
+                <div><small class="text-muted">Build time</small><div>{{ d.buildTime | date:'dd/MM/yyyy HH:mm:ss' }}</div></div>
+                <div><small class="text-muted">Deployed at</small><div>{{ d.deployedAt | date:'dd/MM/yyyy HH:mm:ss' }}</div></div>
+                <div><small class="text-muted">Deployed by</small><div>{{ d.deployedBy || '-' }}</div></div>
+                <div><small class="text-muted">Servidor</small><div>{{ d.serverName || '-' }}</div></div>
+                <div><small class="text-muted">¿Activa?</small>
+                  <div>
+                    <span *ngIf="d.isActive" class="badge bg-success">SI</span>
+                    <span *ngIf="!d.isActive" class="badge bg-secondary">NO</span>
                   </div>
-                </td>
-              </tr>
-            </ng-container>
-          </tbody>
-        </table>
-      </div>
+                </div>
+                <div class="detail-notes">
+                  <small class="text-muted">Notas</small>
+                  <div>{{ d.notes || '(sin notas)' }}</div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
 
       <div *ngIf="!loadingHistory && history.length" class="card-footer text-muted text-right" style="font-size: 12px;">
         Total: <strong>{{ history.length }}</strong> registro(s) · Ordenados por fecha descendente

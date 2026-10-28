@@ -10,19 +10,28 @@
 
   <!-- TABLA -->
   <div class="table-wrapper">
-    <table class="table">
-      <thead>
+    <p-table
+      [value]="perfiles"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+      styleClass="p-datatable-sm"
+      responsiveLayout="scroll">
+
+      <ng-template pTemplate="header">
         <tr>
-          <th>#</th>
+          <th style="width: 60px">#</th>
           <th>Perfil</th>
           <th>Descripción</th>
           <th>Estado</th>
           <th style="width: 120px">Acciones</th>
         </tr>
-      </thead>
+      </ng-template>
 
-      <tbody>
-        <tr *ngFor="let perfil of perfiles; index as i">
+      <ng-template pTemplate="body" let-perfil let-i="rowIndex">
+        <tr>
           <td>{{ i + 1 }}</td>
           <td>{{ perfil.nombre }}</td>
           <td>{{ perfil.descripcion }}</td>
@@ -37,14 +46,16 @@
             </button>
           </td>
         </tr>
+      </ng-template>
 
-        <tr *ngIf="!perfiles.length">
+      <ng-template pTemplate="emptymessage">
+        <tr>
           <td colspan="5" class="empty">
             No hay perfiles registrados
           </td>
         </tr>
-      </tbody>
-    </table>
+      </ng-template>
+    </p-table>
   </div>
 
 </div>

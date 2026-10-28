@@ -10,10 +10,19 @@
 
   <!-- TABLA -->
   <div class="table-wrapper">
-    <table class="table">
-      <thead>
+    <p-table
+      [value]="aprobadores"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+      styleClass="p-datatable-sm"
+      responsiveLayout="scroll">
+
+      <ng-template pTemplate="header">
         <tr>
-          <th>#</th>
+          <th style="width: 60px">#</th>
           <th>Usuario</th>
           <th>Email</th>
           <th>Flujo</th>
@@ -21,10 +30,10 @@
           <th>Estado</th>
           <th style="width: 120px">Acciones</th>
         </tr>
-      </thead>
+      </ng-template>
 
-      <tbody>
-        <tr *ngFor="let aprobador of aprobadores; index as i">
+      <ng-template pTemplate="body" let-aprobador let-i="rowIndex">
+        <tr>
           <td>{{ i + 1 }}</td>
           <td>{{ aprobador.usuario }}</td>
           <td>{{ aprobador.email }}</td>
@@ -41,14 +50,16 @@
             </button>
           </td>
         </tr>
+      </ng-template>
 
-        <tr *ngIf="!aprobadores.length">
+      <ng-template pTemplate="emptymessage">
+        <tr>
           <td colspan="7" class="empty">
             No hay aprobadores registrados
           </td>
         </tr>
-      </tbody>
-    </table>
+      </ng-template>
+    </p-table>
   </div>
 
 </div>

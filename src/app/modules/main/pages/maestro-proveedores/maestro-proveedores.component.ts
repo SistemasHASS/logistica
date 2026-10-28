@@ -51,7 +51,7 @@ export class MaestroProveedoresComponent implements OnInit {
   filtroTipoPersona: string = 'TODOS';
 
   // Estado de carga
-  cargando = false;
+  cargando = true;
 
   // Contadores
   totalProveedores = 0;
@@ -92,6 +92,8 @@ export class MaestroProveedoresComponent implements OnInit {
   }
 
   async cargarProveedores() {
+    this.cargando = true;
+
     // 1. Carga inmediata desde Dexie para mostrar data mientras responde el API
     const dexieRaw = await this.dexieService.showProveedores();
     const dexieData: Proveedor[] = dexieRaw.map((p: any) => this.normalizarProveedor(p));
@@ -107,8 +109,6 @@ export class MaestroProveedoresComponent implements OnInit {
     }
 
     // 2. Refrescar siempre desde el API (carga automática y botón Actualizar)
-    this.cargando = true;
-
     try {
       const body = {
         documento: this.filtroDocumento || '',

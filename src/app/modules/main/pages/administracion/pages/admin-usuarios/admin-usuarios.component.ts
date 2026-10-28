@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal, ChangeDetectionStrategy, ChangeDetec
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { TableModule } from 'primeng/table';
 import { debounceTime, distinctUntilChanged, Subject, switchMap, of } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
@@ -29,7 +30,7 @@ export interface ErpUsuario {
 @Component({
   selector: 'app-admin-usuarios',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, TableModule],
   templateUrl: './admin-usuarios.component.html',
   styleUrls: ['./admin-usuarios.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

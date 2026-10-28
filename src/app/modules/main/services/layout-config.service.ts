@@ -2,6 +2,7 @@ import { Injectable, signal, inject, untracked } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { AprobadorNivel2Service } from './aprobador-nivel2.service';
 
 export type MenuType = 'accordion' | 'nav' | 'list' | 'default';
 
@@ -141,7 +142,8 @@ const MODULOS_POR_ROL: Record<string, string[]> = {
   ALLOGIST:  ['catalogo-items', 'dashboard-despacho', 'notificaciones', 'parametros', 'requerimientos', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'reporte-despachos', 'transferencias-almacen'],
   APLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'dashboard-aprobaciones-area', 'notificaciones', 'aprobaciones-area', 'reporte-aprobaciones-area', 'catalogo-items'],
   FINANZAS:  ['catalogo-items', 'dashboard-finanzas', 'aprobaciones-oc', 'aprobaciones-os'],
-  GERENTE:   ['catalogo-items', 'dashboard-gerencia', 'aprobaciones-gerencia', 'aprobaciones-oc', 'aprobaciones-os'],
+  GERENTE:   ['catalogo-items', 'dashboard-gerencia', 'aprobaciones-gerencia'],
+  // GERENTE:   ['catalogo-items', 'dashboard-gerencia', 'aprobaciones-gerencia', 'aprobaciones-oc', 'aprobaciones-os'],
 };
 
 /** Filtra el ACCORDION_DEFAULT dejando solo los módulos permitidos para un rol (soporta roles concatenados por coma) */
@@ -171,6 +173,7 @@ function getRolesArray(idrol: string): string[] {
 @Injectable({ providedIn: 'root' })
 export class LayoutConfigService {
   private readonly http = inject(HttpClient);
+  private readonly aprobadorNivel2 = inject(AprobadorNivel2Service);
   private readonly baseUrl = environment.baseUrl;
 
   // Signals para el estado del menú
@@ -196,7 +199,9 @@ export class LayoutConfigService {
       const bodyConfigMenu = idrol ? { idrol } : {};
       const [respPermisos, respConfigMenu] = await Promise.allSettled([
         lastValueFrom(this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/listar-config-permisos`, bodyPermisos)),
-        lastValueFrom(this.http.post<any[]>(`${this.baseUrl}/api/configmenu/listar`, bodyConfigMenu))
+        lastValueFrom(this.http.post<any[]>(`${this.baseUrl}/api/configmenu/listar`, bodyConfigMenu)),
+        // Verifica si el usuario es aprobador nivel 2 (inyecta el item de gerencia en el menú)
+        this.aprobadorNivel2.verificar()
       ]);
 
       const permisos: { idrol: string; clave: string; valor: string }[] =
@@ -431,12 +436,34 @@ export class LayoutConfigService {
     if (menu && menu.length > 0) {
       // Respetar exactamente el menú configurado en BD
       console.log('[LayoutConfig] Menú final desde BD:', menu.length, 'grupos');
-      return menu;
+      return this.conItemGerencia(menu);
     }
 
     // Fallback: menú filtrado según módulos permitidos del rol
     console.log('[LayoutConfig] Fallback a default filtrado por rol');
-    return getMenuDefaultParaRol(idrol);
+    return this.conItemGerencia(getMenuDefaultParaRol(idrol));
+  }
+
+  /**
+   * Inyecta el item "Aprobación Gerencia" cuando el usuario pertenece a la
+   * cadena nivel 2 por DNI, aunque su rol no tenga el módulo asignado.
+   * No muta el menú original (puede venir de los signals en memoria).
+   */
+  private conItemGerencia(menu: AccordionGroupConfig[]): AccordionGroupConfig[] {
+    if (!this.aprobadorNivel2.estado().esAprobador) return menu;
+
+    const grupoDefault = ACCORDION_DEFAULT.find(g => g.id === 'aprobaciones');
+    const itemGerencia = grupoDefault?.items.find(i => i.id === 'aprobaciones-gerencia');
+    if (!grupoDefault || !itemGerencia) return menu;
+
+    const idx = menu.findIndex(g => g.id === 'aprobaciones');
+    if (idx >= 0) {
+      if (menu[idx].items.some(i => i.id === 'aprobaciones-gerencia')) return menu;
+      const copia = [...menu];
+      copia[idx] = { ...menu[idx], activo: true, items: [...menu[idx].items, { ...itemGerencia }] };
+      return copia;
+    }
+    return [...menu, { ...grupoDefault, items: [{ ...itemGerencia }] }];
   }
 
   /** Guarda la configuración de menú para un rol */
@@ -516,6 +543,7 @@ export class LayoutConfigService {
   /** Fuerza recarga en el próximo ciclo (después de guardar cambios en admin) */
   invalidar(): void {
     this.cargando = false;
+    this.aprobadorNivel2.invalidar();
     this.accordionRoles.set(new Set());
     this.accordionMenus.set(new Map());
     this.menuConfigs.set(new Map());

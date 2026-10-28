@@ -91,8 +91,15 @@
     <!-- TABLA DE PROVEEDORES -->
     <div class="card">
       <div class="card-body p-0">
-        <!-- LOADING BANNER -->
-        <div *ngIf="cargando" class="loading-banner">
+        <!-- SPINNER DE CARGA INICIAL (sin data aún) -->
+        <div *ngIf="cargando && proveedoresFiltrados.length === 0" class="initial-loader">
+          <div class="spinner"></div>
+          <p class="loader-title">Cargando proveedores...</p>
+          <span class="loader-subtext">Espere mientras se obtiene la información del servidor</span>
+        </div>
+
+        <!-- LOADING BANNER (refresco con data existente) -->
+        <div *ngIf="cargando && proveedoresFiltrados.length > 0" class="loading-banner">
           <div class="loading-bar">
             <div class="loading-bar-progress"></div>
           </div>
@@ -103,6 +110,7 @@
         </div>
 
         <p-table
+          *ngIf="!cargando || proveedoresFiltrados.length > 0"
           [value]="proveedoresFiltrados"
           [loading]="cargando"
           [paginator]="true"

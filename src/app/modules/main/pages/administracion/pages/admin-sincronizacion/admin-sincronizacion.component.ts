@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TableModule } from 'primeng/table';
 import Swal from 'sweetalert2';
 import {
   AdminSincronizacionService,
@@ -11,7 +12,7 @@ import {
 @Component({
   selector: 'app-admin-sincronizacion',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TableModule],
   templateUrl: './admin-sincronizacion.component.html',
   styleUrls: ['./admin-sincronizacion.component.scss'],
 })

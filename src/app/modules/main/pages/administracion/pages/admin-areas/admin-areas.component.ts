@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TableModule } from 'primeng/table';
 import { AdminAreasService } from '../../services/admin-areas.service';
 import { UserService } from '@/app/shared/services/user.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
@@ -10,7 +11,7 @@ import { takeUntil } from 'rxjs/operators';
 @Component({
   selector: 'app-admin-areas',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TableModule],
   templateUrl: './admin-areas.component.html',
   styleUrls: ['./admin-areas.component.scss'],
 })
