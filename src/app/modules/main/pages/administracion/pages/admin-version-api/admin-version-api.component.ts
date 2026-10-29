@@ -39,6 +39,11 @@ export class AdminVersionApiComponent implements OnInit, OnDestroy {
   audit: VersionAuditSnapshot | null = null;
   currentDeployment: DeploymentRecord | null = null;
 
+  // Ambiente consultado en la API de versionado
+  selectedEnvironment = '';
+  environmentOptions = ['development', 'qas', 'production'];
+  defaultEnvironment = '';
+
   // Historial de deployments
   history: DeploymentRecord[] = [];
   historyTake = 20;
@@ -50,6 +55,11 @@ export class AdminVersionApiComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.activeApi = this.deploymentSvc.getActiveApi();
     this.sub = this.deploymentSvc.activeApi$.subscribe(api => (this.activeApi = api));
+    this.defaultEnvironment = this.deploymentSvc.getEnvironmentName();
+    this.selectedEnvironment = this.defaultEnvironment;
+    if (!this.environmentOptions.includes(this.selectedEnvironment)) {
+      this.environmentOptions = [...this.environmentOptions, this.selectedEnvironment];
+    }
     void this.cargarEstado();
   }
 
@@ -90,13 +100,17 @@ export class AdminVersionApiComponent implements OnInit, OnDestroy {
     await this.cargarEstado();
   }
 
+  async onEnvironmentChange() {
+    await this.cargarEstado();
+  }
+
   async cargarEstado() {
     this.loading = true;
     try {
       this.localVersion = await this.versionSvc.getLocalVersion();
       this.serverVersion = await this.versionSvc.getServerVersion();
-      this.currentDeployment = await this.deploymentSvc.getCurrentDeployment();
-      this.audit = await this.deploymentSvc.buildVersionAudit(this.localVersion, this.serverVersion);
+      this.currentDeployment = await this.deploymentSvc.getCurrentDeployment(this.selectedEnvironment);
+      this.audit = await this.deploymentSvc.buildVersionAudit(this.localVersion, this.serverVersion, this.selectedEnvironment);
       await this.cargarHistorial();
     } catch (err) {
       console.error('Error cargando estado:', err);
@@ -108,7 +122,7 @@ export class AdminVersionApiComponent implements OnInit, OnDestroy {
   async cargarHistorial() {
     this.loadingHistory = true;
     try {
-      this.history = await this.deploymentSvc.getDeploymentHistory(this.historyTake);
+      this.history = await this.deploymentSvc.getDeploymentHistory(this.historyTake, this.selectedEnvironment);
     } catch (err) {
       console.error('Error cargando historial:', err);
       this.history = [];

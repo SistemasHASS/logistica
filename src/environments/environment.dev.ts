@@ -1,5 +1,7 @@
 export const environment = {
   production: false,
+  // Ambiente de despliegue que este build representa en AppDeployments.
+  deployEnvironment: 'development', // 'development' | 'qas' | 'production'
   appVersion: '1.0.0',
 
   updateMode: 'AUTO',      // 'AUTO' | 'MANUAL' | 'DISABLED'

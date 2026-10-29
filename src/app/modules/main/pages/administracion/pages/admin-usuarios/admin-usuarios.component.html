@@ -13,10 +13,27 @@
     <div class="alert-error">{{ errorMsg() }}</div>
   }
 
+  <!-- FILTROS -->
+  <div class="filters-bar">
+    <div class="filter-item">
+      <label for="filtroEmpresa">Empresa</label>
+      <select
+        id="filtroEmpresa"
+        [ngModel]="filtroRuc()"
+        (ngModelChange)="filtroRuc.set($event)">
+        <option value="">Todas las empresas</option>
+        <option value="__SIN__">— Sin empresa —</option>
+        @for (e of empresas(); track e.ruc) {
+          <option [value]="e.ruc">{{ e.razonSocial }} ({{ e.ruc }})</option>
+        }
+      </select>
+    </div>
+  </div>
+
   <!-- TABLA -->
   <div class="table-wrapper">
     <p-table
-      [value]="usuarios()"
+      [value]="usuariosFiltrados()"
       [loading]="loading()"
       [paginator]="true"
       [rows]="10"
@@ -34,6 +51,7 @@
           <th>Email</th>
           <th>Teléfono</th>
           <th>RUC</th>
+          <th>Empresa</th>
           <th>Estado</th>
           <th style="width: 110px">Acciones</th>
         </tr>
@@ -47,6 +65,7 @@
           <td>{{ u.email || '—' }}</td>
           <td>{{ u.telefono || '—' }}</td>
           <td>{{ u.ruc || '—' }}</td>
+          <td>{{ nombreEmpresa(u.ruc) }}</td>
           <td>
             <span [class]="u.activo ? 'activo' : 'inactivo'">
               {{ u.activo ? 'Activo' : 'Inactivo' }}
@@ -69,7 +88,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="8" class="empty">No hay usuarios registrados</td>
+          <td colspan="9" class="empty">No hay usuarios registrados</td>
         </tr>
       </ng-template>
     </p-table>
@@ -164,8 +183,13 @@
           <!-- RUC (solo creación) -->
           @if (!isEdit()) {
             <div class="form-group">
-              <label for="fRuc">RUC empresa</label>
-              <input id="fRuc" type="text" formControlName="ruc" placeholder="Ej: 20481121966" />
+              <label for="fRuc">Empresa</label>
+              <select id="fRuc" formControlName="ruc">
+                <option value="">Seleccione empresa...</option>
+                @for (e of empresas(); track e.ruc) {
+                  <option [value]="e.ruc">{{ e.razonSocial }} ({{ e.ruc }})</option>
+                }
+              </select>
             </div>
           }
 

@@ -22,6 +22,7 @@
         <tr>
           <th style="width: 60px">#</th>
           <th>Rol</th>
+          <th>Descripción</th>
           <th>Estado</th>
           <th style="width: 120px">Acciones</th>
         </tr>
@@ -31,6 +32,7 @@
         <tr>
           <td>{{ i + 1 }}</td>
           <td>{{ rol.nombre }}</td>
+          <td>{{ rol.descripcion }}</td>
           <td>
             <span [ngClass]="rol.estado === 'ACTIVO' ? 'activo' : 'inactivo'">
               {{ rol.estado }}
@@ -46,8 +48,8 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="4" class="empty">
-            No hay roles registrados
+          <td colspan="5" class="empty">
+            {{ loading ? 'Cargando roles...' : (error || 'No hay roles registrados') }}
           </td>
         </tr>
       </ng-template>

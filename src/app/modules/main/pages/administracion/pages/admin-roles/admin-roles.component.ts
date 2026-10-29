@@ -1,7 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
+import { AdminRolesService } from '../../services/admin-roles.service';
+
+interface Rol {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  estado: string;
+}
 
 @Component({
   selector: 'app-admin-roles',
@@ -10,13 +18,11 @@ import { TableModule } from 'primeng/table';
   templateUrl: './admin-roles.component.html',
   styleUrls: ['./admin-roles.component.scss']
 })
-export class AdminRolesComponent {
+export class AdminRolesComponent implements OnInit {
 
-  roles: { id: number; nombre: string; estado: string }[] = [
-    { id: 1, nombre: 'Administrador', estado: 'ACTIVO' },
-    { id: 2, nombre: 'Aprobador', estado: 'ACTIVO' },
-    { id: 3, nombre: 'Consulta', estado: 'INACTIVO' }
-  ];
+  roles: Rol[] = [];
+  loading = false;
+  error = '';
 
   showModal = false;
   isEdit = false;
@@ -25,6 +31,35 @@ export class AdminRolesComponent {
     nombre: '',
     estado: 'ACTIVO'
   };
+
+  constructor(private adminRolesService: AdminRolesService) {}
+
+  ngOnInit(): void {
+    this.cargarRoles();
+  }
+
+  cargarRoles(): void {
+    this.loading = true;
+    this.error = '';
+
+    this.adminRolesService.listarRoles({}).subscribe({
+      next: (res: any) => {
+        const data = Array.isArray(res) ? res : (res?.resultado ?? []);
+        this.roles = data.map((r: any) => ({
+          id: r.id ?? r.RolId,
+          nombre: r.nombre ?? r.RolNombre,
+          descripcion: r.descripcion ?? r.Descripcion,
+          estado: r.estado ?? 'ACTIVO'
+        }));
+        this.loading = false;
+      },
+      error: (err: any) => {
+        console.error('Error al cargar roles', err);
+        this.error = 'No se pudieron cargar los roles';
+        this.loading = false;
+      }
+    });
+  }
 
   /* =========================
      NUEVO
@@ -43,7 +78,7 @@ export class AdminRolesComponent {
   /* =========================
      EDITAR
   ========================== */
-  editarRol(rol: { id: number; nombre: string; estado: string }) {
+  editarRol(rol: Rol) {
     console.log('Editar rol', rol);
     this.isEdit = true;
     this.form.nombre = rol.nombre;
@@ -64,6 +99,7 @@ export class AdminRolesComponent {
       if (index !== -1) {
         // Aseguramos que id nunca sea null
         this.roles[index] = {
+          ...this.roles[index],
           id: this.form.id!,
           nombre: this.form.nombre,
           estado: this.form.estado
@@ -85,4 +121,3 @@ export class AdminRolesComponent {
     this.showModal = false;
   }
 }
-

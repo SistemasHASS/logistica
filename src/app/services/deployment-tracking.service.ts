@@ -53,7 +53,8 @@ export class DeploymentTrackingService {
   private readonly logisticaBaseUrl = environment.baseUrl;
   private readonly maestraBaseUrl = environment.apiMaestra;
   private readonly appName = 'logistica';
-  private readonly environmentName = environment.production ? 'production' : 'development';
+  // 'development' | 'qas' | 'production' segun environment.deployEnvironment
+  private readonly environmentName = this.resolveEnvironmentName();
 
   /** Estado reactivo de la API activa para que la UI pueda observarlo. */
   private readonly _activeApi$ = new BehaviorSubject<VersionControlApi>(this.resolveActiveApi());
@@ -83,6 +84,20 @@ export class DeploymentTrackingService {
     }
     this._activeApi$.next(api);
     console.log(`🔁 API de control de versiones cambiada a: ${api}`);
+  }
+
+  /**
+   * Resuelve el nombre de ambiente de despliegue.
+   * Prioridad:
+   *   1. environment.deployEnvironment (explicito, ej. 'qas')
+   *   2. environment.production → 'production' | 'development' (fallback legacy)
+   */
+  private resolveEnvironmentName(): string {
+    const explicit = (environment as any).deployEnvironment as string | undefined;
+    if (explicit && explicit.trim()) {
+      return explicit.trim();
+    }
+    return environment.production ? 'production' : 'development';
   }
 
   /** Resuelve la API activa al iniciar el servicio. */
@@ -115,11 +130,12 @@ export class DeploymentTrackingService {
   }
 
   /** Obtiene el despliegue activo. Detecta API y usa GET o POST. */
-  async getCurrentDeployment(): Promise<DeploymentRecord | null> {
+  async getCurrentDeployment(environmentName?: string): Promise<DeploymentRecord | null> {
     const api = this.getActiveApi();
+    const env = environmentName || this.environmentName;
     try {
       if (api === 'MAESTRA') {
-        const body = { appName: this.appName, environment: this.environmentName };
+        const body = { appName: this.appName, environment: env };
         const response = await lastValueFrom(
           this.http.post<DeploymentRecord | null>(this.endpointFor('current'), body)
         );
@@ -127,7 +143,7 @@ export class DeploymentTrackingService {
       } else {
         const params = new HttpParams()
           .set('appName', this.appName)
-          .set('environment', this.environmentName);
+          .set('environment', env);
         const response = await lastValueFrom(
           this.http.get<DeploymentRecord>(this.endpointFor('current'), { params })
         );
@@ -140,11 +156,12 @@ export class DeploymentTrackingService {
   }
 
   /** Obtiene el historial de despliegues. */
-  async getDeploymentHistory(take: number = 20): Promise<DeploymentRecord[]> {
+  async getDeploymentHistory(take: number = 20, environmentName?: string): Promise<DeploymentRecord[]> {
     const api = this.getActiveApi();
+    const env = environmentName || this.environmentName;
     try {
       if (api === 'MAESTRA') {
-        const body = { appName: this.appName, environment: this.environmentName, take };
+        const body = { appName: this.appName, environment: env, take };
         const response = await lastValueFrom(
           this.http.post<DeploymentRecord[] | null>(this.endpointFor('history'), body)
         );
@@ -152,7 +169,7 @@ export class DeploymentTrackingService {
       } else {
         const params = new HttpParams()
           .set('appName', this.appName)
-          .set('environment', this.environmentName)
+          .set('environment', env)
           .set('take', String(take));
         const response = await lastValueFrom(
           this.http.get<DeploymentRecord[]>(this.endpointFor('history'), { params })
@@ -179,8 +196,9 @@ export class DeploymentTrackingService {
     }
   }
 
-  async buildVersionAudit(localVersion: string, serverVersion: string | null): Promise<VersionAuditSnapshot> {
-    const apiDeployment = await this.getCurrentDeployment();
+  async buildVersionAudit(localVersion: string, serverVersion: string | null, environmentName?: string): Promise<VersionAuditSnapshot> {
+    const env = environmentName || this.environmentName;
+    const apiDeployment = await this.getCurrentDeployment(env);
     const apiVersion = apiDeployment?.version ?? null;
     let promptDecisionReason = 'No hay una nueva version confirmada.';
 
@@ -208,7 +226,7 @@ export class DeploymentTrackingService {
 
     return {
       appName: this.appName,
-      environment: this.environmentName,
+      environment: env,
       localVersion,
       serverVersion,
       apiVersion,

@@ -1,10 +1,11 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { TableModule } from 'primeng/table';
 import { debounceTime, distinctUntilChanged, Subject, switchMap, of } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { AdminEmpresasService, Empresa } from '../../services/admin-empresas.service';
 
 export interface UsuarioLogistica {
   idUsuario: number;
@@ -39,9 +40,20 @@ export class AdminUsuariosComponent implements OnInit {
   private http = inject(HttpClient);
   private fb = inject(FormBuilder);
   private cdr = inject(ChangeDetectorRef);
+  private empresasService = inject(AdminEmpresasService);
   private readonly apiBase = `${environment.baseUrl}/api/logistica/admin-logistica`;
 
   usuarios = signal<UsuarioLogistica[]>([]);
+  empresas = signal<Empresa[]>([]);
+  filtroRuc = signal('');
+  empresasPorRuc = computed(() => new Map(this.empresas().map(e => [e.ruc, e.razonSocial])));
+  usuariosFiltrados = computed(() => {
+    const ruc = this.filtroRuc();
+    const lista = this.usuarios();
+    if (!ruc) return lista;
+    if (ruc === '__SIN__') return lista.filter(u => !u.ruc);
+    return lista.filter(u => u.ruc === ruc);
+  });
   loading = signal(false);
   guardando = signal(false);
   showModal = signal(false);
@@ -65,6 +77,7 @@ export class AdminUsuariosComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarUsuarios();
+    this.cargarEmpresas();
     this.erpSearch$.pipe(
       debounceTime(350),
       distinctUntilChanged(),
@@ -89,6 +102,27 @@ export class AdminUsuariosComponent implements OnInit {
       next: (res) => { this.usuarios.set(Array.isArray(res) ? res : []); this.loading.set(false); this.cdr.markForCheck(); },
       error: () => { this.loading.set(false); this.errorMsg.set('Error al cargar usuarios'); this.cdr.markForCheck(); }
     });
+  }
+
+  cargarEmpresas(): void {
+    this.empresasService.listarEmpresas().subscribe({
+      next: (res) => {
+        let lista: Empresa[] = [];
+        if (res?.resultado) {
+          try { lista = JSON.parse(res.resultado); } catch { lista = res.resultado; }
+        } else if (Array.isArray(res)) {
+          lista = res;
+        }
+        this.empresas.set(lista || []);
+        this.cdr.markForCheck();
+      },
+      error: () => { this.empresas.set([]); this.cdr.markForCheck(); }
+    });
+  }
+
+  nombreEmpresa(ruc: string | null): string {
+    if (!ruc) return '—';
+    return this.empresasPorRuc().get(ruc) ?? ruc;
   }
 
   onBuscarErp(event: Event): void {
@@ -153,7 +187,7 @@ export class AdminUsuariosComponent implements OnInit {
     } else {
       const { documentoidentidad, nombreCompleto, email, telefono, ruc } = this.form.value;
       this.http.post(`${this.apiBase}/logistica-usuarios`, {
-        documentoidentidad, nombreCompleto, email, telefono, ruc, usuarioCreacion: 'SISTEMA'
+        documentoidentidad, nombreCompleto, email, telefono, ruc: ruc || null, usuarioCreacion: 'SISTEMA'
       }).subscribe({
         next: () => { this.guardando.set(false); this.cerrarModal(); this.cargarUsuarios(); },
         error: (err) => { this.guardando.set(false); this.errorMsg.set(err.error?.mensaje || 'Error al crear usuario'); this.cdr.markForCheck(); }

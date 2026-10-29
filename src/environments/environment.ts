@@ -1,5 +1,8 @@
 export const environment = {
   production: false,
+  // Ambiente de despliegue que este build representa en AppDeployments.
+  // Debe coincidir con el servidor al que apunta baseUrl (hoy: QAS).
+  deployEnvironment: 'qas', // 'development' | 'qas' | 'production'
   appVersion: '5.0.0', // se reemplaza automáticamente
 
   updateMode: 'AUTO',      // 'AUTO' | 'MANUAL' | 'DISABLED'
