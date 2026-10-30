@@ -1830,7 +1830,6 @@ export class RequerimientosItemService {
 
       const centroCostoDefault = cecoFirst?.costcenter ?? '0001';
       const proyectoAfeDefault = proyectoFirst?.afe ?? 'FUNDO HP';
-      const accountDefault = cecoFirst?.ccontable ?? '10411103';
 
       let almacenCodigo = reqTransf.almacenOrigen || 'H001';
       if (almacenCodigo && almacenCodigo.length <= 3 && !isNaN(Number(almacenCodigo))) {
@@ -1925,6 +1924,12 @@ export class RequerimientosItemService {
             const labor = this.maestras.labores?.find((l: any) => l.labor === d.labor);
             const proyecto = proyectos.find((p: any) => p.proyectoio === d.proyecto);
             const itemEncontrado = (this.maestras.items || []).find((i: any) => i.item === d.codigo);
+            // Cuenta del maestro de items: gasto primero, inventario como
+            // respaldo (movimiento de almacén). Nunca una cuenta genérica.
+            const cuentaItem = itemEncontrado?.cuentaGasto || itemEncontrado?.cuentaInventario;
+            if (!cuentaItem) {
+              throw new Error(`El item ${d.codigo} no tiene cuenta contable en la maestra`);
+            }
             // Relacionar el turno del requerimiento con la maestra (get-turnos) para obtener codTurno
             const turnoValor = (d.turno || '').toString();
             const turno = this.maestras.turnos?.find((t: any) =>
@@ -1941,12 +1946,20 @@ export class RequerimientosItemService {
             }
             sucursalFormateada = String(sucursalFormateada).substring(0, 4).padStart(4, '0');
 
+            // Monto = porcentaje; las líneas deben sumar 100. La última
+            // absorbe el residuo de redondeo.
+            const montoBase = (100 / detalle.length).toFixed(2);
+            const montoLinea =
+              index === detalle.length - 1
+                ? (100 - Number(montoBase) * (detalle.length - 1)).toFixed(2)
+                : montoBase;
+
             return {
               Secuencia: index + 1,
               Linea: 1,
-              Account: itemEncontrado?.cuentaGasto || ceco?.ccontable || accountDefault,
+              Account: cuentaItem,
               Afe: proyecto?.afe ?? proyectoAfeDefault,
-              Monto: '100.00',
+              Monto: montoLinea,
               CentroCostoDestino: labor?.idlabor ?? (ceco?.costcenter || centroCostoDefault),
               Sucursal: sucursalFormateada,
               CampoReferencia: this.SeleccionaTipoGasto || 'GA',

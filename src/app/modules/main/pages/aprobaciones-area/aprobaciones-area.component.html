@@ -829,8 +829,11 @@
     <div class="d-flex flex-wrap gap-2 justify-content-end">
       <button pButton type="button" label="Rechazar" icon="bx bx-x-circle"
               class="p-button-danger" (click)="rechazarDetallesPendientes()"></button>
-      <button pButton type="button" label="Aprobar" icon="bx bx-check"
-              class="p-button-success" (click)="aprobarDetallesPendientes()"></button>
+      <button pButton type="button"
+              [label]="aprobandoDetallesPendientes ? 'Aprobando...' : (cargandoMaestras ? 'Cargando maestras...' : 'Aprobar')"
+              icon="bx bx-check"
+              class="p-button-success" (click)="aprobarDetallesPendientes()"
+              [disabled]="aprobandoDetallesPendientes || cargandoMaestras"></button>
       <button pButton type="button" label="Cerrar" icon="pi pi-times"
               class="p-button-secondary" (click)="cerrarDetallePendientes()"></button>
     </div>

@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { CardModule } from 'primeng/card';
-import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom, timeout } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule, Checkbox } from 'primeng/checkbox';
@@ -326,7 +326,7 @@ export class AprobacionesAreaComponent implements OnInit {
         }
       });
 
-      this.itemsFiltered = await firstValueFrom(this.ItemService.getItem([{}]));
+      await this.cargarItemsFiltered();
 
       // ✅ Cargar commodities (servicios) con cuenta contable
       const commodities = this.commodityService.getCommodity([{}]);
@@ -458,6 +458,35 @@ export class AprobacionesAreaComponent implements OnInit {
 
   async ListarTipoGastos() {
     this.tipoGastos = await this.dexieService.showTipoGastos();
+  }
+
+  // Carga itemsFiltered (listar-item) con deduplicación: si ya hay una
+  // llamada en vuelo (init o aprobación), se reusa la misma promesa en vez
+  // de disparar otra descarga del maestro completo.
+  private itemsFilteredPromise: Promise<void> | null = null;
+  private async cargarItemsFiltered(): Promise<void> {
+    const esMaestroReal = (arr: any[]) =>
+      Array.isArray(arr) && arr.length > 0 && arr[0].item !== undefined;
+    if (esMaestroReal(this.itemsFiltered)) return;
+    if (!this.itemsFilteredPromise) {
+      this.itemsFilteredPromise = (async () => {
+        this.itemsFiltered = await this.dexieService.showMaestroItem();
+        if (esMaestroReal(this.itemsFiltered)) return;
+        const resp: any = await firstValueFrom(
+          this.ItemService.getItem([{}]).pipe(timeout(60000))
+        );
+        if (esMaestroReal(resp)) {
+          this.itemsFiltered = resp;
+          await this.dexieService.saveMaestroItems(resp);
+          console.log('✅ Items cargados desde listar-item:', resp.length);
+        } else {
+          console.warn('⚠️ listar-item no retornó items válidos:', resp?.length ?? 0);
+        }
+      })().finally(() => {
+        this.itemsFilteredPromise = null;
+      });
+    }
+    await this.itemsFilteredPromise;
   }
 
   cargarRequerimientosPendientes() {
@@ -718,8 +747,8 @@ export class AprobacionesAreaComponent implements OnInit {
           mensaje = responseItem.mensaje || 'Operación realizada correctamente';
           console.log('✅ Formato nuevo detectado, esExitoso:', esExitoso);
         } else if ('resultado' in responseItem) {
-          // Formato antiguo: { resultado: "SUCCESS" | "OK", mensaje: "..." }
-          esExitoso = responseItem.resultado === 'SUCCESS' || responseItem.resultado === 'OK';
+          // Formato antiguo: { resultado: "SUCCESS" | "OK" | ..., mensaje: "..." }
+          esExitoso = this.esRespuestaExito(responseItem);
           mensaje = responseItem.mensaje || 'Operación realizada correctamente';
           console.log('✅ Formato antiguo detectado, esExitoso:', esExitoso);
         }
@@ -846,9 +875,8 @@ export class AprobacionesAreaComponent implements OnInit {
           mensaje =
             firstItem.mensaje || 'Requerimiento rechazado correctamente';
         } else if ('resultado' in firstItem) {
-          // Formato antiguo: [{ resultado: "SUCCESS", mensaje: "..." }]
-          esExitoso =
-            firstItem.resultado === 'SUCCESS' || firstItem.resultado === 'OK';
+          // Formato antiguo: [{ resultado: "SUCCESS" | "OK" | ..., mensaje: "..." }]
+          esExitoso = this.esRespuestaExito(firstItem);
           mensaje =
             firstItem.mensaje || 'Requerimiento rechazado correctamente';
         }
@@ -935,7 +963,7 @@ export class AprobacionesAreaComponent implements OnInit {
           if ('success' in responseItem) {
             esExitoso = responseItem.success === true;
           } else if ('resultado' in responseItem) {
-            esExitoso = responseItem.resultado === 'SUCCESS' || responseItem.resultado === 'OK';
+            esExitoso = this.esRespuestaExito(responseItem);
           }
         }
 
@@ -1008,101 +1036,140 @@ export class AprobacionesAreaComponent implements OnInit {
   // SINCRONIZACIÓN CON SPRING
   // =============================================
 
+  cargandoMaestras = false;
+
+  // Precarga todas las maestras necesarias para la migración a SPRING,
+  // en paralelo. Se llama al abrir el modal de detalle para que estén
+  // listas antes de que el usuario apruebe, y otra vez dentro de
+  // sincronizarRequerimientoSPRING como garantía.
+  async prepararMaestrasSPRING(): Promise<void> {
+    if (this.cargandoMaestras) return;
+    this.cargandoMaestras = true;
+    try {
+      const cargarCecos = async () => {
+      if (this.cecos?.length) return;
+      this.cecos = await this.dexieService.showCecos();
+      if (this.cecos?.length) return;
+      try {
+        const resp: any = await this.maestrasService
+          .getCecos([{ aplicacion: 'LOGISTICA', esadmin: 0 }])
+          .pipe(timeout(60000))
+          .toPromise();
+        if (resp?.length) {
+          await this.dexieService.saveCecos(resp);
+          this.cecos = await this.dexieService.showCecos();
+          console.log('✅ CECOs cargados:', this.cecos.length);
+        }
+      } catch (e) {
+        console.error('❌ Error al sincronizar CECOs:', e);
+      }
+    };
+
+    const cargarLabores = async () => {
+      if (this.labores?.length) return;
+      this.labores = await this.dexieService.showLabores();
+      if (this.labores?.length) return;
+      try {
+        const labores = await this.maestrasService.getLabores([{ aplicacion: 'LOGISTICA', esadmin: 0 }]);
+        if (labores?.length) {
+          await this.dexieService.saveLabores(labores);
+          this.labores = await this.dexieService.showLabores();
+          console.log('✅ Labores cargadas:', this.labores.length);
+        }
+      } catch (e) {
+        console.error('❌ Error al sincronizar Labores:', e);
+      }
+    };
+
+    const cargarProyectos = async () => {
+      if (!this.proyectos?.length) {
+        this.proyectos = await this.dexieService.showProyectos();
+      }
+    };
+
+    // Items (maestro real: listar-item → registros con `item` y `cuentaGasto`).
+    // OJO: la tabla Dexie `items` contiene data de get-items-cmmdty
+    // (forma {codigo, descripcion}, SIN `item`/`cuentaGasto`); no usar showItems()
+    // aquí o el lookup de cuenta contable nunca matchea.
+    const cargarItems = async () => {
+      try {
+        await this.cargarItemsFiltered();
+      } catch (e) {
+        console.error('❌ Error al cargar listar-item:', e);
+      }
+    };
+
+    const cargarTurnos = async () => {
+      if (!this.turnos?.length) {
+        this.turnos = await this.dexieService.showTurnos();
+      }
+    };
+
+    const cargarSubCommodities = async () => {
+      if (this.subcommodities?.length) return;
+      this.subcommodities = await this.dexieService.showMaestroSubCommodity();
+      if (this.subcommodities?.length) return;
+      try {
+        const resp: any = await firstValueFrom(
+          this.commodityService.getSubCommodity([{}]).pipe(timeout(60000))
+        );
+        if (resp?.length) {
+          await this.dexieService.saveMaestroSubCommodities(resp);
+          this.subcommodities = await this.dexieService.showMaestroSubCommodity();
+          console.log('✅ Subcommodities cargados:', this.subcommodities.length);
+        }
+      } catch (e) {
+        console.error('❌ Error al sincronizar subcommodities:', e);
+      }
+    };
+
+    const cargarCommodities = async () => {
+      if (this.commodities?.length) return;
+      this.commodities = await this.dexieService.showMaestroCommodity();
+      if (this.commodities?.length) return;
+      try {
+        const resp: any = await firstValueFrom(
+          this.commodityService.getCommodity([{}]).pipe(timeout(60000))
+        );
+        if (resp?.length) {
+          await this.dexieService.saveMaestroCommodities(resp);
+          this.commodities = await this.dexieService.showMaestroCommodity();
+          console.log('✅ Commodities cargados:', this.commodities.length);
+        }
+      } catch (e) {
+        console.error('❌ Error al sincronizar commodities:', e);
+      }
+    };
+
+      await Promise.all([
+        cargarCecos(),
+        cargarLabores(),
+        cargarProyectos(),
+        cargarItems(),
+        cargarTurnos(),
+        cargarSubCommodities(),
+        cargarCommodities(),
+      ]);
+
+      console.log('✅ Datos maestros verificados:', {
+        cecos: this.cecos?.length || 0,
+        labores: this.labores?.length || 0,
+        proyectos: this.proyectos?.length || 0,
+        items: this.itemsFiltered?.length || 0,
+        subcommodities: this.subcommodities?.length || 0,
+        commodities: this.commodities?.length || 0,
+        turnos: this.turnos?.length || 0
+      });
+    } finally {
+      this.cargandoMaestras = false;
+    }
+  }
+
   async sincronizarRequerimientoSPRING(req: any, silencioso: boolean = false) {
     console.log('🟢 INICIO sincronizarRequerimientoSPRING');
     console.log('📋 Objeto recibido en sincronizarSPRING:', req);
-    
-    // ✅ CORRECCIÓN CRÍTICA: Cargar datos maestros si no están disponibles
-    // CECOs
-    if (!this.cecos || this.cecos.length === 0) {
-      console.log('⚠️ CECOs no cargados, cargando desde Dexie...');
-      this.cecos = await this.dexieService.showCecos();
-      
-      if (!this.cecos || this.cecos.length === 0) {
-        console.log('⚠️ CECOs vacíos en Dexie, sincronizando desde backend...');
-        try {
-          const cecos = this.maestrasService.getCecos([{ aplicacion: 'LOGISTICA', esadmin: 0 }]);
-          const resp: any = await cecos.toPromise();
-          if (!!resp && resp.length) {
-            console.log('📥 Recibidos', resp.length, 'CECOs del backend');
-            await this.dexieService.saveCecos(resp);
-            this.cecos = await this.dexieService.showCecos();
-            console.log('✅ CECOs sincronizados y cargados:', this.cecos.length);
-          } else {
-            console.warn('⚠️ Backend no retornó CECOs');
-          }
-        } catch (error) {
-          console.error('❌ Error al sincronizar CECOs:', error);
-        }
-      }
-    }
-    
-    // Labores
-    if (!this.labores || this.labores.length === 0) {
-      console.log('⚠️ Labores no cargadas, cargando desde Dexie...');
-      this.labores = await this.dexieService.showLabores();
-      
-      if (!this.labores || this.labores.length === 0) {
-        console.log('⚠️ Labores vacías en Dexie, sincronizando desde backend...');
-        try {
-          const labores = await this.maestrasService.getLabores([{ aplicacion: 'LOGISTICA', esadmin: 0 }]);
-          if (!!labores && labores.length) {
-            console.log('📥 Recibidas', labores.length, 'Labores del backend');
-            await this.dexieService.saveLabores(labores);
-            this.labores = await this.dexieService.showLabores();
-            console.log('✅ Labores sincronizadas y cargadas:', this.labores.length);
-          } else {
-            console.warn('⚠️ Backend no retornó Labores');
-          }
-        } catch (error) {
-          console.error('❌ Error al sincronizar Labores:', error);
-        }
-      }
-    }
-    
-    // Proyectos
-    if (!this.proyectos || this.proyectos.length === 0) {
-      console.log('⚠️ Proyectos no cargados, cargando desde Dexie...');
-      this.proyectos = await this.dexieService.showProyectos();
-    }
-    
-    // Items
-    if (!this.itemsFiltered || this.itemsFiltered.length === 0) {
-      console.log('⚠️ Items no cargados, cargando desde Dexie...');
-      this.itemsFiltered = await this.dexieService.showItems();
-      
-      if (!this.itemsFiltered || this.itemsFiltered.length === 0) {
-        console.log('⚠️ Items vacíos en Dexie, sincronizando desde backend...');
-        try {
-          const items = this.maestrasService.getItems([{ ruc: this.usuario.ruc }]);
-          const resp: any = await items.toPromise();
-          if (!!resp && resp.length) {
-            console.log('📥 Recibidos', resp.length, 'Items del backend');
-            await this.dexieService.saveItems(resp);
-            this.itemsFiltered = await this.dexieService.showItems();
-            console.log('✅ Items sincronizados y cargados:', this.itemsFiltered.length);
-          } else {
-            console.warn('⚠️ Backend no retornó Items');
-          }
-        } catch (error) {
-          console.error('❌ Error al sincronizar Items:', error);
-        }
-      }
-    }
-    
-    // Turnos
-    if (!this.turnos || this.turnos.length === 0) {
-      console.log('⚠️ Turnos no cargados, cargando desde Dexie...');
-      this.turnos = await this.dexieService.showTurnos();
-    }
-    
-    console.log('✅ Datos maestros verificados:', {
-      cecos: this.cecos?.length || 0,
-      labores: this.labores?.length || 0,
-      proyectos: this.proyectos?.length || 0,
-      items: this.itemsFiltered?.length || 0,
-      turnos: this.turnos?.length || 0
-    });
+
+    await this.prepararMaestrasSPRING();
     
     try {
 
@@ -1609,29 +1676,33 @@ export class AprobacionesAreaComponent implements OnInit {
                     (c) => c.commodity === d.codigo
                   );
                   itemCuentaContable =
-                    (esCuentaValida(commodity?.cuentaContableGasto) && commodity.cuentaContableGasto) ||
-                    itemCeco?.ccontable ||
-                    cuentacontable;
+                    esCuentaValida(commodity?.cuentaContableGasto) && commodity.cuentaContableGasto;
                   if (subcommodity && !esCuentaValida(subcommodity.cuentaContableGasto)) {
                     console.warn(`⚠️ Subcommodity ${d.codigo} tiene cuentaContableGasto inválida: '${subcommodity.cuentaContableGasto}'`);
                   }
                 }
-                // Solo servicios: la X del 2º carácter se reemplaza por el div del CECO del detalle
-                if (typeof itemCuentaContable === 'string' && itemCuentaContable[1]?.toUpperCase() === 'X') {
+                // Solo servicios (clasificación SER): la X del 2º carácter
+                // se reemplaza por el div del CECO del detalle
+                if (
+                  clasificacion === 'SER' &&
+                  typeof itemCuentaContable === 'string' &&
+                  itemCuentaContable[1]?.toUpperCase() === 'X'
+                ) {
                   if (!itemCeco?.div) {
                     console.warn(`⚠️ Cuenta ${itemCuentaContable} requiere div pero el CECO '${d.idcentrocosto || d.ceco}' no tiene div`);
                   }
                   itemCuentaContable = this.aplicarDivCuenta(itemCuentaContable, itemCeco?.div);
                 }
               } else {
-                // Para items, buscar en itemsFiltered
+                // Para items, buscar en itemsFiltered (comportamiento original)
                 const itemEncontrado = this.itemsFiltered.find(
                   (i) => i.item === d.codigo
                 );
                 if (itemEncontrado?.cuentaGasto) {
                   itemCuentaContable = itemEncontrado.cuentaGasto;
                 } else {
-                  // Fallback: ACTIVOFIJO/ACTIVOMENOR usan códigos de la maestra de subcommodity
+                  // ACTIVOFIJO/ACTIVOMENOR: sus códigos viven en la maestra
+                  // de subcommodity (sin regla X, solo cuenta numérica)
                   const subcommodity = this.subcommodities.find(
                     (sc) => sc.commodity === d.codigo
                   );
@@ -1641,7 +1712,6 @@ export class AprobacionesAreaComponent implements OnInit {
                   itemCuentaContable =
                     (esCuentaValida(subcommodity?.cuentaContableGasto) && subcommodity.cuentaContableGasto) ||
                     (esCuentaValida(commodity?.cuentaContableGasto) && commodity.cuentaContableGasto) ||
-                    itemCeco?.ccontable ||
                     cuentacontable;
                 }
 
@@ -1708,6 +1778,15 @@ export class AprobacionesAreaComponent implements OnInit {
               // Asegurar que sea exactamente 4 caracteres
               sucursalFormateada = sucursalFormateada.substring(0, 4).padStart(4, '0');
               
+              // Monto = porcentaje de distribución; las líneas deben sumar 100.
+              // Se reparte 100/n y la última línea absorbe el residuo de redondeo.
+              const totalDetalles = requerimientoCompleto.detalles.length;
+              const montoBase = Number((100 / totalDetalles).toFixed(2));
+              const montoLinea =
+                index === totalDetalles - 1
+                  ? Number((100 - montoBase * (totalDetalles - 1)).toFixed(2))
+                  : montoBase;
+
               const distribucionItem = {
                 Secuencia: index + 1,
                 Linea: 1,
@@ -1715,7 +1794,7 @@ export class AprobacionesAreaComponent implements OnInit {
                 Account: itemCuentaContable,
                 // ✅ CORRECCIÓN: Usar AFE específico del proyecto del item
                 Afe: itemAfe,
-                Monto: 100,
+                Monto: montoLinea,
                 // ✅ CORRECCIÓN: Usar centro de costo destino específico del item
                 CentroCostoDestino: itemCentroCostoDestino,
                 // ✅ CORRECCIÓN: Formatear sucursal a 4 dígitos
@@ -1751,7 +1830,9 @@ export class AprobacionesAreaComponent implements OnInit {
       // el await resolvía al hacer subscribe y contaba como sincronizado aunque
       // SPRING rechazara el requerimiento)
       const resp = await firstValueFrom(
-        this.requerimientosService.getRegristroRequerimientoSPRING(requerimiento),
+        this.requerimientosService
+          .getRegristroRequerimientoSPRING(requerimiento)
+          .pipe(timeout(60000)),
       );
       console.log('✅ Respuesta del backend:', resp);
       const resultado = Array.isArray(resp) ? resp[0] : resp;
@@ -2189,6 +2270,9 @@ export class AprobacionesAreaComponent implements OnInit {
     this.loadingDetallePendientes = true;
     this.displayDetallePendientesModal = true;
 
+    // Precargar maestras para migración SPRING en segundo plano
+    this.prepararMaestrasSPRING();
+
     // Cargar los items completos del endpoint con detalle
     try {
       const response = await this.aprobacionesAreaService
@@ -2366,7 +2450,21 @@ export class AprobacionesAreaComponent implements OnInit {
     this.detallesPendientesSeleccionados.add(index);
   }
 
+  aprobandoDetallesPendientes = false;
+
+  // Normaliza la respuesta de los SP de aprobación: éxito salvo que
+  // venga resultado: "ERROR"/"FAIL" o success === false
+  private esRespuestaExito(item: any): boolean {
+    if (!item) return false;
+    if (item.success === true) return true;
+    if (item.success === false) return false;
+    const resultado = (item.resultado ?? '').toString().toUpperCase();
+    return resultado !== '' && resultado !== 'ERROR' && resultado !== 'FAIL' && resultado !== 'FAILED';
+  }
+
+
   async aprobarDetallesPendientes() {
+    if (this.aprobandoDetallesPendientes) return;
     if (!this.requerimientoDetallePendientes || !this.usuario) return;
 
     // Prevenir auto-aprobación (salvo roles globales)
@@ -2387,6 +2485,7 @@ export class AprobacionesAreaComponent implements OnInit {
     const comentariosBase = `Aprobados ${seleccionados.length}/${dets.length} ítems: ${codigosAprobados}`;
     const comentarios = comentariosBase.length > 1900 ? comentariosBase.substring(0, 1900) + '...' : comentariosBase;
     try {
+      this.aprobandoDetallesPendientes = true;
       const requestAprobacion = {
         idrequerimiento: this.requerimientoDetallePendientes.idrequerimiento,
         documentoidentidad: this.usuario.documentoidentidad,
@@ -2399,6 +2498,11 @@ export class AprobacionesAreaComponent implements OnInit {
       ).toPromise();
       if (response) {
         const item = Array.isArray(response) ? response[0] : response;
+        console.log('📤 Respuesta aprobación detalles:', item);
+        if (!this.esRespuestaExito(item)) {
+          Swal.fire('Error', item?.mensaje || 'No se pudo aprobar el requerimiento', 'error');
+          return;
+        }
         const estadoFinal = item?.estadoFinal || 'APROBADO';
 
         // Ocultar el requerimiento de la lista local del creador sin esperar sincronización
@@ -2406,28 +2510,39 @@ export class AprobacionesAreaComponent implements OnInit {
           this.requerimientoDetallePendientes.idrequerimiento,
         );
 
+        // La aprobación ya fue exitosa: cerrar el modal antes de la
+        // migración a SPRING para que no quede bloqueado si esta cuelga
+        this.displayDetallePendientesModal = false;
+
         if (estadoFinal === 'APROBACION1') {
           // Flujo DOS_NIVELES: pendiente de Gerencia, sin migración SPRING aún
           console.log('ℹ️ Requerimiento quedó en APROBACION1 - pendiente de Gerencia');
           Swal.fire('Éxito', 'Aprobado nivel 1 - Pendiente de Gerencia', 'success');
         } else {
           // Migrar a SPRING tras aprobación exitosa
+          let migrado = false;
           try {
             console.log('🔄 Migrando requerimiento aprobado a SPRING...');
             await this.sincronizarRequerimientoSPRING(this.requerimientoDetallePendientes);
+            migrado = true;
             console.log('✅ Migración a SPRING completada');
           } catch (err) {
             console.error('❌ Error migrando a SPRING:', err);
           }
-          Swal.fire('Éxito', 'Requerimiento aprobado correctamente', 'success');
+          if (migrado) {
+            Swal.fire('Éxito', 'Requerimiento aprobado y migrado a SPRING correctamente', 'success');
+          } else {
+            Swal.fire('Advertencia', 'Requerimiento aprobado pero no se pudo migrar a SPRING', 'warning');
+          }
         }
-        this.displayDetallePendientesModal = false;
         await this.cargarRequerimientosPendientes();
         await this.cargarDashboard();
         await this.cargarMisRequerimientos();
       }
     } catch {
       Swal.fire('Error', 'Error al aprobar el requerimiento', 'error');
+    } finally {
+      this.aprobandoDetallesPendientes = false;
     }
   }
 
@@ -2463,6 +2578,11 @@ export class AprobacionesAreaComponent implements OnInit {
         : this.aprobacionesAreaService.aprobarRequerimientoArea(requestRechazo)
       ).toPromise();
       if (response) {
+        const item = Array.isArray(response) ? response[0] : response;
+        if (!this.esRespuestaExito(item)) {
+          Swal.fire('Error', item?.mensaje || 'No se pudo rechazar el requerimiento', 'error');
+          return;
+        }
         Swal.fire('Éxito', 'Requerimiento rechazado correctamente', 'success');
         this.displayDetallePendientesModal = false;
         await this.cargarRequerimientosPendientes();
