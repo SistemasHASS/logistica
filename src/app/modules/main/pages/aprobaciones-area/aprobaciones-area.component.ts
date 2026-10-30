@@ -341,7 +341,7 @@ export class AprobacionesAreaComponent implements OnInit {
       const subcommodities = this.commodityService.getSubCommodity([{}]);
       subcommodities.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
-          await this.dexieService.saveComodities(resp);
+          await this.dexieService.saveMaestroSubCommodities(resp);
           await this.ListarSubCommodities();
         }
       });
@@ -428,8 +428,16 @@ export class AprobacionesAreaComponent implements OnInit {
   }
 
   async ListarSubCommodities() {
-    // Subcommodities son los "Comodity" en Dexie (subservicios)
-    this.subcommodities = await this.dexieService.showComodities();
+    // Maestro de subcommodities (subservicios) con cuentaContableGasto
+    this.subcommodities = await this.dexieService.showMaestroSubCommodity();
+    // Si la tabla está vacía (usuario sin sync previo), traerla del API
+    if (!this.subcommodities?.length) {
+      const resp: any = await lastValueFrom(this.commodityService.getSubCommodity([{}]));
+      if (resp?.length) {
+        await this.dexieService.saveMaestroSubCommodities(resp);
+        this.subcommodities = await this.dexieService.showMaestroSubCommodity();
+      }
+    }
   }
 
   async ListarClasificaciones() {
@@ -1575,32 +1583,86 @@ export class AprobacionesAreaComponent implements OnInit {
               // ✅ CORRECCIÓN CRÍTICA: Calcular valores específicos POR CADA ITEM
               // Para commodities, buscar en subcommodities o commodities
               // Para items, buscar en itemsFiltered
+              // La maestra puede traer cuentas inválidas ("EX", "PROYECTO003", texto libre).
+              // La X en el 2º carácter (ej. 9X331101) es válida: se reemplaza por el div del CECO.
+              const esCuentaValida = (c: any): boolean => {
+                if (typeof c !== 'string') return false;
+                const v = c.trim();
+                return /^\d+$/.test(v) || /^\d[Xx]\d+$/.test(v);
+              };
+              // CECO del detalle: se usa para centro de costo y para el div de la cuenta
+              const itemCeco = this.cecos.find(
+                (c) => c.localname === (d.idcentrocosto || d.ceco)
+              );
+              const itemCentroCosto = itemCeco?.costcenter ?? centroCostoDefault;
               let itemCuentaContable;
               if (tipoReq === 'COMMODITY') {
                 // Primero buscar en subcommodities (más específico)
                 const subcommodity = this.subcommodities.find(
                   (sc) => sc.commodity === d.codigo
                 );
-                if (subcommodity && subcommodity.cuentaContableGasto) {
+                if (esCuentaValida(subcommodity?.cuentaContableGasto)) {
                   itemCuentaContable = subcommodity.cuentaContableGasto;
                 } else {
                   // Si no se encuentra, buscar en commodities
                   const commodity = this.commodities.find(
                     (c) => c.commodity === d.codigo
                   );
-                  itemCuentaContable = commodity?.cuentaContableGasto || cuentacontable;
+                  itemCuentaContable =
+                    (esCuentaValida(commodity?.cuentaContableGasto) && commodity.cuentaContableGasto) ||
+                    itemCeco?.ccontable ||
+                    cuentacontable;
+                  if (subcommodity && !esCuentaValida(subcommodity.cuentaContableGasto)) {
+                    console.warn(`⚠️ Subcommodity ${d.codigo} tiene cuentaContableGasto inválida: '${subcommodity.cuentaContableGasto}'`);
+                  }
+                }
+                // Solo servicios: la X del 2º carácter se reemplaza por el div del CECO del detalle
+                if (typeof itemCuentaContable === 'string' && itemCuentaContable[1]?.toUpperCase() === 'X') {
+                  if (!itemCeco?.div) {
+                    console.warn(`⚠️ Cuenta ${itemCuentaContable} requiere div pero el CECO '${d.idcentrocosto || d.ceco}' no tiene div`);
+                  }
+                  itemCuentaContable = this.aplicarDivCuenta(itemCuentaContable, itemCeco?.div);
                 }
               } else {
                 // Para items, buscar en itemsFiltered
                 const itemEncontrado = this.itemsFiltered.find(
                   (i) => i.item === d.codigo
                 );
-                itemCuentaContable = itemEncontrado?.cuentaGasto || cuentacontable;
-                
+                if (itemEncontrado?.cuentaGasto) {
+                  itemCuentaContable = itemEncontrado.cuentaGasto;
+                } else {
+                  // Fallback: ACTIVOFIJO/ACTIVOMENOR usan códigos de la maestra de subcommodity
+                  const subcommodity = this.subcommodities.find(
+                    (sc) => sc.commodity === d.codigo
+                  );
+                  const commodity = this.commodities.find(
+                    (c) => c.commodity === d.codigo
+                  );
+                  itemCuentaContable =
+                    (esCuentaValida(subcommodity?.cuentaContableGasto) && subcommodity.cuentaContableGasto) ||
+                    (esCuentaValida(commodity?.cuentaContableGasto) && commodity.cuentaContableGasto) ||
+                    itemCeco?.ccontable ||
+                    cuentacontable;
+                }
+
                 // Debug: mostrar si no se encontró el item
                 if (!itemEncontrado) {
                   console.warn(`⚠️ Item ${d.codigo} no encontrado en itemsFiltered, usando cuenta por defecto`);
                 }
+              }
+
+              // La cuenta nunca puede ir vacía a SPRING: abortar con mensaje claro
+              if (!itemCuentaContable) {
+                const msg = tipoReq === 'COMMODITY'
+                  ? `El subcommodity ${d.codigo} no tiene cuenta contable en la maestra`
+                  : `El item ${d.codigo} no tiene cuenta contable en la maestra`;
+                console.error('❌ ' + msg);
+                if (!silencioso) {
+                  Swal.fire('Error', msg, 'error');
+                }
+                const err = new Error(msg) as any;
+                err.yaNotificado = true;
+                throw err;
               }
               console.log('  💰 Account (cuenta contable):', itemCuentaContable);
               
@@ -1610,9 +1672,7 @@ export class AprobacionesAreaComponent implements OnInit {
               const itemAfe = itemProyecto?.afe ?? proyectoAfeDefault;
               console.log('  📊 Afe (proyecto):', itemAfe);
               
-              const itemCeco = this.cecos.find((c) => c.localname === (d.idcentrocosto || d.ceco));
               console.log('  🏢 CECO encontrado:', itemCeco);
-              const itemCentroCosto = itemCeco?.costcenter ?? centroCostoDefault;
               console.log('  🏢 Centro de costo:', itemCentroCosto);
               
               const itemLaborValor = (d.idlabor || d.labor || '').toString();
@@ -1922,9 +1982,12 @@ export class AprobacionesAreaComponent implements OnInit {
             descripcion: d.descripcion || d.descripcionCommodity || d.descripcionItem || d.iddescripcion || '',
             cantidad: d.cantidad,
             unidadmedida: d.unidadmedida || 'UND',
-            cuentaGasto: this.subcommodities.find((sc) => sc.commodity === d.codigo)?.cuentaGasto ||
-                         this.commodities.find((c) => c.commodity === d.codigo)?.cuentaGasto ||
-                         '25241001',
+            cuentaGasto: this.aplicarDivCuenta(
+              this.subcommodities.find((sc) => sc.commodity === d.codigo)?.cuentaContableGasto ||
+              this.commodities.find((c) => c.commodity === d.codigo)?.cuentaContableGasto ||
+              detalleCeco?.ccontable,
+              detalleCeco?.div
+            ),
             centroCosto: detalleCeco?.costcenter || d.idcentrocosto || d.ceco || '',
             proyecto: proyectoEncontrado?.proyectoio || d.idproyecto || d.proyecto || '',
             labor: laborEncontrada?.idlabor || d.idlabor || d.labor || '',
@@ -1963,6 +2026,14 @@ export class AprobacionesAreaComponent implements OnInit {
     } catch (error) {
       console.error('❌ Error en registrarRequerimientoCommodityLocal:', error);
     }
+  }
+
+  // Reemplaza la X del 2º carácter de la cuenta (ej. 9X331101) por el div del CECO
+  aplicarDivCuenta(cuenta: any, div: any): any {
+    if (typeof cuenta === 'string' && cuenta[1]?.toUpperCase() === 'X') {
+      return cuenta[0] + (div ?? '') + cuenta.substring(2);
+    }
+    return cuenta;
   }
 
   // Método auxiliar para obtener código de CECO a partir del nombre
