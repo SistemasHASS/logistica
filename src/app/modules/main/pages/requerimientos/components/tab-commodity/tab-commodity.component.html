@@ -55,7 +55,7 @@
                     <th style="min-width: 100px" pSortableColumn="item">Fecha</th>
                     <th style="min-width: 100px" pSortableColumn="descripcionLocal">Servicio</th>
                     <!-- <th style="min-width: 100px" pSortableColumn="unidadCodigo">Fundo</th> -->
-                    <th style="min-width: 120px" pSortableColumn="descripcionLocal">Almacen</th>
+                    <th *ngIf="itemTipoSeleccionado !== 'SERVICIO'" style="min-width: 120px" pSortableColumn="descripcionLocal">Almacen</th>
                     <th style="min-width: 120px" pSortableColumn="idarea">Área</th>
                     <th style="min-width: 120px" pSortableColumn="descripcionLocal">Glosa</th>
                     <th style="min-width: 100px" pSortableColumn="descripcionLocal">Estado</th>
@@ -72,10 +72,10 @@
                       </button>
                     </td>
                     <td><span class="p-column-title">#Req</span>{{ c.idrequerimiento | numeroRequerimiento : c.RequisicionNumero }}</td>
-                    <td>{{ c.fecha | date: "dd/MM/yyyy HH:mm:ss" }}</td>
-                    <td>{{ obtenerDescripcionServicio(c.servicio) }}</td>
+                    <td>{{ c.fecha | date: itemTipoSeleccionado === 'SERVICIO' ? "dd/MM/yyyy" : "dd/MM/yyyy HH:mm:ss" }}</td>
+                    <td>{{ itemTipoSeleccionado === 'SERVICIO' ? descripcionServicioConGlosa(c) : obtenerDescripcionServicio(c.servicio) }}</td>
                     <!-- <td>{{ getDescripcionFundo(c.idfundo) }}</td> -->
-                    <td>{{ c.idalmacen }}</td>
+                    <td *ngIf="itemTipoSeleccionado !== 'SERVICIO'">{{ c.idalmacen }}</td>
                     <td>{{ getDescripcionArea(c.idarea) }}</td>
                     <td>{{ c.glosa }}</td>
                     <td>
@@ -93,7 +93,7 @@
 
                 <ng-template pTemplate="emptymessage">
                   <tr>
-                    <td colspan="8" class="text-center">No hay registros</td>
+                    <td [attr.colspan]="itemTipoSeleccionado === 'SERVICIO' ? 9 : 10" class="text-center">No hay registros</td>
                   </tr>
                 </ng-template>
               </p-table>
@@ -114,9 +114,9 @@
                         &nbsp;&nbsp;&nbsp;<strong>Usuario: {{ commodity.nrodocumento }}</strong>
                       </p>
                       <p class="item-card"><strong>#Requerimiento: </strong>{{ commodity.idrequerimiento | numeroRequerimiento : commodity.RequisicionNumero }}</p>
-                      <p class="item-card"><strong>Servicio: </strong>{{ obtenerDescripcionServicio(commodity.servicio) }}</p>
+                      <p class="item-card"><strong>Servicio: </strong>{{ itemTipoSeleccionado === 'SERVICIO' ? descripcionServicioConGlosa(commodity) : obtenerDescripcionServicio(commodity.servicio) }}</p>
                       <p class="item-card">
-                        <strong>Fecha: </strong>{{ formatoFecha(commodity.fecha) }} - <strong>Almacén:</strong> {{ commodity.almacen }}
+                        <strong>Fecha: </strong>{{ formatoFecha(commodity.fecha) }}<span *ngIf="itemTipoSeleccionado !== 'SERVICIO'"> - <strong>Almacén:</strong> {{ commodity.almacen }}</span>
                       </p>
                       <p class="item-card"><strong>Glosa: </strong>{{ commodity.glosa }}</p>
                     </div>

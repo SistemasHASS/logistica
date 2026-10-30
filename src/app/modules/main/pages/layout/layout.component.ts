@@ -586,7 +586,9 @@ export class LayoutComponent {
       
       'consolidacion-compra': 'Flujo de Compras',
 
-      'conformidad-servicios': 'Conformidad de Servicios'
+      'conformidad-servicios': 'Conformidad de Servicios',
+
+      'aprobaciones-gerencia': 'Aprobación Gerencia',
     };
 
     this.currentPath = pathMap[currentUrl[currentUrl.length - 1]] || '';

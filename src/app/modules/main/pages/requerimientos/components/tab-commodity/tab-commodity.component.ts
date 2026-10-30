@@ -143,6 +143,15 @@ export class TabCommodityComponent implements OnInit {
   getDescripcionFundo(id: any): string { return this.maestrasSvc.getDescripcionFundo(id); }
   getDescripcionArea(id: any): string { return this.maestrasSvc.getDescripcionArea(id); }
   obtenerDescripcionServicio(s: any): string { return this.maestrasSvc.obtenerDescripcionServicio(typeof s === 'string' ? s : s?.servicio ?? s); }
+  descripcionServicioConGlosa(c: any): string {
+    const detalles = c?.detalle?.length ? c.detalle
+      : c?.detalles?.length ? c.detalles
+      : (c?.detalleCommodity || []);
+    const partes = (detalles || [])
+      .map((d: any) => [d?.descripcion || d?.iddescripcion, d?.glosa].filter((x: any) => !!x?.trim?.()).join(' - '))
+      .filter((t: string) => !!t);
+    return partes.length ? partes.join(' | ') : this.obtenerDescripcionServicio(c?.servicio);
+  }
   obtenerIdReq(id: any): string { return this.maestrasSvc.obtenerIdReq(id); }
   formatoFecha(fecha: any): string { return this.maestrasSvc.formatoFecha(fecha); }
 

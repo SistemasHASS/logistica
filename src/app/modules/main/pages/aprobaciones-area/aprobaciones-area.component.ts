@@ -1581,21 +1581,21 @@ export class AprobacionesAreaComponent implements OnInit {
                 const subcommodity = this.subcommodities.find(
                   (sc) => sc.commodity === d.codigo
                 );
-                if (subcommodity && subcommodity.cuentaGasto) {
-                  itemCuentaContable = subcommodity.cuentaGasto;
+                if (subcommodity && subcommodity.cuentaContableGasto) {
+                  itemCuentaContable = subcommodity.cuentaContableGasto;
                 } else {
                   // Si no se encuentra, buscar en commodities
                   const commodity = this.commodities.find(
                     (c) => c.commodity === d.codigo
                   );
-                  itemCuentaContable = commodity?.cuentaGasto || cuentacontable || '25241001';
+                  itemCuentaContable = commodity?.cuentaContableGasto || cuentacontable;
                 }
               } else {
                 // Para items, buscar en itemsFiltered
                 const itemEncontrado = this.itemsFiltered.find(
                   (i) => i.item === d.codigo
                 );
-                itemCuentaContable = itemEncontrado?.cuentaGasto || cuentacontable || '25241001';
+                itemCuentaContable = itemEncontrado?.cuentaGasto || cuentacontable;
                 
                 // Debug: mostrar si no se encontró el item
                 if (!itemEncontrado) {
