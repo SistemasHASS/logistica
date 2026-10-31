@@ -12,6 +12,7 @@ import { NotificationContainerComponent } from '@/app/shared/components/notifica
 import { TestNotificationsComponent } from '@/app/shared/services/test-notifications.component';
 import { NotificacionApiService } from '@/app/shared/services/notificacion-api.service';
 import { NotificationService } from '@/app/shared/services/notification.service';
+import { ItemService } from '@/app/modules/main/services/items.service';
 import { DebugNotificationsService } from '@/app/shared/debug-notifications';
 import { APP_VERSION, APP_INFO } from 'src/environments/version';
 import { environment } from 'src/environments/environment';
@@ -155,6 +156,7 @@ export class LayoutComponent {
     private syncService: SyncService,
     private notificacionApi: NotificacionApiService,
     private notificationService: NotificationService,
+    private itemService: ItemService,
     private debugNotifications: DebugNotificationsService,
     public layoutConfig: LayoutConfigService,
   ) {
@@ -219,6 +221,10 @@ export class LayoutComponent {
     });
     this.fechaHoy = this.getDate();
     this.usuario = await this.dexieService.showUsuario();
+
+    // Verificar en segundo plano si el maestro de items (listar-item) cambió;
+    // solo re-descarga si el fingerprint del servidor difiere del local
+    this.itemService.asegurarMaestroItemsActualizado();
 
     // Redirigir al dashboard del rol si estamos en la raíz /main
     if (this.router.url === '/main' || this.router.url === '/main/') {

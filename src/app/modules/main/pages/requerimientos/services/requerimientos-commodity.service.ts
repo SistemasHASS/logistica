@@ -93,10 +93,10 @@ export class RequerimientosCommodityService {
   }
 
   // Descripcion que viaja al detalle (y luego a CompromisoDetalle.Descripcion en SPRING):
-  // "glosa - subservicio", acotada a 500 chars por descripcionServicio VARCHAR(500)
+  // "subservicio - glosa", acotada a 500 chars por descripcionServicio VARCHAR(500)
   private descripcionDetalleSync(d: any): string {
     const glosa = (d.glosa || '').trim();
-    const texto = glosa ? `${glosa} - ${d.descripcion}` : d.descripcion;
+    const texto = glosa ? `${d.descripcion} - ${glosa}` : d.descripcion;
     return (texto || '').substring(0, 500);
   }
 

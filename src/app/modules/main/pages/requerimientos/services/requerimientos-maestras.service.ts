@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { UtilsService } from '@/app/shared/utils/utils.service';
+import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import {
   Usuario,
   Configuracion,
@@ -88,6 +90,7 @@ export class RequerimientosMaestrasService {
   constructor(
     private dexieService: DexieService,
     private utilsService: UtilsService,
+    private maestrasService: MaestrasService,
   ) {}
 
   // ── Usuario ────────────────────────────────────────────────────────────────
@@ -193,12 +196,39 @@ export class RequerimientosMaestrasService {
 
   async ListarItems() {
     this.items = await this.dexieService.showItemComoditys();
-    if (this.configuracion?.idalmacen) {
-      this.itemsFiltrados = this.items.filter(
-        (it) => it.tipoclasificacion === 'I' && it.almacen === this.configuracion.idalmacen,
+    // Si la tabla itemComoditys está vacía (p.ej. tras cerrar sesión),
+    // re-descargar el maestro desde get-items-cmmdty
+    if (!this.items?.length) {
+      try {
+        const resp: any = await firstValueFrom(
+          this.maestrasService.getItems([{ ruc: this.usuario?.ruc }]),
+        );
+        if (Array.isArray(resp) && resp.length) {
+          await this.dexieService.saveItemComoditys(resp);
+          this.items = await this.dexieService.showItemComoditys();
+          console.log('✅ itemComoditys sincronizado:', this.items.length, 'registros');
+        }
+      } catch (e) {
+        console.error('❌ Error al sincronizar item-commodity:', e);
+      }
+    }
+    const soloI = (this.items || []).filter((it) => it.tipoclasificacion === 'I');
+    // Base tolerante: si ninguna fila trae tipoclasificacion 'I', usar todo
+    const base = soloI.length ? soloI : this.items || [];
+    const almConf = (this.configuracion?.idalmacen || '').toString().trim();
+    if (almConf) {
+      const almAlt = almConf.toUpperCase().startsWith('H')
+        ? almConf.substring(1)
+        : 'H' + almConf.padStart(3, '0');
+      const porAlmacen = base.filter(
+        (it) => it.almacen === almConf || it.almacen === almAlt,
       );
+      // Si el filtro por almacén no devuelve nada (códigos distintos o items
+      // sin almacén asignado), mostrar todos los items para no dejar el
+      // catálogo vacío
+      this.itemsFiltrados = porAlmacen.length ? porAlmacen : base;
     } else {
-      this.itemsFiltrados = this.items.filter((it) => it.tipoclasificacion === 'I');
+      this.itemsFiltrados = base;
     }
   }
 

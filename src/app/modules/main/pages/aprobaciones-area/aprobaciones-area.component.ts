@@ -108,6 +108,12 @@ export class AprobacionesAreaComponent implements OnInit {
   detallesPendientesSeleccionados: Set<number> = new Set<number>();
   detallesPendientesAprobados: Set<number> = new Set<number>();
 
+  // Maestra de subservicios/commodities por código: permite reordenar
+  // "glosa - descripcion" -> "descripcion - glosa" en líneas de servicio
+  // guardadas con el orden antiguo en logistica_dreq.iddescripcion
+  private descripcionServicioPorCodigo = new Map<string, string>();
+  private maestraServiciosCargada = false;
+
   // Adjuntos
   adjuntosRequerimiento: any[] = [];
   selectedFile: File | null = null;
@@ -1037,15 +1043,19 @@ export class AprobacionesAreaComponent implements OnInit {
   // =============================================
 
   cargandoMaestras = false;
+  private maestrasSPRINGPromise: Promise<void> | null = null;
 
   // Precarga todas las maestras necesarias para la migración a SPRING,
   // en paralelo. Se llama al abrir el modal de detalle para que estén
   // listas antes de que el usuario apruebe, y otra vez dentro de
   // sincronizarRequerimientoSPRING como garantía.
+  // Si ya hay una carga en vuelo, devuelve esa misma promesa para que
+  // quien espere (await) realmente aguarde a que termine.
   async prepararMaestrasSPRING(): Promise<void> {
-    if (this.cargandoMaestras) return;
+    if (this.maestrasSPRINGPromise) return this.maestrasSPRINGPromise;
     this.cargandoMaestras = true;
-    try {
+    this.maestrasSPRINGPromise = (async () => {
+      try {
       const cargarCecos = async () => {
       if (this.cecos?.length) return;
       this.cecos = await this.dexieService.showCecos();
@@ -1160,9 +1170,12 @@ export class AprobacionesAreaComponent implements OnInit {
         commodities: this.commodities?.length || 0,
         turnos: this.turnos?.length || 0
       });
-    } finally {
-      this.cargandoMaestras = false;
-    }
+      } finally {
+        this.cargandoMaestras = false;
+        this.maestrasSPRINGPromise = null;
+      }
+    })();
+    await this.maestrasSPRINGPromise;
   }
 
   async sincronizarRequerimientoSPRING(req: any, silencioso: boolean = false) {
@@ -1315,6 +1328,13 @@ export class AprobacionesAreaComponent implements OnInit {
           `Requerimiento ${req.idrequerimiento || req.idRequerimiento} sin detalle para sincronizar`,
         );
       }
+
+      // Reordenar "descripcion - glosa" en líneas de servicio antes de enviar
+      // a SPRING (los registros antiguos quedaron como "glosa - descripcion")
+      await this.cargarMaestraServicios();
+      (requerimientoCompleto.detalles || []).forEach((d: any) =>
+        this.normalizarDetalleServicio(d),
+      );
 
       let origenapp = 'app_logistica';
 
@@ -2213,6 +2233,78 @@ export class AprobacionesAreaComponent implements OnInit {
   verDetalle(requerimiento: RequerimientoConAprobacion) {
     this.requerimientoDetalle = requerimiento;
     this.displayDetalleModal = true;
+    this.prepararMaestrasSPRING()
+      .then(() => this.cargarMaestraServicios())
+      .then(() => this.normalizarDescripcionesServicio(requerimiento));
+  }
+
+  /** Carga la maestra de subservicios/commodities indexada por código.
+   *  Si queda vacía (maestras aún no sincronizadas) permite reintentar. */
+  private async cargarMaestraServicios(): Promise<void> {
+    if (this.maestraServiciosCargada) return;
+    try {
+      const listas = [
+        this.subcommodities || [],
+        await this.dexieService.showMaestroSubCommodity(),
+        this.commodities || [],
+        await this.dexieService.comodities.toArray(),
+        await this.dexieService.maestroCommoditys.toArray(),
+      ];
+      for (const lista of listas) {
+        for (const s of lista || []) {
+          const cod = (s as any)?.commodity ?? (s as any)?.codigo;
+          const desc =
+            (s as any)?.descripcionLocal ??
+            (s as any)?.descripcion ??
+            (s as any)?.descripcionIngles;
+          const clave = cod != null ? String(cod).trim() : '';
+          if (clave && desc && !this.descripcionServicioPorCodigo.has(clave)) {
+            this.descripcionServicioPorCodigo.set(clave, desc);
+          }
+        }
+      }
+      this.maestraServiciosCargada = this.descripcionServicioPorCodigo.size > 0;
+    } catch (e) {
+      console.warn('No se pudo cargar maestra de servicios:', e);
+    }
+  }
+
+  /**
+   * Devuelve el texto de una línea de servicio como "descripcion - glosa".
+   * Si el texto almacenado está en el orden antiguo "glosa - descripcion"
+   * (termina con " - descripcionServicio"), lo reordena.
+   */
+  private ordenarTextoServicio(texto: string, descServicio: string): string {
+    const sep = ' - ';
+    const desc = (descServicio || '').trim();
+    if (!texto || !desc) return texto;
+    if (texto === desc || texto.startsWith(desc + sep)) return texto;
+    for (const sufijo of [sep + descServicio, sep + desc]) {
+      if (sufijo.length > sep.length && texto.endsWith(sufijo)) {
+        const glosa = texto.substring(0, texto.length - sufijo.length).trim();
+        return glosa ? `${desc}${sep}${glosa}` : desc;
+      }
+    }
+    return texto;
+  }
+
+  /** Reordena los campos de descripción de una línea de servicio si aplica. */
+  private normalizarDetalleServicio(d: any): void {
+    const desc = this.descripcionServicioPorCodigo.get(
+      String(d?.codigo ?? '').trim(),
+    );
+    if (!desc) return;
+    ['descripcionItem', 'descripcion', 'iddescripcion'].forEach((k) => {
+      if (typeof d[k] === 'string' && d[k]) {
+        d[k] = this.ordenarTextoServicio(d[k], desc);
+      }
+    });
+  }
+
+  /** Aplica el orden "descripcion - glosa" a todas las líneas del requerimiento. */
+  private normalizarDescripcionesServicio(req: any): void {
+    const dets = req?.items || req?.detalles || req?.detalle || [];
+    dets.forEach((d: any) => this.normalizarDetalleServicio(d));
   }
 
   // =============================================
@@ -2271,7 +2363,7 @@ export class AprobacionesAreaComponent implements OnInit {
     this.displayDetallePendientesModal = true;
 
     // Precargar maestras para migración SPRING en segundo plano
-    this.prepararMaestrasSPRING();
+    const maestrasPromise = this.prepararMaestrasSPRING();
 
     // Cargar los items completos del endpoint con detalle
     try {
@@ -2333,6 +2425,16 @@ export class AprobacionesAreaComponent implements OnInit {
     } finally {
       this.loadingDetallePendientes = false;
     }
+
+    // Reordenar "descripcion - glosa" en líneas de servicio una vez que
+    // las maestras están listas (los datos antiguos quedaron al revés)
+    try {
+      await maestrasPromise;
+    } catch {
+      /* si fallan las maestras se muestra el detalle igual */
+    }
+    await this.cargarMaestraServicios();
+    this.normalizarDescripcionesServicio(this.requerimientoDetallePendientes);
 
     // Detectar si es servicio y abrir el tab correspondiente
     const clas = (

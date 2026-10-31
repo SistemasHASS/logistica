@@ -1330,7 +1330,8 @@ export class DexieService extends Dexie {
     await this.clearRequerimientoCommodity();
     await this.clearRequerimientoActivoFijo();
     await this.clearRequerimientoActivoFijoMenor();
-    await this.clearMaestroItem();
+    // maestroItems (listar-item) se conserva entre sesiones: solo se
+    // re-descarga cuando la versión del servidor cambia (ver ItemService).
     await this.clearMaestroCommodity();
     console.log(
       'Todas las tablas de configuracion han sido limpiadas en indexedDB.',
