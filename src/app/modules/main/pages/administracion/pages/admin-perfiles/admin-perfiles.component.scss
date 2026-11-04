@@ -285,3 +285,65 @@
     }
   }
 }
+
+/* ===========================
+   ROLES / USUARIOS DEL PERFIL
+=========================== */
+.modal-lg { width: 560px; }
+
+.perfil-codigo { font-size: 11px; color: #9ca3af; font-family: monospace; }
+.perfil-desc { font-size: 12px; color: #6b7280; }
+
+.badge-rol {
+  display: inline-block;
+  background: #e8f0fe; color: #1a73e8;
+  font-size: 11px; font-weight: 700;
+  padding: 2px 7px; border-radius: 4px;
+  font-family: monospace; margin: 1px 2px;
+}
+
+.roles-grid {
+  max-height: 180px; overflow-y: auto;
+  border: 1px solid #e5e7eb; border-radius: 6px;
+  padding: 6px; margin-top: 6px;
+}
+
+.rol-check {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 8px; border-radius: 5px; cursor: pointer;
+  margin: 0 !important; font-weight: 400 !important;
+
+  &:hover { background: #f3f4f6; }
+  input { width: auto !important; margin: 0 !important; }
+  .rol-desc { font-size: 12px; color: #6b7280; }
+}
+
+.asignar-usuario {
+  display: flex; gap: 8px; margin-top: 6px;
+
+  input { flex: 1; margin: 0 !important; }
+  .btn-sm { padding: 6px 12px; font-size: 13px; white-space: nowrap; }
+}
+
+.usuarios-lista {
+  margin-top: 8px; border: 1px solid #e5e7eb;
+  border-radius: 6px; max-height: 140px; overflow-y: auto;
+}
+
+.usuario-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 10px; font-size: 13px;
+  border-bottom: 1px solid #f1f5f9;
+
+  &:last-child { border-bottom: none; }
+  small { color: #9ca3af; }
+}
+
+.error-msg {
+  background: #fef2f2; color: #dc2626;
+  border: 1px solid #fecaca; border-radius: 6px;
+  padding: 8px 12px; font-size: 13px; margin-bottom: 10px;
+}
+
+.loading-state { text-align: center; padding: 40px; color: #888; }
+.empty { text-align: center; color: #9ca3af; padding: 12px; font-size: 13px; }

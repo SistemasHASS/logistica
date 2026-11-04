@@ -6,6 +6,7 @@ import { TableModule } from 'primeng/table';
 import { debounceTime, distinctUntilChanged, Subject, switchMap, of } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { AdminEmpresasService, Empresa } from '../../services/admin-empresas.service';
+import { AdminPerfilesService } from '../../services/admin-perfiles.service';
 
 export interface UsuarioLogistica {
   idUsuario: number;
@@ -41,6 +42,7 @@ export class AdminUsuariosComponent implements OnInit {
   private fb = inject(FormBuilder);
   private cdr = inject(ChangeDetectorRef);
   private empresasService = inject(AdminEmpresasService);
+  private perfilesService = inject(AdminPerfilesService);
   private readonly apiBase = `${environment.baseUrl}/api/logistica/admin-logistica`;
 
   usuarios = signal<UsuarioLogistica[]>([]);
@@ -65,6 +67,18 @@ export class AdminUsuariosComponent implements OnInit {
   erpSeleccionado = signal<ErpUsuario | null>(null);
   private erpSearch$ = new Subject<string>();
 
+  // Perfiles del usuario
+  showPerfilesModal = signal(false);
+  perfilesCatalogo = signal<any[]>([]);
+  perfilesAsignados = signal<Set<number>>(new Set());
+  usuarioPerfilSel = signal<UsuarioLogistica | null>(null);
+  procesandoPerfil = signal(false);
+
+  adminUser = JSON.parse(localStorage.getItem('ADMIN_USER') || '{}');
+  private get actor(): string {
+    return this.adminUser?.documentoidentidad || this.adminUser?.usuario || 'ADMIN';
+  }
+
   form: FormGroup = this.fb.group({
     idUsuario:          [null],
     documentoidentidad: ['', Validators.required],
@@ -78,6 +92,7 @@ export class AdminUsuariosComponent implements OnInit {
   ngOnInit(): void {
     this.cargarUsuarios();
     this.cargarEmpresas();
+    this.cargarPerfiles();
     this.erpSearch$.pipe(
       debounceTime(350),
       distinctUntilChanged(),
@@ -123,6 +138,78 @@ export class AdminUsuariosComponent implements OnInit {
   nombreEmpresa(ruc: string | null): string {
     if (!ruc) return '—';
     return this.empresasPorRuc().get(ruc) ?? ruc;
+  }
+
+  /* ============ PERFILES DEL USUARIO ============ */
+
+  cargarPerfiles(): void {
+    this.perfilesService.listarPerfiles({}).subscribe({
+      next: (res: any) => {
+        const data = Array.isArray(res) ? res : (res?.resultado ? JSON.parse(res.resultado) : []);
+        this.perfilesCatalogo.set((data || []).filter((p: any) => p.activo));
+        this.cdr.markForCheck();
+      },
+      error: () => {}
+    });
+  }
+
+  abrirPerfiles(u: UsuarioLogistica): void {
+    this.usuarioPerfilSel.set(u);
+    this.perfilesAsignados.set(new Set());
+    this.errorMsg.set(null);
+    this.showPerfilesModal.set(true);
+
+    this.perfilesService.listarPerfilesUsuario({
+      ruc: u.ruc, nrodocumento: u.documentoidentidad
+    }).subscribe({
+      next: (res: any) => {
+        const data = Array.isArray(res) ? res : (res?.resultado ? JSON.parse(res.resultado) : []);
+        this.perfilesAsignados.set(new Set(
+          (data || []).filter((p: any) => p.activo).map((p: any) => p.idperfil)
+        ));
+        this.cdr.markForCheck();
+      },
+      error: () => {}
+    });
+  }
+
+  cerrarPerfiles(): void {
+    this.showPerfilesModal.set(false);
+    this.usuarioPerfilSel.set(null);
+  }
+
+  tienePerfil(idperfil: number): boolean {
+    return this.perfilesAsignados().has(idperfil);
+  }
+
+  async togglePerfilUsuario(p: any, checked: boolean): Promise<void> {
+    const u = this.usuarioPerfilSel();
+    if (!u || this.procesandoPerfil()) return;
+    this.procesandoPerfil.set(true);
+    try {
+      const r = checked
+        ? await this.perfilesService.asignarPerfilUsuario({
+            ruc: u.ruc, nrodocumento: u.documentoidentidad,
+            idperfil: p.idperfil, usuarioAsigna: this.actor
+          })
+        : await this.perfilesService.quitarPerfilUsuario({
+            ruc: u.ruc, nrodocumento: u.documentoidentidad,
+            idperfil: p.idperfil, usuarioModifica: this.actor
+          });
+
+      if (r?.exito === false) {
+        this.errorMsg.set(r.error || 'Error al actualizar perfil');
+      } else {
+        const s = new Set(this.perfilesAsignados());
+        checked ? s.add(p.idperfil) : s.delete(p.idperfil);
+        this.perfilesAsignados.set(s);
+      }
+    } catch {
+      this.errorMsg.set('Error al actualizar perfil');
+    } finally {
+      this.procesandoPerfil.set(false);
+      this.cdr.markForCheck();
+    }
   }
 
   onBuscarErp(event: Event): void {

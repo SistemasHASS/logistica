@@ -12,6 +12,7 @@
   <div class="table-wrapper">
     <p-table
       [value]="flujos"
+      [loading]="loading"
       [paginator]="true"
       [rows]="10"
       [showCurrentPageReport]="true"
@@ -25,8 +26,10 @@
           <th style="width: 60px">#</th>
           <th>Flujo</th>
           <th>Descripción</th>
-          <th>Niveles</th>
+          <th>Tipo</th>
           <th>Estado</th>
+          <th>Fecha Creación</th>
+          <th>Usuario Creación</th>
           <th style="width: 120px">Acciones</th>
         </tr>
       </ng-template>
@@ -36,15 +39,20 @@
           <td>{{ i + 1 }}</td>
           <td>{{ flujo.nombre }}</td>
           <td>{{ flujo.descripcion }}</td>
-          <td>{{ flujo.niveles }}</td>
+          <td>{{ tipoTexto(flujo.tipo) }}</td>
           <td>
-            <span [class.activo]="flujo.estado === 'ACTIVO'" [class.inactivo]="flujo.estado === 'INACTIVO'">
-              {{ flujo.estado }}
+            <span [class.activo]="estadoTexto(flujo) === 'ACTIVO'" [class.inactivo]="estadoTexto(flujo) !== 'ACTIVO'">
+              {{ estadoTexto(flujo) }}
             </span>
           </td>
+          <td>{{ flujo.fecha_creacion | date:'dd/MM/yyyy' }}</td>
+          <td>{{ flujo.usuario_creacion }}</td>
           <td class="actions">
             <button class="btn btn-sm btn-warning me-2" (click)="openEdit(flujo)">
               <i class="icon-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" (click)="eliminar(flujo)">
+              <i class="icon-trash"></i>
             </button>
           </td>
         </tr>
@@ -52,7 +60,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="6" class="empty">
+          <td colspan="8" class="empty">
             No hay flujos registrados
           </td>
         </tr>
@@ -73,31 +81,28 @@
     <div class="modal-body">
       <div class="form-group">
         <label>Nombre</label>
-        <input type="text" [(ngModel)]="form.nombre" />
+        <input type="text" [(ngModel)]="form.nombre" maxlength="100" />
       </div>
 
       <div class="form-group">
         <label>Descripción</label>
-        <textarea rows="3" [(ngModel)]="form.descripcion"></textarea>
+        <textarea rows="3" [(ngModel)]="form.descripcion" maxlength="500"></textarea>
       </div>
 
       <div class="form-group">
-        <label>Niveles de Aprobación</label>
-        <input type="number" [(ngModel)]="form.niveles" min="1" max="10" />
-      </div>
-
-      <div class="form-group">
-        <label>Estado</label>
-        <select [(ngModel)]="form.estado">
-          <option value="ACTIVO">Activo</option>
-          <option value="INACTIVO">Inactivo</option>
+        <label>Tipo</label>
+        <select [(ngModel)]="form.tipo">
+          <option value="" disabled>Seleccione un tipo</option>
+          <option *ngFor="let t of tiposFlujo" [value]="t.value">{{ t.label }}</option>
         </select>
       </div>
     </div>
 
     <div class="modal-footer">
-      <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
-      <button class="btn-primary" (click)="save()">Guardar</button>
+      <button class="btn-secondary" (click)="closeModal()" [disabled]="guardando">Cancelar</button>
+      <button class="btn-primary" (click)="save()" [disabled]="guardando">
+        {{ guardando ? 'Guardando...' : 'Guardar' }}
+      </button>
     </div>
   </div>
 </div>

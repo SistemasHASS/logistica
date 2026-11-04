@@ -72,6 +72,9 @@
             </span>
           </td>
           <td class="actions">
+            <button class="btn btn-sm btn-info" title="Perfiles" (click)="abrirPerfiles(u)">
+              <i class="bx bx-id-card"></i>
+            </button>
             <button class="btn btn-sm btn-warning" title="Editar" (click)="abrirEditar(u)">
               <i class="bx bx-edit"></i>
             </button>
@@ -210,6 +213,50 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+}
+
+<!-- MODAL PERFILES -->
+@if (showPerfilesModal()) {
+  <div class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal show">
+      <div class="modal-header">
+        <h3>Perfiles de {{ usuarioPerfilSel()?.nombreCompleto }}</h3>
+        <button class="close" (click)="cerrarPerfiles()" aria-label="Cerrar">×</button>
+      </div>
+
+      <div class="modal-body">
+        @if (errorMsg()) {
+          <div class="alert-error mb-2">{{ errorMsg() }}</div>
+        }
+        <p class="hint">Los roles del perfil se suman al rol directo del usuario al iniciar sesión.</p>
+        <div class="perfiles-lista">
+          @for (p of perfilesCatalogo(); track p.idperfil) {
+            <label class="perfil-item">
+              <input type="checkbox"
+                     [checked]="tienePerfil(p.idperfil)"
+                     [disabled]="procesandoPerfil()"
+                     (change)="togglePerfilUsuario(p, $event.target.checked)">
+              <span>
+                <strong>{{ p.nombre }}</strong>
+                <small>{{ p.descripcion }}</small>
+                <small class="perfil-roles">
+                  @for (r of p.roles; track r.idrol) {
+                    <code>{{ r.idrol }}</code>
+                  }
+                </small>
+              </span>
+            </label>
+          } @empty {
+            <div class="empty">No hay perfiles activos</div>
+          }
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="cerrarPerfiles()">Cerrar</button>
+      </div>
     </div>
   </div>
 }

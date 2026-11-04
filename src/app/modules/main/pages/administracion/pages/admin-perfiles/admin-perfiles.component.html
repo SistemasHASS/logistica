@@ -8,89 +8,146 @@
     </button>
   </div>
 
-  <!-- TABLA -->
-  <div class="table-wrapper">
-    <p-table
-      [value]="perfiles"
-      [paginator]="true"
-      [rows]="10"
-      [showCurrentPageReport]="true"
-      [rowsPerPageOptions]="[10, 25, 50]"
-      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
-      styleClass="p-datatable-sm"
-      responsiveLayout="scroll">
+  @if (cargando()) {
+    <div class="loading-state">Cargando perfiles...</div>
+  } @else {
+    <!-- TABLA -->
+    <div class="table-wrapper">
+      <p-table
+        [value]="perfiles()"
+        [paginator]="true"
+        [rows]="10"
+        [showCurrentPageReport]="true"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+        styleClass="p-datatable-sm"
+        responsiveLayout="scroll">
 
-      <ng-template pTemplate="header">
-        <tr>
-          <th style="width: 60px">#</th>
-          <th>Perfil</th>
-          <th>Descripción</th>
-          <th>Estado</th>
-          <th style="width: 120px">Acciones</th>
-        </tr>
-      </ng-template>
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 60px">#</th>
+            <th>Perfil</th>
+            <th>Roles</th>
+            <th style="width: 90px">Usuarios</th>
+            <th>Estado</th>
+            <th style="width: 140px">Acciones</th>
+          </tr>
+        </ng-template>
 
-      <ng-template pTemplate="body" let-perfil let-i="rowIndex">
-        <tr>
-          <td>{{ i + 1 }}</td>
-          <td>{{ perfil.nombre }}</td>
-          <td>{{ perfil.descripcion }}</td>
-          <td>
-            <span [class.activo]="perfil.estado === 'ACTIVO'" [class.inactivo]="perfil.estado === 'INACTIVO'">
-              {{ perfil.estado }}
-            </span>
-          </td>
-          <td class="actions">
-            <button class="btn btn-sm btn-warning me-2" (click)="openEdit(perfil)">
-              <i class="icon-pencil"></i>
-            </button>
-          </td>
-        </tr>
-      </ng-template>
+        <ng-template pTemplate="body" let-perfil let-i="rowIndex">
+          <tr>
+            <td>{{ i + 1 }}</td>
+            <td>
+              <strong>{{ perfil.nombre }}</strong>
+              <div class="perfil-codigo">{{ perfil.codigo }}</div>
+              <div class="perfil-desc">{{ perfil.descripcion }}</div>
+            </td>
+            <td>
+              @for (r of perfil.roles; track r.idrol) {
+                <span class="badge-rol">{{ r.idrol }}</span>
+              }
+            </td>
+            <td>{{ perfil.totalUsuarios ?? 0 }}</td>
+            <td>
+              <span [class.activo]="perfil.activo" [class.inactivo]="!perfil.activo">
+                {{ perfil.activo ? 'ACTIVO' : 'INACTIVO' }}
+              </span>
+            </td>
+            <td class="actions">
+              <button class="btn btn-sm btn-warning me-2" (click)="openEdit(perfil)" title="Editar">
+                <i class="icon-pencil"></i>
+              </button>
+              @if (perfil.activo) {
+                <button class="btn btn-sm btn-danger" (click)="eliminar(perfil)" title="Eliminar">
+                  <i class="icon-trash"></i>
+                </button>
+              }
+            </td>
+          </tr>
+        </ng-template>
 
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="5" class="empty">
-            No hay perfiles registrados
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </div>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="empty">
+              No hay perfiles registrados
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  }
 
 </div>
 
 <!-- MODAL -->
 <div class="modal-backdrop" *ngIf="showModal">
-  <div class="modal" [class.show]="showModal">
+  <div class="modal modal-lg" [class.show]="showModal">
     <div class="modal-header">
       <h3>{{ isEdit ? 'Editar Perfil' : 'Nuevo Perfil' }}</h3>
       <button class="close" (click)="closeModal()">×</button>
     </div>
 
     <div class="modal-body">
+      @if (errorMsg()) {
+        <div class="error-msg">{{ errorMsg() }}</div>
+      }
+
       <div class="form-group">
-        <label>Nombre</label>
+        <label>Nombre *</label>
         <input type="text" [(ngModel)]="form.nombre" />
       </div>
 
       <div class="form-group">
         <label>Descripción</label>
-        <textarea rows="3" [(ngModel)]="form.descripcion"></textarea>
+        <textarea rows="2" [(ngModel)]="form.descripcion"></textarea>
       </div>
 
       <div class="form-group">
-        <label>Estado</label>
-        <select [(ngModel)]="form.estado">
-          <option value="ACTIVO">Activo</option>
-          <option value="INACTIVO">Inactivo</option>
-        </select>
+        <label>Roles del perfil</label>
+        <div class="roles-grid">
+          @for (rol of rolesCatalogo(); track rol.idrol) {
+            <label class="rol-check" [title]="rol.descripcion">
+              <input type="checkbox"
+                     [checked]="hasRol(rol.idrol)"
+                     (change)="toggleRol(rol.idrol, $event.target.checked)">
+              <span class="badge-rol">{{ rol.idrol }}</span>
+              <span class="rol-desc">{{ rol.descripcion }}</span>
+            </label>
+          }
+        </div>
       </div>
+
+      @if (isEdit) {
+        <div class="form-group">
+          <label>Usuarios con este perfil</label>
+
+          <div class="asignar-usuario">
+            <input type="text" placeholder="RUC" [(ngModel)]="nuevoUsuario.ruc" />
+            <input type="text" placeholder="Nro. documento" [(ngModel)]="nuevoUsuario.nrodocumento" />
+            <button class="btn-primary btn-sm" (click)="asignarUsuario()" [disabled]="asignando()">
+              Asignar
+            </button>
+          </div>
+
+          <div class="usuarios-lista">
+            @for (u of usuariosPerfil(); track u.usuario) {
+              <div class="usuario-item">
+                <span>{{ u.usuario }} <small>({{ u.nrodocumento }})</small></span>
+                <button class="btn-link" (click)="quitarUsuario(u)">quitar</button>
+              </div>
+            } @empty {
+              <div class="empty">Sin usuarios asignados</div>
+            }
+          </div>
+        </div>
+      }
     </div>
 
     <div class="modal-footer">
       <button class="btn-secondary" (click)="closeModal()">Cancelar</button>
-      <button class="btn-primary" (click)="save()">Guardar</button>
+      <button class="btn-primary" (click)="guardar()" [disabled]="guardando()">
+        {{ guardando() ? 'Guardando...' : 'Guardar' }}
+      </button>
     </div>
   </div>
 </div>

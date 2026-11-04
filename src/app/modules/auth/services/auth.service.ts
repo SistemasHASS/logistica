@@ -44,9 +44,10 @@ export class AuthService {
             aplicacion: this.aplicaciones,
           })
         );
-        return this.normalizarUsuarios(rolResp);
+        return this.aplicarRolesDePerfiles(this.normalizarUsuarios(rolResp));
       }
 
+      await this.aplicarRolesDePerfiles(this.normalizarUsuarios(response));
       return response;
     } catch (error: any) {
       throw new Error(error.error?.message || 'Error de autenticación');
@@ -66,6 +67,34 @@ export class AuthService {
       try { return JSON.parse(resp.id); } catch { return []; }
     }
     return [];
+  }
+
+  /**
+   * Suma los roles otorgados por perfiles (LOGISTICA_PerfilesUsuarios)
+   * al idrol que viene del ERP. Solo modifica idrol si el perfil agrega
+   * roles nuevos -> usuarios sin perfil quedan identicos.
+   */
+  private async aplicarRolesDePerfiles(usuarios: any[]): Promise<any[]> {
+    for (const u of usuarios) {
+      try {
+        const resp: any = await lastValueFrom(
+          this.http.post(`${this.baseUrl}/api/logistica/listar-roles-efectivos`, {
+            ruc: u.ruc,
+            usuario: u.usuario,
+            nrodocumento: u.documentoidentidad,
+          })
+        );
+        const data = Array.isArray(resp) ? resp[0] : resp;
+        const efectivos: string[] = (data?.rolesEfectivos ?? []).map((r: any) => r.idrol);
+        const directos: string[] = (data?.rolesDirectos ?? []).map((r: any) => r.idrol);
+        if (efectivos.length > directos.length) {
+          u.idrol = efectivos.join(',');
+        }
+      } catch {
+        // sin perfiles o endpoint no disponible -> idrol intacto
+      }
+    }
+    return usuarios;
   }
   async isLoggedIn() {
     const user = await this.dexieService.showUsuario();
