@@ -20,6 +20,7 @@ export class AdminLogisticaLayoutComponent implements OnInit {
 
   user = this.authService.currentUser;
   sidebarCollapsed = signal(false);
+  sidebarOpen = signal(false);
   currentRoute = signal('dashboard');
   fechaHoy = '';
   isOnline = true;
@@ -42,12 +43,22 @@ export class AdminLogisticaLayoutComponent implements OnInit {
         const segments = url.split('/');
         const lastSegment = segments[segments.length - 1] || 'dashboard';
         this.currentRoute.set(lastSegment);
+        this.sidebarOpen.set(false);
       }
     });
   }
 
   toggleSidebar() {
     this.sidebarCollapsed.update(v => !v);
+  }
+
+  openSidebar() {
+    this.sidebarCollapsed.set(false);
+    this.sidebarOpen.set(true);
+  }
+
+  closeSidebar() {
+    this.sidebarOpen.set(false);
   }
 
   logout() {

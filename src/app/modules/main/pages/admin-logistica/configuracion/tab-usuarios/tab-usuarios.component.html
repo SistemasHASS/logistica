@@ -22,6 +22,7 @@
   <!-- Tabla -->
   <div class="card shadow-sm border-0">
     <div class="card-body p-0">
+      <div class="table-wrapper">
       <p-table
         [value]="usuarios"
         [loading]="loading"
@@ -31,6 +32,8 @@
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
         styleClass="p-datatable-sm"
+        [tableStyle]="{'min-width': '680px'}"
+        responsiveLayout="scroll"
       >
         <ng-template pTemplate="header">
           <tr>
@@ -80,6 +83,7 @@
           </tr>
         </ng-template>
       </p-table>
+      </div>
     </div>
   </div>
 

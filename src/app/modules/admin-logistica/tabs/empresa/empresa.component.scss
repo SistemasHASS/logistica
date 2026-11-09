@@ -131,3 +131,32 @@
     }
   }
 }
+
+// Responsive
+@media (max-width: 768px) {
+  .empresa-container {
+    .two-col {
+      flex-direction: column;
+    }
+
+    .col-lista {
+      flex: 1 1 auto;
+      width: 100%;
+
+      .empresa-list {
+        max-height: 220px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+    }
+
+    .col-form .form-header {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .logo-section {
+      flex-wrap: wrap;
+    }
+  }
+}

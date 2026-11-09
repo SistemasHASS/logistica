@@ -385,7 +385,7 @@
       <button
         class="btn btn-success"
         *ngIf="osSeleccionada() && !osSeleccionada()?.tieneConformidad"
-        (click)="cerrarDetalle(); abrirModalConformidad(osSeleccionada()!)">
+        (click)="darConformidadDesdeDetalle()">
         <i class="bx bx-check-circle"></i> Dar Conformidad
       </button>
     </div>
@@ -464,9 +464,9 @@
         <!-- Observaciones -->
         <div class="cs-form-group">
           <label class="cs-form-label"
-            [class.cs-form-label--required]="formConformidad().conformidad === 'NO_CONFORME'">
+            [class.cs-form-label--required]="formConformidad().conformidad !== 'CONFORME'">
             Observaciones
-            <span *ngIf="formConformidad().conformidad === 'NO_CONFORME'" class="text-danger"> (requerido)</span>
+            <span *ngIf="formConformidad().conformidad !== 'CONFORME'" class="text-danger"> (requerido)</span>
           </label>
           <textarea
             class="form-control"

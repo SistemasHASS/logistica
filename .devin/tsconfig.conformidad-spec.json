@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.spec.json",
+  "compilerOptions": { "outDir": "../out-tsc/conformidad-spec" },
+  "include": [
+    "../src/app/modules/main/pages/conformidad-servicios/conformidad-servicios.component.spec.ts",
+    "../src/app/modules/admin-logistica/tabs/conformidad-servicio/conformidad-servicio-pdf.service.spec.ts",
+    "../src/**/*.d.ts"
+  ]
+}

@@ -111,7 +111,9 @@ export class ConformidadServiciosComponent implements OnInit {
     if (!os) return '';
     const firma = this.firmaPreview(); // dependencia reactiva — se actualiza en cada trazo
     const html  = this.pdfSvc.buildHtml(
-      { ...os, firmaJefeArea: firma || undefined },
+      { ...os, estadoConformidad: this.formConformidad().conformidad,
+        observacionesConformidad: this.formConformidad().observaciones,
+        nombreConformidad: this.usuario()?.nombre ?? '', firmaJefeArea: firma || undefined },
       this.empresa() ?? undefined
     );
     return this.sanitizer.bypassSecurityTrustHtml(html);
@@ -143,10 +145,11 @@ export class ConformidadServiciosComponent implements OnInit {
           // Intentar cargar también la empresa (logo + razonSocial)
           this.ordenSvc.listarEmpresas().then(lista => {
             const emp = lista.find(e => e.ruc === u.ruc);
-            if (emp) this.empresa.set(emp);
-          });
+            this.empresa.set(emp ?? { ruc: u.ruc, razonSocial: '', logoBase64: '', direccion: '', telefono: '' });
+          }).catch(() => this.empresa.set({ ruc: u.ruc, razonSocial: '', logoBase64: '', direccion: '', telefono: '' }));
           this.cdr.markForCheck();
-        }
+        },
+        error: () => this.alert.showAlert('Atención', 'No se pudo cargar la plantilla de conformidad de la empresa', 'warning')
       });
     }
     await this.cargarDatos();
@@ -173,6 +176,8 @@ export class ConformidadServiciosComponent implements OnInit {
   private mapearItems(lista: any[]): OrdenServicioConformidad[] {
     return lista.map(os => ({
       ...os,
+      numeroOrden: os.numeroOrden ?? '', nombreProveedor: os.nombreProveedor ?? '',
+      descripcion: os.descripcion ?? '', tipoServicio: os.tipoServicio ?? '',
       items: this.parsearItems(os.items),
     }));
   }
@@ -202,7 +207,15 @@ export class ConformidadServiciosComponent implements OnInit {
   }
 
   // ── Modal conformidad ─────────────────────────────────────────────
+  darConformidadDesdeDetalle() {
+    const os = this.osSeleccionada();
+    if (!os) return;
+    this.cerrarDetalle();
+    this.abrirModalConformidad(os);
+  }
+
   abrirModalConformidad(os: OrdenServicioConformidad) {
+    if (!os || os.tieneConformidad || this.guardando()) return;
     this.osSeleccionada.set(os);
     this.formConformidad.set({ conformidad: 'CONFORME', calificacion: 5, observaciones: '' });
     this.firmaVacia.set(true);
@@ -215,6 +228,8 @@ export class ConformidadServiciosComponent implements OnInit {
   }
 
   cerrarModalConformidad() {
+    if (this.guardando()) return;
+    this.dibujando = false;
     this.modalConformidadAbierto.set(false);
     this.ctx = null;
     this.firmaPreview.set('');
@@ -331,11 +346,16 @@ export class ConformidadServiciosComponent implements OnInit {
 
   async guardarConformidad() {
     const os = this.osSeleccionada();
-    if (!os) return;
+    if (!os || this.guardando()) return;
 
     const form = this.formConformidad();
-    if (form.conformidad === 'NO_CONFORME' && !form.observaciones.trim()) {
-      this.alert.showAlert('Atención', 'Debe ingresar observaciones cuando el servicio no es conforme', 'warning');
+    if (!this.usuario()?.documentoidentidad || !this.tiposConformidad.some(t => t.value === form.conformidad)
+        || !Number.isInteger(form.calificacion) || form.calificacion < 1 || form.calificacion > 5) {
+      this.alert.showAlert('Atención', 'Verifique el usuario, resultado y calificación del servicio', 'warning');
+      return;
+    }
+    if (form.conformidad !== 'CONFORME' && !form.observaciones.trim()) {
+      this.alert.showAlert('Atención', 'Debe ingresar observaciones para el resultado seleccionado', 'warning');
       return;
     }
 
@@ -357,6 +377,7 @@ export class ConformidadServiciosComponent implements OnInit {
       firmaBase64,
     };
 
+    const ventana = window.open('', '_blank', 'width=900,height=750');
     this.guardando.set(true);
     try {
       const resp = await lastValueFrom(this.svc.registrarConformidad(payload));
@@ -368,6 +389,7 @@ export class ConformidadServiciosComponent implements OnInit {
           `La orden ${os.numeroOrden} fue marcada como ${this.etiquetaConformidad(form.conformidad)}`,
           'success'
         );
+        this.guardando.set(false);
         this.cerrarModalConformidad();
         await this.cargarDatos();
         // Generar e imprimir el documento de conformidad
@@ -378,11 +400,13 @@ export class ConformidadServiciosComponent implements OnInit {
           nombreConformidad: this.usuario()?.nombre ?? '',
           fechaConformidad: new Date().toLocaleDateString('es-PE'),
           firmaJefeArea: firmaBase64,
-        });
+        }, ventana);
       } else {
+        ventana?.close();
         this.alert.showAlert('Error', r?.mensaje ?? 'No se pudo registrar la conformidad', 'error');
       }
     } catch (e: any) {
+      ventana?.close();
       this.alert.showAlert('Error', e?.message ?? 'Error al registrar conformidad', 'error');
     } finally {
       this.guardando.set(false);
@@ -391,10 +415,23 @@ export class ConformidadServiciosComponent implements OnInit {
   }
 
   // ── PDF / Impresión ───────────────────────────────────────────────
-  imprimirConformidad(os: OrdenServicioConformidad): void {
-    const emp = this.empresa();
-    const html = this.pdfSvc.buildHtml(os, emp ?? undefined);
-    this.pdfSvc.imprimirConformidad(html, `Conformidad-${os.numeroOrden}`);
+  async imprimirConformidad(os: OrdenServicioConformidad, ventana?: Window | null): Promise<void> {
+    const win = ventana === undefined ? window.open('', '_blank', 'width=900,height=750') : ventana;
+    if (!win) {
+      this.alert.showAlert('Atención', 'Permita las ventanas emergentes para imprimir el documento', 'warning');
+      return;
+    }
+    try {
+      const detalle = await lastValueFrom(this.svc.obtenerDetalle(os.idOS, this.usuario()?.documentoidentidad ?? ''));
+      if (!detalle?.idOS) throw new Error('No se pudo recuperar el documento registrado');
+      const documento = { ...os, ...detalle, items: this.parsearItems(detalle.items),
+        firmaJefeArea: detalle.firmaJefeArea || detalle.firmaBase64 || os.firmaJefeArea };
+      const html = this.pdfSvc.buildHtml(documento, this.empresa() ?? undefined);
+      this.pdfSvc.imprimirConformidad(html, `Conformidad-${os.numeroOrden}`, win);
+    } catch {
+      win.close();
+      this.alert.showAlert('Error', 'No se pudo recuperar el documento para imprimir. Puede reintentarlo desde el historial.', 'error');
+    }
   }
 
   // ── Helpers ───────────────────────────────────────────────────────

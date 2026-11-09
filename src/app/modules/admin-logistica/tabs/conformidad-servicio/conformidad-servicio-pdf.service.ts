@@ -96,24 +96,27 @@ export class ConformidadServicioPdfService {
     const telefono    = emp?.telefono   || '';
 
     const numeroConformidad = os.numeroConformidad || os.idConformidad || os.idOS || '';
-    const firmaJefeArea     = os.firmaJefeArea     || '';
-    const proveedor         = os.nombreProveedor   || '';
-    const numeroOS          = os.numeroOrden        || os.numeroOS     || '';
-    const fechaOS           = os.fechaCreacion      || os.fechaOS      || '';
+    const firma = os.firmaJefeArea || os.firmaBase64 || '';
+    const firmaJefeArea = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(firma) ? firma : '';
+    const proveedor         = this.escapeHtml(os.nombreProveedor);
+    const numeroOS          = this.escapeHtml(os.numeroOrden || os.numeroOS);
+    const fechaOS           = this.escapeHtml(os.fechaOS || os.fechaCreacion || os.fechaRegistro);
     const totalOS           = this.fmt(os.totalOrden ?? os.montoTotal ?? 0);
     const fechaRecepcion    = os.fechaRecepcion     || os.fechaConformidad || this.hoy();
-    const descripcionOS     = os.descripcion        || os.glosaPrincipal  || '';
-    const comentarios       = os.comentarios        || '';
+    const descripcionOS     = this.escapeHtml(os.descripcion || os.glosaPrincipal);
+    const comentarios       = this.escapeHtml(os.observacionesConformidad ?? os.comentarios ?? '');
+    const resultado = this.escapeHtml(({ CONFORME: 'Conforme', NO_CONFORME: 'No Conforme',
+      CONFORME_CON_OBSERVACIONES: 'Conforme con Observaciones' } as Record<string, string>)[os.estadoConformidad] ?? '');
 
     const items: any[] = os.items || [];
     const filasHtml = items.map((it: any, idx: number) => `
       <tr>
         <td style="width:24px;text-align:center;padding:5px 6px;border-bottom:1px solid #ddd">${idx + 1}</td>
-        <td style="padding:5px 6px;border-bottom:1px solid #ddd">${it.descripcionServicio || it.descripcion || ''}</td>
+        <td style="padding:5px 6px;border-bottom:1px solid #ddd">${this.escapeHtml(it.descripcionServicio || it.descripcion)}</td>
       </tr>`).join('');
 
-    const montoServicio = parseFloat(os.valorServicio ?? os.subtotal ?? os.montoServicio ?? 0);
-    const igv           = parseFloat(os.igv ?? montoServicio * 0.18);
+    const montoServicio = parseFloat(os.montoNeto ?? os.valorServicio ?? os.subtotal ?? os.montoServicio ?? os.montoTotal ?? 0);
+    const igv           = parseFloat(os.montoIgv ?? os.igv ?? 0);
     const montoTotal    = parseFloat(os.totalOrden ?? os.montoTotal ?? (montoServicio + igv));
 
     const comentariosHtml = cfg.mostrarComentarios
@@ -205,6 +208,7 @@ export class ConformidadServicioPdfService {
     <span class="info-value">${descripcionOS}</span>
   </div>
 
+  ${resultado ? `<div style="margin-top:8px;font-weight:bold">Resultado: ${resultado}</div>` : ''}
   ${comentariosHtml}
 </div>
 
@@ -260,6 +264,7 @@ export class ConformidadServicioPdfService {
          </div>`
       : '<div style="min-height:48px"></div>'}
     <div class="firma-line">
+      <div style="font-weight:bold;font-size:11px">${this.escapeHtml(os.nombreConformidad)}</div>
       <div style="font-size:10px;margin-top:2px">${cfg.firmante2Label}</div>
     </div>
   </div>
@@ -291,13 +296,20 @@ ${piePaginaHtml}
     return this.buildHtml(os, empresa);
   }
 
-  imprimirConformidad(html: string, titulo: string): void {
-    const win = window.open('', '_blank', 'width=900,height=750');
+  imprimirConformidad(html: string, titulo: string, ventana?: Window): void {
+    const win = ventana ?? window.open('', '_blank', 'width=900,height=750');
     if (!win) return;
+    win.document.open();
+    win.onload = () => { win.focus(); win.print(); };
     win.document.write(html);
     win.document.close();
     win.document.title = titulo;
-    win.onload = () => { win.focus(); win.print(); };
+  }
+
+  private escapeHtml(value: unknown): string {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]!);
   }
 
   private fmt(val: any): string {

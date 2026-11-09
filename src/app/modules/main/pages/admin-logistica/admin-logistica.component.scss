@@ -9,3 +9,13 @@
     font-weight: 600;
   }
 }
+
+// Responsive: en móvil los tabs se desplazan horizontalmente
+@media (max-width: 768px) {
+  .custom-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+}

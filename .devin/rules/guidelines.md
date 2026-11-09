@@ -53,3 +53,9 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+## Verification
+
+- Compile without version/deployment side effects: `npx ng build --configuration development`.
+- Run the conformidad regression tests independently: `npx ng test --watch=false --browsers=ChromeHeadless --ts-config=.devin/tsconfig.conformidad-spec.json --include="**/conformidad-servicios.component.spec.ts" --include="**/conformidad-servicio-pdf.service.spec.ts"`.
+- The default test TypeScript configuration also compiles unrelated specs; `reporte_logistico.component.spec.ts` currently has a broken import of `./reportes_logistico.component`.

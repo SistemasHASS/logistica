@@ -195,6 +195,20 @@ export class OrdenesServicioComponent implements OnInit {
   // Tipo de orden (DIRECTA o DESDE_SOLICITUD)
   tipoOrden: 'DIRECTA' | 'DESDE_SOLICITUD' = 'DESDE_SOLICITUD';
 
+  // Tipo de servicio (OS directa): autocomplete de commodities de servicio (grupos SER).
+  // Se guarda el código commodity SPRING (ej. '0702') porque viaja a tipoServicioSpring
+  // y de ahí a Compromiso.TipodeServicio en SPRING.
+  tipoServicioSel: any = null;
+  tipoServicioSugeridos: any[] = [];
+
+  // Detalle de servicios (commodities) para OS directa
+  detalleCommoditySel: any = null;
+  subCommoditiesSugeridos: any[] = [];
+
+  // Cachés en memoria de los maestros (evitan depender solo de Dexie en cada búsqueda)
+  private subCommoditiesCache: any[] | null = null;
+  private serviciosCache: any[] | null = null;
+
   // ============================================
   // CARGA MASIVA DESDE EXCEL
   // ============================================
@@ -364,8 +378,18 @@ export class OrdenesServicioComponent implements OnInit {
       }
       this.laborData = labores || [];
 
-      // Cargar cecos: desde Dexie
+      // Cargar cecos: desde Dexie o API si está vacío
       let cecos = await this.dexieService.showCecos();
+      if (!cecos || cecos.length === 0) {
+        try {
+          const resp = await lastValueFrom(this.maestrasService.getCecos([{ aplicacion: 'LOGISTICA', esadmin: 0 }]));
+          const lista = this.extraerListaMaestro(resp);
+          if (lista.length) {
+            await this.dexieService.saveCecos(lista);
+            cecos = await this.dexieService.showCecos();
+          }
+        } catch { /* sin conexión, continuar */ }
+      }
       this.cecosData = cecos || [];
     } catch (error) {
       console.error('Error al cargar catálogos de distribución:', error);
@@ -445,24 +469,56 @@ export class OrdenesServicioComponent implements OnInit {
     }
   }
 
+  private extraerListaMaestro(resp: any): any[] {
+    if (Array.isArray(resp)) return resp;
+    if (typeof resp === 'string') {
+      try {
+        const parsed = JSON.parse(resp);
+        return this.extraerListaMaestro(parsed);
+      } catch {
+        return [];
+      }
+    }
+    const lista = resp?.resultado ?? resp?.data ?? resp?.items ?? [];
+    if (typeof lista === 'string') {
+      try { return this.extraerListaMaestro(JSON.parse(lista)); } catch { return []; }
+    }
+    return Array.isArray(lista) ? lista : [];
+  }
+
   private async asegurarMaestroCommoditys(): Promise<void> {
-    const count = await this.dexieService.countMaestroSubCommodity();
+    let count = 0;
+    try { count = await this.dexieService.countMaestroSubCommodity(); } catch { count = 0; }
     if (count === 0) {
       try {
-        const resp = await lastValueFrom(this.commodityService.getSubCommodity([]));
-        if (resp && resp.length) {
-          await this.dexieService.saveMaestroSubCommodities(resp);
+        const resp = await lastValueFrom(this.commodityService.getSubCommodity([{}]));
+        const lista = this.extraerListaMaestro(resp);
+        if (lista.length) {
+          await this.dexieService.saveMaestroSubCommodities(lista);
+          this.subCommoditiesCache = null;
+          this.serviciosCache = null;
+        } else {
+          console.warn('listar-subcommodity devolvió una lista vacía');
         }
-      } catch { /* sin conexión, continuar */ }
+      } catch (error) {
+        console.error('Error al sincronizar maestro de subcommodities:', error);
+      }
     }
-    const countCmm = await this.dexieService.countMaestroCommodity();
+    let countCmm = 0;
+    try { countCmm = await this.dexieService.countMaestroCommodity(); } catch { countCmm = 0; }
     if (countCmm === 0) {
       try {
-        const resp = await lastValueFrom(this.commodityService.getCommodity([]));
-        if (resp && resp.length) {
-          await this.dexieService.saveMaestroCommodities(resp);
+        const resp = await lastValueFrom(this.commodityService.getCommodity([{}]));
+        const lista = this.extraerListaMaestro(resp);
+        if (lista.length) {
+          await this.dexieService.saveMaestroCommodities(lista);
+          this.serviciosCache = null;
+        } else {
+          console.warn('listar-commodity devolvió una lista vacía');
         }
-      } catch { /* sin conexión, continuar */ }
+      } catch (error) {
+        console.error('Error al sincronizar maestro de commodities:', error);
+      }
     }
   }
 
@@ -626,12 +682,19 @@ export class OrdenesServicioComponent implements OnInit {
       estado: 'GENERADA',
       usuarioGenera: this.usuario.documentoidentidad || '',
       porcentajeCompletado: 0,
-      hitos: []
+      hitos: [],
+      detalle: []
     };
     this.cotizacionesDisponibles = [];
     this.solicitudesAprobadas = [];
+    this.detalleCommoditySel = null;
+    this.subCommoditiesSugeridos = [];
+    this.tipoServicioSel = null;
+    this.tipoServicioSugeridos = [];
     this.mostrarFormulario = true;
     this.distribucionContable = [];
+    // Precargar maestros de commodities para que el buscador responda rápido
+    this.asegurarMaestroCommoditys().then(() => this.cdr.markForCheck());
   }
 
   async seleccionarSolicitud(solicitudId: number) {
@@ -751,6 +814,198 @@ export class OrdenesServicioComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
+  // Carga (y cachea) los subcommodities desde Dexie/API
+  private async obtenerSubCommodities(): Promise<any[]> {
+    if (this.subCommoditiesCache) return this.subCommoditiesCache;
+    await this.asegurarMaestroCommoditys();
+    try {
+      this.subCommoditiesCache = await this.dexieService.maestroSubCommoditys.toArray();
+    } catch {
+      this.subCommoditiesCache = [];
+    }
+    return this.subCommoditiesCache;
+  }
+
+  // Subcommodities pertenecientes a grupos de servicios (clasificacion = 'SER' en maestro commodity).
+  // Son los códigos commodity válidos para SPRING (ej. '0702').
+  private async obtenerServicios(): Promise<any[]> {
+    if (this.serviciosCache) return this.serviciosCache;
+    await this.asegurarMaestroCommoditys();
+    try {
+      const commodities = await this.dexieService.maestroCommoditys.toArray();
+      const serGroups = new Set(
+        (commodities || [])
+          .filter((c: any) => String(c.clasificacion ?? '').toUpperCase() === 'SER')
+          .map((c: any) => String(c.commodity01 ?? '').trim())
+      );
+      const subs = await this.obtenerSubCommodities();
+      this.serviciosCache = (subs || []).filter((s: any) =>
+        serGroups.has(String(s.commodity01 ?? '').trim())
+      );
+    } catch {
+      this.serviciosCache = [];
+    }
+    return this.serviciosCache;
+  }
+
+  private coincideBusqueda(s: any, q: string): boolean {
+    return String(s.commodity ?? '').toLowerCase().includes(q) ||
+      String(s.commodity01 ?? '').toLowerCase().includes(q) ||
+      String(s.commodity02 ?? '').toLowerCase().includes(q) ||
+      String(s.descripcionLocal ?? '').toLowerCase().includes(q) ||
+      String(s.descripcionIngles ?? '').toLowerCase().includes(q);
+  }
+
+  // Etiqueta mostrada en el autocomplete de servicios: "0702 — DESCRIPCION"
+  etiquetaServicio = (s: any): string => {
+    if (!s) return '';
+    if (typeof s === 'string') return s;
+    return `${s.commodity ?? ''} — ${s.descripcionLocal ?? ''}`;
+  }
+
+  // Buscador de Tipo de Servicio (commodity de servicio SER, código SPRING)
+  async filtrarTipoServicio(event: any): Promise<void> {
+    const q = String(event?.query ?? '').toLowerCase().trim();
+    try {
+      const servicios = await this.obtenerServicios();
+      this.tipoServicioSugeridos = q.length < 2
+        ? servicios.slice(0, 25)
+        : servicios.filter((s: any) => this.coincideBusqueda(s, q)).slice(0, 25);
+    } catch {
+      this.tipoServicioSugeridos = [];
+    }
+    this.cdr.markForCheck();
+  }
+
+  seleccionarTipoServicio(event: any): void {
+    const sel = event?.value ?? event;
+    if (!sel?.commodity || !this.ordenActual) { this.tipoServicioSel = null; return; }
+    this.ordenActual.tipoServicio = String(sel.commodity).trim();
+    this.tipoServicioSel = sel;
+    // Refrescar las sugerencias del detalle para el grupo elegido
+    this.subCommoditiesSugeridos = [];
+    this.cdr.markForCheck();
+  }
+
+  limpiarTipoServicio(): void {
+    this.tipoServicioSel = null;
+    if (this.ordenActual) this.ordenActual.tipoServicio = '';
+    this.subCommoditiesSugeridos = [];
+    this.cdr.markForCheck();
+  }
+
+  // ============================================
+  // DETALLE DE SERVICIOS (COMMODITIES) - OS DIRECTA
+  // ============================================
+  async filtrarSubCommodities(event: any): Promise<void> {
+    const q = String(event?.query ?? '').toLowerCase().trim();
+    try {
+      let servicios = await this.obtenerServicios();
+      // Si hay Tipo de Servicio elegido, el detalle se limita a su grupo (commodity01)
+      const grupo = String(this.tipoServicioSel?.commodity01 ?? '').trim();
+      if (grupo) {
+        servicios = servicios.filter((s: any) => String(s.commodity01 ?? '').trim() === grupo);
+      }
+      this.subCommoditiesSugeridos = q.length < 2
+        ? servicios.slice(0, 25)
+        : servicios.filter((s: any) => this.coincideBusqueda(s, q)).slice(0, 25);
+    } catch {
+      this.subCommoditiesSugeridos = [];
+    }
+    this.cdr.markForCheck();
+  }
+
+  agregarLineaDetalleOS(event: any): void {
+    const sel = event?.value ?? event;
+    if (!sel?.commodity || !this.ordenActual) { this.detalleCommoditySel = null; return; }
+    const cod = String(sel.commodity).trim();
+    this.ordenActual.detalle = Array.isArray(this.ordenActual.detalle) ? this.ordenActual.detalle : [];
+    if (this.ordenActual.detalle.some((d: any) => String(d.commodity) === cod)) {
+      this.detalleCommoditySel = null;
+      this.alertService.showAlert('Atención', 'El commodity ya fue agregado al detalle.', 'warning');
+      return;
+    }
+    const precioRef = parseFloat(String(sel.montoReferencial ?? '0')) || 0;
+    this.ordenActual.detalle.push({
+      lineaDetalle: this.ordenActual.detalle.length + 1,
+      descripcion: sel.descripcionLocal || '',
+      unidadMedida: sel.unidadporDefecto || 'SER',
+      commodity: cod,
+      cuentaContable: sel.cuentaContableGasto || '',
+      elementoGasto: sel.elementoGasto || '',
+      centroCosto: this.ordenActual.centroCosto || '',
+      ccDestino: this.ordenActual.labor || String(this.ordenActual.centroCosto || '').substring(0, 4),
+      proyecto: this.ordenActual.proyecto || '',
+      cantidad: 1,
+      precioUnitario: precioRef,
+      montoTotal: precioRef,
+      sucursal: '0801',
+      campoReferencia: 'GA'
+    });
+    this.detalleCommoditySel = null;
+    this.recalcularDetalleOS();
+    this.generarDistribucionDesdeDetalle();
+  }
+
+  quitarLineaDetalleOS(index: number): void {
+    if (!this.ordenActual?.detalle) return;
+    this.ordenActual.detalle.splice(index, 1);
+    this.ordenActual.detalle.forEach((d: any, i: number) => { d.lineaDetalle = i + 1; });
+    this.recalcularDetalleOS();
+    this.generarDistribucionDesdeDetalle();
+  }
+
+  recalcularDetalleOS(): void {
+    if (!this.ordenActual) return;
+    const detalle = Array.isArray(this.ordenActual.detalle) ? this.ordenActual.detalle : [];
+    detalle.forEach((d: any) => {
+      d.cantidad = Number(d.cantidad) || 0;
+      d.precioUnitario = Number(d.precioUnitario) || 0;
+      d.montoTotal = Math.round(d.cantidad * d.precioUnitario * 100) / 100;
+    });
+    if (this.tipoOrden === 'DIRECTA' && detalle.length > 0) {
+      this.ordenActual.montoTotal = Math.round(detalle.reduce((s: number, d: any) => s + d.montoTotal, 0) * 100) / 100;
+      // Sincronizar montos de la distribución contable generada desde el detalle
+      if (this.distribucionContable.length === detalle.length) {
+        this.distribucionContable.forEach((dist: any, i: number) => {
+          dist.monto = detalle[i].montoTotal;
+        });
+      }
+    }
+    this.cdr.markForCheck();
+  }
+
+  // Genera la distribución contable a partir de las líneas de detalle (OS directa)
+  private generarDistribucionDesdeDetalle(): void {
+    if (this.tipoOrden !== 'DIRECTA' || !this.ordenActual) return;
+    const detalle = Array.isArray(this.ordenActual.detalle) ? this.ordenActual.detalle : [];
+    this.distribucionContable = detalle.map((d: any, i: number) => {
+      let fondo = '';
+      let referencia = d.elementoGasto || '';
+      if (d.elementoGasto && this.gastosData.length > 0) {
+        const gasto = this.gastosData.find((g: any) =>
+          g.codigo === d.elementoGasto || g.TipoGasto === d.elementoGasto
+        );
+        fondo = gasto?.descripcion || gasto?.Descripcion || d.elementoGasto;
+        referencia = gasto?.codigo || d.elementoGasto;
+      }
+      return {
+        id: `DIST-${Date.now()}-${i}`,
+        cuenta: d.cuentaContable || '',
+        descripcion: d.descripcion || '',
+        centrocosto: d.centroCosto || this.ordenActual?.centroCosto || '',
+        proyecto: d.proyecto || this.ordenActual?.proyecto || '',
+        monto: d.montoTotal || 0,
+        fondo: fondo || d.elementoGasto || '',
+        referencia: referencia,
+        ccdestino: d.ccDestino || this.ordenActual?.labor || String(this.ordenActual?.centroCosto || '').substring(0, 4),
+        turno: this.ordenActual?.turno || '',
+        cultivo: this.ordenActual?.cultivo || ''
+      };
+    });
+    this.cdr.markForCheck();
+  }
+
   // ============================================
   // BUSCADOR DE PROVEEDORES
   // ============================================
@@ -845,6 +1100,10 @@ export class OrdenesServicioComponent implements OnInit {
       this.normalizarTexto(tp.TipoPago) === v
     );
     return match?.TipoPago || valor;
+  }
+
+  cecoExiste(valor: string): boolean {
+    return this.cecosData.some((c: any) => c.costcenter === valor);
   }
 
   condicionPagoExiste(valor: string): boolean {
@@ -959,6 +1218,11 @@ export class OrdenesServicioComponent implements OnInit {
 
       if (!this.ordenActual.descripcion) {
         this.alertService.showAlert('Atención', 'Debe ingresar la descripción del servicio', 'warning');
+        return false;
+      }
+
+      if (!this.ordenActual.centroCosto) {
+        this.alertService.showAlert('Atención', 'Debe seleccionar el centro de costos', 'warning');
         return false;
       }
     }

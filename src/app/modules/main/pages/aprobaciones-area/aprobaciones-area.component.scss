@@ -240,6 +240,18 @@
   }
 }
 
+// Scroll horizontal de tablas en pantallas angostas
+:host ::ng-deep {
+  .tab-content .p-datatable-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-content .p-datatable-table {
+    min-width: 720px;
+  }
+}
+
 :host ::ng-deep .modal-detalle-pendientes {
   .p-dialog-content { padding: 1rem 1.25rem; }
   .text-muted.small { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3px; }

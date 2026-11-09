@@ -1,1 +1,16 @@
 /* Estilos para tab-pdf */
+
+// Responsive
+@media (max-width: 768px) {
+  .card-header.d-flex {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .custom-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+}

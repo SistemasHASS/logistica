@@ -930,7 +930,10 @@ export class DexieService extends Dexie {
     await this.maestroCommoditys.put(maestroCommodity);
   }
   async saveMaestroCommodities(maestroCommodities: MaestroCommodity[]) {
-    await this.maestroCommoditys.bulkPut(maestroCommodities);
+    const chunkSize = 500;
+    for (let i = 0; i < maestroCommodities.length; i += chunkSize) {
+      await this.maestroCommoditys.bulkPut(maestroCommodities.slice(i, i + chunkSize));
+    }
   }
   async showMaestroCommodity() {
     return await this.maestroCommoditys.toArray();
@@ -946,7 +949,10 @@ export class DexieService extends Dexie {
     await this.maestroSubCommoditys.put(maestroSubCommodity);
   }
   async saveMaestroSubCommodities(maestroSubCommoditys: MaestroSubCommodity[]) {
-    await this.maestroSubCommoditys.bulkPut(maestroSubCommoditys);
+    const chunkSize = 500;
+    for (let i = 0; i < maestroSubCommoditys.length; i += chunkSize) {
+      await this.maestroSubCommoditys.bulkPut(maestroSubCommoditys.slice(i, i + chunkSize));
+    }
   }
   async showMaestroSubCommodity() {
     return await this.maestroSubCommoditys.toArray();

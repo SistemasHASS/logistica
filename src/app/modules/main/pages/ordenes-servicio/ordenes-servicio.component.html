@@ -382,8 +382,8 @@
         </div>
       </div>
 
-      <!-- FORMULARIO GENERAL (visible cuando hay orden actual) -->
-      <div *ngIf="ordenActual">
+      <!-- FORMULARIO GENERAL (visible cuando hay orden actual y tab General activo) -->
+      <div *ngIf="ordenActual && !mostrarTabDistribucion">
         <div class="section-title">Información General</div>
         <div class="form-grid">
           <div class="form-group">
@@ -395,8 +395,24 @@
             <input type="date" class="form-control" [(ngModel)]="ordenActual.fecha">
           </div>
           <div class="form-group">
-            <label>Tipo de Servicio:</label>
-            <input type="text" class="form-control" [(ngModel)]="ordenActual.tipoServicio" [readonly]="tipoOrden === 'DESDE_SOLICITUD'">
+            <label>Tipo de Servicio: <span class="required" *ngIf="tipoOrden === 'DIRECTA'">*</span></label>
+            <p-autoComplete
+              *ngIf="tipoOrden === 'DIRECTA'"
+              [(ngModel)]="tipoServicioSel"
+              [suggestions]="tipoServicioSugeridos"
+              (completeMethod)="filtrarTipoServicio($event)"
+              (onSelect)="seleccionarTipoServicio($event)"
+              (onClear)="limpiarTipoServicio()"
+              [optionLabel]="etiquetaServicio"
+              [dropdown]="true"
+              [forceSelection]="true"
+              placeholder="Buscar servicio (ej. 0702)..."
+              styleClass="w-100">
+              <ng-template let-sc pTemplate="item">
+                <div><strong>{{ sc.commodity }}</strong> — {{ sc.descripcionLocal }}</div>
+              </ng-template>
+            </p-autoComplete>
+            <input *ngIf="tipoOrden !== 'DIRECTA'" type="text" class="form-control" [(ngModel)]="ordenActual.tipoServicio" readonly>
           </div>
           <div class="form-group" *ngIf="tipoOrden === 'DIRECTA'">
             <label>Descripción del Servicio:</label>
@@ -499,9 +515,19 @@
             <label>Plazo Ejecución (días):</label>
             <input type="number" class="form-control" [(ngModel)]="ordenActual.plazoEjecucion">
           </div>
+          <div class="form-group" *ngIf="tipoOrden === 'DIRECTA'">
+            <label>Centro de Costos: <span class="required">*</span></label>
+            <select class="form-control" [(ngModel)]="ordenActual.centroCosto">
+              <option value="">-- Seleccione --</option>
+              <option *ngFor="let ceco of cecosData" [value]="ceco.costcenter">{{ ceco.costcenter }} - {{ ceco.localname }}</option>
+              <option *ngIf="ordenActual.centroCosto && !cecoExiste(ordenActual.centroCosto)" [value]="ordenActual.centroCosto">{{ ordenActual.centroCosto }}</option>
+            </select>
+          </div>
           <div class="form-group">
             <label>Monto Total:</label>
-            <input type="number" class="form-control" [(ngModel)]="ordenActual.montoTotal" step="0.01">
+            <input type="number" class="form-control" [(ngModel)]="ordenActual.montoTotal" step="0.01"
+                   [readonly]="tipoOrden === 'DIRECTA' && (ordenActual.detalle?.length || 0) > 0"
+                   [title]="tipoOrden === 'DIRECTA' && (ordenActual.detalle?.length || 0) > 0 ? 'Se calcula desde el detalle de servicios' : ''">
           </div>
           <div class="form-group">
             <label>Condiciones de Pago: <span class="required">*</span></label>
@@ -528,10 +554,68 @@
           <label>Penalidades:</label>
           <textarea class="form-control" [(ngModel)]="ordenActual.penalidades" rows="2"></textarea>
         </div>
+
+        <!-- DETALLE DE SERVICIOS (COMMODITIES) - solo OS directa -->
+        <div *ngIf="tipoOrden === 'DIRECTA'" class="mt-3">
+          <div class="section-title">Detalle de Servicios (Commodities)</div>
+          <div class="form-group mb-2" style="max-width: 650px;">
+            <label class="fw-bold">Agregar commodity:</label>
+            <small class="text-muted d-block" *ngIf="tipoServicioSel">
+              Filtrado por el grupo del tipo de servicio: {{ tipoServicioSel.commodity01 }}
+            </small>
+            <p-autoComplete
+              [(ngModel)]="detalleCommoditySel"
+              [suggestions]="subCommoditiesSugeridos"
+              (completeMethod)="filtrarSubCommodities($event)"
+              (onSelect)="agregarLineaDetalleOS($event)"
+              [optionLabel]="etiquetaServicio"
+              [dropdown]="true"
+              [forceSelection]="true"
+              placeholder="Buscar por código o descripción..."
+              styleClass="w-100">
+              <ng-template let-sc pTemplate="item">
+                <div><strong>{{ sc.commodity }}</strong> — {{ sc.descripcionLocal }}</div>
+              </ng-template>
+            </p-autoComplete>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width:30px">#</th>
+                  <th>Commodity</th>
+                  <th>Descripción</th>
+                  <th>UM</th>
+                  <th class="text-end" style="width:100px">Cantidad</th>
+                  <th class="text-end" style="width:110px">P. Unitario</th>
+                  <th class="text-end" style="width:110px">Subtotal</th>
+                  <th style="width:50px"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let d of ordenActual.detalle; let i = index">
+                  <td>{{ d.lineaDetalle }}</td>
+                  <td><strong>{{ d.commodity }}</strong></td>
+                  <td><input type="text" class="form-control form-control-sm" [(ngModel)]="d.descripcion"></td>
+                  <td>{{ d.unidadMedida }}</td>
+                  <td><input type="number" class="form-control form-control-sm text-end" [(ngModel)]="d.cantidad" min="0" step="0.0001" (ngModelChange)="recalcularDetalleOS()"></td>
+                  <td><input type="number" class="form-control form-control-sm text-end" [(ngModel)]="d.precioUnitario" min="0" step="0.01" (ngModelChange)="recalcularDetalleOS()"></td>
+                  <td class="text-end">S/ {{ formatearMoneda(d.montoTotal) }}</td>
+                  <td><button class="btn btn-sm btn-outline-danger" type="button" (click)="quitarLineaDetalleOS(i)" title="Quitar línea"><i class="bx bx-trash"></i></button></td>
+                </tr>
+                <tr *ngIf="!ordenActual.detalle?.length">
+                  <td colspan="8" class="text-center text-muted py-3">
+                    <i class="bx bx-inbox fs-4 d-block mb-1"></i>Agregue commodities desde el buscador. Si no agrega líneas, podrá ingresar el monto total manualmente.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
-      <!-- DISTRIBUCIÓN CONTABLE -->
-      <div class="distribucion-section" *ngIf="ordenActual && distribucionContable.length > 0">
+      <!-- DISTRIBUCIÓN CONTABLE (visible en tab Distrib. Contable) -->
+      <div class="distribucion-section" *ngIf="ordenActual && mostrarTabDistribucion">
         <div class="section-header">
           <h4>Distribución Contable</h4>
           <button class="btn-primary" type="button" (click)="abrirModalDistribucion()">
