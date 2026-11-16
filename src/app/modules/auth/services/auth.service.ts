@@ -165,6 +165,11 @@ export class AuthService {
     return resp?.permitido === true;
   }
 
+  /** true si idrol (posiblemente "A,B") contiene el rol exacto */
+  private tieneRol(idrol: string | null | undefined, rol: string): boolean {
+    return (idrol ?? '').split(',').map(r => r.trim()).includes(rol);
+  }
+
   /**
    * Carga el área del usuario logueado y la guarda en Dexie
    */
@@ -204,7 +209,7 @@ export class AuthService {
         console.log('Usuario actualizado con información de área:', usuarioActualizado);
         
         // ✅ Redirección según rol y área para APLOGIST
-        if (usuarioActualizado.idrol === 'APLOGIST') {
+        if (this.tieneRol(usuarioActualizado.idrol, 'APLOGIST')) {
           if (usuarioActualizado.idarea) {
             // Si tiene área, redirigir a aprobaciones-area
             console.log('🔄 APLOGIST con área - Redirigiendo a aprobaciones-area');
@@ -223,7 +228,7 @@ export class AuthService {
         console.log('📝 Para asignar un área, contacte al administrador del sistema');
         
         // ✅ Redirección para APLOGIST sin área
-        if (usuario && usuario.idrol === 'APLOGIST') {
+        if (this.tieneRol(usuario?.idrol, 'APLOGIST')) {
           console.log('🔄 APLOGIST sin área - Redirigiendo a aprobaciones');
           this.router.navigate(['/main/aprobaciones']);
         }
