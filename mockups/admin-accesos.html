@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Logística — Accesos a Reportes — Mockup</title>
+<style>
+  :root{
+    --bg:#f4f6fa; --card:#fff; --border:#dee2e6; --txt:#212529; --muted:#6c757d;
+    --primary:#0d6efd; --accent:#0f172a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+  body{background:var(--bg);color:var(--txt)}
+  .container{max-width:1200px;margin:24px auto;padding:0 16px}
+  .navmock{position:fixed;top:12px;right:20px;font-size:12px;z-index:50}
+  .navmock a{background:#fff;border:1px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--muted);text-decoration:none;font-weight:600}
+  .navmock a.on{color:var(--accent);border-color:var(--accent)}
+
+  h4{color:var(--primary);font-weight:700;margin-bottom:16px;font-size:20px}
+
+  /* tabs estilo bootstrap/nav */
+  .tabs{display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:18px;flex-wrap:wrap}
+  .tab{padding:10px 18px;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px}
+  .tab.on{color:var(--primary);border-bottom-color:var(--primary)}
+  .tab.nuevo{color:#7c3aed}
+  .tab.nuevo.on{border-bottom-color:#7c3aed}
+  .tab .new{background:#7c3aed;color:#fff;font-size:9px;border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle}
+
+  /* tarjeta del módulo */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px}
+  .card-h{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .card-h b{font-size:15px}
+  .card-h .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .card-b{padding:18px 20px}
+
+  /* selector de reporte */
+  .rep-selector{display:flex;gap:8px;align-items:flex-end;margin-bottom:18px;flex-wrap:wrap}
+  .rep-selector .fg{display:flex;flex-direction:column;gap:4px}
+  .fg label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .fg select,.fg input{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;background:#fff;min-width:160px}
+
+  /* alta de usuario */
+  .addbox{background:#f8f9fa;border:1px dashed #ced4da;border-radius:10px;padding:14px 16px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:18px}
+  .addbox .fg input{min-width:150px}
+  .found{font-size:12px;color:#198754;font-weight:600;padding-bottom:9px;min-width:200px}
+  .found.none{color:#dc3545}
+  .btn{border:none;border-radius:7px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer}
+  .btn-p{background:var(--primary);color:#fff}
+  .btn-d{background:#dc3545;color:#fff;padding:5px 12px;font-size:12px}
+  .btn:active{transform:scale(.97)}
+
+  /* tabla accesos */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{background:#f8f9fa;text-align:left;padding:9px 10px;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);border-bottom:1px solid var(--border)}
+  tbody td{padding:9px 10px;border-bottom:1px solid #f1f3f5;vertical-align:middle}
+  tbody tr:hover{background:#f8f9fa}
+  .sw{width:38px;height:20px;border-radius:99px;background:#ced4da;border:none;cursor:pointer;position:relative}
+  .sw.on{background:#198754}
+  .sw::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s}
+  .sw.on::after{left:20px}
+  .chipmod{background:#e7f1ff;color:#0d6efd;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700}
+  .muted{color:var(--muted);font-size:12px}
+  .count{font-size:12px;color:var(--muted);margin-top:10px}
+
+  .note{background:#fff3cd;border:1px solid #ffe69c;color:#664d03;font-size:12.5px;border-radius:8px;padding:10px 14px;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="navmock">
+  Mockups: <a href="index.html">Operativo</a> <a href="analisis.html">Análisis</a> <a href="admin-accesos.html" class="on">Accesos (Admin)</a>
+</div>
+
+<div class="container">
+  <h4>Admin Logística</h4>
+
+  <!-- TABS del módulo admin-logistica -->
+  <div class="tabs">
+    <button class="tab">📥 Bandeja Aprobaciones</button>
+    <button class="tab">✔ Aprobar Consumo</button>
+    <button class="tab">🛍 Aprobar SC</button>
+    <button class="tab">🎚 Maestros</button>
+    <button class="tab">👤 Usuarios</button>
+    <button class="tab">📄 Formato PDF</button>
+    <button class="tab">⚙ Parámetros</button>
+    <button class="tab">✅ Aprobadores</button>
+    <button class="tab">🕘 Auditoría</button>
+    <button class="tab nuevo on">🔐 Accesos Reportes<span class="new">NUEVO</span></button>
+  </div>
+
+  <!-- CONTENIDO: nuevo módulo -->
+  <div class="card">
+    <div class="card-h">
+      <div>
+        <b>🔐 Accesos a Reportes Restringidos</b>
+        <div class="sub">Controla qué usuarios (por DNI) pueden ver cada reporte. Si un usuario no está en la lista, el reporte no aparece en su menú y el SP devuelve SIN_ACCESO.</div>
+      </div>
+    </div>
+    <div class="card-b">
+
+      <div class="note">
+        Selecciona el reporte para administrar su lista de acceso. Tabla real: <b>LOGISTICA_ConfigAccesoReporte</b>
+        &nbsp;·&nbsp; Campos: <code>id, modulo, dni, nombre, empresa(ruc), activo, usuarioAlta, fechaAlta</code>
+      </div>
+
+      <!-- Selector de reporte -->
+      <div class="rep-selector">
+        <div class="fg"><label>Reporte / módulo</label>
+          <select id="selReporte" onchange="renderAcc()">
+            <option value="ANALISIS_REQ_COMPRA">📊 Análisis Seguimiento Req. Compra</option>
+            <option value="SEGUIMIENTO_REQ_COMPRA">📦 Seguimiento Req. Compra (operativo)</option>
+            <option value="REPORTE_COSTOS_CECO" disabled>💰 Costos por Ceco (futuro)</option>
+          </select>
+        </div>
+        <div class="fg"><label>Empresa</label>
+          <select><option value="">Todas</option><option>20481121966 - Agro Hass</option><option>20100445620 - Hass S.A.</option></select>
+        </div>
+        <div class="fg"><label>Buscar en la lista</label><input placeholder="DNI o nombre" oninput="filtrarLista(this.value)"></div>
+      </div>
+
+      <!-- Alta de usuario -->
+      <div class="addbox">
+        <div class="fg"><label>DNI del usuario</label><input id="inDni" maxlength="8" placeholder="8 dígitos"></div>
+        <button class="btn btn-p" onclick="buscar()">Buscar</button>
+        <span class="found" id="foundMsg"></span>
+        <button class="btn btn-p" style="background:#198754" id="btnAdd" disabled onclick="agregar()">+ Dar acceso</button>
+      </div>
+
+      <!-- Tabla de accesos -->
+      <table>
+        <thead><tr>
+          <th>#</th><th>DNI</th><th>Nombre</th><th>Empresa</th><th>Rol</th><th>Reporte</th>
+          <th>Activo</th><th>Fecha alta</th><th>Dado de alta por</th><th></th>
+        </tr></thead>
+        <tbody id="tbodyAcc"></tbody>
+      </table>
+      <div class="count" id="countAcc"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* datos mock: usuarios del sistema que se pueden buscar por DNI */
+const USUARIOS_SISTEMA = {
+  '40112233':{nom:'J. Quispe',   rol:'OPLOGIST', emp:'20481121966'},
+  '43665544':{nom:'P. Flores',   rol:'APLOGIST', emp:'20481121966'},
+  '40778899':{nom:'K. Vargas',   rol:'OPLOGIST', emp:'20100445620'},
+  '45566778':{nom:'S. Torres',   rol:'JLOLOGIST',emp:'20481121966'},
+  '45231876':{nom:'M. López',    rol:'APLOGIST', emp:'20100445620'},
+};
+const MOD_LBL = {
+  ANALISIS_REQ_COMPRA:'📊 Análisis Req. Compra',
+  SEGUIMIENTO_REQ_COMPRA:'📦 Seguimiento Req. Compra',
+};
+let ACC = [
+ {mod:'ANALISIS_REQ_COMPRA', dni:'40112233', nom:'J. Quispe', rol:'OPLOGIST', emp:'20481121966', on:true,  alta:'01/11/2026', por:'ADMIN'},
+ {mod:'ANALISIS_REQ_COMPRA', dni:'43665544', nom:'P. Flores', rol:'APLOGIST', emp:'20481121966', on:true,  alta:'01/11/2026', por:'ADMIN'},
+ {mod:'ANALISIS_REQ_COMPRA', dni:'40778899', nom:'K. Vargas', rol:'OPLOGIST', emp:'20100445620', on:false, alta:'10/11/2026', por:'ADMIN'},
+ {mod:'SEGUIMIENTO_REQ_COMPRA', dni:'40112233', nom:'J. Quispe', rol:'OPLOGIST', emp:'20481121966', on:true, alta:'11/11/2026', por:'ADMIN'},
+];
+let encontrado=null, q='';
+
+function mod(){ return document.getElementById('selReporte').value; }
+function filtrarLista(v){ q=(v||'').toLowerCase(); renderAcc(); }
+
+function renderAcc(){
+  const m=mod();
+  const rows=ACC.map((a,i)=>({...a,i})).filter(a=>a.mod===m&&(!q||a.dni.includes(q)||a.nom.toLowerCase().includes(q)));
+  const tb=document.getElementById('tbodyAcc');
+  tb.innerHTML=rows.map((a,ix)=>`<tr>
+    <td>${ix+1}</td><td><b>${a.dni}</b></td><td>${a.nom}</td><td>${a.emp}</td>
+    <td><span class="muted">${a.rol}</span></td>
+    <td><span class="chipmod">${MOD_LBL[a.mod]}</span></td>
+    <td><button class="sw ${a.on?'on':''}" onclick="ACC[${a.i}].on=!ACC[${a.i}].on;renderAcc()"></button></td>
+    <td class="muted">${a.alta}</td><td class="muted">${a.por}</td>
+    <td><button class="btn btn-d" onclick="ACC.splice(${a.i},1);renderAcc()">Quitar</button></td>
+  </tr>`).join('')||'<tr><td colspan="10" class="muted" style="text-align:center;padding:24px">Nadie tiene acceso aún a este reporte</td></tr>';
+  document.getElementById('countAcc').textContent =
+    `${rows.length} usuario(s) con acceso a "${MOD_LBL[m]}"`;
+}
+
+function buscar(){
+  const dni=document.getElementById('inDni').value.trim();
+  const el=document.getElementById('foundMsg');
+  const u=USUARIOS_SISTEMA[dni];
+  if(u){ encontrado={dni,...u}; el.className='found'; el.textContent='✓ '+u.nom+' · '+u.rol+' · '+u.emp;
+    document.getElementById('btnAdd').disabled=false; }
+  else { encontrado=null; el.className='found none'; el.textContent='✗ DNI no registrado en el sistema';
+    document.getElementById('btnAdd').disabled=true; }
+}
+function agregar(){
+  if(!encontrado)return;
+  ACC.unshift({mod:mod(),dni:encontrado.dni,nom:encontrado.nom,rol:encontrado.rol,emp:encontrado.emp,on:true,alta:'13/11/2026',por:'TÚ'});
+  document.getElementById('inDni').value='';document.getElementById('foundMsg').textContent='';
+  document.getElementById('btnAdd').disabled=true;encontrado=null;
+  renderAcc();
+}
+renderAcc();
+</script>
+</body>
+</html>

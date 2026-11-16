@@ -231,11 +231,12 @@
                   <b class="texto-error">*</b> Proyecto
                 </label>
                 <div class="col-lg-9">
-                  <app-dropdown [(ngModel)]="configuracion.idproyecto" (ngModelChange)="darPartidas(true)" [editable]="true" [data]="filteredProyectos"
+                  <app-dropdown [(ngModel)]="configuracion.idproyecto" [editable]="true" [data]="filteredProyectos"
                     [valueField]="'afe'" [optionLabel]="'proyectoio'" [textShow]="'Proyecto'" [textShow2]="'un proyecto'"
                     [disabled]="false"
                     [required]="true">
                   </app-dropdown>
+                  <!-- TODO(PARTIDA): (ngModelChange)="darPartidas(true)" removido hasta retomar desarrollo -->
                 </div>
               </div>
             </fieldset>
@@ -264,6 +265,7 @@
               </div>
             </fieldset>
           </div>
+          <!-- TODO(PARTIDA): campo Partida comentado hasta retomar desarrollo
           <div class="col-6 col-lg-6 marginBottom">
             <fieldset>
               <div class="form-group row box-labelFloat">
@@ -279,6 +281,7 @@
               </div>
             </fieldset>
           </div>
+          -->
         </div>
         </div><!-- Fin formulario parámetros -->
       </div>
@@ -479,11 +482,12 @@
                   <b class="texto-error">*</b> Proyecto
                 </label>
                 <div class="col-lg-9">
-                  <app-dropdown [(ngModel)]="configuracion.idproyecto" (ngModelChange)="darPartidas(true)" [editable]="true" [data]="filteredProyectos"
+                  <app-dropdown [(ngModel)]="configuracion.idproyecto" [editable]="true" [data]="filteredProyectos"
                     [valueField]="'afe'" [optionLabel]="'proyectoio'" [textShow]="'Proyecto'" [textShow2]="'un proyecto'"
                     [disabled]="false"
                     [required]="true">
                   </app-dropdown>
+                  <!-- TODO(PARTIDA): (ngModelChange)="darPartidas(true)" removido hasta retomar desarrollo -->
                 </div>
               </div>
             </fieldset>
@@ -511,7 +515,7 @@
           </div>
         </div>
 
-        <!-- PARTIDA -->
+        <!-- TODO(PARTIDA): campo Partida comentado hasta retomar desarrollo
         <div class="row">
           <div class="col-6 col-lg-6 marginBottom">
             <fieldset>
@@ -529,6 +533,7 @@
             </fieldset>
           </div>
         </div>
+        -->
 
       </div>
 
@@ -683,14 +688,16 @@
                   <b class="texto-error">*</b> Proyecto
                 </label>
                 <div class="col-lg-9">
-                  <app-dropdown [(ngModel)]="configuracion.idproyecto" (ngModelChange)="darPartidas(true)" [editable]="true" [data]="filteredProyectos"
+                  <app-dropdown [(ngModel)]="configuracion.idproyecto" [editable]="true" [data]="filteredProyectos"
                     [valueField]="'afe'" [optionLabel]="'proyectoio'" [textShow]="'Proyecto'" [textShow2]="'un proyecto'"
                     [disabled]="false" [required]="true">
                   </app-dropdown>
+                  <!-- TODO(PARTIDA): (ngModelChange)="darPartidas(true)" removido hasta retomar desarrollo -->
                 </div>
               </div>
             </fieldset>
           </div>
+          <!-- TODO(PARTIDA): campo Partida comentado hasta retomar desarrollo
           <div class="col-6 col-lg-6 marginBottom">
             <fieldset>
               <div class="form-group row box-labelFloat">
@@ -706,6 +713,7 @@
               </div>
             </fieldset>
           </div>
+          -->
         </div>
 
       </div>

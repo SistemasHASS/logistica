@@ -1,0 +1,142 @@
+<section class="card my-4" aria-labelledby="titulo-config-autoaprobacion">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h5 id="titulo-config-autoaprobacion" class="m-0">
+          <i class="bx bx-user-check me-1 text-warning"></i>Auto-aprobación N1 de Jefe de Área
+        </h5>
+        <small class="text-muted">
+          En áreas donde el jefe es el único usuario, permite que firme el paso N1 de sus propios
+          requerimientos. Por tipo se define si además se exige un N2 independiente.
+          Queda auditado como AUTOAPROBACION en el historial de la ruta.
+        </small>
+      </div>
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cargar()" [disabled]="busy() || loading()">Recargar</button>
+    </div>
+
+    @if (error()) { <div class="alert alert-danger" role="alert">{{ error() }}</div> }
+    @if (mensaje()) { <div class="alert alert-success" role="status">{{ mensaje() }}</div> }
+    @if (loading()) { <p role="status">Cargando configuración…</p> }
+
+    <p-table
+      [value]="filas()"
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} excepciones"
+      styleClass="p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Tipo</th>
+          <th>Ámbito / Área</th>
+          <th>Exige N2</th>
+          <th>Motivo req.</th>
+          <th>Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-fila>
+        <tr>
+          <td class="fw-semibold">{{ fila.tipoRequerimiento }}</td>
+          <td>{{ fila.nombreAmbitoArea ?? 'Todas las áreas (global)' }}</td>
+          <td>
+            <p-tag [value]="fila.exigeNivel2 ? 'Sí' : 'No'" [severity]="fila.exigeNivel2 ? 'info' : 'secondary'"></p-tag>
+          </td>
+          <td>
+            <p-tag [value]="fila.requiereMotivo ? 'Sí' : 'No'" [severity]="fila.requiereMotivo ? 'warn' : 'secondary'"></p-tag>
+          </td>
+          <td>
+            <p-tag [value]="fila.activo ? 'ACTIVO' : 'INACTIVO'" [severity]="fila.activo ? 'success' : 'secondary'"></p-tag>
+          </td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-primary me-2" (click)="abrirEditar(fila)" [disabled]="busy()">
+              <i class="bx bx-edit"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" (click)="eliminar(fila)" [disabled]="busy()">
+              <i class="bx bx-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="text-center py-4 text-muted">
+            <i class="bx bx-user-x" style="font-size: 40px;"></i>
+            <p class="mt-2 mb-0">No hay excepciones de auto-aprobación configuradas</p>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <div class="alert alert-warning py-2 small mb-3">
+      <i class="bx bx-error-alt me-1"></i>
+      Solo aplica cuando el solicitante coincide con el aprobador N1 designado por la regla.
+      Con <b>Exige N2</b> activo, si no existe un aprobador N2 independiente disponible el envío seguirá bloqueado.
+    </div>
+
+    <div class="d-flex justify-content-end">
+      <button class="btn btn-primary btn-sm" (click)="abrirNuevo()" [disabled]="busy() || !ruc">
+        <i class="bx bx-plus me-1"></i>Nueva excepción
+      </button>
+    </div>
+  </div>
+</section>
+
+<p-dialog
+  [header]="form.idConfig > 0 ? 'Editar excepción' : 'Nueva excepción'"
+  [(visible)]="modal"
+  [modal]="true"
+  [style]="{width: '520px'}"
+  [draggable]="false"
+  [resizable]="false">
+  <div class="mb-3">
+    <label class="form-label fw-semibold d-block">Tipo de requerimiento *</label>
+    @for (t of tipos; track t) {
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="tipoAutoaprob" [id]="'ta-' + t"
+               [value]="t" [(ngModel)]="form.tipoRequerimiento" (ngModelChange)="onTipoChange()"
+               [disabled]="busy() || form.idConfig > 0">
+        <label class="form-check-label" [for]="'ta-' + t">{{ t }}</label>
+      </div>
+    }
+  </div>
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Ámbito / Área *</label>
+    <select class="form-select" [(ngModel)]="form.idAreaAmbito" [disabled]="busy() || form.idConfig > 0">
+      @for (op of opcionesArea(); track op.idAreaAmbito) {
+        <option [ngValue]="op.idAreaAmbito">{{ op.etiqueta }}</option>
+      }
+    </select>
+  </div>
+  <div class="form-check mb-2">
+    <input class="form-check-input" type="checkbox" id="chkExigeN2" [(ngModel)]="form.exigeNivel2" [disabled]="busy()">
+    <label class="form-check-label" for="chkExigeN2">
+      Exigir aprobador N2 independiente
+      <small class="text-muted d-block">Sugerido: apagado para CONSUMO, encendido para COMPRA y SERVICIO.</small>
+    </label>
+  </div>
+  <div class="form-check mb-3">
+    <input class="form-check-input" type="checkbox" id="chkReqMotivo" [(ngModel)]="form.requiereMotivo" [disabled]="busy()">
+    <label class="form-check-label" for="chkReqMotivo">Exigir comentario obligatorio al aprobar</label>
+  </div>
+  @if (form.idConfig > 0) {
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" id="chkActivoAuto" [(ngModel)]="form.activo" [disabled]="busy()">
+      <label class="form-check-label" for="chkActivoAuto">Activo</label>
+    </div>
+  }
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Motivo del cambio (auditoría) *</label>
+    <input class="form-control" [(ngModel)]="motivo" maxlength="500" [disabled]="busy()">
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-outline-secondary" (click)="modal.set(false)" [disabled]="busy()">Cancelar</button>
+      <button type="button" class="btn btn-primary" (click)="guardar()" [disabled]="busy() || !motivo.trim()">
+        <i class="bx bx-save me-2"></i>{{ busy() ? 'Guardando...' : 'Guardar' }}
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>

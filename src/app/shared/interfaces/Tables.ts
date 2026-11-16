@@ -1070,6 +1070,8 @@ export interface DetalleExcelPreview {
   labor: string;
   activofijo: string;
   afectoIGV?: string;
+  stockDisponible?: number;
+  estadoStock?: string;
   errores: ErrorExcel[];
   error: boolean;
 }

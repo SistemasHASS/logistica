@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { DexieService } from '../dixiedb/dexie-db.service';
 import { NotificationService } from './notification.service';
+import { NotificacionApiService } from './notificacion-api.service';
 import { interval, switchMap, startWith } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -10,13 +11,14 @@ import { environment } from '../../../environments/environment';
 })
 export class StockNotificationService {
   private readonly API_URL = `${environment.baseUrl}/api/logistica`;
-  private readonly CHECK_INTERVAL = 60000; // Verificar cada minuto
+  private readonly CHECK_INTERVAL_DEFAULT = 60000; // Fallback si no hay config
   private usuarioActual: any = null;
   private ultimaVerificacion: Date = new Date();
 
   constructor(
     private dexieService: DexieService,
     private notificationService: NotificationService,
+    private notificacionApi: NotificacionApiService,
     private http: HttpClient
   ) {
     // Iniciar monitoreo periódico
@@ -35,8 +37,12 @@ export class StockNotificationService {
       return;
     }
 
-    // Verificar notificaciones cada minuto
-    interval(this.CHECK_INTERVAL).pipe(
+    // Intervalo configurable desde LOGISTICA_NotificacionParam (NOTIF_POLL_SEGUNDOS)
+    const cfg = await this.notificacionApi.obtenerConfigNotificaciones();
+    const intervalo = (cfg?.pollSegundos ?? 60) * 1000 || this.CHECK_INTERVAL_DEFAULT;
+
+    // Verificar notificaciones según intervalo configurado
+    interval(intervalo).pipe(
       startWith(0),
       switchMap(async () => {
         await this.verificarNotificacionesStock();
@@ -82,10 +88,20 @@ export class StockNotificationService {
         console.log('🔔 Notificaciones recibidas:', notificaciones);
         
         // Filtrar notificaciones que ya fueron notificadas (stock disponible)
-        const notificacionesNuevas = notificaciones.filter((n: any) => 
-          n.notificado && 
+        let notificacionesNuevas = notificaciones.filter((n: any) =>
+          n.notificado &&
           new Date(n.fecha_notificacion) > this.ultimaVerificacion
         );
+
+        // Filtrar por config del rol: solo tipos habilitados con canal TOAST/AMBOS
+        const cfg = await this.notificacionApi.obtenerConfigNotificaciones();
+        if (cfg && cfg.tipos.size > 0) {
+          notificacionesNuevas = notificacionesNuevas.filter((n: any) => {
+            const tipo = n.tipo_notificacion || 'STOCK_DISPONIBLE';
+            const canal = cfg.canalPorTipo.get(tipo);
+            return cfg.tipos.has(tipo) && (canal === 'TOAST' || canal === 'AMBOS' || !canal);
+          });
+        }
 
         console.log('🔔 Notificaciones nuevas:', notificacionesNuevas);
 

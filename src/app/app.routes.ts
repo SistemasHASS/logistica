@@ -62,6 +62,9 @@ import { DashboardFinanzasComponent } from './modules/main/pages/dashboard-finan
 import { AprobacionesAreaComponent } from './modules/main/pages/aprobaciones-area/aprobaciones-area.component';
 import { DashboardAprobacionesAreaComponent } from './modules/main/pages/dashboard-aprobaciones-area/dashboard-aprobaciones-area.component';
 import { ReporteAprobacionesAreaComponent } from './modules/main/pages/reporte-aprobaciones-area/reporte-aprobaciones-area.component';
+import { SeguimientoComprasComponent } from './modules/main/pages/seguimiento-compras/seguimiento-compras.component';
+import { AnalisisReqCompraComponent } from './modules/main/pages/analisis-req-compra/analisis-req-compra.component';
+import { SeguimientoConsumosComponent } from './modules/main/pages/seguimiento-consumos/seguimiento-consumos.component';
 import { AprobacionesOCComponent } from './modules/main/pages/aprobaciones-oc/aprobaciones-oc.component';
 import { AprobacionesOSComponent } from './modules/main/pages/aprobaciones-os/aprobaciones-os.component';
 import { SolicitudesServicioComponent } from './modules/main/pages/solicitudes-servicio/solicitudes-servicio.component';
@@ -169,6 +172,9 @@ export const routes: Routes = [
       { path: 'reporte-saldos', component: ReporteSaldosComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte-despachos', component: ReporteDespachosComponent, canActivate: [AlmacenGuard] },
       { path: 'reporte-requerimientos', component: ReporteRequerimientos },
+      { path: 'seguimiento-req-compra', component: SeguimientoComprasComponent, canActivate: [OperativoLogisticoGuard] },
+      { path: 'analisis-req-compra', component: AnalisisReqCompraComponent, canActivate: [OperativoLogisticoGuard] },
+      { path: 'seguimiento-req-consumo', component: SeguimientoConsumosComponent, canActivate: [OperativoLogisticoGuard] },
       { path: 'consolidacion-requerimientos', component: ConsolidacionRequerimientosComponent, canActivate: [LogisticoGuard] },
       { path: 'consolidacion-compras', component: ConsolidacionComprasComponent, canActivate: [LogisticoGuard] },
       { path: 'consolidacion-compra', component: ConsolidacionCompraComponent, canActivate: [LogisticoGuard] },

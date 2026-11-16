@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -12,6 +12,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule, Checkbox } from 'primeng/checkbox';
 import { AprobacionesService } from '@/app/services/aprobaciones.service';
 import { AprobacionesAreaService } from '@/app/modules/main/services/aprobaciones-area.service';
+import { AprobacionesAmbitosService, PendienteAmbito } from '@/app/modules/main/services/aprobaciones-ambitos.service';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
 import { RequerimientosSyncService } from '@/app/modules/main/pages/requerimientos/services/requerimientos-sync.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
@@ -107,6 +108,14 @@ export class AprobacionesAreaComponent implements OnInit {
   detallePendientesTab: 'items' | 'servicios' | 'adjuntos' | 'historial-anulaciones' = 'items';
   detallesPendientesSeleccionados: Set<number> = new Set<number>();
   detallesPendientesAprobados: Set<number> = new Set<number>();
+  readonly stockDetalle = signal<{
+    estado: 'inicial' | 'cargando' | 'ok' | 'sin-almacen' | 'error';
+    idalmacen: string;
+    fecha: Date | null;
+    stocks: ReadonlyMap<string, number>;
+  }>({ estado: 'inicial', idalmacen: '', fecha: null, stocks: new Map() });
+  private sesionDetallePendientes = 0;
+  private consultaStockDetalle = 0;
 
   // Maestra de subservicios/commodities por código: permite reordenar
   // "glosa - descripcion" -> "descripcion - glosa" en líneas de servicio
@@ -158,6 +167,7 @@ export class AprobacionesAreaComponent implements OnInit {
   constructor(
     private aprobacionesService: AprobacionesService,
     private aprobacionesAreaService: AprobacionesAreaService,
+    private aprobacionesAmbitosService: AprobacionesAmbitosService,
     private requerimientosService: RequerimientosService,
     private syncService: RequerimientosSyncService,
     private dexieService: DexieService,
@@ -495,6 +505,56 @@ export class AprobacionesAreaComponent implements OnInit {
     await this.itemsFilteredPromise;
   }
 
+  /**
+   * Agrega a la bandeja los pasos pendientes del flujo por ámbitos donde el
+   * usuario es el responsable asignado. Si el módulo no está desplegado o la
+   * empresa no lo habilitó, la consulta simplemente no agrega elementos.
+   */
+  private async agregarPendientesAmbitos(): Promise<void> {
+    try {
+      const pendientes = await this.aprobacionesAmbitosService
+        .pendientes(this.usuario.ruc, this.usuario.documentoidentidad)
+        .toPromise();
+      if (!Array.isArray(pendientes) || pendientes.length === 0) return;
+      const existentes = new Set(this.requerimientosPendientes.map(r => r.idrequerimiento));
+      const nuevos = pendientes
+        .filter(p => !existentes.has(p.idrequerimiento))
+        .map(p => this.mapearPendienteAmbito(p));
+      this.requerimientosPendientes = [...this.requerimientosPendientes, ...nuevos];
+    } catch {
+      // El motor de ámbitos aún no está desplegado: la bandeja legado se mantiene.
+    }
+  }
+
+  private mapearPendienteAmbito(p: PendienteAmbito): RequerimientoPendiente {
+    const nivel = p.nivel === 2 ? 'N2' : 'N1';
+    return {
+      idrequerimiento: p.idrequerimiento,
+      ruc: p.ruc,
+      idarea: p.idAreaAmbito,
+      itemtipo: p.itemtipo,
+      tipoRequerimiento: p.itemtipo,
+      glosa: p.glosa,
+      descripcion: p.glosa,
+      dniregistra: p.solicitante,
+      nombreArea: p.nombreArea,
+      nombreAreaSolicitante: p.nombreAmbito
+        ? `${p.nombreAmbito} (${nivel})`
+        : p.nombreArea,
+      estados: p.estados,
+      estado: p.esperaNivelAnterior ? 'ESPERA N1' : 'PENDIENTE',
+      fechaCreacion: p.fechaCreacion,
+      fecha: p.fechaCreacion,
+      idfundo: p.idfundoRequerimiento,
+      flujoAmbito: true,
+      idRuta: p.idRuta,
+      nivelAmbito: p.nivel,
+      esperaNivelAnterior: p.esperaNivelAnterior,
+      autorizadoActualmente: p.autorizadoActualmente,
+      esAutoaprobacion: p.esAutoaprobacion === true || (p.esAutoaprobacion as any) === 1,
+    } as RequerimientoPendiente;
+  }
+
   cargarRequerimientosPendientes() {
     if (!this.usuario) return;
 
@@ -512,7 +572,7 @@ export class AprobacionesAreaComponent implements OnInit {
       : this.aprobacionesAreaService.obtenerRequerimientosPendientesArea(data);
 
     obs.subscribe({
-        next: (response) => {
+        next: async (response) => {
           // console.log('📋 Respuesta de pendientes:', response);
           // El response puede venir como array directo o como {resultado: [...]}
           if (Array.isArray(response)) {
@@ -530,6 +590,7 @@ export class AprobacionesAreaComponent implements OnInit {
           //   '✅ Requerimientos pendientes cargados:',
           //   this.requerimientosPendientes.length,
           // );
+          await this.agregarPendientesAmbitos();
           this.loadingPendientes = false;
         },
         error: (error) => {
@@ -691,10 +752,12 @@ export class AprobacionesAreaComponent implements OnInit {
       return;
     }
 
-    // Prevenir auto-aprobación (salvo roles globales)
+    // Prevenir auto-aprobación (salvo roles globales o paso marcado esAutoaprobacion por excepción configurada)
+    const esAmbitoSeleccionado = (this.requerimientoSeleccionado as any).flujoAmbito === true;
+    const esAutoaprobacionSel = this.requerimientoSeleccionado.esAutoaprobacion === true || this.requerimientoSeleccionado.esAutoaprobacion === 1;
     const rolesGlobalesAprob = ['ADLOGIST', 'JLOLOGIST', 'JEMLOGIST', 'FINANZAS', 'GERENTE', 'TILOGIST'];
     const esRolGlobalAprob = rolesGlobalesAprob.some(r => this.usuario.idrol?.includes(r));
-    if (!esRolGlobalAprob && (this.requerimientoSeleccionado as any).dniregistra === this.usuario.documentoidentidad) {
+    if (!esAutoaprobacionSel && (esAmbitoSeleccionado || !esRolGlobalAprob) && (this.requerimientoSeleccionado as any).dniregistra === this.usuario.documentoidentidad) {
       Swal.fire('No permitido', 'No puede aprobar su propio requerimiento', 'warning');
       return;
     }
@@ -710,13 +773,22 @@ export class AprobacionesAreaComponent implements OnInit {
         idrequerimiento: this.requerimientoSeleccionado.idrequerimiento, // Corregido: minúscula
         documentoidentidad: this.usuario.documentoidentidad,
         accion: 'APROBADO' as const,
-        comentarios: this.observaciones || 'Aprobado',
+        comentarios: esAutoaprobacionSel ? (this.observaciones || '') : (this.observaciones || 'Aprobado'),
         ruc: this.usuario.ruc,
       };
-      const response = await (this.modoGerencia
-        ? this.aprobacionesAreaService.aprobarRequerimientoGerencia(requestAprobacion)
-        : this.aprobacionesAreaService.aprobarRequerimientoArea(requestAprobacion)
-      ).toPromise();
+      const response = esAmbitoSeleccionado
+        ? await this.aprobacionesAmbitosService.decidir({
+            ruc: this.usuario.ruc,
+            idRuta: this.requerimientoSeleccionado.idRuta!,
+            nivel: this.requerimientoSeleccionado.nivelAmbito!,
+            documentoidentidad: this.usuario.documentoidentidad,
+            accion: 'APROBADO',
+            motivo: esAutoaprobacionSel ? (this.observaciones || '') : (this.observaciones || 'Aprobado'),
+          }).toPromise()
+        : await (this.modoGerencia
+          ? this.aprobacionesAreaService.aprobarRequerimientoGerencia(requestAprobacion)
+          : this.aprobacionesAreaService.aprobarRequerimientoArea(requestAprobacion)
+        ).toPromise();
 
       console.log('📤 Respuesta de aprobación:', response);
       this.displayAprobacionModal = false;
@@ -749,7 +821,7 @@ export class AprobacionesAreaComponent implements OnInit {
 
         if ('success' in responseItem) {
           // Formato nuevo: { success: true, mensaje: "..." }
-          esExitoso = responseItem.success === true;
+          esExitoso = responseItem.success === true || responseItem.success === 1;
           mensaje = responseItem.mensaje || 'Operación realizada correctamente';
           console.log('✅ Formato nuevo detectado, esExitoso:', esExitoso);
         } else if ('resultado' in responseItem) {
@@ -768,9 +840,11 @@ export class AprobacionesAreaComponent implements OnInit {
         Swal.fire('Éxito', mensaje, 'success');
         console.log('✅ Aprobación exitosa, requerimiento:', this.requerimientoSeleccionado);
 
-        // Ocultar el requerimiento de la lista local del creador sin esperar sincronización
-        await this.syncService.marcarAprobadoLocalmente(
+        // Reflejar el estado real en la lista local del creador sin esperar sincronización:
+        // APROBACION1 sigue pendiente de N2, APROBADO se marca como aprobado.
+        await this.syncService.marcarEstadoLocalmente(
           this.requerimientoSeleccionado.idrequerimiento,
+          estadoFinal,
         );
 
         console.log('🔄 Iniciando sincronización con SPRING...');
@@ -779,6 +853,23 @@ export class AprobacionesAreaComponent implements OnInit {
           // Flujo DOS_NIVELES: queda pendiente de Gerencia.
           // NO migrar a SPRING ni notificar despacho — ocurre en la aprobación nivel 2
           console.log('ℹ️ Requerimiento quedó en APROBACION1 - pendiente de aprobación de Gerencia');
+        } else if (esAmbitoSeleccionado) {
+          // Flujo por ámbitos: se migra a SPRING con el mismo mecanismo del
+          // flujo legado y el resultado queda registrado en la cola de efectos.
+          try {
+            await this.sincronizarRequerimientoSPRING(this.requerimientoSeleccionado);
+            await this.aprobacionesAmbitosService.marcarEfecto({
+              ruc: this.usuario.ruc, idRuta: this.requerimientoSeleccionado.idRuta!,
+              tipo: 'SPRING', estado: 'COMPLETADO',
+            }).toPromise().catch(() => {});
+          } catch (error: any) {
+            await this.aprobacionesAmbitosService.marcarEfecto({
+              ruc: this.usuario.ruc, idRuta: this.requerimientoSeleccionado.idRuta!,
+              tipo: 'SPRING', estado: 'ERROR',
+              error: String(error?.message ?? error).slice(0, 1000),
+            }).toPromise().catch(() => {});
+            console.error('❌ Error en sincronización con SPRING:', error);
+          }
         } else {
           // Sincronizar con SPRING TODOS los requerimientos aprobados (COMPRA y CONSUMO)
           console.log('🔄 Iniciando sincronización con SPRING para requerimiento aprobado...');
@@ -858,10 +949,19 @@ export class AprobacionesAreaComponent implements OnInit {
         comentarios: this.observaciones,
         ruc: this.usuario.ruc,
       };
-      const response = await (this.modoGerencia
-        ? this.aprobacionesAreaService.aprobarRequerimientoGerencia(requestRechazo)
-        : this.aprobacionesAreaService.aprobarRequerimientoArea(requestRechazo)
-      ).toPromise();
+      const response = (this.requerimientoSeleccionado as any).flujoAmbito === true
+        ? await this.aprobacionesAmbitosService.decidir({
+            ruc: this.usuario.ruc,
+            idRuta: this.requerimientoSeleccionado.idRuta!,
+            nivel: this.requerimientoSeleccionado.nivelAmbito!,
+            documentoidentidad: this.usuario.documentoidentidad,
+            accion: 'RECHAZADO',
+            motivo: this.observaciones,
+          }).toPromise()
+        : await (this.modoGerencia
+          ? this.aprobacionesAreaService.aprobarRequerimientoGerencia(requestRechazo)
+          : this.aprobacionesAreaService.aprobarRequerimientoArea(requestRechazo)
+        ).toPromise();
 
       this.displayAprobacionModal = false;
 
@@ -873,11 +973,13 @@ export class AprobacionesAreaComponent implements OnInit {
       let esExitoso = false;
       let mensaje = '';
 
-      if (response && Array.isArray(response) && response.length > 0) {
-        const firstItem = response[0];
+      const itemRechazo = Array.isArray(response) ? response[0]
+        : (response && typeof response === 'object' ? response : null);
+      if (itemRechazo) {
+        const firstItem = itemRechazo;
         if ('success' in firstItem) {
           // Formato nuevo: [{ success: true, mensaje: "..." }]
-          esExitoso = firstItem.success === true;
+          esExitoso = firstItem.success === true || firstItem.success === 1;
           mensaje =
             firstItem.mensaje || 'Requerimiento rechazado correctamente';
         } else if ('resultado' in firstItem) {
@@ -926,7 +1028,12 @@ export class AprobacionesAreaComponent implements OnInit {
     const esRolGlobalAprob = rolesGlobalesAprob.some(r => this.usuario.idrol?.includes(r));
 
     const aprobables = this.requerimientosPendientesSeleccionados.filter(req => {
-      if (!esRolGlobalAprob && (req as any).dniregistra === this.usuario.documentoidentidad) {
+      const esAmbito = (req as any).flujoAmbito === true;
+      const esAuto = req.esAutoaprobacion === true || req.esAutoaprobacion === 1;
+      if (!esAuto && (esAmbito || !esRolGlobalAprob) && (req as any).dniregistra === this.usuario.documentoidentidad) {
+        return false;
+      }
+      if (esAmbito && ((req as any).esperaNivelAnterior || (req as any).autorizadoActualmente === false)) {
         return false;
       }
       return true;
@@ -945,17 +1052,28 @@ export class AprobacionesAreaComponent implements OnInit {
 
     for (const req of aprobables) {
       try {
+        const esAuto = req.esAutoaprobacion === true || req.esAutoaprobacion === 1;
         const requestAprobacion = {
           idrequerimiento: req.idrequerimiento,
           documentoidentidad: this.usuario.documentoidentidad,
           accion: 'APROBADO' as const,
-          comentarios: this.observacionesMultiple || 'Aprobado',
+          comentarios: esAuto ? (this.observacionesMultiple || '') : (this.observacionesMultiple || 'Aprobado'),
           ruc: this.usuario.ruc,
         };
-        const response = await (this.modoGerencia
-          ? this.aprobacionesAreaService.aprobarRequerimientoGerencia(requestAprobacion)
-          : this.aprobacionesAreaService.aprobarRequerimientoArea(requestAprobacion)
-        ).toPromise();
+        const esAmbitoReq = (req as any).flujoAmbito === true;
+        const response = esAmbitoReq
+          ? await this.aprobacionesAmbitosService.decidir({
+              ruc: this.usuario.ruc,
+              idRuta: (req as any).idRuta,
+              nivel: (req as any).nivelAmbito,
+              documentoidentidad: this.usuario.documentoidentidad,
+              accion: 'APROBADO',
+              motivo: esAuto ? (this.observacionesMultiple || '') : (this.observacionesMultiple || 'Aprobado'),
+            }).toPromise()
+          : await (this.modoGerencia
+            ? this.aprobacionesAreaService.aprobarRequerimientoGerencia(requestAprobacion)
+            : this.aprobacionesAreaService.aprobarRequerimientoArea(requestAprobacion)
+          ).toPromise();
 
         let esExitoso = false;
         let responseItem = null;
@@ -967,7 +1085,7 @@ export class AprobacionesAreaComponent implements OnInit {
 
         if (responseItem) {
           if ('success' in responseItem) {
-            esExitoso = responseItem.success === true;
+            esExitoso = responseItem.success === true || responseItem.success === 1;
           } else if ('resultado' in responseItem) {
             esExitoso = this.esRespuestaExito(responseItem);
           }
@@ -978,10 +1096,29 @@ export class AprobacionesAreaComponent implements OnInit {
         if (esExitoso) {
           exitosos++;
 
-          // Ocultar el requerimiento de la lista local del creador sin esperar sincronización
-          await this.syncService.marcarAprobadoLocalmente(req.idrequerimiento);
+          // Reflejar el estado real en la lista local del creador sin esperar sincronización
+          await this.syncService.marcarEstadoLocalmente(req.idrequerimiento, estadoFinal);
 
-          if (estadoFinal === 'APROBACION1') {
+          if (esAmbitoReq) {
+            // Flujo por ámbitos: misma migración a SPRING que el flujo legado;
+            // el resultado queda registrado en la cola de efectos de la ruta.
+            try {
+              await this.sincronizarRequerimientoSPRING(req, true);
+              sincronizados++;
+              await this.aprobacionesAmbitosService.marcarEfecto({
+                ruc: this.usuario.ruc, idRuta: (req as any).idRuta,
+                tipo: 'SPRING', estado: 'COMPLETADO',
+              }).toPromise().catch(() => {});
+            } catch (syncError: any) {
+              fallidosSincronizacion++;
+              await this.aprobacionesAmbitosService.marcarEfecto({
+                ruc: this.usuario.ruc, idRuta: (req as any).idRuta,
+                tipo: 'SPRING', estado: 'ERROR',
+                error: String(syncError?.message ?? syncError).slice(0, 1000),
+              }).toPromise().catch(() => {});
+              console.error(`❌ Error sincronizando requerimiento ${req.idrequerimiento} con SPRING:`, syncError);
+            }
+          } else if (estadoFinal === 'APROBACION1') {
             // Flujo DOS_NIVELES: pendiente de Gerencia, sin migración SPRING aún
             console.log(`ℹ️ ${req.idrequerimiento} quedó en APROBACION1 - pendiente de Gerencia`);
           } else {
@@ -1425,7 +1562,7 @@ export class AprobacionesAreaComponent implements OnInit {
         (req as any).idClasificacion ||
         ''
       );
-      const itemtipo = (requerimientoCompleto.itemtipo || req.itemtipo || '').toUpperCase();
+      const itemtipo = (requerimientoCompleto.itemtipo || req.itemtipo || '').toString().trim().toUpperCase();
 
       // Determinar clasificación: priorizar valor real de BD; si no viene
       // (ej. lista de aprobados no devuelve idclasificacion), derivarla del
@@ -1718,7 +1855,12 @@ export class AprobacionesAreaComponent implements OnInit {
                 const itemEncontrado = this.itemsFiltered.find(
                   (i) => i.item === d.codigo
                 );
-                if (itemEncontrado?.cuentaGasto) {
+                if (['CMP', 'STO'].includes(clasificacion) && ['COMPRA', 'CONSUMO'].includes(itemtipo)) {
+                  const cuenta = itemtipo === 'COMPRA'
+                    ? itemEncontrado?.cuentaInventario
+                    : itemEncontrado?.cuentaGasto;
+                  itemCuentaContable = typeof cuenta === 'string' ? cuenta.trim() : undefined;
+                } else if (itemEncontrado?.cuentaGasto) {
                   itemCuentaContable = itemEncontrado.cuentaGasto;
                 } else {
                   // ACTIVOFIJO/ACTIVOMENOR: sus códigos viven en la maestra
@@ -1736,7 +1878,7 @@ export class AprobacionesAreaComponent implements OnInit {
                 }
 
                 // Debug: mostrar si no se encontró el item
-                if (!itemEncontrado) {
+                if (!itemEncontrado && !['CMP', 'STO'].includes(clasificacion)) {
                   console.warn(`⚠️ Item ${d.codigo} no encontrado en itemsFiltered, usando cuenta por defecto`);
                 }
               }
@@ -2358,6 +2500,8 @@ export class AprobacionesAreaComponent implements OnInit {
   //DETALLE DE REQUERIMIENTO PENDIENTE DE APROBACION
   //================================================
   async verDetallePendientes(requerimiento: any) {
+    const sesion = ++this.sesionDetallePendientes;
+    this.limpiarStockDetalle();
     this.requerimientoDetallePendientes = requerimiento;
     this.loadingDetallePendientes = true;
     this.displayDetallePendientesModal = true;
@@ -2374,6 +2518,7 @@ export class AprobacionesAreaComponent implements OnInit {
         })
         .toPromise();
 
+      if (sesion !== this.sesionDetallePendientes) return;
       const lista = Array.isArray(response)
         ? response
         : response?.resultado || [];
@@ -2423,8 +2568,10 @@ export class AprobacionesAreaComponent implements OnInit {
     } catch (error) {
       console.error('Error cargando detalle de pendientes:', error);
     } finally {
-      this.loadingDetallePendientes = false;
+      if (sesion === this.sesionDetallePendientes) this.loadingDetallePendientes = false;
     }
+    if (sesion !== this.sesionDetallePendientes) return;
+    void this.actualizarStockDetalle();
 
     // Reordenar "descripcion - glosa" en líneas de servicio una vez que
     // las maestras están listas (los datos antiguos quedaron al revés)
@@ -2433,7 +2580,9 @@ export class AprobacionesAreaComponent implements OnInit {
     } catch {
       /* si fallan las maestras se muestra el detalle igual */
     }
+    if (sesion !== this.sesionDetallePendientes) return;
     await this.cargarMaestraServicios();
+    if (sesion !== this.sesionDetallePendientes) return;
     this.normalizarDescripcionesServicio(this.requerimientoDetallePendientes);
 
     // Detectar si es servicio y abrir el tab correspondiente
@@ -2454,6 +2603,62 @@ export class AprobacionesAreaComponent implements OnInit {
     dets.forEach((_, i) => this.detallesPendientesSeleccionados.add(i));
     // Cargar adjuntos
     this.cargarAdjuntos();
+  }
+
+  get mostrarStockDetalle(): boolean {
+    return !!this.requerimientoDetallePendientes &&
+      ['CONSUMO', 'COMPRA'].includes(this.tipoRequerimientoLabel(this.requerimientoDetallePendientes));
+  }
+
+  get columnasDetallePendientes(): number {
+    return 9 + (this.mostrarStockDetalle ? 1 : 0) +
+      (this.esRequerimientoCompra(this.requerimientoDetallePendientes) ? 2 : 0);
+  }
+
+  stockActualDetalle(codigo: unknown): number | null {
+    return this.stockDetalle().stocks.get(String(codigo ?? '').trim()) ?? null;
+  }
+
+  private limpiarStockDetalle() {
+    this.consultaStockDetalle++;
+    this.stockDetalle.set({ estado: 'inicial', idalmacen: '', fecha: null, stocks: new Map() });
+  }
+
+  async actualizarStockDetalle(): Promise<void> {
+    if (!this.displayDetallePendientesModal || !this.mostrarStockDetalle || this.stockDetalle().estado === 'cargando') return;
+    const consulta = ++this.consultaStockDetalle;
+    const sesion = this.sesionDetallePendientes;
+    const requerimiento = this.requerimientoDetallePendientes;
+    this.stockDetalle.set({ estado: 'cargando', idalmacen: '', fecha: null, stocks: new Map() });
+    const vigente = () => consulta === this.consultaStockDetalle && sesion === this.sesionDetallePendientes &&
+      this.displayDetallePendientesModal;
+    try {
+      const idrequerimiento = String(requerimiento.idrequerimiento ?? requerimiento.idRequerimiento ?? '').trim();
+      const ruc = String(requerimiento.ruc || this.usuario?.ruc || '').trim();
+      const documentoidentidad = String(this.usuario?.documentoidentidad || '').trim();
+      if (!idrequerimiento || !ruc || !documentoidentidad) throw new Error('Falta el contexto del requerimiento');
+      const respuesta = await firstValueFrom(this.aprobacionesAreaService.consultarStockDetalle({
+        idrequerimiento, ruc, documentoidentidad, modoGerencia: this.modoGerencia
+      }).pipe(timeout(30000)));
+      if (!vigente()) return;
+      if (respuesta?.estado === 'SIN_ALMACEN') {
+        this.stockDetalle.set({ estado: 'sin-almacen', idalmacen: '', fecha: null, stocks: new Map() });
+        return;
+      }
+      if (respuesta?.estado !== 'OK' || !respuesta.idalmacen?.trim() || !Array.isArray(respuesta.items)) {
+        throw new Error('Respuesta de stock incompleta');
+      }
+      const stocks = new Map<string, number>();
+      for (const item of respuesta.items) {
+        const codigo = String(item.codigo ?? '').trim();
+        if (codigo && typeof item.stockActual === 'number' && Number.isFinite(item.stockActual)) {
+          stocks.set(codigo, item.stockActual);
+        }
+      }
+      this.stockDetalle.set({ estado: 'ok', idalmacen: respuesta.idalmacen.trim(), fecha: new Date(), stocks });
+    } catch {
+      if (vigente()) this.stockDetalle.set({ estado: 'error', idalmacen: '', fecha: null, stocks: new Map() });
+    }
   }
 
   getDetallesPendientes(): any[] {
@@ -2697,6 +2902,9 @@ export class AprobacionesAreaComponent implements OnInit {
   }
 
   cerrarDetallePendientes() {
+    this.sesionDetallePendientes++;
+    this.limpiarStockDetalle();
+    this.loadingDetallePendientes = false;
     this.displayDetallePendientesModal = false;
     this.requerimientoDetallePendientes = null;
     this.detallesPendientesSeleccionados.clear();
@@ -2980,7 +3188,8 @@ export class AprobacionesAreaComponent implements OnInit {
       ruc: this.usuario?.ruc || ''
     }).subscribe({
       next: (response: any) => {
-        const resultado = response.resultado;
+        // El response puede venir como array directo o como {resultado: [...]}
+        const resultado = Array.isArray(response) ? response : response?.resultado;
         this.requerimientosAnulados = Array.isArray(resultado) ? resultado : [];
         this.loadingAnulados = false;
       },
@@ -3073,7 +3282,8 @@ export class AprobacionesAreaComponent implements OnInit {
       idRequerimiento: this.requerimientoDetallePendientes.idrequerimiento
     }).subscribe({
       next: (response: any) => {
-        const resultado = response.resultado;
+        // El response puede venir como array directo o como {resultado: [...]}
+        const resultado = Array.isArray(response) ? response : response?.resultado;
         this.historialAnulaciones = Array.isArray(resultado) ? resultado : [];
         this.loadingHistorialAnulaciones = false;
       },

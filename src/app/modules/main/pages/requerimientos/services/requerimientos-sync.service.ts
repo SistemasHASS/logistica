@@ -136,6 +136,36 @@ export class RequerimientosSyncService implements OnDestroy {
   }
 
   /**
+   * Marca el estado real devuelto por una aprobación (APROBADO o APROBACION1)
+   * en las tablas locales de Dexie. A diferencia de marcarAprobadoLocalmente,
+   * una aprobación de N1 no oculta el requerimiento: sigue pendiente de N2.
+   */
+  async marcarEstadoLocalmente(idrequerimiento: string | undefined | null, estado: string): Promise<void> {
+    if (!idrequerimiento || !estado) return;
+    const now = new Date().toISOString();
+    const tablas: any[] = [
+      this.dexieService.requerimientos,
+      this.dexieService.requerimientosCommodity,
+      this.dexieService.requerimientosActivoFijo,
+      this.dexieService.requerimientosActivoFijoMenor,
+    ];
+
+    for (const tabla of tablas) {
+      try {
+        const registros = await tabla.where('idrequerimiento').equals(idrequerimiento).toArray();
+        for (const local of registros) {
+          if (local.estado !== 1) continue;
+          const cambios: any = { estados: estado };
+          if (estado === 'APROBADO') cambios.fechaAprobacion = now;
+          await tabla.update(local.id!, cambios);
+        }
+      } catch (error) {
+        console.error(`❌ Error marcando estado ${estado} localmente en tabla ${tabla.name}:`, error);
+      }
+    }
+  }
+
+  /**
    * Aplica los estados recibidos del servidor a los registros locales de Dexie.
    * Solo actualiza requerimientos que ya fueron enviados (estado === 1) para no
    * sobrescribir cambios pendientes de sincronización (estado === 0).

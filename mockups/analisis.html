@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análisis de Requerimientos de Compra — Mockup</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<style>
+  :root{
+    --bg:#f1f5f9; --card:#ffffff; --border:#e2e8f0; --txt:#1e293b; --muted:#64748b;
+    --aprobado:#2563eb; --aprobado-bg:#dbeafe;
+    --proceso:#d97706;  --proceso-bg:#fef3c7;
+    --conoc:#0d9488;   --conoc-bg:#ccfbf1;
+    --atendido:#15803d;--atendido-bg:#dcfce7;
+    --rechazo:#dc2626; --rechazo-bg:#fee2e2;
+    --primary:#0f172a;
+    --accent:#7c3aed;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+  body{background:var(--bg);color:var(--txt);padding:20px}
+  .container{max-width:1500px;margin:0 auto}
+  h1{font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px}
+  h1 .icon{background:var(--accent);color:#fff;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .lock{background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:999px;font-size:11px;padding:3px 10px;font-weight:600}
+  .subtitle{color:var(--muted);font-size:13px;margin:4px 0 16px 44px}
+  .navmock{position:fixed;top:12px;right:20px;font-size:12px;z-index:50}
+  .navmock a{background:#fff;border:1px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--muted);text-decoration:none;font-weight:600}
+  .navmock a.on{color:var(--accent);border-color:var(--accent)}
+
+  .filters{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:14px}
+  .fgroup{display:flex;flex-direction:column;gap:4px}
+  .fgroup label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .fgroup select,.fgroup input{border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;min-width:120px;background:#fff}
+  .btn{border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-excel{background:#15803d;color:#fff}
+  .btn-ghost{background:#fff;border:1px solid var(--border);color:var(--muted)}
+  .btn:active{transform:scale(.97)}
+  .spacer{flex:1}
+
+  /* KPIs análisis */
+  .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+  .kpi .num{font-size:22px;font-weight:800;color:var(--accent)}
+  .kpi .lbl{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+
+  /* Tabs */
+  .tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:0}
+  .tab{padding:10px 22px;font-size:13.5px;font-weight:700;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:8px}
+  .tab .cnt{background:#e2e8f0;border-radius:99px;font-size:11px;padding:1px 8px;color:var(--muted)}
+  .tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .tab.on .cnt{background:var(--accent);color:#fff}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:0 0 12px 12px;border-top:none;overflow-x:auto}
+  table{border-collapse:collapse;font-size:12.5px;min-width:100%}
+  thead th{background:#f8fafc;text-align:left;padding:9px 10px;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0}
+  tbody td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap}
+  tbody tr:hover{background:#f8fafc}
+  .num-r{text-align:right}
+  .muted{color:var(--muted);font-size:11.5px}
+  .reqnum{font-weight:700}
+  .reqnum .spr{display:block;font-size:10.5px;color:var(--muted);font-weight:500}
+  .wrap{white-space:normal;min-width:200px}
+
+  .badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:10.5px;font-weight:700;white-space:nowrap}
+  .b-ap{background:var(--aprobado-bg);color:var(--aprobado)}
+  .b-ep{background:var(--proceso-bg);color:var(--proceso)}
+  .b-oc{background:var(--conoc-bg);color:var(--conoc)}
+  .b-at{background:var(--atendido-bg);color:var(--atendido)}
+  .b-parcial{background:#fff7ed;color:#c2410c;border:1px solid #fdba74}
+  .b-rech{background:var(--rechazo-bg);color:var(--rechazo)}
+  .b-pri{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+  .b-pri.A{background:#fee2e2;color:#b91c1c;border-color:#fecaca}
+  .prog{height:6px;background:#e2e8f0;border-radius:99px;overflow:hidden;width:80px;display:inline-block;vertical-align:middle}
+  .prog>div{height:100%;background:var(--atendido)}
+  .lt{font-weight:700}
+  .lt.ok{color:var(--atendido)} .lt.warn{color:#c2410c} .lt.bad{color:var(--rechazo)}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+  .footer{margin-top:12px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between}
+
+</style>
+</head>
+<body>
+<div class="navmock">
+  Mockups: <a href="index.html">Operativo</a> <a href="analisis.html" class="on">Análisis</a> <a href="admin-accesos.html">Accesos (Admin)</a>
+</div>
+<div class="container">
+
+  <h1><span class="icon">📊</span> Análisis de Seguimiento — Req. de Compra <span class="lock">🔒 acceso restringido por DNI</span></h1>
+  <p class="subtitle">Vista analítica: una pestaña por nivel (cabecera / línea) · Solo usuarios autorizados &nbsp;·&nbsp; Mockup con datos de prueba</p>
+
+  <div class="filters">
+    <div class="fgroup"><label>Empresa</label>
+      <select><option value="">Todas</option><option>20481121966 - Agro Hass</option><option>20100445620 - Hass S.A.</option></select>
+    </div>
+    <div class="fgroup"><label>Fundo</label>
+      <select><option value="">Todos</option><option>F01 - Paltos</option><option>F02 - Chao</option><option>F03 - Virú</option></select>
+    </div>
+    <div class="fgroup"><label>Área</label>
+      <select><option value="">Todas</option><option>Logística</option><option>Producción</option><option>Administración</option><option>Mantenimiento</option></select>
+    </div>
+    <div class="fgroup"><label>Etapa</label>
+      <select id="fEtapa" onchange="render()"><option value="">Todas</option><option value="APROBADO">Aprobado</option><option value="EN_PROCESO">En Proceso</option><option value="CON_OC">Con OC</option><option value="ATENDIDO">Atendido</option></select>
+    </div>
+    <div class="fgroup"><label>Desde</label><input type="date" value="2026-09-01"></div>
+    <div class="fgroup"><label>Hasta</label><input type="date" value="2026-11-13"></div>
+    <div class="fgroup"><label>Buscar</label><input id="fBuscar" type="text" placeholder="req / ítem / OC / proveedor / DNI" oninput="render()"></div>
+    <button class="btn btn-primary" onclick="render()">Buscar</button>
+    <div class="spacer"></div>
+    <a href="admin-accesos.html" class="btn btn-ghost" title="El acceso se administra en Admin Logística → Accesos Reportes" style="text-decoration:none">🔐 Acceso en Admin Logística ↗</a>
+    <button class="btn btn-excel" onclick="exportarExcel()">⬇ Exportar Excel</button>
+  </div>
+
+  <!-- KPIs analíticos -->
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Requerimientos</div><div class="num" id="kReq">0</div></div>
+    <div class="kpi"><div class="lbl">Líneas / ítems</div><div class="num" id="kLin">0</div></div>
+    <div class="kpi"><div class="lbl">% atención global</div><div class="num" id="kPct">0%</div></div>
+    <div class="kpi"><div class="lbl">Monto OC total</div><div class="num" id="kMonto" style="font-size:18px">—</div></div>
+    <div class="kpi"><div class="lbl">Lead time prom.</div><div class="num" id="kLead" style="font-size:18px">—</div></div>
+    <div class="kpi"><div class="lbl">Aprob N2 → OC prom.</div><div class="num" id="kLeadOc" style="font-size:18px">—</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab on" id="tabReq" onclick="setTab('req')">📋 Requerimientos <span class="cnt" id="cntReq">0</span></button>
+    <button class="tab" id="tabDet" onclick="setTab('det')">🧾 Detalles por ítem <span class="cnt" id="cntDet">0</span></button>
+  </div>
+
+  <!-- TAB 1: REQUERIMIENTOS -->
+  <div class="card" id="viewReq">
+    <table>
+      <thead><tr>
+        <th>Requerimiento</th><th>Pri.</th><th>Solicitante</th><th>Fundo / Área</th>
+        <th>Almacén</th><th>F. Registro</th><th>F. Aprob. N2</th><th>Aprobador N2</th>
+        <th>Etapa</th><th>Avance</th><th>OC(s)</th><th>Estado OC</th><th>Proveedor</th>
+        <th class="num-r">Monto OC</th><th>N° NI</th><th>F. Ingreso</th>
+        <th class="num-r">Ap→OC (d)</th><th class="num-r">OC→Ing. (d)</th><th class="num-r">Lead time (d)</th>
+      </tr></thead>
+      <tbody id="tbodyReq"></tbody>
+    </table>
+    <div class="empty" id="emptyReq" style="display:none">Sin resultados</div>
+  </div>
+
+  <!-- TAB 2: DETALLES -->
+  <div class="card" id="viewDet" style="display:none">
+    <table>
+      <thead><tr>
+        <th>Requerimiento</th><th>Solicitante</th><th>Fundo/Área</th>
+        <th>Cód. Ítem</th><th>Descripción</th><th>UM</th><th class="num-r">Cant. Req</th>
+        <th>Ceco</th><th>Proyecto</th><th>Partida</th>
+        <th>Etapa línea</th><th>Consol.</th>
+        <th>N° OC</th><th>Sec. OC</th><th>Estado OC</th><th>Proveedor</th>
+        <th class="num-r">P. Unit.</th><th class="num-r">Pedida</th><th class="num-r">Recibida</th><th class="num-r">Pend.</th><th class="num-r">% Atenc.</th>
+        <th>N° NI</th><th>Guía</th><th>F. Ingreso</th><th class="num-r">Días etapa</th>
+      </tr></thead>
+      <tbody id="tbodyDet"></tbody>
+    </table>
+    <div class="empty" id="emptyDet" style="display:none">Sin resultados</div>
+  </div>
+
+  <div class="footer">
+    <span id="count"></span>
+    <span>MOCKUP — fuente real: SP <code>LOGISTICA_reporteSeguimientoReqCompra_Analisis</code> · acceso: tabla <code>LOGISTICA_ConfigAccesoReporte</code></span>
+  </div>
+</div>
+
+<!-- El acceso a este reporte se administra en el módulo independiente:
+     Admin Logística → tab "Accesos Reportes" (ver admin-accesos.html) -->
+
+<script>
+const ETAPAS = ['APROBADO','EN_PROCESO','CON_OC','ATENDIDO'];
+const ETAPA_LBL = {APROBADO:'Aprobado',EN_PROCESO:'En Proceso',CON_OC:'Con OC',ATENDIDO:'Atendido'};
+const ETAPA_CLS = {APROBADO:'b-ap',EN_PROCESO:'b-ep',CON_OC:'b-oc',ATENDIDO:'b-at'};
+
+const DATA = [
+ { id:'REQ-2026-08841', spr:'0000005882', sol:'M. López', dni:'45231876', fundo:'F02 - Chao', area:'Logística',
+   alm:'ALM-02', pri:'A', freg:'15/10/2026', fap:'28/10/2026', apN2:'R. Mendoza (N2)', glosa:'Repuestos tractor', dias:16,
+   dApOc:7, dOcIng:5, ocRech:false,
+   ocs:[{n:'OC-20261105-0003',spr:'0000000123',est:'APROBADA',prov:'FERREMAX S.A.C.',monto:4820.00,fenvio:'06/11/2026'}],
+   det:[
+    {cod:'100234',desc:'Filtro de aceite motor',um:'UND',cant:10,ceco:'CC-MNT-01',proy:'PALTOS-2026',partida:'5.1.2.3',etapa:'CON_OC',consol:1,
+     oc:'OC-20261105-0003',sec:1,ocEst:'APROBADA',prov:'FERREMAX S.A.C.',pu:182.50,ped:10,rec:0,ni:null,fing:null,guia:null,dEtapa:8},
+    {cod:'100235',desc:'Correa distribución',um:'UND',cant:5,ceco:'CC-MNT-01',proy:'PALTOS-2026',partida:'5.1.2.3',etapa:'ATENDIDO',consol:1,
+     oc:'OC-20261105-0003',sec:2,ocEst:'CO',prov:'FERREMAX S.A.C.',pu:96.00,ped:5,rec:5,ni:'NI000000045',fing:'10/11/2026',guia:'G001-2211',dEtapa:3},
+    {cod:'100240',desc:'Válvula presión hidráulica',um:'UND',cant:2,ceco:'CC-MNT-02',proy:'PALTOS-2026',partida:'5.1.2.4',etapa:'EN_PROCESO',consol:1,
+     oc:'OC-20261111-0004',sec:1,ocEst:'PEND_APROB',prov:'HIDRAULICA SUR S.A.',pu:640.00,ped:2,rec:0,ni:null,fing:null,guia:null,dEtapa:2},
+    {cod:'100241',desc:'Kit juntas',um:'KIT',cant:1,ceco:'CC-MNT-01',proy:'PALTOS-2026',partida:'5.1.2.3',etapa:'APROBADO',consol:0,
+     oc:null,sec:null,ocEst:null,prov:null,pu:null,ped:0,rec:0,ni:null,fing:null,guia:null,dEtapa:16},
+ ]},
+ { id:'REQ-2026-08855', spr:'0000005901', sol:'J. Pérez', dni:'43880112', fundo:'F01 - Paltos', area:'Mantenimiento',
+   alm:'ALM-01', pri:'N', freg:'20/10/2026', fap:'02/11/2026', apN2:'R. Mendoza (N2)', glosa:'Material riego', dias:11,
+   dApOc:null, dOcIng:null, ocRech:false, ocs:[],
+   det:[
+    {cod:'100311',desc:'Rociador estación riego',um:'UND',cant:40,ceco:'CC-RIE-03',proy:'PALTOS-2026',partida:'5.2.1.1',etapa:'APROBADO',consol:0,oc:null,sec:null,ocEst:null,prov:null,pu:null,ped:0,rec:0,ni:null,fing:null,guia:null,dEtapa:11},
+    {cod:'100312',desc:'Tubo PVC 2" x 6m',um:'UND',cant:15,ceco:'CC-RIE-03',proy:'PALTOS-2026',partida:'5.2.1.1',etapa:'APROBADO',consol:0,oc:null,sec:null,ocEst:null,prov:null,pu:null,ped:0,rec:0,ni:null,fing:null,guia:null,dEtapa:11},
+ ]},
+ { id:'REQ-2026-08802', spr:'0000005840', sol:'A. Ruiz', dni:'41994558', fundo:'F03 - Virú', area:'Producción',
+   alm:'ALM-03', pri:'A', freg:'08/10/2026', fap:'10/10/2026', apN2:'C. Salas (N2)', glosa:'Fertilizantes campaña', dias:34,
+   dApOc:5, dOcIng:null, ocRech:true,
+   ocs:[{n:'OC-20261015-0001',spr:'0000000110',est:'RECHAZADA',prov:'AGROINVERSIONES E.I.R.L.',monto:12300.00,fenvio:null}],
+   det:[
+    {cod:'100500',desc:'Fertilizante NPK 15-15-15',um:'KG',cant:60,ceco:'CC-PRD-02',proy:'VIRU-2026',partida:'5.3.4.1',etapa:'APROBADO',consol:0,oc:null,sec:null,ocEst:null,prov:null,pu:null,ped:0,rec:0,ni:null,fing:null,guia:null,dEtapa:29,nota:'Liberado por rechazo OC-20261015-0001'},
+ ]},
+ { id:'REQ-2026-08890', spr:'0000005920', sol:'C. Vega', dni:'46778901', fundo:'F01 - Paltos', area:'Logística',
+   alm:'ALM-01', pri:'N', freg:'01/11/2026', fap:'04/11/2026', apN2:'R. Mendoza (N2)', glosa:'EPP y limpieza', dias:9,
+   dApOc:null, dOcIng:null, ocRech:false,
+   ocs:[{n:'OC-20261107-0008',spr:'0000000131',est:'PENDIENTE_APROBACION',prov:'DISMER S.A.',monto:1540.00,fenvio:null}],
+   det:[
+    {cod:'100610',desc:'Guantes nitrilo (caja)',um:'CJA',cant:20,ceco:'CC-LOG-01',proy:'PALTOS-2026',partida:'5.4.1.2',etapa:'EN_PROCESO',consol:1,oc:'OC-20261107-0008',sec:1,ocEst:'PEND_APROB',prov:'DISMER S.A.',pu:58.00,ped:20,rec:0,ni:null,fing:null,guia:null,dEtapa:6},
+    {cod:'100611',desc:'Alcohol industrial 20L',um:'GLN',cant:4,ceco:'CC-LOG-01',proy:'PALTOS-2026',partida:'5.4.1.2',etapa:'EN_PROCESO',consol:1,oc:'OC-20261107-0008',sec:2,ocEst:'PEND_APROB',prov:'DISMER S.A.',pu:95.00,ped:4,rec:0,ni:null,fing:null,guia:null,dEtapa:6},
+ ]},
+ { id:'REQ-2026-08710', spr:'0000005790', sol:'R. Díaz', dni:'40223344', fundo:'F02 - Chao', area:'Administración',
+   alm:'ALM-02', pri:'B', freg:'25/09/2026', fap:'28/09/2026', apN2:'C. Salas (N2)', glosa:'Útiles oficina', dias:46,
+   dApOc:4, dOcIng:18, ocRech:false,
+   ocs:[{n:'OC-20261002-0007',spr:'0000000098',est:'ENVIADA',prov:'PAPELERÍA LIMA S.A.',monto:980.50,fenvio:'03/10/2026'}],
+   det:[
+    {cod:'100700',desc:'Tóner impresora HP',um:'UND',cant:6,ceco:'CC-ADM-01',proy:'CHAO-2026',partida:'5.5.2.1',etapa:'ATENDIDO',consol:1,oc:'OC-20261002-0007',sec:1,ocEst:'CO',prov:'PAPELERÍA LIMA S.A.',pu:120.00,ped:6,rec:6,ni:'NI000000031',fing:'20/10/2026',guia:'G003-1145',dEtapa:24},
+    {cod:'100701',desc:'Papel A4 (caja)',um:'CJA',cant:10,ceco:'CC-ADM-01',proy:'CHAO-2026',partida:'5.5.2.1',etapa:'ATENDIDO',consol:1,oc:'OC-20261002-0007',sec:2,ocEst:'CO',prov:'PAPELERÍA LIMA S.A.',pu:26.05,ped:10,rec:10,ni:'NI000000031',fing:'20/10/2026',guia:'G003-1145',dEtapa:24},
+ ]},
+ { id:'REQ-2026-08870', spr:'0000005911', sol:'S. Torres', dni:'45566778', fundo:'F03 - Virú', area:'Producción',
+   alm:'ALM-03', pri:'A', freg:'28/10/2026', fap:'30/10/2026', apN2:'C. Salas (N2)', glosa:'Agroquímicos', dias:14,
+   dApOc:4, dOcIng:9, ocRech:false,
+   ocs:[{n:'OC-20261103-0005',spr:'0000000125',est:'APROBADA',prov:'AGROQUÍMICOS PERU S.A.',monto:22750.00,fenvio:'04/11/2026'}],
+   det:[
+    {cod:'100800',desc:'Insecticida clorpirifos',um:'L',cant:30,ceco:'CC-PRD-02',proy:'VIRU-2026',partida:'5.3.4.2',etapa:'CON_OC',consol:1,oc:'OC-20261103-0005',sec:1,ocEst:'APROBADA',prov:'AGROQUÍMICOS PERU S.A.',pu:520.00,ped:30,rec:12,ni:'NI000000052',fing:'12/11/2026',guia:'G002-0871',dEtapa:10,parcial:true},
+    {cod:'100801',desc:'Fungicida mancozeb',um:'KG',cant:25,ceco:'CC-PRD-02',proy:'VIRU-2026',partida:'5.3.4.2',etapa:'CON_OC',consol:1,oc:'OC-20261103-0005',sec:2,ocEst:'APROBADA',prov:'AGROQUÍMICOS PERU S.A.',pu:284.00,ped:25,rec:0,ni:null,fing:null,guia:null,dEtapa:10},
+ ]},
+ { id:'REQ-2026-08898', spr:'0000005927', sol:'L. Ramos', dni:'47889900', fundo:'F01 - Paltos', area:'Logística',
+   alm:'ALM-01', pri:'N', freg:'05/11/2026', fap:'09/11/2026', apN2:'R. Mendoza (N2)', glosa:'Material eléctrico', dias:4,
+   dApOc:null, dOcIng:null, ocRech:false, ocs:[],
+   det:[
+    {cod:'100920',desc:'Cable THW 12AWG (rollo)',um:'RLL',cant:3,ceco:'CC-LOG-02',proy:'PALTOS-2026',partida:'5.4.3.1',etapa:'APROBADO',consol:0,oc:null,sec:null,ocEst:null,prov:null,pu:null,ped:0,rec:0,ni:null,fing:null,guia:null,dEtapa:4},
+    {cod:'100921',desc:'Llave térmica 32A',um:'UND',cant:5,ceco:'CC-LOG-02',proy:'PALTOS-2026',partida:'5.4.3.1',etapa:'APROBADO',consol:0,oc:null,sec:null,ocEst:null,prov:null,pu:null,ped:0,rec:0,ni:null,fing:null,guia:null,dEtapa:4},
+    {cod:'100922',desc:'Reflectores LED 200W',um:'UND',cant:8,ceco:'CC-LOG-02',proy:'PALTOS-2026',partida:'5.4.3.1',etapa:'APROBADO',consol:0,oc:null,sec:null,ocEst:null,prov:null,pu:null,ped:0,rec:0,ni:null,fing:null,guia:null,dEtapa:4},
+ ]},
+];
+
+let tabActivo='req';
+function etapaReq(r){ return ETAPAS[Math.min(...r.det.map(d=>ETAPAS.indexOf(d.etapa)))]; }
+function badge(e,extra=''){ return `<span class="badge ${ETAPA_CLS[e]}">${ETAPA_LBL[e].toUpperCase()}</span>`+(extra?` <span class="badge b-parcial">${extra}</span>`:''); }
+function ltcls(d){ return d==null?'':(d<=7?'lt ok':d<=20?'lt warn':'lt bad'); }
+function fmtD(d){ return d==null?'<span class="muted">—</span>':`<span class="${ltcls(d)}">${d}</span>`; }
+function sol(r){ return `${r.sol}<br><span class="muted">${r.dni}</span>`; }
+
+function filtrar(){
+  const q=(document.getElementById('fBuscar').value||'').toLowerCase();
+  const fe=document.getElementById('fEtapa').value;
+  let rows=DATA.filter(r=>!fe||etapaReq(r)===fe);
+  if(q) rows=rows.filter(r=>
+    r.id.toLowerCase().includes(q)||r.spr.includes(q)||r.dni.includes(q)||r.sol.toLowerCase().includes(q)||
+    r.ocs.some(o=>o.n.toLowerCase().includes(q)||o.prov.toLowerCase().includes(q)||(o.spr||'').includes(q))||
+    r.det.some(d=>d.cod.includes(q)||d.desc.toLowerCase().includes(q)||(d.ni||'').toLowerCase().includes(q)));
+  return rows;
+}
+
+function render(){
+  const rows=filtrar();
+  /* KPIs */
+  const lins=rows.reduce((a,r)=>a+r.det.length,0);
+  const at=rows.reduce((a,r)=>a+r.det.filter(d=>d.etapa==='ATENDIDO').length,0);
+  const monto=rows.reduce((a,r)=>a+r.ocs.filter(o=>o.est!=='RECHAZADA').reduce((s,o)=>s+o.monto,0),0);
+  const leads=rows.map(r=>r.dApOc!=null&&r.dOcIng!=null?r.dApOc+r.dOcIng+(r.dias-r.dApOc-r.dOcIng>0?0:0):null).filter(x=>x!=null);
+  document.getElementById('kReq').textContent=rows.length;
+  document.getElementById('kLin').textContent=lins;
+  document.getElementById('kPct').textContent=lins?Math.round(at/lins*100)+'%':'—';
+  document.getElementById('kMonto').textContent='S/ '+monto.toLocaleString('es-PE',{minimumFractionDigits:2});
+  document.getElementById('kLead').textContent=leads.length?Math.round(leads.reduce((a,b)=>a+b,0)/leads.length)+' d':'—';
+  const apoc=rows.map(r=>r.dApOc).filter(x=>x!=null);
+  document.getElementById('kLeadOc').textContent=apoc.length?(apoc.reduce((a,b)=>a+b,0)/apoc.length).toFixed(1)+' d':'—';
+
+  document.getElementById('cntReq').textContent=rows.length;
+  document.getElementById('cntDet').textContent=lins;
+
+  /* TAB REQUERIMIENTOS */
+  const tb=document.getElementById('tbodyReq'); tb.innerHTML='';
+  document.getElementById('emptyReq').style.display=rows.length?'none':'block';
+  rows.forEach(r=>{
+    const et=etapaReq(r), at2=r.det.filter(d=>d.etapa==='ATENDIDO').length, tot=r.det.length, parcial=r.det.some(d=>d.parcial);
+    const ocHtml=r.ocs.length?r.ocs.map(o=>`<b>${o.n}</b>${o.est==='RECHAZADA'?' <span class="badge b-rech">RECH.</span>':''}<br><span class="muted">SPR ${o.spr||'—'}</span>`).join('<br>'):'<span class="muted">—</span>';
+    const prov=r.ocs[0]?r.ocs[0].prov:'—';
+    const montoOc=r.ocs.filter(o=>o.est!=='RECHAZADA').reduce((s,o)=>s+o.monto,0);
+    const ni=[...new Set(r.det.map(d=>d.ni).filter(Boolean))].join(', ')||'—';
+    const fing=[...new Set(r.det.map(d=>d.fing).filter(Boolean))].join(', ')||'—';
+    const estOc=r.ocs[0]?r.ocs[0].est:'—';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td class="reqnum">${r.id}<span class="spr">REQ ${r.spr}</span></td>
+      <td><span class="badge b-pri ${r.pri==='A'?'A':''}">${r.pri==='A'?'ALTA':r.pri==='B'?'BAJA':'NORMAL'}</span></td>
+      <td>${sol(r)}</td>
+      <td>${r.fundo}<br><span class="muted">${r.area}</span></td>
+      <td>${r.alm}</td><td>${r.freg}</td><td>${r.fap}</td><td class="muted">${r.apN2}</td>
+      <td>${badge(et,parcial?'PARCIAL':'')}${r.ocRech?' <span class="badge b-rech">OC RECH.</span>':''}</td>
+      <td><span class="prog"><span style="width:${Math.round(at2/tot*100)}%"></span></span> <span class="muted">${at2}/${tot}</span></td>
+      <td>${ocHtml}</td><td class="muted">${estOc}</td><td>${prov}</td>
+      <td class="num-r">${montoOc?'S/ '+montoOc.toLocaleString('es-PE',{minimumFractionDigits:2}):'—'}</td>
+      <td>${ni}</td><td>${fing}</td>
+      <td class="num-r">${fmtD(r.dApOc)}</td><td class="num-r">${fmtD(r.dOcIng)}</td>
+      <td class="num-r">${fmtD(r.dApOc!=null&&r.dOcIng!=null?r.dApOc+r.dOcIng:null)}</td>`;
+    tb.appendChild(tr);
+  });
+
+  /* TAB DETALLES */
+  const td=document.getElementById('tbodyDet'); td.innerHTML='';
+  let nlin=0;
+  rows.forEach(r=>r.det.forEach(d=>{
+    nlin++;
+    const pct=d.ped?Math.round(d.rec/d.ped*100):0;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td class="reqnum">${r.id}<span class="spr">REQ ${r.spr}</span></td>
+      <td>${sol(r)}</td>
+      <td>${r.fundo.split(' - ')[0]}<br><span class="muted">${r.area}</span></td>
+      <td><b>${d.cod}</b></td><td class="wrap">${d.desc}</td><td>${d.um}</td>
+      <td class="num-r">${d.cant}</td><td>${d.ceco}</td><td>${d.proy}</td><td class="muted">${d.partida}</td>
+      <td>${badge(d.etapa,d.parcial?'PARCIAL':'')}</td>
+      <td>${d.consol?'<span class="badge b-oc">SÍ</span>':'<span class="muted">no</span>'}</td>
+      <td>${d.oc?`<b>${d.oc}</b>`:'<span class="muted">—</span>'}</td>
+      <td>${d.sec??'—'}</td><td class="muted">${d.ocEst||'—'}</td><td>${d.prov||'—'}</td>
+      <td class="num-r">${d.pu?'S/ '+d.pu.toLocaleString('es-PE',{minimumFractionDigits:2}):'—'}</td>
+      <td class="num-r">${d.ped||'—'}</td><td class="num-r">${d.rec}</td>
+      <td class="num-r">${d.ped?d.ped-d.rec:'—'}</td>
+      <td class="num-r">${d.ped?`<span class="prog"><span style="width:${pct}%"></span></span> ${pct}%`:'—'}</td>
+      <td>${d.ni||'—'}</td><td>${d.guia||'—'}</td><td>${d.fing||'—'}</td>
+      <td class="num-r">${fmtD(d.dEtapa)}</td>`;
+    td.appendChild(tr);
+  }));
+  document.getElementById('emptyDet').style.display=nlin?'none':'block';
+  document.getElementById('count').textContent=`${rows.length} requerimientos · ${nlin} líneas · tab: ${tabActivo==='req'?'Requerimientos':'Detalles'}`;
+}
+
+function setTab(t){
+  tabActivo=t;
+  document.getElementById('tabReq').classList.toggle('on',t==='req');
+  document.getElementById('tabDet').classList.toggle('on',t==='det');
+  document.getElementById('viewReq').style.display=t==='req'?'block':'none';
+  document.getElementById('viewDet').style.display=t==='det'?'block':'none';
+}
+
+/* ===================== EXCEL ===================== */
+const FILLS={APROBADO:'DBEAFE',EN_PROCESO:'FEF3C7',CON_OC:'CCFBF1',ATENDIDO:'DCFCE7'};
+const FONTS={APROBADO:'2563EB',EN_PROCESO:'D97706',CON_OC:'0D9488',ATENDIDO:'15803D'};
+const BORDER={top:{style:'thin',color:{rgb:'CBD5E1'}},bottom:{style:'thin',color:{rgb:'CBD5E1'}},left:{style:'thin',color:{rgb:'CBD5E1'}},right:{style:'thin',color:{rgb:'CBD5E1'}}};
+const HDR={font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'3B0764'}},alignment:{horizontal:'center',vertical:'center'},border:BORDER};
+function cell(v,x={}){return{v,t:typeof v==='number'?'n':'s',s:{border:BORDER,...x}};}
+function cellE(e){return cell(ETAPA_LBL[e].toUpperCase(),{fill:{fgColor:{rgb:FILLS[e]}},font:{bold:true,color:{rgb:FONTS[e]},sz:10},alignment:{horizontal:'center'}});}
+
+function exportarExcel(){
+  const rows=filtrar();
+  /* Hoja Requerimientos */
+  const h1=['N° Requerimiento','N° Req. SPRING','Prioridad','Solicitante','DNI Solicitante','Fundo','Área','Almacén','Glosa',
+    'F. Registro','F. Aprob. N2','Aprobador N2','Etapa','Ítems Atend.','Total Ítems','% Avance',
+    'OC(s)','OC SPRING','Estado OC','Proveedor','Monto OC','F. Envío Prov.',
+    'N° NI','F. Ingreso','Días Ap→OC','Días OC→Ingreso','Lead Time (d)','OC Rechazada'];
+  const aoa1=[h1.map(c=>cell(c,HDR))];
+  rows.forEach(r=>{
+    const et=etapaReq(r),at=r.det.filter(d=>d.etapa==='ATENDIDO').length,tot=r.det.length,oc=r.ocs[0]||{};
+    const ni=[...new Set(r.det.map(d=>d.ni).filter(Boolean))].join(' | ');
+    const fing=[...new Set(r.det.map(d=>d.fing).filter(Boolean))].join(' | ');
+    aoa1.push([cell(r.id),cell(r.spr),cell(r.pri==='A'?'ALTA':r.pri==='B'?'BAJA':'NORMAL'),cell(r.sol),cell(r.dni),cell(r.fundo),cell(r.area),cell(r.alm),cell(r.glosa),
+      cell(r.freg),cell(r.fap),cell(r.apN2),cellE(et),cell(at,{alignment:{horizontal:'center'}}),cell(tot,{alignment:{horizontal:'center'}}),
+      cell(at/tot,{numFmt:'0%',alignment:{horizontal:'center'}}),
+      cell(r.ocs.map(o=>o.n).join(' | ')||'—'),cell(oc.spr||'—'),cell(oc.est||'—'),cell(oc.prov||'—'),
+      cell(oc.monto||'—',{numFmt:'#,##0.00'}),cell(oc.fenvio||'—'),
+      cell(ni||'—'),cell(fing||'—'),
+      cell(r.dApOc??'—',{alignment:{horizontal:'center'}}),cell(r.dOcIng??'—',{alignment:{horizontal:'center'}}),
+      cell(r.dApOc!=null&&r.dOcIng!=null?r.dApOc+r.dOcIng:'—',{alignment:{horizontal:'center'},font:{bold:true}}),
+      cell(r.ocRech?'SÍ':'',{font:{bold:true,color:{rgb:'DC2626'}},alignment:{horizontal:'center'}})]);
+  });
+  const ws1=XLSX.utils.aoa_to_sheet(aoa1);
+  ws1['!cols']=[{wch:16},{wch:13},{wch:9},{wch:11},{wch:11},{wch:12},{wch:14},{wch:9},{wch:24},{wch:11},{wch:11},{wch:15},{wch:12},{wch:11},{wch:10},{wch:9},{wch:38},{wch:11},{wch:20},{wch:24},{wch:12},{wch:11},{wch:26},{wch:20},{wch:10},{wch:13},{wch:11},{wch:11}];
+
+  /* Hoja Detalles */
+  const h2=['N° Requerimiento','N° Req. SPRING','Solicitante','DNI','Fundo','Área',
+    'Cód. Ítem','Descripción','UM','Cant. Req','Ceco','Proyecto','Partida',
+    'Etapa Línea','Consolidado','N° OC','Sec. OC','Estado OC','Proveedor','P. Unit.',
+    'Cant. Pedida','Cant. Recibida','Cant. Pendiente','% Atención','N° NI','Guía Prov.','F. Ingreso','Días Etapa','Nota'];
+  const aoa2=[h2.map(c=>cell(c,HDR))];
+  rows.forEach(r=>r.det.forEach(d=>{
+    const pct=d.ped?d.rec/d.ped:null;
+    aoa2.push([cell(r.id),cell(r.spr),cell(r.sol),cell(r.dni),cell(r.fundo),cell(r.area),
+      cell(d.cod),cell(d.desc),cell(d.um),cell(d.cant,{alignment:{horizontal:'right'}}),cell(d.ceco),cell(d.proy),cell(d.partida),
+      cellE(d.etapa),cell(d.consol?'SÍ':'NO',{alignment:{horizontal:'center'}}),
+      cell(d.oc||'—'),cell(d.sec??'—',{alignment:{horizontal:'center'}}),cell(d.ocEst||'—'),cell(d.prov||'—'),
+      cell(d.pu||'—',{numFmt:'#,##0.00'}),
+      cell(d.ped||'—',{alignment:{horizontal:'right'}}),cell(d.rec,{alignment:{horizontal:'right'}}),
+      cell(d.ped?d.ped-d.rec:'—',{alignment:{horizontal:'right'}}),
+      pct!=null?cell(pct,{numFmt:'0%',alignment:{horizontal:'center'}}):cell('—'),
+      cell(d.ni||'—'),cell(d.guia||'—'),cell(d.fing||'—'),cell(d.dEtapa,{alignment:{horizontal:'center'}}),cell(d.nota||'')]);
+  }));
+  const ws2=XLSX.utils.aoa_to_sheet(aoa2);
+  ws2['!cols']=[{wch:16},{wch:13},{wch:11},{wch:10},{wch:12},{wch:14},{wch:10},{wch:28},{wch:6},{wch:9},{wch:10},{wch:12},{wch:9},{wch:12},{wch:10},{wch:18},{wch:7},{wch:12},{wch:24},{wch:10},{wch:10},{wch:11},{wch:12},{wch:10},{wch:13},{wch:11},{wch:11},{wch:10},{wch:32}];
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws1,'Requerimientos');
+  XLSX.utils.book_append_sheet(wb,ws2,'Detalle por ítem');
+  XLSX.writeFile(wb,'analisis_seguimiento_req_compra.xlsx');
+}
+
+render();
+/* modo embebido dentro del mockup de layout: ocultar nav de mockups */
+if(location.search.indexOf('embed')>=0){var n=document.querySelector('.navmock');if(n)n.style.display='none';}
+</script>
+</body>
+</html>

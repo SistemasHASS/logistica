@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as XLSX from 'xlsx';
@@ -11,6 +11,7 @@ import { UserService } from '@/app/shared/services/user.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import { CommodityService } from '@/app/modules/main/services/commoditys.service';
+import { ConsolidacionService } from '@/app/services/consolidacion.service';
 import { lastValueFrom } from 'rxjs';
 import {
   Usuario,
@@ -79,6 +80,76 @@ export class OrdenesServicioComponent implements OnInit {
   // ============================================
   ordenesServicio: OrdenServicioConSeguimiento[] = [];
   ordenActual: OrdenServicioConSeguimiento | null = null;
+  enviandoAprobacion = signal<number | null>(null);
+
+  puedeEnviarAprobacion(orden: OrdenServicioConSeguimiento): boolean {
+    return !!orden.id && ['GENERADA', 'ENVIADA', 'PENDIENTE_APROBACION'].includes(orden.estado)
+      && (!orden.rucEmpresa || orden.rucEmpresa === this.usuario.ruc);
+  }
+
+  private textoAlertaSeguro(texto: string): string {
+    return texto.replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+  }
+
+  async enviarAprobacion(orden: OrdenServicioConSeguimiento) {
+    if (!this.puedeEnviarAprobacion(orden) || this.enviandoAprobacion() !== null) return;
+    if (!this.usuario.ruc || !this.usuario.documentoidentidad) {
+      this.alertService.showAlert('Atención', 'No se pudo identificar la empresa o el usuario.', 'warning');
+      return;
+    }
+    const requiereSpring = !orden.numeroOrdenSpring?.trim();
+    if (requiereSpring && orden.estado !== 'GENERADA') {
+      this.alertService.showAlert('Atención', 'Esta OS histórica no tiene un vínculo SPRING válido. Debe reconciliarse antes de enviarla a aprobación; no se generará otro compromiso.', 'warning');
+      return;
+    }
+    if (this.usuario.ruc !== '20481121966') {
+      this.alertService.showAlert('Atención', 'El envío a aprobación con SPRING todavía no está configurado para esta empresa.', 'warning');
+      return;
+    }
+    this.enviandoAprobacion.set(orden.id!);
+    let cargaAbierta = false;
+    const cerrarCarga = () => {
+      if (cargaAbierta) this.alertService.cerrarModalCarga();
+      cargaAbierta = false;
+    };
+    try {
+      const confirmado = await this.alertService.showConfirm('Enviar OS a aprobación', requiereSpring
+        ? 'Se creará el compromiso en SPRING y luego se enviará la OS a aprobación. ¿Desea continuar?'
+        : 'Se validará el compromiso SPRING existente y se enviará la OS a aprobación, sin duplicar aprobaciones. ¿Desea continuar?', 'info');
+      if (!confirmado) return;
+      this.alertService.mostrarModalCarga();
+      cargaAbierta = true;
+      if (requiereSpring) {
+        const sync = await lastValueFrom(this.ordenServicioService.sincronizarOrdenServicio({
+          idordenservicio: orden.id, serie: 'APSO', ruc: this.usuario.ruc, usuariogenera: this.usuario.documentoidentidad
+        }));
+        if (sync?.errorgeneral !== 0 || !sync.numeroOrden?.trim()) {
+          cerrarCarga();
+          this.alertService.showAlert('Error', this.textoAlertaSeguro(sync?.mensaje || 'No se pudo obtener el número SPRING. No se envió a aprobación.'), 'error');
+          return;
+        }
+        orden.numeroOrdenSpring = sync.numeroOrden;
+        orden.estado = 'ENVIADA';
+      }
+      const respuesta = await lastValueFrom(this.ordenServicioService.enviarAprobacionOS(orden.id!, this.usuario.ruc, this.usuario.documentoidentidad));
+      cerrarCarga();
+      if (respuesta?.success !== true && respuesta?.success !== 1) {
+        this.alertService.showAlert('No enviada', this.textoAlertaSeguro(respuesta?.mensaje || 'No se pudo enviar la OS a aprobación. Si ya se sincronizó, se conservará el número SPRING para reintentar sin reenviarla.'), 'warning');
+        return;
+      }
+      orden.estado = 'PENDIENTE_APROBACION';
+      this.alertService.showAlert('OS enviada a aprobación', 'La OS está disponible en Aprobaciones OS → Pendientes.', 'success');
+      await this.cargarOrdenes();
+    } catch {
+      cerrarCarga();
+      this.alertService.showAlert('Error', 'No se pudo completar el envío. Actualice el listado antes de reintentar para comprobar el número SPRING y evitar duplicados.', 'error');
+      await this.cargarOrdenes();
+    } finally {
+      cerrarCarga();
+      this.enviandoAprobacion.set(null);
+      this.cdr.markForCheck();
+    }
+  }
 
   mostrarFormulario = false;
   mostrarModalDetalle = false;
@@ -135,6 +206,11 @@ export class OrdenesServicioComponent implements OnInit {
   solicitudesAprobadas: any[] = [];
   cotizacionesDisponibles: any[] = [];
   requerimientosServicio: any[] = [];
+
+  // Modal detalle de requerimiento de servicio aprobado
+  mostrarModalDetalleReq = false;
+  detalleReqSeleccionado: any = null;
+  reqOrigenSeleccionado: any = null;
 
   // Buscador de proveedores
   proveedorInput: string = '';
@@ -227,6 +303,7 @@ export class OrdenesServicioComponent implements OnInit {
     private dexieService: DexieService,
     private maestrasService: MaestrasService,
     private commodityService: CommodityService,
+    private consolidacionService: ConsolidacionService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -761,6 +838,36 @@ export class OrdenesServicioComponent implements OnInit {
     }
   }
 
+  async verDetalleRequerimiento(req: any) {
+    try {
+      this.alertService.mostrarModalCarga();
+      const resp = await this.consolidacionService.obtenerDetalleRequerimiento(req.idDetalle);
+      this.detalleReqSeleccionado = resp;
+      this.reqOrigenSeleccionado = req;
+      this.mostrarModalDetalleReq = true;
+      this.alertService.cerrarModalCarga();
+      this.cdr.markForCheck();
+    } catch (error) {
+      console.error('Error al cargar detalle del requerimiento:', error);
+      this.alertService.cerrarModalCarga();
+      this.alertService.showAlert('Error', 'Error al cargar el detalle del requerimiento', 'error');
+    }
+  }
+
+  cerrarModalDetalleReq() {
+    this.mostrarModalDetalleReq = false;
+    this.detalleReqSeleccionado = null;
+    this.reqOrigenSeleccionado = null;
+  }
+
+  generarOSDesdeModalReq() {
+    if (!this.reqOrigenSeleccionado) return;
+    const req = this.reqOrigenSeleccionado;
+    this.cerrarModalDetalleReq();
+    this.seleccionarRequerimiento(req);
+    this.mostrarFormulario = true;
+  }
+
   async seleccionarRequerimiento(req: any) {
     this.ordenActual = {
       numeroOrden: this.generarNumeroOrden(),
@@ -1174,22 +1281,35 @@ export class OrdenesServicioComponent implements OnInit {
     try {
       this.alertService.mostrarModalCarga();
 
-      const respuesta = await this.ordenServicioService
-        .generarOrdenServicio(this.ordenActual)
-        .toPromise();
+      let respuesta: any;
+      if (this.ordenActual?.idRequerimientoOrigen) {
+        // OS generada desde un requerimiento: usa el flujo de OS individual
+        // (LOGISTICA_crearOSIndividual), que no exige solicitudServicioId
+        // y guarda la trazabilidad en idRequerimientoOrigen/idDetalleRequerimiento.
+        respuesta = await this.ordenServicioService
+          .crearOSIndividual(this.mapearOrdenParaOSIndividual(this.ordenActual))
+          .toPromise();
+      } else {
+        // OS directa o desde solicitud de servicio
+        const orden = {
+          ...this.ordenActual,
+          solicitudServicioId: this.ordenActual!.solicitudServicioId || null,
+          cotizacionServicioId: this.ordenActual!.cotizacionServicioId || null,
+        };
+        respuesta = await this.ordenServicioService
+          .generarOrdenServicio(orden)
+          .toPromise();
+      }
 
-      if (respuesta?.status === 'success' && this.ordenActual) {
+      const exito = respuesta?.status === 'success' || respuesta?.success === 1 || respuesta?.success === true;
+      if (exito && this.ordenActual) {
         // Asignar aprobadores automáticamente
-        try {
-          await this.ordenServicioService
-            .asignarAprobadoresOS(respuesta.id, this.ordenActual.montoTotal)
-            .toPromise();
-        } catch (error) {
-          console.warn('Error al asignar aprobadores:', error);
+        if (respuesta.numeroOrdenSpring) {
+          await lastValueFrom(this.ordenServicioService.enviarAprobacionOS(respuesta.id ?? respuesta.idOS, this.usuario.ruc, this.usuario.documentoidentidad));
         }
 
         this.alertService.cerrarModalCarga();
-        this.alertService.showAlert('Éxito', respuesta.mensaje, 'success');
+        this.alertService.showAlert('Éxito', 'OS guardada. Utilice Enviar a aprobación en el listado para completar el envío.', 'success');
         this.mostrarFormulario = false;
         this.ordenActual = null;
         await this.cargarOrdenes();
@@ -1201,6 +1321,39 @@ export class OrdenesServicioComponent implements OnInit {
       this.alertService.cerrarModalCarga();
       this.alertService.showAlert('Error', error.message || 'Error al guardar orden', 'error');
     }
+  }
+
+  // Mapea ordenActual al payload que espera LOGISTICA_crearOSIndividual
+  private mapearOrdenParaOSIndividual(orden: any): any {
+    const cantidad = orden.cantidad || 1;
+    const precioUnitario = orden.precioReferencial
+      || (cantidad > 0 ? (orden.montoTotal || 0) / cantidad : orden.montoTotal || 0);
+    return {
+      idRequerimiento: orden.idRequerimientoOrigen,
+      idDetalleRequerimiento: orden.idDetalleRequerimiento,
+      proveedor: orden.proveedor,
+      nombreProveedor: orden.nombreProveedor,
+      rucProveedor: orden.rucProveedor,
+      emailProveedor: orden.emailProveedor,
+      telefonoProveedor: orden.telefonoProveedor,
+      tipoServicio: orden.tipoServicio,
+      descripcion: orden.descripcion,
+      alcance: orden.alcance,
+      fechaInicioServicio: orden.fechaInicioServicio,
+      fechaFinServicio: orden.fechaFinServicio,
+      plazoEjecucion: orden.plazoEjecucion,
+      moneda: orden.moneda,
+      condicionesPago: orden.condicionesPago,
+      formaPago: orden.formaPago,
+      centroCosto: orden.centroCosto,
+      proyecto: orden.proyecto,
+      areaSolicita: orden.area,
+      usuarioGenera: orden.usuarioGenera,
+      cantidad,
+      precioUnitario,
+      unidadMedida: orden.unidadMedida,
+      rucEmpresa: orden.rucEmpresa,
+    };
   }
 
   validarOrden(): boolean {

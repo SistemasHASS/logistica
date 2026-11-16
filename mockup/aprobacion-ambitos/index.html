@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Demo de aprobación · Administración y Fundos</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="demo.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">L</span><div>Logística<strong>Laboratorio de aprobación</strong></div></div>
+    <div class="sidebar-caption">GUÍA INTERACTIVA</div>
+    <nav id="navigation" aria-label="Pasos de configuración"></nav>
+    <div class="sidebar-note"><span class="dot"></span> Entorno de demostración<p>Solo memoria del navegador. Sin API, sin SQL y sin cambios en tu sistema.</p></div>
+  </aside>
+  <main>
+    <header class="topbar"><div><span class="eyebrow">ADMIN LOGÍSTICA / FLUJO POR NIVELES</span><h1>Así se configura una aprobación.</h1><p>Aprende con ejemplos completos de administración y de campo.</p></div><button id="reset" class="button secondary">Reiniciar demo</button></header>
+    <div class="notice"><strong>Empresas y fundos reales · copia local de API Maestra.</strong> Consultados el 11/11/2026 a las 17:25 UTC. Se conservan códigos, nombres e identificadores devueltos por el servicio; no es una sincronización en vivo. Las personas, áreas, unidades administrativas, asignaciones y reglas N1/N2 siguen siendo ejemplos y no representan una matriz aprobada.</div>
+    <section class="context-card" aria-labelledby="context-title">
+      <div class="company"><label><span class="eyebrow" id="context-title">EMPRESA SELECCIONADA</span><select id="company-select"></select></label><small id="company-mapping"></small></div>
+      <div class="context-scenarios"><span class="eyebrow">ELIGE UN EJEMPLO COMPLETO</span><div id="scopes" class="scope-buttons"></div></div>
+    </section>
+    <section class="audit-context"><label>Actor de configuración<input value="DEMO-ADMIN · Administrador de ejemplo" disabled></label><label class="grow"><span>Motivo del cambio <b class="required">*</b></span><input id="reason" maxlength="500" value="Capacitación: configurar responsables por empresa y ámbito" placeholder="En el sistema real este motivo queda auditado"></label></section>
+    <div id="toast" role="status" aria-live="polite" hidden></div>
+    <div class="workspace"><section id="content" aria-live="polite"></section><aside id="guide" class="guide"></aside></div>
+    <footer>Mockup independiente para capacitación. La configuración y las rutas son simuladas. No habilita funciones pendientes de integración en la aplicación real. Al recargar se pierden los cambios.</footer>
+  </main>
+</body>
+</html>

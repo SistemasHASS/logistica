@@ -103,6 +103,10 @@ export const adminLogisticaRoutes: Routes = [
         path: 'migracion-adjuntos',
         loadComponent: () => import('./tabs/migracion-adjuntos/migracion-adjuntos.component').then(m => m.MigracionAdjuntosComponent)
       },
+      {
+        path: 'accesos-reportes',
+        loadComponent: () => import('./tabs/accesos-reportes/accesos-reportes.component').then(m => m.AccesosReportesComponent)
+      },
     ]
   }
 ];

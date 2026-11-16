@@ -20,6 +20,8 @@ export class ModalCargaMasivaComponent {
   @Input() puedeGuardar = false;
   // Lista de turnos disponibles para corrección en tabla
   @Input() turnos: any[] = [];
+  // Lista maestra de CECOs para corrección en tabla
+  @Input() cecos: any[] = [];
   // Lista de activos fijos para corrección en tabla
   @Input() activosFijosFiltrados: any[] = [];
   // Tipo de requerimiento (COMPRA/CONSUMO/TRANSFERENCIA) para determinar campos requeridos
@@ -76,6 +78,21 @@ export class ModalCargaMasivaComponent {
   // Retorna true si debe mostrar columna Turno (solo para CONSUMO)
   mostrarColumnaTurno(): boolean {
     return this.tipoRequerimiento === 'CONSUMO';
+  }
+
+  // Retorna true si debe mostrar columna Stock (solo para CONSUMO)
+  mostrarColumnaStock(): boolean {
+    return this.tipoRequerimiento === 'CONSUMO';
+  }
+
+  // CECOs disponibles para una fila: en CONSUMO se filtran por el turno de la
+  // línea; si no hay coincidencias se devuelve la maestra completa
+  cecosParaFila(row: any): any[] {
+    if (this.tipoRequerimiento !== 'CONSUMO' || !row?.turno) return this.cecos;
+    const filtrados = this.cecos.filter(
+      (c: any) => c.turno === row.turno || c.nombreTurno === row.turno,
+    );
+    return filtrados.length ? filtrados : this.cecos;
   }
 
   // Elimina una fila por índice y emite líneas modificadas al padre

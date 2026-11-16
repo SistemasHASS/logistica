@@ -9,6 +9,8 @@ import { ConfigFlujoAprobacionService, ConfigFlujo, AprobadorNivel2 } from '../.
 import { ParametrosService } from '../../tabs/parametros/services/parametros.service';
 import { AdminLogisticaAuthService } from '../../auth/services/admin-logistica-auth.service';
 import { EmpresasMaestrasService } from '../../services/empresas-maestras.service';
+import { ConfigAmbitosComponent } from './config-ambitos.component';
+import { ConfigAutoaprobacionComponent } from './config-autoaprobacion.component';
 
 @Component({
   selector: 'app-config-flujo-aprobacion',
@@ -19,7 +21,9 @@ import { EmpresasMaestrasService } from '../../services/empresas-maestras.servic
     FormsModule,
     TableModule,
     DialogModule,
-    TagModule
+    TagModule,
+    ConfigAmbitosComponent,
+    ConfigAutoaprobacionComponent
   ],
   templateUrl: './config-flujo-aprobacion.component.html',
   styleUrls: ['./config-flujo-aprobacion.component.scss'],
@@ -35,6 +39,8 @@ export class ConfigFlujoAprobacionComponent implements OnInit {
   empresas = this.empresasSvc.empresas;
   cargandoEmpresas = this.empresasSvc.cargando;
 
+  mostrarAmbitos = signal(false);
+  mostrarAutoaprobacion = signal(false);
   rucSeleccionado = signal<string>('');
   configs = signal<ConfigFlujo[]>([]);
   aprobadores = signal<AprobadorNivel2[]>([]);

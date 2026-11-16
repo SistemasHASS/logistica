@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento de Requerimientos de Compra — Mockup</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<style>
+  :root{
+    --bg:#f1f5f9; --card:#ffffff; --border:#e2e8f0; --txt:#1e293b; --muted:#64748b;
+    --aprobado:#2563eb; --aprobado-bg:#dbeafe;
+    --proceso:#d97706;  --proceso-bg:#fef3c7;
+    --conoc:#0d9488;   --conoc-bg:#ccfbf1;
+    --atendido:#15803d;--atendido-bg:#dcfce7;
+    --rechazo:#dc2626; --rechazo-bg:#fee2e2;
+    --primary:#0f172a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+  body{background:var(--bg);color:var(--txt);padding:20px}
+  .container{max-width:1380px;margin:0 auto}
+  h1{font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px}
+  h1 .icon{background:var(--primary);color:#fff;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .subtitle{color:var(--muted);font-size:13px;margin:4px 0 16px 44px}
+
+  /* ---------- Filtros ---------- */
+  .filters{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:14px}
+  .fgroup{display:flex;flex-direction:column;gap:4px}
+  .fgroup label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .fgroup select,.fgroup input{border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;min-width:130px;background:#fff}
+  .fgroup input[type=date]{min-width:135px}
+  .btn{border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer}
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-excel{background:#15803d;color:#fff}
+  .btn:active{transform:scale(.97)}
+  .spacer{flex:1}
+
+  .estado-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .chip{border:1px solid var(--border);background:var(--card);border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;color:var(--muted)}
+  .chip .dot{width:9px;height:9px;border-radius:50%}
+  .chip.active{border-color:currentColor;background:#fff;box-shadow:0 0 0 1px currentColor inset}
+  .chip.c-todos.active{color:var(--primary)}
+  .chip.c-ap{color:var(--aprobado)} .chip.c-ap .dot{background:var(--aprobado)}
+  .chip.c-ep{color:var(--proceso)}  .chip.c-ep .dot{background:var(--proceso)}
+  .chip.c-oc{color:var(--conoc)}    .chip.c-oc .dot{background:var(--conoc)}
+  .chip.c-at{color:var(--atendido)} .chip.c-at .dot{background:var(--atendido)}
+
+  /* ---------- KPI funnel ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;cursor:pointer;position:relative;transition:.15s;border-top:4px solid transparent}
+  .kpi:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.08)}
+  .kpi .num{font-size:30px;font-weight:800}
+  .kpi .lbl{font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+  .kpi .sub{font-size:11px;color:var(--muted);margin-top:2px}
+  .kpi.k1{border-top-color:var(--aprobado)} .kpi.k1 .num{color:var(--aprobado)}
+  .kpi.k2{border-top-color:var(--proceso)}  .kpi.k2 .num{color:var(--proceso)}
+  .kpi.k3{border-top-color:var(--conoc)}    .kpi.k3 .num{color:var(--conoc)}
+  .kpi.k4{border-top-color:var(--atendido)} .kpi.k4 .num{color:var(--atendido)}
+  .kpi.selected{outline:2px solid currentColor}
+  .flecha{align-self:center;color:#cbd5e1;font-size:22px;display:none}
+
+  /* ---------- Tabla ---------- */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{background:#f8fafc;text-align:left;padding:11px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
+  tbody td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tbody tr.req-row{cursor:pointer}
+  tbody tr.req-row:hover{background:#f8fafc}
+  .reqnum{font-weight:700;white-space:nowrap}
+  .reqnum .spr{display:block;font-size:11px;color:var(--muted);font-weight:500}
+  .muted{color:var(--muted);font-size:12px}
+  .expander{display:inline-block;width:20px;text-align:center;color:var(--muted);font-weight:700}
+
+  /* stepper */
+  .stepper{display:flex;align-items:center;gap:0;min-width:170px}
+  .st{display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
+  .st .ball{width:16px;height:16px;border-radius:50%;border:2px solid #cbd5e1;background:#fff;flex:none}
+  .st.done .ball{background:currentColor;border-color:currentColor}
+  .st.now .ball{border-color:currentColor;background:#fff;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 25%,transparent)}
+  .st .lbl{font-size:9.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+  .st.done .lbl,.st.now .lbl{color:currentColor}
+  .seg{width:26px;height:2px;background:#cbd5e1;margin:0 2px;flex:none;margin-bottom:14px}
+  .seg.done{background:currentColor}
+
+  .badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;white-space:nowrap}
+  .b-ap{background:var(--aprobado-bg);color:var(--aprobado)}
+  .b-ep{background:var(--proceso-bg);color:var(--proceso)}
+  .b-oc{background:var(--conoc-bg);color:var(--conoc)}
+  .b-at{background:var(--atendido-bg);color:var(--atendido)}
+  .b-parcial{background:#fff7ed;color:#c2410c;border:1px solid #fdba74}
+  .b-rech{background:var(--rechazo-bg);color:var(--rechazo)}
+  .b-anul{background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1}
+  .aging{font-size:11px;color:var(--muted)}
+  .aging.warn{color:#c2410c;font-weight:700}
+
+  /* detalle expandido */
+  tr.detail-row td{background:#f8fafc;padding:0}
+  .detail-box{padding:14px 20px 18px 46px}
+  .detail-box table{font-size:12.5px;background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .detail-box thead th{background:#eef2f7;padding:8px 10px;font-size:10.5px}
+  .detail-box tbody td{padding:8px 10px}
+  .prog{height:6px;background:#e2e8f0;border-radius:99px;overflow:hidden;min-width:70px}
+  .prog>div{height:100%;background:var(--atendido)}
+  .ocinfo{font-size:12px;line-height:1.5}
+  .ocinfo b{font-weight:700}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+  .footer{margin-top:12px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between}
+
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)} .st .lbl{display:none} .seg{margin-bottom:2px}}
+</style>
+</head>
+<body>
+<div style="position:fixed;top:12px;right:20px;font-size:12px;z-index:50">
+  Mockups: <a href="index.html" style="background:#fff;border:1px solid #0f172a;color:#0f172a;border-radius:8px;padding:5px 10px;text-decoration:none;font-weight:600">Operativo</a>
+  <a href="analisis.html" style="background:#fff;border:1px solid #e2e8f0;color:#64748b;border-radius:8px;padding:5px 10px;text-decoration:none;font-weight:600">Análisis</a>
+  <a href="admin-accesos.html" style="background:#fff;border:1px solid #e2e8f0;color:#64748b;border-radius:8px;padding:5px 10px;text-decoration:none;font-weight:600">Accesos (Admin)</a>
+</div>
+<div class="container">
+
+  <h1><span class="icon">📦</span> Seguimiento de Requerimientos de Compra</h1>
+  <p class="subtitle">Workflow por estados: <b>APROBADO → EN PROCESO → CON OC → ATENDIDO</b> &nbsp;·&nbsp; Roles: OPLOGIST / APLOGIST &nbsp;·&nbsp; Mockup con datos de prueba</p>
+
+  <!-- FILTROS -->
+  <div class="filters">
+    <div class="fgroup"><label>Empresa</label>
+      <select id="fEmpresa"><option value="">Todas</option><option value="20481121966">20481121966 - Agro Hass</option><option value="20100445620">20100445620 - Hass S.A.</option></select>
+    </div>
+    <div class="fgroup"><label>Fundo</label>
+      <select id="fFundo"><option value="">Todos</option><option>F01 - Paltos</option><option>F02 - Chao</option><option>F03 - Virú</option></select>
+    </div>
+    <div class="fgroup"><label>Área</label>
+      <select><option value="">Todas</option><option>Logística</option><option>Producción</option><option>Administración</option><option>Mantenimiento</option></select>
+    </div>
+    <div class="fgroup"><label>Desde</label><input type="date" value="2026-10-01"></div>
+    <div class="fgroup"><label>Hasta</label><input type="date" value="2026-11-13"></div>
+    <div class="fgroup"><label>Buscar</label><input id="fBuscar" type="text" placeholder="N° req / proveedor / OC / ítem"></div>
+    <button class="btn btn-primary" onclick="render()">Buscar</button>
+    <div class="spacer"></div>
+    <button class="btn btn-excel" onclick="exportarExcel()">⬇ Exportar Excel</button>
+  </div>
+
+  <!-- CHIPS DE ESTADO -->
+  <div class="estado-chips" id="chips">
+    <div class="chip c-todos active" data-f="TODOS" onclick="setFiltro('TODOS')">Todos</div>
+    <div class="chip c-ap" data-f="APROBADO" onclick="setFiltro('APROBADO')"><span class="dot"></span>Aprobado</div>
+    <div class="chip c-ep" data-f="EN_PROCESO" onclick="setFiltro('EN_PROCESO')"><span class="dot"></span>En Proceso</div>
+    <div class="chip c-oc" data-f="CON_OC" onclick="setFiltro('CON_OC')"><span class="dot"></span>Con OC</div>
+    <div class="chip c-at" data-f="ATENDIDO" onclick="setFiltro('ATENDIDO')"><span class="dot"></span>Atendido</div>
+  </div>
+
+  <!-- KPI FUNNEL -->
+  <div class="kpis">
+    <div class="kpi k1" data-f="APROBADO" onclick="setFiltro('APROBADO')">
+      <div class="lbl">Aprobado</div><div class="num" id="k1">0</div>
+      <div class="sub">Aprobados N2 · pendientes de OC</div>
+    </div>
+    <div class="kpi k2" data-f="EN_PROCESO" onclick="setFiltro('EN_PROCESO')">
+      <div class="lbl">En Proceso</div><div class="num" id="k2">0</div>
+      <div class="sub">Con OC borrador / en aprobación</div>
+    </div>
+    <div class="kpi k3" data-f="CON_OC" onclick="setFiltro('CON_OC')">
+      <div class="lbl">Con OC</div><div class="num" id="k3">0</div>
+      <div class="sub">OC aprobada · pendiente ingreso</div>
+    </div>
+    <div class="kpi k4" data-f="ATENDIDO" onclick="setFiltro('ATENDIDO')">
+      <div class="lbl">Atendido</div><div class="num" id="k4">0</div>
+      <div class="sub">Ingresó a almacén</div>
+    </div>
+  </div>
+
+  <!-- TABLA -->
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:26px"></th>
+          <th>Requerimiento</th>
+          <th>Solicitante</th>
+          <th>Fundo / Área</th>
+          <th>F. Registro</th>
+          <th>F. Aprob. N2</th>
+          <th>OC / Proveedor</th>
+          <th>Estado workflow</th>
+          <th>Días</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty" style="display:none">Sin resultados para el filtro seleccionado</div>
+  </div>
+
+  <div class="footer">
+    <span id="count"></span>
+    <span>MOCKUP — datos de prueba · lógica real se resolverá en SP <code>LOGISTICA_reporteSeguimientoReqCompra</code></span>
+  </div>
+</div>
+
+<script>
+/* ===================== DATOS DE PRUEBA ===================== */
+const ETAPAS = ['APROBADO','EN_PROCESO','CON_OC','ATENDIDO'];
+const ETAPA_LBL = {APROBADO:'Aprobado',EN_PROCESO:'En Proceso',CON_OC:'Con OC',ATENDIDO:'Atendido'};
+const ETAPA_CLS = {APROBADO:'b-ap',EN_PROCESO:'b-ep',CON_OC:'b-oc',ATENDIDO:'b-at'};
+const ETAPA_COLOR = {APROBADO:'var(--aprobado)',EN_PROCESO:'var(--proceso)',CON_OC:'var(--conoc)',ATENDIDO:'var(--atendido)'};
+
+const DATA = [
+ {
+  id:'REQ-2026-08841', spr:'0000005882', solicitante:'M. López', fundo:'F02 - Chao', area:'Logística',
+  freg:'15/10/2026', fap:'28/10/2026', dias:16, ocRechazada:false,
+  ocs:[{n:'OC-20261105-0003',spring:'0000000123',estado:'APROBADA',prov:'FERREMAX S.A.C.',monto:'S/ 4,820.00'}],
+  det:[
+    {cod:'100234',desc:'Filtro de aceite motor',cant:10,etapa:'CON_OC',oc:'OC-20261105-0003',ped:10,rec:0,ni:null,fing:null,guia:null},
+    {cod:'100235',desc:'Correa distribución',cant:5,etapa:'ATENDIDO',oc:'OC-20261105-0003',ped:5,rec:5,ni:'NI000000045',fing:'10/11/2026',guia:'G001-2211'},
+    {cod:'100240',desc:'Válvula presión hidráulica',cant:2,etapa:'EN_PROCESO',oc:'OC-20261111-0004*',ped:2,rec:0,ni:null,fing:null,guia:null,nota:'OC en aprobación N2'},
+    {cod:'100241',desc:'Kit juntas',cant:1,etapa:'APROBADO',oc:null,ped:0,rec:0,ni:null,fing:null,guia:null},
+  ]
+ },
+ {
+  id:'REQ-2026-08855', spr:'0000005901', solicitante:'J. Pérez', fundo:'F01 - Paltos', area:'Mantenimiento',
+  freg:'20/10/2026', fap:'02/11/2026', dias:11, ocRechazada:false,
+  ocs:[],
+  det:[
+    {cod:'100311',desc:'Rociador estación riego',cant:40,etapa:'APROBADO',oc:null,ped:0,rec:0,ni:null,fing:null,guia:null},
+    {cod:'100312',desc:'Tubo PVC 2" x 6m',cant:15,etapa:'APROBADO',oc:null,ped:0,rec:0,ni:null,fing:null,guia:null},
+  ]
+ },
+ {
+  id:'REQ-2026-08802', spr:'0000005840', solicitante:'A. Ruiz', fundo:'F03 - Virú', area:'Producción',
+  freg:'08/10/2026', fap:'10/10/2026', dias:34, ocRechazada:true,
+  ocs:[{n:'OC-20261015-0001',spring:'0000000110',estado:'RECHAZADA',prov:'AGROINVERSIONES E.I.R.L.',monto:'S/ 12,300.00'}],
+  det:[
+    {cod:'100500',desc:'Fertilizante NPK 15-15-15',cant:60,etapa:'APROBADO',oc:null,ped:0,rec:0,ni:null,fing:null,guia:null,nota:'Liberado por rechazo OC-20261015-0001'},
+  ]
+ },
+ {
+  id:'REQ-2026-08890', spr:'0000005920', solicitante:'C. Vega', fundo:'F01 - Paltos', area:'Logística',
+  freg:'01/11/2026', fap:'04/11/2026', dias:9, ocRechazada:false,
+  ocs:[{n:'OC-20261107-0008',spring:'0000000131',estado:'PENDIENTE_APROBACION',prov:'DISMER S.A.',monto:'S/ 1,540.00'}],
+  det:[
+    {cod:'100610',desc:'Guantes nitrilo (caja)',cant:20,etapa:'EN_PROCESO',oc:'OC-20261107-0008',ped:20,rec:0,ni:null,fing:null,guia:null,nota:'En aprobación N1'},
+    {cod:'100611',desc:'Alcohol industrial 20L',cant:4,etapa:'EN_PROCESO',oc:'OC-20261107-0008',ped:4,rec:0,ni:null,fing:null,guia:null},
+  ]
+ },
+ {
+  id:'REQ-2026-08710', spr:'0000005790', solicitante:'R. Díaz', fundo:'F02 - Chao', area:'Administración',
+  freg:'25/09/2026', fap:'28/09/2026', dias:46, ocRechazada:false,
+  ocs:[{n:'OC-20261002-0007',spring:'0000000098',estado:'ENVIADA',prov:'PAPELERÍA LIMA S.A.',monto:'S/ 980.50'}],
+  det:[
+    {cod:'100700',desc:'Tóner impresora HP',cant:6,etapa:'ATENDIDO',oc:'OC-20261002-0007',ped:6,rec:6,ni:'NI000000031',fing:'20/10/2026',guia:'G003-1145'},
+    {cod:'100701',desc:'Papel A4 (caja)',cant:10,etapa:'ATENDIDO',oc:'OC-20261002-0007',ped:10,rec:10,ni:'NI000000031',fing:'20/10/2026',guia:'G003-1145'},
+  ]
+ },
+ {
+  id:'REQ-2026-08870', spr:'0000005911', solicitante:'S. Torres', fundo:'F03 - Virú', area:'Producción',
+  freg:'28/10/2026', fap:'30/10/2026', dias:14, ocRechazada:false,
+  ocs:[{n:'OC-20261103-0005',spring:'0000000125',estado:'APROBADA',prov:'AGROQUÍMICOS PERU S.A.',monto:'S/ 22,750.00'}],
+  det:[
+    {cod:'100800',desc:'Insecticida clorpirifos',cant:30,etapa:'CON_OC',oc:'OC-20261103-0005',ped:30,rec:12,ni:'NI000000052',fing:'12/11/2026',guia:'G002-0871',parcial:true},
+    {cod:'100801',desc:'Fungicida mancozeb',cant:25,etapa:'CON_OC',oc:'OC-20261103-0005',ped:25,rec:0,ni:null,fing:null,guia:null},
+  ]
+ },
+ {
+  id:'REQ-2026-08898', spr:'0000005927', solicitante:'L. Ramos', fundo:'F01 - Paltos', area:'Logística',
+  freg:'05/11/2026', fap:'09/11/2026', dias:4, ocRechazada:false,
+  ocs:[],
+  det:[
+    {cod:'100920',desc:'Cable thw 12awg (rollo)',cant:3,etapa:'APROBADO',oc:null,ped:0,rec:0,ni:null,fing:null,guia:null},
+    {cod:'100921',desc:'Llave térmica 32A',cant:5,etapa:'APROBADO',oc:null,ped:0,rec:0,ni:null,fing:null,guia:null},
+    {cod:'100922',desc:'Reflectores LED 200W',cant:8,etapa:'APROBADO',oc:null,ped:0,rec:0,ni:null,fing:null,guia:null},
+  ]
+ },
+];
+
+/* ===================== LÓGICA ===================== */
+let filtro = 'TODOS';
+let expanded = new Set();
+
+function etapaReq(r){
+  // etapa más atrasada entre sus líneas (índice mínimo)
+  return ETAPAS[Math.min(...r.det.map(d=>ETAPAS.indexOf(d.etapa)))];
+}
+function avance(r){
+  const at = r.det.filter(d=>d.etapa==='ATENDIDO').length;
+  return {at, tot:r.det.length};
+}
+
+function stepper(etapa){
+  const idx = ETAPAS.indexOf(etapa);
+  const col = ETAPA_COLOR[etapa];
+  let h = '<div class="stepper" style="color:'+col+'">';
+  ETAPAS.forEach((e,i)=>{
+    const cls = i<idx?'done':(i===idx?'now':'');
+    h += `<div class="st ${cls}" style="color:${i<=idx?col:'#cbd5e1'}"><div class="ball"></div><div class="lbl">${ETAPA_LBL[e]}</div></div>`;
+    if(i<ETAPAS.length-1) h += `<div class="seg ${i<idx?'done':''}" style="background:${i<idx?col:'#cbd5e1'}"></div>`;
+  });
+  return h+'</div>';
+}
+
+function badge(etapa, extra=''){
+  return `<span class="badge ${ETAPA_CLS[etapa]}">${ETAPA_LBL[etapa].toUpperCase()}</span>` + (extra?` <span class="badge b-parcial">${extra}</span>`:'');
+}
+
+function render(){
+  const q = (document.getElementById('fBuscar').value||'').toLowerCase();
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML='';
+  let rows = DATA.filter(r=>filtro==='TODOS'||etapaReq(r)===filtro);
+  if(q) rows = rows.filter(r=>
+    r.id.toLowerCase().includes(q)||r.spr.includes(q)||
+    r.solicitante.toLowerCase().includes(q)||
+    r.ocs.some(o=>o.n.toLowerCase().includes(q)||o.prov.toLowerCase().includes(q)||(o.spring||'').includes(q))||
+    r.det.some(d=>d.cod.includes(q)||d.desc.toLowerCase().includes(q))
+  );
+
+  // KPIs (sin filtro de estado, sí con búsqueda)
+  const base = q?DATA.filter(r=>
+    r.id.toLowerCase().includes(q)||r.spr.includes(q)||
+    r.ocs.some(o=>o.n.toLowerCase().includes(q)||o.prov.toLowerCase().includes(q))):DATA;
+  document.getElementById('k1').textContent = base.filter(r=>etapaReq(r)==='APROBADO').length;
+  document.getElementById('k2').textContent = base.filter(r=>etapaReq(r)==='EN_PROCESO').length;
+  document.getElementById('k3').textContent = base.filter(r=>etapaReq(r)==='CON_OC').length;
+  document.getElementById('k4').textContent = base.filter(r=>etapaReq(r)==='ATENDIDO').length;
+
+  document.getElementById('empty').style.display = rows.length?'none':'block';
+  document.getElementById('count').textContent = rows.length + ' requerimiento(s) · filtro: ' + (filtro==='TODOS'?'Todos':ETAPA_LBL[filtro]);
+
+  rows.forEach(r=>{
+    const et = etapaReq(r);
+    const av = avance(r);
+    const ocHtml = r.ocs.length
+      ? r.ocs.map(o=>`<div class="ocinfo"><b>${o.n}</b> ${o.estado==='RECHAZADA'?'<span class="badge b-rech">RECHAZADA</span>':''}<br><span class="muted">${o.prov} · ${o.monto} · SPR ${o.spring||'—'}</span></div>`).join('')
+      : '<span class="muted">— sin OC —</span>';
+    const parcial = r.det.some(d=>d.parcial);
+
+    const tr = document.createElement('tr');
+    tr.className='req-row';
+    tr.innerHTML = `
+      <td><span class="expander">${expanded.has(r.id)?'▾':'▸'}</span></td>
+      <td class="reqnum">${r.id}<span class="spr">REQ ${r.spr}</span></td>
+      <td>${r.solicitante}</td>
+      <td><div>${r.fundo}</div><div class="muted">${r.area}</div></td>
+      <td>${r.freg}</td>
+      <td>${r.fap}</td>
+      <td>${ocHtml}</td>
+      <td>
+        ${stepper(et)}
+        <div style="margin-top:5px">${badge(et, parcial?'PARCIAL':'')} <span class="muted">${av.at}/${av.tot} ítems</span>
+        ${r.ocRechazada?' <span class="badge b-rech" title="Hubo una OC rechazada">OC RECH.</span>':''}</div>
+      </td>
+      <td><div class="aging ${r.dias>30?'warn':''}">${r.dias}d</div></td>`;
+    tr.onclick = ()=>{ expanded.has(r.id)?expanded.delete(r.id):expanded.add(r.id); render(); };
+    tbody.appendChild(tr);
+
+    if(expanded.has(r.id)){
+      const dtr = document.createElement('tr');
+      dtr.className='detail-row';
+      const td = document.createElement('td');
+      td.colSpan = 9;
+      td.innerHTML = `<div class="detail-box">
+        <table><thead><tr>
+          <th>Ítem</th><th>Descripción</th><th style="text-align:right">Cant.</th>
+          <th>Etapa línea</th><th>OC</th><th>Recibido / Pedido</th>
+          <th>N° NI (Spring)</th><th>Guía prov.</th><th>F. Ingreso</th><th>Nota</th>
+        </tr></thead><tbody>${
+          r.det.map(d=>{
+            const pct = d.ped? Math.round(d.rec/d.ped*100):0;
+            return `<tr>
+              <td><b>${d.cod}</b></td><td>${d.desc}</td><td style="text-align:right">${d.cant}</td>
+              <td>${badge(d.etapa, d.parcial?'PARCIAL':'')}</td>
+              <td>${d.oc?`<b>${d.oc}</b>`:'<span class="muted">—</span>'}</td>
+              <td>${d.ped?`<div class="prog"><div style="width:${pct}%"></div></div><span class="muted">${d.rec}/${d.ped}</span>`:'<span class="muted">—</span>'}</td>
+              <td>${d.ni||'—'}</td><td>${d.guia||'—'}</td><td>${d.fing||'—'}</td>
+              <td class="muted">${d.nota||''}</td></tr>`;
+          }).join('')
+        }</tbody></table></div>`;
+      dtr.appendChild(td);
+      tbody.appendChild(dtr);
+    }
+  });
+}
+
+function setFiltro(f){
+  filtro = filtro===f?'TODOS':f;
+  document.querySelectorAll('#chips .chip').forEach(c=>c.classList.toggle('active', c.dataset.f===filtro));
+  document.querySelectorAll('.kpi').forEach(k=>k.classList.toggle('selected', k.dataset.f===filtro));
+  render();
+}
+
+/* ===================== EXPORTAR A EXCEL =====================
+   Propuesta: libro con 2 hojas
+   - "Detalle"  → una fila por LÍNEA de requerimiento (nivel más fino del workflow)
+   - "Resumen"  → una fila por requerimiento (cabecera + avance)
+   Respeta el filtro de estado y la búsqueda activos.
+============================================================= */
+const FILLS = {APROBADO:'DBEAFE',EN_PROCESO:'FEF3C7',CON_OC:'CCFBF1',ATENDIDO:'DCFCE7'};
+const FONTS = {APROBADO:'2563EB',EN_PROCESO:'D97706',CON_OC:'0D9488',ATENDIDO:'15803D'};
+const BORDER = {top:{style:'thin',color:{rgb:'CBD5E1'}},bottom:{style:'thin',color:{rgb:'CBD5E1'}},
+                left:{style:'thin',color:{rgb:'CBD5E1'}},right:{style:'thin',color:{rgb:'CBD5E1'}}};
+const HDR = {font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'0F172A'}},
+             alignment:{horizontal:'center',vertical:'center'},border:BORDER};
+
+function cell(v,extra={}){ return {v, t:typeof v==='number'?'n':'s', s:{border:BORDER,...extra}}; }
+function cellEtapa(e){ return cell(ETAPA_LBL[e].toUpperCase(),{fill:{fgColor:{rgb:FILLS[e]}},font:{bold:true,color:{rgb:FONTS[e]},sz:10},alignment:{horizontal:'center'}}); }
+
+function exportarExcel(){
+  const q = (document.getElementById('fBuscar').value||'').toLowerCase();
+  let rows = DATA.filter(r=>filtro==='TODOS'||etapaReq(r)===filtro);
+  if(q) rows = rows.filter(r=>
+    r.id.toLowerCase().includes(q)||r.spr.includes(q)||
+    r.solicitante.toLowerCase().includes(q)||
+    r.ocs.some(o=>o.n.toLowerCase().includes(q)||o.prov.toLowerCase().includes(q)||(o.spring||'').includes(q))||
+    r.det.some(d=>d.cod.includes(q)||d.desc.toLowerCase().includes(q)));
+
+  /* ---------- Hoja 1: DETALLE (una fila por ítem) ---------- */
+  const cols = ['N° Requerimiento','N° Req. SPRING','Solicitante','Fundo','Área',
+    'F. Registro','F. Aprob. N2','Días','Etapa Req.',
+    'Cód. Ítem','Descripción','Cantidad','Etapa Línea',
+    'N° OC','OC SPRING','Estado OC','Proveedor','Monto OC',
+    'Cant. Pedida','Cant. Recibida','% Atención',
+    'N° NI SPRING','Guía Proveedor','F. Ingreso','Nota'];
+  const aoa = [cols.map(c=>cell(c,HDR))];
+
+  rows.forEach(r=>{
+    const et = etapaReq(r);
+    r.det.forEach((d,i)=>{
+      const oc = r.ocs.find(o=>d.oc && o.n===d.oc.replace('*','')) || r.ocs[0] || {};
+      const pct = d.ped? Math.round(d.rec/d.ped*100)/100:null;
+      aoa.push([
+        i===0?cell(r.id):cell(''), i===0?cell(r.spr):cell(''), i===0?cell(r.solicitante):cell(''),
+        i===0?cell(r.fundo):cell(''), i===0?cell(r.area):cell(''),
+        i===0?cell(r.freg):cell(''), i===0?cell(r.fap):cell(''), i===0?cell(r.dias,{alignment:{horizontal:'center'}}):cell(''),
+        i===0?cellEtapa(et):cell(''),
+        cell(d.cod), cell(d.desc), cell(d.cant,{alignment:{horizontal:'right'}}), cellEtapa(d.etapa),
+        cell(d.oc||'—'), cell(oc.spring||'—'), cell(oc.estado||'—'), cell(oc.prov||'—'), cell(oc.monto||'—'),
+        d.ped?cell(d.ped,{alignment:{horizontal:'right'}}):cell('—'),
+        cell(d.rec,{alignment:{horizontal:'right'}}),
+        pct!==null?cell(pct,{numFmt:'0%',alignment:{horizontal:'center'}}):cell('—'),
+        cell(d.ni||'—'), cell(d.guia||'—'), cell(d.fing||'—'), cell(d.nota||''),
+      ]);
+    });
+  });
+
+  const ws1 = XLSX.utils.aoa_to_sheet(aoa);
+  ws1['!cols'] = [{wch:16},{wch:13},{wch:12},{wch:12},{wch:14},{wch:11},{wch:11},{wch:6},{wch:12},
+                  {wch:10},{wch:30},{wch:9},{wch:12},{wch:18},{wch:11},{wch:20},{wch:24},{wch:12},
+                  {wch:11},{wch:12},{wch:10},{wch:13},{wch:12},{wch:11},{wch:32}];
+
+  /* ---------- Hoja 2: RESUMEN (una fila por req) ---------- */
+  const cols2 = ['N° Requerimiento','N° Req. SPRING','Solicitante','Fundo','Área',
+    'F. Registro','F. Aprob. N2','Días','Etapa','Ítems Atendidos','Total Ítems','% Avance',
+    'OC(s)','OC SPRING','Proveedor','Monto OC','Estado OC','OC Rechazada'];
+  const aoa2 = [cols2.map(c=>cell(c,HDR))];
+  rows.forEach(r=>{
+    const et = etapaReq(r), av = avance(r);
+    const oc = r.ocs[0]||{};
+    aoa2.push([
+      cell(r.id),cell(r.spr),cell(r.solicitante),cell(r.fundo),cell(r.area),
+      cell(r.freg),cell(r.fap),cell(r.dias,{alignment:{horizontal:'center'}}),cellEtapa(et),
+      cell(av.at,{alignment:{horizontal:'center'}}),cell(av.tot,{alignment:{horizontal:'center'}}),
+      cell(av.at/av.tot,{numFmt:'0%',alignment:{horizontal:'center'}}),
+      cell(r.ocs.map(o=>o.n).join(' | ')||'—'),cell(oc.spring||'—'),cell(oc.prov||'—'),
+      cell(oc.monto||'—'),cell(oc.estado||'—'),
+      cell(r.ocRechazada?'SÍ':'',{font:{bold:true,color:{rgb:'DC2626'}},alignment:{horizontal:'center'}}),
+    ]);
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(aoa2);
+  ws2['!cols'] = [{wch:16},{wch:13},{wch:12},{wch:12},{wch:14},{wch:11},{wch:11},{wch:6},{wch:12},
+                  {wch:14},{wch:11},{wch:9},{wch:40},{wch:11},{wch:24},{wch:12},{wch:20},{wch:12}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, 'Detalle por ítem');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Resumen por req');
+  XLSX.writeFile(wb, 'seguimiento_req_compra_'+(filtro==='TODOS'?'todos':filtro.toLowerCase())+'.xlsx');
+}
+render();
+if(location.search.indexOf('embed')>=0){var n=document.querySelector('div[style*="position:fixed"]');if(n)n.style.display='none';}
+</script>
+</body>
+</html>

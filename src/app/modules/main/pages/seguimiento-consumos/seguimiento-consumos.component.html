@@ -1,0 +1,185 @@
+<div class="container">
+
+  <h1><span class="icon">📦</span> Seguimiento de Requerimientos de Consumo</h1>
+  <p class="subtitle">Workflow por estados: <b>PENDIENTE → APROBADO → EN ATENCIÓN → DESPACHADO → CONFORME</b></p>
+
+  <!-- FILTROS -->
+  <div class="filters">
+    <div class="fgroup"><label>Fundo</label>
+      <select [(ngModel)]="fidfundo">
+        <option value="">Todos</option>
+        <option *ngFor="let f of fundos" [value]="f.codigoFundo">{{ f.codigoFundo }} - {{ f.nombreFundo }}</option>
+      </select>
+    </div>
+    <div class="fgroup"><label>Área</label>
+      <input type="text" [(ngModel)]="fidarea" placeholder="Id área (opcional)">
+    </div>
+    <div class="fgroup"><label>Desde</label><input type="date" [(ngModel)]="fdesde"></div>
+    <div class="fgroup"><label>Hasta</label><input type="date" [(ngModel)]="fhasta"></div>
+    <div class="fgroup"><label>Buscar</label>
+      <input type="text" [(ngModel)]="busqueda" placeholder="N° req / NS / ítem / usuario">
+    </div>
+    <button class="btn btn-primary" (click)="buscar()">Buscar</button>
+    <div class="spacer"></div>
+    <button class="btn btn-excel" (click)="exportarExcel()" [disabled]="!dataFiltrada.length">⬇ Exportar Excel</button>
+  </div>
+
+  <!-- CHIPS DE ESTADO -->
+  <div class="estado-chips">
+    <div class="chip c-todos" [class.active]="filtroEstado==='TODOS'" (click)="setFiltro('TODOS')">Todos</div>
+    <div class="chip c-pend" [class.active]="filtroEstado==='PENDIENTE'" (click)="setFiltro('PENDIENTE')"><span class="dot"></span>Pendiente</div>
+    <div class="chip c-ap" [class.active]="filtroEstado==='APROBADO'" (click)="setFiltro('APROBADO')"><span class="dot"></span>Aprobado</div>
+    <div class="chip c-ep" [class.active]="filtroEstado==='EN_ATENCION'" (click)="setFiltro('EN_ATENCION')"><span class="dot"></span>En Atención</div>
+    <div class="chip c-oc" [class.active]="filtroEstado==='DESPACHADO'" (click)="setFiltro('DESPACHADO')"><span class="dot"></span>Despachado</div>
+    <div class="chip c-at" [class.active]="filtroEstado==='CONFORME'" (click)="setFiltro('CONFORME')"><span class="dot"></span>Conforme</div>
+  </div>
+
+  <!-- KPI FUNNEL -->
+  <div class="kpis">
+    <div class="kpi k0" [class.selected]="filtroEstado==='PENDIENTE'" (click)="setFiltro('PENDIENTE')">
+      <div class="lbl">Pendiente</div><div class="num">{{ kpi('PENDIENTE') }}</div>
+      <div class="sub">En flujo de aprobación N1/N2</div>
+    </div>
+    <div class="kpi k1" [class.selected]="filtroEstado==='APROBADO'" (click)="setFiltro('APROBADO')">
+      <div class="lbl">Aprobado</div><div class="num">{{ kpi('APROBADO') }}</div>
+      <div class="sub">Aprobados N2 · pendientes de despacho</div>
+    </div>
+    <div class="kpi k2" [class.selected]="filtroEstado==='EN_ATENCION'" (click)="setFiltro('EN_ATENCION')">
+      <div class="lbl">En Atención</div><div class="num">{{ kpi('EN_ATENCION') }}</div>
+      <div class="sub">Con despachos parciales</div>
+    </div>
+    <div class="kpi k3" [class.selected]="filtroEstado==='DESPACHADO'" (click)="setFiltro('DESPACHADO')">
+      <div class="lbl">Despachado</div><div class="num">{{ kpi('DESPACHADO') }}</div>
+      <div class="sub">Atendido al 100% · falta conformidad</div>
+    </div>
+    <div class="kpi k4" [class.selected]="filtroEstado==='CONFORME'" (click)="setFiltro('CONFORME')">
+      <div class="lbl">Conforme</div><div class="num">{{ kpi('CONFORME') }}</div>
+      <div class="sub">Conformidad de almacén registrada</div>
+    </div>
+  </div>
+
+  <!-- ESTADOS DE CARGA -->
+  <div *ngIf="cargando" class="empty-card">Cargando seguimiento…</div>
+  <div *ngIf="error && !cargando" class="empty-card error">{{ error }}</div>
+
+  <!-- TABLA -->
+  <div class="card" *ngIf="!cargando && !error">
+    <p-table
+      [value]="dataFiltrada"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} requerimientos"
+      styleClass="p-datatable-sm p-datatable-striped"
+      [tableStyle]="{'min-width':'75rem'}"
+      emptyMessage="Sin resultados para el filtro seleccionado">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width:26px"></th>
+          <th pSortableColumn="id">Requerimiento <p-sortIcon field="id" /></th>
+          <th pSortableColumn="sol">Solicitante <p-sortIcon field="sol" /></th>
+          <th pSortableColumn="fundo">Fundo / Área <p-sortIcon field="fundo" /></th>
+          <th>F. Registro</th>
+          <th>F. Aprob. N2</th>
+          <th>NS / Despacho</th>
+          <th pSortableColumn="etapaNum">Estado workflow <p-sortIcon field="etapaNum" /></th>
+          <th pSortableColumn="dias">Días <p-sortIcon field="dias" /></th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-r>
+          <tr class="req-row" (click)="toggleExpand(r.id)">
+            <td><span class="expander">{{ expanded.has(r.id) ? '▾' : '▸' }}</span></td>
+            <td class="reqnum">{{ r.id }}<span class="spr">REQ {{ r.spr || '—' }}</span></td>
+            <td>{{ r.sol }}</td>
+            <td><div>{{ r.fundo }}</div><div class="muted">{{ r.area }}</div></td>
+            <td>{{ r.freg }}</td>
+            <td>{{ r.fap }}</td>
+            <td>
+              <ng-container *ngIf="r.nss?.length; else sinNS">
+                <div class="ocinfo" *ngFor="let n of r.nss">
+                  <b>{{ n.n }}</b>
+                  <span *ngIf="n.conf==='CONFORME'" class="badge b-at">CONFORME</span>
+                  <span *ngIf="n.conf==='NO_CONFORME'" class="badge b-rech">NO CONFORME</span>
+                  <br><span class="muted">{{ n.usr }} · {{ n.f }}<span *ngIf="n.area"> · {{ n.area }}</span></span>
+                </div>
+              </ng-container>
+              <ng-template #sinNS><span class="muted">— sin despachos —</span></ng-template>
+            </td>
+            <td>
+              <div class="stepper" [ngClass]="'stg-' + etapaReq(r)">
+                <ng-container *ngFor="let e of etapas; let i = index">
+                  <div class="st" [class.done]="i < etapaIndex(etapaReq(r))" [class.now]="i === etapaIndex(etapaReq(r))">
+                    <div class="ball"></div><div class="lbl">{{ etapaLbl[e] }}</div>
+                  </div>
+                  <div *ngIf="i < etapas.length - 1" class="seg" [class.done]="i < etapaIndex(etapaReq(r))"></div>
+                </ng-container>
+              </div>
+              <div style="margin-top:5px">
+                <span class="badge" [ngClass]="etapaCls[etapaReq(r)]">{{ etapaLbl[etapaReq(r)].toUpperCase() }}</span>
+                <span *ngIf="tieneParcial(r)" class="badge b-parcial">PARCIAL</span>
+                <span *ngIf="esSinStock(r)" class="badge b-rech" title="Sin stock para atender">SIN STOCK</span>
+                <span class="muted"> {{ avance(r).at }}/{{ avance(r).tot }} ítems</span>
+              </div>
+            </td>
+            <td><div class="aging" [class.warn]="r.dias > 30">{{ r.dias }}d</div></td>
+          </tr>
+
+          <!-- detalle expandido -->
+          <tr class="detail-row" *ngIf="expanded.has(r.id)">
+            <td colspan="9">
+              <div class="detail-box">
+                <p-table
+                  [value]="r.det || []"
+                  [paginator]="true"
+                  [rows]="5"
+                  [rowsPerPageOptions]="[5, 10, 20]"
+                  styleClass="p-datatable-sm"
+                  emptyMessage="Sin ítems">
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>Item</th><th>Descripción</th><th>UM</th><th>Cant.</th><th>Etapa</th>
+                      <th>Despachado</th><th>NS / Desp.</th><th>F. Despacho</th><th>Nota</th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-d>
+                    <tr>
+                      <td><b>{{ d.cod }}</b></td>
+                      <td>{{ d.desc }}</td>
+                      <td>{{ d.um }}</td>
+                      <td>{{ d.cant }}</td>
+                      <td>
+                        <span class="badge" [ngClass]="etapaCls[d.etapa]">{{ etapaLbl[d.etapa] }}</span>
+                        <span *ngIf="d.parcial" class="badge b-parcial">PARCIAL</span>
+                      </td>
+                      <td style="min-width:90px">
+                        {{ d.desp }}/{{ d.cant }}
+                        <div class="prog"><div [style.width.%]="pctLinea(d)"></div></div>
+                        <div class="muted" *ngIf="d.pend > 0">pend: {{ d.pend }}</div>
+                      </td>
+                      <td><div *ngIf="d.ns">{{ d.ns }}<span class="muted"> ×{{ d.nDesp }}</span></div><div class="muted" *ngIf="d.usr">{{ d.usr }}</div><span *ngIf="!d.ns">—</span></td>
+                      <td>{{ d.fdesp || '—' }}</td>
+                      <td class="muted">{{ notaLinea(d) }}</td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </div>
+            </td>
+          </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9" class="empty">Sin resultados para el filtro seleccionado</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <div class="footer">
+    <span>{{ dataFiltrada.length }} requerimiento(s) · filtro: {{ filtroEstado==='TODOS' ? 'Todos' : etapaLbl[filtroEstado] }}</span>
+    <span>SP: LOGISTICA_reporteSeguimientoReqConsumo</span>
+  </div>
+</div>

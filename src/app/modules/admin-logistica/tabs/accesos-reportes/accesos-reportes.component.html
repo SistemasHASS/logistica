@@ -1,0 +1,107 @@
+<div class="acc-wrap">
+
+  <div class="acc-header">
+    <h2><i class="bx bx-lock-open-alt"></i> Accesos a Reportes Restringidos</h2>
+    <p class="sub">Configura qué usuarios (por DNI) pueden ver cada reporte restringido</p>
+  </div>
+
+  <div *ngIf="alertMsg()" class="alerta" [ngClass]="alertTipo()">{{ alertMsg() }}</div>
+
+  <div class="acc-grid">
+
+    <!-- selector de reporte -->
+    <div class="card">
+      <div class="card-titulo">Reporte</div>
+      <div class="mod-list">
+        <div *ngFor="let m of modulos" class="mod-item" [class.sel]="moduloSel()===m.modulo"
+             (click)="cambiarModulo(m.modulo)">
+          <div class="mod-nombre">{{ m.nombre }}</div>
+          <div class="mod-desc">{{ m.descripcion }}</div>
+          <div class="mod-key">{{ m.modulo }}</div>
+        </div>
+      </div>
+
+      <div class="card-titulo" style="margin-top:18px">Visibilidad en el menú</div>
+      <ng-container *ngIf="configMenu() as cfg">
+        <div class="cfg-row">
+          <div class="cfg-info">
+            <div class="cfg-nombre">Mostrar en el menú principal</div>
+            <div class="cfg-desc">Si se apaga, el ítem desaparece del menú para todos</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" [checked]="cfg.menuVisible" [disabled]="guardandoCfg()"
+                   (change)="toggleConfig('menuVisible')">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="cfg-row">
+          <div class="cfg-info">
+            <div class="cfg-nombre">Solo usuarios con acceso</div>
+            <div class="cfg-desc">El ítem solo se muestra a usuarios con acceso activo</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" [checked]="cfg.soloConAcceso" [disabled]="guardandoCfg() || !cfg.menuVisible"
+                   (change)="toggleConfig('soloConAcceso')">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </ng-container>
+      <div *ngIf="!configMenu()" class="mini">Cargando configuración…</div>
+
+      <div class="card-titulo" style="margin-top:18px">Nuevo acceso</div>
+      <div class="alta">
+        <input type="text" [(ngModel)]="dniNuevo" maxlength="12" placeholder="DNI del usuario"
+               (keyup.enter)="buscarUsuario()">
+        <button class="btn-sec" (click)="buscarUsuario()" [disabled]="buscandoUsr() || !dniNuevo.trim()">
+          {{ buscandoUsr() ? 'Buscando…' : 'Buscar' }}
+        </button>
+      </div>
+
+      <div *ngIf="usrPreview() as u" class="usr-preview">
+        <div><b>{{ u.nombre }}</b></div>
+        <div class="mini">DNI: {{ u.dni }} · Rol: {{ u.rol || '—' }} · Empresa: {{ u.ruc || '—' }}</div>
+        <div class="mini" *ngIf="u.area">Área: {{ u.area }}</div>
+        <button class="btn-pri" (click)="darAcceso()" [disabled]="guardando()">
+          {{ guardando() ? 'Guardando…' : '+ Dar acceso' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- tabla de accesos -->
+    <div class="card">
+      <div class="card-titulo fila">
+        Usuarios con acceso — {{ moduloActual.nombre }}
+        <input type="text" class="buscar" [(ngModel)]="filtroTxt" placeholder="Filtrar por DNI / nombre / rol">
+      </div>
+
+      <div *ngIf="cargando()" class="estado">Cargando…</div>
+      <div *ngIf="!cargando() && !accesosFiltrados.length" class="estado">
+        No hay usuarios con acceso a este reporte
+      </div>
+
+      <table *ngIf="!cargando() && accesosFiltrados.length">
+        <thead>
+          <tr><th>DNI</th><th>Nombre</th><th>Empresa</th><th>Rol</th><th>Activo</th><th>Alta</th><th>Otorgado por</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of accesosFiltrados">
+            <td><b>{{ a.dni }}</b></td>
+            <td>{{ a.nombre || '—' }}</td>
+            <td class="mini">{{ a.ruc || '—' }}</td>
+            <td><span class="rol">{{ a.rol || '—' }}</span></td>
+            <td>
+              <label class="switch">
+                <input type="checkbox" [checked]="a.activo" (change)="toggle(a)">
+                <span class="slider"></span>
+              </label>
+            </td>
+            <td class="mini">{{ a.fechaAlta || '—' }}</td>
+            <td class="mini">{{ a.usuarioAlta || '—' }}</td>
+            <td><button class="btn-del" (click)="quitar(a)">Quitar</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>

@@ -4,6 +4,12 @@ import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '@/environments/environment';
 
+export interface StockDetalleAprobacion {
+  estado: 'OK' | 'SIN_ALMACEN';
+  idalmacen: string;
+  items: { codigo: string; stockActual: number }[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -144,6 +150,15 @@ export class AprobacionesAreaService {
     ruc?: string;
   }): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/logistica/requerimientos-pendientes-area-detalle`, data);
+  }
+
+  consultarStockDetalle(data: {
+    idrequerimiento: string;
+    documentoidentidad: string;
+    ruc: string;
+    modoGerencia: boolean;
+  }): Observable<StockDetalleAprobacion> {
+    return this.http.post<StockDetalleAprobacion>(`${this.baseUrl}/api/logistica/consultar-stock-detalle-aprobacion`, data);
   }
 
   /**

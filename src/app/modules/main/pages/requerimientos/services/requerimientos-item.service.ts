@@ -5,14 +5,17 @@ import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { UtilsService } from '@/app/shared/utils/utils.service';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
 import { AprobacionesAreaService } from '@/app/modules/main/services/aprobaciones-area.service';
+import { AprobacionesAmbitosService } from '@/app/modules/main/services/aprobaciones-ambitos.service';
 import { PrioridadRequerimientoService } from '@/app/shared/services/prioridad-requerimiento.service';
 import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 import {
   Requerimiento, DetalleRequerimiento,
-  Ceco, Labor, Proyecto, DetalleExcelPreview, PartidaLocal,
+  Ceco, Labor, Proyecto, DetalleExcelPreview, /* PartidaLocal, */
 } from '@/app/shared/interfaces/Tables';
-import { construirArbolPartidas, filtrarPartidas } from '@/app/shared/utils/partida-tree.utils';
-import { ModuloNode } from '@/app/modules/main/components/tree-select/tree-select.component';
+// import { construirArbolPartidas, filtrarPartidas } from '@/app/shared/utils/partida-tree.utils';
+// import { ModuloNode } from '@/app/modules/main/components/tree-select/tree-select.component';
 import { PrioridadSpring, TipoRequerimiento } from '@/app/shared/interfaces/PrioridadRequerimiento';
 import { RequerimientosMaestrasService } from './requerimientos-maestras.service';
 import { TransferenciaService } from '@/app/modules/main/services/transferencia.service';
@@ -79,6 +82,7 @@ export class RequerimientosItemService {
     private utilsService: UtilsService,
     private requerimientosService: RequerimientosService,
     private aprobacionesAreaService: AprobacionesAreaService,
+    private aprobacionesAmbitosService: AprobacionesAmbitosService,
     public prioridadService: PrioridadRequerimientoService,
     private maestras: RequerimientosMaestrasService,
     private transferenciaService: TransferenciaService,
@@ -488,9 +492,9 @@ export class RequerimientosItemService {
         turno: this.TipoSelecionado === 'COMPRA' ? '' : (this.maestras.turnoSeleccionado ?? ''),
         labor: this.maestras.laborSeleccionado?.labor ?? '',
         esActivoFijo: false, activoFijo: '', afectoIGV: 'S',
-        partidaId: '', partida: '', subpresupuesto: undefined, partidaDescripcion: '',
+        // partidaId: '', partida: '', subpresupuesto: undefined, partidaDescripcion: '',
       };
-      this.aplicarPartidaPorDefecto();
+      // this.aplicarPartidaPorDefecto();
     this.modalAbierto = true;
   }
 
@@ -525,7 +529,7 @@ export class RequerimientosItemService {
       this.filteredCecosModal = [];
     }
     this.lineaTemp.ceco = ''; this.lineaTemp.labor = ''; this.lineaTemp.proyecto = '';
-    this.limpiarPartidaLinea();
+    // this.limpiarPartidaLinea();
     this.filteredLaboresModal = [];
     this.filteredProyectosModal = [];
     if (this.filteredCecosModal.length === 1) {
@@ -540,7 +544,7 @@ export class RequerimientosItemService {
     const cecoObj = this.maestras.cecos.find((c) => c.localname === cecoActual);
     this.filteredLaboresModal = this.maestras.labores.filter((l) => l.ceco === (cecoObj?.costcenter || ''));
     this.lineaTemp.labor = ''; this.lineaTemp.proyecto = '';
-    this.limpiarPartidaLinea();
+    // this.limpiarPartidaLinea();
     this.filteredProyectosModal = [];
     if (this.filteredLaboresModal.length === 1) {
       this.lineaTemp.labor = this.filteredLaboresModal[0].labor;
@@ -563,63 +567,64 @@ export class RequerimientosItemService {
     if (this.filteredProyectosModal.length === 1) {
       this.lineaTemp.proyecto = String(this.filteredProyectosModal[0].proyectoio);
     }
-    this.aplicarPartidaPorDefecto();
+    // this.aplicarPartidaPorDefecto();
   }
 
   // ── Partida presupuestal (opcional, depende del proyecto/AFE de la línea) ──
-  resolverAfeProyecto(proyectoLinea: string | undefined): string {
-    const valor = String(proyectoLinea ?? '').trim();
-    if (!valor) return '';
-    const proyecto = this.maestras.proyectos.find((p: any) =>
-      String(p.proyectoio ?? '').trim() === valor || String(p.afe ?? '').trim() === valor);
-    return String(proyecto?.afe ?? '').trim();
-  }
+  // TODO(PARTIDA): comentado temporalmente hasta retomar el desarrollo de partida
+  // resolverAfeProyecto(proyectoLinea: string | undefined): string {
+  //   const valor = String(proyectoLinea ?? '').trim();
+  //   if (!valor) return '';
+  //   const proyecto = this.maestras.proyectos.find((p: any) =>
+  //     String(p.proyectoio ?? '').trim() === valor || String(p.afe ?? '').trim() === valor);
+  //   return String(proyecto?.afe ?? '').trim();
+  // }
 
-  get partidasFiltradasModal(): PartidaLocal[] {
-    const afe = this.resolverAfeProyecto(this.lineaTemp?.proyecto);
-    return filtrarPartidas(this.maestras.partidas, afe, this.usuario?.ruc);
-  }
+  // get partidasFiltradasModal(): PartidaLocal[] {
+  //   const afe = this.resolverAfeProyecto(this.lineaTemp?.proyecto);
+  //   return filtrarPartidas(this.maestras.partidas, afe, this.usuario?.ruc);
+  // }
 
-  get partidaTreeNodesModal(): ModuloNode[] {
-    return construirArbolPartidas(this.partidasFiltradasModal);
-  }
+  // get partidaTreeNodesModal(): ModuloNode[] {
+  //   return construirArbolPartidas(this.partidasFiltradasModal);
+  // }
 
-  private limpiarPartidaLinea() {
-    this.lineaTemp.partidaId = '';
-    this.lineaTemp.subpresupuesto = undefined;
-    this.lineaTemp.partida = '';
-    this.lineaTemp.partidaDescripcion = '';
-  }
+  // private limpiarPartidaLinea() {
+  //   this.lineaTemp.partidaId = '';
+  //   this.lineaTemp.subpresupuesto = undefined;
+  //   this.lineaTemp.partida = '';
+  //   this.lineaTemp.partidaDescripcion = '';
+  // }
 
-  private aplicarPartidaPorDefecto() {
-    // Hereda la partida global de Parámetros solo si el proyecto de la línea coincide
-    const global = this.maestras.partidaSeleccionada;
-    const afe = this.resolverAfeProyecto(this.lineaTemp?.proyecto);
-    if (global && afe && String(global.proyecto).trim() === afe) {
-      this.lineaTemp.partidaId = global.id;
-      this.lineaTemp.subpresupuesto = global.subpresupuesto;
-      this.lineaTemp.partida = String(global.partida ?? '').trim();
-      this.lineaTemp.partidaDescripcion = String(global.partida_descripcion ?? '').trim();
-    } else {
-      this.limpiarPartidaLinea();
-    }
-  }
+  // private aplicarPartidaPorDefecto() {
+  //   // Hereda la partida global de Parámetros solo si el proyecto de la línea coincide
+  //   const global = this.maestras.partidaSeleccionada;
+  //   const afe = this.resolverAfeProyecto(this.lineaTemp?.proyecto);
+  //   if (global && afe && String(global.proyecto).trim() === afe) {
+  //     this.lineaTemp.partidaId = global.id;
+  //     this.lineaTemp.subpresupuesto = global.subpresupuesto;
+  //     this.lineaTemp.partida = String(global.partida ?? '').trim();
+  //     this.lineaTemp.partidaDescripcion = String(global.partida_descripcion ?? '').trim();
+  //   } else {
+  //     this.limpiarPartidaLinea();
+  //   }
+  // }
 
   onProyectoChangeModal() {
     // El proyecto de la línea cambió: la partida seleccionada puede no aplicar
-    this.aplicarPartidaPorDefecto();
+    // this.aplicarPartidaPorDefecto();
   }
 
-  onPartidaChangeModal() {
-    const seleccionada = this.partidasFiltradasModal.find((p) => p.id === this.lineaTemp.partidaId);
-    if (seleccionada) {
-      this.lineaTemp.subpresupuesto = seleccionada.subpresupuesto;
-      this.lineaTemp.partida = String(seleccionada.partida ?? '').trim();
-      this.lineaTemp.partidaDescripcion = String(seleccionada.partida_descripcion ?? '').trim();
-    } else {
-      this.limpiarPartidaLinea();
-    }
-  }
+  // onPartidaChangeModal() {
+  //   const seleccionada = this.partidasFiltradasModal.find((p) => p.id === this.lineaTemp.partidaId);
+  //   if (seleccionada) {
+  //     this.lineaTemp.subpresupuesto = seleccionada.subpresupuesto;
+  //     this.lineaTemp.partida = String(seleccionada.partida ?? '').trim();
+  //     this.lineaTemp.partidaDescripcion = String(seleccionada.partida_descripcion ?? '').trim();
+  //   } else {
+  //     this.limpiarPartidaLinea();
+  //   }
+  // }
 
   editarDetalleItem(index: number) {
     this.editIndex = index;
@@ -777,17 +782,33 @@ export class RequerimientosItemService {
             : req.itemtipo === 'COMPRA'
               ? (idrol.includes('APLOGIST') && !idrol.includes('JLOLOGIST') ? 'COMPRA_AREA' : 'COMPRA')
             : 'ITEM';
-          await this.aprobacionesAreaService.registrarRequerimiento({
-            ruc: req.ruc, idrequerimiento: req.idrequerimiento,
-            idarea: Number(req.idarea), tipoRequerimiento: tipoAprobacion,
-            descripcion: req.glosa, usuarioSolicitud: this.maestras.usuario.documentoidentidad,
-            glosa: req.glosa, monto: 0,
-          }).toPromise();
-          await this.aprobacionesAreaService.asignarAprobadoresRequerimiento({
-            ruc: req.ruc, idrequerimiento: req.idrequerimiento,
-            idarea: Number(req.idarea), tipoRequerimiento: tipoAprobacion,
-            usuarioSolicitud: this.maestras.usuario.documentoidentidad,
-          }).toPromise();
+          let errorEnvio: string | null = null;
+          const envioAmbito = await this.aprobacionesAmbitosService.enviarSiCorresponde(
+            { ruc: req.ruc, idrequerimiento: req.idrequerimiento, idarea: req.idarea, idfundo: req.idfundo },
+            this.maestras.usuario.documentoidentidad,
+          ).catch((e: any) => { errorEnvio = e?.message || 'No se pudo registrar la ruta de aprobación'; return undefined; });
+          if (envioAmbito) {
+            if (envioAmbito.estadoFinal && envioAmbito.estadoFinal !== req.estados) {
+              req.estados = envioAmbito.estadoFinal;
+              await this.dexieService.requerimientos.where('idrequerimiento').equals(req.idrequerimiento)
+                .modify((r: any) => { r.estados = envioAmbito.estadoFinal; });
+            }
+          } else if (errorEnvio) {
+            this.alertService.showAlert('Aviso',
+              `El requerimiento quedó guardado pero no pudo enviarse a aprobación: ${errorEnvio}`, 'warning');
+          } else {
+            await this.aprobacionesAreaService.registrarRequerimiento({
+              ruc: req.ruc, idrequerimiento: req.idrequerimiento,
+              idarea: Number(req.idarea), tipoRequerimiento: tipoAprobacion,
+              descripcion: req.glosa, usuarioSolicitud: this.maestras.usuario.documentoidentidad,
+              glosa: req.glosa, monto: 0,
+            }).toPromise();
+            await this.aprobacionesAreaService.asignarAprobadoresRequerimiento({
+              ruc: req.ruc, idrequerimiento: req.idrequerimiento,
+              idarea: Number(req.idarea), tipoRequerimiento: tipoAprobacion,
+              usuarioSolicitud: this.maestras.usuario.documentoidentidad,
+            }).toPromise();
+          }
         }
       } catch { }
       this.alertService.cerrarModalCarga();
@@ -855,7 +876,7 @@ export class RequerimientosItemService {
             idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
             idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
             afectoIGV: d.afectoIGV === 'N' ? 'N' : 'S',
-            subpresupuesto: d.subpresupuesto ?? null, partida: d.partida || '',
+            // TODO(PARTIDA): subpresupuesto: d.subpresupuesto ?? null, partida: d.partida || '',
           })),
         };
         const resp = await this.transferenciaService.crearRequerimientoTransferencia(payloadTransf);
@@ -901,7 +922,7 @@ export class RequerimientosItemService {
         idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
         idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
         afectoIGV: d.afectoIGV === 'N' ? 'N' : 'S',
-        subpresupuesto: d.subpresupuesto ?? null, partida: d.partida || '',
+        // TODO(PARTIDA): subpresupuesto: d.subpresupuesto ?? null, partida: d.partida || '',
       })),
     }];
     this.requerimientosService.registrarRequerimientos(payload).subscribe({
@@ -967,7 +988,7 @@ export class RequerimientosItemService {
             idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
             idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
             afectoIGV: d.afectoIGV === 'N' ? 'N' : 'S',
-            subpresupuesto: d.subpresupuesto ?? null, partida: d.partida || '',
+            // TODO(PARTIDA): subpresupuesto: d.subpresupuesto ?? null, partida: d.partida || '',
           })),
         };
         const respTransf = await this.transferenciaService.crearRequerimientoTransferencia(payloadTransf);
@@ -1038,7 +1059,7 @@ export class RequerimientosItemService {
         idproyecto: d.proyecto || '', idcentrocosto: d.ceco || '',
         idturno: d.turno || '', idlabor: d.labor || '', eliminado: 0,
         afectoIGV: d.afectoIGV === 'N' ? 'N' : 'S',
-        subpresupuesto: d.subpresupuesto ?? null, partida: d.partida || '',
+        // TODO(PARTIDA): subpresupuesto: d.subpresupuesto ?? null, partida: d.partida || '',
       })),
     }));
     try {
@@ -1298,12 +1319,19 @@ export class RequerimientosItemService {
     return lista;
   }
 
+  // Normaliza el código de ítem: rellena con ceros solo si es numérico;
+  // los códigos alfanuméricos se conservan tal cual (acepta texto)
+  private padCodigo(valor: any): string {
+    const s = String(valor ?? '').trim();
+    return /^\d+$/.test(s) ? s.padStart(6, '0') : s;
+  }
+
   validarFila(row: DetalleExcelPreview, lineasPreview: DetalleExcelPreview[], activosFijos: any[]): void {
     row.errores = [];
     if (!row.codigo) {
       row.errores.push({ columna: 'Código', mensaje: 'Requerido' });
     } else {
-      const codigoPadded = String(row.codigo).padStart(6, '0');
+      const codigoPadded = this.padCodigo(row.codigo);
       row.codigo = codigoPadded;
       const item = this.maestras.items.find((i: any) => i.codigo === codigoPadded);
       if (!item) {
@@ -1315,6 +1343,14 @@ export class RequerimientosItemService {
       }
     }
     if (!row.cantidad || row.cantidad <= 0) row.errores.push({ columna: 'Cantidad', mensaje: 'Debe ser mayor a 0' });
+    if (
+      this.TipoSelecionado === 'CONSUMO' &&
+      row.stockDisponible !== undefined &&
+      row.stockDisponible !== null &&
+      Number(row.cantidad) > row.stockDisponible
+    ) {
+      row.errores.push({ columna: 'Stock', mensaje: `Disponible: ${row.stockDisponible}` });
+    }
     if (this.TipoSelecionado === 'CONSUMO' && !row.turno) {
       row.errores.push({ columna: 'Turno', mensaje: 'Requerido' });
     }
@@ -1334,7 +1370,7 @@ export class RequerimientosItemService {
     if (!row.codigo) {
       row.errores.push({ columna: 'Código', mensaje: 'Requerido' });
     } else {
-      const codigoPadded = String(row.codigo).padStart(6, '0');
+      const codigoPadded = this.padCodigo(row.codigo);
       row.codigo = codigoPadded;
       const item = this.maestras.items.find((i: any) => i.codigo === codigoPadded);
       if (!item) {
@@ -1364,7 +1400,7 @@ export class RequerimientosItemService {
     for (const r of rows) {
       const rawCodigo = r['COD MATERIAL'];
       const codigoPadded = rawCodigo !== undefined && rawCodigo !== ''
-        ? String(rawCodigo).padStart(6, '0')
+        ? this.padCodigo(rawCodigo)
         : '';
       const itemEncontrado = codigoPadded
         ? this.maestras.items.find((i: any) => i.codigo === codigoPadded)
@@ -1428,7 +1464,10 @@ export class RequerimientosItemService {
         unidadMedida: itemEncontrado?.um || r['UM'] || 'UND',
         turno: '',
         ceco: ceco || (this.maestras.cecoSeleccionado as any)?.localname || '',
-        proyecto: proyecto || (this.maestras.proyectoSeleccionado as any)?.proyectoio || '',
+        proyecto:
+          String(proyecto ?? '').trim() ||
+          (this.maestras.proyectoSeleccionado as any)?.proyectoio ||
+          '',
         labor: laborRaw || (this.maestras.laborSeleccionado?.labor ?? ''),
         activofijo: '',
         afectoIGV: itemEncontrado?.afectoIGV === 'N' ? 'N' : 'S',
@@ -1464,15 +1503,21 @@ export class RequerimientosItemService {
   async cargarExcel(file: File, activosFijos: any[]): Promise<{ lineasPreview: DetalleExcelPreview[]; tieneErrores: boolean; puedeGuardar: boolean }> {
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    // La plantilla nueva trae hojas "Carga" y "Catalogo Items": leer por nombre
+    // y caer a la primera hoja para compatibilidad con plantillas antiguas
+    const sheetName =
+      workbook.SheetNames.find((n) => /carga|plantilla|detalle/i.test(n)) ?? workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
     const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
     const lineasPreview: DetalleExcelPreview[] = [];
     const lineasAgrupadas = new Map<string, DetalleExcelPreview>();
     for (const r of rows) {
       const rawCodigo = r['Cod. Item'];
       const codigoPadded = rawCodigo !== undefined && rawCodigo !== ''
-        ? String(rawCodigo).padStart(6, '0')
+        ? this.padCodigo(rawCodigo)
         : '';
+      // Ignorar filas completamente vacías (separadores/instrucciones)
+      if (codigoPadded === '' && (r['Cantidad'] === undefined || r['Cantidad'] === '')) continue;
       const itemEncontrado = codigoPadded
         ? this.maestras.items.find((i: any) => i.codigo === codigoPadded)
         : undefined;
@@ -1522,10 +1567,17 @@ export class RequerimientosItemService {
         descripcion: itemEncontrado?.descripcion ?? r['Descripcion Item'] ?? '',
         cantidad: Number(r['Cantidad']),
         unidadMedida: itemEncontrado?.um || r['Unidad Medida'] || 'UND',
-        turno: r['Turno'],
+        turno: r['Turno'] || this.maestras.turnoSeleccionado || '',
         activofijo: r['ActivoFijo'],
-        proyecto: proyecto || (this.maestras.proyectoSeleccionado as any)?.proyectoio || '',
-        ceco: ceco || (this.maestras.cecoSeleccionado as any)?.localname || '',
+        proyecto:
+          String(proyecto ?? '').trim() ||
+          (this.maestras.proyectoSeleccionado as any)?.proyectoio ||
+          '',
+        ceco:
+          String(ceco ?? '').trim() ||
+          (this.maestras.cecoSeleccionado as any)?.localname ||
+          this.maestras.configuracion?.idceco ||
+          '',
         labor: this.maestras.laborSeleccionado?.labor ?? '',
         afectoIGV: itemEncontrado?.afectoIGV === 'N' ? 'N' : 'S',
         errores: [],
@@ -1544,6 +1596,44 @@ export class RequerimientosItemService {
 
     // Convertir Map a array
     lineasPreview.push(...lineasAgrupadas.values());
+
+    // Validación de stock en lote (solo CONSUMO, con almacén configurado)
+    if (this.TipoSelecionado === 'CONSUMO' && lineasPreview.length) {
+      const idalmacen = (
+        this.maestras.almacenSeleccionado ||
+        this.maestras.configuracion?.idalmacen ||
+        ''
+      ).toString().trim();
+      if (idalmacen) {
+        try {
+          const resp: any[] = await firstValueFrom(
+            this.requerimientosService.validarStockItems(
+              idalmacen,
+              lineasPreview.map((l) => ({ codigo: l.codigo, producto: l.codigo, cantidad: l.cantidad })),
+            ),
+          );
+          const stockMap = new Map<string, any>();
+          for (const r of resp || []) {
+            const cod = r.codigo ?? r.iditem;
+            if (cod !== undefined && cod !== null && cod !== '') {
+              stockMap.set(this.padCodigo(cod), r);
+            }
+          }
+          for (const fila of lineasPreview) {
+            const res = stockMap.get(fila.codigo);
+            if (res) {
+              fila.stockDisponible = Number(res.stockDisponible ?? 0);
+              fila.estadoStock = res.estadoStock;
+            }
+            // Revalidar para aplicar la regla de stock sobre la fila
+            this.validarFila(fila, lineasPreview, activosFijos);
+          }
+        } catch (e) {
+          console.error('No se pudo validar el stock de la carga masiva:', e);
+        }
+      }
+    }
+
     const tieneErrores = lineasPreview.some((r) => r.errores.length > 0);
     const puedeGuardar = !lineasPreview.some((l) => l.error);
     return { lineasPreview, tieneErrores, puedeGuardar };
@@ -1556,10 +1646,10 @@ export class RequerimientosItemService {
     }
     const idReqActual = this.requerimiento?.idrequerimiento || '';
     const nuevos: DetalleRequerimiento[] = lineasPreview.map((l) => {
-      // Hereda la partida global de Parámetros solo si el proyecto de la línea coincide
-      const global = this.maestras.partidaSeleccionada;
-      const afeLinea = this.resolverAfeProyecto(l.proyecto);
-      const aplicaGlobal = !!global && !!afeLinea && String(global.proyecto).trim() === afeLinea;
+      // TODO(PARTIDA): herencia de partida global comentada hasta retomar desarrollo
+      // const global = this.maestras.partidaSeleccionada;
+      // const afeLinea = this.resolverAfeProyecto(l.proyecto);
+      // const aplicaGlobal = !!global && !!afeLinea && String(global.proyecto).trim() === afeLinea;
       return {
         idrequerimiento: idReqActual,
         codigo: l.codigo,
@@ -1574,10 +1664,11 @@ export class RequerimientosItemService {
         esActivoFijo: false,
         activoFijo: l.activofijo,
         afectoIGV: l.afectoIGV === 'N' ? 'N' : 'S',
-        partidaId: aplicaGlobal ? global!.id : '',
-        subpresupuesto: aplicaGlobal ? global!.subpresupuesto : undefined,
-        partida: aplicaGlobal ? String(global!.partida ?? '').trim() : '',
-        partidaDescripcion: aplicaGlobal ? String(global!.partida_descripcion ?? '').trim() : '',
+        // TODO(PARTIDA):
+        // partidaId: aplicaGlobal ? global!.id : '',
+        // subpresupuesto: aplicaGlobal ? global!.subpresupuesto : undefined,
+        // partida: aplicaGlobal ? String(global!.partida ?? '').trim() : '',
+        // partidaDescripcion: aplicaGlobal ? String(global!.partida_descripcion ?? '').trim() : '',
         estado: 0,
       };
     });
@@ -1637,10 +1728,11 @@ export class RequerimientosItemService {
       esActivoFijo: this.lineaTemp.esActivoFijo,
       activoFijo: this.lineaTemp.activoFijo,
       afectoIGV: this.lineaTemp.afectoIGV === 'N' ? 'N' : 'S',
-      partidaId: this.lineaTemp.partidaId || '',
-      subpresupuesto: this.lineaTemp.subpresupuesto ?? undefined,
-      partida: this.lineaTemp.partida || '',
-      partidaDescripcion: this.lineaTemp.partidaDescripcion || '',
+      // TODO(PARTIDA):
+      // partidaId: this.lineaTemp.partidaId || '',
+      // subpresupuesto: this.lineaTemp.subpresupuesto ?? undefined,
+      // partida: this.lineaTemp.partida || '',
+      // partidaDescripcion: this.lineaTemp.partidaDescripcion || '',
       estado: 0,
     };
     if (this.editIndex >= 0) {
@@ -1686,10 +1778,11 @@ export class RequerimientosItemService {
       esActivoFijo: this.lineaTemp.esActivoFijo || false,
       activoFijo: this.lineaTemp.activoFijo || '',
       afectoIGV: this.lineaTemp.afectoIGV === 'N' ? 'N' : 'S',
-      partidaId: this.lineaTemp.partidaId || '',
-      subpresupuesto: this.lineaTemp.subpresupuesto ?? undefined,
-      partida: this.lineaTemp.partida || '',
-      partidaDescripcion: this.lineaTemp.partidaDescripcion || '',
+      // TODO(PARTIDA):
+      // partidaId: this.lineaTemp.partidaId || '',
+      // subpresupuesto: this.lineaTemp.subpresupuesto ?? undefined,
+      // partida: this.lineaTemp.partida || '',
+      // partidaDescripcion: this.lineaTemp.partidaDescripcion || '',
       estado: 0,
       stockDisponible: this.stockActualLineaTemp,
     };
@@ -1914,8 +2007,9 @@ export class RequerimientosItemService {
               IGVExoneradoFlag: d.afectoIGV === 'N' ? 'S' : 'N',
               GenerarContratoFlag: 'N',
               // Partida presupuestal (opcional) → WH_RequisicionDetalle
-              PartidaPresupuestal: d.subpresupuesto != null ? String(d.subpresupuesto).padStart(4, '0') : null,
-              Partida: d.partida || null,
+              // TODO(PARTIDA):
+              // PartidaPresupuestal: d.subpresupuesto != null ? String(d.subpresupuesto).padStart(4, '0') : null,
+              // Partida: d.partida || null,
               origen: 'app_logistica',
             };
           }),
@@ -2019,7 +2113,47 @@ export class RequerimientosItemService {
     XLSX.writeFile(wb, 'plantilla_carga_masiva_compra.xlsx');
   }
 
-  descargarPlantillaConsumo(): void {
+  async descargarPlantillaConsumo(): Promise<void> {
+    const idalmacen = (
+      this.maestras.almacenSeleccionado ||
+      this.maestras.configuracion?.idalmacen ||
+      ''
+    ).toString().trim();
+    const catalogo: any[] = this.maestras.itemsFiltrados || [];
+
+    // Stock del catálogo en una sola llamada batch
+    const stockPorItem = new Map<string, number>();
+    let stockOk = false;
+    if (idalmacen && catalogo.length) {
+      try {
+        const resp: any[] = await firstValueFrom(
+          this.requerimientosService.validarStockItems(
+            idalmacen,
+            catalogo.map((i: any) => ({ codigo: i.codigo, producto: i.codigo, cantidad: 0 })),
+          ),
+        );
+        for (const r of resp || []) {
+          const cod = r.codigo ?? r.iditem;
+          if (cod !== undefined && cod !== null && cod !== '') {
+            stockPorItem.set(this.padCodigo(cod), Number(r.stockDisponible ?? 0));
+          }
+        }
+        stockOk = true;
+      } catch (e) {
+        console.error('No se pudo obtener el stock para la plantilla:', e);
+      }
+    }
+    if (!stockOk && catalogo.length) {
+      this.alertService.mostrarInfo(
+        'No se pudo obtener el stock actualizado. La plantilla se generó sin la columna de stock.',
+      );
+    }
+
+    const wb = new ExcelJS.Workbook();
+    const ahora = new Date();
+    const fechaGen = ahora.toLocaleString('es-PE');
+
+    // Hoja "Carga": la que el usuario llena
     const headers = [
       'Cod. Item',
       'Descripcion Item',
@@ -2030,9 +2164,96 @@ export class RequerimientosItemService {
       'CECO',
       'PROYECTO',
     ];
-    const ws = XLSX.utils.aoa_to_sheet([headers]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Plantilla Consumo');
-    XLSX.writeFile(wb, 'plantilla_carga_masiva_consumo.xlsx');
+    const wsCarga = wb.addWorksheet('Carga');
+    wsCarga.addRow(headers);
+    wsCarga.columns = headers.map(() => ({ width: 18 }));
+    // Columna "Cod. Item" en formato texto: acepta letras y conserva ceros a la izquierda
+    wsCarga.getColumn('A').numFmt = '@';
+
+    // Hoja "Listas": maestras para los desplegables de la hoja Carga
+    const cecos: any[] = this.maestras.cecos || [];
+    const turnos: any[] = this.maestras.turnos || [];
+    const proyectos: any[] = this.maestras.proyectos || [];
+    const labores: any[] = this.maestras.labores || [];
+    const wsListas = wb.addWorksheet('Listas');
+    wsListas.addRow(['CECO', 'TURNO', 'PROYECTO', 'LABOR']);
+    wsListas.columns = [{ width: 40 }, { width: 20 }, { width: 30 }, { width: 30 }];
+    const maxListas = Math.max(cecos.length, turnos.length, proyectos.length, labores.length, 1);
+    for (let i = 0; i < maxListas; i++) {
+      wsListas.addRow([
+        cecos[i]?.localname ?? null,
+        turnos[i]?.nombreTurno ?? turnos[i]?.id ?? null,
+        proyectos[i]?.proyectoio ?? null,
+        labores[i]?.labor ?? null,
+      ]);
+    }
+
+    // Desplegables en la hoja Carga (columnas E=Turno, G=CECO, H=PROYECTO)
+    const listaRef = (col: string, n: number) => `'Listas'!$${col}$2:$${col}$${Math.max(n, 1) + 1}`;
+    const dvConfig: [string, string][] = [
+      ['E', listaRef('B', turnos.length)],
+      ['G', listaRef('A', cecos.length)],
+      ['H', listaRef('C', proyectos.length)],
+    ];
+    for (const [col, ref] of dvConfig) {
+      for (let rowNum = 2; rowNum <= 500; rowNum++) {
+        wsCarga.getCell(`${col}${rowNum}`).dataValidation = {
+          type: 'list', allowBlank: true, formulae: [ref],
+        };
+      }
+    }
+
+    // Hoja "Catalogo Items": referencia con stock del almacén configurado
+    const catalogoOrdenado = [...catalogo].sort((a: any, b: any) =>
+      String(a.descripcion ?? '').localeCompare(String(b.descripcion ?? '')),
+    );
+    const wsCatalogo = wb.addWorksheet('Catalogo Items');
+    wsCatalogo.columns = [{ width: 12 }, { width: 60 }, { width: 10 }, { width: 18 }];
+    wsCatalogo.addRow([
+      `Catálogo de ítems del almacén ${idalmacen || '(no configurado)'} — generado ${fechaGen}`,
+    ]);
+    wsCatalogo.addRow([]);
+    wsCatalogo.addRow(['CODIGO', 'DESCRIPCION', 'UM', 'STOCK DISPONIBLE']);
+    for (const i of catalogoOrdenado) {
+      const cod = this.padCodigo(i.codigo);
+      wsCatalogo.addRow([
+        cod,
+        i.descripcion ?? '',
+        i.um ?? i.unidadMedida ?? '',
+        stockOk ? (stockPorItem.get(cod) ?? 0) : 'N/D',
+      ]);
+    }
+    if (catalogoOrdenado.length) {
+      wsCatalogo.autoFilter = { from: 'A3', to: `D${3 + catalogoOrdenado.length}` };
+    }
+
+    // Hoja "Instrucciones"
+    const wsInst = wb.addWorksheet('Instrucciones');
+    wsInst.columns = [{ width: 110 }];
+    [
+      'PLANTILLA DE CARGA MASIVA - REQUERIMIENTO DE CONSUMO',
+      '',
+      '1. Llene la hoja "Carga" con los ítems del requerimiento.',
+      '2. La hoja "Catalogo Items" muestra los ítems del almacén configurado y su stock disponible.',
+      '3. Copie el CODIGO del catálogo a la columna "Cod. Item"; la descripción y unidad de medida',
+      '   se completan automáticamente al cargar el archivo.',
+      '4. Las columnas Turno, CECO y PROYECTO tienen listas desplegables con los valores',
+      '   de las maestras (hoja "Listas"). Si las deja vacías se usa lo configurado en parámetros.',
+      '5. La cantidad no puede superar el stock disponible del almacén.',
+      '6. El stock se valida nuevamente al cargar el archivo y al aprobar el requerimiento.',
+      '',
+      `Generado: ${fechaGen}`,
+    ].forEach((t) => wsInst.addRow([t]));
+
+    const stamp = `${ahora.getFullYear()}${String(ahora.getMonth() + 1).padStart(2, '0')}${String(
+      ahora.getDate(),
+    ).padStart(2, '0')}_${String(ahora.getHours()).padStart(2, '0')}${String(
+      ahora.getMinutes(),
+    ).padStart(2, '0')}`;
+    const buffer = await wb.xlsx.writeBuffer();
+    saveAs(
+      new Blob([buffer], { type: 'application/octet-stream' }),
+      `plantilla_carga_masiva_consumo_${stamp}.xlsx`,
+    );
   }
 }

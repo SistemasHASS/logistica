@@ -4,13 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { DropdownComponent } from '../../../../components/dropdown/dropdown.component';
 import { ProductSearchCardsComponent } from '../../../../components/product-search-cards/product-search-cards.component';
 import { ModalSolicitudItemComponent } from '../modal-solicitud-item/modal-solicitud-item.component';
-import { TreeSelectComponent, ModuloNode } from '../../../../components/tree-select/tree-select.component';
+// TODO(PARTIDA): import { TreeSelectComponent, ModuloNode } from '../../../../components/tree-select/tree-select.component';
 
 @Component({
   selector: 'app-modal-detalle-item',
   standalone: true,
   styleUrls: ['../../requerimientos.component.scss'],
-  imports: [CommonModule, FormsModule, DropdownComponent, ProductSearchCardsComponent, ModalSolicitudItemComponent, TreeSelectComponent],
+  imports: [CommonModule, FormsModule, DropdownComponent, ProductSearchCardsComponent, ModalSolicitudItemComponent /* TODO(PARTIDA): , TreeSelectComponent */],
   templateUrl: './modal-detalle-item.component.html',
 })
 export class ModalDetalleItemComponent {
@@ -51,7 +51,7 @@ export class ModalDetalleItemComponent {
   @Input() modalProyectoEditable = false;
   @Input() modalProyectoDisabled = false;
   @Input() permitirEditarParametros = false;
-  @Input() partidaTreeNodes: ModuloNode[] = [];
+  // TODO(PARTIDA): @Input() partidaTreeNodes: ModuloNode[] = [];
 
   // Eventos emitidos al padre
   @Output() cerrarEvt = new EventEmitter<void>();
@@ -65,7 +65,7 @@ export class ModalDetalleItemComponent {
   @Output() cecoChangeEvt = new EventEmitter<void>();
   @Output() laborChangeEvt = new EventEmitter<void>();
   @Output() proyectoChangeEvt = new EventEmitter<void>();
-  @Output() partidaChangeEvt = new EventEmitter<void>();
+  // TODO(PARTIDA): @Output() partidaChangeEvt = new EventEmitter<void>();
   @Output() productoSelectEvt = new EventEmitter<any>();
   @Output() permitirEditarParametrosChange = new EventEmitter<boolean>();
 
@@ -145,10 +145,10 @@ export class ModalDetalleItemComponent {
     this.proyectoChangeEvt.emit();
   }
 
-  // Notifica cambio de partida presupuestal
-  onPartidaChange() {
-    this.partidaChangeEvt.emit();
-  }
+  // TODO(PARTIDA): Notifica cambio de partida presupuestal
+  // onPartidaChange() {
+  //   this.partidaChangeEvt.emit();
+  // }
 
   // Notifica selección de producto
   onProductoSelect(event: any) {

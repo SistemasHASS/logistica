@@ -39,6 +39,32 @@ export class LogisticaService {
     return this.http.post<any[]>(`${this.apiUrl}/generar-reporte-requerimientos`, data);
   }
 
+  // ===================== SEGUIMIENTO REQ. COMPRA =====================
+
+  reporteSeguimientoCompras(data: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/reporte-seguimiento-compras`, data);
+  }
+
+  reporteSeguimientoComprasAnalisis(data: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/reporte-seguimiento-compras-analisis`, data);
+  }
+
+  reporteSeguimientoConsumos(data: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/reporte-seguimiento-consumos`, data);
+  }
+
+  listarAccesoReporte(modulo: string, busqueda: string = ''): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/listar-acceso-reporte`, [{ modulo, busqueda }]);
+  }
+
+  guardarAccesoReporte(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/guardar-acceso-reporte`, [payload]);
+  }
+
+  buscarUsuarioPorDni(dni: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/buscar-usuario-por-dni`, [{ dni }]);
+  }
+
   listarEmpresas(filtro: any = []): Observable<any[]> {
     return this.http.post<any[]>(`${this.apiUrl}/lista-empresa`, filtro);
   }

@@ -10,7 +10,7 @@ import {
   Labor,
   Proyecto,
   ActivoFijo,
-  PartidaLocal,
+  // PartidaLocal, // TODO(PARTIDA): comentado hasta retomar desarrollo
 } from '@/app/shared/interfaces/Tables';
 
 @Injectable({ providedIn: 'root' })
@@ -64,7 +64,7 @@ export class RequerimientosMaestrasService {
   activosFijosFiltrados: any[] = [];
   activosFijosServicioFiltrados: any[] = [];
   unidadesMedidaFiltradas: any[] = [];
-  partidas: PartidaLocal[] = [];
+  // partidas: PartidaLocal[] = []; // TODO(PARTIDA): comentado hasta retomar desarrollo
 
   // ── Selecciones compartidas ────────────────────────────────────────────────
   fundoSeleccionado = '';
@@ -78,7 +78,7 @@ export class RequerimientosMaestrasService {
   cecoSeleccionado: Ceco | null = null;
   proyectoSeleccionado: Proyecto | null = null;
   laborSeleccionado: Labor | null = null;
-  partidaSeleccionada: PartidaLocal | null = null;
+  // partidaSeleccionada: PartidaLocal | null = null; // TODO(PARTIDA): comentado hasta retomar desarrollo
 
   // ── Estado global ──────────────────────────────────────────────────────────
   loading = false;
@@ -123,7 +123,7 @@ export class RequerimientosMaestrasService {
     await this.ListarServiciosAFMenor();
     await this.ListarTipoGastos();
     await this.ListarActivosFijos();
-    await this.ListarPartidas();
+    // await this.ListarPartidas(); // TODO(PARTIDA): comentado hasta retomar desarrollo
   }
 
   async cargarConfiguracion() {
@@ -154,19 +154,19 @@ export class RequerimientosMaestrasService {
       if (config.idlabor) {
         this.laborSeleccionado = (await this.dexieService.getLaborById(config.idlabor)) as Labor | null;
       }
-      // Partida global de parámetros (opcional): válida solo si el proyecto coincide
-      if (config.partida && config.subpresupuesto != null) {
-        if (!this.partidas?.length) await this.ListarPartidas();
-        this.partidaSeleccionada = this.partidas.find(
-          (p) =>
-            String(p.partida).trim() === String(config.partida).trim() &&
-            p.subpresupuesto === config.subpresupuesto &&
-            String(p.proyecto).trim() === String(config.idproyecto ?? '').trim() &&
-            String(p.ruc).trim() === String(this.usuario?.ruc ?? '').trim(),
-        ) || null;
-      } else {
-        this.partidaSeleccionada = null;
-      }
+      // TODO(PARTIDA): partida global de parámetros comentada hasta retomar desarrollo
+      // if (config.partida && config.subpresupuesto != null) {
+      //   if (!this.partidas?.length) await this.ListarPartidas();
+      //   this.partidaSeleccionada = this.partidas.find(
+      //     (p) =>
+      //       String(p.partida).trim() === String(config.partida).trim() &&
+      //       p.subpresupuesto === config.subpresupuesto &&
+      //       String(p.proyecto).trim() === String(config.idproyecto ?? '').trim() &&
+      //       String(p.ruc).trim() === String(this.usuario?.ruc ?? '').trim(),
+      //   ) || null;
+      // } else {
+      //   this.partidaSeleccionada = null;
+      // }
       console.log('🔧 Configuración cargada en maestras:', {
         idTipoItem: config.idTipoItem,
         idalmacen: config.idalmacen,
@@ -192,7 +192,8 @@ export class RequerimientosMaestrasService {
     this.proveedoresActivoFijo = await this.dexieService.showProveedores();
   }
   async ListarTipoGastos() { this.tipoGastos = await this.dexieService.showTipoGastos(); }
-  async ListarPartidas() { this.partidas = await this.dexieService.showPartidas(); }
+  // TODO(PARTIDA): comentado hasta retomar desarrollo
+  // async ListarPartidas() { this.partidas = await this.dexieService.showPartidas(); }
 
   async ListarItems() {
     this.items = await this.dexieService.showItemComoditys();

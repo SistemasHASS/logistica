@@ -1,0 +1,243 @@
+<section class="card my-4" aria-labelledby="titulo-config-ambitos">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+      <h5 id="titulo-config-ambitos" class="m-0">Estructura y reglas por ámbito</h5>
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cargar()" [disabled]="busy() || loading()">Recargar</button>
+    </div>
+    <div class="alert alert-info">Configuración nueva e independiente. Guardar o publicar aquí no activa el nuevo flujo operativo ni modifica requerimientos anteriores.</div>
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <span class="badge" [class.bg-success]="despliegueHabilitado()" [class.bg-secondary]="!despliegueHabilitado()">
+        Flujo por ámbitos: {{ despliegueHabilitado() ? 'ACTIVADO' : 'INACTIVO' }}
+      </span>
+      @if (despliegueHabilitado()) {
+        <button type="button" class="btn btn-outline-danger btn-sm" (click)="cambiarDespliegue(false)" [disabled]="busy() || !motivo.trim()">Desactivar</button>
+      } @else {
+        <button type="button" class="btn btn-outline-primary btn-sm" (click)="cambiarDespliegue(true)" [disabled]="busy() || !motivo.trim()">Activar para esta empresa</button>
+      }
+      <span class="small text-muted">Requiere al menos una regla publicada. Los requerimientos anteriores siguen su flujo original.</span>
+    </div>
+    @if (error()) { <div class="alert alert-danger" role="alert">{{ error() }}</div> }
+    @if (mensaje()) { <div class="alert alert-success" role="status">{{ mensaje() }}</div> }
+    @if (loading()) { <p role="status">Cargando configuración…</p> }
+    <nav class="d-flex flex-wrap gap-2 mb-3" aria-label="Configuración por ámbitos">
+      @for (item of tabs; track item.id) {
+        <button type="button" class="btn btn-sm" [class.btn-primary]="tab() === item.id" [class.btn-outline-secondary]="tab() !== item.id"
+          [attr.aria-pressed]="tab() === item.id" (click)="tab.set(item.id)">{{ item.nombre }}</button>
+      }
+    </nav>
+    <label class="form-label d-block">Motivo del cambio (obligatorio para guardar, publicar o inactivar)
+      <input class="form-control mt-1" [(ngModel)]="motivo" maxlength="500" [disabled]="busy() || loading()">
+    </label>
+    <fieldset [disabled]="busy() || loading() || !ruc" class="border-0 p-0 m-0">
+      @if (tab() === 'estructura') {
+        <h6 class="mt-3">Ámbitos organizacionales</h6>
+        <form #ambitoForm="ngForm" (ngSubmit)="guardarAmbito()" class="row g-2 align-items-end mb-3">
+          <label class="col-md-3 form-label">Tipo
+            <select name="tipoAmbito" class="form-select" [(ngModel)]="ambito.tipoAmbito" (ngModelChange)="onTipoAmbitoChange()" [disabled]="ambito.idAmbito > 0" required>
+              <option value="ADMINISTRATIVO">Administrativo</option><option value="FUNDO">Fundo</option>
+            </select>
+          </label>
+          @if (ambito.tipoAmbito === 'FUNDO') {
+            <label class="col-md-4 form-label">Fundo del maestro de la empresa
+              <select name="fundoMaestro" class="form-select" [ngModel]="ambito.idFundoMaestro" (ngModelChange)="seleccionarFundoMaestro($event)"
+                [disabled]="ambito.idAmbito > 0 || estadoFundos() !== 'ok'" required>
+                <option [ngValue]="null" disabled>Seleccione un fundo</option>
+                @for (f of fundosMaestra(); track f.id) {
+                  <option [ngValue]="f.id">{{ f.codigoFundo }} — {{ f.nombreFundo }}</option>
+                }
+              </select>
+            </label>
+            @if (estadoFundos() === 'cargando') { <div class="col-12 small text-muted">Cargando fundos de la empresa…</div> }
+            @if (estadoFundos() === 'vacio') { <div class="col-12 small text-warning">La empresa no tiene fundos registrados en el maestro.</div> }
+            @if (estadoFundos() === 'error') {
+              <div class="col-12 small text-danger">No se pudo consultar el maestro de fundos. No se permite registro manual.
+                <button type="button" class="btn btn-link btn-sm p-0" (click)="cargar()">Reintentar</button>
+              </div>
+            }
+            <label class="col-md-2 form-label">Código
+              <input class="form-control" [ngModel]="ambito.codigoUnidad" name="codigoUnidadFundo" readonly>
+            </label>
+            <label class="col-md-3 form-label">Nombre
+              <input class="form-control" [ngModel]="ambito.nombre" name="nombreFundo" readonly>
+            </label>
+          } @else {
+            <label class="col-md-3 form-label">Código de unidad
+              <input name="codigoUnidad" class="form-control" [(ngModel)]="ambito.codigoUnidad" [disabled]="ambito.idAmbito > 0" required maxlength="50">
+            </label>
+            <label class="col-md-4 form-label">Nombre
+              <input name="nombre" class="form-control" [(ngModel)]="ambito.nombre" required maxlength="150">
+            </label>
+          }
+          <label class="col-md-2 form-label"><input name="activo" type="checkbox" [(ngModel)]="ambito.activo"> Activo</label>
+          <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary btn-sm" [disabled]="ambitoForm.invalid || !motivo.trim()">Guardar ámbito</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="ambito = nuevoAmbito()">Nuevo / cancelar</button>
+          </div>
+        </form>
+        <p-table [value]="config().ambitos" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+          [rowsPerPageOptions]="[10, 25, 50]" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ámbitos"
+          styleClass="p-datatable-sm">
+          <ng-template pTemplate="header"><tr><th>Tipo</th><th>Código</th><th>Nombre</th><th>Estado</th><th>Acción</th></tr></ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr><td>{{ item.tipoAmbito }}</td><td>{{ item.codigoUnidad }}</td><td>{{ item.nombre }}</td><td>{{ item.activo ? 'Activo' : 'Inactivo' }}</td>
+              <td><button type="button" class="btn btn-outline-primary btn-sm" (click)="editarAmbito(item)">Editar ámbito</button></td></tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage"><tr><td colspan="5" class="text-center py-3 text-muted">No hay ámbitos configurados.</td></tr></ng-template>
+        </p-table>
+        <h6 class="mt-4">Habilitar áreas en un ámbito</h6>
+        <form #areaForm="ngForm" (ngSubmit)="guardarArea()" class="row g-2 align-items-end mb-3">
+          <label class="col-md-4 form-label">Ámbito
+            <select name="idAmbito" class="form-select" [(ngModel)]="area.idAmbito" required>
+              <option [ngValue]="0">Seleccione</option>
+              @for (item of config().ambitos; track item.idAmbito) { <option [ngValue]="item.idAmbito">{{ item.tipoAmbito }} / {{ item.nombre }}</option> }
+            </select>
+          </label>
+          <label class="col-md-4 form-label">Área del catálogo de la empresa
+            <select name="idarea" class="form-select" [(ngModel)]="area.idarea" required>
+              <option [ngValue]="0">Seleccione</option>
+              @for (item of catalogo(); track item.idarea) { <option [ngValue]="item.idarea">{{ item.nombre || item.descripcion }}</option> }
+            </select>
+          </label>
+          <label class="col-md-2 form-label"><input name="activo" type="checkbox" [(ngModel)]="area.activo"> Activa</label>
+          <div class="col-md-2"><button class="btn btn-primary btn-sm" [disabled]="areaForm.invalid || !area.idAmbito || !area.idarea || !motivo.trim()">Guardar área</button></div>
+        </form>
+        <p-table [value]="config().areas" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+          [rowsPerPageOptions]="[10, 25, 50]" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} áreas"
+          styleClass="p-datatable-sm">
+          <ng-template pTemplate="header"><tr><th>Área / ámbito</th><th>Estado</th><th>Acción</th></tr></ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr><td>{{ nombreAreaAmbito(item.idAreaAmbito) }}</td><td>{{ item.activo ? 'Activa' : 'Inactiva' }}</td>
+              <td><button type="button" class="btn btn-outline-primary btn-sm" (click)="area = { idAmbito: item.idAmbito, idarea: item.idarea, activo: item.activo }">Editar vínculo</button></td></tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage"><tr><td colspan="3" class="text-center py-3 text-muted">No hay áreas habilitadas.</td></tr></ng-template>
+        </p-table>
+      }
+      @if (tab() === 'asignaciones') {
+        <p class="text-muted mt-3">Una misma persona puede tener permisos en varias empresas, áreas y ámbitos. Ser aprobador no impide solicitar.</p>
+        <form #asignacionForm="ngForm" (ngSubmit)="guardarAsignacion()" class="row g-2 align-items-end mb-3">
+          <label class="col-md-5 form-label">Área y ámbito
+            <select name="areaAsignacion" class="form-select" [(ngModel)]="asignacion.idAreaAmbito" required>
+              <option [ngValue]="0">Seleccione</option>
+              @for (item of config().areas; track item.idAreaAmbito) { <option [ngValue]="item.idAreaAmbito">{{ nombreAreaAmbito(item.idAreaAmbito) }}</option> }
+            </select>
+          </label>
+          <label class="col-md-3 form-label">Documento de identidad
+            <input name="documento" class="form-control" [(ngModel)]="asignacion.documentoidentidad" required maxlength="20">
+          </label>
+          <label class="col-md-2 form-label">Desde<input name="desde" type="datetime-local" class="form-control" [(ngModel)]="asignacion.vigenteDesde" required></label>
+          <label class="col-md-2 form-label">Hasta (opcional)<input name="hasta" type="datetime-local" class="form-control" [(ngModel)]="asignacion.vigenteHasta"></label>
+          <div class="col-12 d-flex flex-wrap gap-3">
+            <label><input name="solicitar" type="checkbox" [(ngModel)]="asignacion.puedeSolicitar"> Crear requerimientos</label>
+            <label><input name="n1" type="checkbox" [(ngModel)]="asignacion.puedeAprobarN1"> Aprobar N1</label>
+            <label><input name="n2" type="checkbox" [(ngModel)]="asignacion.puedeAprobarN2"> Aprobar N2</label>
+            <label><input name="activo" type="checkbox" [(ngModel)]="asignacion.activo"> Asignación activa</label>
+          </div>
+          <div class="col-12 d-flex gap-2"><button class="btn btn-primary btn-sm" [disabled]="asignacionForm.invalid || !asignacion.idAreaAmbito || !motivo.trim()">Guardar asignación</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="asignacion = nuevaAsignacion()">Nueva / cancelar</button></div>
+        </form>
+        <p-table [value]="config().asignaciones" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+          [rowsPerPageOptions]="[10, 25, 50]" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} asignaciones"
+          styleClass="p-datatable-sm">
+          <ng-template pTemplate="header"><tr><th>Persona</th><th>Área / ámbito</th><th>Permisos</th><th>Estado</th><th>Acción</th></tr></ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr><td>{{ item.documentoidentidad }}</td><td>{{ nombreAreaAmbito(item.idAreaAmbito) }}</td><td>{{ item.puedeSolicitar ? 'Solicitar ' : '' }}{{ item.puedeAprobarN1 ? 'N1 ' : '' }}{{ item.puedeAprobarN2 ? 'N2' : '' }}</td>
+              <td>{{ item.activo ? 'Activa' : 'Inactiva' }}</td><td><button type="button" class="btn btn-outline-primary btn-sm" (click)="editarAsignacion(item)">Editar asignación</button></td></tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage"><tr><td colspan="5" class="text-center py-3 text-muted">No hay asignaciones.</td></tr></ng-template>
+        </p-table>
+      }
+      @if (tab() === 'reglas') {
+        <p class="text-muted mt-3">Primero guarde un borrador. La publicación valida cobertura y responsables independientes. Para modificar una regla publicada, copie a un nuevo borrador.</p>
+        <form #reglaForm="ngForm" (ngSubmit)="guardarRegla()" class="row g-2 align-items-end mb-3">
+          <label class="col-md-3 form-label">Tipo de ámbito
+            <select name="tipo" class="form-select" [(ngModel)]="regla.tipoAmbito" (ngModelChange)="regla.idAmbito = null; regla.idarea = null" required>
+              <option value="ADMINISTRATIVO">Administrativo</option><option value="FUNDO">Fundo</option>
+            </select>
+          </label>
+          <label class="col-md-3 form-label">Ámbito específico
+            <select name="ambito" class="form-select" [(ngModel)]="regla.idAmbito" (ngModelChange)="regla.idarea = null">
+              <option [ngValue]="null">Todos los ámbitos del tipo</option>
+              @for (item of ambitosRegla(); track item.idAmbito) { <option [ngValue]="item.idAmbito">{{ item.nombre }}</option> }
+            </select>
+          </label>
+          <label class="col-md-3 form-label">Área específica
+            <select name="area" class="form-select" [(ngModel)]="regla.idarea" [disabled]="!regla.idAmbito">
+              <option [ngValue]="null">Todas las áreas</option>
+              @for (item of areasRegla(); track item.idAreaAmbito) { <option [ngValue]="item.idarea">{{ item.nombre }}</option> }
+            </select>
+          </label>
+          <label class="col-md-3 form-label">Requerimiento<select name="req" class="form-select" [(ngModel)]="regla.tipoRequerimiento" required><option>CONSUMO</option><option>COMPRA</option><option>SERVICIO</option></select></label>
+          <label class="col-md-2 form-label">Niveles<select name="niveles" class="form-select" [(ngModel)]="regla.niveles"><option [ngValue]="1">Uno</option><option [ngValue]="2">Dos</option></select></label>
+          <label class="col-md-5 form-label">Vigente desde<input name="desde" type="datetime-local" class="form-control" [(ngModel)]="regla.vigenteDesde" required></label>
+          <label class="col-md-5 form-label">Vigente hasta (opcional)<input name="hasta" type="datetime-local" class="form-control" [(ngModel)]="regla.vigenteHasta"></label>
+          <div class="col-12"><strong>Titulares y suplentes</strong><p class="small text-muted">El menor orden disponible es el titular efectivo. N2 también se usa para escalar solicitudes propias de N1 en rutas de un nivel.</p></div>
+          @for (p of regla.responsables; track $index; let i = $index) {
+            <div class="col-12 border rounded p-2"><div class="row g-2 align-items-end">
+              <label class="col-md-1 form-label">Nivel<select [name]="'nivel' + i" class="form-select" [(ngModel)]="p.nivel"><option [ngValue]="1">N1</option><option [ngValue]="2">N2</option></select></label>
+              <label class="col-md-3 form-label">Documento<input [name]="'dni' + i" class="form-control" [(ngModel)]="p.documentoidentidad" required maxlength="20"></label>
+              <label class="col-md-1 form-label">Orden<input [name]="'orden' + i" type="number" min="1" class="form-control" [(ngModel)]="p.orden" required></label>
+              <label class="col-md-3 form-label">Desde<input [name]="'desde' + i" type="datetime-local" class="form-control" [(ngModel)]="p.vigenteDesde" required></label>
+              <label class="col-md-3 form-label">Hasta<input [name]="'hasta' + i" type="datetime-local" class="form-control" [(ngModel)]="p.vigenteHasta"></label>
+              <div class="col-md-1"><button type="button" class="btn btn-outline-danger btn-sm" [attr.aria-label]="'Quitar responsable ' + (i + 1)" (click)="regla.responsables.splice(i, 1)">Quitar</button></div>
+              <label class="col-12"><input [name]="'disponible' + i" type="checkbox" [(ngModel)]="p.disponible"> Disponible</label>
+            </div></div>
+          }
+          <div class="col-12 d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="agregarResponsable(1)">Añadir suplente N1</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="agregarResponsable(2)">Añadir suplente N2</button>
+            <button class="btn btn-primary btn-sm" [disabled]="reglaForm.invalid || !regla.responsables.length || !motivo.trim()">Guardar borrador {{ regla.idRegla || '' }}</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="regla = nuevaRegla()">Nueva / cancelar</button>
+          </div>
+        </form>
+        <p-table [value]="config().reglas" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+          [rowsPerPageOptions]="[10, 25, 50]" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} reglas"
+          styleClass="p-datatable-sm">
+          <ng-template pTemplate="header"><tr><th>Regla</th><th>Alcance</th><th>Tipo / niveles</th><th>Estado</th><th>Acciones</th></tr></ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr><td>{{ item.idRegla }}</td><td>{{ item.tipoAmbito }} / {{ nombreAmbito(item.idAmbito) }} / {{ nombreArea(item.idarea) }}</td><td>{{ item.tipoRequerimiento }} / {{ item.niveles }}</td><td>{{ item.estado }}</td>
+              <td><div class="d-flex flex-wrap gap-1">
+                @if (item.estado === 'BORRADOR') {
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="editarRegla(item)">Editar borrador</button>
+                  <button type="button" class="btn btn-outline-success btn-sm" [disabled]="!motivo.trim()" (click)="cambiarEstado(item, 'PUBLICADA')">Publicar</button>
+                }
+                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="editarRegla(item, true)">Copiar a borrador</button>
+                @if (item.estado !== 'INACTIVA') { <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="!motivo.trim()" (click)="cambiarEstado(item, 'INACTIVA')">Inactivar</button> }
+              </div></td></tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage"><tr><td colspan="5" class="text-center py-3 text-muted">No hay reglas configuradas.</td></tr></ng-template>
+        </p-table>
+      }
+      @if (tab() === 'simulador') {
+        <form #simuladorForm="ngForm" (ngSubmit)="simular()" class="row g-2 align-items-end mt-2">
+          <label class="col-md-5 form-label">Área / ámbito<select name="area" class="form-select" [(ngModel)]="simulador.idAreaAmbito" required><option [ngValue]="0">Seleccione</option>
+            @for (item of config().areas; track item.idAreaAmbito) { <option [ngValue]="item.idAreaAmbito">{{ nombreAreaAmbito(item.idAreaAmbito) }}</option> }
+          </select></label>
+          <label class="col-md-3 form-label">Solicitante<input name="dni" class="form-control" [(ngModel)]="simulador.documentoidentidad" required maxlength="20"></label>
+          <label class="col-md-2 form-label">Tipo<select name="tipo" class="form-select" [(ngModel)]="simulador.tipoRequerimiento"><option>CONSUMO</option><option>COMPRA</option><option>SERVICIO</option></select></label>
+          <div class="col-md-2"><button class="btn btn-primary" [disabled]="simuladorForm.invalid || !simulador.idAreaAmbito">Simular ruta</button></div>
+        </form>
+        @if (simulacion(); as resultado) {
+          <div class="alert mt-3" [class.alert-success]="resultado.valido" [class.alert-warning]="!resultado.valido" role="status">
+            <strong>{{ resultado.mensaje }}</strong>
+            <div>Regla: {{ resultado.idRegla || 'Sin regla' }} · Niveles: {{ resultado.niveles || 'Sin resolver' }}</div>
+            <div>N1: {{ resultado.responsableN1 || 'Sin responsable' }} {{ resultado.omitirN1 ? '(se omite por solicitud propia)' : '' }}</div>
+            <div>N2: {{ resultado.responsableN2 || 'No asignado' }}</div>
+            <small>La simulación no crea aprobaciones ni modifica requerimientos.</small>
+          </div>
+        }
+      }
+      @if (tab() === 'auditoria') {
+        <p class="text-muted mt-3">Últimos 100 cambios de configuración de esta empresa.</p>
+        <p-table [value]="config().auditoria" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+          [rowsPerPageOptions]="[10, 25, 50]" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} cambios"
+          styleClass="p-datatable-sm">
+          <ng-template pTemplate="header"><tr><th>Fecha</th><th>Entidad / ID</th><th>Acción</th><th>Usuario</th><th>Motivo</th></tr></ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr><td>{{ item.fecha | date:'dd/MM/yyyy HH:mm' }}</td><td>{{ item.entidad }} / {{ item.idEntidad }}</td><td>{{ item.accion }}</td><td>{{ item.usuario }}</td><td>{{ item.motivo }}</td></tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage"><tr><td colspan="5" class="text-center py-3 text-muted">No hay cambios registrados.</td></tr></ng-template>
+        </p-table>
+      }
+    </fieldset>
+  </div>
+</section>

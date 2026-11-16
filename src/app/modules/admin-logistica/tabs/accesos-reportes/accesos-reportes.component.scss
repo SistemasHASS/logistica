@@ -1,0 +1,62 @@
+:host {
+  --card: #fff; --border: #e2e8f0; --txt: #1e293b; --muted: #64748b;
+  --primary: #0f172a; --ok: #15803d; --bad: #dc2626;
+  display: block; padding: 20px; background: #f1f5f9; color: var(--txt); min-height: 100%;
+}
+
+.acc-wrap { max-width: 1200px; margin: 0 auto; }
+.acc-header h2 { font-size: 18px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px; }
+.acc-header .sub { color: var(--muted); font-size: 13px; margin: 4px 0 16px 28px; }
+
+.alerta { border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+.alerta.success { background: #dcfce7; color: #166534; }
+.alerta.danger { background: #fee2e2; color: #991b1b; }
+
+.acc-grid { display: grid; grid-template-columns: 400px 1fr; gap: 14px; align-items: start; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.card-titulo { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 10px; }
+.card-titulo.fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.card-titulo .buscar { flex: 1; max-width: 260px; }
+
+.mod-list { display: flex; flex-direction: column; gap: 8px; }
+.mod-item { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: .15s; }
+.mod-item:hover { border-color: var(--primary); }
+.mod-item.sel { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary) inset; }
+.mod-nombre { font-weight: 700; font-size: 13.5px; }
+.mod-desc { font-size: 11.5px; color: var(--muted); }
+.mod-key { font-size: 10px; color: var(--muted); font-family: monospace; margin-top: 2px; }
+
+.alta { display: flex; gap: 8px; }
+.alta input, .buscar { border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; font-size: 13px; flex: 1; }
+.btn-pri { background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px; }
+.btn-sec { background: #f1f5f9; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.btn-pri:disabled, .btn-sec:disabled { opacity: .5; cursor: not-allowed; }
+.btn-del { background: #fff; color: var(--bad); border: 1px solid #fecaca; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.btn-del:hover { background: var(--bad); color: #fff; }
+
+.cfg-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.cfg-row:last-of-type { border-bottom: none; }
+.cfg-row .cfg-info { flex: 1; min-width: 0; }
+.cfg-row .switch { flex-shrink: 0; }
+.cfg-nombre { font-weight: 600; font-size: 13px; }
+.cfg-desc { font-size: 11.5px; color: var(--muted); }
+.switch input:disabled + .slider { opacity: .5; cursor: not-allowed; }
+
+.usr-preview { border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; margin-top: 10px; font-size: 13px; }
+.mini { font-size: 11.5px; color: var(--muted); }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { text-align: left; padding: 9px 10px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); border-bottom: 1px solid var(--border); }
+tbody td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.rol { background: #eef2f7; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+.estado { padding: 30px; text-align: center; color: var(--muted); font-size: 13px; }
+
+/* switch */
+.switch { position: relative; display: inline-block; width: 38px; height: 20px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 99px; cursor: pointer; transition: .2s; }
+.slider::before { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; top: 2px; left: 2px; transition: .2s; }
+.switch input:checked + .slider { background: var(--ok); }
+.switch input:checked + .slider::before { transform: translateX(18px); }
+
+@media (max-width: 900px) { .acc-grid { grid-template-columns: 1fr; } }

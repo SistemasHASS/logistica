@@ -1017,7 +1017,7 @@ export class AdminPlantillasMenuComponent {
         if (config && (config.menuConfig?.length || config.usaAccordion)) {
           mapa.set(rol.id, {
             tipoMenu: config.tipoMenu,
-            grupos: config.menuConfig || this.layoutConfig.getAccordionMenu(rol.id)
+            grupos: config.menuConfig || this.layoutConfig.getAccordionMenu(rol.id, false)
           });
         }
       }
@@ -1045,7 +1045,7 @@ export class AdminPlantillasMenuComponent {
   getGruposRol(idrol: string): AccordionGroupConfig[] {
     const cfg = this.configsRolCargadas().get(idrol);
     if (cfg?.grupos?.length) return cfg.grupos;
-    return this.layoutConfig.getAccordionMenu(idrol);
+    return this.layoutConfig.getAccordionMenu(idrol, false);
   }
 
   getRolBadgeClass(idrol: string): string {

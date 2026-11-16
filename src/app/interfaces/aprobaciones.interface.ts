@@ -61,6 +61,12 @@ export interface RequerimientoPendiente {
   idalmacen?: string;  // Agregado
   idfundo?: string;    // Agregado
   prioridad?: string;  // Agregado
+  flujoAmbito?: boolean;  // Agregado - pendiente del motor de aprobación por ámbitos
+  idRuta?: number;        // Agregado - versión de ruta de ámbitos asignada
+  nivelAmbito?: number;   // Agregado - nivel del paso pendiente (1 o 2)
+  esperaNivelAnterior?: boolean;  // Agregado - N2 aún no puede actuar porque N1 sigue pendiente
+  autorizadoActualmente?: boolean; // Agregado - el responsable conserva su asignación vigente
+  esAutoaprobacion?: number | boolean; // Agregado - paso N1 propio permitido por excepción configurada
 }
 
 export interface RequerimientoConAprobacion {

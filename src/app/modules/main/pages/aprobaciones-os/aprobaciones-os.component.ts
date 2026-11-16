@@ -62,6 +62,7 @@ export class AprobacionesOSComponent implements OnInit {
     totalPendientes: 0,
     totalAprobadas: 0,
     totalRechazadas: 0,
+    totalAnuladas: 0,
     totalVencidas: 0,
   };
 
@@ -77,7 +78,7 @@ export class AprobacionesOSComponent implements OnInit {
 
   // Rol usado para filtrar listados. Vacío para lectura = ver todas las OS.
   get rolFiltro(): string {
-    return this.puedeAprobar ? this.usuario?.idrol ?? '' : '';
+    return this.puedeAprobar ? 'FINANZAS' : '';
   }
 
   get documentoIdentidadFiltro(): string {
@@ -87,10 +88,14 @@ export class AprobacionesOSComponent implements OnInit {
   // OS Pendientes
   osPendientes: any[] = [];
   osPendientesFiltradas: any[] = [];
+  cargandoPendientes = false;
 
   // OS Aprobadas / Rechazadas
   osAprobadas: any[] = [];
-  tabVistaActiva: 'PENDIENTES' | 'APROBADAS' | 'RECHAZADAS' = 'PENDIENTES';
+  osHistorialAprobadas: any[] = [];
+  osAnuladas: any[] = [];
+  cargandoHistorial = 0;
+  tabVistaActiva: 'PENDIENTES' | 'APROBADAS' | 'ANULADAS' = 'PENDIENTES';
 
   // Pagination
   rowsPerPageOptions = [10, 25, 50, 100];
@@ -148,8 +153,35 @@ export class AprobacionesOSComponent implements OnInit {
 
   async ngOnInit() {
     await this.cargarUsuario();
-    await this.cargarContadores();
-    await this.cargarOSPendientes();
+    await this.recargarListas();
+  }
+
+  async recargarListas() {
+    if (this.cargandoPendientes || this.cargandoHistorial > 0) return;
+    await Promise.all([this.cargarOSPendientes(), this.cargarOSAprobadas('APROBADA'), this.cargarOSAprobadas('ANULADA')]);
+  }
+
+  async cambiarVista(tab: 'PENDIENTES' | 'APROBADAS' | 'ANULADAS') {
+    this.tabVistaActiva = tab;
+    this.osAprobadas = tab === 'APROBADAS' ? this.osHistorialAprobadas : tab === 'ANULADAS' ? this.osAnuladas : [];
+  }
+
+  async cargarOSAprobadas(estado: 'APROBADA' | 'ANULADA') {
+    this.cargandoHistorial++;
+    try {
+      const resp = await lastValueFrom(this.aprobacionOSService.listarHistorialAprobaciones(this.rolFiltro, estado, this.usuario.ruc));
+      const lista = (Array.isArray(resp) ? resp : []).filter(os => os?.estado === estado && Number(os.ordenServicioId) > 0);
+      if (estado === 'APROBADA') this.osHistorialAprobadas = lista;
+      else this.osAnuladas = lista;
+    } catch {
+      if (estado === 'APROBADA') this.osHistorialAprobadas = [];
+      else this.osAnuladas = [];
+      this.alertService.showAlert('Error', `No se pudieron cargar las OS ${estado === 'APROBADA' ? 'aprobadas' : 'anuladas'}`, 'error');
+    } finally {
+      this.cargandoHistorial--;
+      await this.cargarContadores();
+      await this.cambiarVista(this.tabVistaActiva);
+    }
   }
 
   async cargarUsuario() {
@@ -160,59 +192,36 @@ export class AprobacionesOSComponent implements OnInit {
   }
 
   async cargarContadores() {
-    try {
-      const contadores = await this.aprobacionOSService
-        .obtenerContadores(this.documentoIdentidadFiltro, this.rolFiltro)
-        .toPromise();
-
-      if (contadores) {
-        this.contadores = contadores;
-      }
-    } catch (error) {
-      console.error('Error al cargar contadores:', error);
-    }
+    this.contadores.totalPendientes = this.osPendientes.length;
+    this.contadores.totalAprobadas = this.osHistorialAprobadas.length;
+    this.contadores.totalAnuladas = this.osAnuladas.length;
   }
 
   async cargarOSPendientes() {
+    if (this.cargandoPendientes) return;
+    this.cargandoPendientes = true;
     try {
       this.alertService.mostrarModalCarga();
 
       const respDetallado = await lastValueFrom(
-        this.aprobacionOSService.listarOSPendientes(this.rolFiltro)
+        this.aprobacionOSService.listarOSPendientes(this.rolFiltro, this.usuario.ruc)
       );
-      const pendientes = Array.isArray(respDetallado) ? respDetallado : [];
-
-      this.osPendientes = pendientes;
-      this.contadores.totalPendientes = pendientes.length;
+      this.osPendientes = (Array.isArray(respDetallado) ? respDetallado : []).filter(os =>
+        os?.estado === 'PENDIENTE_APROBACION' && Number(os.ordenServicioId) > 0
+        && Number(os.idAprobacion) > 0 && !!os.numeroOrdenSpring
+        && os.estadoCompromiso === 'PR'
+      ).map(os => ({ ...os, numeroOrden: os.numeroOrdenSpring }));
+      await this.cargarContadores();
       this.aplicarFiltros();
-      this.alertService.cerrarModalCarga();
     } catch (error) {
       console.error('Error al cargar OS pendientes:', error);
-      this.alertService.cerrarModalCarga();
+      this.osPendientes = [];
+      await this.cargarContadores();
+      this.aplicarFiltros();
       this.alertService.showAlert('Error', 'No se pudieron cargar las órdenes de servicio pendientes', 'error');
-    }
-  }
-
-  async cambiarVista(tab: 'PENDIENTES' | 'APROBADAS' | 'RECHAZADAS') {
-    this.tabVistaActiva = tab;
-    if (tab === 'APROBADAS') {
-      await this.cargarOSAprobadas('APROBADA');
-    } else if (tab === 'RECHAZADAS') {
-      await this.cargarOSAprobadas('RECHAZADA');
-    }
-  }
-
-  async cargarOSAprobadas(estado: string) {
-    try {
-      this.alertService.mostrarModalCarga();
-      const resp = await lastValueFrom(
-        this.aprobacionOSService.listarHistorialAprobaciones(this.rolFiltro, estado)
-      );
-      this.osAprobadas = Array.isArray(resp) ? resp : [];
+    } finally {
+      this.cargandoPendientes = false;
       this.alertService.cerrarModalCarga();
-    } catch (error) {
-      this.alertService.cerrarModalCarga();
-      this.osAprobadas = [];
     }
   }
 
@@ -330,8 +339,7 @@ export class AprobacionesOSComponent implements OnInit {
         );
 
         this.modalAprobacion = false;
-        await this.cargarOSPendientes();
-        await this.cargarContadores();
+        await this.recargarListas();
       } else {
         this.alertService.showAlert(
           'Error',
@@ -383,8 +391,7 @@ export class AprobacionesOSComponent implements OnInit {
           respuesta?.mensaje || 'La OS fue anulada correctamente.',
           'success'
         );
-        await this.cargarOSPendientes();
-        await this.cargarContadores();
+        await this.recargarListas();
       } else {
         this.alertService.showAlert('Error', respuesta?.mensaje || 'Error al anular.', 'error');
       }

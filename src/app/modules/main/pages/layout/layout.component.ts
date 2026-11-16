@@ -595,6 +595,12 @@ export class LayoutComponent {
       'conformidad-servicios': 'Conformidad de Servicios',
 
       'aprobaciones-gerencia': 'Aprobación Gerencia',
+
+      'seguimiento-req-compra': 'Seguimiento Requerimientos de Compra',
+      
+      'seguimiento-req-consumo': 'Seguimiento Requerimientos de Consumo',
+
+      'analisis-req-compra': 'Análisis de Requerimientos de Compra'
     };
 
     this.currentPath = pathMap[currentUrl[currentUrl.length - 1]] || '';

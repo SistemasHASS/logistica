@@ -116,8 +116,11 @@
     <div class="solicitudes-section" *ngIf="tabListado === 'PENDIENTES' && requerimientosServicio.length > 0">
       <h3>Requerimientos de Servicio Aprobados (Pendientes de Orden)</h3>
       <div class="table-wrapper">
-        <table class="table">
-          <thead>
+        <p-table [value]="requerimientosServicio" [paginator]="true" [rows]="10"
+                 [rowsPerPageOptions]="[10,25,50]" [showCurrentPageReport]="true"
+                 currentPageReportTemplate="Mostrando {first}-{last} de {totalRecords}"
+                 styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
             <tr>
               <th>#</th>
               <th>N° Requerimiento</th>
@@ -128,10 +131,10 @@
               <th class="text-center">Cantidad</th>
               <th>Acciones</th>
             </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let req of requerimientosServicio; let i = index">
-              <td>{{ i + 1 }}</td>
+          </ng-template>
+          <ng-template pTemplate="body" let-req let-ri="rowIndex">
+            <tr>
+              <td class="text-muted small">{{ ri + 1 }}</td>
               <td><strong>{{ req.numeroRequerimiento }}</strong></td>
               <td>
                 <strong>{{ req.empresa || req.ruc || '-' }}</strong>
@@ -142,16 +145,29 @@
               <td>{{ req.descripcion }}</td>
               <td class="text-center">{{ req.cantidad }} {{ req.unidadMedida }}</td>
               <td class="actions">
-                <button 
-                  class="btn btn-sm btn-success" 
+                <button
+                  class="btn btn-sm btn-info"
+                  (click)="verDetalleRequerimiento(req)"
+                  title="Ver detalle del requerimiento">
+                  <i class="bx bx-show"></i>
+                </button>
+                <button
+                  class="btn btn-sm btn-success"
                   (click)="seleccionarRequerimiento(req); mostrarFormulario = true"
                   title="Generar Orden de Servicio">
                   <i class="bx bx-file-plus"></i> Generar OS
                 </button>
               </td>
             </tr>
-          </tbody>
-        </table>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">
+                <i class="bx bx-inbox fs-3 d-block mb-2"></i>No hay requerimientos de servicio aprobados pendientes.
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
       </div>
     </div>
 
@@ -269,10 +285,14 @@
                       (click)="abrirModalConformidad(orden)" title="Registrar Conformidad">
                 <i class="bx bx-check-circle"></i>
               </button>
-              <button class="btn btn-sm btn-primary me-2" *ngIf="orden.estado === 'GENERADA'"
-                      (click)="sincronizarOrdenServicio(orden)" title="Enviar a SPRING">
-                <i class="bx bx-transfer"></i> SPRING
-              </button>
+              @if (puedeEnviarAprobacion(orden)) {
+                <button type="button" class="btn btn-sm btn-primary me-2"
+                        (click)="$event.stopPropagation(); enviarAprobacion(orden)"
+                        [disabled]="enviandoAprobacion() !== null" title="Enviar OS a aprobación">
+                  <i class="bx bx-send" aria-hidden="true"></i>
+                  {{ enviandoAprobacion() === orden.id ? 'Enviando...' : 'Enviar a aprobación' }}
+                </button>
+              }
             </td>
           </tr>
         </ng-template>
@@ -364,6 +384,9 @@
                     <small>{{ req.ultimoProveedor || '-' }}</small>
                   </td>
                   <td>
+                    <button class="btn btn-sm btn-info" (click)="verDetalleRequerimiento(req)" title="Ver detalle del requerimiento">
+                      <i class="bx bx-show"></i>
+                    </button>
                     <button class="btn btn-sm btn-success" (click)="seleccionarRequerimiento(req)" title="Generar OS desde este requerimiento">
                       <i class="bx bx-file-plus"></i> Generar OS
                     </button>
@@ -1343,3 +1366,120 @@
   </div>
 </div>
 }
+
+<!-- Modal de Detalle de Requerimiento de Servicio -->
+<div class="modal-overlay" *ngIf="mostrarModalDetalleReq" (click)="cerrarModalDetalleReq()">
+  <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="bx bx-file"></i>
+        Detalle del Requerimiento: {{ detalleReqSeleccionado?.RequisicionNumero || reqOrigenSeleccionado?.numeroRequerimiento }}
+      </h3>
+      <button class="btn-close" (click)="cerrarModalDetalleReq()">
+        <i class="bx bx-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="detalleReqSeleccionado">
+      <div class="section-title">Información General</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>N° Requerimiento:</label>
+          <p class="form-control-plaintext"><strong>{{ detalleReqSeleccionado.RequisicionNumero || reqOrigenSeleccionado?.numeroRequerimiento }}</strong></p>
+        </div>
+        <div class="form-group">
+          <label>Empresa (RUC):</label>
+          <p class="form-control-plaintext">{{ detalleReqSeleccionado.ruc || reqOrigenSeleccionado?.ruc || '-' }}</p>
+        </div>
+        <div class="form-group">
+          <label>Área:</label>
+          <p class="form-control-plaintext">{{ detalleReqSeleccionado.area || reqOrigenSeleccionado?.area || '-' }}</p>
+        </div>
+        <div class="form-group">
+          <label>Fecha:</label>
+          <p class="form-control-plaintext">{{ detalleReqSeleccionado.fecharegistro ? (detalleReqSeleccionado.fecharegistro | date:'dd/MM/yyyy HH:mm') : '-' }}</p>
+        </div>
+        <div class="form-group">
+          <label>Tipo:</label>
+          <p class="form-control-plaintext">{{ detalleReqSeleccionado.tipo || detalleReqSeleccionado.itemtipo || '-' }}</p>
+        </div>
+        <div class="form-group">
+          <label>Estado:</label>
+          <p class="form-control-plaintext">{{ detalleReqSeleccionado.estados || '-' }}</p>
+        </div>
+        <div class="form-group full-width">
+          <label>Glosa:</label>
+          <p class="form-control-plaintext">{{ detalleReqSeleccionado.glosa || '-' }}</p>
+        </div>
+      </div>
+
+      <div class="section-title">
+        {{ detalleReqSeleccionado.tipo === 'COMMODITY' ? 'Detalle de Servicios' : 'Detalle de Ítems' }}
+      </div>
+      <div class="table-wrapper">
+        <table class="table" *ngIf="detalleReqSeleccionado.tipo !== 'COMMODITY'">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th class="text-center">Cantidad</th>
+              <th>Unidad</th>
+              <th>Familia</th>
+              <th>Categoría</th>
+              <th>Centro Costo</th>
+              <th>Proyecto</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of detalleReqSeleccionado.detalle">
+              <td class="mono">{{ d.codigo }}</td>
+              <td>{{ d.iddescripcion || d.idproducto }}</td>
+              <td class="text-center">{{ d.cantidad | number:'1.2-2' }}</td>
+              <td>{{ d.unidadMedida || 'UND' }}</td>
+              <td>{{ d.familia }}</td>
+              <td>{{ d.categoria }}</td>
+              <td>{{ d.idcentrocosto }}</td>
+              <td>{{ d.idproyecto }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table class="table" *ngIf="detalleReqSeleccionado.tipo === 'COMMODITY'">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Commodity</th>
+              <th>Subcommodity</th>
+              <th class="text-center">Cantidad</th>
+              <th>Centro Costo</th>
+              <th>Proyecto</th>
+              <th>Turno</th>
+              <th>Labor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of detalleReqSeleccionado.detalle">
+              <td class="mono">{{ d.codigo }}</td>
+              <td>{{ d.iddescripcion || d.descripcion }}</td>
+              <td>{{ d.commodity }}</td>
+              <td>{{ d.subcommodity }}</td>
+              <td class="text-center">{{ d.cantidad | number:'1.2-2' }}</td>
+              <td>{{ d.idcentrocosto }}</td>
+              <td>{{ d.idproyecto }}</td>
+              <td>{{ d.idturno }}</td>
+              <td>{{ d.idlabor }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrarModalDetalleReq()">Cerrar</button>
+      <button class="btn btn-success" (click)="generarOSDesdeModalReq()" *ngIf="reqOrigenSeleccionado">
+        <i class="bx bx-file-plus"></i> Generar OS
+      </button>
+    </div>
+  </div>
+</div>
