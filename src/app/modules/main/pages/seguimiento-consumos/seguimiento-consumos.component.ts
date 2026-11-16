@@ -84,7 +84,8 @@ export class SeguimientoConsumosComponent implements OnInit {
       dniusuario: this.usuario.documentoidentidad,
       idfundo: this.fidfundo || null,
       idarea: this.fidarea || null,
-      busqueda: ''
+      busqueda: '',
+      modulo: 'SEGUIMIENTO_REQ_CONSUMO'
     }];
     this.logisticaService.reporteSeguimientoConsumos(payload).subscribe({
       next: (res: any) => {

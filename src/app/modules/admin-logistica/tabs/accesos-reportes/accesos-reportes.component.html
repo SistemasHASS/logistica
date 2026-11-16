@@ -84,7 +84,7 @@
           <tr><th>DNI</th><th>Nombre</th><th>Empresa</th><th>Rol</th><th>Activo</th><th>Alta</th><th>Otorgado por</th><th></th></tr>
         </thead>
         <tbody>
-          <tr *ngFor="let a of accesosFiltrados">
+          <tr *ngFor="let a of accesosFiltrados" [class.fila-sel]="usrAreasSel()?.dni===a.dni">
             <td><b>{{ a.dni }}</b></td>
             <td>{{ a.nombre || '—' }}</td>
             <td class="mini">{{ a.ruc || '—' }}</td>
@@ -97,10 +97,65 @@
             </td>
             <td class="mini">{{ a.fechaAlta || '—' }}</td>
             <td class="mini">{{ a.usuarioAlta || '—' }}</td>
-            <td><button class="btn-del" (click)="quitar(a)">Quitar</button></td>
+            <td class="acciones">
+              <button class="btn-sec" (click)="abrirAreas(a)">Áreas</button>
+              <button class="btn-del" (click)="quitar(a)">Quitar</button>
+            </td>
           </tr>
         </tbody>
       </table>
+
+      <!-- alcance por áreas del usuario seleccionado -->
+      <div *ngIf="usrAreasSel() as ua" class="areas-panel">
+        <div class="card-titulo fila">
+          <span>Áreas visibles — {{ ua.nombre || ua.dni }} <b>({{ ua.dni }})</b></span>
+          <button class="btn-sec" (click)="cerrarAreas()">Cerrar</button>
+        </div>
+        <p class="mini">
+          Sin áreas configuradas aplica el alcance automático: roles globales ven todo;
+          los demás ven sus áreas propias y las de sus ámbitos asignados, además de sus
+          propios requerimientos. Al configurar áreas aquí, el usuario solo verá
+          requerimientos de esas áreas (más los que él mismo registró).
+        </p>
+
+        <div class="alta areas-alta">
+          <select [(ngModel)]="areaNueva" [disabled]="cargandoAreas()">
+            <option value="">— Selecciona área —</option>
+            <option *ngFor="let ar of areasDisponibles" [value]="ar.idarea">{{ ar.nombre }}</option>
+          </select>
+          <button class="btn-sec" (click)="agregarArea()" [disabled]="!areaNueva || guardandoArea()">
+            {{ guardandoArea() ? 'Guardando…' : '+ Agregar' }}
+          </button>
+        </div>
+
+        <div *ngIf="cargandoAreas()" class="estado">Cargando…</div>
+        <div *ngIf="!cargandoAreas() && !areasOtorgadas().length" class="estado">
+          Sin áreas configuradas — aplica el alcance automático
+        </div>
+
+        <table *ngIf="!cargandoAreas() && areasOtorgadas().length">
+          <thead>
+            <tr><th>Área</th><th>Ámbito</th><th>Activo</th><th>Alta</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ar of areasOtorgadas()">
+              <td><b>{{ ar.nombreArea }}</b> <span class="mini">#{{ ar.idarea }}</span></td>
+              <td class="mini">
+                {{ ar.tipoAmbito === 'FUNDO' ? 'Fundo' : (ar.tipoAmbito === 'ADMINISTRATIVO' ? 'Administrativo' : '—') }}
+                {{ ar.nombreAmbito ? '· ' + ar.nombreAmbito : '' }}
+              </td>
+              <td>
+                <label class="switch">
+                  <input type="checkbox" [checked]="ar.activo" (change)="toggleArea(ar)">
+                  <span class="slider"></span>
+                </label>
+              </td>
+              <td class="mini">{{ ar.fechaAlta || '—' }}</td>
+              <td><button class="btn-del" (click)="quitarArea(ar)">Quitar</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>

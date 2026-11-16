@@ -88,7 +88,8 @@ export class AnalisisReqCompraComponent implements OnInit {
       idrol: this.usuario.idrol,
       dniusuario: this.usuario.documentoidentidad,
       idfundo: this.fidfundo || null,
-      busqueda: ''
+      busqueda: '',
+      modulo: 'ANALISIS_REQ_COMPRA'
     }];
     this.logisticaService.reporteSeguimientoComprasAnalisis(payload).subscribe({
       next: (res: any) => {

@@ -18,6 +18,24 @@ export interface AccesoReporte {
   fechaAlta: string | null;
 }
 
+export interface AreaAcceso {
+  id: number;
+  modulo: string;
+  dni: string;
+  idarea: number;
+  nombreArea: string;
+  tipoAmbito: string | null;
+  nombreAmbito: string | null;
+  activo: boolean;
+  usuarioAlta: string | null;
+  fechaAlta: string | null;
+}
+
+interface AreaCatalogo {
+  idarea: number;
+  nombre: string;
+}
+
 interface ModuloReporte {
   modulo: string;
   nombre: string;
@@ -38,7 +56,12 @@ const MODULOS: ModuloReporte[] = [
   {
     modulo: 'SEGUIMIENTO_REQ_COMPRA',
     nombre: 'Seguimiento Req. Compra',
-    descripcion: 'Reporte operativo del workflow (para restringir a usuarios específicos)'
+    descripcion: 'Reporte operativo del workflow — configura también las áreas visibles por usuario'
+  },
+  {
+    modulo: 'SEGUIMIENTO_REQ_CONSUMO',
+    nombre: 'Seguimiento Req. Consumo',
+    descripcion: 'Seguimiento de despachos/atención de req. consumo — configura las áreas visibles por usuario'
   },
 ];
 
@@ -73,6 +96,14 @@ export class AccesosReportesComponent implements OnInit {
   // visibilidad del ítem de menú en el layout principal
   configMenu   = signal<ConfigMenuReporte | null>(null);
   guardandoCfg = signal(false);
+
+  // alcance por áreas del usuario seleccionado
+  usrAreasSel    = signal<AccesoReporte | null>(null);
+  areasOtorgadas = signal<AreaAcceso[]>([]);
+  areasCatalogo  = signal<AreaCatalogo[]>([]);
+  cargandoAreas  = signal(false);
+  guardandoArea  = signal(false);
+  areaNueva      = '';
 
   ngOnInit() { this.cargar(); }
 
@@ -117,6 +148,7 @@ export class AccesosReportesComponent implements OnInit {
     this.dniNuevo = '';
     this.usrPreview.set(null);
     this.configMenu.set(null);
+    this.cerrarAreas();
     this.cargar();
   }
 
@@ -229,6 +261,111 @@ export class AccesosReportesComponent implements OnInit {
       this.alerta('Acceso eliminado', 'success');
     } catch {
       this.alerta('Error al eliminar el acceso', 'danger');
+    }
+  }
+
+  /* ---------- alcance por áreas ---------- */
+
+  get areasDisponibles(): AreaCatalogo[] {
+    const usadas = new Set(this.areasOtorgadas().map(a => a.idarea));
+    return this.areasCatalogo().filter(a => !usadas.has(a.idarea));
+  }
+
+  async abrirAreas(a: AccesoReporte) {
+    if (this.usrAreasSel()?.dni === a.dni) { this.cerrarAreas(); return; }
+    this.usrAreasSel.set(a);
+    this.areaNueva = '';
+    this.cargandoAreas.set(true);
+    try {
+      const [otorgadas, catalogo]: any[] = await Promise.all([
+        lastValueFrom(
+          this.http.post(`${this.baseUrl}/api/logistica/listar-areas-acceso-reporte`,
+            [{ modulo: this.moduloSel(), dni: a.dni }])
+        ),
+        lastValueFrom(
+          this.http.post(`${this.baseUrl}/api/logistica/listar-areas`,
+            [{ ruc: a.ruc || this.auth.currentUser()?.ruc }])
+        ).catch(() => [])
+      ]);
+      this.areasOtorgadas.set(Array.isArray(otorgadas) ? otorgadas : []);
+      this.areasCatalogo.set(Array.isArray(catalogo) ? catalogo : []);
+    } catch {
+      this.areasOtorgadas.set([]);
+      this.alerta('Error al cargar las áreas del usuario', 'danger');
+    } finally {
+      this.cargandoAreas.set(false);
+    }
+  }
+
+  cerrarAreas() {
+    this.usrAreasSel.set(null);
+    this.areasOtorgadas.set([]);
+    this.areaNueva = '';
+  }
+
+  async recargarAreas() {
+    const a = this.usrAreasSel();
+    if (!a) return;
+    const res: any = await lastValueFrom(
+      this.http.post(`${this.baseUrl}/api/logistica/listar-areas-acceso-reporte`,
+        [{ modulo: this.moduloSel(), dni: a.dni }])
+    ).catch(() => []);
+    this.areasOtorgadas.set(Array.isArray(res) ? res : []);
+  }
+
+  async agregarArea() {
+    const a = this.usrAreasSel();
+    const idarea = +this.areaNueva;
+    if (!a || !idarea || this.guardandoArea()) return;
+    this.guardandoArea.set(true);
+    try {
+      const res: any = await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/guardar-area-acceso-reporte`, [{
+          modulo: this.moduloSel(), dni: a.dni, idarea, ruc: a.ruc,
+          accion: 'ALTA',
+          usuarioAlta: this.auth.currentUser()?.usuario ?? 'admin'
+        }])
+      );
+      if (res?.success) {
+        this.areaNueva = '';
+        await this.recargarAreas();
+      } else {
+        this.alerta(res?.mensaje || 'No se pudo otorgar el área', 'danger');
+      }
+    } catch {
+      this.alerta('Error al otorgar el área', 'danger');
+    } finally {
+      this.guardandoArea.set(false);
+    }
+  }
+
+  async toggleArea(ar: AreaAcceso) {
+    try {
+      await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/guardar-area-acceso-reporte`, [{
+          modulo: ar.modulo, dni: ar.dni, idarea: ar.idarea, accion: 'TOGGLE',
+          usuarioAlta: this.auth.currentUser()?.usuario ?? 'admin'
+        }])
+      );
+      this.areasOtorgadas.update(list =>
+        list.map(x => x.id === ar.id ? { ...x, activo: !x.activo } : x));
+    } catch {
+      this.alerta('Error al cambiar estado del área', 'danger');
+    }
+  }
+
+  async quitarArea(ar: AreaAcceso) {
+    if (!confirm(`¿Quitar el área "${ar.nombreArea}" del alcance de ${ar.dni}?`)) return;
+    try {
+      await lastValueFrom(
+        this.http.post(`${this.baseUrl}/api/logistica/guardar-area-acceso-reporte`, [{
+          modulo: ar.modulo, dni: ar.dni, idarea: ar.idarea, accion: 'ELIMINAR',
+          usuarioAlta: this.auth.currentUser()?.usuario ?? 'admin'
+        }])
+      );
+      this.areasOtorgadas.update(list => list.filter(x => x.id !== ar.id));
+    } catch {
+      this.alerta('Error al quitar el área', 'danger');
     }
   }
 

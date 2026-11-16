@@ -129,19 +129,19 @@ export class AuthService {
   //Perfil Usuario
   async isUsuario() {
     const user = await this.getUser();
-    return user?.idrol === 'OPLOGIST';
+    return (user?.idrol ?? '').includes('OPLOGIST');
   }
 
   //Perfil Sistemas
   async isSistemas() {
     const user = await this.getUser();
-    return user?.idrol === 'TILOGIST';
+    return (user?.idrol ?? '').includes('TILOGIST');
   }
 
   //Perfil Empaque
   async isEmpaque() {
     const user = await this.getUser();
-    return user?.idrol === 'EMLOGIST';
+    return (user?.idrol ?? '').includes('EMLOGIST');
   }
 
   //Perfil Logístico

@@ -59,4 +59,11 @@ tbody td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-a
 .switch input:checked + .slider { background: var(--ok); }
 .switch input:checked + .slider::before { transform: translateX(18px); }
 
+.fila-sel td { background: #f8fafc; }
+.acciones { display: flex; gap: 6px; }
+
+.areas-panel { margin-top: 14px; border-top: 2px solid var(--primary); padding-top: 12px; }
+.areas-alta { max-width: 480px; margin-bottom: 10px; }
+.areas-alta select { border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; font-size: 13px; flex: 1; background: #fff; }
+
 @media (max-width: 900px) { .acc-grid { grid-template-columns: 1fr; } }

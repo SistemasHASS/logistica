@@ -84,7 +84,8 @@ export class SeguimientoComprasComponent implements OnInit {
       dniusuario: this.usuario.documentoidentidad,
       idfundo: this.fidfundo || null,
       idarea: this.fidarea || null,
-      busqueda: ''
+      busqueda: '',
+      modulo: 'SEGUIMIENTO_REQ_COMPRA'
     }];
     this.logisticaService.reporteSeguimientoCompras(payload).subscribe({
       next: (res: any) => {
