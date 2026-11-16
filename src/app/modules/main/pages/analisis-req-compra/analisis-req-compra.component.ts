@@ -18,8 +18,9 @@ const ETAPA_CLS: Record<string, string> = {
 };
 
 interface DetRow {
-  req: any;   // referencia a cabecera
-  det: any;   // línea
+  req: any;      // referencia a cabecera
+  det: any;      // línea
+  reqNum: string; // N° requerimiento mostrado (spr o id interno)
 }
 
 @Component({
@@ -116,7 +117,7 @@ export class AnalisisReqCompraComponent implements OnInit {
   get flatDet(): DetRow[] {
     const out: DetRow[] = [];
     for (const r of this.dataFiltrada) {
-      for (const d of (r.det || [])) out.push({ req: r, det: d });
+      for (const d of (r.det || [])) out.push({ req: r, det: d, reqNum: r.spr || r.id });
     }
     return out;
   }
@@ -222,7 +223,7 @@ export class AnalisisReqCompraComponent implements OnInit {
     ]];
     this.flatDet.forEach(({ req: r, det: d }) => {
       detAoa.push([
-        r.id, r.sol, r.fundo || '', ETAPA_LBL[this.etapaReq(r)],
+        r.spr || r.id, r.sol, r.fundo || '', ETAPA_LBL[this.etapaReq(r)],
         d.cod, d.desc, d.um || '', d.cant, d.ceco || '', d.proy || '', d.partida || '', d.turno || '', d.labor || '',
         ETAPA_LBL[d.etapa] ?? d.etapa, d.consol ? 'SÍ' : 'NO',
         d.oc || '', d.sec ?? '', d.ocEst || '', d.prov || '', d.pu ?? '',

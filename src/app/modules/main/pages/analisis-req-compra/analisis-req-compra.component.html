@@ -140,7 +140,7 @@
 
         <ng-template pTemplate="header">
           <tr>
-            <th pSortableColumn="req.id">Req <p-sortIcon field="req.id" /></th>
+            <th pSortableColumn="reqNum">Req <p-sortIcon field="reqNum" /></th>
             <th pSortableColumn="det.cod">Código <p-sortIcon field="det.cod" /></th>
             <th pSortableColumn="det.desc">Descripción <p-sortIcon field="det.desc" /></th>
             <th>UM</th><th>Cant.</th>
@@ -158,7 +158,12 @@
 
         <ng-template pTemplate="body" let-x>
           <tr>
-            <td><b>{{ x.req.id }}</b></td>
+            <td>
+              <b>{{ x.req.spr || x.req.id }}</b>
+              <div class="muted" *ngIf="!x.req.spr">
+                Sin N° REQ{{ etapaReq(x.req) === 'PENDIENTE' ? ' (pendiente)' : '' }}
+              </div>
+            </td>
             <td>{{ x.det.cod }}</td>
             <td>{{ x.det.desc }}</td>
             <td>{{ x.det.um }}</td>
