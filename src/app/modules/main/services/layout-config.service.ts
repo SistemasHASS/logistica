@@ -199,28 +199,28 @@ export class LayoutConfigService {
     }
     this.cargando = true;
     try {
-      // Llamar ambas APIs en paralelo
-      const bodyPermisos = idrol ? { idrol } : {};
-      const bodyConfigMenu = idrol ? { idrol } : {};
-      const [respPermisos, respConfigMenu] = await Promise.allSettled([
-        lastValueFrom(this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/listar-config-permisos`, bodyPermisos)),
-        lastValueFrom(this.http.post<any[]>(`${this.baseUrl}/api/configmenu/listar`, bodyConfigMenu)),
+      // El backend filtra por idrol exacto: con roles concatenados ("A,B")
+      // hay que consultar cada rol por separado y unir las filas.
+      const rolesUsuario = [...new Set(getRolesArray(idrol ?? ''))];
+      const bodies = rolesUsuario.length ? rolesUsuario.map(r => ({ idrol: r })) : [{}];
+      const [resPermisos, resConfigMenu] = await Promise.all([
+        Promise.allSettled(bodies.map(b =>
+          lastValueFrom(this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/listar-config-permisos`, b)))),
+        Promise.allSettled(bodies.map(b =>
+          lastValueFrom(this.http.post<any[]>(`${this.baseUrl}/api/configmenu/listar`, b)))),
         // Verifica si el usuario es aprobador nivel 2 (inyecta el item de gerencia en el menú)
         this.aprobadorNivel2.verificar(),
         // Resuelve qué ítems de reportes restringidos ocultar del menú (por config + DNI)
         this.reporteMenu.verificar()
       ]);
 
-      const permisos: { idrol: string; clave: string; valor: string }[] =
-        respPermisos.status === 'fulfilled' && Array.isArray((respPermisos as any).value)
-          ? (respPermisos as any).value
-          : [];
+      const filasDe = (results: PromiseSettledResult<any>[]): { idrol: string; clave: string; valor: string }[] =>
+        results.flatMap(r => (r.status === 'fulfilled' && Array.isArray(r.value) ? r.value : []));
+
+      const permisos = filasDe(resPermisos);
 
       // configmenu devuelve filas con {idrol, clave, valor} — misma forma que permisos
-      const configMenuRows: { idrol: string; clave: string; valor: string }[] =
-        respConfigMenu.status === 'fulfilled' && Array.isArray((respConfigMenu as any).value)
-          ? (respConfigMenu as any).value
-          : [];
+      const configMenuRows = filasDe(resConfigMenu);
 
       // Unificar: configmenu tiene precedencia para claves de menú
       const todasLasClaves = [...permisos, ...configMenuRows];
