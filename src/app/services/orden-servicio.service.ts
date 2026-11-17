@@ -31,6 +31,12 @@ export class OrdenServicioService {
     return this.http.post<any>(url, { ordenServicioId, montoTotal });
   }
 
+  enviarAprobacionOS(ordenServicioId: number, ruc: string, usuarioGenera: string): Observable<{ success: boolean | number; mensaje?: string; idAprobacion?: number; numeroOrdenSpring?: string }> {
+    return this.http.post<{ success: boolean | number; mensaje?: string; idAprobacion?: number; numeroOrdenSpring?: string }>(
+      `${this.baseUrl}/api/logistica/orden-servicio/asignar-aprobadores`, { ordenServicioId, ruc, usuarioGenera }
+    );
+  }
+
   aprobarRechazarOS(
     idAprobacion: number,
     accion: string,
@@ -66,5 +72,10 @@ export class OrdenServicioService {
   listarRequerimientosServicioParaOS(filtros: any = {}): Observable<any> {
     const url = `${this.baseUrl}/api/logistica/listar-requerimientos-servicio-para-os`;
     return this.http.post<any>(url, filtros);
+  }
+
+  crearOSIndividual(orden: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/crear-os-individual`;
+    return this.http.post<any>(url, orden);
   }
 }

@@ -16,10 +16,12 @@
  *   node scripts/register-deployment.js
  *   node scripts/register-deployment.js --api=MAESTRA
  *   node scripts/register-deployment.js --environment=production --notes="Deploy manual"
+ *   node scripts/register-deployment.js --env-file=src/environments/environment.ts
  *
  * Flags utiles:
  *   --skip        No hace nada (escape rapido en pipelines)
  *   --dry-run     Muestra lo que enviaria sin hacer la peticion
+ *   --env-file    Archivo environment*.ts usado por el build (define API y ambiente)
  */
 
 const fs = require('fs');
@@ -46,11 +48,20 @@ if (args.skip || process.env.DEPLOY_SKIP_REGISTER === '1') {
 // ------------------------------------------------------------------
 // Determinar API
 // ------------------------------------------------------------------
-const ENV_FILE = path.resolve('src/environments/environment.prod-api.ts');
+// Archivo environment*.ts del build que se esta registrando.
+// Cada configuracion de angular.json usa uno distinto:
+//   production/development -> environment.ts | prod-api -> environment.prod-api.ts
+const ENV_FILE = path.resolve(args['env-file'] || 'src/environments/environment.prod-api.ts');
+
+// Lee el env file ignorando lineas completamente comentadas (// ...)
+// para no capturar valores desactivados como "// baseUrl: '...'".
+function readEnvContent() {
+  return fs.readFileSync(ENV_FILE, 'utf8').replace(/^[ \t]*\/\/.*$/gm, '');
+}
 
 function readVersionControlApiFromEnv() {
   try {
-    const content = fs.readFileSync(ENV_FILE, 'utf8');
+    const content = readEnvContent();
     const m = content.match(/versionControlApi\s*:\s*'(LOGISTICA|MAESTRA)'/);
     return m ? m[1] : null;
   } catch {
@@ -58,8 +69,18 @@ function readVersionControlApiFromEnv() {
   }
 }
 
+function readDeployEnvironmentFromEnv() {
+  try {
+    const content = readEnvContent();
+    const m = content.match(/deployEnvironment\s*:\s*'([^']+)'/);
+    return m ? m[1].trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 function readApiUrlsFromEnv() {
-  const content = fs.readFileSync(ENV_FILE, 'utf8');
+  const content = readEnvContent();
   const base = content.match(/baseUrl\s*:\s*'([^']+)'/);
   const maestra = content.match(/apiMaestra\s*:\s*'([^']+)'/);
   return {
@@ -101,7 +122,7 @@ const versionJson = JSON.parse(fs.readFileSync(versionJsonPath, 'utf8'));
 
 const payload = {
   appName: pkg.name,
-  environment: args.environment || process.env.DEPLOY_ENV || 'production',
+  environment: args.environment || process.env.DEPLOY_ENV || readDeployEnvironmentFromEnv() || 'production',
   version: versionJson.version,
   build: versionJson.build || 0,
   buildTime: versionJson.buildTime,
@@ -118,6 +139,7 @@ const payload = {
 console.log('');
 console.log('========== REGISTRO DE DEPLOYMENT ==========');
 console.log(`  API seleccionada: ${apiSelected}`);
+console.log(`  Env file:         ${ENV_FILE}`);
 console.log(`  Endpoint:         ${endpoint}`);
 console.log(`  AppName:          ${payload.appName}`);
 console.log(`  Version:          ${payload.version} (build ${payload.build})`);

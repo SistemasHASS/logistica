@@ -1,0 +1,194 @@
+<div class="container-fluid p-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h4 class="mb-1"><i class="bx bx-bell me-2"></i>Configuración de Notificaciones</h4>
+      <p class="text-muted mb-0">Define qué notificaciones recibe cada rol, por qué canal y en qué módulo.</p>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- ══════════ CONFIGURACIÓN POR ROL ══════════ -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bx bx-group me-2"></i>Notificaciones por Rol</h5>
+          <button class="btn btn-success btn-sm" [disabled]="!rolSeleccionado || guardando" (click)="guardarConfig()">
+            <i class="bx bx-save me-1"></i>{{ guardando ? 'Guardando...' : 'Guardar configuración' }}
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Rol</label>
+              <select class="form-select" [(ngModel)]="rolSeleccionado" (change)="cargarConfig()">
+                <option value="">-- Seleccione un rol --</option>
+                <option *ngFor="let r of roles" [value]="r.idrol">{{ r.nombre || r.idrol }} ({{ r.idrol }})</option>
+              </select>
+            </div>
+          </div>
+
+          <div *ngIf="!rolSeleccionado" class="alert alert-light border text-center text-muted">
+            Seleccione un rol para configurar sus notificaciones.
+          </div>
+
+          <div *ngIf="rolSeleccionado && loadingConfig" class="text-center py-4">
+            <div class="spinner-border text-primary"></div>
+          </div>
+
+          <ng-container *ngIf="rolSeleccionado && !loadingConfig">
+            <div *ngFor="let modulo of modulosAgrupados" class="mb-3">
+              <h6 class="text-uppercase text-muted border-bottom pb-1">
+                <i class="bx bx-package me-1"></i>{{ modulo }}
+              </h6>
+              <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width:20%">Tipo</th>
+                    <th>Descripción</th>
+                    <th style="width:15%">Canal</th>
+                    <th class="text-center" style="width:10%">Recibe</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let f of filasPorModulo(modulo)" [class.table-secondary]="!f.activo">
+                    <td><code>{{ f.tipo_notificacion }}</code></td>
+                    <td>{{ f.descripcion }}</td>
+                    <td>
+                      <select class="form-select form-select-sm" [(ngModel)]="f.canal" [disabled]="!f.activo">
+                        <option *ngFor="let c of canales" [value]="c">{{ c }}</option>
+                      </select>
+                    </td>
+                    <td class="text-center">
+                      <input type="checkbox" class="form-check-input" [(ngModel)]="f.activo" />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ CATÁLOGO DE TIPOS ══════════ -->
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bx bx-list-ul me-2"></i>Catálogo de Tipos</h5>
+          <button class="btn btn-primary btn-sm" (click)="abrirModalTipo()">
+            <i class="bx bx-plus me-1"></i>Nuevo tipo
+          </button>
+        </div>
+        <div class="card-body">
+          <table class="table table-sm table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Tipo</th>
+                <th>Descripción</th>
+                <th>Módulo</th>
+                <th class="text-center">Activo</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of tipos">
+                <td><code>{{ t.tipo_notificacion }}</code></td>
+                <td>{{ t.descripcion }}</td>
+                <td><span class="badge bg-light text-dark border">{{ t.modulo }}</span></td>
+                <td class="text-center">
+                  <span class="badge" [class]="t.activo ? 'bg-success' : 'bg-secondary'">
+                    {{ t.activo ? 'Sí' : 'No' }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-warning btn-sm me-1" (click)="abrirModalTipo(t)" title="Editar">
+                    <i class="bx bx-edit"></i>
+                  </button>
+                  <button class="btn btn-danger btn-sm" (click)="eliminarTipo(t)" title="Eliminar">
+                    <i class="bx bx-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="!tipos.length && !loadingTipos">
+                <td colspan="5" class="text-center text-muted">Sin tipos registrados</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ PARÁMETROS GLOBALES ══════════ -->
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="bx bx-time-five me-2"></i>Parámetros</h5>
+        </div>
+        <div class="card-body">
+          <label class="form-label fw-semibold">Intervalo de verificación (segundos)</label>
+          <div class="input-group">
+            <input type="number" class="form-control" [(ngModel)]="pollSegundos" min="10" />
+            <button class="btn btn-primary" [disabled]="guardandoParam" (click)="guardarParam()">
+              <i class="bx bx-save"></i>
+            </button>
+          </div>
+          <small class="text-muted">
+            Frecuencia con la que la app consulta notificaciones nuevas (mínimo 10s).
+            Aplica a todos los roles con canal TOAST/AMBOS.
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL TIPO ══════════ -->
+<div class="modal-overlay" *ngIf="modalTipoVisible" (click)="modalTipoVisible = false">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5 class="modal-title">
+        <i class="bx" [class]="tipoEditando ? 'bx-edit' : 'bx-plus-circle'"></i>
+        {{ tipoEditando ? 'Editar' : 'Nuevo' }} tipo de notificación
+      </h5>
+      <button class="btn-close" (click)="modalTipoVisible = false">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group mb-3">
+        <label class="form-label fw-semibold">Tipo (código) <span class="text-danger">*</span></label>
+        <input type="text" class="form-control text-uppercase" [ngModel]="tipoForm.tipo_notificacion"
+               (ngModelChange)="onTipoCodigoInput($event)"
+               [disabled]="!!tipoEditando" placeholder="STOCK_DISPONIBLE" />
+        <small class="text-muted">Solo letras, números y guion bajo. Debe coincidir con el código que emite la notificación.</small>
+      </div>
+      <div class="form-group mb-3">
+        <label class="form-label fw-semibold">Descripción</label>
+        <input type="text" class="form-control" [(ngModel)]="tipoForm.descripcion" placeholder="Texto descriptivo" />
+      </div>
+      <div class="form-group mb-3">
+        <label class="form-label fw-semibold">Módulo <span class="text-danger">*</span></label>
+        <select class="form-select" [ngModel]="moduloOtro ? '__OTRO__' : tipoForm.modulo"
+                (ngModelChange)="onModuloSelect($event)">
+          <option value="" disabled>-- Seleccione un módulo --</option>
+          <option *ngFor="let m of modulosExistentes" [value]="m">{{ m }}</option>
+          <option value="__OTRO__">Otro...</option>
+        </select>
+        <input *ngIf="moduloOtro" type="text" class="form-control mt-2"
+               [(ngModel)]="tipoForm.modulo" placeholder="Nuevo módulo" />
+        <small class="text-muted">Use el id del ítem del menú dinámico cuando aplique.</small>
+      </div>
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="tipoActivo" [(ngModel)]="tipoForm.activo" />
+        <label class="form-check-label" for="tipoActivo">Activo</label>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="modalTipoVisible = false">Cancelar</button>
+      <button class="btn btn-primary" (click)="guardarTipo()">
+        <i class="bx bx-save me-1"></i>Guardar
+      </button>
+    </div>
+  </div>
+</div>

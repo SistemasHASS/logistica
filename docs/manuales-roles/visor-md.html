@@ -55,6 +55,7 @@
   <a class="volver" href="index.html">← Portal</a>
   <h1 id="titulo">Documento</h1>
   <div class="acciones">
+    <a class="btn" id="btnWord" href="#" style="display:none">Ver Word</a>
     <a class="btn" id="btnFuente" href="#">Ver fuente .md</a>
     <a class="btn" href="anexo.html">Anexo documental</a>
   </div>
@@ -108,6 +109,15 @@ if (!doc) {
         else a.href = abs;
       });
       estado.style.display = 'none';
+      // Si existe el .docx equivalente, mostrar boton "Ver Word"
+      const docxPath = docReal.replace(/\.md$/i, '.docx');
+      fetch(docxPath, { method: 'HEAD' }).then(r => {
+        if (r.ok) {
+          const b = document.getElementById('btnWord');
+          b.href = 'visor-docx.html?doc=' + encodeURIComponent(docxPath);
+          b.style.display = '';
+        }
+      }).catch(() => {});
     })
     .catch(e => {
       estado.classList.add('error');

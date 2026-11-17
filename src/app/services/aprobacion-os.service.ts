@@ -18,16 +18,18 @@ export class AprobacionOSService {
     });
   }
 
-  listarOSPendientes(rol: string): Observable<any> {
+  listarOSPendientes(rol: string, ruc: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/logistica/aprobacion-os/listar-pendientes`, {
       rol,
+      ruc,
     });
   }
 
-  listarHistorialAprobaciones(rol: string, estado?: string): Observable<any> {
+  listarHistorialAprobaciones(rol: string, estado?: string, ruc?: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/logistica/aprobacion-os/historial`, {
       rol,
       estado: estado || '',
+      ruc,
     });
   }
 

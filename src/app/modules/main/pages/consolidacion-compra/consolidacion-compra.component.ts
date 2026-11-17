@@ -192,6 +192,15 @@ export class ConsolidacionCompraComponent implements OnInit {
   porcentajeIncrementoOC = 10;
   emitirOCEmpresas: EmitirEmpresa[] = [];
 
+  // OC Directa (sin requerimiento de compra)
+  modalOCDirectaAbierto = false;
+  ocDirectaEmpresa: any = null;
+  ocDirectaItemSel: any = null;
+  itemsSugeridosDirecta: any[] = [];
+  cecosDirecta = signal<any[]>([]);
+  proyectosDirecta = signal<any[]>([]);
+  private ocDirectaSeq = -1;
+
   // Cotización OC multiempresa
   cotizacionActiva: any = null;
   cotizacionesPendientes: any[] = [];
@@ -2061,6 +2070,7 @@ export class ConsolidacionCompraComponent implements OnInit {
       }
 
       this.modalOCAbierto = false;
+      this.modalOCDirectaAbierto = false;
       this.seleccionadosCorp.clear();
       this.proveedorGlobal = null;
       this.emitirOCEmpresas = [];
@@ -2077,6 +2087,199 @@ export class ConsolidacionCompraComponent implements OnInit {
 
   cerrarModal(): void {
     this.modalOCAbierto = false;
+  }
+
+  // ============================================
+  // OC DIRECTA (sin requerimiento de compra)
+  // Reutiliza emitirOCEmpresas / recalcEmitirOC / confirmarOC
+  // ============================================
+  abrirOCDirecta(): void {
+    this.ocDirectaEmpresa = null;
+    this.ocDirectaItemSel = null;
+    this.itemsSugeridosDirecta = [];
+    this.emitirOCEmpresas = [];
+    this.proveedorGlobal = null;
+    this.ocProv = '';
+    this.ocRuc = '';
+    this.modalOCDirectaAbierto = true;
+    this.ocMonedaAnterior = this.ocMoneda;
+    this.cargarTipoCambioOC();
+    // Catálogos en segundo plano (ya deberían estar cargados desde ngOnInit)
+    if (!this.empresas().length) this.cargarEmpresas();
+    if (!this.itemsMaestra().length) this.cargarItemsMaestra();
+    if (!this.proveedores().length) this.cargarProveedores();
+    if (!this.almacenes.length) this.cargarAlmacenes();
+    if (!this.cecosDirecta().length) this.cargarCecosDirecta();
+    if (!this.proyectosDirecta().length) this.cargarProyectosDirecta();
+    this.cdr.markForCheck();
+  }
+
+  async cargarCecosDirecta(): Promise<void> {
+    try {
+      let cecos = await this.dexieService.showCecos();
+      if (!cecos || cecos.length === 0) {
+        const resp: any = await lastValueFrom(
+          this.maestrasService.getCecos([{ aplicacion: 'LOGISTICA', esadmin: 0 }])
+        );
+        cecos = Array.isArray(resp) ? resp : [];
+        if (cecos.length > 0) await this.dexieService.saveCecos(cecos);
+      }
+      const vistos = new Set<string>();
+      this.cecosDirecta.set(cecos.filter((c: any) => {
+        const key = String(c.costcenter || c.id);
+        if (vistos.has(key)) return false;
+        vistos.add(key);
+        return true;
+      }));
+    } catch {
+      this.cecosDirecta.set([]);
+    }
+    this.cdr.markForCheck();
+  }
+
+  async cargarProyectosDirecta(): Promise<void> {
+    try {
+      let proyectos = await this.dexieService.showProyectos();
+      if (!proyectos || proyectos.length === 0) {
+        const resp: any = await lastValueFrom(
+          this.maestrasService.getProyectos([{ ruc: this.usuario?.ruc, aplicacion: 'LOGISTICA', esadmin: 0 }])
+        );
+        proyectos = Array.isArray(resp) ? resp : [];
+        if (proyectos.length > 0) await this.dexieService.saveProyectos(proyectos);
+      }
+      const vistos = new Set<string>();
+      this.proyectosDirecta.set(proyectos.filter((p: any) => {
+        const key = String(p.proyectoio || p.afe);
+        if (vistos.has(key)) return false;
+        vistos.add(key);
+        return true;
+      }));
+    } catch {
+      this.proyectosDirecta.set([]);
+    }
+    this.cdr.markForCheck();
+  }
+
+  cerrarOCDirecta(): void {
+    this.modalOCDirectaAbierto = false;
+  }
+
+  empresasOpcionesOCDirecta(): any[] {
+    return this.empresas().map(e => ({
+      ...e,
+      _nombre: String(e.razonsocial ?? e.razonSocial ?? e.nombre ?? e.idempresa ?? '').trim()
+    }));
+  }
+
+  async onEmpresaDirectaChange(empSel: any): Promise<void> {
+    const rucEmpresa = String(empSel?.ruc ?? '').trim();
+    const idempresa = String(empSel?.idempresa ?? '').trim();
+    if (!rucEmpresa || !idempresa) {
+      this.emitirOCEmpresas = [];
+      return;
+    }
+    const emp = this.empCodigoPorRuc[rucEmpresa] || this.codigoEmpresaPorRucDirecto(rucEmpresa) || 'OC';
+    const items = this.emitirOCEmpresas[0]?.items ?? [];
+    this.emitirOCEmpresas = [{ emp, items, subtotal: 0, igv: 0, total: 0, almacen: '', rucEmpresa, idempresa }];
+    await this.cargarAlmacenesPorRuc(rucEmpresa);
+    this.emitirOCEmpresas[0].almacen = this.almacenesPorRuc(rucEmpresa)[0]?.idalmacen || '';
+    this.recalcEmitirOC();
+    this.cdr.markForCheck();
+  }
+
+  filtrarItemsMaestra(event: any): void {
+    const q = String(event?.query ?? '').toLowerCase().trim();
+    const todos = this.itemsMaestra();
+    const activos = todos.filter(i => {
+      const est = String(i.estado ?? '').toLowerCase();
+      return est === 'activo' || est === 'a';
+    });
+    const base = activos.length ? activos : todos;
+    this.itemsSugeridosDirecta = (q ? base.filter(i =>
+      String(i.item ?? '').toLowerCase().includes(q) ||
+      String(i.descripcionLocal ?? '').toLowerCase().includes(q) ||
+      String(i.descripcionCompleta ?? '').toLowerCase().includes(q)
+    ) : base).slice(0, 50);
+  }
+
+  setProveedorDirecta(event: any): void {
+    const prov: Proveedor | null = event?.value ?? event ?? null;
+    this.proveedorGlobal = prov;
+    this.ocProv = prov?.nombre ?? '';
+    this.ocRuc = prov?.ruc ?? '';
+    if (prov) {
+      this.ocMoneda = prov.monedaPago === 'EX' ? 'USD' : 'PEN';
+      this.ocCondPago = prov.formaPago || this.formasPago[0]?.idformapago || 'Contado';
+      this.ocFormaPago = prov.tipoPago || this.tiposPago[0]?.TipoPago || 'Transferencia';
+      this.ocPlazo = prov.diasEntrega ?? 7;
+      this.calcularFechaEntregaOC();
+      this.cargarTipoCambioOC();
+    }
+  }
+
+  agregarItemOCDirecta(event: any): void {
+    const sel = event?.value ?? event;
+    const cod = String(sel?.item ?? '').trim();
+    const empBox = this.emitirOCEmpresas[0];
+    if (!cod) return;
+    if (!empBox) {
+      this.toast('Seleccione primero la empresa', 'err');
+      setTimeout(() => { this.ocDirectaItemSel = null; this.cdr.markForCheck(); });
+      return;
+    }
+    if (empBox.items.some(r => r.cod === cod)) {
+      this.toast('El ítem ya fue agregado', 'err');
+      setTimeout(() => { this.ocDirectaItemSel = null; this.cdr.markForCheck(); });
+      return;
+    }
+    const precioRef = parseFloat(String(sel.precioUnitarioLocal ?? sel.precioCosto ?? '0')) || 0;
+    empBox.items = [...empBox.items, {
+      id: this.ocDirectaSeq--,
+      req: '', area: '', solicitante: '', fecha: '', empresa: empBox.emp,
+      cod,
+      desc: String(sel.descripcionLocal || sel.descripcionCompleta || '').trim(),
+      um: String(sel.unidadCompra || sel.unidadCodigo || 'UND').trim(),
+      lineaCodigo: '', linea: String(sel.linea ?? ''),
+      familiaCodigo: '', familia: String(sel.familia ?? ''),
+      subfamiliaCodigo: '', subfamilia: String(sel.subFamilia ?? ''),
+      cantidad: 1, cantidadOriginal: 1, cantidadPendiente: 1,
+      incrementoLogistica: 0,
+      ultimaOC: precioRef,
+      afectoIGV: String(sel.afectoImpuestoVentasFlag ?? '').toUpperCase() === 'S',
+      ruc: '', razonSocial: '', ceco: '', proyecto: '', almacen: '',
+      idDetalle: null as any, idrequerimiento: 0,
+      precio: precioRef
+    } as LineaReq & { precio: number }];
+    setTimeout(() => { this.ocDirectaItemSel = null; this.cdr.markForCheck(); });
+    this.recalcEmitirOC();
+    this.cdr.markForCheck();
+  }
+
+  onCantidadOriginalDirectaChange(r: LineaReq & { precio: number }): void {
+    // No forzar a 0 mientras el usuario escribe (null cuando el input es inválido/vacío)
+    if (r.cantidadOriginal == null || isNaN(Number(r.cantidadOriginal))) return;
+    r.cantidadOriginal = Number(r.cantidadOriginal);
+    this.onIncrementoChange(r);
+  }
+
+  quitarItemOCDirecta(empBox: EmitirEmpresa, r: any): void {
+    empBox.items = empBox.items.filter(x => x !== r);
+    this.recalcEmitirOC();
+    this.cdr.markForCheck();
+  }
+
+  puedeCrearOCDirecta(): boolean {
+    return !!this.proveedorGlobal &&
+      this.emitirOCEmpresas.length > 0 &&
+      this.emitirOCEmpresas[0].items.length > 0;
+  }
+
+  async crearOCDirecta(): Promise<void> {
+    if (!this.emitirOCEmpresas.length || !this.emitirOCEmpresas[0].items.length) {
+      this.toast('Agregue al menos un ítem a la OC', 'err');
+      return;
+    }
+    await this.confirmarOC();
   }
 
   cerrarModalOverlay(event: MouseEvent): void {

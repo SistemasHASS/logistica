@@ -1,0 +1,60 @@
+<div class="tst-container" [class.single-mode]="singleSelection" [class.has-selection]="selected.size > 0">
+
+  <!-- Trigger -->
+  <div class="tst-trigger" (click)="toggleDropdown()">
+    <div class="tst-value">
+      <span *ngIf="selected.size === 0" class="tst-placeholder">{{ placeholder }}</span>
+      <ng-container *ngIf="selected.size > 0">
+        <span *ngFor="let chip of getSelectedChips().slice(0, MAX_VISIBLE_CHIPS)" class="tst-chip">
+          {{ chip.label }}
+          <span *ngIf="!singleSelection" class="tst-chip-remove" (click)="removeChip(chip.key); $event.stopPropagation()">×</span>
+        </span>
+        <span *ngIf="selected.size > MAX_VISIBLE_CHIPS" class="tst-chip-more">
+          +{{ selected.size - MAX_VISIBLE_CHIPS }} más
+        </span>
+      </ng-container>
+    </div>
+    <div class="tst-actions">
+      <span *ngIf="selected.size > 0 && !singleSelection" class="tst-clear" (click)="clearAll($event)">✕</span>
+      <span class="tst-arrow" [class.open]="isOpen">{{ isOpen ? '▲' : '▼' }}</span>
+    </div>
+  </div>
+
+  <!-- Panel -->
+  <div class="tst-panel" *ngIf="isOpen">
+    <div *ngFor="let modulo of options" class="tst-modulo">
+
+      <!-- Módulo header -->
+      <div class="tst-modulo-header">
+        <span class="tst-expand-icon" (click)="toggleExpand(modulo.key)">
+          {{ isExpanded(modulo.key) ? '▼' : '▶' }}
+        </span>
+        <label class="tst-modulo-label" (click)="$event.preventDefault(); toggleModulo(modulo)">
+          <span *ngIf="!singleSelection" class="tst-checkbox"
+            [class.checked]="isModuloFull(modulo)"
+            [class.partial]="isModuloPartial(modulo)">
+          </span>
+          {{ modulo.label }}
+        </label>
+      </div>
+
+      <!-- Hijos -->
+      <div class="tst-children" *ngIf="isExpanded(modulo.key)">
+        <label *ngFor="let turno of modulo.children"
+          class="tst-turno"
+          (click)="$event.preventDefault(); toggleTurno(turno.key)">
+          <span *ngIf="!singleSelection" class="tst-checkbox" [class.checked]="selected.has(turno.key)"></span>
+          <span *ngIf="singleSelection" class="tst-radio" [class.checked]="selected.has(turno.key)"></span>
+          {{ turno.label }}
+        </label>
+      </div>
+
+    </div>
+    <div *ngIf="options.length === 0" class="tst-modulo">
+      <div class="tst-modulo-header">
+        <label class="tst-modulo-label">Sin opciones disponibles</label>
+      </div>
+    </div>
+  </div>
+
+</div>

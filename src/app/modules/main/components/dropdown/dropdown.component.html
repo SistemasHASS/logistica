@@ -13,13 +13,15 @@
         [ngStyle]="{'border-color' : !selectedItem && required && showValidation ? '#f009' : required && showValidation ||selectedItem ? '#85d446' : '', 'cursor': disabled ? 'no-drop' : editable ? 'text' : 'pointer'}"
         (input)="onInputChange($event)"
         placeholder="Seleccione {{textShow2}}">
-    <div class="dropdown-perso" [ngStyle]="{'transition' : duration+'s'}">
-        <div class="drop-content">
-            <!-- {{ filteredData.length === 0 ? 'No hay datos' : '' }} -->
-            <p (click)="clearSelection()">Sin selección</p>
-            @for (item of filteredData; track $index) {
-                <p (click)="darItem(item)">{{item[optionLabel]}}</p>
-            }
+    @if (isDrop) {
+        <div class="dropdown-perso" [ngStyle]="{'transition' : duration+'s'}">
+            <div class="drop-content">
+                <!-- {{ filteredData.length === 0 ? 'No hay datos' : '' }} -->
+                <p (click)="clearSelection()">Sin selección</p>
+                @for (item of filteredData; track $index) {
+                    <p (click)="darItem(item)">{{item[optionLabel]}}</p>
+                }
+            </div>
         </div>
-    </div>
+    }
 </div>

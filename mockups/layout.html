@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Layout — Análisis Seguimiento Req. Compra — Mockup</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+  body{overflow:hidden;background:#f4f6fa}
+  .wrapper{display:flex;height:100vh}
+
+  /* ============ SIDEBAR (réplica layout real) ============ */
+  .sidebar{width:262px;min-width:262px;background:#1b2a47;color:#c8d3e8;display:flex;flex-direction:column;height:100vh}
+  .brand{padding:16px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid rgba(255,255,255,.07)}
+  .brand .logo{width:34px;height:34px;border-radius:50%;background:#fff;color:#1b2a47;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+  .hello{padding:12px 18px 6px;font-size:12px;color:#8fa3c7}
+  .hello b{display:block;color:#fff;font-size:14px;font-weight:600}
+  .hello .ver{font-size:10px;color:#5f7098}
+  nav{flex:1;overflow-y:auto;padding:4px 0 12px}
+  nav::-webkit-scrollbar{width:5px}
+  nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:99px}
+  .cap{padding:14px 18px 4px;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#5f7098;font-weight:700}
+  .grp-h{padding:9px 18px;font-size:13px;font-weight:600;color:#c8d3e8;display:flex;align-items:center;gap:10px;cursor:pointer;border-left:3px solid transparent}
+  .grp-h .ico{font-size:14px;width:18px;text-align:center}
+  .grp-h .chev{margin-left:auto;font-size:10px;color:#5f7098}
+  .grp-h.open{color:#fff}
+  .items{border-left:none}
+  .item{display:flex;align-items:center;gap:10px;padding:8px 18px 8px 44px;font-size:12.5px;color:#a9b8d6;cursor:pointer;border-left:3px solid transparent}
+  .item:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .item.active{background:rgba(13,110,253,.18);color:#fff;border-left-color:#3d8bfd;font-weight:600}
+  .item .nuevo{background:#198754;color:#fff;font-size:8.5px;border-radius:4px;padding:1px 5px;margin-left:auto;font-weight:700}
+  .item .lock{margin-left:auto;font-size:11px}
+  .item.disabled{color:#5f7098;cursor:default}
+  .bottom{padding:14px 16px;border-top:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:8px}
+  .bottom .btn{border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:600;cursor:pointer}
+  .b-help{background:#0d6efd;color:#fff}.b-out{background:#dc3545;color:#fff}.b-reload{background:#ffc107;color:#212529;font-size:11px}
+
+  /* ============ CONTENIDO ============ */
+  .main{flex:1;display:flex;flex-direction:column;height:100vh}
+  .topbar{height:44px;background:#fff;border-bottom:1px solid #dee2e6;display:flex;align-items:center;padding:0 18px;gap:10px;font-size:13px;color:#6c757d}
+  .topbar .crumb b{color:#212529}
+  .topbar .tag{margin-left:auto;font-size:11px;background:#fff3cd;color:#664d03;border:1px solid #ffe69c;border-radius:99px;padding:2px 10px}
+  iframe{flex:1;border:none;width:100%}
+  .navmock{position:fixed;top:8px;right:16px;font-size:11.5px;z-index:60}
+  .navmock a{background:#fff;border:1px solid #dee2e6;border-radius:8px;padding:4px 9px;color:#6c757d;text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+<div class="navmock">Mockups sueltos: <a href="index.html">Operativo</a> <a href="analisis.html">Análisis</a> <a href="admin-accesos.html">Accesos</a></div>
+<div class="wrapper">
+
+  <!-- SIDEBAR réplica -->
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">H</div></div>
+    <div class="hello">Hola<b>Jonathan M.</b><span class="ver">V. 2.4.1 · rol OPLOGIST</span></div>
+
+    <nav>
+      <div class="cap">Módulos</div>
+      <div class="item"><span>◫</span> Dashboard Operativo</div>
+      <div class="item"><span>🔔</span> Notificaciones</div>
+      <div class="item"><span>📦</span> Catálogo de Items</div>
+      <div class="item"><span>📝</span> Requerimientos</div>
+
+      <div class="cap">Almacén &amp; Stock</div>
+      <div class="item"><span>📤</span> Gestión de Despachos</div>
+      <div class="item"><span>📥</span> Recepción de Mercadería</div>
+      <div class="item"><span>🗃</span> Kardex e Inventario</div>
+      <div class="item"><span>✍</span> Conformidad NI / NS</div>
+
+      <div class="cap">Aprobaciones</div>
+      <div class="item"><span>✔</span> Aprobaciones por Área</div>
+
+      <div class="cap">Reportes</div>
+      <div class="grp-h open"><span class="ico">📄</span> Reportes <span class="chev">▾</span></div>
+      <div class="items">
+        <div class="item"><span>📊</span> Reportes Avanzados</div>
+        <div class="item"><span>📋</span> Reporte Requerimientos</div>
+        <div class="item"><span>📤</span> Reporte de Despachos</div>
+        <div class="item"><span>📑</span> Reporte Aprob. Área</div>
+        <div class="item" id="miSeg" onclick="ver('index')"><span>📦</span> Seguimiento Req. Compra <span class="nuevo">NUEVO</span></div>
+        <div class="item active" id="miAna" onclick="ver('analisis')"><span>📊</span> Análisis Req. Compra <span class="lock" title="Acceso restringido por DNI">🔒</span></div>
+      </div>
+    </nav>
+
+    <div class="bottom">
+      <button class="btn b-help">❔ Ayuda</button>
+      <button class="btn b-out">⏻ Cerrar sesión</button>
+      <button class="btn b-reload">⟳ Recargar Menú</button>
+    </div>
+  </aside>
+
+  <!-- CONTENIDO: aquí se renderiza la página real (router-outlet) -->
+  <div class="main">
+    <div class="topbar">
+      🍞 <span class="crumb">Reportes / <b id="crumb">Análisis Req. Compra</b></span>
+      <span class="tag">router-outlet del layout</span>
+    </div>
+    <iframe id="frame" src="analisis.html?embed=1"></iframe>
+  </div>
+</div>
+
+<script>
+function ver(v){
+  const f=document.getElementById('frame');
+  const seg=document.getElementById('miSeg'),ana=document.getElementById('miAna');
+  if(v==='index'){f.src='index.html?embed=1';seg.classList.add('active');ana.classList.remove('active');
+    document.getElementById('crumb').textContent='Seguimiento Req. Compra';}
+  else{f.src='analisis.html?embed=1';ana.classList.add('active');seg.classList.remove('active');
+    document.getElementById('crumb').textContent='Análisis Req. Compra';}
+}
+</script>
+</body>
+</html>

@@ -70,7 +70,9 @@
     <!-- Lista de aprobaciones pendientes -->
     <div class="row">
       <div class="col-12">
-        <p-table [value]="aprobacionesPendientes" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5,10,20]">
+        <div class="table-wrapper">
+        <p-table [value]="aprobacionesPendientes" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5,10,20]"
+          styleClass="p-datatable-sm" [tableStyle]="{'min-width': '640px'}" responsiveLayout="scroll">
           <ng-template pTemplate="header">
             <tr>
               <th>Tipo</th>
@@ -102,6 +104,7 @@
             }
           </ng-template>
         </p-table>
+        </div>
       </div>
     </div>
   }

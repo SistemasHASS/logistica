@@ -196,6 +196,52 @@
   }
 }
 
+// ── Responsive ───────────────────────────────────────────────────────────────
+@media (max-width: 992px) {
+  .pdf-config-container {
+    .two-col-layout {
+      flex-direction: column;
+
+      .col-preview {
+        flex: 1 1 auto;
+        width: 100%;
+
+        .preview-sticky {
+          position: static;
+
+          .preview-iframe,
+          .preview-empty {
+            height: 60vh;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .pdf-config-container {
+    .config-section {
+      padding: 12px;
+
+      .d-flex.justify-content-between {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+    }
+
+    .nav-tabs .nav-link {
+      padding: 8px 14px;
+      font-size: 0.875rem;
+    }
+
+    .firmas-grid .firma-card {
+      flex: 1 1 100%;
+      max-width: 100%;
+    }
+  }
+}
+
 // ── Modal vista previa ───────────────────────────────────────────────────────
 :host ::ng-deep .preview-modal-backdrop {
   position: fixed;

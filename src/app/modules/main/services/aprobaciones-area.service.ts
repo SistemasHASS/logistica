@@ -4,6 +4,12 @@ import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '@/environments/environment';
 
+export interface StockDetalleAprobacion {
+  estado: 'OK' | 'SIN_ALMACEN';
+  idalmacen: string;
+  items: { codigo: string; stockActual: number }[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -146,6 +152,15 @@ export class AprobacionesAreaService {
     return this.http.post(`${this.baseUrl}/api/logistica/requerimientos-pendientes-area-detalle`, data);
   }
 
+  consultarStockDetalle(data: {
+    idrequerimiento: string;
+    documentoidentidad: string;
+    ruc: string;
+    modoGerencia: boolean;
+  }): Observable<StockDetalleAprobacion> {
+    return this.http.post<StockDetalleAprobacion>(`${this.baseUrl}/api/logistica/consultar-stock-detalle-aprobacion`, data);
+  }
+
   /**
    * Aprueba o rechaza un requerimiento en el flujo por área
    */
@@ -197,6 +212,77 @@ export class AprobacionesAreaService {
     ruc?: string;
   }): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/logistica/obtener-area-usuario`, data);
+  }
+
+  // =============================================
+  // APROBACIÓN NIVEL 2 - GERENCIA
+  // =============================================
+
+  /**
+   * Bandeja de gerencia: solo el aprobador vigente de la empresa
+   * recibe los requerimientos en APROBACION1 de todas las áreas
+   */
+  obtenerRequerimientosPendientesGerencia(data: {
+    documentoidentidad: string;
+    ruc?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/obtener-requerimientos-pendientes-gerencia`, data).pipe(
+      catchError((error) => {
+        if (error.status === 500) {
+          return of({ resultado: [] });
+        }
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Lista los requerimientos que este aprobador N2 ya proceso
+   * (aprobados o rechazados en gerencia).
+   */
+  obtenerRequerimientosAprobadosGerencia(data: {
+    documentoidentidad: string;
+    ruc?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/obtener-requerimientos-aprobados-gerencia`, data).pipe(
+      catchError((error) => {
+        if (error.status === 500) {
+          return of({ resultado: [] });
+        }
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * KPIs del dashboard de gerencia (nivel 2).
+   */
+  dashboardGerencia(data: {
+    documentoidentidad: string;
+    ruc?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/dashboard-gerencia`, data).pipe(
+      catchError((error) => {
+        if (error.status === 500) {
+          return of({ resultado: [] });
+        }
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Aprueba o rechaza un requerimiento en nivel 2 (gerencia).
+   * Solo el aprobador vigente de la empresa puede procesarlo.
+   */
+  aprobarRequerimientoGerencia(data: {
+    idrequerimiento: string;
+    documentoidentidad: string;
+    accion: 'APROBADO' | 'RECHAZADO';
+    comentarios?: string;
+    ruc?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/aprobar-requerimiento-gerencia`, data);
   }
 
   // =============================================

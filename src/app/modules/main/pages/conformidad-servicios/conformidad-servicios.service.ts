@@ -36,6 +36,10 @@ export interface OrdenServicioConformidad {
   usuarioConformidad?: string;
   nombreConformidad?: string;
   fechaConformidad?: string;
+  firmaBase64?: string;
+  montoNeto?: number;
+  montoIgv?: number;
+  fechaOS?: string;
   firmaJefeArea?: string;  // base64 firma del confirmante (firmante 2)
   // Items
   items?: ItemOS[];
@@ -81,10 +85,10 @@ export class ConformidadServiciosService {
     );
   }
 
-  obtenerDetalle(idOS: number): Observable<OrdenServicioConformidad> {
+  obtenerDetalle(idOS: number, usuario: string): Observable<OrdenServicioConformidad> {
     return this.http.post<any>(
       `${this.base}/obtener-detalle-conformidad`,
-      { idOS },
+      { idOS, usuario },
       { headers: this.headers }
     );
   }

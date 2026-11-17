@@ -1,0 +1,60 @@
+<div class="dashboard-gerencia container-fluid py-3">
+  <h5 class="mb-3"><i class="bx bx-bar-chart-alt-2 me-2"></i>Dashboard Gerencia - Aprobaciones Nivel 2</h5>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-4 col-lg-2" *ngFor="let k of [
+        {label: 'Pendientes N2', value: kpis.pendientesN2, icon: 'bx bx-time', cls: 'text-warning'},
+        {label: 'Aprobados hoy', value: kpis.aprobadosHoy, icon: 'bx bx-check-circle', cls: 'text-success'},
+        {label: 'Rechazados hoy', value: kpis.rechazadosHoy, icon: 'bx bx-x-circle', cls: 'text-danger'},
+        {label: 'Total aprobados', value: kpis.totalAprobadosN2, icon: 'bx bx-check-double', cls: 'text-success'},
+        {label: 'Total rechazados', value: kpis.totalRechazadosN2, icon: 'bx bx-block', cls: 'text-danger'},
+        {label: 'Ultimos 7 dias', value: kpis.totalSemana, icon: 'bx bx-calendar', cls: 'text-primary'}]">
+        <div class="card kpi-card text-center h-100">
+          <div class="card-body py-3">
+            <i [class]="k.icon + ' fs-3 ' + k.cls"></i>
+            <div class="fs-4 fw-bold mt-1">{{ k.value ?? 0 }}</div>
+            <small class="text-muted">{{ k.label }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header fw-semibold">Tiempo promedio de aprobacion</div>
+          <div class="card-body text-center">
+            <div class="fs-3 fw-bold text-primary">{{ kpis.tiempoPromedioMin ?? 0 }} min</div>
+            <small class="text-muted">desde aprobacion jefatura hasta su decision</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header fw-semibold">Aprobaciones por area</div>
+          <div class="card-body p-0">
+            <table class="table table-sm mb-0" *ngIf="porArea.length; else sinAreas">
+              <thead><tr><th>Area</th><th class="text-center">Total</th><th class="text-center">Aprobados</th><th class="text-center">Rechazados</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let a of porArea">
+                  <td>{{ a.nombreArea || a.idarea }}</td>
+                  <td class="text-center">{{ a.total }}</td>
+                  <td class="text-center text-success">{{ a.aprobados }}</td>
+                  <td class="text-center text-danger">{{ a.rechazados }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <ng-template #sinAreas>
+              <div class="text-center text-muted py-4">Sin aprobaciones registradas</div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

@@ -1,7 +1,7 @@
 <div class="aprobaciones-container p-4">
   <!-- Dashboard de Indicadores -->
   <!-- Vista desktop: cards -->
-  <div class="row mb-4 d-none d-md-flex" *ngIf="dashboard">
+  <div class="row mb-4 d-none d-md-flex" *ngIf="dashboard && !modoGerencia">
     <div class="col-md-3">
       <p-card>
         <div class="text-center">
@@ -41,7 +41,7 @@
   </div>
 
   <!-- Vista móvil: indicadores compactos horizontales -->
-  <div class="d-md-none mb-4" *ngIf="dashboard">
+  <div class="d-md-none mb-4" *ngIf="dashboard && !modoGerencia">
     <div class="dashboard-mobile-scroll d-flex flex-nowrap gap-2 overflow-auto pb-1">
       <div class="dashboard-mobile-item flex-shrink-0 text-center bg-white rounded-3 shadow-sm p-2 border-start border-4 border-dark">
         <i class="bx bx-clock text-warning" style="font-size: 1.25rem;"></i>
@@ -73,7 +73,7 @@
       <ul class="nav custom-tabs mb-3" role="tablist">
         <li class="nav-item" role="presentation">
           <button class="nav-link" [class.active]="activeTabIndex === 0" (click)="activeTabIndex = 0" type="button">
-            <i class="bx bx-time me-1"></i> Pendientes de Aprobación
+            <i class="bx bx-time me-1"></i> {{ modoGerencia ? 'Pendientes Gerencia' : 'Pendientes de Aprobación' }}
             <span class="tab-badge ms-1">{{ requerimientosPendientes.length }}</span>
           </button>
         </li>
@@ -191,6 +191,9 @@
                   <p-tag [severity]="req.estado === 'APROBADO' ? 'success' : req.estado === 'RECHAZADO' ? 'danger' : 'warn'">
                     {{ req.estado || req.estados || 'PENDIENTE' }}
                   </p-tag>
+                  @if (req.esAutoaprobacion) {
+                    <p-tag severity="warn" value="Auto-aprobación" styleClass="ms-1"></p-tag>
+                  }
                 </td>
                 <!-- <td>-</td> -->
                 <td>
@@ -239,6 +242,7 @@
         <div *ngIf="activeTabIndex === 1">
           <p-table [value]="misRequerimientos" [loading]="loadingMisRequerimientos" [showCurrentPageReport]="true"
                    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} requerimientos"
+                   emptyMessage="No hay requerimientos aprobados por gerencia"
                    [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10,25,50]" styleClass="p-datatable-sm">
             <ng-template pTemplate="header">
               <tr>
@@ -690,12 +694,13 @@
 
 <!-- Modal de Detalle de Requerimientos Pendientes (con selección) -->
 <p-dialog [(visible)]="displayDetallePendientesModal" [modal]="true"
-          [style]="{width: '95vw', maxWidth: '1000px'}"
+          [style]="{width: '95vw', maxWidth: mostrarStockDetalle ? '1400px' : '1000px'}"
           [breakpoints]="{'960px': '95vw', '640px': '100vw'}"
           [header]="'Detalle del Requerimiento - ' + tipoRequerimientoLabel(requerimientoDetallePendientes)"
           (onHide)="cerrarDetallePendientes()"
           styleClass="modal-detalle-pendientes">
   <div *ngIf="requerimientoDetallePendientes" class="p-2">
+    @let stock = stockDetalle();
     <div *ngIf="loadingDetallePendientes" class="text-center py-3">
       <p-progressBar mode="indeterminate" [style]="{ height: '6px' }"></p-progressBar>
       <small class="text-muted">Cargando detalle...</small>
@@ -739,6 +744,32 @@
       </div>
     </div>
 
+    @if (mostrarStockDetalle) {
+      <div class="stock-detalle-resumen d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div aria-live="polite" role="status">
+          <div><strong>Almacén consultado:</strong> {{ stock.idalmacen || (stock.estado === 'sin-almacen' ? 'No informado' : 'Pendiente de consulta') }}</div>
+          @switch (stock.estado) {
+            @case ('ok') {
+              <div class="small">Stock consultado: {{ stock.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</div>
+            }
+            @case ('sin-almacen') {
+              <div class="small">No es posible consultar el stock: el requerimiento no tiene almacén.</div>
+            }
+            @case ('error') {
+              <div class="small">No se pudo consultar el stock del almacén y empresa del requerimiento. Puedes reintentar.</div>
+            }
+            @default {
+              <div class="small">Consultando stock del requerimiento…</div>
+            }
+          }
+        </div>
+        <button pButton type="button" label="Actualizar stock" icon="pi pi-refresh"
+                class="p-button-sm p-button-outlined"
+                [disabled]="loadingDetallePendientes || stock.estado === 'cargando'"
+                (click)="actualizarStockDetalle()"></button>
+      </div>
+    }
+
     <!-- Tabs comentadas: solo se muestra la tabla de Items -->
 
     <!-- Ítems -->
@@ -760,6 +791,11 @@
             <th>Código</th>
             <th>{{ esRequerimientoServicio ? 'Servicio' : 'Producto' }}</th>
             <th>Cantidad</th>
+            @if (mostrarStockDetalle) {
+              <th class="stock-detalle-columna text-end"
+                  pTooltip="Existencia actual en el almacén del requerimiento según la última consulta. No reserva stock ni descuenta compromisos."
+                  tabindex="0">Stock actual</th>
+            }
             <th *ngIf="esRequerimientoCompra(requerimientoDetallePendientes)" class="text-end">P.Unit.</th>
             <th *ngIf="esRequerimientoCompra(requerimientoDetallePendientes)" class="text-end">Subtotal</th>
             <th>Proyecto</th>
@@ -781,6 +817,19 @@
             <!-- <td>{{ det.idproducto || det.producto || det.codigo }}</td> -->
             <td>{{ det.descripcionItem || det.descripcion || 'Sin descripción' }}</td>
             <td>{{ det.cantidad }}</td>
+            @if (mostrarStockDetalle) {
+              <td class="stock-detalle-columna text-end">
+                @if (stock.estado === 'cargando' || stock.estado === 'inicial') {
+                  <span class="small">Consultando…</span>
+                } @else if (stock.estado === 'sin-almacen') {
+                  <span class="small">Sin almacén</span>
+                } @else if (stockActualDetalle(det.codigo) !== null) {
+                  <span class="fw-semibold">{{ stockActualDetalle(det.codigo) | number:'1.0-4' }}</span>
+                } @else {
+                  <span class="small">No disponible</span>
+                }
+              </td>
+            }
             <td *ngIf="esRequerimientoCompra(requerimientoDetallePendientes)" class="text-end">
               <span class="text-muted small">{{ formatMoneda(getPrecioItem(det.codigo)) }}</span>
             </td>
@@ -805,17 +854,20 @@
         </ng-template>
         <ng-template pTemplate="footer">
           <tr *ngIf="esRequerimientoCompra(requerimientoDetallePendientes)">
-            <td [attr.colspan]="7" class="text-end text-muted small">Monto total referencial:</td>
+            <td [attr.colspan]="columnasDetallePendientes - 2" class="text-end text-muted small">Monto total referencial:</td>
             <td colspan="2" class="text-end">
               <span class="fw-bold text-primary" style="font-size:1rem;">{{ formatMoneda(calcularMontoModalActual()) }}</span>
             </td>
           </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">
-          <tr><td colspan="10" class="text-center">No hay ítems</td></tr>
+          <tr><td [attr.colspan]="columnasDetallePendientes" class="text-center">No hay ítems</td></tr>
         </ng-template>
       </p-table>
     </div>
+    @if (mostrarStockDetalle) {
+      <p class="small mt-2 mb-0">Stock actual del almacén indicado. Consulta informativa; no reserva existencias ni modifica la aprobación.</p>
+    }
 
     <!-- Servicios comentado -->
 
@@ -828,8 +880,11 @@
     <div class="d-flex flex-wrap gap-2 justify-content-end">
       <button pButton type="button" label="Rechazar" icon="bx bx-x-circle"
               class="p-button-danger" (click)="rechazarDetallesPendientes()"></button>
-      <button pButton type="button" label="Aprobar" icon="bx bx-check"
-              class="p-button-success" (click)="aprobarDetallesPendientes()"></button>
+      <button pButton type="button"
+              [label]="aprobandoDetallesPendientes ? 'Aprobando...' : (cargandoMaestras ? 'Cargando maestras...' : 'Aprobar')"
+              icon="bx bx-check"
+              class="p-button-success" (click)="aprobarDetallesPendientes()"
+              [disabled]="aprobandoDetallesPendientes || cargandoMaestras"></button>
       <button pButton type="button" label="Cerrar" icon="pi pi-times"
               class="p-button-secondary" (click)="cerrarDetallePendientes()"></button>
     </div>

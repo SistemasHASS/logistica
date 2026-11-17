@@ -24,6 +24,7 @@ import { AdminPlantillasMenuComponent } from './pages/admin-plantillas-menu/admi
 import { AdminPlantillaAlmacenComponent } from './pages/admin-plantilla-almacen/admin-plantilla-almacen.component';
 import { AdminConfigBrandingComponent } from './pages/admin-config-branding/admin-config-branding.component';
 import { AdminSincronizacionComponent } from './pages/admin-sincronizacion/admin-sincronizacion.component';
+import { AdminNotificacionesConfigComponent } from './pages/admin-notificaciones-config/admin-notificaciones-config.component';
 
 const routes: Routes = [
   {
@@ -53,6 +54,7 @@ const routes: Routes = [
       { path: 'admin-plantilla-almacen', component: AdminPlantillaAlmacenComponent },
       { path: 'admin-config-branding', component: AdminConfigBrandingComponent },
       { path: 'admin-sincronizacion', component: AdminSincronizacionComponent },
+      { path: 'admin-notificaciones-config', component: AdminNotificacionesConfigComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

@@ -32,6 +32,48 @@
 }
 
 /* ===========================
+   FILTROS
+=========================== */
+.filters-bar {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+
+  .filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 260px;
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    select {
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      background-color: #ffffff;
+      color: #374151;
+
+      &:focus {
+        outline: none;
+        border-color: #3f51b5;
+      }
+    }
+  }
+}
+
+/* ===========================
    BOTONES
 =========================== */
 .btn-primary {
@@ -437,4 +479,21 @@ code {
       min-width: 100px;
     }
   }
+}
+
+/* Perfiles del usuario */
+.perfiles-lista { border: 1px solid #e5e7eb; border-radius: 6px; max-height: 300px; overflow-y: auto; }
+.perfil-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  &:last-child { border-bottom: none; }
+  &:hover { background: #f9fafb; }
+  input { margin-top: 3px; }
+  span { display: flex; flex-direction: column; gap: 2px; }
+  small { color: #6b7280; }
+}
+.perfil-roles code {
+  background: #e8f0fe; color: #1a73e8; font-size: 11px;
+  padding: 1px 6px; border-radius: 4px; margin-right: 4px;
 }

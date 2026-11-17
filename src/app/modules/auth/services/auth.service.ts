@@ -33,10 +33,68 @@ export class AuthService {
 
     try {
       const response = await lastValueFrom(this.http.post<any>(url, body));
+
+      // Fallback: usuarios con rol whitelist (GERENTE/FINANZAS) que tienen
+      // estado=0 en el maestro y no pueden loguear por la via normal.
+      if (this.normalizarUsuarios(response).length === 0) {
+        const rolResp = await lastValueFrom(
+          this.http.post<any>(`${this.baseUrl}/api/logistica/auth/login-rol`, {
+            usuario,
+            clave,
+            aplicacion: this.aplicaciones,
+          })
+        );
+        return this.aplicarRolesDePerfiles(this.normalizarUsuarios(rolResp));
+      }
+
+      await this.aplicarRolesDePerfiles(this.normalizarUsuarios(response));
       return response;
     } catch (error: any) {
       throw new Error(error.error?.message || 'Error de autenticación');
     }
+  }
+
+  private normalizarUsuarios(resp: any): any[] {
+    if (!resp) return [];
+    if (Array.isArray(resp)) {
+      // la API logistica puede devolver [[{...}]] -> aplanar un nivel
+      return resp.length === 1 && Array.isArray(resp[0]) ? resp[0] : resp;
+    }
+    if (typeof resp === 'string') {
+      try { return JSON.parse(resp); } catch { return []; }
+    }
+    if (resp.id && typeof resp.id === 'string') {
+      try { return JSON.parse(resp.id); } catch { return []; }
+    }
+    return [];
+  }
+
+  /**
+   * Suma los roles otorgados por perfiles (LOGISTICA_PerfilesUsuarios)
+   * al idrol que viene del ERP. Solo modifica idrol si el perfil agrega
+   * roles nuevos -> usuarios sin perfil quedan identicos.
+   */
+  private async aplicarRolesDePerfiles(usuarios: any[]): Promise<any[]> {
+    for (const u of usuarios) {
+      try {
+        const resp: any = await lastValueFrom(
+          this.http.post(`${this.baseUrl}/api/logistica/listar-roles-efectivos`, {
+            ruc: u.ruc,
+            usuario: u.usuario,
+            nrodocumento: u.documentoidentidad,
+          })
+        );
+        const data = Array.isArray(resp) ? resp[0] : resp;
+        const efectivos: string[] = (data?.rolesEfectivos ?? []).map((r: any) => r.idrol);
+        const directos: string[] = (data?.rolesDirectos ?? []).map((r: any) => r.idrol);
+        if (efectivos.length > directos.length) {
+          u.idrol = efectivos.join(',');
+        }
+      } catch {
+        // sin perfiles o endpoint no disponible -> idrol intacto
+      }
+    }
+    return usuarios;
   }
   async isLoggedIn() {
     const user = await this.dexieService.showUsuario();
@@ -58,7 +116,7 @@ export class AuthService {
   async isAprobador() {
     const user = await this.getUser();
     const rol = user?.idrol ?? '';
-    return rol.includes('ADLOGIST') || rol.includes('APLOGIST') || rol.includes('JLOLOGIST');
+    return rol.includes('ADLOGIST') || rol.includes('APLOGIST') || rol.includes('JLOLOGIST') || rol.includes('GERENTE');
   }
 
   //Perfil Almacen
@@ -71,19 +129,19 @@ export class AuthService {
   //Perfil Usuario
   async isUsuario() {
     const user = await this.getUser();
-    return user?.idrol === 'OPLOGIST';
+    return (user?.idrol ?? '').includes('OPLOGIST');
   }
 
   //Perfil Sistemas
   async isSistemas() {
     const user = await this.getUser();
-    return user?.idrol === 'TILOGIST';
+    return (user?.idrol ?? '').includes('TILOGIST');
   }
 
   //Perfil Empaque
   async isEmpaque() {
     const user = await this.getUser();
-    return user?.idrol === 'EMLOGIST';
+    return (user?.idrol ?? '').includes('EMLOGIST');
   }
 
   //Perfil Logístico
@@ -105,6 +163,11 @@ export class AuthService {
     const resp: any = await lastValueFrom(this.http.get(url));
 
     return resp?.permitido === true;
+  }
+
+  /** true si idrol (posiblemente "A,B") contiene el rol exacto */
+  private tieneRol(idrol: string | null | undefined, rol: string): boolean {
+    return (idrol ?? '').split(',').map(r => r.trim()).includes(rol);
   }
 
   /**
@@ -146,7 +209,7 @@ export class AuthService {
         console.log('Usuario actualizado con información de área:', usuarioActualizado);
         
         // ✅ Redirección según rol y área para APLOGIST
-        if (usuarioActualizado.idrol === 'APLOGIST') {
+        if (this.tieneRol(usuarioActualizado.idrol, 'APLOGIST')) {
           if (usuarioActualizado.idarea) {
             // Si tiene área, redirigir a aprobaciones-area
             console.log('🔄 APLOGIST con área - Redirigiendo a aprobaciones-area');
@@ -165,7 +228,7 @@ export class AuthService {
         console.log('📝 Para asignar un área, contacte al administrador del sistema');
         
         // ✅ Redirección para APLOGIST sin área
-        if (usuario && usuario.idrol === 'APLOGIST') {
+        if (this.tieneRol(usuario?.idrol, 'APLOGIST')) {
           console.log('🔄 APLOGIST sin área - Redirigiendo a aprobaciones');
           this.router.navigate(['/main/aprobaciones']);
         }

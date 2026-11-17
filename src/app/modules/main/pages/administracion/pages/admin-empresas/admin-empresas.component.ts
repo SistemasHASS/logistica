@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TableModule } from 'primeng/table';
 import { AdminEmpresasService, Empresa } from '../../services/admin-empresas.service';
 import { UserService } from '@/app/shared/services/user.service';
 import { AlertService } from '@/app/shared/alertas/alerts.service';
@@ -10,7 +11,7 @@ import { takeUntil } from 'rxjs/operators';
 @Component({
   selector: 'app-admin-empresas',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TableModule],
   templateUrl: './admin-empresas.component.html',
   styleUrls: ['./admin-empresas.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

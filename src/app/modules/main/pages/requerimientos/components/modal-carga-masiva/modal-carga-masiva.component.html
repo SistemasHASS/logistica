@@ -24,8 +24,9 @@
               <th>Descripción</th>
               <th>Cantidad</th>
               <th>UM</th>
+              <th *ngIf="mostrarColumnaStock()">Stock</th>
               <th *ngIf="mostrarColumnaTurno()">Turno</th>
-              <th *ngIf="!mostrarColumnaTurno()">CECO</th>
+              <th>CECO</th>
               <th *ngIf="!mostrarColumnaTurno()">Proyecto</th>
               <th *ngIf="!mostrarColumnaTurno()">Labor</th>
               <th>Estado</th>
@@ -72,6 +73,23 @@
                 <input class="form-control form-control-sm" [(ngModel)]="row.unidadMedida" placeholder="UM" />
               </td>
 
+              <td *ngIf="mostrarColumnaStock()">
+                <span
+                  *ngIf="row.stockDisponible !== undefined && row.stockDisponible !== null"
+                  class="badge"
+                  [ngClass]="{
+                    'bg-success': row.stockDisponible >= row.cantidad,
+                    'bg-warning text-dark': row.stockDisponible > 0 && row.stockDisponible < row.cantidad,
+                    'bg-danger': row.stockDisponible <= 0
+                  }">
+                  {{ row.stockDisponible }}
+                </span>
+                <span *ngIf="row.stockDisponible === undefined || row.stockDisponible === null" class="text-muted">—</span>
+                <div *ngIf="tieneError(row, 'Stock')" class="invalid-feedback d-block">
+                  {{ getMensajeError(row, 'Stock') }}
+                </div>
+              </td>
+
               <td *ngIf="mostrarColumnaTurno()">
                 <select
                   class="form-select form-select-sm"
@@ -79,15 +97,21 @@
                   [(ngModel)]="row.turno"
                   (change)="onValidarFila(row)">
                   <option value="">--</option>
-                  <option *ngFor="let t of turnos" [value]="t">{{ t }}</option>
+                  <option *ngFor="let t of turnos" [value]="t.nombreTurno ?? t">{{ t.nombreTurno ?? t }}</option>
                 </select>
                 <div *ngIf="tieneError(row, 'Turno')" class="invalid-feedback d-block">
                   {{ getMensajeError(row, 'Turno') }}
                 </div>
               </td>
 
-              <td *ngIf="!mostrarColumnaTurno()">
-                <input class="form-control form-control-sm" [(ngModel)]="row.ceco" placeholder="CECO" />
+              <td>
+                <select
+                  class="form-select form-select-sm"
+                  [(ngModel)]="row.ceco"
+                  (change)="onValidarFila(row)">
+                  <option value="">--</option>
+                  <option *ngFor="let c of cecosParaFila(row)" [value]="c.localname">{{ c.localname }}</option>
+                </select>
               </td>
 
               <td *ngIf="!mostrarColumnaTurno()">

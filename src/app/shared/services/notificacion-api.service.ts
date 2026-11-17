@@ -55,15 +55,18 @@ export class NotificacionApiService {
         // Si resultado es un string, parsearlo
         if (typeof response.resultado === 'string') {
           const parsed = JSON.parse(response.resultado);
+          const lista = await this.filtrarPorConfig(parsed);
           // Si soloNoLeidas es true, filtrar las no leídas
-          return soloNoLeidas ? parsed.filter((n: any) => !n.leida) : parsed;
+          return soloNoLeidas ? lista.filter((n: any) => !n.leida) : lista;
         }
         // Si ya es un array, filtrar si es necesario
         const resultArray = Array.isArray(response.resultado) ? response.resultado : [];
-        return soloNoLeidas ? resultArray.filter((n: any) => !n.leida) : resultArray;
+        const lista = await this.filtrarPorConfig(resultArray);
+        return soloNoLeidas ? lista.filter((n: any) => !n.leida) : lista;
       }
 
-      return Array.isArray(response) ? response : [];
+      const listaFallback = Array.isArray(response) ? await this.filtrarPorConfig(response) : [];
+      return listaFallback;
 
       // TEMPORAL: Mock para probar sin backend
       /*
@@ -171,10 +174,13 @@ export class NotificacionApiService {
         ? todasNotificaciones.filter(n => !n.leida)
         : todasNotificaciones;
       
+      // Filtrar por la configuración del rol (tipos habilitados)
+      let filtrado = await this.filtrarPorConfig(resultado);
+
       // Ordenar por fecha descendente
-      resultado.sort((a, b) => new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime());
-      
-      return resultado;
+      filtrado.sort((a, b) => new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime());
+
+      return filtrado;
 
       // Mock para notificaciones directas (logistica_notificaciones)
       /*
@@ -242,6 +248,85 @@ export class NotificacionApiService {
       console.error('Error al listar todas las notificaciones:', error);
       return [];
     }
+  }
+
+  // ── Configuración de notificaciones por rol (cache 60s) ──────────────────
+  private configCache: {
+    idrol: string;
+    tipos: Set<string>;
+    canalPorTipo: Map<string, string>;
+    pollSegundos: number;
+  } | null = null;
+  private configCacheTime = 0;
+  private readonly CONFIG_TTL = 60000;
+
+  /**
+   * Config de notificaciones del rol del usuario actual (tipos habilitados y canal).
+   * Retorna null si no hay config o falla la consulta (comportamiento anterior).
+   */
+  async obtenerConfigNotificaciones(): Promise<{
+    tipos: Set<string>;
+    canalPorTipo: Map<string, string>;
+    pollSegundos: number;
+  } | null> {
+    try {
+      const usuario = await this.dexieService.showUsuario();
+      if (!usuario?.idrol) return null;
+      if (
+        this.configCache &&
+        this.configCache.idrol === usuario.idrol &&
+        Date.now() - this.configCacheTime < this.CONFIG_TTL
+      ) {
+        return this.configCache;
+      }
+      const [configResp, paramsResp] = await Promise.all([
+        firstValueFrom(
+          this.http.post<any>(`${this.API_URL_LOGISTICA}/notificacion-config/listar-config`, {
+            idrol: usuario.idrol,
+          }),
+        ),
+        firstValueFrom(
+          this.http.post<any>(`${this.API_URL_LOGISTICA}/notificacion-config/listar-params`, {}),
+        ),
+      ]);
+      const items: any[] = this.procesarRespuestaNotificaciones(configResp) as any[];
+      const params: any[] = this.procesarRespuestaNotificaciones(paramsResp) as any[];
+      const tipos = new Set<string>(
+        items.filter((i: any) => i.activo).map((i: any) => i.tipo_notificacion),
+      );
+      const canalPorTipo = new Map<string, string>(
+        items.map((i: any) => [i.tipo_notificacion, i.canal || 'AMBOS']),
+      );
+      const pollSegundos =
+        Number(params.find((p: any) => p.clave === 'NOTIF_POLL_SEGUNDOS')?.valor) || 60;
+      this.configCache = { idrol: usuario.idrol, tipos, canalPorTipo, pollSegundos };
+      this.configCacheTime = Date.now();
+      return this.configCache;
+    } catch (e) {
+      console.warn('No se pudo obtener la configuración de notificaciones:', e);
+      return null;
+    }
+  }
+
+  /** Canal configurado para un tipo (AMBOS si no hay config). */
+  async canalParaTipo(tipo: string): Promise<string> {
+    const cfg = await this.obtenerConfigNotificaciones();
+    if (!cfg || cfg.tipos.size === 0) return 'AMBOS';
+    return cfg.canalPorTipo.get(tipo) ?? 'AMBOS';
+  }
+
+  /**
+   * Filtra una lista de notificaciones según la config del rol (si existe).
+   * Solo pasan tipos activos con canal AMBOS o BANDEJA (TOAST no va a bandeja).
+   */
+  async filtrarPorConfig(lista: NotificacionDB[]): Promise<NotificacionDB[]> {
+    const cfg = await this.obtenerConfigNotificaciones();
+    if (!cfg || cfg.tipos.size === 0) return lista;
+    return lista.filter((n) => {
+      if (!n.tipo_notificacion || !cfg.tipos.has(n.tipo_notificacion)) return false;
+      const canal = cfg.canalPorTipo.get(n.tipo_notificacion);
+      return canal !== 'TOAST';
+    });
   }
 
   /**
@@ -470,14 +555,10 @@ export class NotificacionApiService {
         return 0;
       }
 
-      // Si es OPLOGIST, contar de ambas tablas
-      if (usuario.idrol === 'OPLOGIST') {
-        const notificaciones = await this.listarTodasMisNotificaciones(true);
-        return notificaciones.length;
-      } else {
-        const notificaciones = await this.listarMisNotificaciones(true);
-        return notificaciones.length;
-      }
+      // El listado unificado ya aplica la configuración del rol
+      // (tipos habilitados + canal BANDEJA/AMBOS)
+      const notificaciones = await this.listarTodasMisNotificaciones(true);
+      return notificaciones.length;
     } catch (error) {
       console.error('Error al obtener contador de notificaciones no leídas:', error);
       return 0;

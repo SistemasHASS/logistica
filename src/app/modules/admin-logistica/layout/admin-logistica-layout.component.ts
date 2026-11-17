@@ -20,6 +20,7 @@ export class AdminLogisticaLayoutComponent implements OnInit {
 
   user = this.authService.currentUser;
   sidebarCollapsed = signal(false);
+  sidebarOpen = signal(false);
   currentRoute = signal('dashboard');
   fechaHoy = '';
   isOnline = true;
@@ -42,12 +43,22 @@ export class AdminLogisticaLayoutComponent implements OnInit {
         const segments = url.split('/');
         const lastSegment = segments[segments.length - 1] || 'dashboard';
         this.currentRoute.set(lastSegment);
+        this.sidebarOpen.set(false);
       }
     });
   }
 
   toggleSidebar() {
     this.sidebarCollapsed.update(v => !v);
+  }
+
+  openSidebar() {
+    this.sidebarCollapsed.set(false);
+    this.sidebarOpen.set(true);
+  }
+
+  closeSidebar() {
+    this.sidebarOpen.set(false);
   }
 
   logout() {
@@ -91,12 +102,14 @@ export class AdminLogisticaLayoutComponent implements OnInit {
     { route: 'aprobar-consumo',       label: 'Aprobar Consumo',            icon: 'bx bx-check-circle', clave: 'ADMINLG_MENU_APROBAR_CONSUMO', fallback: () => true },
     { route: 'aprobar-sc',            label: 'Aprobar Solicitud Compra',   icon: 'bx bx-shopping-bag', clave: 'ADMINLG_MENU_APROBAR_SC',      fallback: () => !this.isJefeLogistica() },
     { route: 'aprobar-ss',            label: 'Aprobar Solicitud Servicio', icon: 'bx bx-file-find',    clave: 'ADMINLG_MENU_APROBAR_SS',      fallback: () => !this.isJefeLogistica() },
+    { route: 'aprobar-gerencia',      label: 'Aprobar Gerencia',           icon: 'bx bx-check-double', clave: 'ADMINLG_MENU_APROBAR_GERENCIA',fallback: () => true },
     { route: 'maestros',              label: 'Maestros',                   icon: 'bx bx-equalizer',    clave: 'ADMINLG_MENU_MAESTROS',        fallback: () => true },
     { route: 'proveedores',           label: 'Gestión Proveedores',        icon: 'bx bx-store',        clave: 'ADMINLG_MENU_PROVEEDORES',     fallback: () => true },
     { route: 'usuarios',              label: 'Usuarios',                   icon: 'bx bx-user',         clave: 'ADMINLG_MENU_USUARIOS',        fallback: () => this.authService.canCreateUsers() },
     { route: 'areas',                 label: 'Áreas',                      icon: 'bx bx-buildings',    clave: 'ADMINLG_MENU_AREAS',           fallback: () => this.isAdmin() },
     { route: 'usuario-area',          label: 'Usuarios por Área',          icon: 'bx bx-user-check',   clave: 'ADMINLG_MENU_USUARIO_AREA',    fallback: () => this.isAdmin() },
     { route: 'flujo-aprobacion-area', label: 'Flujo Aprobación Área',      icon: 'bx bx-git-branch',   clave: 'ADMINLG_MENU_FLUJO_AREA',      fallback: () => this.isAdmin() },
+    { route: 'config-flujo-aprobacion', label: 'Flujo por Niveles',        icon: 'bx bx-layer',        clave: 'ADMINLG_MENU_FLUJO_NIVELES',   fallback: () => this.isAdmin() },
     { route: 'pdf',                   label: 'Formato PDF',                icon: 'bx bxs-file-pdf',    clave: 'ADMINLG_MENU_PDF',             fallback: () => true },
     { route: 'empresa',               label: 'Empresa',                    icon: 'bx bx-buildings',    clave: 'ADMINLG_MENU_EMPRESA',         fallback: () => this.isAdmin() },
     { route: 'parametros',            label: 'Parámetros',                 icon: 'bx bx-cog',          clave: 'ADMINLG_MENU_PARAMETROS',      fallback: () => this.isAdmin() },
@@ -107,6 +120,7 @@ export class AdminLogisticaLayoutComponent implements OnInit {
     { route: 'conformidad-servicio',  label: 'Conformidad Servicio',       icon: 'bx bx-check-shield', clave: 'ADMINLG_MENU_CONFORMIDAD',     fallback: () => this.isAdmin() },
     { route: 'permisos-rol',          label: 'Permisos por Rol',           icon: 'bx bx-shield',       clave: 'ADMINLG_MENU_PERMISOS_ROL',   fallback: () => this.isAdmin() },
     { route: 'migracion-adjuntos',   label: 'Migrar Adjuntos',            icon: 'bx bx-refresh',      clave: 'ADMINLG_MENU_MIGRAR_ADJUNTOS', fallback: () => this.isAdmin() },
+    { route: 'accesos-reportes',    label: 'Accesos Reportes',           icon: 'bx bx-lock-open-alt',clave: 'ADMINLG_MENU_ACCESOS_REPORTES', fallback: () => this.isAdmin() },
     { route: 'mantenimiento',        label: 'Mantenimiento',              icon: 'bx bx-trash',        clave: 'ADMINLG_MENU_MANTENIMIENTO',   fallback: () => this.isAdmin() },
   ];
 
@@ -117,7 +131,7 @@ export class AdminLogisticaLayoutComponent implements OnInit {
     return this._ITEMS_DEF.map(item => ({
       ...item,
       visible: listo
-        ? ((item.clave === 'ADMINLG_MENU_MIGRAR_ADJUNTOS' || item.clave === 'ADMINLG_MENU_INCREMENTO_OC' || item.clave === 'ADMINLG_MENU_MANTENIMIENTO') && this.isAdmin())
+        ? ((item.clave === 'ADMINLG_MENU_MIGRAR_ADJUNTOS' || item.clave === 'ADMINLG_MENU_INCREMENTO_OC' || item.clave === 'ADMINLG_MENU_ACCESOS_REPORTES' || item.clave === 'ADMINLG_MENU_MANTENIMIENTO') && this.isAdmin())
           || this._tienePermiso(item.clave, item.fallback())
         : true,
     }));

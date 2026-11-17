@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -6,12 +6,13 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { CardModule } from 'primeng/card';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom, timeout } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule, Checkbox } from 'primeng/checkbox';
 import { AprobacionesService } from '@/app/services/aprobaciones.service';
 import { AprobacionesAreaService } from '@/app/modules/main/services/aprobaciones-area.service';
+import { AprobacionesAmbitosService, PendienteAmbito } from '@/app/modules/main/services/aprobaciones-ambitos.service';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
 import { RequerimientosSyncService } from '@/app/modules/main/pages/requerimientos/services/requerimientos-sync.service';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
@@ -55,6 +56,10 @@ import { NombreCortoPipe } from '@/app/shared/pipes/nombre-corto.pipe';
   styleUrl: './aprobaciones-area.component.scss',
 })
 export class AprobacionesAreaComponent implements OnInit {
+  // true = bandeja de Gerencia (nivel 2, estados APROBACION1);
+  // false = bandeja de jefe de área (nivel 1)
+  @Input() modoGerencia = false;
+
   // Usuario actual
   usuario: any;
 
@@ -103,6 +108,20 @@ export class AprobacionesAreaComponent implements OnInit {
   detallePendientesTab: 'items' | 'servicios' | 'adjuntos' | 'historial-anulaciones' = 'items';
   detallesPendientesSeleccionados: Set<number> = new Set<number>();
   detallesPendientesAprobados: Set<number> = new Set<number>();
+  readonly stockDetalle = signal<{
+    estado: 'inicial' | 'cargando' | 'ok' | 'sin-almacen' | 'error';
+    idalmacen: string;
+    fecha: Date | null;
+    stocks: ReadonlyMap<string, number>;
+  }>({ estado: 'inicial', idalmacen: '', fecha: null, stocks: new Map() });
+  private sesionDetallePendientes = 0;
+  private consultaStockDetalle = 0;
+
+  // Maestra de subservicios/commodities por código: permite reordenar
+  // "glosa - descripcion" -> "descripcion - glosa" en líneas de servicio
+  // guardadas con el orden antiguo en logistica_dreq.iddescripcion
+  private descripcionServicioPorCodigo = new Map<string, string>();
+  private maestraServiciosCargada = false;
 
   // Adjuntos
   adjuntosRequerimiento: any[] = [];
@@ -148,6 +167,7 @@ export class AprobacionesAreaComponent implements OnInit {
   constructor(
     private aprobacionesService: AprobacionesService,
     private aprobacionesAreaService: AprobacionesAreaService,
+    private aprobacionesAmbitosService: AprobacionesAmbitosService,
     private requerimientosService: RequerimientosService,
     private syncService: RequerimientosSyncService,
     private dexieService: DexieService,
@@ -157,6 +177,7 @@ export class AprobacionesAreaComponent implements OnInit {
     private alertService: AlertService,
     public adjuntosService: AdjuntosService,
     private notificacionApi: NotificacionApiService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -167,10 +188,12 @@ export class AprobacionesAreaComponent implements OnInit {
       }
 
       // Roles globales: acceden sin ser jefe de área (el SP maneja la lógica de áreas)
+      // En modoGerencia el SP valida que el usuario sea el aprobador vigente nivel 2
       const rolesGlobales = ['ADLOGIST', 'JLOLOGIST', 'JEMLOGIST', 'FINANZAS', 'GERENTE', 'TILOGIST', 'APLOGIST'];
       const esRolGlobal = rolesGlobales.some(r => this.usuario.idrol?.includes(r));
 
       if (
+        !this.modoGerencia &&
         !esRolGlobal &&
         (!this.usuario.idarea ||
         (this.usuario.esJefeArea !== 1 && this.usuario.esJefeArea !== true))
@@ -194,10 +217,29 @@ export class AprobacionesAreaComponent implements OnInit {
 
   async cargarUsuario() {
     this.usuario = await this.dexieService.showUsuario();
+
+    // Bandeja Gerencia: la sesión vigente es la de admin-logistica
+    // (localStorage), no necesariamente hay usuario en Dexie.
+    // Se envía el username; el SP lo resuelve a DNI si hace falta.
+    if (this.modoGerencia) {
+      try {
+        const adminUser = JSON.parse(localStorage.getItem('admin_logistica_user') || 'null');
+        if (adminUser) {
+          this.usuario = {
+            ...(this.usuario || {}),
+            documentoidentidad: adminUser.usuario,
+            ruc: adminUser.ruc || this.usuario?.ruc,
+            idrol: adminUser.idrol || this.usuario?.idrol,
+            nombre: adminUser.nombre || this.usuario?.nombre,
+            esJefeArea: this.usuario?.esJefeArea,
+          };
+        }
+      } catch { /* sin sesión admin-logistica */ }
+    }
   }
 
   async cargarDashboard() {
-    if (!this.usuario) return;
+    if (!this.usuario || this.modoGerencia) return;
 
     this.loadingDashboard = true;
     try {
@@ -300,7 +342,7 @@ export class AprobacionesAreaComponent implements OnInit {
         }
       });
 
-      this.itemsFiltered = await firstValueFrom(this.ItemService.getItem([{}]));
+      await this.cargarItemsFiltered();
 
       // ✅ Cargar commodities (servicios) con cuenta contable
       const commodities = this.commodityService.getCommodity([{}]);
@@ -315,7 +357,7 @@ export class AprobacionesAreaComponent implements OnInit {
       const subcommodities = this.commodityService.getSubCommodity([{}]);
       subcommodities.subscribe(async (resp: any) => {
         if (!!resp && resp.length) {
-          await this.dexieService.saveComodities(resp);
+          await this.dexieService.saveMaestroSubCommodities(resp);
           await this.ListarSubCommodities();
         }
       });
@@ -402,8 +444,16 @@ export class AprobacionesAreaComponent implements OnInit {
   }
 
   async ListarSubCommodities() {
-    // Subcommodities son los "Comodity" en Dexie (subservicios)
-    this.subcommodities = await this.dexieService.showComodities();
+    // Maestro de subcommodities (subservicios) con cuentaContableGasto
+    this.subcommodities = await this.dexieService.showMaestroSubCommodity();
+    // Si la tabla está vacía (usuario sin sync previo), traerla del API
+    if (!this.subcommodities?.length) {
+      const resp: any = await lastValueFrom(this.commodityService.getSubCommodity([{}]));
+      if (resp?.length) {
+        await this.dexieService.saveMaestroSubCommodities(resp);
+        this.subcommodities = await this.dexieService.showMaestroSubCommodity();
+      }
+    }
   }
 
   async ListarClasificaciones() {
@@ -426,6 +476,85 @@ export class AprobacionesAreaComponent implements OnInit {
     this.tipoGastos = await this.dexieService.showTipoGastos();
   }
 
+  // Carga itemsFiltered (listar-item) con deduplicación: si ya hay una
+  // llamada en vuelo (init o aprobación), se reusa la misma promesa en vez
+  // de disparar otra descarga del maestro completo.
+  private itemsFilteredPromise: Promise<void> | null = null;
+  private async cargarItemsFiltered(): Promise<void> {
+    const esMaestroReal = (arr: any[]) =>
+      Array.isArray(arr) && arr.length > 0 && arr[0].item !== undefined;
+    if (esMaestroReal(this.itemsFiltered)) return;
+    if (!this.itemsFilteredPromise) {
+      this.itemsFilteredPromise = (async () => {
+        this.itemsFiltered = await this.dexieService.showMaestroItem();
+        if (esMaestroReal(this.itemsFiltered)) return;
+        const resp: any = await firstValueFrom(
+          this.ItemService.getItem([{}]).pipe(timeout(60000))
+        );
+        if (esMaestroReal(resp)) {
+          this.itemsFiltered = resp;
+          await this.dexieService.saveMaestroItems(resp);
+          console.log('✅ Items cargados desde listar-item:', resp.length);
+        } else {
+          console.warn('⚠️ listar-item no retornó items válidos:', resp?.length ?? 0);
+        }
+      })().finally(() => {
+        this.itemsFilteredPromise = null;
+      });
+    }
+    await this.itemsFilteredPromise;
+  }
+
+  /**
+   * Agrega a la bandeja los pasos pendientes del flujo por ámbitos donde el
+   * usuario es el responsable asignado. Si el módulo no está desplegado o la
+   * empresa no lo habilitó, la consulta simplemente no agrega elementos.
+   */
+  private async agregarPendientesAmbitos(): Promise<void> {
+    try {
+      const pendientes = await this.aprobacionesAmbitosService
+        .pendientes(this.usuario.ruc, this.usuario.documentoidentidad)
+        .toPromise();
+      if (!Array.isArray(pendientes) || pendientes.length === 0) return;
+      const existentes = new Set(this.requerimientosPendientes.map(r => r.idrequerimiento));
+      const nuevos = pendientes
+        .filter(p => !existentes.has(p.idrequerimiento))
+        .map(p => this.mapearPendienteAmbito(p));
+      this.requerimientosPendientes = [...this.requerimientosPendientes, ...nuevos];
+    } catch {
+      // El motor de ámbitos aún no está desplegado: la bandeja legado se mantiene.
+    }
+  }
+
+  private mapearPendienteAmbito(p: PendienteAmbito): RequerimientoPendiente {
+    const nivel = p.nivel === 2 ? 'N2' : 'N1';
+    return {
+      idrequerimiento: p.idrequerimiento,
+      ruc: p.ruc,
+      idarea: p.idAreaAmbito,
+      itemtipo: p.itemtipo,
+      tipoRequerimiento: p.itemtipo,
+      glosa: p.glosa,
+      descripcion: p.glosa,
+      dniregistra: p.solicitante,
+      nombreArea: p.nombreArea,
+      nombreAreaSolicitante: p.nombreAmbito
+        ? `${p.nombreAmbito} (${nivel})`
+        : p.nombreArea,
+      estados: p.estados,
+      estado: p.esperaNivelAnterior ? 'ESPERA N1' : 'PENDIENTE',
+      fechaCreacion: p.fechaCreacion,
+      fecha: p.fechaCreacion,
+      idfundo: p.idfundoRequerimiento,
+      flujoAmbito: true,
+      idRuta: p.idRuta,
+      nivelAmbito: p.nivel,
+      esperaNivelAnterior: p.esperaNivelAnterior,
+      autorizadoActualmente: p.autorizadoActualmente,
+      esAutoaprobacion: p.esAutoaprobacion === true || (p.esAutoaprobacion as any) === 1,
+    } as RequerimientoPendiente;
+  }
+
   cargarRequerimientosPendientes() {
     if (!this.usuario) return;
 
@@ -438,10 +567,12 @@ export class AprobacionesAreaComponent implements OnInit {
       ruc: this.usuario.ruc,
     };
 
-    this.aprobacionesAreaService
-      .obtenerRequerimientosPendientesArea(data)
-      .subscribe({
-        next: (response) => {
+    const obs = this.modoGerencia
+      ? this.aprobacionesAreaService.obtenerRequerimientosPendientesGerencia(data)
+      : this.aprobacionesAreaService.obtenerRequerimientosPendientesArea(data);
+
+    obs.subscribe({
+        next: async (response) => {
           // console.log('📋 Respuesta de pendientes:', response);
           // El response puede venir como array directo o como {resultado: [...]}
           if (Array.isArray(response)) {
@@ -459,6 +590,7 @@ export class AprobacionesAreaComponent implements OnInit {
           //   '✅ Requerimientos pendientes cargados:',
           //   this.requerimientosPendientes.length,
           // );
+          await this.agregarPendientesAmbitos();
           this.loadingPendientes = false;
         },
         error: (error) => {
@@ -480,11 +612,35 @@ export class AprobacionesAreaComponent implements OnInit {
       });
   }
 
-  cargarMisRequerimientos() {
+  async cargarMisRequerimientos() {
     if (!this.usuario) return;
 
     this.loadingMisRequerimientos = true;
     this.misRequerimientos = [];
+
+    // En modoGerencia el tab "Aprobados" muestra lo que este aprobador N2
+    // ya proceso, no la lista de jefe de area.
+    if (this.modoGerencia) {
+      try {
+        const response: any = await lastValueFrom(
+          this.aprobacionesAreaService.obtenerRequerimientosAprobadosGerencia({
+            documentoidentidad: this.usuario.documentoidentidad,
+            ruc: this.usuario.ruc,
+          })
+        );
+        this.misRequerimientos = Array.isArray(response)
+          ? response
+          : response?.resultado ?? [];
+      } catch {
+        this.misRequerimientos = [];
+      } finally {
+        this.loadingMisRequerimientos = false;
+        // La mascara del p-table puede quedar huérfana si el flag se apaga
+        // en la misma tarea; detectChanges fuerza el flush visual.
+        this.cdr.detectChanges();
+      }
+      return;
+    }
 
     // El SP espera usuario y rol
     const data = {
@@ -596,10 +752,12 @@ export class AprobacionesAreaComponent implements OnInit {
       return;
     }
 
-    // Prevenir auto-aprobación (salvo roles globales)
+    // Prevenir auto-aprobación (salvo roles globales o paso marcado esAutoaprobacion por excepción configurada)
+    const esAmbitoSeleccionado = (this.requerimientoSeleccionado as any).flujoAmbito === true;
+    const esAutoaprobacionSel = this.requerimientoSeleccionado.esAutoaprobacion === true || this.requerimientoSeleccionado.esAutoaprobacion === 1;
     const rolesGlobalesAprob = ['ADLOGIST', 'JLOLOGIST', 'JEMLOGIST', 'FINANZAS', 'GERENTE', 'TILOGIST'];
     const esRolGlobalAprob = rolesGlobalesAprob.some(r => this.usuario.idrol?.includes(r));
-    if (!esRolGlobalAprob && (this.requerimientoSeleccionado as any).dniregistra === this.usuario.documentoidentidad) {
+    if (!esAutoaprobacionSel && (esAmbitoSeleccionado || !esRolGlobalAprob) && (this.requerimientoSeleccionado as any).dniregistra === this.usuario.documentoidentidad) {
       Swal.fire('No permitido', 'No puede aprobar su propio requerimiento', 'warning');
       return;
     }
@@ -611,15 +769,26 @@ export class AprobacionesAreaComponent implements OnInit {
     });
     
     try {
-      const response = await this.aprobacionesAreaService
-        .aprobarRequerimientoArea({
-          idrequerimiento: this.requerimientoSeleccionado.idrequerimiento, // Corregido: minúscula
-          documentoidentidad: this.usuario.documentoidentidad,
-          accion: 'APROBADO',
-          comentarios: this.observaciones || 'Aprobado',
-          ruc: this.usuario.ruc,
-        })
-        .toPromise();
+      const requestAprobacion = {
+        idrequerimiento: this.requerimientoSeleccionado.idrequerimiento, // Corregido: minúscula
+        documentoidentidad: this.usuario.documentoidentidad,
+        accion: 'APROBADO' as const,
+        comentarios: esAutoaprobacionSel ? (this.observaciones || '') : (this.observaciones || 'Aprobado'),
+        ruc: this.usuario.ruc,
+      };
+      const response = esAmbitoSeleccionado
+        ? await this.aprobacionesAmbitosService.decidir({
+            ruc: this.usuario.ruc,
+            idRuta: this.requerimientoSeleccionado.idRuta!,
+            nivel: this.requerimientoSeleccionado.nivelAmbito!,
+            documentoidentidad: this.usuario.documentoidentidad,
+            accion: 'APROBADO',
+            motivo: esAutoaprobacionSel ? (this.observaciones || '') : (this.observaciones || 'Aprobado'),
+          }).toPromise()
+        : await (this.modoGerencia
+          ? this.aprobacionesAreaService.aprobarRequerimientoGerencia(requestAprobacion)
+          : this.aprobacionesAreaService.aprobarRequerimientoArea(requestAprobacion)
+        ).toPromise();
 
       console.log('📤 Respuesta de aprobación:', response);
       this.displayAprobacionModal = false;
@@ -632,6 +801,7 @@ export class AprobacionesAreaComponent implements OnInit {
       // Formato 3: { "resultado": "OK", "mensaje": "..." } (objeto directo)
       let esExitoso = false;
       let mensaje = '';
+      let estadoFinal = 'APROBADO';
 
       // Normalizar respuesta: si es array, tomar primer elemento; si es objeto, usar directamente
       let responseItem = null;
@@ -647,15 +817,16 @@ export class AprobacionesAreaComponent implements OnInit {
         console.log('🔍 Analizando respuesta:', responseItem);
         console.log('🔍 Tiene propiedad "success":', 'success' in responseItem);
         console.log('🔍 Tiene propiedad "resultado":', 'resultado' in responseItem);
-        
+        estadoFinal = responseItem.estadoFinal || 'APROBADO';
+
         if ('success' in responseItem) {
           // Formato nuevo: { success: true, mensaje: "..." }
-          esExitoso = responseItem.success === true;
+          esExitoso = responseItem.success === true || responseItem.success === 1;
           mensaje = responseItem.mensaje || 'Operación realizada correctamente';
           console.log('✅ Formato nuevo detectado, esExitoso:', esExitoso);
         } else if ('resultado' in responseItem) {
-          // Formato antiguo: { resultado: "SUCCESS" | "OK", mensaje: "..." }
-          esExitoso = responseItem.resultado === 'SUCCESS' || responseItem.resultado === 'OK';
+          // Formato antiguo: { resultado: "SUCCESS" | "OK" | ..., mensaje: "..." }
+          esExitoso = this.esRespuestaExito(responseItem);
           mensaje = responseItem.mensaje || 'Operación realizada correctamente';
           console.log('✅ Formato antiguo detectado, esExitoso:', esExitoso);
         }
@@ -669,46 +840,71 @@ export class AprobacionesAreaComponent implements OnInit {
         Swal.fire('Éxito', mensaje, 'success');
         console.log('✅ Aprobación exitosa, requerimiento:', this.requerimientoSeleccionado);
 
-        // Ocultar el requerimiento de la lista local del creador sin esperar sincronización
-        await this.syncService.marcarAprobadoLocalmente(
+        // Reflejar el estado real en la lista local del creador sin esperar sincronización:
+        // APROBACION1 sigue pendiente de N2, APROBADO se marca como aprobado.
+        await this.syncService.marcarEstadoLocalmente(
           this.requerimientoSeleccionado.idrequerimiento,
+          estadoFinal,
         );
 
         console.log('🔄 Iniciando sincronización con SPRING...');
 
-        // Sincronizar con SPRING TODOS los requerimientos aprobados (COMPRA y CONSUMO)
-        console.log('🔄 Iniciando sincronización con SPRING para requerimiento aprobado...');
-        try {
-          await this.sincronizarRequerimientoSPRING(
-            this.requerimientoSeleccionado,
-          );
-          console.log('✅ Sincronización con SPRING completada');
-          
-          // Información sobre el flujo posterior + notificación PENDIENTE_DESPACHO para CONSUMO
-          const tipoReq = (this.requerimientoSeleccionado as any)?.itemtipo || 
-                         (this.requerimientoSeleccionado as any)?.tipoRequerimiento ||
-                         'COMPRA'; // Default
-          if (tipoReq === 'COMPRA') {
-            console.log('ℹ️ Requerimiento de COMPRA migrado a SPRING - También aparecerá en consolidación para órdenes de compra');
-          } else if (tipoReq === 'CONSUMO') {
-            console.log('ℹ️ Requerimiento de CONSUMO migrado a SPRING - Listo para despacho directo');
-            const dniSolicitante = (this.requerimientoSeleccionado as any)?.dniregistra
-              || (this.requerimientoSeleccionado as any)?.nrodocumento
-              || '';
-            if (dniSolicitante) {
-              const numReq = (this.requerimientoSeleccionado as any)?.numero
-                || (this.requerimientoSeleccionado as any)?.idrequerimiento || 'N/A';
-              this.notificacionApi.registrarNotificacionSolicitante({
-                usuario_destino: dniSolicitante,
-                id_dreq: String((this.requerimientoSeleccionado as any)?.idrequerimiento || '0'),
-                mensaje: `Tu requerimiento de consumo ${numReq} fue aprobado y está pendiente de despacho por almacén.`,
-                tipo_notificacion: 'PENDIENTE_DESPACHO'
-              }).catch(() => {});
-            }
+        if (estadoFinal === 'APROBACION1') {
+          // Flujo DOS_NIVELES: queda pendiente de Gerencia.
+          // NO migrar a SPRING ni notificar despacho — ocurre en la aprobación nivel 2
+          console.log('ℹ️ Requerimiento quedó en APROBACION1 - pendiente de aprobación de Gerencia');
+        } else if (esAmbitoSeleccionado) {
+          // Flujo por ámbitos: se migra a SPRING con el mismo mecanismo del
+          // flujo legado y el resultado queda registrado en la cola de efectos.
+          try {
+            await this.sincronizarRequerimientoSPRING(this.requerimientoSeleccionado);
+            await this.aprobacionesAmbitosService.marcarEfecto({
+              ruc: this.usuario.ruc, idRuta: this.requerimientoSeleccionado.idRuta!,
+              tipo: 'SPRING', estado: 'COMPLETADO',
+            }).toPromise().catch(() => {});
+          } catch (error: any) {
+            await this.aprobacionesAmbitosService.marcarEfecto({
+              ruc: this.usuario.ruc, idRuta: this.requerimientoSeleccionado.idRuta!,
+              tipo: 'SPRING', estado: 'ERROR',
+              error: String(error?.message ?? error).slice(0, 1000),
+            }).toPromise().catch(() => {});
+            console.error('❌ Error en sincronización con SPRING:', error);
           }
-        } catch (error) {
-          console.error('❌ Error en sincronización con SPRING:', error);
-          // No interrumpir el flujo si falla la sincronización
+        } else {
+          // Sincronizar con SPRING TODOS los requerimientos aprobados (COMPRA y CONSUMO)
+          console.log('🔄 Iniciando sincronización con SPRING para requerimiento aprobado...');
+          try {
+            await this.sincronizarRequerimientoSPRING(
+              this.requerimientoSeleccionado,
+            );
+            console.log('✅ Sincronización con SPRING completada');
+
+            // Información sobre el flujo posterior + notificación PENDIENTE_DESPACHO para CONSUMO
+            const tipoReq = (this.requerimientoSeleccionado as any)?.itemtipo ||
+                           (this.requerimientoSeleccionado as any)?.tipoRequerimiento ||
+                           'COMPRA'; // Default
+            if (tipoReq === 'COMPRA') {
+              console.log('ℹ️ Requerimiento de COMPRA migrado a SPRING - También aparecerá en consolidación para órdenes de compra');
+            } else if (tipoReq === 'CONSUMO') {
+              console.log('ℹ️ Requerimiento de CONSUMO migrado a SPRING - Listo para despacho directo');
+              const dniSolicitante = (this.requerimientoSeleccionado as any)?.dniregistra
+                || (this.requerimientoSeleccionado as any)?.nrodocumento
+                || '';
+              if (dniSolicitante) {
+                const numReq = (this.requerimientoSeleccionado as any)?.numero
+                  || (this.requerimientoSeleccionado as any)?.idrequerimiento || 'N/A';
+                this.notificacionApi.registrarNotificacionSolicitante({
+                  usuario_destino: dniSolicitante,
+                  id_dreq: String((this.requerimientoSeleccionado as any)?.idrequerimiento || '0'),
+                  mensaje: `Tu requerimiento de consumo ${numReq} fue aprobado y está pendiente de despacho por almacén.`,
+                  tipo_notificacion: 'PENDIENTE_DESPACHO'
+                }).catch(() => {});
+              }
+            }
+          } catch (error) {
+            console.error('❌ Error en sincronización con SPRING:', error);
+            // No interrumpir el flujo si falla la sincronización
+          }
         }
 
         console.log('🔄 Recargando datos...');
@@ -746,15 +942,26 @@ export class AprobacionesAreaComponent implements OnInit {
     }
 
     try {
-      const response = await this.aprobacionesAreaService
-        .aprobarRequerimientoArea({
-          idrequerimiento: this.requerimientoSeleccionado.idrequerimiento,
-          documentoidentidad: this.usuario.documentoidentidad,
-          accion: 'RECHAZADO',
-          comentarios: this.observaciones,
-          ruc: this.usuario.ruc,
-        })
-        .toPromise();
+      const requestRechazo = {
+        idrequerimiento: this.requerimientoSeleccionado.idrequerimiento,
+        documentoidentidad: this.usuario.documentoidentidad,
+        accion: 'RECHAZADO' as const,
+        comentarios: this.observaciones,
+        ruc: this.usuario.ruc,
+      };
+      const response = (this.requerimientoSeleccionado as any).flujoAmbito === true
+        ? await this.aprobacionesAmbitosService.decidir({
+            ruc: this.usuario.ruc,
+            idRuta: this.requerimientoSeleccionado.idRuta!,
+            nivel: this.requerimientoSeleccionado.nivelAmbito!,
+            documentoidentidad: this.usuario.documentoidentidad,
+            accion: 'RECHAZADO',
+            motivo: this.observaciones,
+          }).toPromise()
+        : await (this.modoGerencia
+          ? this.aprobacionesAreaService.aprobarRequerimientoGerencia(requestRechazo)
+          : this.aprobacionesAreaService.aprobarRequerimientoArea(requestRechazo)
+        ).toPromise();
 
       this.displayAprobacionModal = false;
 
@@ -766,17 +973,18 @@ export class AprobacionesAreaComponent implements OnInit {
       let esExitoso = false;
       let mensaje = '';
 
-      if (response && Array.isArray(response) && response.length > 0) {
-        const firstItem = response[0];
+      const itemRechazo = Array.isArray(response) ? response[0]
+        : (response && typeof response === 'object' ? response : null);
+      if (itemRechazo) {
+        const firstItem = itemRechazo;
         if ('success' in firstItem) {
           // Formato nuevo: [{ success: true, mensaje: "..." }]
-          esExitoso = firstItem.success === true;
+          esExitoso = firstItem.success === true || firstItem.success === 1;
           mensaje =
             firstItem.mensaje || 'Requerimiento rechazado correctamente';
         } else if ('resultado' in firstItem) {
-          // Formato antiguo: [{ resultado: "SUCCESS", mensaje: "..." }]
-          esExitoso =
-            firstItem.resultado === 'SUCCESS' || firstItem.resultado === 'OK';
+          // Formato antiguo: [{ resultado: "SUCCESS" | "OK" | ..., mensaje: "..." }]
+          esExitoso = this.esRespuestaExito(firstItem);
           mensaje =
             firstItem.mensaje || 'Requerimiento rechazado correctamente';
         }
@@ -820,7 +1028,12 @@ export class AprobacionesAreaComponent implements OnInit {
     const esRolGlobalAprob = rolesGlobalesAprob.some(r => this.usuario.idrol?.includes(r));
 
     const aprobables = this.requerimientosPendientesSeleccionados.filter(req => {
-      if (!esRolGlobalAprob && (req as any).dniregistra === this.usuario.documentoidentidad) {
+      const esAmbito = (req as any).flujoAmbito === true;
+      const esAuto = req.esAutoaprobacion === true || req.esAutoaprobacion === 1;
+      if (!esAuto && (esAmbito || !esRolGlobalAprob) && (req as any).dniregistra === this.usuario.documentoidentidad) {
+        return false;
+      }
+      if (esAmbito && ((req as any).esperaNivelAnterior || (req as any).autorizadoActualmente === false)) {
         return false;
       }
       return true;
@@ -839,15 +1052,28 @@ export class AprobacionesAreaComponent implements OnInit {
 
     for (const req of aprobables) {
       try {
-        const response = await this.aprobacionesAreaService
-          .aprobarRequerimientoArea({
-            idrequerimiento: req.idrequerimiento,
-            documentoidentidad: this.usuario.documentoidentidad,
-            accion: 'APROBADO',
-            comentarios: this.observacionesMultiple || 'Aprobado',
-            ruc: this.usuario.ruc,
-          })
-          .toPromise();
+        const esAuto = req.esAutoaprobacion === true || req.esAutoaprobacion === 1;
+        const requestAprobacion = {
+          idrequerimiento: req.idrequerimiento,
+          documentoidentidad: this.usuario.documentoidentidad,
+          accion: 'APROBADO' as const,
+          comentarios: esAuto ? (this.observacionesMultiple || '') : (this.observacionesMultiple || 'Aprobado'),
+          ruc: this.usuario.ruc,
+        };
+        const esAmbitoReq = (req as any).flujoAmbito === true;
+        const response = esAmbitoReq
+          ? await this.aprobacionesAmbitosService.decidir({
+              ruc: this.usuario.ruc,
+              idRuta: (req as any).idRuta,
+              nivel: (req as any).nivelAmbito,
+              documentoidentidad: this.usuario.documentoidentidad,
+              accion: 'APROBADO',
+              motivo: esAuto ? (this.observacionesMultiple || '') : (this.observacionesMultiple || 'Aprobado'),
+            }).toPromise()
+          : await (this.modoGerencia
+            ? this.aprobacionesAreaService.aprobarRequerimientoGerencia(requestAprobacion)
+            : this.aprobacionesAreaService.aprobarRequerimientoArea(requestAprobacion)
+          ).toPromise();
 
         let esExitoso = false;
         let responseItem = null;
@@ -859,40 +1085,66 @@ export class AprobacionesAreaComponent implements OnInit {
 
         if (responseItem) {
           if ('success' in responseItem) {
-            esExitoso = responseItem.success === true;
+            esExitoso = responseItem.success === true || responseItem.success === 1;
           } else if ('resultado' in responseItem) {
-            esExitoso = responseItem.resultado === 'SUCCESS' || responseItem.resultado === 'OK';
+            esExitoso = this.esRespuestaExito(responseItem);
           }
         }
+
+        const estadoFinal = responseItem?.estadoFinal || 'APROBADO';
 
         if (esExitoso) {
           exitosos++;
 
-          // Ocultar el requerimiento de la lista local del creador sin esperar sincronización
-          await this.syncService.marcarAprobadoLocalmente(req.idrequerimiento);
+          // Reflejar el estado real en la lista local del creador sin esperar sincronización
+          await this.syncService.marcarEstadoLocalmente(req.idrequerimiento, estadoFinal);
 
-          // Sincronizar con SPRING igual que en aprobación individual desde modal
-          try {
-            await this.sincronizarRequerimientoSPRING(req, true);
-            sincronizados++;
-
-            // Notificación PENDIENTE_DESPACHO para requerimientos de CONSUMO
-            const tipoReq = (req as any)?.itemtipo || (req as any)?.tipoRequerimiento || 'COMPRA';
-            if (tipoReq === 'CONSUMO') {
-              const dniSolicitante = (req as any)?.dniregistra || (req as any)?.nrodocumento || '';
-              if (dniSolicitante) {
-                const numReq = (req as any)?.numero || (req as any)?.idrequerimiento || 'N/A';
-                this.notificacionApi.registrarNotificacionSolicitante({
-                  usuario_destino: dniSolicitante,
-                  id_dreq: String((req as any)?.idrequerimiento || '0'),
-                  mensaje: `Tu requerimiento de consumo ${numReq} fue aprobado y está pendiente de despacho por almacén.`,
-                  tipo_notificacion: 'PENDIENTE_DESPACHO'
-                }).catch(() => {});
-              }
+          if (esAmbitoReq) {
+            // Flujo por ámbitos: misma migración a SPRING que el flujo legado;
+            // el resultado queda registrado en la cola de efectos de la ruta.
+            try {
+              await this.sincronizarRequerimientoSPRING(req, true);
+              sincronizados++;
+              await this.aprobacionesAmbitosService.marcarEfecto({
+                ruc: this.usuario.ruc, idRuta: (req as any).idRuta,
+                tipo: 'SPRING', estado: 'COMPLETADO',
+              }).toPromise().catch(() => {});
+            } catch (syncError: any) {
+              fallidosSincronizacion++;
+              await this.aprobacionesAmbitosService.marcarEfecto({
+                ruc: this.usuario.ruc, idRuta: (req as any).idRuta,
+                tipo: 'SPRING', estado: 'ERROR',
+                error: String(syncError?.message ?? syncError).slice(0, 1000),
+              }).toPromise().catch(() => {});
+              console.error(`❌ Error sincronizando requerimiento ${req.idrequerimiento} con SPRING:`, syncError);
             }
-          } catch (syncError) {
-            console.error(`❌ Error sincronizando requerimiento ${req.idrequerimiento} con SPRING:`, syncError);
-            fallidosSincronizacion++;
+          } else if (estadoFinal === 'APROBACION1') {
+            // Flujo DOS_NIVELES: pendiente de Gerencia, sin migración SPRING aún
+            console.log(`ℹ️ ${req.idrequerimiento} quedó en APROBACION1 - pendiente de Gerencia`);
+          } else {
+            // Sincronizar con SPRING igual que en aprobación individual desde modal
+            try {
+              await this.sincronizarRequerimientoSPRING(req, true);
+              sincronizados++;
+
+              // Notificación PENDIENTE_DESPACHO para requerimientos de CONSUMO
+              const tipoReq = (req as any)?.itemtipo || (req as any)?.tipoRequerimiento || 'COMPRA';
+              if (tipoReq === 'CONSUMO') {
+                const dniSolicitante = (req as any)?.dniregistra || (req as any)?.nrodocumento || '';
+                if (dniSolicitante) {
+                  const numReq = (req as any)?.numero || (req as any)?.idrequerimiento || 'N/A';
+                  this.notificacionApi.registrarNotificacionSolicitante({
+                    usuario_destino: dniSolicitante,
+                    id_dreq: String((req as any)?.idrequerimiento || '0'),
+                    mensaje: `Tu requerimiento de consumo ${numReq} fue aprobado y está pendiente de despacho por almacén.`,
+                    tipo_notificacion: 'PENDIENTE_DESPACHO'
+                  }).catch(() => {});
+                }
+              }
+            } catch (syncError) {
+              console.error(`❌ Error sincronizando requerimiento ${req.idrequerimiento} con SPRING:`, syncError);
+              fallidosSincronizacion++;
+            }
           }
         } else {
           fallidos++;
@@ -927,101 +1179,147 @@ export class AprobacionesAreaComponent implements OnInit {
   // SINCRONIZACIÓN CON SPRING
   // =============================================
 
+  cargandoMaestras = false;
+  private maestrasSPRINGPromise: Promise<void> | null = null;
+
+  // Precarga todas las maestras necesarias para la migración a SPRING,
+  // en paralelo. Se llama al abrir el modal de detalle para que estén
+  // listas antes de que el usuario apruebe, y otra vez dentro de
+  // sincronizarRequerimientoSPRING como garantía.
+  // Si ya hay una carga en vuelo, devuelve esa misma promesa para que
+  // quien espere (await) realmente aguarde a que termine.
+  async prepararMaestrasSPRING(): Promise<void> {
+    if (this.maestrasSPRINGPromise) return this.maestrasSPRINGPromise;
+    this.cargandoMaestras = true;
+    this.maestrasSPRINGPromise = (async () => {
+      try {
+      const cargarCecos = async () => {
+      if (this.cecos?.length) return;
+      this.cecos = await this.dexieService.showCecos();
+      if (this.cecos?.length) return;
+      try {
+        const resp: any = await this.maestrasService
+          .getCecos([{ aplicacion: 'LOGISTICA', esadmin: 0 }])
+          .pipe(timeout(60000))
+          .toPromise();
+        if (resp?.length) {
+          await this.dexieService.saveCecos(resp);
+          this.cecos = await this.dexieService.showCecos();
+          console.log('✅ CECOs cargados:', this.cecos.length);
+        }
+      } catch (e) {
+        console.error('❌ Error al sincronizar CECOs:', e);
+      }
+    };
+
+    const cargarLabores = async () => {
+      if (this.labores?.length) return;
+      this.labores = await this.dexieService.showLabores();
+      if (this.labores?.length) return;
+      try {
+        const labores = await this.maestrasService.getLabores([{ aplicacion: 'LOGISTICA', esadmin: 0 }]);
+        if (labores?.length) {
+          await this.dexieService.saveLabores(labores);
+          this.labores = await this.dexieService.showLabores();
+          console.log('✅ Labores cargadas:', this.labores.length);
+        }
+      } catch (e) {
+        console.error('❌ Error al sincronizar Labores:', e);
+      }
+    };
+
+    const cargarProyectos = async () => {
+      if (!this.proyectos?.length) {
+        this.proyectos = await this.dexieService.showProyectos();
+      }
+    };
+
+    // Items (maestro real: listar-item → registros con `item` y `cuentaGasto`).
+    // OJO: la tabla Dexie `items` contiene data de get-items-cmmdty
+    // (forma {codigo, descripcion}, SIN `item`/`cuentaGasto`); no usar showItems()
+    // aquí o el lookup de cuenta contable nunca matchea.
+    const cargarItems = async () => {
+      try {
+        await this.cargarItemsFiltered();
+      } catch (e) {
+        console.error('❌ Error al cargar listar-item:', e);
+      }
+    };
+
+    const cargarTurnos = async () => {
+      if (!this.turnos?.length) {
+        this.turnos = await this.dexieService.showTurnos();
+      }
+    };
+
+    const cargarSubCommodities = async () => {
+      if (this.subcommodities?.length) return;
+      this.subcommodities = await this.dexieService.showMaestroSubCommodity();
+      if (this.subcommodities?.length) return;
+      try {
+        const resp: any = await firstValueFrom(
+          this.commodityService.getSubCommodity([{}]).pipe(timeout(60000))
+        );
+        if (resp?.length) {
+          await this.dexieService.saveMaestroSubCommodities(resp);
+          this.subcommodities = await this.dexieService.showMaestroSubCommodity();
+          console.log('✅ Subcommodities cargados:', this.subcommodities.length);
+        }
+      } catch (e) {
+        console.error('❌ Error al sincronizar subcommodities:', e);
+      }
+    };
+
+    const cargarCommodities = async () => {
+      if (this.commodities?.length) return;
+      this.commodities = await this.dexieService.showMaestroCommodity();
+      if (this.commodities?.length) return;
+      try {
+        const resp: any = await firstValueFrom(
+          this.commodityService.getCommodity([{}]).pipe(timeout(60000))
+        );
+        if (resp?.length) {
+          await this.dexieService.saveMaestroCommodities(resp);
+          this.commodities = await this.dexieService.showMaestroCommodity();
+          console.log('✅ Commodities cargados:', this.commodities.length);
+        }
+      } catch (e) {
+        console.error('❌ Error al sincronizar commodities:', e);
+      }
+    };
+
+      await Promise.all([
+        cargarCecos(),
+        cargarLabores(),
+        cargarProyectos(),
+        cargarItems(),
+        cargarTurnos(),
+        cargarSubCommodities(),
+        cargarCommodities(),
+      ]);
+
+      console.log('✅ Datos maestros verificados:', {
+        cecos: this.cecos?.length || 0,
+        labores: this.labores?.length || 0,
+        proyectos: this.proyectos?.length || 0,
+        items: this.itemsFiltered?.length || 0,
+        subcommodities: this.subcommodities?.length || 0,
+        commodities: this.commodities?.length || 0,
+        turnos: this.turnos?.length || 0
+      });
+      } finally {
+        this.cargandoMaestras = false;
+        this.maestrasSPRINGPromise = null;
+      }
+    })();
+    await this.maestrasSPRINGPromise;
+  }
+
   async sincronizarRequerimientoSPRING(req: any, silencioso: boolean = false) {
     console.log('🟢 INICIO sincronizarRequerimientoSPRING');
     console.log('📋 Objeto recibido en sincronizarSPRING:', req);
-    
-    // ✅ CORRECCIÓN CRÍTICA: Cargar datos maestros si no están disponibles
-    // CECOs
-    if (!this.cecos || this.cecos.length === 0) {
-      console.log('⚠️ CECOs no cargados, cargando desde Dexie...');
-      this.cecos = await this.dexieService.showCecos();
-      
-      if (!this.cecos || this.cecos.length === 0) {
-        console.log('⚠️ CECOs vacíos en Dexie, sincronizando desde backend...');
-        try {
-          const cecos = this.maestrasService.getCecos([{ aplicacion: 'LOGISTICA', esadmin: 0 }]);
-          const resp: any = await cecos.toPromise();
-          if (!!resp && resp.length) {
-            console.log('📥 Recibidos', resp.length, 'CECOs del backend');
-            await this.dexieService.saveCecos(resp);
-            this.cecos = await this.dexieService.showCecos();
-            console.log('✅ CECOs sincronizados y cargados:', this.cecos.length);
-          } else {
-            console.warn('⚠️ Backend no retornó CECOs');
-          }
-        } catch (error) {
-          console.error('❌ Error al sincronizar CECOs:', error);
-        }
-      }
-    }
-    
-    // Labores
-    if (!this.labores || this.labores.length === 0) {
-      console.log('⚠️ Labores no cargadas, cargando desde Dexie...');
-      this.labores = await this.dexieService.showLabores();
-      
-      if (!this.labores || this.labores.length === 0) {
-        console.log('⚠️ Labores vacías en Dexie, sincronizando desde backend...');
-        try {
-          const labores = await this.maestrasService.getLabores([{ aplicacion: 'LOGISTICA', esadmin: 0 }]);
-          if (!!labores && labores.length) {
-            console.log('📥 Recibidas', labores.length, 'Labores del backend');
-            await this.dexieService.saveLabores(labores);
-            this.labores = await this.dexieService.showLabores();
-            console.log('✅ Labores sincronizadas y cargadas:', this.labores.length);
-          } else {
-            console.warn('⚠️ Backend no retornó Labores');
-          }
-        } catch (error) {
-          console.error('❌ Error al sincronizar Labores:', error);
-        }
-      }
-    }
-    
-    // Proyectos
-    if (!this.proyectos || this.proyectos.length === 0) {
-      console.log('⚠️ Proyectos no cargados, cargando desde Dexie...');
-      this.proyectos = await this.dexieService.showProyectos();
-    }
-    
-    // Items
-    if (!this.itemsFiltered || this.itemsFiltered.length === 0) {
-      console.log('⚠️ Items no cargados, cargando desde Dexie...');
-      this.itemsFiltered = await this.dexieService.showItems();
-      
-      if (!this.itemsFiltered || this.itemsFiltered.length === 0) {
-        console.log('⚠️ Items vacíos en Dexie, sincronizando desde backend...');
-        try {
-          const items = this.maestrasService.getItems([{ ruc: this.usuario.ruc }]);
-          const resp: any = await items.toPromise();
-          if (!!resp && resp.length) {
-            console.log('📥 Recibidos', resp.length, 'Items del backend');
-            await this.dexieService.saveItems(resp);
-            this.itemsFiltered = await this.dexieService.showItems();
-            console.log('✅ Items sincronizados y cargados:', this.itemsFiltered.length);
-          } else {
-            console.warn('⚠️ Backend no retornó Items');
-          }
-        } catch (error) {
-          console.error('❌ Error al sincronizar Items:', error);
-        }
-      }
-    }
-    
-    // Turnos
-    if (!this.turnos || this.turnos.length === 0) {
-      console.log('⚠️ Turnos no cargados, cargando desde Dexie...');
-      this.turnos = await this.dexieService.showTurnos();
-    }
-    
-    console.log('✅ Datos maestros verificados:', {
-      cecos: this.cecos?.length || 0,
-      labores: this.labores?.length || 0,
-      proyectos: this.proyectos?.length || 0,
-      items: this.itemsFiltered?.length || 0,
-      turnos: this.turnos?.length || 0
-    });
+
+    await this.prepararMaestrasSPRING();
     
     try {
 
@@ -1168,6 +1466,13 @@ export class AprobacionesAreaComponent implements OnInit {
         );
       }
 
+      // Reordenar "descripcion - glosa" en líneas de servicio antes de enviar
+      // a SPRING (los registros antiguos quedaron como "glosa - descripcion")
+      await this.cargarMaestraServicios();
+      (requerimientoCompleto.detalles || []).forEach((d: any) =>
+        this.normalizarDetalleServicio(d),
+      );
+
       let origenapp = 'app_logistica';
 
       // ✅ CORRECCIÓN: Convertir almacén corto (001) a código completo (H001)
@@ -1226,6 +1531,7 @@ export class AprobacionesAreaComponent implements OnInit {
       )?.cuentaGasto;
       const proyectoAfeDefault =
         this.proyectos.find((p) => p.proyectoio === first?.idproyecto)?.afe ??
+        first?.idproyecto ??
         'FUNDO HP';
       const laborValor = (first?.idlabor || '').toString();
       const labores = this.labores.find((l: any) =>
@@ -1236,7 +1542,7 @@ export class AprobacionesAreaComponent implements OnInit {
       );
       // console.log('labores', labores);
       // ✅ CORRECCIÓN: Para COMPRA, usar centroCostoDefault si no hay labor
-      const ccostodestino = labores?.idlabor ?? centroCostoDefault;
+      const ccostodestino = labores?.idlabor ?? laborValor ?? centroCostoDefault;
 
       const turnos = this.turnos.find((t: any) =>
         t.nombreTurno === first?.idturno ||
@@ -1256,7 +1562,7 @@ export class AprobacionesAreaComponent implements OnInit {
         (req as any).idClasificacion ||
         ''
       );
-      const itemtipo = (requerimientoCompleto.itemtipo || req.itemtipo || '').toUpperCase();
+      const itemtipo = (requerimientoCompleto.itemtipo || req.itemtipo || '').toString().trim().toUpperCase();
 
       // Determinar clasificación: priorizar valor real de BD; si no viene
       // (ej. lista de aprobados no devuelve idclasificacion), derivarla del
@@ -1313,6 +1619,27 @@ export class AprobacionesAreaComponent implements OnInit {
 
       const tipoReq = (clasificacion === 'SER' || clasificacion === 'COM') ? 'COMMODITY' : 'ITEM';
 
+      // ✅ Para COMMODITY/SERVICIO el detalle local puede no traer 'descripcion':
+      // resolverla desde la maestra de commodities por código
+      const descripcionCommodityPorCodigo = new Map<string, string>();
+      if (tipoReq !== 'ITEM') {
+        try {
+          const maestras = [
+            ...(await this.dexieService.comodities.toArray()),
+            ...(await this.dexieService.maestroCommoditys.toArray()),
+          ];
+          for (const c of maestras) {
+            const cod = (c as any)?.codigo ?? (c as any)?.commodity;
+            const desc = (c as any)?.descripcion ?? (c as any)?.descripcionLocal;
+            if (cod && desc && !descripcionCommodityPorCodigo.has(cod)) {
+              descripcionCommodityPorCodigo.set(cod, desc);
+            }
+          }
+        } catch (e) {
+          console.warn('[SPRING] No se pudo cargar maestra de commodities:', e);
+        }
+      }
+
       console.log('🏪 DEBUG - AlmacenCodigo FINAL antes de enviar a SPRING:', almacenCodigo);
       console.log('🏪 DEBUG - AlmacenCodigo truncado (max 20 chars):', almacenCodigo.substring(0, 20));
       console.log('🏪 DEBUG - Clasificación FINAL:', clasificacion, '(itemtipo:', itemtipo, ')');
@@ -1352,7 +1679,7 @@ export class AprobacionesAreaComponent implements OnInit {
             req.fechaaprobacion,
             requerimientoCompleto.fechaAprobacion,
           ),
-          PreparadaPor: req.solicitante,
+          PreparadaPor: req.dniregistra || req.solicitante,
           AprobadaPor: this.usuario.documentoidentidad,
           // PrecioTotal: 0.0,
           // ✅ Corregido: Usar prioridad del requerimiento
@@ -1387,7 +1714,7 @@ export class AprobacionesAreaComponent implements OnInit {
           DefaultCampoReferencia: 'PL'.substring(0, 20),
           RevisionTecnicaPendienteFlag: 'N',
           // ✅ ClienteNumeroPedido: idlabor (código) del requerimiento, resuelto via maestra de labores
-          ClienteNumeroPedido: (labores?.idlabor ?? '').toString().substring(0, 20),
+          ClienteNumeroPedido: (labores?.idlabor ?? laborValor ?? '').toString().substring(0, 20),
           // ✅ Limitar longitud de vía transporte a 5 caracteres
           ViaTransporte: 'T'.substring(0, 5),
           OrigenGeneracionFlag: 'L',
@@ -1407,7 +1734,7 @@ export class AprobacionesAreaComponent implements OnInit {
                 l.idlabor === itemLaborValor ||
                 String(l.id) === itemLaborValor
               );
-              const itemLoteProduccion = itemLabor?.idlabor ?? itemCentroCosto;
+              const itemLoteProduccion = itemLabor?.idlabor ?? (itemLaborValor || itemCentroCosto);
               
               return {
                 Secuencia: index + 1,
@@ -1421,7 +1748,12 @@ export class AprobacionesAreaComponent implements OnInit {
                 Descripcion:
                   tipoReq === 'ITEM'
                     ? d.idproducto || d.descripcion || ''
-                    : d.descripcion || '',
+                    : d.descripcion ||
+                      d.descripcionCommodity ||
+                      d.descripcionItem ||
+                      d.iddescripcion ||
+                      descripcionCommodityPorCodigo.get(d.codigo) ||
+                      '',
                 ComprasAlmacenFlag:
                   requerimientoCompleto.itemtipo === 'TRANSFERENCIA' ||
                   requerimientoCompleto.itemtipo === 'CONSUMO'
@@ -1451,6 +1783,9 @@ export class AprobacionesAreaComponent implements OnInit {
                 UltimaFechaModif: new Date().toISOString(),
                 IGVExoneradoFlag: d.afectoIGV === 'N' ? 'S' : 'N',
                 GenerarContratoFlag: 'N',
+                // Partida presupuestal (opcional) → WH_RequisicionDetalle
+                PartidaPresupuestal: d.subpresupuesto != null ? String(d.subpresupuesto).padStart(4, '0') : null,
+                Partida: d.partida || null,
                 origen: origenapp,
               };
             }
@@ -1472,32 +1807,94 @@ export class AprobacionesAreaComponent implements OnInit {
               // ✅ CORRECCIÓN CRÍTICA: Calcular valores específicos POR CADA ITEM
               // Para commodities, buscar en subcommodities o commodities
               // Para items, buscar en itemsFiltered
+              // La maestra puede traer cuentas inválidas ("EX", "PROYECTO003", texto libre).
+              // La X en el 2º carácter (ej. 9X331101) es válida: se reemplaza por el div del CECO.
+              const esCuentaValida = (c: any): boolean => {
+                if (typeof c !== 'string') return false;
+                const v = c.trim();
+                return /^\d+$/.test(v) || /^\d[Xx]\d+$/.test(v);
+              };
+              // CECO del detalle: se usa para centro de costo y para el div de la cuenta
+              const itemCeco = this.cecos.find(
+                (c) => c.localname === (d.idcentrocosto || d.ceco)
+              );
+              const itemCentroCosto = itemCeco?.costcenter ?? centroCostoDefault;
               let itemCuentaContable;
               if (tipoReq === 'COMMODITY') {
                 // Primero buscar en subcommodities (más específico)
                 const subcommodity = this.subcommodities.find(
                   (sc) => sc.commodity === d.codigo
                 );
-                if (subcommodity && subcommodity.cuentaGasto) {
-                  itemCuentaContable = subcommodity.cuentaGasto;
+                if (esCuentaValida(subcommodity?.cuentaContableGasto)) {
+                  itemCuentaContable = subcommodity.cuentaContableGasto;
                 } else {
                   // Si no se encuentra, buscar en commodities
                   const commodity = this.commodities.find(
                     (c) => c.commodity === d.codigo
                   );
-                  itemCuentaContable = commodity?.cuentaGasto || cuentacontable || '25241001';
+                  itemCuentaContable =
+                    esCuentaValida(commodity?.cuentaContableGasto) && commodity.cuentaContableGasto;
+                  if (subcommodity && !esCuentaValida(subcommodity.cuentaContableGasto)) {
+                    console.warn(`⚠️ Subcommodity ${d.codigo} tiene cuentaContableGasto inválida: '${subcommodity.cuentaContableGasto}'`);
+                  }
+                }
+                // Solo servicios (clasificación SER): la X del 2º carácter
+                // se reemplaza por el div del CECO del detalle
+                if (
+                  clasificacion === 'SER' &&
+                  typeof itemCuentaContable === 'string' &&
+                  itemCuentaContable[1]?.toUpperCase() === 'X'
+                ) {
+                  if (!itemCeco?.div) {
+                    console.warn(`⚠️ Cuenta ${itemCuentaContable} requiere div pero el CECO '${d.idcentrocosto || d.ceco}' no tiene div`);
+                  }
+                  itemCuentaContable = this.aplicarDivCuenta(itemCuentaContable, itemCeco?.div);
                 }
               } else {
-                // Para items, buscar en itemsFiltered
+                // Para items, buscar en itemsFiltered (comportamiento original)
                 const itemEncontrado = this.itemsFiltered.find(
                   (i) => i.item === d.codigo
                 );
-                itemCuentaContable = itemEncontrado?.cuentaGasto || cuentacontable || '25241001';
-                
+                if (['CMP', 'STO'].includes(clasificacion) && ['COMPRA', 'CONSUMO'].includes(itemtipo)) {
+                  const cuenta = itemtipo === 'COMPRA'
+                    ? itemEncontrado?.cuentaInventario
+                    : itemEncontrado?.cuentaGasto;
+                  itemCuentaContable = typeof cuenta === 'string' ? cuenta.trim() : undefined;
+                } else if (itemEncontrado?.cuentaGasto) {
+                  itemCuentaContable = itemEncontrado.cuentaGasto;
+                } else {
+                  // ACTIVOFIJO/ACTIVOMENOR: sus códigos viven en la maestra
+                  // de subcommodity (sin regla X, solo cuenta numérica)
+                  const subcommodity = this.subcommodities.find(
+                    (sc) => sc.commodity === d.codigo
+                  );
+                  const commodity = this.commodities.find(
+                    (c) => c.commodity === d.codigo
+                  );
+                  itemCuentaContable =
+                    (esCuentaValida(subcommodity?.cuentaContableGasto) && subcommodity.cuentaContableGasto) ||
+                    (esCuentaValida(commodity?.cuentaContableGasto) && commodity.cuentaContableGasto) ||
+                    cuentacontable;
+                }
+
                 // Debug: mostrar si no se encontró el item
-                if (!itemEncontrado) {
+                if (!itemEncontrado && !['CMP', 'STO'].includes(clasificacion)) {
                   console.warn(`⚠️ Item ${d.codigo} no encontrado en itemsFiltered, usando cuenta por defecto`);
                 }
+              }
+
+              // La cuenta nunca puede ir vacía a SPRING: abortar con mensaje claro
+              if (!itemCuentaContable) {
+                const msg = tipoReq === 'COMMODITY'
+                  ? `El subcommodity ${d.codigo} no tiene cuenta contable en la maestra`
+                  : `El item ${d.codigo} no tiene cuenta contable en la maestra`;
+                console.error('❌ ' + msg);
+                if (!silencioso) {
+                  Swal.fire('Error', msg, 'error');
+                }
+                const err = new Error(msg) as any;
+                err.yaNotificado = true;
+                throw err;
               }
               console.log('  💰 Account (cuenta contable):', itemCuentaContable);
               
@@ -1507,9 +1904,7 @@ export class AprobacionesAreaComponent implements OnInit {
               const itemAfe = itemProyecto?.afe ?? proyectoAfeDefault;
               console.log('  📊 Afe (proyecto):', itemAfe);
               
-              const itemCeco = this.cecos.find((c) => c.localname === (d.idcentrocosto || d.ceco));
               console.log('  🏢 CECO encontrado:', itemCeco);
-              const itemCentroCosto = itemCeco?.costcenter ?? centroCostoDefault;
               console.log('  🏢 Centro de costo:', itemCentroCosto);
               
               const itemLaborValor = (d.idlabor || d.labor || '').toString();
@@ -1545,6 +1940,15 @@ export class AprobacionesAreaComponent implements OnInit {
               // Asegurar que sea exactamente 4 caracteres
               sucursalFormateada = sucursalFormateada.substring(0, 4).padStart(4, '0');
               
+              // Monto = porcentaje de distribución; las líneas deben sumar 100.
+              // Se reparte 100/n y la última línea absorbe el residuo de redondeo.
+              const totalDetalles = requerimientoCompleto.detalles.length;
+              const montoBase = Number((100 / totalDetalles).toFixed(2));
+              const montoLinea =
+                index === totalDetalles - 1
+                  ? Number((100 - montoBase * (totalDetalles - 1)).toFixed(2))
+                  : montoBase;
+
               const distribucionItem = {
                 Secuencia: index + 1,
                 Linea: 1,
@@ -1552,7 +1956,7 @@ export class AprobacionesAreaComponent implements OnInit {
                 Account: itemCuentaContable,
                 // ✅ CORRECCIÓN: Usar AFE específico del proyecto del item
                 Afe: itemAfe,
-                Monto: 100,
+                Monto: montoLinea,
                 // ✅ CORRECCIÓN: Usar centro de costo destino específico del item
                 CentroCostoDestino: itemCentroCostoDestino,
                 // ✅ CORRECCIÓN: Formatear sucursal a 4 dígitos
@@ -1588,7 +1992,9 @@ export class AprobacionesAreaComponent implements OnInit {
       // el await resolvía al hacer subscribe y contaba como sincronizado aunque
       // SPRING rechazara el requerimiento)
       const resp = await firstValueFrom(
-        this.requerimientosService.getRegristroRequerimientoSPRING(requerimiento),
+        this.requerimientosService
+          .getRegristroRequerimientoSPRING(requerimiento)
+          .pipe(timeout(60000)),
       );
       console.log('✅ Respuesta del backend:', resp);
       const resultado = Array.isArray(resp) ? resp[0] : resp;
@@ -1816,12 +2222,15 @@ export class AprobacionesAreaComponent implements OnInit {
 
           const detalleResultado = {
             codigo: d.codigo,
-            descripcion: d.descripcion,
+            descripcion: d.descripcion || d.descripcionCommodity || d.descripcionItem || d.iddescripcion || '',
             cantidad: d.cantidad,
             unidadmedida: d.unidadmedida || 'UND',
-            cuentaGasto: this.subcommodities.find((sc) => sc.commodity === d.codigo)?.cuentaGasto ||
-                         this.commodities.find((c) => c.commodity === d.codigo)?.cuentaGasto ||
-                         '25241001',
+            cuentaGasto: this.aplicarDivCuenta(
+              this.subcommodities.find((sc) => sc.commodity === d.codigo)?.cuentaContableGasto ||
+              this.commodities.find((c) => c.commodity === d.codigo)?.cuentaContableGasto ||
+              detalleCeco?.ccontable,
+              detalleCeco?.div
+            ),
             centroCosto: detalleCeco?.costcenter || d.idcentrocosto || d.ceco || '',
             proyecto: proyectoEncontrado?.proyectoio || d.idproyecto || d.proyecto || '',
             labor: laborEncontrada?.idlabor || d.idlabor || d.labor || '',
@@ -1860,6 +2269,14 @@ export class AprobacionesAreaComponent implements OnInit {
     } catch (error) {
       console.error('❌ Error en registrarRequerimientoCommodityLocal:', error);
     }
+  }
+
+  // Reemplaza la X del 2º carácter de la cuenta (ej. 9X331101) por el div del CECO
+  aplicarDivCuenta(cuenta: any, div: any): any {
+    if (typeof cuenta === 'string' && cuenta[1]?.toUpperCase() === 'X') {
+      return cuenta[0] + (div ?? '') + cuenta.substring(2);
+    }
+    return cuenta;
   }
 
   // Método auxiliar para obtener código de CECO a partir del nombre
@@ -1958,6 +2375,78 @@ export class AprobacionesAreaComponent implements OnInit {
   verDetalle(requerimiento: RequerimientoConAprobacion) {
     this.requerimientoDetalle = requerimiento;
     this.displayDetalleModal = true;
+    this.prepararMaestrasSPRING()
+      .then(() => this.cargarMaestraServicios())
+      .then(() => this.normalizarDescripcionesServicio(requerimiento));
+  }
+
+  /** Carga la maestra de subservicios/commodities indexada por código.
+   *  Si queda vacía (maestras aún no sincronizadas) permite reintentar. */
+  private async cargarMaestraServicios(): Promise<void> {
+    if (this.maestraServiciosCargada) return;
+    try {
+      const listas = [
+        this.subcommodities || [],
+        await this.dexieService.showMaestroSubCommodity(),
+        this.commodities || [],
+        await this.dexieService.comodities.toArray(),
+        await this.dexieService.maestroCommoditys.toArray(),
+      ];
+      for (const lista of listas) {
+        for (const s of lista || []) {
+          const cod = (s as any)?.commodity ?? (s as any)?.codigo;
+          const desc =
+            (s as any)?.descripcionLocal ??
+            (s as any)?.descripcion ??
+            (s as any)?.descripcionIngles;
+          const clave = cod != null ? String(cod).trim() : '';
+          if (clave && desc && !this.descripcionServicioPorCodigo.has(clave)) {
+            this.descripcionServicioPorCodigo.set(clave, desc);
+          }
+        }
+      }
+      this.maestraServiciosCargada = this.descripcionServicioPorCodigo.size > 0;
+    } catch (e) {
+      console.warn('No se pudo cargar maestra de servicios:', e);
+    }
+  }
+
+  /**
+   * Devuelve el texto de una línea de servicio como "descripcion - glosa".
+   * Si el texto almacenado está en el orden antiguo "glosa - descripcion"
+   * (termina con " - descripcionServicio"), lo reordena.
+   */
+  private ordenarTextoServicio(texto: string, descServicio: string): string {
+    const sep = ' - ';
+    const desc = (descServicio || '').trim();
+    if (!texto || !desc) return texto;
+    if (texto === desc || texto.startsWith(desc + sep)) return texto;
+    for (const sufijo of [sep + descServicio, sep + desc]) {
+      if (sufijo.length > sep.length && texto.endsWith(sufijo)) {
+        const glosa = texto.substring(0, texto.length - sufijo.length).trim();
+        return glosa ? `${desc}${sep}${glosa}` : desc;
+      }
+    }
+    return texto;
+  }
+
+  /** Reordena los campos de descripción de una línea de servicio si aplica. */
+  private normalizarDetalleServicio(d: any): void {
+    const desc = this.descripcionServicioPorCodigo.get(
+      String(d?.codigo ?? '').trim(),
+    );
+    if (!desc) return;
+    ['descripcionItem', 'descripcion', 'iddescripcion'].forEach((k) => {
+      if (typeof d[k] === 'string' && d[k]) {
+        d[k] = this.ordenarTextoServicio(d[k], desc);
+      }
+    });
+  }
+
+  /** Aplica el orden "descripcion - glosa" a todas las líneas del requerimiento. */
+  private normalizarDescripcionesServicio(req: any): void {
+    const dets = req?.items || req?.detalles || req?.detalle || [];
+    dets.forEach((d: any) => this.normalizarDetalleServicio(d));
   }
 
   // =============================================
@@ -2011,9 +2500,14 @@ export class AprobacionesAreaComponent implements OnInit {
   //DETALLE DE REQUERIMIENTO PENDIENTE DE APROBACION
   //================================================
   async verDetallePendientes(requerimiento: any) {
+    const sesion = ++this.sesionDetallePendientes;
+    this.limpiarStockDetalle();
     this.requerimientoDetallePendientes = requerimiento;
     this.loadingDetallePendientes = true;
     this.displayDetallePendientesModal = true;
+
+    // Precargar maestras para migración SPRING en segundo plano
+    const maestrasPromise = this.prepararMaestrasSPRING();
 
     // Cargar los items completos del endpoint con detalle
     try {
@@ -2024,6 +2518,7 @@ export class AprobacionesAreaComponent implements OnInit {
         })
         .toPromise();
 
+      if (sesion !== this.sesionDetallePendientes) return;
       const lista = Array.isArray(response)
         ? response
         : response?.resultado || [];
@@ -2073,8 +2568,22 @@ export class AprobacionesAreaComponent implements OnInit {
     } catch (error) {
       console.error('Error cargando detalle de pendientes:', error);
     } finally {
-      this.loadingDetallePendientes = false;
+      if (sesion === this.sesionDetallePendientes) this.loadingDetallePendientes = false;
     }
+    if (sesion !== this.sesionDetallePendientes) return;
+    void this.actualizarStockDetalle();
+
+    // Reordenar "descripcion - glosa" en líneas de servicio una vez que
+    // las maestras están listas (los datos antiguos quedaron al revés)
+    try {
+      await maestrasPromise;
+    } catch {
+      /* si fallan las maestras se muestra el detalle igual */
+    }
+    if (sesion !== this.sesionDetallePendientes) return;
+    await this.cargarMaestraServicios();
+    if (sesion !== this.sesionDetallePendientes) return;
+    this.normalizarDescripcionesServicio(this.requerimientoDetallePendientes);
 
     // Detectar si es servicio y abrir el tab correspondiente
     const clas = (
@@ -2094,6 +2603,62 @@ export class AprobacionesAreaComponent implements OnInit {
     dets.forEach((_, i) => this.detallesPendientesSeleccionados.add(i));
     // Cargar adjuntos
     this.cargarAdjuntos();
+  }
+
+  get mostrarStockDetalle(): boolean {
+    return !!this.requerimientoDetallePendientes &&
+      ['CONSUMO', 'COMPRA'].includes(this.tipoRequerimientoLabel(this.requerimientoDetallePendientes));
+  }
+
+  get columnasDetallePendientes(): number {
+    return 9 + (this.mostrarStockDetalle ? 1 : 0) +
+      (this.esRequerimientoCompra(this.requerimientoDetallePendientes) ? 2 : 0);
+  }
+
+  stockActualDetalle(codigo: unknown): number | null {
+    return this.stockDetalle().stocks.get(String(codigo ?? '').trim()) ?? null;
+  }
+
+  private limpiarStockDetalle() {
+    this.consultaStockDetalle++;
+    this.stockDetalle.set({ estado: 'inicial', idalmacen: '', fecha: null, stocks: new Map() });
+  }
+
+  async actualizarStockDetalle(): Promise<void> {
+    if (!this.displayDetallePendientesModal || !this.mostrarStockDetalle || this.stockDetalle().estado === 'cargando') return;
+    const consulta = ++this.consultaStockDetalle;
+    const sesion = this.sesionDetallePendientes;
+    const requerimiento = this.requerimientoDetallePendientes;
+    this.stockDetalle.set({ estado: 'cargando', idalmacen: '', fecha: null, stocks: new Map() });
+    const vigente = () => consulta === this.consultaStockDetalle && sesion === this.sesionDetallePendientes &&
+      this.displayDetallePendientesModal;
+    try {
+      const idrequerimiento = String(requerimiento.idrequerimiento ?? requerimiento.idRequerimiento ?? '').trim();
+      const ruc = String(requerimiento.ruc || this.usuario?.ruc || '').trim();
+      const documentoidentidad = String(this.usuario?.documentoidentidad || '').trim();
+      if (!idrequerimiento || !ruc || !documentoidentidad) throw new Error('Falta el contexto del requerimiento');
+      const respuesta = await firstValueFrom(this.aprobacionesAreaService.consultarStockDetalle({
+        idrequerimiento, ruc, documentoidentidad, modoGerencia: this.modoGerencia
+      }).pipe(timeout(30000)));
+      if (!vigente()) return;
+      if (respuesta?.estado === 'SIN_ALMACEN') {
+        this.stockDetalle.set({ estado: 'sin-almacen', idalmacen: '', fecha: null, stocks: new Map() });
+        return;
+      }
+      if (respuesta?.estado !== 'OK' || !respuesta.idalmacen?.trim() || !Array.isArray(respuesta.items)) {
+        throw new Error('Respuesta de stock incompleta');
+      }
+      const stocks = new Map<string, number>();
+      for (const item of respuesta.items) {
+        const codigo = String(item.codigo ?? '').trim();
+        if (codigo && typeof item.stockActual === 'number' && Number.isFinite(item.stockActual)) {
+          stocks.set(codigo, item.stockActual);
+        }
+      }
+      this.stockDetalle.set({ estado: 'ok', idalmacen: respuesta.idalmacen.trim(), fecha: new Date(), stocks });
+    } catch {
+      if (vigente()) this.stockDetalle.set({ estado: 'error', idalmacen: '', fecha: null, stocks: new Map() });
+    }
   }
 
   getDetallesPendientes(): any[] {
@@ -2192,7 +2757,21 @@ export class AprobacionesAreaComponent implements OnInit {
     this.detallesPendientesSeleccionados.add(index);
   }
 
+  aprobandoDetallesPendientes = false;
+
+  // Normaliza la respuesta de los SP de aprobación: éxito salvo que
+  // venga resultado: "ERROR"/"FAIL" o success === false
+  private esRespuestaExito(item: any): boolean {
+    if (!item) return false;
+    if (item.success === true) return true;
+    if (item.success === false) return false;
+    const resultado = (item.resultado ?? '').toString().toUpperCase();
+    return resultado !== '' && resultado !== 'ERROR' && resultado !== 'FAIL' && resultado !== 'FAILED';
+  }
+
+
   async aprobarDetallesPendientes() {
+    if (this.aprobandoDetallesPendientes) return;
     if (!this.requerimientoDetallePendientes || !this.usuario) return;
 
     // Prevenir auto-aprobación (salvo roles globales)
@@ -2213,36 +2792,64 @@ export class AprobacionesAreaComponent implements OnInit {
     const comentariosBase = `Aprobados ${seleccionados.length}/${dets.length} ítems: ${codigosAprobados}`;
     const comentarios = comentariosBase.length > 1900 ? comentariosBase.substring(0, 1900) + '...' : comentariosBase;
     try {
-      const response = await this.aprobacionesAreaService
-        .aprobarRequerimientoArea({
-          idrequerimiento: this.requerimientoDetallePendientes.idrequerimiento,
-          documentoidentidad: this.usuario.documentoidentidad,
-          accion: 'APROBADO',
-          comentarios,
-        })
-        .toPromise();
+      this.aprobandoDetallesPendientes = true;
+      const requestAprobacion = {
+        idrequerimiento: this.requerimientoDetallePendientes.idrequerimiento,
+        documentoidentidad: this.usuario.documentoidentidad,
+        accion: 'APROBADO' as const,
+        comentarios,
+      };
+      const response = await (this.modoGerencia
+        ? this.aprobacionesAreaService.aprobarRequerimientoGerencia(requestAprobacion)
+        : this.aprobacionesAreaService.aprobarRequerimientoArea(requestAprobacion)
+      ).toPromise();
       if (response) {
+        const item = Array.isArray(response) ? response[0] : response;
+        console.log('📤 Respuesta aprobación detalles:', item);
+        if (!this.esRespuestaExito(item)) {
+          Swal.fire('Error', item?.mensaje || 'No se pudo aprobar el requerimiento', 'error');
+          return;
+        }
+        const estadoFinal = item?.estadoFinal || 'APROBADO';
+
         // Ocultar el requerimiento de la lista local del creador sin esperar sincronización
         await this.syncService.marcarAprobadoLocalmente(
           this.requerimientoDetallePendientes.idrequerimiento,
         );
 
-        // Migrar a SPRING tras aprobación exitosa
-        try {
-          console.log('🔄 Migrando requerimiento aprobado a SPRING...');
-          await this.sincronizarRequerimientoSPRING(this.requerimientoDetallePendientes);
-          console.log('✅ Migración a SPRING completada');
-        } catch (err) {
-          console.error('❌ Error migrando a SPRING:', err);
-        }
-        Swal.fire('Éxito', 'Requerimiento aprobado correctamente', 'success');
+        // La aprobación ya fue exitosa: cerrar el modal antes de la
+        // migración a SPRING para que no quede bloqueado si esta cuelga
         this.displayDetallePendientesModal = false;
+
+        if (estadoFinal === 'APROBACION1') {
+          // Flujo DOS_NIVELES: pendiente de Gerencia, sin migración SPRING aún
+          console.log('ℹ️ Requerimiento quedó en APROBACION1 - pendiente de Gerencia');
+          Swal.fire('Éxito', 'Aprobado nivel 1 - Pendiente de Gerencia', 'success');
+        } else {
+          // Migrar a SPRING tras aprobación exitosa
+          let migrado = false;
+          try {
+            console.log('🔄 Migrando requerimiento aprobado a SPRING...');
+            await this.sincronizarRequerimientoSPRING(this.requerimientoDetallePendientes);
+            migrado = true;
+            console.log('✅ Migración a SPRING completada');
+          } catch (err) {
+            console.error('❌ Error migrando a SPRING:', err);
+          }
+          if (migrado) {
+            Swal.fire('Éxito', 'Requerimiento aprobado y migrado a SPRING correctamente', 'success');
+          } else {
+            Swal.fire('Advertencia', 'Requerimiento aprobado pero no se pudo migrar a SPRING', 'warning');
+          }
+        }
         await this.cargarRequerimientosPendientes();
         await this.cargarDashboard();
         await this.cargarMisRequerimientos();
       }
     } catch {
       Swal.fire('Error', 'Error al aprobar el requerimiento', 'error');
+    } finally {
+      this.aprobandoDetallesPendientes = false;
     }
   }
 
@@ -2267,15 +2874,22 @@ export class AprobacionesAreaComponent implements OnInit {
       ? `${observacion} | Ítems rechazados: ${codigosRechazados}`
       : observacion;
     try {
-      const response = await this.aprobacionesAreaService
-        .aprobarRequerimientoArea({
-          idrequerimiento: this.requerimientoDetallePendientes.idrequerimiento,
-          documentoidentidad: this.usuario.documentoidentidad,
-          accion: 'RECHAZADO',
-          comentarios,
-        })
-        .toPromise();
+      const requestRechazo = {
+        idrequerimiento: this.requerimientoDetallePendientes.idrequerimiento,
+        documentoidentidad: this.usuario.documentoidentidad,
+        accion: 'RECHAZADO' as const,
+        comentarios,
+      };
+      const response = await (this.modoGerencia
+        ? this.aprobacionesAreaService.aprobarRequerimientoGerencia(requestRechazo)
+        : this.aprobacionesAreaService.aprobarRequerimientoArea(requestRechazo)
+      ).toPromise();
       if (response) {
+        const item = Array.isArray(response) ? response[0] : response;
+        if (!this.esRespuestaExito(item)) {
+          Swal.fire('Error', item?.mensaje || 'No se pudo rechazar el requerimiento', 'error');
+          return;
+        }
         Swal.fire('Éxito', 'Requerimiento rechazado correctamente', 'success');
         this.displayDetallePendientesModal = false;
         await this.cargarRequerimientosPendientes();
@@ -2288,6 +2902,9 @@ export class AprobacionesAreaComponent implements OnInit {
   }
 
   cerrarDetallePendientes() {
+    this.sesionDetallePendientes++;
+    this.limpiarStockDetalle();
+    this.loadingDetallePendientes = false;
     this.displayDetallePendientesModal = false;
     this.requerimientoDetallePendientes = null;
     this.detallesPendientesSeleccionados.clear();
@@ -2571,7 +3188,8 @@ export class AprobacionesAreaComponent implements OnInit {
       ruc: this.usuario?.ruc || ''
     }).subscribe({
       next: (response: any) => {
-        const resultado = response.resultado;
+        // El response puede venir como array directo o como {resultado: [...]}
+        const resultado = Array.isArray(response) ? response : response?.resultado;
         this.requerimientosAnulados = Array.isArray(resultado) ? resultado : [];
         this.loadingAnulados = false;
       },
@@ -2664,7 +3282,8 @@ export class AprobacionesAreaComponent implements OnInit {
       idRequerimiento: this.requerimientoDetallePendientes.idrequerimiento
     }).subscribe({
       next: (response: any) => {
-        const resultado = response.resultado;
+        // El response puede venir como array directo o como {resultado: [...]}
+        const resultado = Array.isArray(response) ? response : response?.resultado;
         this.historialAnulaciones = Array.isArray(resultado) ? resultado : [];
         this.loadingHistorialAnulaciones = false;
       },

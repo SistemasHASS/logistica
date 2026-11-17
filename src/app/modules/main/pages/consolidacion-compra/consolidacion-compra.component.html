@@ -415,6 +415,7 @@
         <input type="text" class="form-control form-control-sm" style="max-width:200px" placeholder="Buscar por Número OC" [(ngModel)]="filtroNumeroOC" (ngModelChange)="aplicarFiltrosOC()">
         <input type="text" class="form-control form-control-sm" style="max-width:200px" placeholder="Buscar por Proveedor" [(ngModel)]="filtroProveedorOC" (ngModelChange)="aplicarFiltrosOC()">
         <button class="btn-gen btn-sm" (click)="cargarOrdenesCompra()" title="Refrescar"><i class='bx bx-refresh'></i></button>
+        <button class="btn-gen btn-sm ms-auto" (click)="abrirOCDirecta()" title="Crear OC directa sin requerimiento de compra"><i class='bx bx-plus'></i> OC Directa</button>
       </div>
       <div class="tw">
         <p-table [value]="ordenesCompraFiltradas()"
@@ -784,6 +785,246 @@
     </div>
     <div class="mft">
       <button class="btn-gen" (click)="cerrarModalAdjuntosOC()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL OC DIRECTA -->
+<div class="overlay" [class.show]="modalOCDirectaAbierto" (click)="cerrarOCDirecta()">
+  <div class="mpanel" style="width:min(1240px,96vw)" (click)="$event.stopPropagation()">
+    <div class="mhd">
+      <h6><i class='bx bx-file'></i> Emisión de Orden de Compra Directa (sin requerimiento)</h6>
+      <button class="btn-x" (click)="cerrarOCDirecta()"><i class='bx bx-x'></i></button>
+    </div>
+    <div class="mbody">
+      <div class="oc-form">
+        <div class="oc-fld">
+          <label>Empresa *</label>
+          <p-select
+            [(ngModel)]="ocDirectaEmpresa"
+            [options]="empresasOpcionesOCDirecta()"
+            optionLabel="_nombre"
+            placeholder="-- Seleccione empresa --"
+            [filter]="true"
+            filterBy="_nombre"
+            appendTo="body"
+            [style]="{ width: '100%' }"
+            (onChange)="onEmpresaDirectaChange($event.value)">
+          </p-select>
+        </div>
+        <div class="oc-fld">
+          <label>Proveedor</label>
+          <p-autoComplete
+            [(ngModel)]="proveedorGlobal"
+            [suggestions]="proveedoresSugeridos"
+            (completeMethod)="filtrarProveedores($event)"
+            (onSelect)="setProveedorDirecta($event)"
+            (onClear)="setProveedorDirecta(null)"
+            optionLabel="nombre"
+            [dropdown]="true"
+            [forceSelection]="true"
+            appendTo="body"
+            placeholder="Buscar por nombre o RUC..."
+            [style]="{ width: '100%' }">
+            <ng-template let-prov pTemplate="item">
+              <div>{{ prov.nombre }} <small class="text-muted">({{ prov.ruc }})</small></div>
+            </ng-template>
+          </p-autoComplete>
+        </div>
+        <div class="oc-fld">
+          <label>RUC</label>
+          <input type="text" [(ngModel)]="ocRuc" readonly/>
+        </div>
+        <div class="oc-fld">
+          <label>Condición de pago</label>
+          <select [(ngModel)]="ocCondPago">
+            <option value="">-- Seleccione --</option>
+            <option *ngFor="let fp of formasPago" [value]="fp.idformapago">{{ fp.formapago }}</option>
+          </select>
+        </div>
+        <div class="oc-fld">
+          <label>Forma de pago</label>
+          <select [(ngModel)]="ocFormaPago">
+            <option value="">-- Seleccione --</option>
+            <option *ngFor="let tp of tiposPago" [value]="tp.TipoPago">{{ tp.Descripcion }}</option>
+          </select>
+        </div>
+        <div class="oc-fld">
+          <label>Plazo de entrega (días)</label>
+          <input type="number" [(ngModel)]="ocPlazo" min="1" (input)="calcularFechaEntregaOC()"/>
+        </div>
+        <div class="oc-fld">
+          <label>Fecha de entrega estimada</label>
+          <input type="date" [(ngModel)]="ocFechaEntrega"/>
+        </div>
+        <div class="oc-fld">
+          <label>Moneda <span class="chip {{ ocMoneda === 'USD' ? 'bg-success' : 'bg-primary' }}">{{ simboloMoneda(ocMoneda) }} {{ ocMoneda }}</span></label>
+          <select [(ngModel)]="ocMoneda" (change)="onMonedaChange()">
+            <option value="PEN">PEN - Soles</option>
+            <option value="USD">USD - Dólares</option>
+          </select>
+        </div>
+        <div class="oc-fld">
+          <label>Lugar de entrega</label>
+          <select [(ngModel)]="ocLugar">
+            <option value="">-- Seleccione lugar de entrega --</option>
+            <option value="AGENCIA DE TRANSPORTE">AGENCIA DE TRANSPORTE</option>
+            <option value="OFICINA DIEGO DE ALMAGRO">OFICINA DIEGO DE ALMAGRO</option>
+            <option value="FUNDO">FUNDO</option>
+            <option value="ALMACEN DE PROVEEDOR">ALMACEN DE PROVEEDOR</option>
+          </select>
+        </div>
+        <div class="oc-fld full">
+          <label>Observaciones</label>
+          <textarea [(ngModel)]="ocObs" placeholder="Ingrese observaciones para la OC..."></textarea>
+        </div>
+      </div>
+      <div>
+        <div class="oc-emp-box" *ngFor="let empBox of emitirOCEmpresas">
+          <div class="oc-emp-hd">
+            <span class="chip {{ empBox.emp }}">{{ empBox.emp }}</span>
+            <strong>{{ empNombres[empBox.emp] || nombreEmpresaPorRuc(empBox.rucEmpresa, '') }}</strong>
+            <div class="oc-emp-almacen">
+              <label>Almacén *</label>
+              <p-select
+                [(ngModel)]="empBox.almacen"
+                [options]="almacenesPorRuc(empBox.rucEmpresa)"
+                optionLabel="almacen"
+                optionValue="idalmacen"
+                placeholder="-- Seleccione almacén --"
+                [filter]="true"
+                filterBy="almacen"
+                filterPlaceholder="Buscar almacén..."
+                [showClear]="true"
+                appendTo="body"
+                [style]="{ width: '260px' }"
+                [panelStyle]="{ width: '260px', maxHeight: '240px' }"
+                [scrollHeight]="'200px'"
+                panelStyleClass="oc-almacen-panel">
+              </p-select>
+            </div>
+          </div>
+          <div class="oc-fld" style="margin-bottom:10px">
+            <label>Agregar ítem (maestro de ítems)</label>
+            <p-autoComplete
+              [ngModel]="ocDirectaItemSel"
+              (ngModelChange)="ocDirectaItemSel = $event"
+              [suggestions]="itemsSugeridosDirecta"
+              (completeMethod)="filtrarItemsMaestra($event)"
+              (onSelect)="agregarItemOCDirecta($event)"
+              (onClear)="ocDirectaItemSel = null"
+              optionLabel="item"
+              [dropdown]="true"
+              [forceSelection]="false"
+              appendTo="body"
+              placeholder="Buscar por código o descripción..."
+              [style]="{ width: '100%' }">
+              <ng-template let-it pTemplate="item">
+                <div><span class="codigo">{{ it.item }}</span> {{ it.descripcionLocal || it.descripcionCompleta }}</div>
+              </ng-template>
+            </p-autoComplete>
+          </div>
+          <p-table
+            [value]="empBox.items"
+            [paginator]="true"
+            [rows]="5"
+            [rowsPerPageOptions]="[5, 10, 20]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords}"
+            styleClass="p-datatable-sm oc-items-table"
+            [responsiveLayout]="'scroll'">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th class="text-end" style="min-width:110px">Cant. original</th>
+                <th style="min-width:130px">Incremento logística</th>
+                <th class="text-end">Cant. Total</th>
+                <th class="text-end">Máx. (+{{ porcentajeIncrementoOC }}%)</th>
+                <th>UM</th>
+                <th>Precio ref. ({{ simboloMoneda(ocMoneda) }})</th>
+                <th>Precio proveedor ({{ simboloMoneda(ocMoneda) }})</th>
+                <th>CECO</th>
+                <th>Proyecto</th>
+                <th>Afecto IGV</th>
+                <th style="text-align:right">Subtotal ({{ simboloMoneda(ocMoneda) }})</th>
+                <th style="text-align:right">IGV ({{ simboloMoneda(ocMoneda) }})</th>
+                <th style="text-align:right">Total ({{ simboloMoneda(ocMoneda) }})</th>
+                <th style="width:40px"></th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-r>
+              <tr>
+                <td><span class="codigo">{{ r.cod }}</span></td>
+                <td>{{ r.desc }}</td>
+                <td><input type="number" class="price-inp" [(ngModel)]="r.cantidadOriginal" min="0" step="0.0001" style="width:95px" (change)="onCantidadOriginalDirectaChange(r)" (blur)="onCantidadOriginalDirectaChange(r)"></td>
+                <td>
+                  <input type="text" class="price-inp" [(ngModel)]="r.incrementoLogistica" min="0"
+                    [max]="incrementoMaximoItem(r)" step="0.0001" style="width:110px"
+                    [class.is-invalid]="incrementoInvalido(r)" (ngModelChange)="onIncrementoChange(r)">
+                  @if (incrementoInvalido(r)) {
+                    <small class="text-danger d-block">Máx. {{ incrementoMaximoItem(r) | number:'1.0-4' }}</small>
+                  }
+                </td>
+                <td class="text-end fw-semibold">{{ cantidadTotalItem(r) | number:'1.0-4' }}</td>
+                <td class="text-end">{{ (cantidadOriginalItem(r) + incrementoMaximoItem(r)) | number:'1.0-4' }}</td>
+                <td>{{ r.um }}</td>
+                <td>{{ mostrarUltimaOC(r) }}</td>
+                <td><input type="text" class="price-inp" [(ngModel)]="r.precio" min="0" step="0.01" style="width:90px" (input)="recalcEmitirOC()"></td>
+                <td>
+                  <select class="form-select form-select-sm" [(ngModel)]="r.ceco" style="min-width:150px;font-size:.75rem">
+                    <option value="">-- CECO --</option>
+                    @for (ceco of cecosDirecta(); track ceco.id) {
+                      <option [value]="ceco.costcenter">{{ ceco.localname }} ({{ ceco.costcenter }})</option>
+                    }
+                  </select>
+                </td>
+                <td>
+                  <select class="form-select form-select-sm" [(ngModel)]="r.proyecto" style="min-width:120px;font-size:.75rem">
+                    <option value="">-- Proyecto --</option>
+                    @for (proy of proyectosDirecta(); track proy.id) {
+                      <option [value]="proy.proyectoio">{{ proy.proyectoio }}</option>
+                    }
+                  </select>
+                </td>
+                <td><span class="chip {{ obtenerAfectoIGV(r) ? 'SI' : 'NO' }}">{{ obtenerAfectoIGV(r) ? 'SI' : 'NO' }}</span></td>
+                <td class="oc-sub" style="text-align:right">{{ (r.cantidad * r.precio).toFixed(2) }}</td>
+                <td class="oc-igv" style="text-align:right">{{ (obtenerAfectoIGV(r) ? r.cantidad * r.precio * 0.18 : 0).toFixed(2) }}</td>
+                <td class="oc-tot" style="text-align:right">{{ (obtenerAfectoIGV(r) ? r.cantidad * r.precio * 1.18 : r.cantidad * r.precio).toFixed(2) }}</td>
+                <td><button class="btn-x" type="button" (click)="quitarItemOCDirecta(empBox, r)" title="Quitar ítem"><i class='bx bx-trash'></i></button></td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr><td colspan="16" class="text-center py-3 text-muted">Agregue ítems desde el buscador.</td></tr>
+            </ng-template>
+          </p-table>
+          <div class="oc-total-box">
+            <div class="oc-total-row"><span>Subtotal:</span><span>{{ simboloMoneda(ocMoneda) }} {{ empBox.subtotal.toFixed(2) }}</span></div>
+            <div class="oc-total-row"><span>IGV (18%):</span><span>{{ simboloMoneda(ocMoneda) }} {{ empBox.igv.toFixed(2) }}</span></div>
+            <div class="oc-total-row grand"><span>TOTAL:</span><span>{{ simboloMoneda(ocMoneda) }} {{ empBox.total.toFixed(2) }}</span></div>
+          </div>
+        </div>
+        <div *ngIf="!emitirOCEmpresas.length" class="alert alert-info py-2">
+          <i class='bx bx-info-circle me-1'></i> Seleccione la empresa para comenzar a agregar ítems.
+        </div>
+      </div>
+    </div>
+    <div class="oc-resumen-confirmar" style="padding:0.75rem 1rem; background:#f4f4f8; border-top:1px solid #e0e0e0;" *ngIf="emitirOCEmpresas.length">
+      <div class="small fw-bold mb-1 text-dark">Se creará la siguiente OC:</div>
+      <div class="row g-2">
+        <div class="col-md-6" *ngFor="let empBox of emitirOCEmpresas">
+          <div class="d-flex align-items-center gap-2 small">
+            <i class='bx bx-building-house text-primary'></i>
+            <span>{{ nombreEmpresaPorRuc(empBox.rucEmpresa, empNombres[empBox.emp]) }}</span>
+            <span class="text-muted">— RUC: {{ empBox.rucEmpresa }}</span>
+            <span class="ms-auto fw-semibold">{{ simboloMoneda(ocMoneda) }} {{ empBox.total.toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn-reiniciar" (click)="cerrarOCDirecta()"><i class='bx bx-x'></i> Cerrar</button>
+      <button class="btn-gen" [disabled]="!puedeCrearOCDirecta() || guardandoOC()" (click)="crearOCDirecta()"><i class='bx bx-check'></i> {{ guardandoOC() ? 'Creando...' : 'Crear OC' }}</button>
     </div>
   </div>
 </div>

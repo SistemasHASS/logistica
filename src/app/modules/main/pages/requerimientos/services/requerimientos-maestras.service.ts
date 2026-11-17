@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
 import { UtilsService } from '@/app/shared/utils/utils.service';
+import { MaestrasService } from '@/app/modules/main/services/maestras.service';
 import {
   Usuario,
   Configuracion,
@@ -8,6 +10,7 @@ import {
   Labor,
   Proyecto,
   ActivoFijo,
+  // PartidaLocal, // TODO(PARTIDA): comentado hasta retomar desarrollo
 } from '@/app/shared/interfaces/Tables';
 
 @Injectable({ providedIn: 'root' })
@@ -61,6 +64,7 @@ export class RequerimientosMaestrasService {
   activosFijosFiltrados: any[] = [];
   activosFijosServicioFiltrados: any[] = [];
   unidadesMedidaFiltradas: any[] = [];
+  // partidas: PartidaLocal[] = []; // TODO(PARTIDA): comentado hasta retomar desarrollo
 
   // ── Selecciones compartidas ────────────────────────────────────────────────
   fundoSeleccionado = '';
@@ -74,6 +78,7 @@ export class RequerimientosMaestrasService {
   cecoSeleccionado: Ceco | null = null;
   proyectoSeleccionado: Proyecto | null = null;
   laborSeleccionado: Labor | null = null;
+  // partidaSeleccionada: PartidaLocal | null = null; // TODO(PARTIDA): comentado hasta retomar desarrollo
 
   // ── Estado global ──────────────────────────────────────────────────────────
   loading = false;
@@ -85,6 +90,7 @@ export class RequerimientosMaestrasService {
   constructor(
     private dexieService: DexieService,
     private utilsService: UtilsService,
+    private maestrasService: MaestrasService,
   ) {}
 
   // ── Usuario ────────────────────────────────────────────────────────────────
@@ -117,6 +123,7 @@ export class RequerimientosMaestrasService {
     await this.ListarServiciosAFMenor();
     await this.ListarTipoGastos();
     await this.ListarActivosFijos();
+    // await this.ListarPartidas(); // TODO(PARTIDA): comentado hasta retomar desarrollo
   }
 
   async cargarConfiguracion() {
@@ -147,6 +154,19 @@ export class RequerimientosMaestrasService {
       if (config.idlabor) {
         this.laborSeleccionado = (await this.dexieService.getLaborById(config.idlabor)) as Labor | null;
       }
+      // TODO(PARTIDA): partida global de parámetros comentada hasta retomar desarrollo
+      // if (config.partida && config.subpresupuesto != null) {
+      //   if (!this.partidas?.length) await this.ListarPartidas();
+      //   this.partidaSeleccionada = this.partidas.find(
+      //     (p) =>
+      //       String(p.partida).trim() === String(config.partida).trim() &&
+      //       p.subpresupuesto === config.subpresupuesto &&
+      //       String(p.proyecto).trim() === String(config.idproyecto ?? '').trim() &&
+      //       String(p.ruc).trim() === String(this.usuario?.ruc ?? '').trim(),
+      //   ) || null;
+      // } else {
+      //   this.partidaSeleccionada = null;
+      // }
       console.log('🔧 Configuración cargada en maestras:', {
         idTipoItem: config.idTipoItem,
         idalmacen: config.idalmacen,
@@ -172,15 +192,44 @@ export class RequerimientosMaestrasService {
     this.proveedoresActivoFijo = await this.dexieService.showProveedores();
   }
   async ListarTipoGastos() { this.tipoGastos = await this.dexieService.showTipoGastos(); }
+  // TODO(PARTIDA): comentado hasta retomar desarrollo
+  // async ListarPartidas() { this.partidas = await this.dexieService.showPartidas(); }
 
   async ListarItems() {
     this.items = await this.dexieService.showItemComoditys();
-    if (this.configuracion?.idalmacen) {
-      this.itemsFiltrados = this.items.filter(
-        (it) => it.tipoclasificacion === 'I' && it.almacen === this.configuracion.idalmacen,
+    // Si la tabla itemComoditys está vacía (p.ej. tras cerrar sesión),
+    // re-descargar el maestro desde get-items-cmmdty
+    if (!this.items?.length) {
+      try {
+        const resp: any = await firstValueFrom(
+          this.maestrasService.getItems([{ ruc: this.usuario?.ruc }]),
+        );
+        if (Array.isArray(resp) && resp.length) {
+          await this.dexieService.saveItemComoditys(resp);
+          this.items = await this.dexieService.showItemComoditys();
+          console.log('✅ itemComoditys sincronizado:', this.items.length, 'registros');
+        }
+      } catch (e) {
+        console.error('❌ Error al sincronizar item-commodity:', e);
+      }
+    }
+    const soloI = (this.items || []).filter((it) => it.tipoclasificacion === 'I');
+    // Base tolerante: si ninguna fila trae tipoclasificacion 'I', usar todo
+    const base = soloI.length ? soloI : this.items || [];
+    const almConf = (this.configuracion?.idalmacen || '').toString().trim();
+    if (almConf) {
+      const almAlt = almConf.toUpperCase().startsWith('H')
+        ? almConf.substring(1)
+        : 'H' + almConf.padStart(3, '0');
+      const porAlmacen = base.filter(
+        (it) => it.almacen === almConf || it.almacen === almAlt,
       );
+      // Si el filtro por almacén no devuelve nada (códigos distintos o items
+      // sin almacén asignado), mostrar todos los items para no dejar el
+      // catálogo vacío
+      this.itemsFiltrados = porAlmacen.length ? porAlmacen : base;
     } else {
-      this.itemsFiltrados = this.items.filter((it) => it.tipoclasificacion === 'I');
+      this.itemsFiltrados = base;
     }
   }
 

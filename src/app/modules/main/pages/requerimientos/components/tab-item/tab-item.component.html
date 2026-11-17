@@ -298,8 +298,9 @@
               <button *ngIf="TipoSelecionado === 'COMPRA'" type="button" class="btn btn-outline-primary" (click)="descargarPlantilla()" title="Descargar plantilla Excel para compra">
                 <i class="bi bi-download me-1"></i> Plantilla compra
               </button>
-              <button *ngIf="TipoSelecionado === 'CONSUMO'" type="button" class="btn btn-outline-success" (click)="descargarPlantilla()" title="Descargar plantilla Excel para consumo">
-                <i class="bi bi-download me-1"></i> Plantilla consumo
+              <button *ngIf="TipoSelecionado === 'CONSUMO'" type="button" class="btn btn-outline-success" [disabled]="descargandoPlantilla" (click)="descargarPlantilla()" title="Descargar plantilla Excel para consumo">
+                <i class="bi" [class]="descargandoPlantilla ? 'bi-arrow-repeat me-1' : 'bi-download me-1'"></i>
+                {{ descargandoPlantilla ? 'Generando...' : 'Plantilla consumo' }}
               </button>
               <button *ngIf="TipoSelecionado === 'COMPRA' || TipoSelecionado === 'CONSUMO'" type="button" class="btn btn-success" (click)="fileInput.click()">
                 <i class="bi bi-upload me-1"></i> Carga masiva
@@ -343,6 +344,7 @@
                         <th>Producto</th>
                         <th>Cantidad</th>
                         <th>Proyecto</th>
+                        <!-- TODO(PARTIDA): <th>Partida</th> -->
                         <th>CECO</th>
                         <th>Turno</th>
                         <th>Labor</th>
@@ -362,6 +364,7 @@
                         <td>{{ obtenerDescripcionDetalle(item) }}</td>
                         <td>{{ item.cantidad }}</td>
                         <td>{{ item.proyecto }}</td>
+                        <!-- TODO(PARTIDA): <td [title]="item.partidaDescripcion || ''">{{ item.partida || '—' }}</td> -->
                         <td>{{ item.ceco }}</td>
                         <td>{{ item.turno }}</td>
                         <td>{{ item.labor }}</td>
@@ -377,7 +380,7 @@
                         </td>
                       </tr>
                       <tr *ngIf="detalles.length === 0">
-                        <td colspan="11" class="text-muted">No hay detalles agregados</td>
+                        <td colspan="12" class="text-muted">No hay detalles agregados</td>
                       </tr>
                     </tbody>
                   </table>
@@ -464,6 +467,7 @@
                       <th>Producto</th>
                       <th>Cantidad</th>
                       <th>Proyecto</th>
+                      <!-- TODO(PARTIDA): <th>Partida</th> -->
                       <th>CECO</th>
                       <th>Turno</th>
                       <th>Labor</th>
@@ -483,6 +487,7 @@
                       <td>{{ obtenerDescripcionDetalle(item) }}</td>
                       <td>{{ item.cantidad }}</td>
                       <td>{{ item.proyecto }}</td>
+                      <!-- TODO(PARTIDA): <td [title]="item.partidaDescripcion || ''">{{ item.partida || '—' }}</td> -->
                       <td>{{ item.ceco }}</td>
                       <td>{{ item.turno }}</td>
                       <td>{{ item.labor }}</td>
@@ -498,7 +503,7 @@
                       </td>
                     </tr>
                     <tr *ngIf="detalles.length === 0">
-                      <td colspan="11" class="text-muted">No hay detalles agregados</td>
+                      <td colspan="12" class="text-muted">No hay detalles agregados</td>
                     </tr>
                   </tbody>
                 </table>
@@ -558,8 +563,12 @@
   (turnoChangeEvt)="onTurnoChangeModal()"
   (cecoChangeEvt)="onCecoChangeModal()"
   (laborChangeEvt)="onLaborChangeModal()"
+  (proyectoChangeEvt)="onProyectoChangeModal()"
   (productoSelectEvt)="onProductoSelect($event)"
 ></app-modal-detalle-item>
+
+<!-- TODO(PARTIDA): bindings de partida removidos temporalmente de app-modal-detalle-item
+     ([partidaTreeNodes]="partidaTreeNodesModal" y (partidaChangeEvt)="onPartidaChangeModal()") -->
 
 <!-- Modal carga masiva Excel (componente separado) -->
 <app-modal-carga-masiva
@@ -568,6 +577,7 @@
   [tieneErroresExcel]="tieneErroresExcel"
   [puedeGuardar]="puedeGuardar"
   [turnos]="turnosParaCarga"
+  [cecos]="maestrasSvc.cecos"
   [activosFijosFiltrados]="activosFijosFiltrados"
   [tipoRequerimiento]="TipoSelecionado"
   (cerrarEvt)="cerrarModalCargaMasiva()"

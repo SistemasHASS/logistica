@@ -2,6 +2,8 @@ import { Injectable, signal, inject, untracked } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { AprobadorNivel2Service } from './aprobador-nivel2.service';
+import { ReporteMenuService } from './reporte-menu.service';
 
 export type MenuType = 'accordion' | 'nav' | 'list' | 'default';
 
@@ -46,6 +48,7 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
     items: [
       { id: 'dashboard-jlologist', nombre: 'Dashboard Jef. Logística', icono: 'bx bx-line-chart',       ruta: './dashboard-jlologist',  activo: true, orden: 1 },
       { id: 'dashboard-oplogist',  nombre: 'Mi Dashboard',             icono: 'bx bx-user-check',        ruta: './dashboard-oplogist',   activo: true, orden: 2 },
+      { id: 'dashboard-gerencia',  nombre: 'Mi Dashboard',             icono: 'bx bx-bar-chart-alt-2',   ruta: './dashboard-gerencia',   activo: true, orden: 2 },
       { id: 'dashboard-logistica', nombre: 'Dashboard Logística',      icono: 'bx bx-bar-chart-alt-2',   ruta: './dashboard-logistica',  activo: true, orden: 3 },
       { id: 'dashboard-despacho',  nombre: 'Dashboard Almacén',        icono: 'bx bxs-dashboard',        ruta: './dashboard-despacho',   activo: true, orden: 4 },
       { id: 'dashboard-tilogist',  nombre: 'Dashboard TI',             icono: 'bx bxs-dashboard',        ruta: './dashboard-tilogist',   activo: true, orden: 5 },
@@ -111,6 +114,7 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
       { id: 'aprobaciones-oc', nombre: 'Aprobación OC', icono: 'icon icon-file-check', ruta: './aprobaciones-oc', activo: true, orden: 1 },
       { id: 'aprobaciones-os', nombre: 'Aprobación OS', icono: 'icon icon-file-check', ruta: './aprobaciones-os', activo: true, orden: 2 },
       { id: 'aprobaciones-area', nombre: 'Aprobaciones por Área', icono: 'icon icon-circle', ruta: './aprobaciones-area', activo: true, orden: 3 },
+      { id: 'aprobaciones-gerencia', nombre: 'Aprobación Gerencia', icono: 'icon icon-user-check', ruta: './aprobaciones-gerencia', activo: true, orden: 4 },
     ]
   },
   {
@@ -120,6 +124,9 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
       { id: 'reporte-requerimientos',  nombre: 'Reporte Requerimientos',   icono: 'icon icon-file-check', ruta: './reporte-requerimientos',  activo: true, orden: 2 },
       { id: 'reporte-despachos',       nombre: 'Reporte de Despachos',     icono: 'icon icon-file-text',  ruta: './reporte-despachos',       activo: true, orden: 3 },
       { id: 'reporte-aprobaciones-area', nombre: 'Reporte Aprobaciones Área', icono: 'icon icon-file-text', ruta: './reporte-aprobaciones-area', activo: true, orden: 4 },
+      { id: 'seguimiento-req-compra', nombre: 'Seguimiento Req. Compra', icono: 'icon icon-stack', ruta: './seguimiento-req-compra', activo: true, orden: 5 },
+      { id: 'analisis-req-compra', nombre: 'Análisis Req. Compra', icono: 'icon icon-equalizer', ruta: './analisis-req-compra', activo: true, orden: 6 },
+      { id: 'seguimiento-req-consumo', nombre: 'Seguimiento Req. Consumo', icono: 'icon icon-stack', ruta: './seguimiento-req-consumo', activo: true, orden: 7 },
     ]
   },
 ];
@@ -129,17 +136,18 @@ export const ACCORDION_DEFAULT: AccordionGroupConfig[] = [
  * Solo se usan como FALLBACK cuando no hay MENU_JSON en BD
  */
 const MODULOS_POR_ROL: Record<string, string[]> = {
-  TILOGIST:  ['catalogo-items', 'dashboard-tilogist', 'dashboard-aprobaciones-area', 'notificaciones', 'parametros', 'maestros', 'maestro-proveedores', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'consolidacion-servicios', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'aprobaciones-area', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'reporte-aprobaciones-area'],
-  ADLOGIST:  ['catalogo-items', 'dashboard-adlogist', 'dashboard-aprobaciones-area', 'notificaciones', 'parametros', 'maestros', 'maestro-proveedores', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'consolidacion-servicios', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'aprobaciones-area', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'reporte-aprobaciones-area'],
-  JLOLOGIST: ['catalogo-items', 'dashboard-jlologist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'consolidacion-servicios', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'aprobaciones-area', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'reporte-aprobaciones-area'],
-  JEMLOGIST: ['catalogo-items', 'dashboard-jemlogist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'consolidacion-servicios', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'aprobaciones-oc', 'aprobaciones-os', 'aprobaciones-area', 'reporte-aprobaciones-area'],
-  LOLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'saldo-requerimiento', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'consolidacion-servicios', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'reporte-aprobaciones-area'],
-  EMLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'conformidad-servicios', 'aprobaciones-area'],
-  OPLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'notificaciones', 'parametros','requerimientos', 'conformidad-almacen', 'catalogo-items'],
-  ALLOGIST:  ['catalogo-items', 'dashboard-despacho', 'notificaciones', 'parametros', 'requerimientos', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'reporte-despachos', 'transferencias-almacen'],
-  APLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'dashboard-aprobaciones-area', 'notificaciones', 'aprobaciones-area', 'reporte-aprobaciones-area', 'catalogo-items'],
+  TILOGIST:  ['catalogo-items', 'dashboard-tilogist', 'dashboard-aprobaciones-area', 'notificaciones', 'parametros', 'maestros', 'maestro-proveedores', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'consolidacion-servicios', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'aprobaciones-area', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'reporte-aprobaciones-area', 'seguimiento-req-compra', 'analisis-req-compra'],
+  ADLOGIST:  ['catalogo-items', 'dashboard-adlogist', 'dashboard-aprobaciones-area', 'notificaciones', 'parametros', 'maestros', 'maestro-proveedores', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'consolidacion-servicios', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'aprobaciones-area', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'reporte-aprobaciones-area', 'seguimiento-req-compra', 'analisis-req-compra', 'seguimiento-req-consumo'],
+  JLOLOGIST: ['catalogo-items', 'dashboard-jlologist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'consolidacion-servicios', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'aprobaciones-area', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'reporte-aprobaciones-area', 'seguimiento-req-compra'],
+  JEMLOGIST: ['catalogo-items', 'dashboard-jemlogist', 'dashboard-oplogist', 'notificaciones', 'requerimientos', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'consolidacion-servicios', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'aprobaciones-oc', 'aprobaciones-os', 'aprobaciones-area', 'reporte-aprobaciones-area', 'seguimiento-req-compra'],
+  LOLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'saldo-requerimiento', 'solicitudes-compra', 'ordenes-compra', 'consolidacion-compra', 'consolidacion-compras', 'consolidacion-servicios', 'solicitudes-servicio', 'ordenes-servicio', 'cotizaciones', 'conformidad-servicios', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'aprobaciones-oc', 'aprobaciones-os', 'reportes-compras', 'reporte-requerimientos', 'reporte-despachos', 'reporte-aprobaciones-area', 'seguimiento-req-compra'],
+  EMLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'notificaciones', 'parametros', 'requerimientos', 'conformidad-servicios', 'aprobaciones-area', 'seguimiento-req-compra'],
+  OPLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'notificaciones', 'parametros','requerimientos', 'conformidad-almacen', 'catalogo-items', 'seguimiento-req-compra', 'analisis-req-compra', 'seguimiento-req-consumo'],
+  ALLOGIST:  ['catalogo-items', 'dashboard-despacho', 'notificaciones', 'parametros', 'requerimientos', 'despachos', 'recepcion-mercaderia', 'kardex', 'conformidad-almacen', 'reporte-despachos', 'transferencias-almacen', 'seguimiento-req-compra'],
+  APLOGIST:  ['catalogo-items', 'dashboard-oplogist', 'dashboard-aprobaciones-area', 'notificaciones', 'aprobaciones-area', 'reporte-aprobaciones-area', 'catalogo-items', 'seguimiento-req-compra', 'analisis-req-compra', 'seguimiento-req-consumo'],
   FINANZAS:  ['catalogo-items', 'dashboard-finanzas', 'aprobaciones-oc', 'aprobaciones-os'],
-  GERENTE:   ['catalogo-items', 'dashboard-oplogist', 'aprobaciones-oc', 'aprobaciones-os'],
+  GERENTE:   ['catalogo-items', 'dashboard-gerencia', 'aprobaciones-gerencia'],
+  // GERENTE:   ['catalogo-items', 'dashboard-gerencia', 'aprobaciones-gerencia', 'aprobaciones-oc', 'aprobaciones-os'],
 };
 
 /** Filtra el ACCORDION_DEFAULT dejando solo los módulos permitidos para un rol (soporta roles concatenados por coma) */
@@ -169,6 +177,8 @@ function getRolesArray(idrol: string): string[] {
 @Injectable({ providedIn: 'root' })
 export class LayoutConfigService {
   private readonly http = inject(HttpClient);
+  private readonly aprobadorNivel2 = inject(AprobadorNivel2Service);
+  private readonly reporteMenu = inject(ReporteMenuService);
   private readonly baseUrl = environment.baseUrl;
 
   // Signals para el estado del menú
@@ -189,24 +199,28 @@ export class LayoutConfigService {
     }
     this.cargando = true;
     try {
-      // Llamar ambas APIs en paralelo
-      const bodyPermisos = idrol ? { idrol } : {};
-      const bodyConfigMenu = idrol ? { idrol } : {};
-      const [respPermisos, respConfigMenu] = await Promise.allSettled([
-        lastValueFrom(this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/listar-config-permisos`, bodyPermisos)),
-        lastValueFrom(this.http.post<any[]>(`${this.baseUrl}/api/configmenu/listar`, bodyConfigMenu))
+      // El backend filtra por idrol exacto: con roles concatenados ("A,B")
+      // hay que consultar cada rol por separado y unir las filas.
+      const rolesUsuario = [...new Set(getRolesArray(idrol ?? ''))];
+      const bodies = rolesUsuario.length ? rolesUsuario.map(r => ({ idrol: r })) : [{}];
+      const [resPermisos, resConfigMenu] = await Promise.all([
+        Promise.allSettled(bodies.map(b =>
+          lastValueFrom(this.http.post(`${this.baseUrl}/api/ConfiguracionPermiso/listar-config-permisos`, b)))),
+        Promise.allSettled(bodies.map(b =>
+          lastValueFrom(this.http.post<any[]>(`${this.baseUrl}/api/configmenu/listar`, b)))),
+        // Verifica si el usuario es aprobador nivel 2 (inyecta el item de gerencia en el menú)
+        this.aprobadorNivel2.verificar(),
+        // Resuelve qué ítems de reportes restringidos ocultar del menú (por config + DNI)
+        this.reporteMenu.verificar()
       ]);
 
-      const permisos: { idrol: string; clave: string; valor: string }[] =
-        respPermisos.status === 'fulfilled' && Array.isArray((respPermisos as any).value)
-          ? (respPermisos as any).value
-          : [];
+      const filasDe = (results: PromiseSettledResult<any>[]): { idrol: string; clave: string; valor: string }[] =>
+        results.flatMap(r => (r.status === 'fulfilled' && Array.isArray(r.value) ? r.value : []));
+
+      const permisos = filasDe(resPermisos);
 
       // configmenu devuelve filas con {idrol, clave, valor} — misma forma que permisos
-      const configMenuRows: { idrol: string; clave: string; valor: string }[] =
-        respConfigMenu.status === 'fulfilled' && Array.isArray((respConfigMenu as any).value)
-          ? (respConfigMenu as any).value
-          : [];
+      const configMenuRows = filasDe(resConfigMenu);
 
       // Unificar: configmenu tiene precedencia para claves de menú
       const todasLasClaves = [...permisos, ...configMenuRows];
@@ -360,7 +374,7 @@ export class LayoutConfigService {
       idrol,
       tipoMenu: usaAccordion ? 'accordion' : 'default',
       usaAccordion,
-      menuConfig: usaAccordion ? this.getAccordionMenu(idrol) : undefined
+      menuConfig: usaAccordion ? this.getAccordionMenu(idrol, false) : undefined
     };
   }
 
@@ -383,15 +397,15 @@ export class LayoutConfigService {
   }
 
   // Roles que SIEMPRE usan menú accordion (fallback sin depender de BD)
-  private readonly ROLES_ACCORDION_DEFAULT = new Set(['JLOLOGIST']);
+  private readonly ROLES_ACCORDION_DEFAULT = new Set(['JLOLOGIST', 'GERENTE', 'FINANZAS']);
 
   /** Determina el tipo de menú a usar para un rol (soporta roles concatenados por coma) */
   getMenuType(idrol: string): MenuType {
     const config = this.getConfigParaRol(idrol);
-    if (config) return config.tipoMenu;
+    if (config?.tipoMenu && config.tipoMenu !== 'default') return config.tipoMenu;
     const roles = getRolesArray(idrol);
     if (roles.some(rol => this.accordionRoles().has(rol) || this.ROLES_ACCORDION_DEFAULT.has(rol))) return 'accordion';
-    return 'default';
+    return config?.tipoMenu ?? 'default';
   }
 
   /** Verifica si un rol usa menú dinámico configurado (soporta roles concatenados por coma) */
@@ -412,8 +426,12 @@ export class LayoutConfigService {
     return roles.some(rol => this.accordionRoles().has(rol) || this.ROLES_ACCORDION_DEFAULT.has(rol));
   }
 
-  /** Devuelve el menú configurado para un rol. Si no hay config en BD, devuelve el default. */
-  getAccordionMenu(idrol: string): AccordionGroupConfig[] {
+  /**
+   * Devuelve el menú configurado para un rol. Si no hay config en BD, devuelve el default.
+   * @param filtrarOcultos true (default) aplica el filtro de reportes ocultos por DNI;
+   *                       pasar false en pantallas de administración/preview de menús.
+   */
+  getAccordionMenu(idrol: string, filtrarOcultos = true): AccordionGroupConfig[] {
     const config = this.getConfigParaRol(idrol);
     console.log('[LayoutConfig] getAccordionMenu para', idrol, '- config encontrada:', !!config, 'roles:', getRolesArray(idrol));
     // Devolver menuConfig para cualquier tipo (accordion, nav, list)
@@ -429,12 +447,46 @@ export class LayoutConfigService {
     if (menu && menu.length > 0) {
       // Respetar exactamente el menú configurado en BD
       console.log('[LayoutConfig] Menú final desde BD:', menu.length, 'grupos');
-      return menu;
+      return this.conItemGerencia(filtrarOcultos ? this.sinItemsOcultos(menu) : menu);
     }
 
     // Fallback: menú filtrado según módulos permitidos del rol
     console.log('[LayoutConfig] Fallback a default filtrado por rol');
-    return getMenuDefaultParaRol(idrol);
+    return this.conItemGerencia(filtrarOcultos ? this.sinItemsOcultos(getMenuDefaultParaRol(idrol)) : getMenuDefaultParaRol(idrol));
+  }
+
+  /**
+   * Quita del menú los ítems de reportes restringidos que el usuario no
+   * debe ver (oculto global o sin acceso por DNI). No muta el menú original.
+   */
+  private sinItemsOcultos(menu: AccordionGroupConfig[]): AccordionGroupConfig[] {
+    const ocultos = this.reporteMenu.itemsOcultos();
+    if (ocultos.size === 0) return menu;
+    return menu
+      .map(g => ({ ...g, items: g.items.filter(i => !ocultos.has(i.id)) }))
+      .filter(g => g.items.length > 0);
+  }
+
+  /**
+   * Inyecta el item "Aprobación Gerencia" cuando el usuario pertenece a la
+   * cadena nivel 2 por DNI, aunque su rol no tenga el módulo asignado.
+   * No muta el menú original (puede venir de los signals en memoria).
+   */
+  private conItemGerencia(menu: AccordionGroupConfig[]): AccordionGroupConfig[] {
+    if (!this.aprobadorNivel2.estado().esAprobador) return menu;
+
+    const grupoDefault = ACCORDION_DEFAULT.find(g => g.id === 'aprobaciones');
+    const itemGerencia = grupoDefault?.items.find(i => i.id === 'aprobaciones-gerencia');
+    if (!grupoDefault || !itemGerencia) return menu;
+
+    const idx = menu.findIndex(g => g.id === 'aprobaciones');
+    if (idx >= 0) {
+      if (menu[idx].items.some(i => i.id === 'aprobaciones-gerencia')) return menu;
+      const copia = [...menu];
+      copia[idx] = { ...menu[idx], activo: true, items: [...menu[idx].items, { ...itemGerencia }] };
+      return copia;
+    }
+    return [...menu, { ...grupoDefault, items: [{ ...itemGerencia }] }];
   }
 
   /** Guarda la configuración de menú para un rol */
@@ -514,6 +566,8 @@ export class LayoutConfigService {
   /** Fuerza recarga en el próximo ciclo (después de guardar cambios en admin) */
   invalidar(): void {
     this.cargando = false;
+    this.aprobadorNivel2.invalidar();
+    this.reporteMenu.invalidar();
     this.accordionRoles.set(new Set());
     this.accordionMenus.set(new Map());
     this.menuConfigs.set(new Map());

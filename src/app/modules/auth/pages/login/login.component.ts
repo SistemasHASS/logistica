@@ -62,7 +62,7 @@ export class LoginComponent {
       await this.stockNotificationService.recargarUsuario();
       
       // Si es APLOGIST, cargar área antes de redirigir
-      if (this.usuario.idrol === 'APLOGIST') {
+      if (this.tieneRol(this.usuario.idrol, 'APLOGIST')) {
         await this.authService.cargarAreaUsuario();
       } else {
         this.login();
@@ -78,7 +78,7 @@ export class LoginComponent {
       // this.redireccionarPorRol(user.idrol, user);
       
       // Si no es APLOGIST, redirigir normalmente
-      if (user.idrol !== 'APLOGIST') {
+      if (!this.tieneRol(user.idrol, 'APLOGIST')) {
         this.redireccionarPorRol(user.idrol);
       }
       // Si es APLOGIST, la redirección ocurrirá en cargarAreaUsuario
@@ -110,51 +110,41 @@ export class LoginComponent {
     // }
   }
 
-  // 🔐 REDIRECCIÓN CENTRALIZADA POR ROL
+  /** true si idrol (posiblemente "A,B") contiene el rol exacto */
+  private tieneRol(idrol: string | null | undefined, rol: string): boolean {
+    return (idrol ?? '').split(',').map(r => r.trim()).includes(rol);
+  }
+
+  // 🔐 REDIRECCIÓN CENTRALIZADA POR ROL (soporta roles concatenados "A,B";
+  // con varios roles gana el primero en este orden de prioridad)
   private redireccionarPorRol(rol: string) {
-    switch (rol) {
-      case 'TILOGIST':
-        this.router.navigate(['/main/parametros']);
-        break;
-
-      case 'ADLOGIST':
-        this.router.navigate(['/main/maestros']);
-        break;
-
-      case 'APLOGIST':
-        this.router.navigate(['/main/aprobaciones']);
-        break;
-
-      case 'ALLOGIST':
-        this.router.navigate(['/main/dashboard-despacho']);
-        break;
-
-      case 'OPLOGIST':
-        // this.router.navigate(['/main/parametros']);
-        this.router.navigate(['/main/dashboard-oplogist']);
-        break;
-        
-      case 'EMLOGIST': // 👈 rol empaque
-        this.router.navigate(['/main/parametros']);
-        break;
-
-      case 'LOLOGIST': // 👈 rol logistico
-        // this.router.navigate(['/main/parametros']);
-        this.router.navigate(['/main/dashboard-logistica']);
-        break;
-
-      case 'JLOLOGIST': // 👈 jefe de logística
-        // this.router.navigate(['/main/dashboard-logistica']);
-        this.router.navigate(['/main/dashboard-jlologist'])
-        break;
-
-      case 'FINANZAS': // 👈 rol finanzas
-        this.router.navigate(['/main/dashboard-finanzas']);
-        break;      
-
-      default:
-        this.router.navigate(['/main/reporte_logistico']);
-        break;
+    if (this.tieneRol(rol, 'TILOGIST')) {
+      this.router.navigate(['/main/parametros']);
+    } else if (this.tieneRol(rol, 'ADLOGIST')) {
+      this.router.navigate(['/main/maestros']);
+    } else if (this.tieneRol(rol, 'APLOGIST')) {
+      this.router.navigate(['/main/aprobaciones']);
+    } else if (this.tieneRol(rol, 'ALLOGIST')) {
+      this.router.navigate(['/main/dashboard-despacho']);
+    } else if (this.tieneRol(rol, 'OPLOGIST')) {
+      this.router.navigate(['/main/dashboard-oplogist']);
+    } else if (this.tieneRol(rol, 'EMLOGIST')) {
+      // 👈 rol empaque
+      this.router.navigate(['/main/parametros']);
+    } else if (this.tieneRol(rol, 'LOLOGIST')) {
+      // 👈 rol logistico
+      this.router.navigate(['/main/dashboard-logistica']);
+    } else if (this.tieneRol(rol, 'JLOLOGIST')) {
+      // 👈 jefe de logística
+      this.router.navigate(['/main/dashboard-jlologist']);
+    } else if (this.tieneRol(rol, 'FINANZAS')) {
+      // 👈 rol finanzas
+      this.router.navigate(['/main/dashboard-finanzas']);
+    } else if (this.tieneRol(rol, 'GERENTE')) {
+      // 👈 rol gerencia - aprueba nivel 2 requerimientos y OC/OS
+      this.router.navigate(['/main/aprobaciones-gerencia']);
+    } else {
+      this.router.navigate(['/main/reporte_logistico']);
     }
   }
 

@@ -1,13 +1,13 @@
 <div class="admin-logistica-layout" [class.sidebar-collapsed]="sidebarCollapsed()">
   <!-- Sidebar -->
-  <aside class="sidebar">
+  <aside class="sidebar" [class.open]="sidebarOpen()">
     <div class="sidebar-header">
       <div class="logo">
         <i class="bx bxs-truck"></i>
         <span class="logo-text">Admin Logística</span>
       </div>
-      <button class="toggle-btn" (click)="toggleSidebar()">
-        <i class="bx" [class.bx-menu]="!sidebarCollapsed()" [class.bx-x]="sidebarCollapsed()"></i>
+      <button class="toggle-btn" (click)="closeSidebar()" aria-label="Cerrar menú">
+        <i class="bx bx-x"></i>
       </button>
     </div>
 
@@ -52,11 +52,17 @@
     </div>
   </aside>
 
+  <!-- Backdrop móvil -->
+  <div class="sidebar-backdrop" [class.show]="sidebarOpen()" (click)="closeSidebar()"></div>
+
   <!-- Main Content -->
   <main class="main-content">
     <!-- Top Header -->
     <header class="top-header">
       <div class="header-left">
+        <button class="mobile-menu-btn" (click)="openSidebar()" aria-label="Abrir menú">
+          <i class="bx bx-menu"></i>
+        </button>
         <h3 class="page-title">
           @switch (currentRoute()) {
             @case ('dashboard') { Dashboard }

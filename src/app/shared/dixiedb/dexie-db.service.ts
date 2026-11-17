@@ -65,6 +65,8 @@ import {
   DetalleSolicitudCotizacion,
   DetalleSolicitudCotizacionLegacy,
   UnidadMedida,
+  Partida,
+  PartidaLocal,
 } from '../interfaces/Tables';
 import Dexie from 'dexie';
 
@@ -149,9 +151,10 @@ export class DexieService extends Dexie {
   public solicitudesCotizacion!: Dexie.Table<SolicitudCotizacion, number>;
   public detalleSolicitudCotizacion!: Dexie.Table<DetalleSolicitudCotizacionLegacy, number>;
   public unidadesMedida!: Dexie.Table<UnidadMedida, number>;
+  public partidas!: Dexie.Table<PartidaLocal, string>;
 
   private static readonly DB_NAME = 'Logistica';
-  private static readonly DB_VERSION = 44; // Added afectoIGV to itemComoditys and detalles
+  private static readonly DB_VERSION = 45; // Added partidas table (partida presupuestal)
 
   constructor() {
     super(DexieService.DB_NAME);
@@ -234,6 +237,7 @@ export class DexieService extends Dexie {
         destinatariosCorreo: `id,email,tipo,activo`,
         plantillasCorreo: `id,tipo,activo`,
         unidadesMedida: `++id,codigo,descripcion,abreviatura,tipo,estado`,
+        partidas: `id,ruc,proyecto,subpresupuesto,categoria,partida`,
       }).upgrade(async (tx) => {
         // Migración versión 38: Convertir estado a estadoItem en detalleRecepciones
         const detalleRecepciones = tx.table('detalleRecepciones');
@@ -339,6 +343,7 @@ export class DexieService extends Dexie {
       this.solicitudesCotizacion = this.table('solicitudesCotizacion');
       this.detalleSolicitudCotizacion = this.table('detalleSolicitudCotizacion');
       this.unidadesMedida = this.table('unidadesMedida');
+      this.partidas = this.table('partidas');
 
       // 🔧 Manejo automático de errores por versión o corrupción
       this.open().catch(async (err) => {
@@ -925,7 +930,10 @@ export class DexieService extends Dexie {
     await this.maestroCommoditys.put(maestroCommodity);
   }
   async saveMaestroCommodities(maestroCommodities: MaestroCommodity[]) {
-    await this.maestroCommoditys.bulkPut(maestroCommodities);
+    const chunkSize = 500;
+    for (let i = 0; i < maestroCommodities.length; i += chunkSize) {
+      await this.maestroCommoditys.bulkPut(maestroCommodities.slice(i, i + chunkSize));
+    }
   }
   async showMaestroCommodity() {
     return await this.maestroCommoditys.toArray();
@@ -941,7 +949,10 @@ export class DexieService extends Dexie {
     await this.maestroSubCommoditys.put(maestroSubCommodity);
   }
   async saveMaestroSubCommodities(maestroSubCommoditys: MaestroSubCommodity[]) {
-    await this.maestroSubCommoditys.bulkPut(maestroSubCommoditys);
+    const chunkSize = 500;
+    for (let i = 0; i < maestroSubCommoditys.length; i += chunkSize) {
+      await this.maestroSubCommoditys.bulkPut(maestroSubCommoditys.slice(i, i + chunkSize));
+    }
   }
   async showMaestroSubCommodity() {
     return await this.maestroSubCommoditys.toArray();
@@ -983,6 +994,20 @@ export class DexieService extends Dexie {
   }
   async clearDetalleDespacho() {
     await this.detalleDespachos.clear();
+  }
+  // ---------------- Partidas (partida presupuestal) ----------------
+  async savePartidas(partidas: Partida[]) {
+    await this.partidas.bulkPut(partidas.map((p) => ({
+      ...p,
+      id: JSON.stringify([String(p.ruc ?? '').trim(), String(p.proyecto ?? '').trim(), p.subpresupuesto, String(p.categoria ?? '').trim(), String(p.partida ?? '').trim()])
+    })));
+  }
+  async showPartidas() {
+    return (await this.partidas.toArray())
+      .filter((p: PartidaLocal) => !!p.proyecto && !!p.partida_descripcion);
+  }
+  async clearPartidas() {
+    await this.partidas.clear();
   }
   async generarCodigo(): Promise<string> {
     const total = await this.requerimientos.count();
@@ -1311,7 +1336,8 @@ export class DexieService extends Dexie {
     await this.clearRequerimientoCommodity();
     await this.clearRequerimientoActivoFijo();
     await this.clearRequerimientoActivoFijoMenor();
-    await this.clearMaestroItem();
+    // maestroItems (listar-item) se conserva entre sesiones: solo se
+    // re-descarga cuando la versión del servidor cambia (ver ItemService).
     await this.clearMaestroCommodity();
     console.log(
       'Todas las tablas de configuracion han sido limpiadas en indexedDB.',

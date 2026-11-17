@@ -84,6 +84,8 @@ export class TabItemComponent {
       return this.itemSvc.filteredProyectosModal.length > 0 ? this.itemSvc.filteredProyectosModal : this.maestrasSvc.proyectos;
     return this.itemSvc.permitirEditarParametros ? this.itemSvc.filteredProyectosModal : this.maestrasSvc.proyectos;
   }
+  // TODO(PARTIDA): Árbol de partidas filtradas por el proyecto (AFE) de la línea actual del modal
+  // get partidaTreeNodesModal() { return this.itemSvc.partidaTreeNodesModal; }
   @Input() activosFijosFiltrados: any[] = [];
   @Input() items: any[] = [];
   // Valores del modal leídos desde lineaTemp del servicio
@@ -189,11 +191,18 @@ export class TabItemComponent {
   onTipoChange() { this.tipoChangeEvt.emit(); }
   resetFileInput() { if (this.fileInputRef?.nativeElement) this.fileInputRef.nativeElement.value = ''; }
 
-  descargarPlantilla() {
+  descargandoPlantilla = false;
+
+  async descargarPlantilla() {
     if (this.TipoSelecionado === 'COMPRA') {
       this.itemSvc.descargarPlantillaCompra();
-    } else if (this.TipoSelecionado === 'CONSUMO') {
-      this.itemSvc.descargarPlantillaConsumo();
+    } else if (this.TipoSelecionado === 'CONSUMO' && !this.descargandoPlantilla) {
+      this.descargandoPlantilla = true;
+      try {
+        await this.itemSvc.descargarPlantillaConsumo();
+      } finally {
+        this.descargandoPlantilla = false;
+      }
     }
   }
 
@@ -246,6 +255,8 @@ export class TabItemComponent {
   onTurnoChangeModal() { this.itemSvc.onTurnoChangeModal(); }
   onCecoChangeModal() { this.itemSvc.onCecoChangeModal(); }
   onLaborChangeModal() { this.itemSvc.onLaborChangeModal(); }
+  onProyectoChangeModal() { this.itemSvc.onProyectoChangeModal(); }
+  // TODO(PARTIDA): onPartidaChangeModal() { this.itemSvc.onPartidaChangeModal(); }
   actualizarUnidadMedidaDesdeProducto() { this.itemSvc.actualizarUnidadMedidaDesdeProducto(); }
   editarLinea(i: number) { this.itemSvc.editarLinea(i); }
   copiarLinea(i: number) {

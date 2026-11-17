@@ -380,7 +380,7 @@ export class AdminMenusDinamicosComponent {
     }
 
     // Buscar config desde LayoutConfigService
-    const configMenu = this.layoutConfig.getAccordionMenu(this.rolSeleccionado);
+    const configMenu = this.layoutConfig.getAccordionMenu(this.rolSeleccionado, false);
     if (configMenu && configMenu.length > 0) {
       this.previewMenuGroups = this.sincronizarItemsNuevos(configMenu);
       return;

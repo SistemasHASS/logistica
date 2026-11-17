@@ -5,6 +5,7 @@ import { AlertService } from '@/app/shared/alertas/alerts.service';
 import { UtilsService } from '@/app/shared/utils/utils.service';
 import { RequerimientosService } from '@/app/modules/main/services/requerimientos.service';
 import { AprobacionesAreaService } from '@/app/modules/main/services/aprobaciones-area.service';
+import { AprobacionesAmbitosService } from '@/app/modules/main/services/aprobaciones-ambitos.service';
 import { PrioridadRequerimientoService } from '@/app/shared/services/prioridad-requerimiento.service';
 import { RequerimientoActivoFijoMenor, DetalleRequerimientoActivoFijoMenor } from '@/app/shared/interfaces/Tables';
 import { PrioridadSpring } from '@/app/shared/interfaces/PrioridadRequerimiento';
@@ -43,6 +44,7 @@ export class RequerimientosActivoMenorService {
     private utilsService: UtilsService,
     private requerimientosService: RequerimientosService,
     private aprobacionesAreaService: AprobacionesAreaService,
+    private aprobacionesAmbitosService: AprobacionesAmbitosService,
     public prioridadService: PrioridadRequerimientoService,
     private maestras: RequerimientosMaestrasService,
     private syncService: RequerimientosSyncService,
@@ -241,17 +243,33 @@ export class RequerimientosActivoMenorService {
       }
       try {
         if (reqAF.idarea) {
-          await this.aprobacionesAreaService.registrarRequerimiento({
-            ruc: reqAF.ruc, idrequerimiento: reqAF.idrequerimiento,
-            idarea: Number(reqAF.idarea), tipoRequerimiento: this.itemTipoSeleccionado,
-            descripcion: reqAF.glosa, usuarioSolicitud: this.maestras.usuario.documentoidentidad,
-            glosa: reqAF.glosa, monto: 0,
-          }).toPromise();
-          await this.aprobacionesAreaService.asignarAprobadoresRequerimiento({
-            ruc: reqAF.ruc, idrequerimiento: reqAF.idrequerimiento,
-            idarea: Number(reqAF.idarea), tipoRequerimiento: this.itemTipoSeleccionado,
-            usuarioSolicitud: this.maestras.usuario.documentoidentidad,
-          }).toPromise();
+          let errorEnvio: string | null = null;
+          const envioAmbito = await this.aprobacionesAmbitosService.enviarSiCorresponde(
+            { ruc: reqAF.ruc, idrequerimiento: reqAF.idrequerimiento, idarea: reqAF.idarea, idfundo: reqAF.idfundo },
+            this.maestras.usuario.documentoidentidad,
+          ).catch((e: any) => { errorEnvio = e?.message || 'No se pudo registrar la ruta de aprobación'; return undefined; });
+          if (envioAmbito) {
+            if (envioAmbito.estadoFinal && envioAmbito.estadoFinal !== reqAF.estados) {
+              reqAF.estados = envioAmbito.estadoFinal;
+              await this.dexieService.requerimientosActivoFijoMenor.where('idrequerimiento').equals(reqAF.idrequerimiento)
+                .modify((r: any) => { r.estados = envioAmbito.estadoFinal; });
+            }
+          } else if (errorEnvio) {
+            this.alertService.showAlert('Aviso',
+              `El requerimiento quedó guardado pero no pudo enviarse a aprobación: ${errorEnvio}`, 'warning');
+          } else {
+            await this.aprobacionesAreaService.registrarRequerimiento({
+              ruc: reqAF.ruc, idrequerimiento: reqAF.idrequerimiento,
+              idarea: Number(reqAF.idarea), tipoRequerimiento: this.itemTipoSeleccionado,
+              descripcion: reqAF.glosa, usuarioSolicitud: this.maestras.usuario.documentoidentidad,
+              glosa: reqAF.glosa, monto: 0,
+            }).toPromise();
+            await this.aprobacionesAreaService.asignarAprobadoresRequerimiento({
+              ruc: reqAF.ruc, idrequerimiento: reqAF.idrequerimiento,
+              idarea: Number(reqAF.idarea), tipoRequerimiento: this.itemTipoSeleccionado,
+              usuarioSolicitud: this.maestras.usuario.documentoidentidad,
+            }).toPromise();
+          }
         }
       } catch { }
       this.alertService.cerrarModalCarga();

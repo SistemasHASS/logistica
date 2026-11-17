@@ -1,0 +1,207 @@
+<div class="container">
+
+  <h1><span class="icon">📊</span> Análisis de Requerimientos de Compra</h1>
+  <p class="subtitle">Reporte analítico del workflow — acceso restringido por usuario</p>
+
+  <!-- SIN ACCESO -->
+  <div *ngIf="sinAcceso" class="sin-acceso">
+    <div class="lock">🔒</div>
+    <h2>Acceso restringido</h2>
+    <p>{{ mensajeAcceso }}</p>
+    <p class="muted">Contacta al administrador de logística para habilitar tu DNI en el módulo
+       <b>Admin Logística → Accesos Reportes</b>.</p>
+  </div>
+
+  <ng-container *ngIf="!sinAcceso">
+
+    <!-- FILTROS -->
+    <div class="filters">
+      <div class="fgroup"><label>Fundo</label>
+        <select [(ngModel)]="fidfundo">
+          <option value="">Todos</option>
+          <option *ngFor="let f of fundos" [value]="f.codigoFundo">{{ f.codigoFundo }} - {{ f.nombreFundo }}</option>
+        </select>
+      </div>
+      <div class="fgroup"><label>Desde</label><input type="date" [(ngModel)]="fdesde"></div>
+      <div class="fgroup"><label>Hasta</label><input type="date" [(ngModel)]="fhasta"></div>
+      <div class="fgroup"><label>Buscar</label>
+        <input type="text" [(ngModel)]="busqueda" placeholder="N° req / proveedor / OC / ítem">
+      </div>
+      <button class="btn btn-primary" (click)="buscar()">Buscar</button>
+      <div class="spacer"></div>
+      <button class="btn btn-excel" (click)="exportarExcel()" [disabled]="!dataFiltrada.length">⬇ Exportar Excel</button>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpis6">
+      <div class="kpi"><div class="lbl">Requerimientos</div><div class="num">{{ totalReqs }}</div></div>
+      <div class="kpi"><div class="lbl">Líneas</div><div class="num">{{ totalLineas }}</div></div>
+      <div class="kpi"><div class="lbl">% Atención</div><div class="num green">{{ pctAtencion }}%</div></div>
+      <div class="kpi"><div class="lbl">Monto OC</div><div class="num">S/ {{ montoTotal | number:'1.0-0' }}</div></div>
+      <div class="kpi"><div class="lbl">Lead Time prom.</div><div class="num">{{ leadProm }}</div></div>
+      <div class="kpi"><div class="lbl">AprobN2→OC prom.</div><div class="num">{{ dApOcProm }}</div></div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab" [class.active]="tabActivo==='req'" (click)="tabActivo='req'">📋 Requerimientos ({{ dataFiltrada.length }})</button>
+      <button class="tab" [class.active]="tabActivo==='det'" (click)="tabActivo='det'">🧾 Detalles por ítem ({{ flatDet.length }})</button>
+      <div class="spacer"></div>
+      <div class="estado-chips">
+        <div class="chip" [class.active]="filtroEstado==='TODOS'" (click)="filtroEstado='TODOS'">Todos</div>
+        <div class="chip" *ngFor="let e of etapas" [class.active]="filtroEstado===e" (click)="filtroEstado=e">{{ etapaLbl[e] }}</div>
+      </div>
+    </div>
+
+    <div *ngIf="cargando" class="empty-card">Cargando análisis…</div>
+    <div *ngIf="error && !cargando" class="empty-card error">{{ error }}</div>
+
+    <!-- TAB 1: REQUERIMIENTOS -->
+    <div class="card" *ngIf="tabActivo==='req' && !cargando && !error">
+      <p-table
+        [value]="dataFiltrada"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 20, 50]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} requerimientos"
+        styleClass="p-datatable-sm p-datatable-striped"
+        [tableStyle]="{'min-width':'105rem'}"
+        emptyMessage="Sin datos">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="id">Requerimiento <p-sortIcon field="id" /></th>
+            <th pSortableColumn="pri">Prio. <p-sortIcon field="pri" /></th>
+            <th pSortableColumn="sol">Solicitante <p-sortIcon field="sol" /></th>
+            <th pSortableColumn="fundo">Fundo / Área <p-sortIcon field="fundo" /></th>
+            <th>F. Reg.</th><th>F. Aprob N2</th><th>Aprobador</th>
+            <th pSortableColumn="etapaNum">Etapa <p-sortIcon field="etapaNum" /></th>
+            <th>Avance</th>
+            <th>OC(s)</th><th>Proveedor</th><th>Monto</th>
+            <th pSortableColumn="dApOc">Aprob→OC <p-sortIcon field="dApOc" /></th>
+            <th pSortableColumn="dOcIng">OC→Ingreso <p-sortIcon field="dOcIng" /></th>
+            <th>Lead</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-r>
+          <tr>
+            <td><b>{{ r.id }}</b><div class="muted">REQ {{ r.spr || '—' }}</div></td>
+            <td><span class="badge" [ngClass]="r.pri==='A'?'b-rech':(r.pri==='B'?'b-ep':'b-ap')">{{ r.pri==='A'?'ALTA':(r.pri==='B'?'NORMAL':'BAJA') }}</span></td>
+            <td>{{ r.sol }}<div class="muted">{{ r.dni }}</div></td>
+            <td>{{ r.fundo }}<div class="muted">{{ r.area }}</div></td>
+            <td>{{ r.freg }}</td>
+            <td>{{ r.fap }}</td>
+            <td class="muted">{{ r.apN2 || '—' }}</td>
+            <td>
+              <span class="badge" [ngClass]="etapaCls[etapaReq(r)]">{{ etapaLbl[etapaReq(r)] }}</span>
+              <span *ngIf="r.ocRech" class="badge b-rech">OC RECH.</span>
+            </td>
+            <td>
+              {{ r.linAtend }}/{{ r.totLin }}
+              <div class="prog"><div [style.width.%]="r.totLin ? (r.linAtend/r.totLin*100) : 0"></div></div>
+            </td>
+            <td>
+              <div *ngFor="let o of r.ocs" class="ocinfo">
+                <b>{{ o.n }}</b> <span class="muted">{{ o.est }}</span><br>
+                <span class="muted">SPR {{ o.spr || '—' }}</span>
+              </div>
+              <span *ngIf="!r.ocs?.length" class="muted">—</span>
+            </td>
+            <td class="muted">{{ r.ocs?.length ? r.ocs[0].prov : '—' }}</td>
+            <td>{{ r.ocs?.length ? ((r.ocs[0].moneda==='USD'?'$':'S/') + ' ' + r.ocs[0].monto) : '—' }}</td>
+            <td><span [ngClass]="leadClass(r.dApOc)">{{ r.dApOc != null ? r.dApOc + 'd' : '—' }}</span></td>
+            <td><span [ngClass]="leadClass(r.dOcIng)">{{ r.dOcIng != null ? r.dOcIng + 'd' : '—' }}</span></td>
+            <td><span [ngClass]="leadClass((r.dApOc ?? 0) + (r.dOcIng ?? 0))">{{ (r.dApOc != null && r.dOcIng != null) ? (r.dApOc + r.dOcIng) + 'd' : '—' }}</span></td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="15" class="empty">Sin datos</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- TAB 2: DETALLES -->
+    <div class="card" *ngIf="tabActivo==='det' && !cargando && !error">
+      <p-table
+        [value]="flatDet"
+        [paginator]="true"
+        [rows]="15"
+        [rowsPerPageOptions]="[15, 30, 50]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ítems"
+        styleClass="p-datatable-sm p-datatable-striped"
+        [tableStyle]="{'min-width':'110rem'}"
+        emptyMessage="Sin datos">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="reqNum">Req <p-sortIcon field="reqNum" /></th>
+            <th pSortableColumn="det.cod">Código <p-sortIcon field="det.cod" /></th>
+            <th pSortableColumn="det.desc">Descripción <p-sortIcon field="det.desc" /></th>
+            <th>UM</th><th>Cant.</th>
+            <th>Ceco / Proy / Partida</th>
+            <th pSortableColumn="det.etapa">Etapa <p-sortIcon field="det.etapa" /></th>
+            <th pSortableColumn="det.oc">OC / Sec <p-sortIcon field="det.oc" /></th>
+            <th>Estado OC</th>
+            <th pSortableColumn="det.prov">Proveedor <p-sortIcon field="det.prov" /></th>
+            <th>P.Unit</th><th>Ped/Rec/Pend</th><th>% At.</th>
+            <th pSortableColumn="det.ni">NI <p-sortIcon field="det.ni" /></th>
+            <th>Guía</th><th>F. Ingreso</th>
+            <th pSortableColumn="det.dEtapa">Días etapa <p-sortIcon field="det.dEtapa" /></th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-x>
+          <tr>
+            <td>
+              <b>{{ x.req.spr || x.req.id }}</b>
+              <div class="muted" *ngIf="!x.req.spr">
+                Sin N° REQ{{ etapaReq(x.req) === 'PENDIENTE' ? ' (pendiente)' : '' }}
+              </div>
+            </td>
+            <td>{{ x.det.cod }}</td>
+            <td>{{ x.det.desc }}</td>
+            <td>{{ x.det.um }}</td>
+            <td>{{ x.det.cant }}</td>
+            <td class="muted">{{ x.det.ceco || '—' }} / {{ x.det.proy || '—' }} / {{ x.det.partida || '—' }}</td>
+            <td>
+              <span class="badge" [ngClass]="etapaCls[x.det.etapa]">{{ etapaLbl[x.det.etapa] }}</span>
+              <span *ngIf="x.det.parcial" class="badge b-parcial">PARCIAL</span>
+            </td>
+            <td><ng-container *ngIf="x.det.oc; else dash1"><b>{{ x.det.oc }}</b> / {{ x.det.sec }}</ng-container><ng-template #dash1>—</ng-template></td>
+            <td class="muted">{{ x.det.ocEst || '—' }}</td>
+            <td class="muted">{{ x.det.prov || '—' }}</td>
+            <td>{{ x.det.pu ?? '—' }}</td>
+            <td>{{ x.det.ped ?? '—' }} / {{ x.det.rec ?? '—' }} / {{ (x.det.ped != null && x.det.rec != null) ? x.det.ped - x.det.rec : '—' }}</td>
+            <td>
+              <ng-container *ngIf="x.det.ped">{{ (x.det.rec/x.det.ped*100) | number:'1.0-0' }}%
+                <div class="prog"><div [style.width.%]="x.det.ped ? x.det.rec/x.det.ped*100 : 0"></div></div>
+              </ng-container>
+            </td>
+            <td>{{ x.det.ni || '—' }}</td>
+            <td class="muted">{{ x.det.guia || '—' }}</td>
+            <td>{{ x.det.fing || '—' }}</td>
+            <td><span [ngClass]="leadClass(x.det.dEtapa)">{{ x.det.dEtapa != null ? x.det.dEtapa + 'd' : '—' }}</span></td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="17" class="empty">Sin datos</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+  </ng-container>
+
+  <div class="footer">
+    <span>Reporte restringido — validación de DNI en servidor</span>
+    <span>SP: LOGISTICA_reporteSeguimientoCompraAnalisis</span>
+  </div>
+</div>

@@ -148,6 +148,7 @@ export class AprobacionesService {
   getEstadoBadge(estado: string): { severity: 'success' | 'info' | 'secondary' | 'warn' | 'danger' | 'contrast'; label: string } {
     const badges: { [key: string]: { severity: 'success' | 'info' | 'secondary' | 'warn' | 'danger' | 'contrast'; label: string } } = {
       'PENDIENTE': { severity: 'warn', label: 'PENDIENTE' },
+      'APROBACION1': { severity: 'info', label: 'APROBADO N1 · PENDIENTE GERENCIA' },
       'APROBADO': { severity: 'success', label: 'APROBADO' },
       'RECHAZADO': { severity: 'danger', label: 'RECHAZADO' },
       'PENDIENTE_APROBACION': { severity: 'info', label: 'EN APROBACIÓN' }

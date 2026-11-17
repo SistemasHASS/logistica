@@ -236,13 +236,14 @@
                     [disabled]="false"
                     [required]="true">
                   </app-dropdown>
+                  <!-- TODO(PARTIDA): (ngModelChange)="darPartidas(true)" removido hasta retomar desarrollo -->
                 </div>
               </div>
             </fieldset>
           </div>
         </div>
 
-        <!-- ALMACÉN -->
+        <!-- ALMACÉN / PARTIDA -->
         <div class="row">
           <div class="col-6 col-lg-6 marginBottom">
             <fieldset>
@@ -264,6 +265,23 @@
               </div>
             </fieldset>
           </div>
+          <!-- TODO(PARTIDA): campo Partida comentado hasta retomar desarrollo
+          <div class="col-6 col-lg-6 marginBottom">
+            <fieldset>
+              <div class="form-group row box-labelFloat">
+                <label class="col-lg-3 col-form-label">
+                  Partida
+                </label>
+                <div class="col-lg-9">
+                  <app-tree-select [(ngModel)]="selectedPartidaId" (ngModelChange)="onPartidaChange()"
+                    [options]="partidaTreeNodes" [singleSelection]="true"
+                    placeholder="Seleccione una partida"></app-tree-select>
+                  <small class="text-muted">Opcional - depende del Proyecto seleccionado</small>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          -->
         </div>
         </div><!-- Fin formulario parámetros -->
       </div>
@@ -469,6 +487,7 @@
                     [disabled]="false"
                     [required]="true">
                   </app-dropdown>
+                  <!-- TODO(PARTIDA): (ngModelChange)="darPartidas(true)" removido hasta retomar desarrollo -->
                 </div>
               </div>
             </fieldset>
@@ -495,6 +514,26 @@
             </fieldset>
           </div>
         </div>
+
+        <!-- TODO(PARTIDA): campo Partida comentado hasta retomar desarrollo
+        <div class="row">
+          <div class="col-6 col-lg-6 marginBottom">
+            <fieldset>
+              <div class="form-group row box-labelFloat">
+                <label class="col-lg-3 col-form-label">
+                  Partida
+                </label>
+                <div class="col-lg-9">
+                  <app-tree-select [(ngModel)]="selectedPartidaId" (ngModelChange)="onPartidaChange()"
+                    [options]="partidaTreeNodes" [singleSelection]="true"
+                    placeholder="Seleccione una partida"></app-tree-select>
+                  <small class="text-muted">Opcional - depende del Proyecto seleccionado</small>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+        -->
 
       </div>
 
@@ -640,7 +679,7 @@
           </div>
         </div>
 
-        <!-- PROYECTO -->
+        <!-- PROYECTO / PARTIDA -->
         <div class="row">
           <div class="col-6 col-lg-6 marginBottom">
             <fieldset>
@@ -653,10 +692,28 @@
                     [valueField]="'afe'" [optionLabel]="'proyectoio'" [textShow]="'Proyecto'" [textShow2]="'un proyecto'"
                     [disabled]="false" [required]="true">
                   </app-dropdown>
+                  <!-- TODO(PARTIDA): (ngModelChange)="darPartidas(true)" removido hasta retomar desarrollo -->
                 </div>
               </div>
             </fieldset>
           </div>
+          <!-- TODO(PARTIDA): campo Partida comentado hasta retomar desarrollo
+          <div class="col-6 col-lg-6 marginBottom">
+            <fieldset>
+              <div class="form-group row box-labelFloat">
+                <label class="col-lg-3 col-form-label">
+                  Partida
+                </label>
+                <div class="col-lg-9">
+                  <app-tree-select [(ngModel)]="selectedPartidaId" (ngModelChange)="onPartidaChange()"
+                    [options]="partidaTreeNodes" [singleSelection]="true"
+                    placeholder="Seleccione una partida"></app-tree-select>
+                  <small class="text-muted">Opcional - depende del Proyecto seleccionado</small>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          -->
         </div>
 
       </div>

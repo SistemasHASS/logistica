@@ -39,6 +39,15 @@ export class MaestrasService {
     }
   }
 
+  getPartidas(body: any): Observable<any> {
+    const url = `${this.apiMaestra}/api/Maestros/get-partidas`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error en el api: partidas');
+    }
+  }
+
   getItems(body: any): Observable<any> {
     const url = `${this.apiMaestra}/api/Maestros/get-items-cmmdty`;
     try {

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -51,7 +51,7 @@ export class MaestroProveedoresComponent implements OnInit {
   filtroTipoPersona: string = 'TODOS';
 
   // Estado de carga
-  cargando = false;
+  cargando = true;
 
   // Contadores
   totalProveedores = 0;
@@ -70,6 +70,7 @@ export class MaestroProveedoresComponent implements OnInit {
   tiposServicio = ['BIENES', 'SERVICIOS', 'MIXTO'];
 
   private http = inject(HttpClient);
+  private cdr = inject(ChangeDetectorRef);
   private dexieService = inject(DexieService);
   private alertService = inject(AlertService);
   private baseUrl = environment.baseUrl;
@@ -90,32 +91,24 @@ export class MaestroProveedoresComponent implements OnInit {
     return { ...p, documento: p.documento || p.RazonSocial || '' };
   }
 
-  async cargarProveedores(forzarApi = false) {
-    const debeRecargarApi = sessionStorage.getItem('proveedores_recargar_api') === '1';
+  async cargarProveedores() {
+    this.cargando = true;
 
-    // 1. Carga inmediata desde Dexie
+    // 1. Carga inmediata desde Dexie para mostrar data mientras responde el API
     const dexieRaw = await this.dexieService.showProveedores();
     const dexieData: Proveedor[] = dexieRaw.map((p: any) => this.normalizarProveedor(p));
-    const hayDataEnDexie = dexieData.length > 0;
 
     // Detectar data corrupta: todos sin documento y sin RazonSocial
-    const dexieCorrupto = hayDataEnDexie &&
+    const dexieCorrupto = dexieData.length > 0 &&
       dexieData.every(p => !p.documento && !(p as any).RazonSocial);
 
-    if (hayDataEnDexie && !dexieCorrupto) {
+    if (dexieData.length > 0 && !dexieCorrupto) {
       this.proveedores = dexieData;
       this.aplicarFiltros();
       this.calcularContadores();
     }
 
-    // 2. Llamar API si: Dexie vacío, corrupto, forzado externamente, o hay flag de nuevo registro
-    const necesitaApi = !hayDataEnDexie || dexieCorrupto || forzarApi || debeRecargarApi;
-    if (!necesitaApi) return;
-
-    sessionStorage.removeItem('proveedores_recargar_api');
-    // Mostrar loading solo si Dexie estaba vacío (primera carga)
-    if (!hayDataEnDexie) this.cargando = true;
-
+    // 2. Refrescar siempre desde el API (carga automática y botón Actualizar)
     try {
       const body = {
         documento: this.filtroDocumento || '',
@@ -143,8 +136,8 @@ export class MaestroProveedoresComponent implements OnInit {
 
       if (proveedoresApi.length > 0) {
         this.proveedores = proveedoresApi;
-        await this.dexieService.clearProveedores();
-        await this.dexieService.saveProveedores(proveedoresApi);
+        // Persistir en caché local en segundo plano, sin bloquear la UI
+        this.persistirProveedoresEnDexie(proveedoresApi);
       }
     } catch {
       console.warn('[Proveedores] API no disponible, usando Dexie como fallback.');
@@ -152,6 +145,16 @@ export class MaestroProveedoresComponent implements OnInit {
       this.cargando = false;
       this.aplicarFiltros();
       this.calcularContadores();
+      this.cdr.detectChanges();
+    }
+  }
+
+  private async persistirProveedoresEnDexie(lista: Proveedor[]) {
+    try {
+      await this.dexieService.clearProveedores();
+      await this.dexieService.saveProveedores(lista);
+    } catch (error) {
+      console.warn('[Proveedores] No se pudo guardar en caché local:', error);
     }
   }
 
@@ -209,8 +212,7 @@ export class MaestroProveedoresComponent implements OnInit {
       if (resultado === 'OK') {
         this.alertService.showAlert('Éxito', mensaje, 'success');
         this.mostrarFormulario = false;
-        sessionStorage.setItem('proveedores_recargar_api', '1');
-        await this.cargarProveedores(true); // fuerza recarga API tras nuevo registro
+        await this.cargarProveedores(); // recarga API tras nuevo registro
       } else {
         this.alertService.showAlert('Error', mensaje, 'error');
       }

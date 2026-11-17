@@ -49,6 +49,19 @@ export class AdminUsuariosService {
   }
 
   /**
+   * Actualizar usuario por área (incluye flag esAprobador)
+   * SP_Logistica_UsuariosPorArea_Actualizar — requiere la fila completa
+   */
+  actualizarUsuarioPorArea(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/admin-logistica/usuarios-por-area/actualizar`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error al actualizar usuario por área');
+    }
+  }
+
+  /**
    * Obtener configuración de usuario
    */
   obtenerConfiguracionUsuario(body: any): Observable<any> {

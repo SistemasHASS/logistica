@@ -3,7 +3,7 @@
   <div class="page-header">
     <h2>Maestro de Proveedores</h2>
     <div class="header-actions">
-      <button class="btn btn-outline-secondary" (click)="cargarProveedores(true)" [disabled]="cargando" title="Actualizar desde servidor">
+      <button class="btn btn-outline-secondary" (click)="cargarProveedores()" [disabled]="cargando" title="Actualizar desde servidor">
         <i class="bx" [class.bx-refresh]="!cargando" [class.bx-loader-alt]="cargando" [class.bx-spin]="cargando"></i>
         Actualizar
       </button>
@@ -91,8 +91,15 @@
     <!-- TABLA DE PROVEEDORES -->
     <div class="card">
       <div class="card-body p-0">
-        <!-- LOADING BANNER -->
-        <div *ngIf="cargando" class="loading-banner">
+        <!-- SPINNER DE CARGA INICIAL (sin data aún) -->
+        <div *ngIf="cargando && proveedoresFiltrados.length === 0" class="initial-loader">
+          <div class="spinner"></div>
+          <p class="loader-title">Cargando proveedores...</p>
+          <span class="loader-subtext">Espere mientras se obtiene la información del servidor</span>
+        </div>
+
+        <!-- LOADING BANNER (refresco con data existente) -->
+        <div *ngIf="cargando && proveedoresFiltrados.length > 0" class="loading-banner">
           <div class="loading-bar">
             <div class="loading-bar-progress"></div>
           </div>
@@ -103,6 +110,7 @@
         </div>
 
         <p-table
+          *ngIf="!cargando || proveedoresFiltrados.length > 0"
           [value]="proveedoresFiltrados"
           [loading]="cargando"
           [paginator]="true"
@@ -284,10 +292,9 @@
       </div>
     </div>
   </div>
-</div>
 
-<!-- MODAL DETALLE PROVEEDOR -->
-<div class="modal-overlay" *ngIf="modalDetalleAbierto" (click)="cerrarModalDetalle()">
+  <!-- MODAL DETALLE PROVEEDOR -->
+  <div class="modal-overlay" *ngIf="modalDetalleAbierto" (click)="cerrarModalDetalle()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>Detalle del Proveedor</h3>
@@ -341,6 +348,7 @@
       <button class="btn-secondary" (click)="cerrarModalDetalle()">
         Cerrar
       </button>
+    </div>
     </div>
   </div>
 </div>

@@ -116,8 +116,11 @@
     <div class="solicitudes-section" *ngIf="tabListado === 'PENDIENTES' && requerimientosServicio.length > 0">
       <h3>Requerimientos de Servicio Aprobados (Pendientes de Orden)</h3>
       <div class="table-wrapper">
-        <table class="table">
-          <thead>
+        <p-table [value]="requerimientosServicio" [paginator]="true" [rows]="10"
+                 [rowsPerPageOptions]="[10,25,50]" [showCurrentPageReport]="true"
+                 currentPageReportTemplate="Mostrando {first}-{last} de {totalRecords}"
+                 styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
             <tr>
               <th>#</th>
               <th>N° Requerimiento</th>
@@ -128,10 +131,10 @@
               <th class="text-center">Cantidad</th>
               <th>Acciones</th>
             </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let req of requerimientosServicio; let i = index">
-              <td>{{ i + 1 }}</td>
+          </ng-template>
+          <ng-template pTemplate="body" let-req let-ri="rowIndex">
+            <tr>
+              <td class="text-muted small">{{ ri + 1 }}</td>
               <td><strong>{{ req.numeroRequerimiento }}</strong></td>
               <td>
                 <strong>{{ req.empresa || req.ruc || '-' }}</strong>
@@ -142,16 +145,29 @@
               <td>{{ req.descripcion }}</td>
               <td class="text-center">{{ req.cantidad }} {{ req.unidadMedida }}</td>
               <td class="actions">
-                <button 
-                  class="btn btn-sm btn-success" 
+                <button
+                  class="btn btn-sm btn-info"
+                  (click)="verDetalleRequerimiento(req)"
+                  title="Ver detalle del requerimiento">
+                  <i class="bx bx-show"></i>
+                </button>
+                <button
+                  class="btn btn-sm btn-success"
                   (click)="seleccionarRequerimiento(req); mostrarFormulario = true"
                   title="Generar Orden de Servicio">
                   <i class="bx bx-file-plus"></i> Generar OS
                 </button>
               </td>
             </tr>
-          </tbody>
-        </table>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">
+                <i class="bx bx-inbox fs-3 d-block mb-2"></i>No hay requerimientos de servicio aprobados pendientes.
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
       </div>
     </div>
 
@@ -269,10 +285,14 @@
                       (click)="abrirModalConformidad(orden)" title="Registrar Conformidad">
                 <i class="bx bx-check-circle"></i>
               </button>
-              <button class="btn btn-sm btn-primary me-2" *ngIf="orden.estado === 'GENERADA'"
-                      (click)="sincronizarOrdenServicio(orden)" title="Enviar a SPRING">
-                <i class="bx bx-transfer"></i> SPRING
-              </button>
+              @if (puedeEnviarAprobacion(orden)) {
+                <button type="button" class="btn btn-sm btn-primary me-2"
+                        (click)="$event.stopPropagation(); enviarAprobacion(orden)"
+                        [disabled]="enviandoAprobacion() !== null" title="Enviar OS a aprobación">
+                  <i class="bx bx-send" aria-hidden="true"></i>
+                  {{ enviandoAprobacion() === orden.id ? 'Enviando...' : 'Enviar a aprobación' }}
+                </button>
+              }
             </td>
           </tr>
         </ng-template>
@@ -364,6 +384,9 @@
                     <small>{{ req.ultimoProveedor || '-' }}</small>
                   </td>
                   <td>
+                    <button class="btn btn-sm btn-info" (click)="verDetalleRequerimiento(req)" title="Ver detalle del requerimiento">
+                      <i class="bx bx-show"></i>
+                    </button>
                     <button class="btn btn-sm btn-success" (click)="seleccionarRequerimiento(req)" title="Generar OS desde este requerimiento">
                       <i class="bx bx-file-plus"></i> Generar OS
                     </button>
@@ -382,8 +405,8 @@
         </div>
       </div>
 
-      <!-- FORMULARIO GENERAL (visible cuando hay orden actual) -->
-      <div *ngIf="ordenActual">
+      <!-- FORMULARIO GENERAL (visible cuando hay orden actual y tab General activo) -->
+      <div *ngIf="ordenActual && !mostrarTabDistribucion">
         <div class="section-title">Información General</div>
         <div class="form-grid">
           <div class="form-group">
@@ -395,8 +418,24 @@
             <input type="date" class="form-control" [(ngModel)]="ordenActual.fecha">
           </div>
           <div class="form-group">
-            <label>Tipo de Servicio:</label>
-            <input type="text" class="form-control" [(ngModel)]="ordenActual.tipoServicio" [readonly]="tipoOrden === 'DESDE_SOLICITUD'">
+            <label>Tipo de Servicio: <span class="required" *ngIf="tipoOrden === 'DIRECTA'">*</span></label>
+            <p-autoComplete
+              *ngIf="tipoOrden === 'DIRECTA'"
+              [(ngModel)]="tipoServicioSel"
+              [suggestions]="tipoServicioSugeridos"
+              (completeMethod)="filtrarTipoServicio($event)"
+              (onSelect)="seleccionarTipoServicio($event)"
+              (onClear)="limpiarTipoServicio()"
+              [optionLabel]="etiquetaServicio"
+              [dropdown]="true"
+              [forceSelection]="true"
+              placeholder="Buscar servicio (ej. 0702)..."
+              styleClass="w-100">
+              <ng-template let-sc pTemplate="item">
+                <div><strong>{{ sc.commodity }}</strong> — {{ sc.descripcionLocal }}</div>
+              </ng-template>
+            </p-autoComplete>
+            <input *ngIf="tipoOrden !== 'DIRECTA'" type="text" class="form-control" [(ngModel)]="ordenActual.tipoServicio" readonly>
           </div>
           <div class="form-group" *ngIf="tipoOrden === 'DIRECTA'">
             <label>Descripción del Servicio:</label>
@@ -499,9 +538,19 @@
             <label>Plazo Ejecución (días):</label>
             <input type="number" class="form-control" [(ngModel)]="ordenActual.plazoEjecucion">
           </div>
+          <div class="form-group" *ngIf="tipoOrden === 'DIRECTA'">
+            <label>Centro de Costos: <span class="required">*</span></label>
+            <select class="form-control" [(ngModel)]="ordenActual.centroCosto">
+              <option value="">-- Seleccione --</option>
+              <option *ngFor="let ceco of cecosData" [value]="ceco.costcenter">{{ ceco.costcenter }} - {{ ceco.localname }}</option>
+              <option *ngIf="ordenActual.centroCosto && !cecoExiste(ordenActual.centroCosto)" [value]="ordenActual.centroCosto">{{ ordenActual.centroCosto }}</option>
+            </select>
+          </div>
           <div class="form-group">
             <label>Monto Total:</label>
-            <input type="number" class="form-control" [(ngModel)]="ordenActual.montoTotal" step="0.01">
+            <input type="number" class="form-control" [(ngModel)]="ordenActual.montoTotal" step="0.01"
+                   [readonly]="tipoOrden === 'DIRECTA' && (ordenActual.detalle?.length || 0) > 0"
+                   [title]="tipoOrden === 'DIRECTA' && (ordenActual.detalle?.length || 0) > 0 ? 'Se calcula desde el detalle de servicios' : ''">
           </div>
           <div class="form-group">
             <label>Condiciones de Pago: <span class="required">*</span></label>
@@ -528,10 +577,68 @@
           <label>Penalidades:</label>
           <textarea class="form-control" [(ngModel)]="ordenActual.penalidades" rows="2"></textarea>
         </div>
+
+        <!-- DETALLE DE SERVICIOS (COMMODITIES) - solo OS directa -->
+        <div *ngIf="tipoOrden === 'DIRECTA'" class="mt-3">
+          <div class="section-title">Detalle de Servicios (Commodities)</div>
+          <div class="form-group mb-2" style="max-width: 650px;">
+            <label class="fw-bold">Agregar commodity:</label>
+            <small class="text-muted d-block" *ngIf="tipoServicioSel">
+              Filtrado por el grupo del tipo de servicio: {{ tipoServicioSel.commodity01 }}
+            </small>
+            <p-autoComplete
+              [(ngModel)]="detalleCommoditySel"
+              [suggestions]="subCommoditiesSugeridos"
+              (completeMethod)="filtrarSubCommodities($event)"
+              (onSelect)="agregarLineaDetalleOS($event)"
+              [optionLabel]="etiquetaServicio"
+              [dropdown]="true"
+              [forceSelection]="true"
+              placeholder="Buscar por código o descripción..."
+              styleClass="w-100">
+              <ng-template let-sc pTemplate="item">
+                <div><strong>{{ sc.commodity }}</strong> — {{ sc.descripcionLocal }}</div>
+              </ng-template>
+            </p-autoComplete>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width:30px">#</th>
+                  <th>Commodity</th>
+                  <th>Descripción</th>
+                  <th>UM</th>
+                  <th class="text-end" style="width:100px">Cantidad</th>
+                  <th class="text-end" style="width:110px">P. Unitario</th>
+                  <th class="text-end" style="width:110px">Subtotal</th>
+                  <th style="width:50px"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let d of ordenActual.detalle; let i = index">
+                  <td>{{ d.lineaDetalle }}</td>
+                  <td><strong>{{ d.commodity }}</strong></td>
+                  <td><input type="text" class="form-control form-control-sm" [(ngModel)]="d.descripcion"></td>
+                  <td>{{ d.unidadMedida }}</td>
+                  <td><input type="number" class="form-control form-control-sm text-end" [(ngModel)]="d.cantidad" min="0" step="0.0001" (ngModelChange)="recalcularDetalleOS()"></td>
+                  <td><input type="number" class="form-control form-control-sm text-end" [(ngModel)]="d.precioUnitario" min="0" step="0.01" (ngModelChange)="recalcularDetalleOS()"></td>
+                  <td class="text-end">S/ {{ formatearMoneda(d.montoTotal) }}</td>
+                  <td><button class="btn btn-sm btn-outline-danger" type="button" (click)="quitarLineaDetalleOS(i)" title="Quitar línea"><i class="bx bx-trash"></i></button></td>
+                </tr>
+                <tr *ngIf="!ordenActual.detalle?.length">
+                  <td colspan="8" class="text-center text-muted py-3">
+                    <i class="bx bx-inbox fs-4 d-block mb-1"></i>Agregue commodities desde el buscador. Si no agrega líneas, podrá ingresar el monto total manualmente.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
-      <!-- DISTRIBUCIÓN CONTABLE -->
-      <div class="distribucion-section" *ngIf="ordenActual && distribucionContable.length > 0">
+      <!-- DISTRIBUCIÓN CONTABLE (visible en tab Distrib. Contable) -->
+      <div class="distribucion-section" *ngIf="ordenActual && mostrarTabDistribucion">
         <div class="section-header">
           <h4>Distribución Contable</h4>
           <button class="btn-primary" type="button" (click)="abrirModalDistribucion()">
@@ -1259,3 +1366,120 @@
   </div>
 </div>
 }
+
+<!-- Modal de Detalle de Requerimiento de Servicio -->
+<div class="modal-overlay" *ngIf="mostrarModalDetalleReq" (click)="cerrarModalDetalleReq()">
+  <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="bx bx-file"></i>
+        Detalle del Requerimiento: {{ detalleReqSeleccionado?.RequisicionNumero || reqOrigenSeleccionado?.numeroRequerimiento }}
+      </h3>
+      <button class="btn-close" (click)="cerrarModalDetalleReq()">
+        <i class="bx bx-x"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="detalleReqSeleccionado">
+      <div class="section-title">Información General</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>N° Requerimiento:</label>
+          <p class="form-control-plaintext"><strong>{{ detalleReqSeleccionado.RequisicionNumero || reqOrigenSeleccionado?.numeroRequerimiento }}</strong></p>
+        </div>
+        <div class="form-group">
+          <label>Empresa (RUC):</label>
+          <p class="form-control-plaintext">{{ detalleReqSeleccionado.ruc || reqOrigenSeleccionado?.ruc || '-' }}</p>
+        </div>
+        <div class="form-group">
+          <label>Área:</label>
+          <p class="form-control-plaintext">{{ detalleReqSeleccionado.area || reqOrigenSeleccionado?.area || '-' }}</p>
+        </div>
+        <div class="form-group">
+          <label>Fecha:</label>
+          <p class="form-control-plaintext">{{ detalleReqSeleccionado.fecharegistro ? (detalleReqSeleccionado.fecharegistro | date:'dd/MM/yyyy HH:mm') : '-' }}</p>
+        </div>
+        <div class="form-group">
+          <label>Tipo:</label>
+          <p class="form-control-plaintext">{{ detalleReqSeleccionado.tipo || detalleReqSeleccionado.itemtipo || '-' }}</p>
+        </div>
+        <div class="form-group">
+          <label>Estado:</label>
+          <p class="form-control-plaintext">{{ detalleReqSeleccionado.estados || '-' }}</p>
+        </div>
+        <div class="form-group full-width">
+          <label>Glosa:</label>
+          <p class="form-control-plaintext">{{ detalleReqSeleccionado.glosa || '-' }}</p>
+        </div>
+      </div>
+
+      <div class="section-title">
+        {{ detalleReqSeleccionado.tipo === 'COMMODITY' ? 'Detalle de Servicios' : 'Detalle de Ítems' }}
+      </div>
+      <div class="table-wrapper">
+        <table class="table" *ngIf="detalleReqSeleccionado.tipo !== 'COMMODITY'">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th class="text-center">Cantidad</th>
+              <th>Unidad</th>
+              <th>Familia</th>
+              <th>Categoría</th>
+              <th>Centro Costo</th>
+              <th>Proyecto</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of detalleReqSeleccionado.detalle">
+              <td class="mono">{{ d.codigo }}</td>
+              <td>{{ d.iddescripcion || d.idproducto }}</td>
+              <td class="text-center">{{ d.cantidad | number:'1.2-2' }}</td>
+              <td>{{ d.unidadMedida || 'UND' }}</td>
+              <td>{{ d.familia }}</td>
+              <td>{{ d.categoria }}</td>
+              <td>{{ d.idcentrocosto }}</td>
+              <td>{{ d.idproyecto }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table class="table" *ngIf="detalleReqSeleccionado.tipo === 'COMMODITY'">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Commodity</th>
+              <th>Subcommodity</th>
+              <th class="text-center">Cantidad</th>
+              <th>Centro Costo</th>
+              <th>Proyecto</th>
+              <th>Turno</th>
+              <th>Labor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of detalleReqSeleccionado.detalle">
+              <td class="mono">{{ d.codigo }}</td>
+              <td>{{ d.iddescripcion || d.descripcion }}</td>
+              <td>{{ d.commodity }}</td>
+              <td>{{ d.subcommodity }}</td>
+              <td class="text-center">{{ d.cantidad | number:'1.2-2' }}</td>
+              <td>{{ d.idcentrocosto }}</td>
+              <td>{{ d.idproyecto }}</td>
+              <td>{{ d.idturno }}</td>
+              <td>{{ d.idlabor }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrarModalDetalleReq()">Cerrar</button>
+      <button class="btn btn-success" (click)="generarOSDesdeModalReq()" *ngIf="reqOrigenSeleccionado">
+        <i class="bx bx-file-plus"></i> Generar OS
+      </button>
+    </div>
+  </div>
+</div>

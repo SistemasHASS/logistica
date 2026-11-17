@@ -116,3 +116,8 @@
     }
   }
 }
+
+/* SweetAlert por encima de los p-dialog de PrimeNG */
+.swal2-container {
+  z-index: 100000 !important;
+}

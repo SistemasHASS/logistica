@@ -82,4 +82,52 @@ export class AdminPerfilesService {
       throw new Error(error.error?.message || 'Error al asignar roles al perfil');
     }
   }
+
+  /**
+   * Asignar perfil a usuario
+   */
+  async asignarPerfilUsuario(body: any): Promise<any> {
+    const url = `${this.baseUrl}/api/logistica/asignar-perfil-usuario`;
+    try {
+      return await lastValueFrom(this.http.post<any>(url, body));
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error al asignar perfil al usuario');
+    }
+  }
+
+  /**
+   * Quitar perfil a usuario
+   */
+  async quitarPerfilUsuario(body: any): Promise<any> {
+    const url = `${this.baseUrl}/api/logistica/quitar-perfil-usuario`;
+    try {
+      return await lastValueFrom(this.http.post<any>(url, body));
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error al quitar perfil al usuario');
+    }
+  }
+
+  /**
+   * Listar perfiles de un usuario
+   */
+  listarPerfilesUsuario(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/listar-perfiles-usuario`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error al listar perfiles del usuario');
+    }
+  }
+
+  /**
+   * Roles efectivos del usuario (rol directo + roles de perfiles)
+   */
+  listarRolesEfectivos(body: any): Observable<any> {
+    const url = `${this.baseUrl}/api/logistica/listar-roles-efectivos`;
+    try {
+      return this.http.post<any>(url, body);
+    } catch (error: any) {
+      throw new Error(error.error?.message || 'Error al listar roles efectivos');
+    }
+  }
 }

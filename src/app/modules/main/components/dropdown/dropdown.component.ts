@@ -70,9 +70,12 @@ export class DropdownComponent implements ControlValueAccessor, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data'] && this.data?.length > 0 && this.tempValue !== null) {
-      this.setSelectedItem(this.tempValue);
-      this.tempValue = null;
+    if (changes['data']) {
+      this.filteredData = [...(this.data ?? [])];
+      if (this.data?.length > 0 && this.tempValue !== null) {
+        this.setSelectedItem(this.tempValue);
+        this.tempValue = null;
+      }
     }
   }
 
@@ -116,7 +119,7 @@ export class DropdownComponent implements ControlValueAccessor, OnChanges {
   filterData(searchTerm: string) {
     const lowerSearch = searchTerm.toLowerCase();
     this.filteredData = this.data.filter((item) =>
-      item[this.optionLabel].toLowerCase().includes(lowerSearch)
+      String(item[this.optionLabel] ?? '').toLowerCase().includes(lowerSearch)
     );
   }
 
