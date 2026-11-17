@@ -1,0 +1,8923 @@
+{
+ "sps": {
+  "logistica_listaritemspendientesconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SP_CONSOLIDACION_PARTE1.sql"
+  },
+  "logistica_crearconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SP_CONSOLIDACION_PARTE1.sql"
+  },
+  "logistica_obtenerconsolidacionporid": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SP_CONSOLIDACION_PARTE1.sql"
+  },
+  "logistica_listarhistorialconsolidaciones": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SP_CONSOLIDACION_PARTE1.sql"
+  },
+  "logistica_generarsolicitudcotizacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SP_CONSOLIDACION_PARTE1.sql"
+  },
+  "logistica_anularconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SP_CONSOLIDACION_PARTE1.sql"
+  },
+  "logistica_verrequerimientocompletopordetalle": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "03_SP_CONSOLIDACION_PARTE2.sql"
+  },
+  "logistica_anularlineaconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "03_SP_CONSOLIDACION_PARTE2.sql"
+  },
+  "logistica_anularitempendienteconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "03_SP_CONSOLIDACION_PARTE2.sql"
+  },
+  "logistica_registrarsaldopendienteaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "03_SP_CONSOLIDACION_PARTE2.sql"
+  },
+  "logistica_listarsaldospendientesaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "03_SP_CONSOLIDACION_PARTE2.sql"
+  },
+  "logistica_aprobarrechazarsaldopendiente": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "03_SP_CONSOLIDACION_PARTE2.sql"
+  },
+  "logistica_migrarsaldodirectoconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "03_SP_CONSOLIDACION_PARTE2.sql"
+  },
+  "logistica_poblaritemspendientesconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "04_SP_HELPER_POBLAR_PENDIENTES.sql"
+  },
+  "logistica_listarmissaldos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "05_SP_SALDO_REQUERIMIENTO.sql"
+  },
+  "logistica_confirmaratencionsaldo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "05_SP_SALDO_REQUERIMIENTO.sql"
+  },
+  "logistica_cerrarsaldo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "05_SP_SALDO_REQUERIMIENTO.sql"
+  },
+  "logistica_crearrequerimientocommodity": {
+   "params": [
+    [
+     "idrequerimiento",
+     "VARCHAR(20)"
+    ],
+    [
+     "fecha",
+     "DATE"
+    ],
+    [
+     "proveedor",
+     "VARCHAR(20)"
+    ],
+    [
+     "servicio",
+     "VARCHAR(100)"
+    ],
+    [
+     "descripcion",
+     "VARCHAR(500)"
+    ],
+    [
+     "almacen",
+     "VARCHAR(20)"
+    ],
+    [
+     "idclasificacion",
+     "VARCHAR(20)"
+    ],
+    [
+     "idproyecto",
+     "VARCHAR(20)"
+    ],
+    [
+     "idceco",
+     "VARCHAR(20)"
+    ],
+    [
+     "prioridad",
+     "INT"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ],
+    [
+     "glosa",
+     "VARCHAR(1000)"
+    ],
+    [
+     "detalles",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "06_SP_REQUERIMIENTOS_COMMODITY.sql"
+  },
+  "logistica_listarrequerimientosservicio": {
+   "params": [
+    [
+     "fechaDesde",
+     "DATE"
+    ],
+    [
+     "fechaHasta",
+     "DATE"
+    ],
+    [
+     "estado",
+     "INT"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "06_SP_REQUERIMIENTOS_COMMODITY.sql"
+  },
+  "logistica_actualizarrequerimientocommodity": {
+   "params": [
+    [
+     "idrequerimiento",
+     "VARCHAR(20)"
+    ],
+    [
+     "proveedor",
+     "VARCHAR(20)"
+    ],
+    [
+     "servicio",
+     "VARCHAR(100)"
+    ],
+    [
+     "descripcion",
+     "VARCHAR(500)"
+    ],
+    [
+     "glosa",
+     "VARCHAR(1000)"
+    ],
+    [
+     "detalles",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "06_SP_REQUERIMIENTOS_COMMODITY.sql"
+  },
+  "logistica_listarserviciospendientesconsolidacion": {
+   "params": [],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "06_SP_REQUERIMIENTOS_COMMODITY.sql"
+  },
+  "logistica_listarareas": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_creararea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_actualizararea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_eliminararea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_listarusuarioslogistica": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_configurarusuariologistica": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_listarroleslogistica": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_configurarrollogistica": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_listarperfiles": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_crearperfil": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_asignarrolesperfil": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_listarflujos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_crearflujo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_listaraprobadores": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_crearaprobador": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "07_SP_ADMINISTRACION.sql"
+  },
+  "logistica_listarrequerimientospendientesaprobacion": {
+   "params": [
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "07_SP_APROBACIONES.sql"
+  },
+  "logistica_listarserviciospendientesaprobacion": {
+   "params": [
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "07_SP_APROBACIONES.sql"
+  },
+  "logistica_aprobarrechazarrequerimiento": {
+   "params": [
+    [
+     "idrequerimiento",
+     "VARCHAR(20)"
+    ],
+    [
+     "accion",
+     "VARCHAR(20)"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ],
+    [
+     "comentarios",
+     "VARCHAR(500)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "07_SP_APROBACIONES.sql"
+  },
+  "logistica_aprobarrechazarservicio": {
+   "params": [
+    [
+     "idrequerimiento",
+     "VARCHAR(20)"
+    ],
+    [
+     "accion",
+     "VARCHAR(20)"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ],
+    [
+     "comentarios",
+     "VARCHAR(500)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "07_SP_APROBACIONES.sql"
+  },
+  "logistica_listaractivosfijospendientesaprobacion": {
+   "params": [
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "07_SP_APROBACIONES.sql"
+  },
+  "logistica_crearconsolidacionservicio": {
+   "params": [
+    [
+     "idconsolidacion",
+     "VARCHAR(20)"
+    ],
+    [
+     "fecha",
+     "DATE"
+    ],
+    [
+     "descripcion",
+     "VARCHAR(500)"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ],
+    [
+     "servicios",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "08_SP_CONSOLIDACION_SERVICIOS.sql"
+  },
+  "logistica_listarhistorialconsolidacionesservicio": {
+   "params": [
+    [
+     "fechaDesde",
+     "DATE"
+    ],
+    [
+     "fechaHasta",
+     "DATE"
+    ],
+    [
+     "estado",
+     "INT"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "08_SP_CONSOLIDACION_SERVICIOS.sql"
+  },
+  "logistica_generarsolicitudcotizacionservicio": {
+   "params": [
+    [
+     "idconsolidacion",
+     "VARCHAR(20)"
+    ],
+    [
+     "idsolicitud",
+     "VARCHAR(20)"
+    ],
+    [
+     "fechaLimite",
+     "DATE"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "08_SP_CONSOLIDACION_SERVICIOS.sql"
+  },
+  "logistica_loginadmin": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "08_SP_LOGIN_ADMIN.sql"
+  },
+  "logistica_registrarnotificacionstock": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "08_SP_NOTIFICACIONES_STOCK.sql"
+  },
+  "logistica_notificarstockdisponible": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "08_SP_NOTIFICACIONES_STOCK.sql"
+  },
+  "logistica_listarmisnotificaciones": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "08_SP_NOTIFICACIONES_STOCK.sql"
+  },
+  "logistica_limpiarnotificacionesantiguas": {
+   "params": [],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "08_SP_NOTIFICACIONES_STOCK.sql"
+  },
+  "logistica_listarsolicitudescotizacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "09_SP_COTIZACIONES.sql"
+  },
+  "logistica_registrarcotizacion": {
+   "params": [
+    [
+     "idcotizacion",
+     "VARCHAR(20)"
+    ],
+    [
+     "idsolicitud",
+     "VARCHAR(20)"
+    ],
+    [
+     "proveedor",
+     "VARCHAR(20)"
+    ],
+    [
+     "nombreProveedor",
+     "VARCHAR(200)"
+    ],
+    [
+     "rucProveedor",
+     "VARCHAR(20)"
+    ],
+    [
+     "fechaCotizacion",
+     "DATE"
+    ],
+    [
+     "fechaValidez",
+     "DATE"
+    ],
+    [
+     "moneda",
+     "VARCHAR(10)"
+    ],
+    [
+     "tiempoEntrega",
+     "INT"
+    ],
+    [
+     "formaPago",
+     "VARCHAR(100)"
+    ],
+    [
+     "observaciones",
+     "VARCHAR(1000)"
+    ],
+    [
+     "detalles",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "idcotizacion",
+     "VARCHAR(50)"
+    ],
+    [
+     "idsolicitud",
+     "VARCHAR(50)"
+    ],
+    [
+     "proveedor",
+     "VARCHAR(50)"
+    ],
+    [
+     "sociedad",
+     "VARCHAR(3)"
+    ],
+    [
+     "idproyecto",
+     "VARCHAR(10)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "09_SP_COTIZACIONES.sql"
+  },
+  "logistica_listarcotizacionesporsolicitud": {
+   "params": [
+    [
+     "idsolicitud",
+     "VARCHAR(20)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "09_SP_COTIZACIONES.sql"
+  },
+  "logistica_compararcotizaciones": {
+   "params": [
+    [
+     "idsolicitud",
+     "VARCHAR(20)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "09_SP_COTIZACIONES.sql"
+  },
+  "logistica_seleccionarproveedorganador": {
+   "params": [
+    [
+     "idcotizacion",
+     "VARCHAR(20)"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ],
+    [
+     "comentarios",
+     "VARCHAR(500)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "09_SP_COTIZACIONES.sql"
+  },
+  "logistica_registrarcotizacionservicio": {
+   "params": [
+    [
+     "idcotizacion",
+     "VARCHAR(20)"
+    ],
+    [
+     "idsolicitud",
+     "VARCHAR(20)"
+    ],
+    [
+     "proveedor",
+     "VARCHAR(20)"
+    ],
+    [
+     "nombreProveedor",
+     "VARCHAR(200)"
+    ],
+    [
+     "rucProveedor",
+     "VARCHAR(20)"
+    ],
+    [
+     "fechaCotizacion",
+     "DATE"
+    ],
+    [
+     "fechaValidez",
+     "DATE"
+    ],
+    [
+     "moneda",
+     "VARCHAR(10)"
+    ],
+    [
+     "tiempoEjecucion",
+     "INT"
+    ],
+    [
+     "formaPago",
+     "VARCHAR(100)"
+    ],
+    [
+     "observaciones",
+     "VARCHAR(1000)"
+    ],
+    [
+     "detalles",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "09_SP_COTIZACIONES.sql"
+  },
+  "logistica_listarsolicitudescotizacion_completo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "09_SP_COTIZACIONES_COMPATIBLE.sql"
+  },
+  "logistica_listarsolicitudescotizacion_debug": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "09_SP_COTIZACIONES_DEBUG.sql"
+  },
+  "logistica_listarsolicitudescotizacion_sindetalles": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "09_SP_COTIZACIONES_ESCAPE.sql"
+  },
+  "logistica_listarsolicitudescotizacion_simple": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "09_SP_COTIZACIONES_FINAL_FUNCIONAL.sql"
+  },
+  "logistica_listarsolicitudescotizacion_basic": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "09_SP_COTIZACIONES_JSON.sql"
+  },
+  "logistica_listarsolicitudescotizacion_sinroot": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "09_SP_COTIZACIONES_JSON_REAL.sql"
+  },
+  "logistica_listarsolicitudescotizacion_test": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": true,
+   "file": "09_SP_COTIZACIONES_TEST.sql"
+  },
+  "logistica_listarcotizaciones": {
+   "params": [
+    [
+     "sociedad",
+     "VARCHAR(3)"
+    ],
+    [
+     "idproyecto",
+     "VARCHAR(10)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "13_SP_LISTAR_COTIZACIONES.sql"
+  },
+  "logistica_listarcotizacionessimple": {
+   "params": [
+    [
+     "sociedad",
+     "VARCHAR(3)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "13_SP_LISTAR_COTIZACIONES.sql"
+  },
+  "logistica_probarregistrocotizacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "16_DEBUG_REGISTRO_COTIZACION.sql"
+  },
+  "logistica_crearsolicitudcompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "241_SP_SOLICITUDES_COMPRA.sql"
+  },
+  "logistica_actualizarestadosolicitudcompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "241_SP_SOLICITUDES_COMPRA.sql"
+  },
+  "logistica_eliminarsolicitudcompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "241_SP_SOLICITUDES_COMPRA.sql"
+  },
+  "logistica_obtenercontadoressolicitudes": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "241_SP_SOLICITUDES_COMPRA.sql"
+  },
+  "logistica_obtenerkpisdashboardcompras": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "242_SP_DASHBOARD_COMPRAS.sql"
+  },
+  "logistica_obtenersolicitudesporestado": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "242_SP_DASHBOARD_COMPRAS.sql"
+  },
+  "logistica_obtenertendenciasolicitudes": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "242_SP_DASHBOARD_COMPRAS.sql"
+  },
+  "logistica_obtenertopitemssolicitados": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "242_SP_DASHBOARD_COMPRAS.sql"
+  },
+  "logistica_obtenersolicitudesrecientes": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "242_SP_DASHBOARD_COMPRAS.sql"
+  },
+  "logistica_obtenerestadisticasporalmacen": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "242_SP_DASHBOARD_COMPRAS.sql"
+  },
+  "logistica_guardaradjuntosolicitudcompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "242_SP_SOLICITUD_COMPRA_ADJUNTOS.sql"
+  },
+  "logistica_listaradjuntossolicitudcompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "242_SP_SOLICITUD_COMPRA_ADJUNTOS.sql"
+  },
+  "logistica_obteneradjuntoporid": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "242_SP_SOLICITUD_COMPRA_ADJUNTOS.sql"
+  },
+  "logistica_eliminaradjuntosolicitudcompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "242_SP_SOLICITUD_COMPRA_ADJUNTOS.sql"
+  },
+  "logistica_actualizarestadosolicitudcotizacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "243_SP_ACTUALIZAR_ESTADO_SOLICITUD_COTIZACION.sql"
+  },
+  "logistica_reportesolicitudesporperiodo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "243_SP_REPORTES_COMPRAS.sql"
+  },
+  "logistica_reporteitemssolicitados": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "243_SP_REPORTES_COMPRAS.sql"
+  },
+  "logistica_reporteeficienciaaprobaciones": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "243_SP_REPORTES_COMPRAS.sql"
+  },
+  "logistica_reportesolicitudesporusuario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "243_SP_REPORTES_COMPRAS.sql"
+  },
+  "logistica_reporteanalisisrechazos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "243_SP_REPORTES_COMPRAS.sql"
+  },
+  "logistica_reportecomparativoalmacenes": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "243_SP_REPORTES_COMPRAS.sql"
+  },
+  "logistica_listarcommoditiespendientesconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "244_SP_LISTAR_COMMODITIES_PENDIENTES_CONSOLIDACION.sql"
+  },
+  "logistica_listarlistasstock": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "245_SP_LISTAS_STOCK.sql"
+  },
+  "logistica_crearlistastock": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "245_SP_LISTAS_STOCK.sql"
+  },
+  "logistica_actualizarlistastock": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "245_SP_LISTAS_STOCK.sql"
+  },
+  "logistica_eliminarlistastock": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "245_SP_LISTAS_STOCK.sql"
+  },
+  "logistica_verificarstockvslimites": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "245_SP_LISTAS_STOCK.sql"
+  },
+  "logistica_generaralertasstock": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "245_SP_LISTAS_STOCK.sql"
+  },
+  "logistica_listaralertasstock": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "245_SP_LISTAS_STOCK.sql"
+  },
+  "logistica_atenderalertastock": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "245_SP_LISTAS_STOCK.sql"
+  },
+  "logistica_registrarrequerimientocommodityaprobado": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "246_SP_REGISTRAR_REQUERIMIENTO_COMMODITY_APROBADO.sql"
+  },
+  "logistica_listarajustesinventario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "247_SP_GESTION_INVENTARIO.sql"
+  },
+  "logistica_crearajusteinventario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "247_SP_GESTION_INVENTARIO.sql"
+  },
+  "logistica_aprobarajusteinventario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "247_SP_GESTION_INVENTARIO.sql"
+  },
+  "logistica_listarconteosinventario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "247_SP_GESTION_INVENTARIO.sql"
+  },
+  "logistica_crearconteoinventario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "247_SP_GESTION_INVENTARIO.sql"
+  },
+  "logistica_registrarconteofisico": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "247_SP_GESTION_INVENTARIO.sql"
+  },
+  "logistica_finalizarconteoinventario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "247_SP_GESTION_INVENTARIO.sql"
+  },
+  "logistica_obtenerdetalleconteo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "247_SP_GESTION_INVENTARIO.sql"
+  },
+  "logistica_listarsolicitudespendientesaprobacionsc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "251_SP_APROBACION_SOLICITUD_COMPRA.sql"
+  },
+  "logistica_aprobarsolicitudcompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "251_SP_APROBACION_SOLICITUD_COMPRA.sql"
+  },
+  "logistica_rechazarsolicitudcompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "251_SP_APROBACION_SOLICITUD_COMPRA.sql"
+  },
+  "logistica_asignaraprobadoressc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "251_SP_APROBACION_SOLICITUD_COMPRA.sql"
+  },
+  "logistica_obtenerhistorialaprobacionessc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "251_SP_APROBACION_SOLICITUD_COMPRA.sql"
+  },
+  "logistica_obtenercontadoresaprobacionessc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "251_SP_APROBACION_SOLICITUD_COMPRA.sql"
+  },
+  "logistica_listarflujosaprobacionsc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "252_SP_CONFIGURACION_APROBADORES_SC.sql"
+  },
+  "logistica_guardarflujoaprobacionsc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "252_SP_CONFIGURACION_APROBADORES_SC.sql"
+  },
+  "logistica_eliminarflujoaprobacionsc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "252_SP_CONFIGURACION_APROBADORES_SC.sql"
+  },
+  "logistica_listarusuariosaprobadoressc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "252_SP_CONFIGURACION_APROBADORES_SC.sql"
+  },
+  "logistica_guardarusuarioaprobadorsc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "252_SP_CONFIGURACION_APROBADORES_SC.sql"
+  },
+  "logistica_eliminarusuarioaprobadorsc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "252_SP_CONFIGURACION_APROBADORES_SC.sql"
+  },
+  "logistica_obtenerrolesaprobacionsc": {
+   "params": [],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "252_SP_CONFIGURACION_APROBADORES_SC.sql"
+  },
+  "logistica_generarordendesdesolicitud": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "261_SP_ORDEN_COMPRA.sql"
+  },
+  "logistica_listarordenescompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "261_SP_ORDEN_COMPRA.sql"
+  },
+  "logistica_obtenerordencompraporid": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "261_SP_ORDEN_COMPRA.sql"
+  },
+  "logistica_actualizarestadoordencompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "261_SP_ORDEN_COMPRA.sql"
+  },
+  "logistica_anularordencompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "261_SP_ORDEN_COMPRA.sql"
+  },
+  "logistica_obtenercontadoresordenescompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "261_SP_ORDEN_COMPRA.sql"
+  },
+  "logistica_listaractivosfijospendientesconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "270_SP_LISTAR_ACTIVOS_FIJOS_PENDIENTES_CONSOLIDACION.sql"
+  },
+  "logistica_listaractivosmenorespendientesconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "271_SP_LISTAR_ACTIVOS_MENORES_PENDIENTES_CONSOLIDACION.sql"
+  },
+  "logistica_registrartransaccioninventario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "27_SP_KARDEX.sql"
+  },
+  "logistica_procesartransaccioninventario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "27_SP_KARDEX.sql"
+  },
+  "logistica_registrarmovimientokardex": {
+   "params": [
+    [
+     "tipoMovimiento",
+     "VARCHAR(20)"
+    ],
+    [
+     "tipoDocumento",
+     "VARCHAR(20)"
+    ],
+    [
+     "numeroDocumento",
+     "VARCHAR(50)"
+    ],
+    [
+     "idItem",
+     "INT"
+    ],
+    [
+     "codigoItem",
+     "VARCHAR(50)"
+    ],
+    [
+     "descripcionItem",
+     "VARCHAR(500)"
+    ],
+    [
+     "unidadMedida",
+     "VARCHAR(10)"
+    ],
+    [
+     "almacenOrigen",
+     "VARCHAR(50)"
+    ],
+    [
+     "almacenDestino",
+     "VARCHAR(50)"
+    ],
+    [
+     "cantidadEntrada",
+     "DECIMAL(18,4)"
+    ],
+    [
+     "cantidadSalida",
+     "DECIMAL(18,4)"
+    ],
+    [
+     "costoUnitario",
+     "DECIMAL(18,4)"
+    ],
+    [
+     "metodoValorizacion",
+     "VARCHAR(20)"
+    ],
+    [
+     "observaciones",
+     "VARCHAR(500)"
+    ],
+    [
+     "usuarioRegistro",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "27_SP_KARDEX.sql"
+  },
+  "logistica_actualizarstock": {
+   "params": [
+    [
+     "codigoItem",
+     "VARCHAR(50)"
+    ],
+    [
+     "almacen",
+     "VARCHAR(50)"
+    ],
+    [
+     "cantidad",
+     "DECIMAL(18,4)"
+    ],
+    [
+     "costoUnitario",
+     "DECIMAL(18,4)"
+    ],
+    [
+     "operacion",
+     "VARCHAR(10)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "27_SP_KARDEX.sql"
+  },
+  "logistica_registrarrecepcionoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "281_SP_RECEPCION_OC.sql"
+  },
+  "logistica_listarrecepciones": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "281_SP_RECEPCION_OC.sql"
+  },
+  "logistica_obtenerrecepcionporid": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "281_SP_RECEPCION_OC.sql"
+  },
+  "logistica_validarrecepcion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "281_SP_RECEPCION_OC.sql"
+  },
+  "logistica_ingresarrecepcionkardex": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "281_SP_RECEPCION_OC.sql"
+  },
+  "logistica_obtenercontadoresrecepciones": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "281_SP_RECEPCION_OC.sql"
+  },
+  "logistica_guardarsolicitudservicio": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "284_FIX_SP_GUARDAR_SOLICITUD_SERVICIO.sql"
+  },
+  "logistica_consultarkardex": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "28_SP_KARDEX_CONSULTAS.sql"
+  },
+  "logistica_consultarstock": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "28_SP_KARDEX_CONSULTAS.sql"
+  },
+  "logistica_listartransacciones": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "28_SP_KARDEX_CONSULTAS.sql"
+  },
+  "logistica_obtenerdetalletransaccion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "28_SP_KARDEX_CONSULTAS.sql"
+  },
+  "logistica_reportevalorizacioninventario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "28_SP_KARDEX_CONSULTAS.sql"
+  },
+  "logistica_dashboardinventario": {
+   "params": [],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "28_SP_KARDEX_CONSULTAS.sql"
+  },
+  "logistica_probarflujokardexcompleto": {
+   "params": [],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "28_SP_KARDEX_SPRING.sql"
+  },
+  "logistica_ejecutarrecepcionordencompra": {
+   "params": [
+    [
+     "companiaSocio",
+     "VARCHAR(20)"
+    ],
+    [
+     "numeroOrden",
+     "VARCHAR(20)"
+    ],
+    [
+     "almacenCodigo",
+     "VARCHAR(10)"
+    ],
+    [
+     "usuario",
+     "VARCHAR(20)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "28_SP_KARDEX_SPRING.sql"
+  },
+  "logistica_sincronizarkardexspring": {
+   "params": [
+    [
+     "companiaSocio",
+     "VARCHAR(20)"
+    ],
+    [
+     "fechaDesde",
+     "DATETIME"
+    ],
+    [
+     "fechaHasta",
+     "DATETIME"
+    ],
+    [
+     "soloPendientes",
+     "BIT"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "28_SP_KARDEX_SPRING.sql"
+  },
+  "logistica_ejecutarsincronizacionspring": {
+   "params": [
+    [
+     "companiaSocio",
+     "VARCHAR(20)"
+    ],
+    [
+     "fechaDesde",
+     "DATETIME"
+    ],
+    [
+     "fechaHasta",
+     "DATETIME"
+    ],
+    [
+     "soloPendientes",
+     "BIT"
+    ],
+    [
+     "ejecutarReal",
+     "BIT"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "28_SP_KARDEX_SPRING.sql"
+  },
+  "logistica_verificarestadosincronizacion": {
+   "params": [
+    [
+     "companiaSocio",
+     "VARCHAR(20)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "28_SP_KARDEX_SPRING.sql"
+  },
+  "logistica_asignaraprobadoresoc": {
+   "params": [
+    [
+     "idOrdenCompra",
+     "INT"
+    ],
+    [
+     "montoTotal",
+     "DECIMAL(18,2)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "291_SP_APROBACION_OC.sql"
+  },
+  "logistica_aprobarrechazaroc": {
+   "params": [
+    [
+     "idAprobacion",
+     "INT"
+    ],
+    [
+     "accion",
+     "VARCHAR(20)"
+    ],
+    [
+     "usuarioAprueba",
+     "VARCHAR(50)"
+    ],
+    [
+     "nombreUsuario",
+     "VARCHAR(200)"
+    ],
+    [
+     "observaciones",
+     "VARCHAR(500)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "291_SP_APROBACION_OC.sql"
+  },
+  "logistica_listarocpendientesaprobacion": {
+   "params": [
+    [
+     "documentoIdentidad",
+     "VARCHAR(20)"
+    ],
+    [
+     "rol",
+     "VARCHAR(50)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "291_SP_APROBACION_OC.sql"
+  },
+  "logistica_obtenerhistorialaprobacionoc": {
+   "params": [
+    [
+     "idOrdenCompra",
+     "INT"
+    ],
+    [
+     "numeroOrden",
+     "VARCHAR(50)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "291_SP_APROBACION_OC.sql"
+  },
+  "logistica_obtenercontadoresaprobacionoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "291_SP_APROBACION_OC.sql"
+  },
+  "logistica_guardarusuarioaprobadoroc": {
+   "params": [
+    [
+     "idUsuarioAprobador",
+     "INT"
+    ],
+    [
+     "documentoIdentidad",
+     "VARCHAR(20)"
+    ],
+    [
+     "nombreCompleto",
+     "VARCHAR(200)"
+    ],
+    [
+     "email",
+     "VARCHAR(200)"
+    ],
+    [
+     "rol",
+     "VARCHAR(50)"
+    ],
+    [
+     "montoMinimo",
+     "DECIMAL(18,2)"
+    ],
+    [
+     "montoMaximo",
+     "DECIMAL(18,2)"
+    ],
+    [
+     "nivel",
+     "INT"
+    ],
+    [
+     "activo",
+     "BIT"
+    ],
+    [
+     "usuarioCreacion",
+     "VARCHAR(50)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "291_SP_APROBACION_OC.sql"
+  },
+  "logistica_listarusuariosaprobadoresoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "291_SP_APROBACION_OC.sql"
+  },
+  "logistica_registrardevolucionproveedor": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "29_SP_DEVOLUCION_PROVEEDOR.sql"
+  },
+  "logistica_listardevolucionesproveedor": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "29_SP_DEVOLUCION_PROVEEDOR.sql"
+  },
+  "logistica_obtenerdevolucionproveedorporid": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "29_SP_DEVOLUCION_PROVEEDOR.sql"
+  },
+  "logistica_cambiarestadodevolucionproveedor": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "29_SP_DEVOLUCION_PROVEEDOR.sql"
+  },
+  "logistica_resolverdevolucionproveedor": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "29_SP_DEVOLUCION_PROVEEDOR.sql"
+  },
+  "logistica_listarrecepcionesnoconformes": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "29_SP_DEVOLUCION_PROVEEDOR.sql"
+  },
+  "logistica_generardevoluciondesderecepcion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "29_SP_DEVOLUCION_PROVEEDOR.sql"
+  },
+  "logistica_anulardevolucionproveedor": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "29_SP_DEVOLUCION_PROVEEDOR.sql"
+  },
+  "logistica_registrartransaccionkardex": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "29_SP_KARDEX_MISSING.sql"
+  },
+  "logistica_procesartransaccionkardex": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "29_SP_KARDEX_MISSING.sql"
+  },
+  "logistica_listartransaccioneskardex": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "29_SP_KARDEX_MISSING.sql"
+  },
+  "logistica_obtenerdetalletransaccionkardex": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "29_SP_KARDEX_MISSING.sql"
+  },
+  "logistica_reportevalorizacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "29_SP_KARDEX_MISSING.sql"
+  },
+  "logistica_anulartransaccionkardex": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "29_SP_KARDEX_MISSING.sql"
+  },
+  "logistica_listarproveedoresemail": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "300_EMAIL_PROVEEDORES.sql"
+  },
+  "logistica_crearproveedoremail": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "300_EMAIL_PROVEEDORES.sql"
+  },
+  "logistica_actualizarproveedoremail": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "300_EMAIL_PROVEEDORES.sql"
+  },
+  "logistica_eliminarproveedoremail": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "300_EMAIL_PROVEEDORES.sql"
+  },
+  "logistica_crearseguimientoos": {
+   "params": [
+    [
+     "idOrdenServicio",
+     "INT"
+    ],
+    [
+     "numeroOrden",
+     "VARCHAR(50)"
+    ],
+    [
+     "usuarioGenera",
+     "VARCHAR(50)"
+    ],
+    [
+     "hitosJson",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": true,
+   "file": "300_TABLAS_SEGUIMIENTO_SERVICIO.sql"
+  },
+  "logistica_actualizarseguimientoos": {
+   "params": [
+    [
+     "idOrdenServicio",
+     "INT"
+    ],
+    [
+     "nuevoEstado",
+     "VARCHAR(20)"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ],
+    [
+     "hitosJson",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "observaciones",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "300_TABLAS_SEGUIMIENTO_SERVICIO.sql"
+  },
+  "logistica_obtenerseguimientoos": {
+   "params": [
+    [
+     "idOrdenServicio",
+     "INT"
+    ],
+    [
+     "numeroOrden",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "300_TABLAS_SEGUIMIENTO_SERVICIO.sql"
+  },
+  "logistica_registrarconformidados": {
+   "params": [
+    [
+     "idOrdenServicio",
+     "INT"
+    ],
+    [
+     "conformidad",
+     "VARCHAR(20)"
+    ],
+    [
+     "calificacion",
+     "INT"
+    ],
+    [
+     "observaciones",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "300_TABLAS_SEGUIMIENTO_SERVICIO.sql"
+  },
+  "logistica_listarconfigsmtp": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "301_CONFIG_SMTP.sql"
+  },
+  "logistica_guardarconfigsmtp": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "301_CONFIG_SMTP.sql"
+  },
+  "logistica_probarconexionsmtp": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "301_CONFIG_SMTP.sql"
+  },
+  "logistica_eliminarconfigsmtp": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "301_CONFIG_SMTP.sql"
+  },
+  "logistica_listarsolicitudesservicio": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "301_SP_SOLICITUD_SERVICIO.sql"
+  },
+  "logistica_obtenersolicitudservicioporid": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "301_SP_SOLICITUD_SERVICIO.sql"
+  },
+  "logistica_enviarsolicitudservicio": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "301_SP_SOLICITUD_SERVICIO.sql"
+  },
+  "logistica_anularsolicitudservicio": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "301_SP_SOLICITUD_SERVICIO.sql"
+  },
+  "logistica_obtenercontadoresss": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "301_SP_SOLICITUD_SERVICIO.sql"
+  },
+  "logistica_listarplantillascorreo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "302_PLANTILLA_CORREO.sql"
+  },
+  "logistica_guardarplantillacorreo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "302_PLANTILLA_CORREO.sql"
+  },
+  "logistica_eliminarplantillacorreo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "302_PLANTILLA_CORREO.sql"
+  },
+  "logistica_asignaraprobadoresss": {
+   "params": [
+    [
+     "solicitudServicioId",
+     "INT"
+    ],
+    [
+     "montoEstimado",
+     "DECIMAL(18,2)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "302_SP_APROBACION_SS_COTIZACION.sql"
+  },
+  "logistica_aprobarrechazarss": {
+   "params": [
+    [
+     "idAprobacion",
+     "INT"
+    ],
+    [
+     "accion",
+     "VARCHAR(20)"
+    ],
+    [
+     "usuarioAprueba",
+     "VARCHAR(50)"
+    ],
+    [
+     "nombreUsuario",
+     "VARCHAR(200)"
+    ],
+    [
+     "observaciones",
+     "VARCHAR(500)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "302_SP_APROBACION_SS_COTIZACION.sql"
+  },
+  "logistica_listarsspendientesaprobacion": {
+   "params": [
+    [
+     "documentoIdentidad",
+     "VARCHAR(20)"
+    ],
+    [
+     "rol",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "302_SP_APROBACION_SS_COTIZACION.sql"
+  },
+  "logistica_guardarcotizacionservicio": {
+   "params": [
+    [
+     "cotizacionJson",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "302_SP_APROBACION_SS_COTIZACION.sql"
+  },
+  "logistica_listarcotizacionesservicio": {
+   "params": [
+    [
+     "filtrosJson",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "302_SP_APROBACION_SS_COTIZACION.sql"
+  },
+  "logistica_seleccionarcotizacionservicio": {
+   "params": [
+    [
+     "idCotizacion",
+     "INT"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "302_SP_APROBACION_SS_COTIZACION.sql"
+  },
+  "logistica_listarplantillaspdf": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "303_PLANTILLA_PDF.sql"
+  },
+  "logistica_guardarplantillapdf": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "303_PLANTILLA_PDF.sql"
+  },
+  "logistica_eliminarplantillapdf": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "303_PLANTILLA_PDF.sql"
+  },
+  "logistica_generarordenservicio": {
+   "params": [
+    [
+     "ordenJson",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "303_SP_ORDEN_SERVICIO.sql"
+  },
+  "logistica_listarordenesservicio": {
+   "params": [
+    [
+     "filtrosJson",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "303_SP_ORDEN_SERVICIO.sql"
+  },
+  "logistica_obtenerordenservicioporid": {
+   "params": [
+    [
+     "parametrosJson",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "303_SP_ORDEN_SERVICIO.sql"
+  },
+  "logistica_asignaraprobadoresos": {
+   "params": [
+    [
+     "ordenServicioId",
+     "INT"
+    ],
+    [
+     "montoTotal",
+     "DECIMAL(18,2)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "303_SP_ORDEN_SERVICIO.sql"
+  },
+  "logistica_aprobarrechazaros": {
+   "params": [
+    [
+     "idAprobacion",
+     "INT"
+    ],
+    [
+     "accion",
+     "VARCHAR(20)"
+    ],
+    [
+     "usuarioAprueba",
+     "VARCHAR(50)"
+    ],
+    [
+     "nombreUsuario",
+     "VARCHAR(200)"
+    ],
+    [
+     "observaciones",
+     "VARCHAR(500)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "303_SP_ORDEN_SERVICIO.sql"
+  },
+  "logistica_listarospendientesaprobacion": {
+   "params": [
+    [
+     "documentoIdentidad",
+     "VARCHAR(20)"
+    ],
+    [
+     "rol",
+     "VARCHAR(50)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "303_SP_ORDEN_SERVICIO.sql"
+  },
+  "logistica_registrarconformidadservicio": {
+   "params": [
+    [
+     "conformidadJson",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "303_SP_ORDEN_SERVICIO.sql"
+  },
+  "logistica_obtenercontadoresaprobacionos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "304_SP_APROBACION_OS.sql"
+  },
+  "logistica_listarhistorialaprobacionesos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "304_SP_APROBACION_OS.sql"
+  },
+  "logistica_obtenerhistorialos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "304_SP_APROBACION_OS.sql"
+  },
+  "logistica_listarusuariosaprobadoresos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "304_SP_APROBACION_OS.sql"
+  },
+  "logistica_listarflujosaprobacionos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "304_SP_APROBACION_OS.sql"
+  },
+  "logistica_crearusuarioaprobadoros": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "304_SP_APROBACION_OS.sql"
+  },
+  "logistica_crearflujoaprobacionos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "304_SP_APROBACION_OS.sql"
+  },
+  "logistica_sincronizarordenservicio": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "304_SP_SINCRONIZAR_ORDEN_SERVICIO.sql"
+  },
+  "logistica_enviaraprobacionorden": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "308_SP_APROBACION_OC_OS.sql"
+  },
+  "logistica_listarpendientesaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "308_SP_APROBACION_OC_OS.sql"
+  },
+  "logistica_aprobarorden": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "308_SP_APROBACION_OC_OS.sql"
+  },
+  "logistica_rechazarorden": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "308_SP_APROBACION_OC_OS.sql"
+  },
+  "logistica_anularorden": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "308_SP_APROBACION_OC_OS.sql"
+  },
+  "logistica_listarhistorialaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "308_SP_APROBACION_OC_OS.sql"
+  },
+  "logistica_crearocdesdeconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "309_SP_CREAR_OC_OS_DESDE_CONSOLIDACION.sql"
+  },
+  "logistica_crearosdesdeconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "309_SP_CREAR_OC_OS_DESDE_CONSOLIDACION.sql"
+  },
+  "logistica_obtenerocdesdeconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "309_SP_CREAR_OC_OS_DESDE_CONSOLIDACION.sql"
+  },
+  "logistica_obtenerosdesdeconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "309_SP_CREAR_OC_OS_DESDE_CONSOLIDACION.sql"
+  },
+  "logistica_listarpendientesaprobaciondetallado": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "309_SP_CREAR_OC_OS_DESDE_CONSOLIDACION.sql"
+  },
+  "logistica_anulartransaccion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "30_SP_ANULAR_TRANSACCION.sql"
+  },
+  "logistica_registrardevolucionconsumo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "30_SP_DEVOLUCION_CONSUMO.sql"
+  },
+  "logistica_listardevolucionesconsumo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "30_SP_DEVOLUCION_CONSUMO.sql"
+  },
+  "logistica_obtenerdevolucionconsumoporid": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "30_SP_DEVOLUCION_CONSUMO.sql"
+  },
+  "logistica_aprobardevolucionconsumo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "30_SP_DEVOLUCION_CONSUMO.sql"
+  },
+  "logistica_rechazardevolucionconsumo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "30_SP_DEVOLUCION_CONSUMO.sql"
+  },
+  "logistica_anulardevolucionconsumo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "30_SP_DEVOLUCION_CONSUMO.sql"
+  },
+  "logistica_listardespachosconsumo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "30_SP_DEVOLUCION_CONSUMO.sql"
+  },
+  "logistica_listarrequerimientosparaoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "310_FLUJO_COMPLETO_OC_OS_COMPRAS_SERVICIOS.sql"
+  },
+  "logistica_listarrequerimientosparaos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "310_FLUJO_COMPLETO_OC_OS_COMPRAS_SERVICIOS.sql"
+  },
+  "logistica_crearocborrador": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "310_FLUJO_COMPLETO_OC_OS_COMPRAS_SERVICIOS.sql"
+  },
+  "logistica_enviarocaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "310_FLUJO_COMPLETO_OC_OS_COMPRAS_SERVICIOS.sql"
+  },
+  "logistica_confirmarenviooc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "310_FLUJO_COMPLETO_OC_OS_COMPRAS_SERVICIOS.sql"
+  },
+  "logistica_listarocsporestado": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "310_FLUJO_COMPLETO_OC_OS_COMPRAS_SERVICIOS.sql"
+  },
+  "logistica_guardaradjuntooc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "310_FLUJO_COMPLETO_OC_OS_COMPRAS_SERVICIOS.sql"
+  },
+  "logistica_listaradjuntosoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "310_FLUJO_COMPLETO_OC_OS_COMPRAS_SERVICIOS.sql"
+  },
+  "logistica_crearosborrador": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "310_FLUJO_COMPLETO_OC_OS_COMPRAS_SERVICIOS.sql"
+  },
+  "logistica_enviarosaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "310_FLUJO_COMPLETO_OC_OS_COMPRAS_SERVICIOS.sql"
+  },
+  "logistica_listarossporestado": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "310_FLUJO_COMPLETO_OC_OS_COMPRAS_SERVICIOS.sql"
+  },
+  "logistica_obtenerconfigempresa": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "310_FLUJO_COMPLETO_OC_OS_COMPRAS_SERVICIOS.sql"
+  },
+  "logistica_guardarconfigempresa": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "310_FLUJO_COMPLETO_OC_OS_COMPRAS_SERVICIOS.sql"
+  },
+  "logistica_confirmarenvioos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "312_SPS_ADAPTADOS_ESQUEMA_REAL.sql"
+  },
+  "logistica_listarrequerimientoscompletos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "315_SPS_CONSOLIDACION_OC_OS.sql"
+  },
+  "logistica_listarocpendientesaprobacionusuario": {
+   "params": [
+    [
+     "documentoIdentidad",
+     "VARCHAR(20)"
+    ],
+    [
+     "rol",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "317_FIX_APROBACION_Y_MIGRACION_SPRING.sql"
+  },
+  "logistica_obtenerocparasincronizar": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "317_FIX_APROBACION_Y_MIGRACION_SPRING.sql"
+  },
+  "logistica_aprobarrechazarocconmigracion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "317_FIX_APROBACION_Y_MIGRACION_SPRING.sql"
+  },
+  "logistica_listaraprobacionesporrol": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "317_FIX_APROBACION_Y_MIGRACION_SPRING.sql"
+  },
+  "logistica_reintentarsyncspring": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "317_FIX_APROBACION_Y_MIGRACION_SPRING.sql"
+  },
+  "logistica_eliminaradjuntooc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "318_FIX_MIGRAR_ADJUNTOS_CORRECTA.sql"
+  },
+  "logistica_listarreingresos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "31_SP_LISTAR_REINGRESOS.sql"
+  },
+  "logistica_registrarreingreso": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "31_SP_REINGRESO.sql"
+  },
+  "logistica_obtenerreingresoporid": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "31_SP_REINGRESO.sql"
+  },
+  "logistica_aprobarreingreso": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "31_SP_REINGRESO.sql"
+  },
+  "logistica_rechazarreingreso": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "31_SP_REINGRESO.sql"
+  },
+  "logistica_anularreingreso": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "31_SP_REINGRESO.sql"
+  },
+  "logistica_listarsaldospendientesreingreso": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "31_SP_REINGRESO.sql"
+  },
+  "logistica_generarreingresodesdesaldo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "31_SP_REINGRESO.sql"
+  },
+  "sp_plantillaalmacen_guardar": {
+   "params": [
+    [
+     "tipoDocumento",
+     "VARCHAR(2)"
+    ],
+    [
+     "tituloDocumento",
+     "NVARCHAR(100)"
+    ],
+    [
+     "mostrarUbicFisica",
+     "BIT"
+    ],
+    [
+     "mostrarCodInterno",
+     "BIT"
+    ],
+    [
+     "mostrarStockActual",
+     "BIT"
+    ],
+    [
+     "mostrarCCostos",
+     "BIT"
+    ],
+    [
+     "mostrarCantPend",
+     "BIT"
+    ],
+    [
+     "mostrarCantCompra",
+     "BIT"
+    ],
+    [
+     "firmante1",
+     "NVARCHAR(100)"
+    ],
+    [
+     "firmante2",
+     "NVARCHAR(100)"
+    ],
+    [
+     "piePagina",
+     "NVARCHAR(500)"
+    ],
+    [
+     "actualizadoPor",
+     "NVARCHAR(100)"
+    ],
+    [
+     "ruc",
+     "VARCHAR(20)"
+    ],
+    [
+     "firmaAlmacenBase64",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "nombreAlmacenero",
+     "NVARCHAR(200)"
+    ],
+    [
+     "ruc",
+     "VARCHAR(11)"
+    ],
+    [
+     "razonSocial",
+     "NVARCHAR(200)"
+    ],
+    [
+     "logoEmpresaBase64",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "dniAlmacenero",
+     "VARCHAR(15)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": true,
+   "file": "320_PLANTILLA_ALMACEN_CONFIG.sql"
+  },
+  "sp_plantillaalmacen_obtener": {
+   "params": [
+    [
+     "tipoDocumento",
+     "VARCHAR(2)"
+    ],
+    [
+     "ruc",
+     "VARCHAR(20)"
+    ],
+    [
+     "ruc",
+     "VARCHAR(11)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "320_PLANTILLA_ALMACEN_CONFIG.sql"
+  },
+  "logistica_listarempresas": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "320_SP_LISTAR_EMPRESAS.sql"
+  },
+  "logistica_listarocpendientesunificado": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "321_SP_LISTAR_OC_PENDIENTES_UNIFICADO.sql"
+  },
+  "logistica_sincronizarordencompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "outputJson",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "326_FIX_OBTENER_OC_PARA_SINCRONIZAR_OUTPUT.sql"
+  },
+  "logistica_guardarocdirectaaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "326_SP_GUARDAR_OC_DIRECTA_APROBACION.sql"
+  },
+  "logistica_actualizarestadospring": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "327_FIX_APROBAR_OC_SYNC_SPRING.sql"
+  },
+  "logistica_obteneradjuntooc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "327_SP_OBTENER_ADJUNTO_OC.sql"
+  },
+  "logistica_listarflujoaprobacionporarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "328_SP_CRUD_FLUJO_APROBACION_POR_AREA.sql"
+  },
+  "logistica_guardarflujoaprobacionporarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "328_SP_CRUD_FLUJO_APROBACION_POR_AREA.sql"
+  },
+  "logistica_eliminarflujoaprobacionporarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "328_SP_CRUD_FLUJO_APROBACION_POR_AREA.sql"
+  },
+  "logistica_guardaradjuntospring": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "328_SP_GUARDAR_ADJUNTO_SPRING.sql"
+  },
+  "logistica_actualizaradjuntooc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "329_FIX_GUARDAR_ADJUNTO_COMPLETO.sql"
+  },
+  "logistica_registrartransaccionkardexcompleta": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "32_KARDEX_NUEVOS_TIPOS.sql"
+  },
+  "logistica_obteneraprobadorporarea": {
+   "params": [
+    [
+     "areaSolicitante",
+     "VARCHAR(50)"
+    ],
+    [
+     "tipoRequerimiento",
+     "VARCHAR(20)"
+    ],
+    [
+     "monto",
+     "DECIMAL(18,2)"
+    ],
+    [
+     "ruc",
+     "VARCHAR(11)"
+    ],
+    [
+     "idarea",
+     "INT"
+    ],
+    [
+     "idsubarea",
+     "INT"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "32_SP_APROBACIONES_POR_AREA.sql"
+  },
+  "logistica_obtenerflujocompletoaprobacion": {
+   "params": [
+    [
+     "areaSolicitante",
+     "VARCHAR(50)"
+    ],
+    [
+     "tipoRequerimiento",
+     "VARCHAR(20)"
+    ],
+    [
+     "monto",
+     "DECIMAL(18,2)"
+    ],
+    [
+     "ruc",
+     "VARCHAR(11)"
+    ],
+    [
+     "idarea",
+     "INT"
+    ],
+    [
+     "idsubarea",
+     "INT"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "32_SP_APROBACIONES_POR_AREA.sql"
+  },
+  "logistica_asignaraprobadoresrequerimiento": {
+   "params": [
+    [
+     "idRequerimiento",
+     "INT"
+    ],
+    [
+     "numeroRequerimiento",
+     "VARCHAR(50)"
+    ],
+    [
+     "areaSolicitante",
+     "VARCHAR(50)"
+    ],
+    [
+     "usuarioSolicitante",
+     "VARCHAR(20)"
+    ],
+    [
+     "tipoRequerimiento",
+     "VARCHAR(20)"
+    ],
+    [
+     "monto",
+     "DECIMAL(18,2)"
+    ],
+    [
+     "ruc",
+     "VARCHAR(11)"
+    ],
+    [
+     "idareaSolicitante",
+     "INT"
+    ],
+    [
+     "idsubareaSolicitante",
+     "INT"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "32_SP_APROBACIONES_POR_AREA.sql"
+  },
+  "logistica_obtenerrequerimientospendientesaprobacion": {
+   "params": [
+    [
+     "documentoidentidad",
+     "VARCHAR(20)"
+    ],
+    [
+     "aprobadorAsignado",
+     "VARCHAR(20)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "32_SP_APROBACIONES_POR_AREA.sql"
+  },
+  "logistica_procesaraprobacionrequerimiento": {
+   "params": [
+    [
+     "idRequerimiento",
+     "INT"
+    ],
+    [
+     "documentoidentidad",
+     "VARCHAR(20)"
+    ],
+    [
+     "accion",
+     "VARCHAR(20)"
+    ],
+    [
+     "observaciones",
+     "VARCHAR(500)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "32_SP_APROBACIONES_POR_AREA.sql"
+  },
+  "logistica_obtenerusuariosporarea": {
+   "params": [
+    [
+     "ruc",
+     "VARCHAR(11)"
+    ],
+    [
+     "idarea",
+     "INT"
+    ],
+    [
+     "idsubarea",
+     "INT"
+    ],
+    [
+     "rol",
+     "VARCHAR(20)"
+    ],
+    [
+     "esJefeArea",
+     "BIT"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "32_SP_APROBACIONES_POR_AREA_ADAPTADO.sql"
+  },
+  "logistica_actualizarcantidadrecepcion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "330_FIX_RECEPCION_ADAPTAR_TABLAS_EXISTENTES.sql"
+  },
+  "logistica_actualizarestadorecepcion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "330_RECEPCION_INGRESO_ALMACEN.sql"
+  },
+  "logistica_actualizaradjuntospring": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "333_SP_ACTUALIZAR_ADJUNTO_SPRING.sql"
+  },
+  "logistica_registrardespacho": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "334_SP_DESPACHO_ATENCION_PARCIAL.sql"
+  },
+  "logistica_listardespachosporrequerimiento": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "334_SP_DESPACHO_ATENCION_PARCIAL.sql"
+  },
+  "logistica_procesarcolaspring": {
+   "params": [
+    [
+     "soloTipo",
+     "VARCHAR(20)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "336_OPTIMIZAR_DESPACHO_ASYNC_SPRING.sql"
+  },
+  "logistica_enviarnsaspring": {
+   "params": [
+    [
+     "json",
+     "VARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "336_OPTIMIZAR_DESPACHO_ASYNC_SPRING.sql"
+  },
+  "logistica_estadocolamigracion": {
+   "params": [],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "336_OPTIMIZAR_DESPACHO_ASYNC_SPRING.sql"
+  },
+  "logistica_obtenerrequerimientospendientesarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "339_FIX_SP_PENDIENTES_AREA_CLASIFICACION.sql"
+  },
+  "logistica_obtenertipocambio": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "340_SP_TIPO_CAMBIO.sql"
+  },
+  "logistica_obtenerdetalleoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "341_SP_ACTUALIZAR_OC_BORRADOR.sql"
+  },
+  "logistica_actualizarocborrador": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "341_SP_ACTUALIZAR_OC_BORRADOR.sql"
+  },
+  "sp_logisticausuarios_listar": {
+   "params": [],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "343_SP_CRUD_LOGISTICA_USUARIOS.sql"
+  },
+  "sp_logisticausuarios_crear": {
+   "params": [
+    [
+     "documentoidentidad",
+     "NVARCHAR(20)"
+    ],
+    [
+     "nombreCompleto",
+     "NVARCHAR(200)"
+    ],
+    [
+     "email",
+     "NVARCHAR(100)"
+    ],
+    [
+     "telefono",
+     "NVARCHAR(20)"
+    ],
+    [
+     "ruc",
+     "NVARCHAR(20)"
+    ],
+    [
+     "idUsuarioMaestro",
+     "INT"
+    ],
+    [
+     "usuarioCreacion",
+     "NVARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "343_SP_CRUD_LOGISTICA_USUARIOS.sql"
+  },
+  "sp_logisticausuarios_actualizar": {
+   "params": [
+    [
+     "idUsuario",
+     "INT"
+    ],
+    [
+     "nombreCompleto",
+     "NVARCHAR(200)"
+    ],
+    [
+     "email",
+     "NVARCHAR(100)"
+    ],
+    [
+     "telefono",
+     "NVARCHAR(20)"
+    ],
+    [
+     "activo",
+     "BIT"
+    ],
+    [
+     "usuarioModificacion",
+     "NVARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "343_SP_CRUD_LOGISTICA_USUARIOS.sql"
+  },
+  "sp_logisticausuarios_cambiarestado": {
+   "params": [
+    [
+     "idUsuario",
+     "INT"
+    ],
+    [
+     "activo",
+     "BIT"
+    ],
+    [
+     "usuarioModificacion",
+     "NVARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "343_SP_CRUD_LOGISTICA_USUARIOS.sql"
+  },
+  "logistica_registrarrequerimiento": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "idRequerimiento",
+     "INT"
+    ],
+    [
+     "numeroRequerimiento",
+     "VARCHAR(50)"
+    ],
+    [
+     "usuarioSolicita",
+     "VARCHAR(20)"
+    ],
+    [
+     "areaSolicitante",
+     "VARCHAR(50)"
+    ],
+    [
+     "tipo",
+     "VARCHAR(20)"
+    ],
+    [
+     "montoTotal",
+     "DECIMAL(18,2)"
+    ],
+    [
+     "ruc",
+     "VARCHAR(11)"
+    ],
+    [
+     "idarea",
+     "INT"
+    ],
+    [
+     "idsubarea",
+     "INT"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "34_SP_INTEGRACION_REQUERIMIENTOS.sql"
+  },
+  "logistica_obtenerrequerimientosconaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "34_SP_INTEGRACION_REQUERIMIENTOS.sql"
+  },
+  "logistica_obtenerdashboardaprobaciones": {
+   "params": [
+    [
+     "documentoidentidad",
+     "VARCHAR(20)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "34_SP_INTEGRACION_REQUERIMIENTOS.sql"
+  },
+  "logistica_listarnotasconformidad": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "350_CONFORMIDAD_ALMACEN.sql"
+  },
+  "logistica_registrarconformidad": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "350_CONFORMIDAD_ALMACEN.sql"
+  },
+  "logistica_obtenerdetallenota": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "350_CONFORMIDAD_ALMACEN.sql"
+  },
+  "logistica_listarrequerimientosservicioparaos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "350_FLUJO_OS_INDIVIDUAL_PARTE2.sql"
+  },
+  "logistica_crearosindividual": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "350_FLUJO_OS_INDIVIDUAL_PARTE2.sql"
+  },
+  "logistica_obtenerprecioreferencialservicio": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "350_FLUJO_OS_INDIVIDUAL_PARTE3.sql"
+  },
+  "logistica_registrarconfirmacionservicio": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "350_FLUJO_OS_INDIVIDUAL_PARTE3.sql"
+  },
+  "logistica_listarosindividuales": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "350_FLUJO_OS_INDIVIDUAL_PARTE3.sql"
+  },
+  "logistica_obtenerareausuario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "35_SP_OBTENER_AREA_USUARIO.sql"
+  },
+  "logistica_listarsaldospendientes": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "36_SP_LISTAR_SALDOS_PENDIENTES.sql"
+  },
+  "logistica_obtenerrequerimientospendientesareadetalle": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "38_SP_APROBACIONES_AREA_COMPLETAS.sql"
+  },
+  "logistica_aprobarrequerimientoarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "38_SP_APROBACIONES_AREA_COMPLETAS.sql"
+  },
+  "logistica_obtenerhistorialaprobacionesarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "38_SP_APROBACIONES_AREA_COMPLETAS.sql"
+  },
+  "logistica_obtenerreporteaprobacionesarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "38_SP_APROBACIONES_AREA_COMPLETAS.sql"
+  },
+  "logistica_listarmisnotificacionesdirectas": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "38_SP_NOTIFICACIONES_CORREGIDAS.sql"
+  },
+  "logistica_contarnotificacionesnoleidas": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "38_SP_NOTIFICACIONES_FINAL.sql"
+  },
+  "logistica_aprobarrechazarrequerimientoarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "38_SP_REQUERIMIENTOS_PENDIENTES_AREA.sql"
+  },
+  "logistica_listarpendientesaprobacionporarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "38_SP_USUARIOS_SIN_AREA_CORREGIDOS.sql"
+  },
+  "logistica_aprobarrechazarrequerimientoporarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "38_SP_USUARIOS_SIN_AREA_CORREGIDOS.sql"
+  },
+  "logistica_crearseguimientooc": {
+   "params": [
+    [
+     "idOrden",
+     "INT"
+    ],
+    [
+     "numeroOrden",
+     "VARCHAR(50)"
+    ],
+    [
+     "usuarioGenera",
+     "VARCHAR(50)"
+    ],
+    [
+     "hitosJson",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": true,
+   "file": "400_TABLAS_SEGUIMIENTO_COMPRA.sql"
+  },
+  "logistica_actualizarseguimientooc": {
+   "params": [
+    [
+     "idOrden",
+     "INT"
+    ],
+    [
+     "nuevoEstado",
+     "VARCHAR(20)"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ],
+    [
+     "hitosJson",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "400_TABLAS_SEGUIMIENTO_COMPRA.sql"
+  },
+  "logistica_obtenerseguimientooc": {
+   "params": [
+    [
+     "idOrden",
+     "INT"
+    ],
+    [
+     "idOrden",
+     "FOR"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "400_TABLAS_SEGUIMIENTO_COMPRA.sql"
+  },
+  "logistica_migrar_a_spring_v2": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "42_DIAGNOSTICO_SP_CONFLICTIVO.sql"
+  },
+  "logistica_actualizarrequerimientocompletado": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "500_SP_ESTADO_REQUERIMIENTO_COMPLETADO.sql"
+  },
+  "logistica_completarrequerimientoporoc": {
+   "params": [
+    [
+     "idOrden",
+     "INT"
+    ],
+    [
+     "numeroOrden",
+     "VARCHAR(50)"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "500_SP_ESTADO_REQUERIMIENTO_COMPLETADO.sql"
+  },
+  "logistica_completarrequerimientoporos": {
+   "params": [
+    [
+     "idOrdenServicio",
+     "INT"
+    ],
+    [
+     "numeroOrden",
+     "VARCHAR(50)"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "500_SP_ESTADO_REQUERIMIENTO_COMPLETADO.sql"
+  },
+  "logistica_listarocspararecepcion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "502_FIX_RECEPCION_AMBOS_FLUJOS.sql"
+  },
+  "logistica_finalizarordenserviciosimple": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "502_INTEGRAR_COMPLETADO_EN_FINALIZACION_OS.sql"
+  },
+  "logistica_obtenerrequerimientosporestado": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "503_ACTUALIZAR_SP_CONSULTA_COMPLETADO.sql"
+  },
+  "logistica_obtenerkpisrequerimientos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "503_ACTUALIZAR_SP_CONSULTA_COMPLETADO.sql"
+  },
+  "logistica_listarrequerimientoscompletados": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "503_ACTUALIZAR_SP_CONSULTA_COMPLETADO.sql"
+  },
+  "logistica_revertirrequerimientocompletado": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "503_ACTUALIZAR_SP_CONSULTA_COMPLETADO.sql"
+  },
+  "logistica_obtenerestadisticasrequerimientos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "504_FIX_CONSUMO_CERRADO_COMO_COMPLETADO.sql"
+  },
+  "logistica_obtenerordenescompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "505_FIX_SP_DASHBOARD_TABS.sql"
+  },
+  "logistica_obtenersolicitudescompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "505_FIX_SP_DASHBOARD_TABS.sql"
+  },
+  "logistica_obtenerproveedores": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "505_FIX_SP_DASHBOARD_TABS.sql"
+  },
+  "logistica_reportecompras": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "506_SP_REPORTES_DASHBOARD.sql"
+  },
+  "logistica_reporteinventario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "506_SP_REPORTES_DASHBOARD.sql"
+  },
+  "logistica_reporteproveedores": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "506_SP_REPORTES_DASHBOARD.sql"
+  },
+  "logistica_reportetiempos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "506_SP_REPORTES_DASHBOARD.sql"
+  },
+  "logistica_reportegastos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "506_SP_REPORTES_DASHBOARD.sql"
+  },
+  "logistica_reporteconsolidado": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "506_SP_REPORTES_DASHBOARD.sql"
+  },
+  "sp_adminlogistica_login": {
+   "params": [
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ],
+    [
+     "claveHash",
+     "VARCHAR(255)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "600_ADMIN_LOGISTICA_TABLAS.sql"
+  },
+  "sp_adminlogistica_usuarios_listar": {
+   "params": [],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "600_ADMIN_LOGISTICA_TABLAS.sql"
+  },
+  "sp_adminlogistica_usuarios_crear": {
+   "params": [
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ],
+    [
+     "claveHash",
+     "VARCHAR(255)"
+    ],
+    [
+     "nombre",
+     "VARCHAR(100)"
+    ],
+    [
+     "email",
+     "VARCHAR(100)"
+    ],
+    [
+     "idrol",
+     "VARCHAR(20)"
+    ],
+    [
+     "rol",
+     "VARCHAR(50)"
+    ],
+    [
+     "idempresa",
+     "VARCHAR(20)"
+    ],
+    [
+     "ruc",
+     "VARCHAR(20)"
+    ],
+    [
+     "creadoPor",
+     "VARCHAR(50)"
+    ],
+    [
+     "nrodocumento",
+     "VARCHAR(20)"
+    ],
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "600_ADMIN_LOGISTICA_TABLAS.sql"
+  },
+  "sp_adminlogistica_usuarios_actualizar": {
+   "params": [
+    [
+     "id",
+     "INT"
+    ],
+    [
+     "nombre",
+     "VARCHAR(100)"
+    ],
+    [
+     "email",
+     "VARCHAR(100)"
+    ],
+    [
+     "idrol",
+     "VARCHAR(20)"
+    ],
+    [
+     "rol",
+     "VARCHAR(50)"
+    ],
+    [
+     "activo",
+     "BIT"
+    ],
+    [
+     "actualizadoPor",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "600_ADMIN_LOGISTICA_TABLAS.sql"
+  },
+  "sp_adminlogistica_parametros_obtener": {
+   "params": [],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "600_ADMIN_LOGISTICA_TABLAS.sql"
+  },
+  "sp_adminlogistica_parametros_guardar": {
+   "params": [
+    [
+     "parametro",
+     "VARCHAR(50)"
+    ],
+    [
+     "valor",
+     "VARCHAR(500)"
+    ],
+    [
+     "actualizadoPor",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "600_ADMIN_LOGISTICA_TABLAS.sql"
+  },
+  "sp_adminlogistica_configpdf_obtener": {
+   "params": [],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "600_ADMIN_LOGISTICA_TABLAS.sql"
+  },
+  "sp_adminlogistica_configpdf_guardar": {
+   "params": [
+    [
+     "logoUrl",
+     "VARCHAR(500)"
+    ],
+    [
+     "colorPrimario",
+     "VARCHAR(7)"
+    ],
+    [
+     "colorSecundario",
+     "VARCHAR(7)"
+    ],
+    [
+     "textoEncabezado",
+     "VARCHAR(500)"
+    ],
+    [
+     "textoPie",
+     "VARCHAR(500)"
+    ],
+    [
+     "mostrarLogo",
+     "BIT"
+    ],
+    [
+     "mostrarCodigoBarras",
+     "BIT"
+    ],
+    [
+     "formatoNumero",
+     "VARCHAR(50)"
+    ],
+    [
+     "tamanioPagina",
+     "VARCHAR(10)"
+    ],
+    [
+     "actualizadoPor",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "600_ADMIN_LOGISTICA_TABLAS.sql"
+  },
+  "sp_adminlogistica_auditoria_registrar": {
+   "params": [
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ],
+    [
+     "idUsuario",
+     "INT"
+    ],
+    [
+     "tipo",
+     "VARCHAR(20)"
+    ],
+    [
+     "modulo",
+     "VARCHAR(50)"
+    ],
+    [
+     "accion",
+     "VARCHAR(100)"
+    ],
+    [
+     "descripcion",
+     "VARCHAR(500)"
+    ],
+    [
+     "ipAddress",
+     "VARCHAR(50)"
+    ],
+    [
+     "userAgent",
+     "VARCHAR(255)"
+    ],
+    [
+     "datosAnteriores",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "datosNuevos",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "idRegistro",
+     "INT"
+    ],
+    [
+     "tabla",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": true,
+   "file": "600_ADMIN_LOGISTICA_TABLAS.sql"
+  },
+  "sp_adminlogistica_auditoria_listar": {
+   "params": [
+    [
+     "fechaInicio",
+     "DATE"
+    ],
+    [
+     "fechaFin",
+     "DATE"
+    ],
+    [
+     "tipo",
+     "VARCHAR(20)"
+    ],
+    [
+     "usuario",
+     "VARCHAR(50)"
+    ],
+    [
+     "top",
+     "INT"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "600_ADMIN_LOGISTICA_TABLAS.sql"
+  },
+  "sp_adminlogistica_dashboard_kpis": {
+   "params": [
+    [
+     "ruc",
+     "VARCHAR(20)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "600_ADMIN_LOGISTICA_TABLAS.sql"
+  },
+  "logistica_sincronizarocconsolidacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "resultado",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "601_SINCRONIZAR_OC_CONSOLIDACION_SPRING.sql"
+  },
+  "logistica_guardardistribucionconsoloc": {
+   "params": [
+    [
+     "idOrden",
+     "INT"
+    ],
+    [
+     "distribucionJson",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "602_CREAR_TABLA_DISTRIBUCION_CONSOLIDACION.sql"
+  },
+  "logistica_obtenerdistribucionconsoloc": {
+   "params": [
+    [
+     "idOrden",
+     "INT"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "602_CREAR_TABLA_DISTRIBUCION_CONSOLIDACION.sql"
+  },
+  "logistica_aprobarocconsolidacionspring": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "603_APROBAR_OC_CONSOLIDACION_SPRING.sql"
+  },
+  "logistica_listarproveedoresspring": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "604_SP_PROVEEDORES_SPRING.sql"
+  },
+  "logistica_registrarproveedorspring": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "604_SP_PROVEEDORES_SPRING.sql"
+  },
+  "logistica_listarunidadesmedida": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "605_MAESTRO_UNIDADES_MEDIDA.sql"
+  },
+  "logistica_guardarunidadmedida": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "605_MAESTRO_UNIDADES_MEDIDA.sql"
+  },
+  "logistica_eliminarunidadmedida": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "605_MAESTRO_UNIDADES_MEDIDA.sql"
+  },
+  "logistica_listarincoterms": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "610_CLASIFICACION_INCOTERM_OC.sql"
+  },
+  "logistica_listartipospago": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "620_LOGISTICA_listarTiposPago.sql"
+  },
+  "logistica_restaurarestadooc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "622_SP_REVERTIR_OC_A_PENDIENTE.sql"
+  },
+  "logistica_listarempresasconcarpeta": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "633_CONFIG_EMPRESA_IDEMPRESA_SPRING.sql"
+  },
+  "logistica_actualizarconsoladjunto": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "639_ADJUNTOS_CONSOL_OC.sql"
+  },
+  "logistica_obtenerocreargdgruponivel6": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "639_ADJUNTOS_CONSOL_OC.sql"
+  },
+  "logistica_registrargdarchivo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "639_ADJUNTOS_CONSOL_OC.sql"
+  },
+  "logistica_listarconfigpermisos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "654_CONFIG_PERMISOS_ROLES.sql"
+  },
+  "logistica_verificarpermiso": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "654_CONFIG_PERMISOS_ROLES.sql"
+  },
+  "logistica_guardarconfigpermiso": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "idrol",
+     "VARCHAR(20)"
+    ],
+    [
+     "clave",
+     "VARCHAR(100)"
+    ],
+    [
+     "valor",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "descripcion",
+     "NVARCHAR(500)"
+    ],
+    [
+     "usuarioModifica",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "654_CONFIG_PERMISOS_ROLES.sql"
+  },
+  "sp_logistica_areas_listar": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "700_SP_AREAS_Y_USUARIOS_POR_AREA.sql"
+  },
+  "sp_logistica_areas_crear": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "700_SP_AREAS_Y_USUARIOS_POR_AREA.sql"
+  },
+  "sp_logistica_areas_actualizar": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "700_SP_AREAS_Y_USUARIOS_POR_AREA.sql"
+  },
+  "sp_logistica_areas_eliminar": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "700_SP_AREAS_Y_USUARIOS_POR_AREA.sql"
+  },
+  "sp_logistica_subareas_listar": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "700_SP_AREAS_Y_USUARIOS_POR_AREA.sql"
+  },
+  "sp_logistica_subareas_crear": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "700_SP_AREAS_Y_USUARIOS_POR_AREA.sql"
+  },
+  "sp_logistica_subareas_actualizar": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "700_SP_AREAS_Y_USUARIOS_POR_AREA.sql"
+  },
+  "sp_logistica_areas_sincronizarcatalogo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "700_SP_AREAS_Y_USUARIOS_POR_AREA.sql"
+  },
+  "sp_logistica_usuariosporarea_listar": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "700_SP_AREAS_Y_USUARIOS_POR_AREA.sql"
+  },
+  "sp_logistica_usuariosporarea_crear": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "700_SP_AREAS_Y_USUARIOS_POR_AREA.sql"
+  },
+  "sp_logistica_usuariosporarea_actualizar": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "700_SP_AREAS_Y_USUARIOS_POR_AREA.sql"
+  },
+  "sp_logistica_usuariosporarea_eliminar": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "700_SP_AREAS_Y_USUARIOS_POR_AREA.sql"
+  },
+  "sp_logistica_usuarios_sincronizarerp": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "700_SP_AREAS_Y_USUARIOS_POR_AREA.sql"
+  },
+  "logistica_guardarconfigpermisolegacy": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "700_TABLA_CONFIGURACION_PERMISOS.sql"
+  },
+  "logistica_eliminarconfigpermiso": {
+   "params": [
+    [
+     "idrol",
+     "VARCHAR(20)"
+    ],
+    [
+     "clave",
+     "VARCHAR(100)"
+    ],
+    [
+     "usuarioModifica",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "700_TABLA_CONFIGURACION_PERMISOS.sql"
+  },
+  "logistica_obtenerconfigpermiso": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "700_TABLA_CONFIGURACION_PERMISOS.sql"
+  },
+  "logistica_listarrolesconmenuconfig": {
+   "params": [],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "700_TABLA_CONFIGURACION_PERMISOS.sql"
+  },
+  "sp_logistica_crearrequerimientotransferencia": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "700_TRANSFERENCIA_ALMACEN_VIRTUAL.sql"
+  },
+  "sp_logistica_listartransferenciaspendientes": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "700_TRANSFERENCIA_ALMACEN_VIRTUAL.sql"
+  },
+  "sp_logistica_detallerequerimientotransferencia": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "700_TRANSFERENCIA_ALMACEN_VIRTUAL.sql"
+  },
+  "sp_logistica_ejecutartransferencia": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "700_TRANSFERENCIA_ALMACEN_VIRTUAL.sql"
+  },
+  "sp_logistica_listarhistorialtransferencias": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "700_TRANSFERENCIA_ALMACEN_VIRTUAL.sql"
+  },
+  "logistica_listarconfigmenu": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "701_TABLA_CONFIG_MENU_NUEVO.sql"
+  },
+  "logistica_guardarconfigmenu": {
+   "params": [
+    [
+     "idrol",
+     "VARCHAR(20)"
+    ],
+    [
+     "clave",
+     "VARCHAR(100)"
+    ],
+    [
+     "valor",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "descripcion",
+     "NVARCHAR(500)"
+    ],
+    [
+     "usuarioModifica",
+     "VARCHAR(50)"
+    ],
+    [
+     "idrol",
+     "NVARCHAR(50)"
+    ],
+    [
+     "clave",
+     "NVARCHAR(100)"
+    ],
+    [
+     "usuarioModifica",
+     "NVARCHAR(100)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": true,
+   "file": "701_TABLA_CONFIG_MENU_NUEVO.sql"
+  },
+  "logistica_eliminarconfigmenu": {
+   "params": [
+    [
+     "idrol",
+     "VARCHAR(20)"
+    ],
+    [
+     "clave",
+     "VARCHAR(100)"
+    ],
+    [
+     "usuarioModifica",
+     "VARCHAR(50)"
+    ],
+    [
+     "idrol",
+     "NVARCHAR(50)"
+    ],
+    [
+     "clave",
+     "NVARCHAR(100)"
+    ],
+    [
+     "usuarioModifica",
+     "NVARCHAR(100)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "701_TABLA_CONFIG_MENU_NUEVO.sql"
+  },
+  "logistica_obtenerconfigmenu": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "701_TABLA_CONFIG_MENU_NUEVO.sql"
+  },
+  "logistica_listarosparaconformidad": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "702_CONFORMIDAD_SERVICIOS_MODULE.sql"
+  },
+  "logistica_obtenerdetalleosconformidad": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "702_CONFORMIDAD_SERVICIOS_MODULE.sql"
+  },
+  "logistica_registrarrequerimientoenlog": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "702_FIX_DASHBOARD_Y_REGISTRO.sql"
+  },
+  "sp_plantillaconformidadservicio_obtener": {
+   "params": [
+    [
+     "ruc",
+     "VARCHAR(11)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "704_PLANTILLA_CONFORMIDAD_SERVICIO.sql"
+  },
+  "sp_plantillaconformidadservicio_guardar": {
+   "params": [
+    [
+     "ruc",
+     "VARCHAR(11)"
+    ],
+    [
+     "tituloDocumento",
+     "NVARCHAR(100)"
+    ],
+    [
+     "etiquetaProveedor",
+     "NVARCHAR(100)"
+    ],
+    [
+     "etiquetaNumeroOS",
+     "NVARCHAR(100)"
+    ],
+    [
+     "etiquetaFechaOS",
+     "NVARCHAR(100)"
+    ],
+    [
+     "etiquetaTotalOS",
+     "NVARCHAR(100)"
+    ],
+    [
+     "etiquetaFechaRecepcion",
+     "NVARCHAR(100)"
+    ],
+    [
+     "etiquetaDescripcionOS",
+     "NVARCHAR(100)"
+    ],
+    [
+     "etiquetaComentarios",
+     "NVARCHAR(100)"
+    ],
+    [
+     "etiquetaCorrespondienteA",
+     "NVARCHAR(100)"
+    ],
+    [
+     "etiquetaMontoServicio",
+     "NVARCHAR(100)"
+    ],
+    [
+     "etiquetaIGV",
+     "NVARCHAR(50)"
+    ],
+    [
+     "etiquetaMontoTotal",
+     "NVARCHAR(100)"
+    ],
+    [
+     "etiquetaConfirmadoPor",
+     "NVARCHAR(100)"
+    ],
+    [
+     "mostrarIGV",
+     "BIT"
+    ],
+    [
+     "mostrarComentarios",
+     "BIT"
+    ],
+    [
+     "piePagina",
+     "NVARCHAR(500)"
+    ],
+    [
+     "firmante1Label",
+     "NVARCHAR(100)"
+    ],
+    [
+     "firmante2Label",
+     "NVARCHAR(100)"
+    ],
+    [
+     "firmaLologistBase64",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "nombreLologist",
+     "NVARCHAR(200)"
+    ],
+    [
+     "cargoLologist",
+     "NVARCHAR(100)"
+    ],
+    [
+     "actualizadoPor",
+     "NVARCHAR(100)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": true,
+   "file": "704_PLANTILLA_CONFORMIDAD_SERVICIO.sql"
+  },
+  "logistica_obtenerconfigbranding": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "704_TABLA_CONFIG_BRANDING.sql"
+  },
+  "logistica_guardarconfigbranding": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "704_TABLA_CONFIG_BRANDING.sql"
+  },
+  "logistica_obtenerkpisdashboardjlologist": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "706_SP_DASHBOARD_JLOLOGIST_KPIS.sql"
+  },
+  "logistica_listaritemsdetalledashboardjlologist": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "707_SP_DASHBOARD_JLOLOGIST_TABLAS.sql"
+  },
+  "logistica_listarreqsrecientesdashboardjlologist": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "707_SP_DASHBOARD_JLOLOGIST_TABLAS.sql"
+  },
+  "logistica_listarocsrecientesdashboardjlologist": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "707_SP_DASHBOARD_JLOLOGIST_TABLAS.sql"
+  },
+  "logistica_listardetallerequerimiento": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "713_PARTIDA_PRESUPUESTAL_REQUERIMIENTOS.sql"
+  },
+  "logistica_verdetallerequerimientopordetalle": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "713_PARTIDA_PRESUPUESTAL_REQUERIMIENTOS.sql"
+  },
+  "logistica_ingresarserviciotransporte": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "713_SP_INGRESAR_SERVICIO_TRANSPORTE.sql"
+  },
+  "logistica_obtenerrequerimientospormes": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "720_FIX_DASHBOARD_EMPRESA_CONSOL_OC_OS.sql"
+  },
+  "logistica_obtenerseguimientoordenes": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "720_FIX_DASHBOARD_EMPRESA_CONSOL_OC_OS.sql"
+  },
+  "logistica_obtenerentregashoy": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "720_FIX_DASHBOARD_EMPRESA_CONSOL_OC_OS.sql"
+  },
+  "logistica_obtenerestadoalmacen": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "720_FIX_DASHBOARD_EMPRESA_CONSOL_OC_OS.sql"
+  },
+  "logistica_obtenerresumencompras": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "720_FIX_DASHBOARD_EMPRESA_CONSOL_OC_OS.sql"
+  },
+  "logistica_obtenergastosmensuales": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "720_FIX_DASHBOARD_EMPRESA_CONSOL_OC_OS.sql"
+  },
+  "logistica_obtenerordenesservicio": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "720_FIX_DASHBOARD_EMPRESA_CONSOL_OC_OS.sql"
+  },
+  "logistica_actualizarestadoreqsdeconsolidacion": {
+   "params": [
+    [
+     "idConsolidacion",
+     "INT"
+    ],
+    [
+     "nuevoEstado",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": false,
+   "file": "740_TRAZABILIDAD_ESTADO_REQ_COMPRA.sql"
+  },
+  "logistica_listarrequerimientosusuariodashboard": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "740_TRAZABILIDAD_ESTADO_REQ_COMPRA.sql"
+  },
+  "logistica_crearcotizacionoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "743_COTIZACION_OC_MULTIEMPRESA.sql"
+  },
+  "logistica_obtenercotizacionoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "743_COTIZACION_OC_MULTIEMPRESA.sql"
+  },
+  "logistica_guardarprecioscotizacionoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "743_COTIZACION_OC_MULTIEMPRESA.sql"
+  },
+  "logistica_listarcotizacionesoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "743_COTIZACION_OC_MULTIEMPRESA.sql"
+  },
+  "logistica_anularcotizacionoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "743_COTIZACION_OC_MULTIEMPRESA.sql"
+  },
+  "logistica_cerrarcotizacionoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "743_COTIZACION_OC_MULTIEMPRESA.sql"
+  },
+  "logistica_guardarconfigincrementooc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "746_INCREMENTO_CANTIDAD_OC.sql"
+  },
+  "logistica_obtenerconfigincrementoocvigente": {
+   "params": [],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "746_INCREMENTO_CANTIDAD_OC.sql"
+  },
+  "logistica_listarhistorialconfigincrementooc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "746_INCREMENTO_CANTIDAD_OC.sql"
+  },
+  "logistica_listarauditoriaconfigincrementooc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "746_INCREMENTO_CANTIDAD_OC.sql"
+  },
+  "logistica_cargamasivaconfiguracion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "750_SP_CARGA_MASIVA_CONFIGURACION.sql"
+  },
+  "logistica_eliminarconfigmenuporid": {
+   "params": [
+    [
+     "idMenu",
+     "INT"
+    ],
+    [
+     "usuarioModifica",
+     "NVARCHAR(100)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "800_TABLA_CONFIGMENU_DINAMICO.sql"
+  },
+  "logistica_listarconfigflujorequerimiento": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "811_APROBACION_NIVELES_SPS.sql"
+  },
+  "logistica_guardarconfigflujorequerimiento": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "811_APROBACION_NIVELES_SPS.sql"
+  },
+  "logistica_listaraprobadoresnivel2": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "811_APROBACION_NIVELES_SPS.sql"
+  },
+  "logistica_guardaraprobadornivel2": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "811_APROBACION_NIVELES_SPS.sql"
+  },
+  "logistica_eliminaraprobadornivel2": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "811_APROBACION_NIVELES_SPS.sql"
+  },
+  "logistica_reordenaraprobadornivel2": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "811_APROBACION_NIVELES_SPS.sql"
+  },
+  "logistica_toggledisponibleaprobadorn2": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "811_APROBACION_NIVELES_SPS.sql"
+  },
+  "logistica_obtenerrequerimientospendientesgerencia": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "811_APROBACION_NIVELES_SPS.sql"
+  },
+  "logistica_aprobarrequerimientogerencia": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "811_APROBACION_NIVELES_SPS.sql"
+  },
+  "sp_validar_anulacion_requerimiento": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "812_APROBACION_NIVELES_INTEGRACION.sql"
+  },
+  "sp_obtener_requerimientos_anulables": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "812_APROBACION_NIVELES_INTEGRACION.sql"
+  },
+  "logistica_eliminarusuarioaprobadoroc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "813_MANTENEDORES_APROBADORES_OC_OS.sql"
+  },
+  "logistica_listarflujosaprobacionoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "813_MANTENEDORES_APROBADORES_OC_OS.sql"
+  },
+  "logistica_guardarflujoaprobacionoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "813_MANTENEDORES_APROBADORES_OC_OS.sql"
+  },
+  "logistica_eliminarflujoaprobacionoc": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "813_MANTENEDORES_APROBADORES_OC_OS.sql"
+  },
+  "logistica_guardarusuarioaprobadoros": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "813_MANTENEDORES_APROBADORES_OC_OS.sql"
+  },
+  "logistica_eliminarusuarioaprobadoros": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "813_MANTENEDORES_APROBADORES_OC_OS.sql"
+  },
+  "logistica_guardarflujoaprobacionos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "813_MANTENEDORES_APROBADORES_OC_OS.sql"
+  },
+  "logistica_eliminarflujoaprobacionos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "813_MANTENEDORES_APROBADORES_OC_OS.sql"
+  },
+  "logistica_obtenerosdetalleaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "817_FIX_RESPUESTAS_OBJETO_OS.sql"
+  },
+  "logistica_anularos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "817_FIX_RESPUESTAS_OBJETO_OS.sql"
+  },
+  "logistica_loginusuariorol": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "818_LOGIN_USUARIO_ROL.sql"
+  },
+  "logistica_obtenerrequerimientosaprobadosgerencia": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "819_APROBADOS_GERENCIA.sql"
+  },
+  "logistica_dashboardgerencia": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "820_DASHBOARD_GERENCIA.sql"
+  },
+  "logistica_esaprobadornivel2": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "822_SP_ES_APROBADOR_NIVEL2.sql"
+  },
+  "logistica_listarmaestroitemversion": {
+   "params": [
+    [
+     "json",
+     "VARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "827_SP_MAESTRO_ITEM_VERSION.sql"
+  },
+  "admin_listarperfiles": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "850_PERFILES_TABLAS_Y_SPS.sql"
+  },
+  "admin_crearperfil": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "850_PERFILES_TABLAS_Y_SPS.sql"
+  },
+  "admin_actualizarperfil": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "850_PERFILES_TABLAS_Y_SPS.sql"
+  },
+  "admin_eliminarperfil": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "850_PERFILES_TABLAS_Y_SPS.sql"
+  },
+  "admin_obtenerperfil": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "850_PERFILES_TABLAS_Y_SPS.sql"
+  },
+  "admin_asignarrolesperfil": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "850_PERFILES_TABLAS_Y_SPS.sql"
+  },
+  "admin_asignarperfilusuario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "850_PERFILES_TABLAS_Y_SPS.sql"
+  },
+  "admin_quitarperfilusuario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "850_PERFILES_TABLAS_Y_SPS.sql"
+  },
+  "admin_listarperfilesusuario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "850_PERFILES_TABLAS_Y_SPS.sql"
+  },
+  "admin_listarrolesefectivos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "850_PERFILES_TABLAS_Y_SPS.sql"
+  },
+  "admin_listarflujos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "851_FLUJOS_APROBADORES_ADMIN.sql"
+  },
+  "admin_crearflujo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "851_FLUJOS_APROBADORES_ADMIN.sql"
+  },
+  "admin_actualizarflujo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "851_FLUJOS_APROBADORES_ADMIN.sql"
+  },
+  "admin_eliminarflujo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "851_FLUJOS_APROBADORES_ADMIN.sql"
+  },
+  "admin_listaraprobadores": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "851_FLUJOS_APROBADORES_ADMIN.sql"
+  },
+  "admin_crearaprobador": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "851_FLUJOS_APROBADORES_ADMIN.sql"
+  },
+  "logistica_simularrutaambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "853_APROBACION_AMBITOS_RESOLUCION.sql"
+  },
+  "logistica_listarestructuraaprobacionambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "853_APROBACION_AMBITOS_RESOLUCION.sql"
+  },
+  "logistica_validarcambioconfigambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "855_APROBACION_AMBITOS_MANTENEDORES.sql"
+  },
+  "logistica_bloquearconfigambito": {
+   "params": [
+    [
+     "ruc",
+     "VARCHAR(11)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "855_APROBACION_AMBITOS_MANTENEDORES.sql"
+  },
+  "logistica_guardarambitoorganizacional": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "855_APROBACION_AMBITOS_MANTENEDORES.sql"
+  },
+  "logistica_guardarareaambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "855_APROBACION_AMBITOS_MANTENEDORES.sql"
+  },
+  "logistica_guardarasignacionambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "855_APROBACION_AMBITOS_MANTENEDORES.sql"
+  },
+  "logistica_guardarreglaambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "855_APROBACION_AMBITOS_MANTENEDORES.sql"
+  },
+  "logistica_cambiarestadoreglaambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "855_APROBACION_AMBITOS_MANTENEDORES.sql"
+  },
+  "logistica_obtenermantenedoresambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "855_APROBACION_AMBITOS_MANTENEDORES.sql"
+  },
+  "logistica_cambiardespliegueambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "855_APROBACION_AMBITOS_MANTENEDORES.sql"
+  },
+  "logistica_obtenercontenidorutaambito": {
+   "params": [
+    [
+     "ruc",
+     "VARCHAR(11)"
+    ],
+    [
+     "idrequerimiento",
+     "VARCHAR(100)"
+    ],
+    [
+     "contenido",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "huella",
+     "VARCHAR(64)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "857_APROBACION_AMBITOS_OPERACION.sql"
+  },
+  "logistica_registrarrutaambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "resultado",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "857_APROBACION_AMBITOS_OPERACION.sql"
+  },
+  "logistica_invalidarrutaambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "857_APROBACION_AMBITOS_OPERACION.sql"
+  },
+  "logistica_decidirrutaambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "858_APROBACION_AMBITOS_DECISIONES.sql"
+  },
+  "logistica_reasignarpasorutaambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "858_APROBACION_AMBITOS_DECISIONES.sql"
+  },
+  "logistica_marcarefectofinalambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "858_APROBACION_AMBITOS_DECISIONES.sql"
+  },
+  "logistica_contextosolicitanteambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "859_APROBACION_AMBITOS_CONSULTAS.sql"
+  },
+  "logistica_pendientesrutaambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "859_APROBACION_AMBITOS_CONSULTAS.sql"
+  },
+  "logistica_historialrutaambito": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "859_APROBACION_AMBITOS_CONSULTAS.sql"
+  },
+  "logistica_requerimientosrutaambitovigente": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "860_APROBACION_AMBITOS_CONVIVENCIA.sql"
+  },
+  "logistica_consultarstockdetalleaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "861_STOCK_DETALLE_APROBACIONES.sql"
+  },
+  "sp_anular_requerimiento_v2": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "863_FIX_ANULACION_V2_JEFE_AREA.sql"
+  },
+  "logistica_reporteseguimientoreqcompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "870_SEGUIMIENTO_REQ_COMPRA.sql"
+  },
+  "logistica_reporteseguimientocompraanalisis": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "870_SEGUIMIENTO_REQ_COMPRA.sql"
+  },
+  "logistica_listaraccesoreporte": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "870_SEGUIMIENTO_REQ_COMPRA.sql"
+  },
+  "logistica_guardaraccesoreporte": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "870_SEGUIMIENTO_REQ_COMPRA.sql"
+  },
+  "logistica_buscarusuariopordni": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "870_SEGUIMIENTO_REQ_COMPRA.sql"
+  },
+  "logistica_reporteseguimientoreqconsumo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "872_SEGUIMIENTO_REQ_CONSUMO.sql"
+  },
+  "logistica_listarconfigautoaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "874_CONFIG_AUTOAPROBACION_JEFE.sql"
+  },
+  "logistica_guardarconfigautoaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "874_CONFIG_AUTOAPROBACION_JEFE.sql"
+  },
+  "logistica_eliminarconfigautoaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "874_CONFIG_AUTOAPROBACION_JEFE.sql"
+  },
+  "logistica_listarconfigreportemenu": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "876_CONFIG_MENU_REPORTES.sql"
+  },
+  "logistica_guardarconfigreportemenu": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "876_CONFIG_MENU_REPORTES.sql"
+  },
+  "logistica_verificarmenureporte": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "876_CONFIG_MENU_REPORTES.sql"
+  },
+  "logistica_listarareasaccesoreporte": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "880_SEGUIMIENTO_AREAS_VISIBLES.sql"
+  },
+  "logistica_guardarareaaccesoreporte": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "880_SEGUIMIENTO_AREAS_VISIBLES.sql"
+  },
+  "logistica_limpiardataflujo": {
+   "params": [
+    [
+     "confirmacion",
+     "VARCHAR(20)"
+    ],
+    [
+     "soloSimular",
+     "BIT"
+    ],
+    [
+     "resetearCorrelativos",
+     "BIT"
+    ],
+    [
+     "usuario",
+     "VARCHAR(100)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "910_SP_LIMPIAR_DATA_FLUJO.sql"
+  },
+  "logistica_previewtabla": {
+   "params": [
+    [
+     "tabla",
+     "sysname"
+    ],
+    [
+     "top",
+     "int"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "910_SP_LIMPIAR_DATA_FLUJO.sql"
+  },
+  "logistica_listarbackupslimpieza": {
+   "params": [],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "912_SP_RESTAURAR_DATA_FLUJO.sql"
+  },
+  "logistica_restaurardataflujo": {
+   "params": [
+    [
+     "backupFile",
+     "NVARCHAR(500)"
+    ],
+    [
+     "confirmacion",
+     "VARCHAR(20)"
+    ],
+    [
+     "usuario",
+     "VARCHAR(100)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "912_SP_RESTAURAR_DATA_FLUJO.sql"
+  },
+  "sp_aprobar_requerimiento_area": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ACTUALIZAR_SP_APROBAR_REQUERIMIENTO.sql"
+  },
+  "sp_guardar_adjunto_requerimiento": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ADJUNTOS_REQUERIMIENTOS.sql"
+  },
+  "sp_listar_adjuntos_requerimiento": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ADJUNTOS_REQUERIMIENTOS.sql"
+  },
+  "sp_eliminar_adjunto_requerimiento": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ADJUNTOS_REQUERIMIENTOS.sql"
+  },
+  "logistica_listarusuariosporarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ADMINISTRACION_USUARIOS_POR_AREA.sql"
+  },
+  "logistica_configurarusuarioporarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "ADMINISTRACION_USUARIOS_POR_AREA.sql"
+  },
+  "logistica_eliminarusuarioporarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "ADMINISTRACION_USUARIOS_POR_AREA.sql"
+  },
+  "logistica_buscarusuariosmaestros": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ADMINISTRACION_USUARIOS_POR_AREA.sql"
+  },
+  "logistica_agregarcolumnasresponsableareas": {
+   "params": [],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "ADMINISTRACION_USUARIOS_POR_AREA_CORREGIDO.sql"
+  },
+  "admin_listarareas": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ADMIN_listarAreas_CORREGIDO.sql"
+  },
+  "admin_listarroleslogistica": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "ADMIN_listarRolesLogistica.sql"
+  },
+  "admin_listarusuarioslogistica": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ADMIN_SPs_FALTANTES.sql"
+  },
+  "admin_configurarusuariologistica": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "ADMIN_SPs_FALTANTES.sql"
+  },
+  "admin_obtenerconfigusuario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ADMIN_SPs_FALTANTES.sql"
+  },
+  "admin_listarusuariosmaestros": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ADMIN_SPs_FALTANTES.sql"
+  },
+  "admin_asignarrolesusuario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "ADMIN_SPs_FALTANTES.sql"
+  },
+  "sp_anular_requerimiento": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ANULACIONES_REQUERIMIENTOS.sql"
+  },
+  "sp_listar_historial_anulaciones": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ANULACIONES_REQUERIMIENTOS.sql"
+  },
+  "logistica_obtenerjefearea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ASIGNACION_AUTOMATICA_APROBADOR.sql"
+  },
+  "logistica_asignaraprobadorautomatico": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ASIGNACION_AUTOMATICA_APROBADOR.sql"
+  },
+  "logistica_sincronizarrequerimientosconaprobacionauto": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "ASIGNACION_AUTOMATICA_APROBADOR.sql"
+  },
+  "sp_obtener_requerimientos_pendientes_usuario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "CONFIGURAR_FLUJO_HIBRIDO_APROBACION.sql"
+  },
+  "sp_aprobar_requerimiento": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "CONFIGURAR_FLUJO_HIBRIDO_APROBACION.sql"
+  },
+  "sp_obtener_historial_aprobaciones": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "CONFIGURAR_FLUJO_HIBRIDO_APROBACION.sql"
+  },
+  "logistica_listarmisnotificacionesstock": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "FIX_SP_listarMisNotificacionesStock.sql"
+  },
+  "sp_obtener_requerimientos_pendientes_area": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "FLUJO_APROBACION_POR_AREA.sql"
+  },
+  "sp_obtener_requerimientos_pendientes_area_detalle": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "FLUJO_APROBACION_POR_AREA.sql"
+  },
+  "sp_obtener_historial_aprobaciones_area": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "FLUJO_APROBACION_POR_AREA.sql"
+  },
+  "logistica_sincronizarrequerimientosconaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "INTEGRACION_FLUJO_APROBACIONES.sql"
+  },
+  "logistica_listarmaestroitemslim": {
+   "params": [
+    [
+     "json",
+     "VARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "LOGISTICA_listarMaestroItemSlim.sql"
+  },
+  "logistica_loginiciarsincronizacion": {
+   "params": [
+    [
+     "tabla",
+     "VARCHAR(100)"
+    ],
+    [
+     "operacion",
+     "VARCHAR(100)"
+    ],
+    [
+     "logId",
+     "INT"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "LOGISTICA_SincronizacionLog.sql"
+  },
+  "logistica_logcerrarsincronizacion": {
+   "params": [
+    [
+     "logId",
+     "INT"
+    ],
+    [
+     "estado",
+     "VARCHAR(20)"
+    ],
+    [
+     "filas",
+     "INT"
+    ],
+    [
+     "mensaje",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": true,
+   "file": "LOGISTICA_SincronizacionLog.sql"
+  },
+  "logistica_sincronizarmaestroitemconlog": {
+   "params": [],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "LOGISTICA_SincronizacionLog.sql"
+  },
+  "logistica_verlogsincronizacion": {
+   "params": [
+    [
+     "ultimas",
+     "INT"
+    ]
+   ],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "LOGISTICA_SincronizacionLog.sql"
+  },
+  "logistica_obtenerusuarioconarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "OBTENER_USUARIO_CON_AREA.sql"
+  },
+  "logistica_loginconarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "OBTENER_USUARIO_CON_AREA.sql"
+  },
+  "logistica_listarmaestroitem": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ],
+    [
+     "json",
+     "VARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "OPTIMIZACION_listarMaestroItem.sql"
+  },
+  "logistica_refrescarcachemaestroitem": {
+   "params": [],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "OPTIMIZACION_listarMaestroItem.sql"
+  },
+  "logistica_listarmaestroitemcache": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "OPTIMIZACION_listarMaestroItem.sql"
+  },
+  "logistica_sincronizarmaestroitem": {
+   "params": [],
+   "openjson": false,
+   "forjson": false,
+   "json_in": false,
+   "file": "OPTIMIZACION_listarMaestroItem_v2.sql"
+  },
+  "logistica_listarmaestroitemlocal": {
+   "params": [
+    [
+     "json",
+     "VARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "OPTIMIZACION_listarMaestroItem_v2.sql"
+  },
+  "logistica_cerrarrequerimiento": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "SP_cerrarRequerimiento.sql"
+  },
+  "logistica_registrarnotificacionsolicitante": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "SP_notificaciones_oplogist.sql"
+  },
+  "logistica_registrarnotificacionalmacen": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "SP_registrarNotificacionAlmacen.sql"
+  },
+  "logistica_registrarnotificaciondirecta": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "SP_registrarNotificacionDirecta_actualizado.sql"
+  },
+  "logistica_registrarnotificacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "SP_registrarNotificacion_logistica_notificaciones.sql"
+  },
+  "logistica_verificaryactualizarestadoevaluacion": {
+   "params": [
+    [
+     "idsolicitud",
+     "VARCHAR(50)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": false,
+   "file": "SP_REGISTRAR_COTIZACION_CON_EVALUACION.sql"
+  },
+  "logistica_registrarcotizacionconevaluacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "SP_REGISTRAR_COTIZACION_CON_EVALUACION.sql"
+  },
+  "logistica_reporteaprobacionesarea": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "SP_REPORTE_APROBACIONES_AREA.sql"
+  },
+  "logistica_solicitarcreacionitem": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "SP_solicitarCreacionItem.sql"
+  },
+  "logistica_listarsolicitudescompra": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "SP_SOLICITUD_COMPRA_LISTAR.sql"
+  },
+  "logistica_obtenersolicitudcompraporid": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "SP_SOLICITUD_COMPRA_OBTENER_POR_ID.sql"
+  },
+  "logistica_validaridsdetalles": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "SP_validarIdsDetalles.sql"
+  },
+  "sp_obtener_requerimientos_pendientes_detalle": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "VISTA_REQUERIMIENTOS_DETALLE.sql"
+  },
+  "logistica_generarsalidanswh_json": {
+   "params": [
+    [
+     "json",
+     "VARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "LOGISTICA_generarSalidaNSWH_JSON_PRD.sql"
+  },
+  "logistica_reportesaldoslote": {
+   "params": [
+    [
+     "json",
+     "VARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "LOGISTICA_reporteSaldosLote_PRD.sql"
+  },
+  "logistica_validarstockitems": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "LOGISTICA_ValidarStockItems_PRD.sql"
+  },
+  "logistica_listarnotificaciontipos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "_notificacion_config.sql"
+  },
+  "logistica_guardarnotificaciontipo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "_notificacion_config.sql"
+  },
+  "logistica_eliminarnotificaciontipo": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "_notificacion_config.sql"
+  },
+  "logistica_listarnotificacionconfig": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "_notificacion_config.sql"
+  },
+  "logistica_guardarnotificacionconfig": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "_notificacion_config.sql"
+  },
+  "logistica_listarnotificacionparams": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "_notificacion_config.sql"
+  },
+  "logistica_guardarnotificacionparam": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "_notificacion_config.sql"
+  },
+  "logistica_insertarnotificacionstock": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "_notificacion_config_filtrado.sql"
+  },
+  "logistica_listarmaestrosubcommodity": {
+   "params": [
+    [
+     "json",
+     "VARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "logistica_ingresarservicioalquilermaquinaria": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "logistica_insertarrequisicioneswh": {
+   "params": [
+    [
+     "json",
+     "VARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "logistica_listarrequerimiento": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "logistica_listarrequerimientoaprobacion": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "logistica_reporteaprobacionrequerimientos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "logistica_reporterequerimientos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "alquiler_actualizar_conformidad": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "alquiler_crud_jefe_area": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "alquiler_crud_maquinaria": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "alquiler_crud_operador": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "alquiler_listar_jefes_area": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "alquiler_listar_maestros_combos": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "alquiler_listar_maquinarias": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "alquiler_listar_operadores": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": false,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "alquiler_listar_registros": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "alquiler_login_proveedor": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "alquiler_obtener_registro": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "alquiler_registrar_parte_diario": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": false,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  },
+  "alquiler_reporte_semanal": {
+   "params": [
+    [
+     "json",
+     "NVARCHAR(MAX)"
+    ]
+   ],
+   "openjson": true,
+   "forjson": true,
+   "json_in": true,
+   "file": "02_SPs_NUEVOS_Y_ACTUALIZADOS.sql"
+  }
+ },
+ "dtos": {
+  "LoginRequest": [
+   [
+    "string",
+    "Usuario"
+   ],
+   [
+    "string",
+    "Clave"
+   ]
+  ],
+  "CrearUsuarioRequest": [
+   [
+    "string",
+    "Usuario"
+   ],
+   [
+    "string",
+    "Nombre"
+   ],
+   [
+    "string?",
+    "Email"
+   ],
+   [
+    "string",
+    "IdRol"
+   ],
+   [
+    "string",
+    "Rol"
+   ],
+   [
+    "string?",
+    "IdEmpresa"
+   ],
+   [
+    "string",
+    "Ruc"
+   ],
+   [
+    "string",
+    "Nrodocumento"
+   ],
+   [
+    "string?",
+    "CreadoPor"
+   ]
+  ],
+  "ActualizarUsuarioRequest": [
+   [
+    "string",
+    "Nombre"
+   ],
+   [
+    "string",
+    "Email"
+   ],
+   [
+    "string",
+    "IdRol"
+   ],
+   [
+    "string",
+    "Rol"
+   ],
+   [
+    "bool",
+    "Activo"
+   ],
+   [
+    "string?",
+    "ActualizadoPor"
+   ]
+  ],
+  "CambiarEstadoRequest": [
+   [
+    "bool",
+    "Activo"
+   ]
+  ],
+  "PdfConfigRequest": [
+   [
+    "string?",
+    "LogoUrl"
+   ],
+   [
+    "string?",
+    "ColorPrimario"
+   ],
+   [
+    "string?",
+    "ColorSecundario"
+   ],
+   [
+    "string?",
+    "TextoEncabezado"
+   ],
+   [
+    "string?",
+    "TextoPie"
+   ],
+   [
+    "bool?",
+    "MostrarLogo"
+   ],
+   [
+    "bool?",
+    "MostrarCodigoBarras"
+   ],
+   [
+    "string?",
+    "FormatoNumero"
+   ],
+   [
+    "string?",
+    "TamanioPagina"
+   ]
+  ],
+  "CrearLogisticaUsuarioRequest": [
+   [
+    "string",
+    "Documentoidentidad"
+   ],
+   [
+    "string",
+    "NombreCompleto"
+   ],
+   [
+    "string?",
+    "Email"
+   ],
+   [
+    "string?",
+    "Telefono"
+   ],
+   [
+    "string?",
+    "Ruc"
+   ],
+   [
+    "int?",
+    "IdUsuarioMaestro"
+   ],
+   [
+    "string?",
+    "UsuarioCreacion"
+   ]
+  ],
+  "ActualizarLogisticaUsuarioRequest": [
+   [
+    "string",
+    "NombreCompleto"
+   ],
+   [
+    "string?",
+    "Email"
+   ],
+   [
+    "string?",
+    "Telefono"
+   ],
+   [
+    "bool",
+    "Activo"
+   ],
+   [
+    "string?",
+    "UsuarioModificacion"
+   ]
+  ],
+  "CambiarEstadoLogisticaUsuarioRequest": [
+   [
+    "bool",
+    "Activo"
+   ],
+   [
+    "string?",
+    "UsuarioModificacion"
+   ]
+  ],
+  "LimpiarDataRequest": [
+   [
+    "string?",
+    "Confirmacion"
+   ],
+   [
+    "bool",
+    "SoloSimular"
+   ],
+   [
+    "bool",
+    "ResetearCorrelativos"
+   ],
+   [
+    "string?",
+    "Usuario"
+   ]
+  ],
+  "RestaurarDataRequest": [
+   [
+    "string?",
+    "BackupFile"
+   ],
+   [
+    "string?",
+    "Confirmacion"
+   ],
+   [
+    "string?",
+    "Usuario"
+   ]
+  ],
+  "CreateAppDeploymentRequest": [
+   [
+    "string",
+    "AppName"
+   ],
+   [
+    "string",
+    "Environment"
+   ],
+   [
+    "string",
+    "Version"
+   ],
+   [
+    "DateTime?",
+    "BuildTime"
+   ],
+   [
+    "DateTime?",
+    "DeployedAt"
+   ],
+   [
+    "string?",
+    "DeployedBy"
+   ],
+   [
+    "string?",
+    "ServerName"
+   ],
+   [
+    "string?",
+    "Notes"
+   ],
+   [
+    "bool",
+    "IsActive"
+   ]
+  ],
+  "ConfigMenuFiltroRequest": [
+   [
+    "string?",
+    "idrol"
+   ]
+  ],
+  "EliminarConfigMenuRequest": [
+   [
+    "string?",
+    "id"
+   ],
+   [
+    "int",
+    "idMenu"
+   ],
+   [
+    "string?",
+    "usuarioModifica"
+   ]
+  ],
+  "ConfiguracionPermisoRequest": [
+   [
+    "string",
+    "idrol"
+   ],
+   [
+    "string",
+    "clave"
+   ],
+   [
+    "string",
+    "valor"
+   ],
+   [
+    "string?",
+    "descripcion"
+   ],
+   [
+    "string?",
+    "usuarioModifica"
+   ]
+  ],
+  "ConfiguracionPermisoFiltroRequest": [
+   [
+    "string?",
+    "idrol"
+   ],
+   [
+    "string?",
+    "clave"
+   ]
+  ],
+  "ConsolidacionRequest": [
+   [
+    "string",
+    "NoCia"
+   ],
+   [
+    "string",
+    "UsuarioCreador"
+   ],
+   [
+    "string",
+    "Observaciones"
+   ],
+   [
+    "List<LineaConsolidacionRequest>",
+    "Lineas"
+   ]
+  ],
+  "LineaConsolidacionRequest": [
+   [
+    "string",
+    "CodigoItem"
+   ],
+   [
+    "string",
+    "DescripcionItem"
+   ],
+   [
+    "string",
+    "UnidadMedida"
+   ],
+   [
+    "List<OrigenConsolidacionRequest>",
+    "Origenes"
+   ]
+  ],
+  "OrigenConsolidacionRequest": [
+   [
+    "string",
+    "TipoOrigen"
+   ],
+   [
+    "string",
+    "IdRequerimientoOrigen"
+   ],
+   [
+    "int",
+    "NoLineaOrigen"
+   ],
+   [
+    "decimal",
+    "CantidadConsolidada"
+   ]
+  ],
+  "AnularConsolidacionRequest": [
+   [
+    "string",
+    "Motivo"
+   ]
+  ],
+  "GenerarSolicitudCotizacionRequest": [
+   [
+    "string",
+    "NoReqconsolcompra"
+   ]
+  ],
+  "EmailOrdenRequest": [
+   [
+    "string",
+    "TipoOrden"
+   ],
+   [
+    "string",
+    "CodigoOrden"
+   ],
+   [
+    "string",
+    "DestinatarioEmail"
+   ],
+   [
+    "string",
+    "DestinatarioNombre"
+   ],
+   [
+    "string",
+    "Asunto"
+   ],
+   [
+    "string",
+    "CuerpoHtml"
+   ],
+   [
+    "byte[]?",
+    "PdfBytes"
+   ],
+   [
+    "string",
+    "PdfNombre"
+   ],
+   [
+    "string",
+    "SmtpHost"
+   ],
+   [
+    "int",
+    "SmtpPort"
+   ],
+   [
+    "string",
+    "SmtpUser"
+   ],
+   [
+    "string",
+    "SmtpPassword"
+   ],
+   [
+    "bool",
+    "SmtpSsl"
+   ],
+   [
+    "string",
+    "RemitenteName"
+   ],
+   [
+    "string",
+    "RemitenteEmail"
+   ]
+  ]
+ }
+}
