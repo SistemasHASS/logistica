@@ -1,8 +1,7 @@
 export const environment = {
   production: true,
   // Ambiente de despliegue que este build representa en AppDeployments.
-  deployEnvironment: 'production', // 'development' | 'qas' | 'production'
-  appVersion: '4.2.0', // se reemplaza automáticamente
+  deployEnvironment: 'production', // 'development' | 'qas' | 'production'  appVersion: '7.0.1', // se reemplaza automáticamente
 
   updateMode: 'AUTO',      // 'AUTO' | 'MANUAL' | 'DISABLED'
   showUpdateModal: true,   // true | false
