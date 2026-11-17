@@ -1,0 +1,4 @@
+# Los archivos de entorno son específicos de cada rama (qas -> pruebas, main -> producción).
+# El driver merge=ours conserva siempre la versión de la rama actual en merges.
+# Requiere (una vez por clon): git config merge.ours.driver true
+src/environments/** merge=ours
