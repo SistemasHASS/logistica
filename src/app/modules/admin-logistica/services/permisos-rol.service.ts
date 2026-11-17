@@ -48,6 +48,7 @@ export const MODULOS_MENU: ModuloMenu[] = [
   { route: 'permisos-rol',          label: 'Permisos por Rol',           icon: 'bx bx-shield',       clavePermiso: 'ADMINLG_MENU_PERMISOS_ROL' },
   { route: 'migracion-adjuntos',   label: 'Migrar Adjuntos',            icon: 'bx bx-refresh',      clavePermiso: 'ADMINLG_MENU_MIGRAR_ADJUNTOS' },
   { route: 'accesos-reportes',     label: 'Accesos Reportes',           icon: 'bx bx-lock-open-alt',clavePermiso: 'ADMINLG_MENU_ACCESOS_REPORTES' },
+  { route: 'mantenimiento',        label: 'Mantenimiento',              icon: 'bx bx-trash',        clavePermiso: 'ADMINLG_MENU_MANTENIMIENTO' },
 ];
 
 export const ROLES_SISTEMA = [

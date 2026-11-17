@@ -107,6 +107,10 @@ export const adminLogisticaRoutes: Routes = [
         path: 'accesos-reportes',
         loadComponent: () => import('./tabs/accesos-reportes/accesos-reportes.component').then(m => m.AccesosReportesComponent)
       },
+      {
+        path: 'mantenimiento',
+        loadComponent: () => import('./tabs/mantenimiento/mantenimiento.component').then(m => m.MantenimientoComponent)
+      },
     ]
   }
 ];
