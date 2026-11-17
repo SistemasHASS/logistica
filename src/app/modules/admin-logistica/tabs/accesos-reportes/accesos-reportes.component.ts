@@ -284,11 +284,15 @@ export class AccesosReportesComponent implements OnInit {
         ),
         lastValueFrom(
           this.http.post(`${this.baseUrl}/api/logistica/listar-areas`,
-            [{ ruc: a.ruc || this.auth.currentUser()?.ruc }])
+            { ruc: a.ruc || this.auth.currentUser()?.ruc })
         ).catch(() => [])
       ]);
       this.areasOtorgadas.set(Array.isArray(otorgadas) ? otorgadas : []);
-      this.areasCatalogo.set(Array.isArray(catalogo) ? catalogo : []);
+      // ADMIN_listarAreas devuelve { idarea, descripcion, ... } — el combo muestra `nombre`
+      this.areasCatalogo.set(
+        (Array.isArray(catalogo) ? catalogo : [])
+          .map((x: any) => ({ idarea: +x.idarea, nombre: x.nombre ?? x.descripcion ?? `#${x.idarea}` }))
+      );
     } catch {
       this.areasOtorgadas.set([]);
       this.alerta('Error al cargar las áreas del usuario', 'danger');

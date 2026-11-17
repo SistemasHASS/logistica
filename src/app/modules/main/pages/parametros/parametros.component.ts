@@ -32,6 +32,7 @@ import { DropdownComponent } from '../../components/dropdown/dropdown.component'
 // TODO(PARTIDA): import { TreeSelectComponent, ModuloNode } from '../../components/tree-select/tree-select.component';
 // TODO(PARTIDA): import { construirArbolPartidas, filtrarPartidas } from '@/app/shared/utils/partida-tree.utils';
 import { CommodityService } from '../../services/commoditys.service';
+import { lastValueFrom } from 'rxjs';
 import { any } from '@tensorflow/tfjs';
 
 @Component({
@@ -187,6 +188,14 @@ export class ParametrosComponent implements OnInit {
     console.log('🔍 Array tipoItem:', this.tipoItem);
     
     await this.llenarDropdowns(); // Cargar todos los datos base primero
+
+    // Si las tablas maestras están vacías (el login limpia IndexedDB), descargar
+    // solo lo que necesita esta pantalla antes de restaurar la configuración.
+    if (!this.cecos.length || !this.turnos.length || !this.labores.length || !this.proyectos.length) {
+      await this.sincronizarMaestrasParametros();
+      await this.llenarDropdowns();
+    }
+
     await this.validarExisteConfiguracion(); // Luego cargar configuración guardada
     
     // 
@@ -337,25 +346,78 @@ export class ParametrosComponent implements OnInit {
   }
 
   async llenarDropdowns() {
+    // Empresas primero: fundos, cultivos y áreas filtran por ella
     await this.ListarEmpresas();
-    await this.ListarFundos();
-    await this.ListarCultivos();
-    await this.ListarAreas();
-    // await this.ListarAlmacenes();
-    // await this.ListarAlmacenesPorRol();
-    await this.ListarProyectos();
-    // await this.ListarPartidas(); // TODO(PARTIDA): comentado hasta retomar desarrollo
-    await this.ListarItems();
-    await this.ListarTurnos();
-    await this.ListarLabores();
-    await this.ListarCecos();
-    await this.ListarClasificaciones();
-    await this.ListarTipoGastos();
-    await this.ListarProveedores();
-    await this.ListarServicios();
-    await this.ListarActivosFijos();
+    // El resto de lecturas a Dexie en paralelo
+    await Promise.all([
+      this.ListarFundos(),
+      this.ListarCultivos(),
+      this.ListarAreas(),
+      // this.ListarAlmacenes(),
+      // this.ListarAlmacenesPorRol(),
+      this.ListarProyectos(),
+      // this.ListarPartidas(), // TODO(PARTIDA): comentado hasta retomar desarrollo
+      this.ListarItems(),
+      this.ListarTurnos(),
+      this.ListarLabores(),
+      this.ListarCecos(),
+      this.ListarClasificaciones(),
+      this.ListarTipoGastos(),
+      this.ListarProveedores(),
+      this.ListarServicios(),
+      this.ListarActivosFijos(),
+    ]);
     await this.filtrarLaboresInicio();
     await this.filtraCecoTurnoProyectoInicio();
+  }
+
+  // Descarga ligera: solo las maestras que necesita esta pantalla, en paralelo.
+  // Se dispara automáticamente en ngOnInit cuando las tablas Dexie están vacías
+  // (el login las limpia), así el usuario no tiene que presionar "Sincronizar".
+  private async sincronizarMaestrasParametros() {
+    console.log('⏳ Tablas maestras vacías, descargando datos de parámetros...');
+    this.alertService.mostrarModalCarga();
+    try {
+      const ruc = this.usuario?.ruc;
+      const idempresa = this.usuario?.idempresa;
+      const [
+        empresas, fundos, cultivos, areas, almacenes, almacenesDestino,
+        proyectos, turnos, labores, cecos,
+      ] = await Promise.all([
+        this.maestrasService.getEmpresas([]),
+        lastValueFrom(this.maestrasService.getFundos([{ idempresa }])),
+        lastValueFrom(this.maestrasService.getCultivos([{ idempresa }])),
+        lastValueFrom(this.maestrasService.getAreas([{ ruc, aplicacion: 'LOGISTICA' }])),
+        lastValueFrom(this.maestrasService.getAlmacenes([{ ruc, aplicacion: 'LOGISTICA' }])),
+        lastValueFrom(this.requerimientosService.getAlmacenes([{ ruc }])),
+        lastValueFrom(this.maestrasService.getProyectos([{ ruc, aplicacion: 'LOGISTICA', esadmin: 0 }])),
+        lastValueFrom(this.maestrasService.getTurnos([{ idempresa, aplicacion: 'LOGISTICA' }])),
+        this.maestrasService.getLabores([{ aplicacion: 'LOGISTICA', esadmin: 0 }]),
+        lastValueFrom(this.maestrasService.getCecos([{ aplicacion: 'LOGISTICA', esadmin: 0 }])),
+      ]);
+
+      await Promise.all([
+        empresas?.length ? this.dexieService.saveEmpresas(empresas) : Promise.resolve(),
+        fundos?.length ? this.dexieService.saveFundos(fundos) : Promise.resolve(),
+        cultivos?.length ? this.dexieService.saveCultivos(cultivos) : Promise.resolve(),
+        areas?.length ? this.dexieService.saveAreas(areas) : Promise.resolve(),
+        almacenes?.length ? this.dexieService.saveAlmacenes(almacenes) : Promise.resolve(),
+        almacenesDestino?.length ? this.dexieService.saveAlmacenesDestino(almacenesDestino) : Promise.resolve(),
+        proyectos?.length ? this.dexieService.saveProyectos(proyectos) : Promise.resolve(),
+        turnos?.length ? this.dexieService.saveTurnos(turnos) : Promise.resolve(),
+        labores?.length ? this.dexieService.saveLabores(labores) : Promise.resolve(),
+        cecos?.length ? this.dexieService.saveCecos(cecos) : Promise.resolve(),
+      ]);
+
+      console.log('✅ Maestras de parámetros descargadas:', {
+        fundos: fundos?.length, cultivos: cultivos?.length, proyectos: proyectos?.length,
+        turnos: turnos?.length, labores: labores?.length, cecos: cecos?.length,
+      });
+    } catch (error) {
+      console.error('❌ Error descargando maestras de parámetros:', error);
+    } finally {
+      this.alertService.cerrarModalCarga();
+    }
   }
 
   async cargarRoles() {
@@ -439,11 +501,17 @@ export class ParametrosComponent implements OnInit {
   }
 
 
+  // Normaliza valores que pueden venir como string, number, null o undefined
+  // desde la API/Dexie para comparaciones seguras en los filtros en cascada.
+  private norm(v: any): string {
+    return (v ?? '').toString().trim();
+  }
+
   async filtrarLaboresInicio() {
     if (this.configuracion.idceco) {
       const labores = await this.dexieService.showLabores();
       this.filteredLabores = labores.filter(
-        (x: Labor) => x.ceco?.trim() === this.configuracion.idceco
+        (x: Labor) => this.norm(x.ceco) === this.norm(this.configuracion.idceco)
       );
     }
   }
@@ -453,9 +521,9 @@ export class ParametrosComponent implements OnInit {
     this.configuracion.idlabor = '';
     if (this.configuracion.idgrupolabor) {
       const labores = await this.dexieService.showLabores();
-      const grupoLaborId = this.configuracion.idgrupolabor.trim();
+      const grupoLaborId = this.norm(this.configuracion.idgrupolabor);
       this.filteredLabores = labores.filter(
-        (x: Labor) => x.idlabor?.trim() === grupoLaborId
+        (x: Labor) => this.norm(x.idlabor) === grupoLaborId
       );
     }
   }
@@ -504,7 +572,7 @@ export class ParametrosComponent implements OnInit {
       
       // Cargar turnos según cultivo (para CONSUMO y TRANSFERENCIA)
       this.filteredTurnos = this.turnos.filter(
-        (x: Turno) => x.idcultivo?.trim() === this.configuracion.idcultivo
+        (x: Turno) => this.norm(x.idcultivo) === this.norm(this.configuracion.idcultivo)
       );
       
       console.log(`🔍 Filtrando turnos para cultivo "${this.configuracion.idcultivo}": ${this.filteredTurnos.length} encontrados`);
@@ -544,7 +612,7 @@ export class ParametrosComponent implements OnInit {
       
       // Filtrar CECOs por cultivo
       this.filteredCecos = this.cecos.filter(
-        (ceco: Ceco) => ceco.idcultivo?.trim() === this.configuracion.idcultivo
+        (ceco: Ceco) => this.norm(ceco.idcultivo) === this.norm(this.configuracion.idcultivo)
       );
       
       console.log('🔄 CECOs filtrados por cultivo:', this.filteredCecos.length);
@@ -967,6 +1035,50 @@ export class ParametrosComponent implements OnInit {
 
     console.log('🔎 PROYECTOS TOTALES CARGADOS:', this.proyectos.length);
     console.log('� SAMPLE:', this.proyectos[0]);
+    this.reaplicarFiltrosDependientes();
+  }
+
+  // Reaplica la cascada cultivo → turno → ceco → labor → proyecto sin borrar
+  // lo seleccionado. Se usa cuando las tablas maestras llegan o se actualizan
+  // DESPUÉS de que el usuario ya eligió valores (ej. sync tardía de Dexie).
+  private reaplicarFiltrosDependientes() {
+    if (!this.configuracion.idcultivo) return;
+
+    this.filteredTurnos = this.turnos.filter(
+      (x: Turno) => this.norm(x.idcultivo) === this.norm(this.configuracion.idcultivo)
+    );
+
+    const cecosPorCultivo = this.cecos.filter(
+      (x: Ceco) => this.norm(x.idcultivo) === this.norm(this.configuracion.idcultivo)
+    );
+
+    const turno = this.filteredTurnos.find(
+      (t: any) => t.codTurno === this.configuracion.idturno
+    );
+    const conturnoSel = this.norm(turno?.conturno);
+    if (turno && this.configuracion.idturno && conturnoSel) {
+      const porTurno = this.cecos.filter((x: Ceco) =>
+        this.norm(x.conturno).includes(conturnoSel)
+      );
+      this.filteredCecos = porTurno.length ? porTurno : cecosPorCultivo;
+    } else {
+      this.filteredCecos = cecosPorCultivo;
+    }
+
+    if (this.configuracion.idceco) {
+      this.filteredLabores = this.labores.filter(
+        (x: Labor) => this.norm(x.ceco) === this.norm(this.configuracion.idceco)
+      );
+    }
+
+    if (this.configuracion.idceco && this.configuracion.idlabor) {
+      this.filteredProyectos = this.proyectos.filter(
+        (p: any) =>
+          this.norm(p.ceco) === this.norm(this.configuracion.idceco) &&
+          this.norm(p.idlabor) === this.norm(this.configuracion.idlabor) &&
+          this.norm(p.idcultivo) === this.norm(this.configuracion.idcultivo)
+      );
+    }
   }
 
 
@@ -998,7 +1110,7 @@ export class ParametrosComponent implements OnInit {
     const clasificaciones = await this.dexieService.showClasificaciones();
     this.clasificaciones = clasificaciones;
     if (this.clasificaciones.length == 1) {
-      this.configuracion.idclasificacion = this.items[0].idclasificacion;
+      this.configuracion.idclasificacion = this.clasificaciones[0].idclasificacion;
     }
   }
 
@@ -1006,8 +1118,10 @@ export class ParametrosComponent implements OnInit {
     const turnos = await this.dexieService.showTurnos();
     this.turnos = turnos;
     if (this.turnos.length == 1) {
-      this.configuracion.idturno = this.turnos[0].id;
+      // El dropdown de turno usa 'codTurno' como valueField, no 'id'
+      this.configuracion.idturno = this.turnos[0].codTurno;
     }
+    this.reaplicarFiltrosDependientes();
   }
 
   async ListarLabores() {
@@ -1016,6 +1130,7 @@ export class ParametrosComponent implements OnInit {
     if (this.labores.length == 1) {
       this.configuracion.idlabor = this.labores[0].idlabor;
     }
+    this.reaplicarFiltrosDependientes();
   }
 
   async ListarCecos() {
@@ -1026,10 +1141,7 @@ export class ParametrosComponent implements OnInit {
     //   this.configuracion.idceco = this.cecos[0].id;
     //   // this.configuracion.idceco = this.cecos[0].costcenter;
     // }
-    if (this.cecos.length > 0) {
-    this.configuracion.idceco = this.cecos[0].costcenter;
-    }
-    console.log(this.configuracion.idceco);
+    this.reaplicarFiltrosDependientes();
   }
 
   async ListarTipoGastos() {
@@ -1051,7 +1163,7 @@ export class ParametrosComponent implements OnInit {
   async ListarServicios() {
     const servicios = await this.dexieService.showComodities();
     this.servicios = servicios;
-    if (this.servicios.length == 1) {
+    if (this.servicios.length == 1 && this.proveedores.length > 0) {
       this.configuracion.idproveedor = this.proveedores[0].id;
     }
   }
@@ -1114,11 +1226,13 @@ export class ParametrosComponent implements OnInit {
     this.filteredTurnos.length = 0;
     this.configuracion.idturno = '';
     if (this.configuracion.idcultivo) {
+      // configuracion.idcultivo guarda el CODIGO del cultivo, no el id
       const cultivo = this.cultivos.find(
-        (e: any) => e.id == this.configuracion.idcultivo
+        (e: any) => this.norm(e.codigo) === this.norm(this.configuracion.idcultivo)
       );
+      if (!cultivo) return;
       this.filteredTurnos = this.turnos.filter(
-        (x: Turno) => x.idcultivo?.trim() === cultivo.codigo
+        (x: Turno) => this.norm(x.idcultivo) === this.norm(cultivo.codigo)
       );
     }
   }
@@ -1139,7 +1253,7 @@ export class ParametrosComponent implements OnInit {
     if (this.configuracion.idcultivo) {
       // Cargar turnos según cultivo
       this.filteredTurnos = this.turnos.filter(
-        (x: Turno) => x.idcultivo?.trim() === this.configuracion.idcultivo
+        (x: Turno) => this.norm(x.idcultivo) === this.norm(this.configuracion.idcultivo)
       );
 
       // Para COMPRA: cargar CECOs según cultivo
@@ -1148,7 +1262,7 @@ export class ParametrosComponent implements OnInit {
       } else {
         // Para CONSUMO y TRANSFERENCIA: cargar CECOs según cultivo
         this.filteredCecos = this.cecos.filter(
-          (x: Ceco) => x.idcultivo?.trim() === this.configuracion.idcultivo
+          (x: Ceco) => this.norm(x.idcultivo) === this.norm(this.configuracion.idcultivo)
         );
       }
 
@@ -1172,11 +1286,13 @@ export class ParametrosComponent implements OnInit {
       if (this.configuracion.idTipoItem !== 'COMPRA') {
         // Para CONSUMO y TRANSFERENCIA: lógica original
         this.filteredCecos = this.cecos.filter(
-          (x: Ceco) => x.idcultivo?.trim() === this.configuracion.idcultivo
+          (x: Ceco) => this.norm(x.idcultivo) === this.norm(this.configuracion.idcultivo)
         );
       } else {
-        // Para COMPRA: ya están cargados desde onCultivoChange()
-        // No hacer nada, los CECOs ya están filtrados por cultivo
+        // Para COMPRA: reponer el filtro por cultivo (filteredCecos se limpió arriba)
+        this.filteredCecos = this.cecos.filter(
+          (x: Ceco) => this.norm(x.idcultivo) === this.norm(this.configuracion.idcultivo)
+        );
       }
     }
 
@@ -1184,10 +1300,11 @@ export class ParametrosComponent implements OnInit {
       (e: any) => e.codTurno === this.configuracion.idturno
     );
 
-    if (turno && this.configuracion.idturno) {
+    const conturnoSel = this.norm(turno?.conturno);
+    if (turno && this.configuracion.idturno && conturnoSel) {
       // Para CONSUMO y TRANSFERENCIA: filtrar CECOs por turno
       const cecosPorTurno = this.cecos.filter((x: Ceco) =>
-        x.conturno.includes(turno.conturno ?? '')
+        this.norm(x.conturno).includes(conturnoSel)
       );
       
       // Si hay CECOs que coinciden con el turno, usarlos
@@ -1228,7 +1345,7 @@ export class ParametrosComponent implements OnInit {
         // Filtrar labores que pertenecen al CECO seleccionado
         const labores = await this.dexieService.showLabores();
         this.filteredLabores = labores.filter(
-          (x: Labor) => x.ceco === this.configuracion.idceco
+          (x: Labor) => this.norm(x.ceco) === this.norm(this.configuracion.idceco)
         );
         
         console.log('📊 Labores filtradas por CECO:', this.filteredLabores.length);
@@ -1255,6 +1372,9 @@ export class ParametrosComponent implements OnInit {
         const ceco = this.filteredCecos.find(
           // (e: any) => e.id === this.configuracion.idceco
           (e: any) => e.costcenter === this.configuracion.idceco
+        ) ?? this.cecos.find(
+          // Fallback: el CECO puede no estar en filteredCecos si fue filtrado por turno
+          (e: any) => this.norm(e.costcenter) === this.norm(this.configuracion.idceco)
         );
         if (ceco) {
           if (ceco.esinversion === 1) {
@@ -1266,7 +1386,7 @@ export class ParametrosComponent implements OnInit {
           console.log('labores: ',labores);
           this.filteredLabores = labores.filter(
             // (x: Labor) => x.ceco == this.configuracion.idceco
-            (x: Labor) => x.ceco === ceco.costcenter
+            (x: Labor) => this.norm(x.ceco) === this.norm(ceco.costcenter)
           );
           console.log('filtro de labores: ', this.filteredLabores);
         }
@@ -1277,10 +1397,11 @@ export class ParametrosComponent implements OnInit {
   async filtraCecoTurnoProyectoInicio() {
     if (this.configuracion.idcultivo) {
       const cultivo = this.cultivos.find(
-        (e: any) => e.id == this.configuracion.idcultivo
+        (e: any) => this.norm(e.codigo) === this.norm(this.configuracion.idcultivo)
       );
+      if (!cultivo) return;
       this.filteredTurnos = this.turnos.filter(
-        (x: Turno) => x.idcultivo?.trim() === cultivo.codigo
+        (x: Turno) => this.norm(x.idcultivo) === this.norm(cultivo.codigo)
       );
       // LIMPIAR PROYECTOS AL CAMBIAR CULTIVO
       // this.filteredProyectos = [];
@@ -1319,9 +1440,9 @@ export class ParametrosComponent implements OnInit {
       
       this.filteredProyectos = this.proyectos.filter(
         (p: any) =>
-          p.ceco?.trim() === this.configuracion.idceco?.trim() &&
-          p.idlabor?.trim() === this.configuracion.idlabor?.trim() &&
-          p.idcultivo?.trim() === this.configuracion.idcultivo?.trim()
+          this.norm(p.ceco) === this.norm(this.configuracion.idceco) &&
+          this.norm(p.idlabor) === this.norm(this.configuracion.idlabor) &&
+          this.norm(p.idcultivo) === this.norm(this.configuracion.idcultivo)
       );
       
       console.log('✅ PROYECTOS FILTRADOS (CECO + LABOR):', this.filteredProyectos.length);
@@ -1386,18 +1507,21 @@ export class ParametrosComponent implements OnInit {
 
     if (cultivo) {
       // Buscar turnos del cultivo (turno.idcultivo = cultivo.codigo)
-      const turnosDelCultivo = this.turnos.filter((t: Turno) => t.idcultivo?.trim() === cultivo.codigo?.trim());
+      const turnosDelCultivo = this.turnos.filter((t: Turno) => this.norm(t.idcultivo) === this.norm(cultivo.codigo));
       console.log('📋 TURNOS DEL CULTIVO:', turnosDelCultivo.length);
 
       // Obtener el CECO seleccionado
-      const cecoSeleccionado = this.cecos.find((c: Ceco) => c.costcenter?.trim() === this.configuracion.idceco?.trim());
+      const cecoSeleccionado = this.cecos.find((c: Ceco) => this.norm(c.costcenter) === this.norm(this.configuracion.idceco));
       console.log('📋 CECO SELECCIONADO:', cecoSeleccionado);
 
       if (cecoSeleccionado) {
         // Verificar que el CECO pertenezca a algún turno del cultivo (ceco.conturno debe estar en turnosDelCultivo)
-        const cecoPerteneceCultivo = turnosDelCultivo.some((t: Turno) =>
-          cecoSeleccionado.conturno?.includes(t.conturno || '')
-        );
+        // Solo se consideran turnos con conturno no vacío: includes('') siempre es true
+        const conturnoCeco = this.norm(cecoSeleccionado.conturno);
+        const cecoPerteneceCultivo = conturnoCeco !== '' && turnosDelCultivo.some((t: Turno) => {
+          const conturnoTurno = this.norm(t.conturno);
+          return conturnoTurno !== '' && conturnoCeco.includes(conturnoTurno);
+        });
 
         console.log('🔍 CECO pertenece al cultivo?', cecoPerteneceCultivo);
 
@@ -1414,9 +1538,9 @@ export class ParametrosComponent implements OnInit {
     // Los proyectos deben coincidir con CECO, IDLABOR y CULTIVO
     this.filteredProyectos = this.proyectos.filter(
       (p: any) =>
-        p.ceco?.trim() === this.configuracion.idceco?.trim() &&
-        p.idlabor?.trim() === this.configuracion.idlabor?.trim() &&
-        p.idcultivo?.trim() === cultivo.codigo?.trim()
+        this.norm(p.ceco) === this.norm(this.configuracion.idceco) &&
+        this.norm(p.idlabor) === this.norm(this.configuracion.idlabor) &&
+        this.norm(p.idcultivo) === this.norm(this.configuracion.idcultivo)
     );
 
     console.log('✅ PROYECTOS FILTRADOS (CULTIVO + CECO + LABOR):', this.filteredProyectos.length);
@@ -1570,12 +1694,12 @@ export class ParametrosComponent implements OnInit {
         
         // 1. Cargar turnos según cultivo
         this.filteredTurnos = this.turnos.filter(
-          (x: Turno) => x.idcultivo?.trim() === this.configuracion.idcultivo
+          (x: Turno) => this.norm(x.idcultivo) === this.norm(this.configuracion.idcultivo)
         );
         
         // 2. Cargar CECOs según cultivo (para CONSUMO también se filtran por cultivo)
         this.filteredCecos = this.cecos.filter(
-          (x: Ceco) => x.idcultivo?.trim() === this.configuracion.idcultivo
+          (x: Ceco) => this.norm(x.idcultivo) === this.norm(this.configuracion.idcultivo)
         );
         
         console.log('✅ Turnos para CONSUMO:', this.filteredTurnos.length);
@@ -1607,7 +1731,7 @@ export class ParametrosComponent implements OnInit {
       // Cargar CECOs según cultivo (igual que CONSUMO)
       if (this.configuracion.idcultivo) {
         this.filteredCecos = this.cecos.filter(
-          (x: Ceco) => x.idcultivo?.trim() === this.configuracion.idcultivo
+          (x: Ceco) => this.norm(x.idcultivo) === this.norm(this.configuracion.idcultivo)
         );
       }
 
