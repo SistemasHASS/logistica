@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
+  deployEnvironment: 'development', // 'development' | 'qas' | 'production'
   appVersion: '1.0.0',
 
   updateMode: 'AUTO',      // 'AUTO' | 'MANUAL' | 'DISABLED'
