@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup: Menús del Layout Principal — JLOLOGIST</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1a73e8; --success:#198754; --bg:#f4f6f9; --panel:#fff;
+    --border:#dee2e6; --ink:#2c3e50; --muted:#6c757d;
+  }
+  body { background:var(--bg); font-family:'Segoe UI',system-ui,sans-serif; padding:1.5rem 0; color:var(--ink); }
+  .page-title { font-size:1.15rem; font-weight:700; display:flex; gap:.5rem; align-items:center; margin:0; }
+  .page-subtitle { color:var(--muted); font-size:.85rem; margin:0; }
+  .stat-chip { background:#fff; border:1px solid var(--border); border-radius:20px; padding:.25rem .8rem; font-size:.8rem; color:var(--muted); }
+  .stat-chip b { color:var(--ink); }
+  .tabs-bar { display:flex; gap:.5rem; margin:1rem 0; }
+  .tab-btn { border:1px solid var(--border); background:#fff; border-radius:8px; padding:.5rem 1rem; font-size:.85rem; font-weight:600; color:var(--muted); cursor:pointer; }
+  .tab-btn.active { background:var(--primary); border-color:var(--primary); color:#fff; }
+  .card-panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:1.1rem 1.25rem; margin-bottom:1rem; }
+  .editor-toolbar { display:flex; gap:1.5rem; align-items:flex-end; flex-wrap:wrap; }
+  .editor-label { font-size:.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:.3rem; }
+  .select-rol { border:1px solid var(--border); border-radius:8px; padding:.5rem .75rem; font-size:.9rem; min-width:240px; background:#fff; }
+  .select-rol.jlo { border-color:var(--primary); box-shadow:0 0 0 3px rgba(26,115,232,.15); }
+  .btn-guardar { background:var(--primary); color:#fff; border:none; border-radius:8px; padding:.55rem 1.1rem; font-size:.85rem; font-weight:600; }
+  .btn-reset { background:#fff; color:var(--muted); border:1px solid var(--border); border-radius:8px; padding:.55rem 1rem; font-size:.85rem; font-weight:600; }
+  .badge-tipo { font-size:.72rem; padding:.15rem .55rem; border-radius:10px; background:#e7f1ff; color:var(--primary); font-weight:700; }
+  .cat-header { display:flex; align-items:center; gap:.6rem; padding:.65rem 1rem; background:#f0f4f9; border-radius:8px; cursor:pointer; user-select:none; }
+  .cat-header h6 { margin:0; font-size:.85rem; font-weight:700; }
+  .cat-count { margin-left:auto; font-size:.75rem; color:var(--muted); }
+  .mod-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:.4rem .9rem; padding:.8rem .4rem .2rem; }
+  .mod-item { display:flex; align-items:center; gap:.55rem; padding:.4rem .55rem; border-radius:7px; font-size:.85rem; cursor:pointer; }
+  .mod-item:hover { background:#f1f6ff; }
+  .mod-item input { accent-color:var(--primary); width:16px; height:16px; }
+  .mod-item .mod-icon { width:22px; text-align:center; color:var(--muted); }
+  .mod-item.off { opacity:.45; }
+  .mod-ruta { margin-left:auto; font-size:.7rem; color:#9aa5b1; font-family:Consolas,monospace; }
+  .hint { background:#e7f1ff; border:1px solid #c7dcfb; color:#29518f; border-radius:8px; padding:.7rem 1rem; font-size:.82rem; }
+  .legend { font-size:.75rem; color:var(--muted); }
+  .kbd { background:#eef1f5; border:1px solid var(--border); border-radius:5px; padding:.05rem .4rem; font-family:Consolas,monospace; font-size:.72rem; }
+  .callout { border-left:4px solid var(--primary); background:#fff; border-radius:0 8px 8px 0; padding:.8rem 1rem; font-size:.83rem; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+  .callout code { font-size:.75rem; }
+</style>
+</head>
+<body>
+<div class="container-fluid px-4">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h4 class="page-title"><i class='bx bx-layout'></i> Menús del Layout Principal</h4>
+      <p class="page-subtitle">Vista y configuración de los módulos del sistema por rol. &nbsp;<span class="text-secondary">(mockup — JLOLOGIST usa su menú propio: se configura AQUÍ, no en “Permisos por Rol” de admin-logística)</span></p>
+    </div>
+    <div class="d-flex gap-2">
+      <span class="stat-chip"><b>32</b> módulos</span>
+      <span class="stat-chip"><b>11</b> roles</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-bar">
+    <button class="tab-btn" id="tabVista" onclick="showTab('vista')"><i class='bx bx-table'></i> Vista por roles</button>
+    <button class="tab-btn active" id="tabEditor" onclick="showTab('editor')"><i class='bx bx-edit'></i> Editor Accordion</button>
+  </div>
+
+  <!-- ══════ TAB: VISTA POR ROLES (resumen) ══════ -->
+  <div id="panelVista" style="display:none">
+    <div class="card-panel">
+      <div class="d-flex gap-3 flex-wrap align-items-center mb-2">
+        <input class="form-control form-control-sm" style="max-width:220px" placeholder="Buscar módulo...">
+        <select class="form-select form-select-sm" style="max-width:240px"><option>Todos los roles</option><option selected>JLOLOGIST — Jef. Logística</option></select>
+        <select class="form-select form-select-sm" style="max-width:200px"><option>Todas las secciones</option></select>
+      </div>
+      <table class="table table-sm align-middle mb-0">
+        <thead><tr><th>Módulo</th><th>Ruta</th><th class="text-center">TILOGIST</th><th class="text-center">ADLOGIST</th><th class="text-center" style="background:#e7f1ff">JLOLOGIST</th><th class="text-center">GERENTE</th><th class="text-center">…</th></tr></thead>
+        <tbody>
+          <tr><td><i class='bx bx-line-chart'></i> Dashboard Jef. Logística</td><td><code>/main/dashboard-jlologist</code></td><td class="text-center">—</td><td class="text-center">—</td><td class="text-center text-success fw-bold" style="background:#f2f8ff">✓</td><td class="text-center">—</td><td></td></tr>
+          <tr><td><i class='bx bx-shopping-bag'></i> Solicitudes de Compra</td><td><code>/main/solicitudes-compra</code></td><td class="text-center text-success">✓</td><td class="text-center text-success">✓</td><td class="text-center text-success fw-bold" style="background:#f2f8ff">✓</td><td class="text-center">—</td><td></td></tr>
+          <tr><td><i class='icon icon-file-check'></i> Aprobación OC</td><td><code>/main/aprobaciones-oc</code></td><td class="text-center text-success">✓</td><td class="text-center text-success">✓</td><td class="text-center text-success fw-bold" style="background:#f2f8ff">✓</td><td class="text-center text-success">✓</td><td></td></tr>
+          <tr><td><i class='bx bx-pie-chart'></i> Seguimiento Req. Compra</td><td><code>/main/seguimiento-req-compra</code></td><td class="text-center text-success">✓</td><td class="text-center text-success">✓</td><td class="text-center text-success fw-bold" style="background:#f2f8ff">✓</td><td class="text-center">—</td><td></td></tr>
+          <tr class="table-secondary"><td colspan="7" class="text-center legend">… 28 módulos más …</td></tr>
+        </tbody>
+      </table>
+      <p class="legend mt-2 mb-0"><i class='bx bx-info-circle'></i> Esta matriz refleja el arreglo <code>roles:[]</code> de cada módulo (código). La visibilidad real por usuario sale de <code>ITEMS_VISIBLES</code> en BD — se edita en la pestaña “Editor Accordion”.</p>
+    </div>
+  </div>
+
+  <!-- ══════ TAB: EDITOR ══════ -->
+  <div id="panelEditor">
+
+    <div class="card-panel">
+      <div class="editor-toolbar">
+        <div>
+          <label class="editor-label"><i class='bx bx-user-circle'></i> Rol a editar:</label>
+          <select class="select-rol jlo">
+            <option>JLOLOGIST — Jef. Logística</option>
+            <option>ADLOGIST — Admin Logística</option>
+            <option>TILOGIST — Admin Sistema</option>
+            <option>GERENTE — Gerente</option>
+          </select>
+        </div>
+        <div>
+          <label class="editor-label"><i class='bx bx-layout'></i> Tipo de menú:</label>
+          <select class="select-rol" id="tipoMenu" onchange="updTipo()">
+            <option value="default" selected>Default (menú tradicional)</option>
+            <option value="accordion">Accordion (grupos colapsables)</option>
+            <option value="nav">Nav (vertical con submenús)</option>
+            <option value="list">List (lista plana)</option>
+          </select>
+        </div>
+        <div class="ms-auto d-flex gap-2">
+          <button class="btn-reset"><i class='bx bx-reset'></i> Restaurar default</button>
+          <button class="btn-guardar"><i class='bx bx-save'></i> Guardar cambios</button>
+        </div>
+      </div>
+      <div class="mt-3 d-flex gap-2 align-items-center">
+        <span class="badge-tipo" id="badgeTipo">DEFAULT</span>
+        <span class="legend">Se guarda en <span class="kbd">LOGISTICA_ConfigMenu</span> claves <span class="kbd">LAYOUT_ACCORDION</span> y <span class="kbd">ITEMS_VISIBLES</span> para <b>JLOLOGIST</b></span>
+      </div>
+    </div>
+
+    <div class="hint mb-3">
+      <i class='bx bx-info-circle'></i> Marca los módulos visibles para <b>JLOLOGIST</b>.
+      Sin configuración en BD se usa el default del código
+      (<code>MODULOS_POR_ROL['JLOLOGIST']</code> — 27 ítems). Los checks de abajo reflejan ese default.
+    </div>
+
+    <div id="cats"></div>
+
+    <div class="callout mt-2">
+      <b>¿Cómo llega el usuario final a este menú?</b> El <code>LayoutConfigService</code> del layout principal consulta
+      <code>api/configmenu/listar</code> + <code>listar-config-permisos</code> al iniciar sesión;
+      si <code>LAYOUT_ACCORDION='1'</code> dibuja el menú accordion, y <code>ITEMS_VISIBLES</code> (JSON)
+      filtra los módulos. Sin filas en BD → default hardcodeado del rol.
+      Ruta de esta pantalla: <code>/#/administracion/admin-menus-layout</code>.
+    </div>
+  </div>
+</div>
+
+<script>
+const ITEMS = [
+  {cat:'Mi Dashboard', mods:[
+    ['dashboard-tilogist','Dashboard Admin Sistema','/main/dashboard-tilogist',0],
+    ['dashboard-adlogist','Dashboard Admin Logística','/main/dashboard-adlogist',0],
+    ['dashboard-jlologist','Dashboard Jef. Logística','/main/dashboard-jlologist',1],
+    ['dashboard-oplogist','Mi Dashboard (Operativo)','/main/dashboard-oplogist',1],
+    ['dashboard-logistica','Dashboard Logística','/main/dashboard-logistica',0],
+    ['dashboard-finanzas','Dashboard Finanzas','/main/dashboard-finanzas',0],
+    ['dashboard-aprobaciones-area','Dashboard Aprobaciones Área','/main/dashboard-aprobaciones-area',0]]},
+  {cat:'Configuración', mods:[
+    ['notificaciones','Notificaciones','/main/notificaciones',1],
+    ['parametros','Parámetros','/main/parametros',0]]},
+  {cat:'Requerimientos', mods:[
+    ['requerimientos','Requerimientos','/main/requerimientos',1],
+    ['saldo-requerimiento','Saldo de Requerimiento','/main/saldo-requerimiento',1]]},
+  {cat:'Compras & Órdenes', mods:[
+    ['solicitudes-compra','Solicitudes de Compra','/main/solicitudes-compra',1],
+    ['ordenes-compra','Órdenes de Compra','/main/ordenes-compra',1],
+    ['consolidacion-compra','Consolidación Compras','/main/consolidacion-compra',1],
+    ['consolidacion-compras','Flujo de Compras','/main/consolidacion-compras',1],
+    ['consolidacion-servicios','Consolidación Servicios','/main/consolidacion-servicios',1],
+    ['solicitudes-servicio','Solicitudes de Servicio','/main/solicitudes-servicio',1],
+    ['ordenes-servicio','Órdenes de Servicio','/main/ordenes-servicio',1],
+    ['cotizaciones','Cotizaciones','/main/cotizaciones',1],
+    ['conformidad-servicios','Conformidad de OS','/main/conformidad-servicios',1]]},
+  {cat:'Almacén & Stock', mods:[
+    ['despachos','Gestión de Despachos','/main/despachos',1],
+    ['recepcion-mercaderia','Recepción de Mercadería','/main/recepcion-mercaderia',1],
+    ['kardex','Kardex e Inventario','/main/kardex',1],
+    ['conformidad-almacen','Conformidad NI / NS','/main/conformidad-almacen',1],
+    ['devoluciones-consumo','Devoluciones de Consumo','/main/devoluciones-consumo',0],
+    ['reingresos','Reingresos','/main/reingresos',0]]},
+  {cat:'Aprobaciones', mods:[
+    ['aprobaciones-oc','Aprobación OC','/main/aprobaciones-oc',1],
+    ['aprobaciones-os','Aprobación OS','/main/aprobaciones-os',1],
+    ['aprobaciones-area','Aprobación por Área','/main/aprobaciones-area',1],
+    ['aprobaciones-gerencia','Aprobación Gerencia (N2)','/main/aprobaciones-gerencia',0]]},
+  {cat:'Reportes', mods:[
+    ['reportes-compras','Reportes Avanzados','/main/reportes-compras',1],
+    ['reporte-requerimientos','Reporte Requerimientos','/main/reporte-requerimientos',1],
+    ['reporte-despachos','Reporte de Despachos','/main/reporte-despachos',1],
+    ['reporte-aprobaciones-area','Reporte Aprobaciones Área','/main/reporte-aprobaciones-area',1],
+    ['reporte-saldos','Reporte de Saldos','/main/reporte-saldos',1],
+    ['reporte-aprobados','Reporte Reqs. Aprobados','/main/reporte-aprobados',1],
+    ['seguimiento-req-compra','Seguimiento Req. Compra','/main/seguimiento-req-compra',1],
+    ['analisis-req-compra','Análisis Req. Compra','/main/analisis-req-compra',0],
+    ['seguimiento-req-consumo','Seguimiento Req. Consumo','/main/seguimiento-req-consumo',0]]},
+  {cat:'Consultas', mods:[
+    ['catalogo-items','Catálogo de Items','/main/catalogo-items',1]]}
+];
+
+const cats = document.getElementById('cats');
+ITEMS.forEach(c => {
+  const visibles = c.mods.filter(m=>m[3]).length;
+  const div = document.createElement('div');
+  div.className = 'card-panel';
+  div.innerHTML = `
+    <div class="cat-header" onclick="this.nextElementSibling.classList.toggle('d-none')">
+      <i class='bx bx-category'></i><h6>${c.cat}</h6>
+      <span class="cat-count">${visibles}/${c.mods.length} visibles</span>
+      <i class='bx bx-chevron-down'></i>
+    </div>
+    <div class="mod-grid">
+      ${c.mods.map(m=>`
+        <label class="mod-item ${m[3]?'':'off'}">
+          <input type="checkbox" ${m[3]?'checked':''} onchange="this.closest('label').classList.toggle('off',!this.checked)">
+          <span class="mod-icon"><i class='bx bx-purchase-tag'></i></span>
+          ${m[1]}
+          <span class="mod-ruta">${m[0]}</span>
+        </label>`).join('')}
+    </div>`;
+  cats.appendChild(div);
+});
+
+function showTab(t){
+  document.getElementById('panelVista').style.display = t==='vista'?'block':'none';
+  document.getElementById('panelEditor').style.display = t==='editor'?'block':'none';
+  document.getElementById('tabVista').classList.toggle('active', t==='vista');
+  document.getElementById('tabEditor').classList.toggle('active', t==='editor');
+}
+function updTipo(){
+  document.getElementById('badgeTipo').textContent =
+    document.getElementById('tipoMenu').value.toUpperCase();
+}
+</script>
+</body>
+</html>
