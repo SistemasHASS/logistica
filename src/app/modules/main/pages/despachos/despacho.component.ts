@@ -20,6 +20,8 @@ import { ItemPendienteConsolidacion } from '@/app/models/consolidacion.model';
 import { TableModule } from 'primeng/table';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { ViewChild } from '@angular/core';
 import { Table } from 'primeng/table';
 import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
@@ -35,7 +37,7 @@ export enum EstadoRequerimiento {
 @Component({
   selector: 'app-despachos',
   standalone: true,
-  imports: [CommonModule, FormsModule, TableModule, DatePickerModule, NumeroRequerimientoPipe, DialogModule],
+  imports: [CommonModule, FormsModule, TableModule, DatePickerModule, NumeroRequerimientoPipe, DialogModule, InputTextModule, MultiSelectModule],
   templateUrl: './despacho.component.html',
   styleUrls: ['despacho.component.scss'],
 })
@@ -316,7 +318,38 @@ export class DespachoComponent implements OnInit {
         if (!r.nombreArea && cached.area) r.nombreArea = cached.area;
         if (!r.nombreSolicitante && cached.nombre) r.nombreSolicitante = cached.nombre;
       }
+      r.usuarioFiltro = [r.nombreCreador, this.obtenerNombreUsuario(r)].filter(Boolean).join(' ');
+      r.areaTexto = this.obtenerNombreArea(r);
     }
+  }
+
+  /** Campos auxiliares para los filtros de columna (menú estilo Excel). */
+  private enriquecerFilaDespacho(r: any): void {
+    r.fechaTexto = this.formatearFecha(r.fechaAprobacion || r.fecha);
+    r.estadoFiltro = r.estados || 'PENDIENTE';
+    r.usuarioFiltro = [r.nombreCreador, this.obtenerNombreUsuario(r)].filter(Boolean).join(' ');
+    r.areaTexto = this.obtenerNombreArea(r);
+    r.familiaTexto = this.obtenerFamilia(r);
+  }
+
+  private opcionesUnicasDespachos(lista: any[], campo: string): { label: string; value: string }[] {
+    const set = new Set<string>();
+    for (const r of lista || []) {
+      const v = r?.[campo];
+      if (v != null && String(v).trim() !== '') set.add(String(v));
+    }
+    return [...set].sort().map(v => ({ label: v, value: v }));
+  }
+
+  get almacenOpciones() {
+    return this.opcionesUnicasDespachos(this.requerimientosAprobadosAll, 'idalmacen');
+  }
+
+  get estadoOpciones() {
+    const label = (v: string) =>
+      v === 'ATENCION_PARCIAL' ? 'ATENCIÓN PARCIAL' : v === 'SIN_STOCK' ? 'SIN STOCK' : v;
+    return this.opcionesUnicasDespachos(this.requerimientosAprobadosAll, 'estadoFiltro')
+      .map(o => ({ label: label(o.value), value: o.value }));
   }
 
   /** Devuelve una familia/descripción representativa para la fila (commodity o item). */
@@ -1854,6 +1887,7 @@ export class DespachoComponent implements OnInit {
     });
 
     this.requerimientosAprobadosAll = Array.from(requerimientosUnicos.values());
+    this.requerimientosAprobadosAll.forEach((r: any) => this.enriquecerFilaDespacho(r));
 
     // Ordenar por fecha de aprobación (más reciente primero)
     this.requerimientosAprobadosAll.sort((a: any, b: any) => {

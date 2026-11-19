@@ -10,6 +10,8 @@ import { firstValueFrom, lastValueFrom, timeout } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule, Checkbox } from 'primeng/checkbox';
+import { InputTextModule } from 'primeng/inputtext';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { AprobacionesService } from '@/app/services/aprobaciones.service';
 import { AprobacionesAreaService } from '@/app/modules/main/services/aprobaciones-area.service';
 import { AprobacionesAmbitosService, PendienteAmbito } from '@/app/modules/main/services/aprobaciones-ambitos.service';
@@ -49,6 +51,8 @@ import { NombreCortoPipe } from '@/app/shared/pipes/nombre-corto.pipe';
     TooltipModule,
     CheckboxModule,
     Checkbox,
+    InputTextModule,
+    MultiSelectModule,
     NumeroRequerimientoPipe,
     NombreCortoPipe,
 ],
@@ -162,6 +166,50 @@ export class AprobacionesAreaComponent implements OnInit {
     return this.requerimientosPendientes.filter(
       req => this.tipoRequerimientoLabel(req) === tipo
     ).length;
+  }
+
+  // ---- Campos auxiliares para filtros de columna (menú estilo Excel) ----
+  private enriquecerReq(r: any): any {
+    r.numeroFiltro = [r.RequisicionNumero, r.numeroRequerimiento, r.idrequerimiento]
+      .filter(v => v != null && String(v).trim() !== '')
+      .map(String)
+      .join(' ');
+    r.fechaTexto = this.fmtFecha(r.fecha ?? r.fechaRegistro);
+    r.estadoFiltro = r.estado || r.estados || 'PENDIENTE';
+    r.tipoFiltro = r.itemtipo || r.tipoRequerimiento || r.tipo || '';
+    return r;
+  }
+
+  private enriquecerLista(lista: any[]): any[] {
+    return (lista || []).map(r => this.enriquecerReq(r));
+  }
+
+  private fmtFecha(v: any): string {
+    if (!v) return '';
+    const d = new Date(v);
+    return isNaN(d.getTime())
+      ? String(v)
+      : d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  private opcionesUnicas(lista: any[], campo: string): { label: string; value: string }[] {
+    const set = new Set<string>();
+    for (const r of lista || []) {
+      const v = r?.[campo];
+      if (v != null && String(v).trim() !== '') set.add(String(v));
+    }
+    return [...set].sort().map(v => ({ label: v, value: v }));
+  }
+
+  get estadoPendientesOpciones() { return this.opcionesUnicas(this.requerimientosPendientes, 'estadoFiltro'); }
+  get estadoMisReqOpciones() { return this.opcionesUnicas(this.misRequerimientos, 'estadoFiltro'); }
+  get tipoTodosOpciones() { return this.opcionesUnicas(this.todosRequerimientos, 'tipo'); }
+  get tipoAnuladosOpciones() { return this.opcionesUnicas(this.requerimientosAnulados, 'tipoFiltro'); }
+  get estadoAnteriorOpciones() { return this.opcionesUnicas(this.requerimientosAnulados, 'estadoAnterior'); }
+
+  get estadoTodosOpciones(): { label: string; value: string }[] {
+    return this.opcionesUnicas(this.todosRequerimientos, 'estadoFiltro')
+      .map(o => ({ label: this.getEstadoBadge(o.value).label, value: o.value }));
   }
 
   constructor(
@@ -591,6 +639,7 @@ export class AprobacionesAreaComponent implements OnInit {
           //   this.requerimientosPendientes.length,
           // );
           await this.agregarPendientesAmbitos();
+          this.requerimientosPendientes = this.enriquecerLista(this.requerimientosPendientes);
           this.loadingPendientes = false;
         },
         error: (error) => {
@@ -628,9 +677,9 @@ export class AprobacionesAreaComponent implements OnInit {
             ruc: this.usuario.ruc,
           })
         );
-        this.misRequerimientos = Array.isArray(response)
-          ? response
-          : response?.resultado ?? [];
+        this.misRequerimientos = this.enriquecerLista(
+          Array.isArray(response) ? response : response?.resultado ?? []
+        );
       } catch {
         this.misRequerimientos = [];
       } finally {
@@ -656,13 +705,13 @@ export class AprobacionesAreaComponent implements OnInit {
           console.log('📝 Respuesta de mis requerimientos:', response);
           // El response puede venir como array directo o como {resultado: [...]}
           if (Array.isArray(response)) {
-            this.misRequerimientos = response;
+            this.misRequerimientos = this.enriquecerLista(response);
           } else if (
             response &&
             typeof response === 'object' &&
             'resultado' in response
           ) {
-            this.misRequerimientos = response.resultado || [];
+            this.misRequerimientos = this.enriquecerLista(response.resultado || []);
           } else {
             this.misRequerimientos = [];
           }
@@ -703,13 +752,13 @@ export class AprobacionesAreaComponent implements OnInit {
           // console.log('📋 Respuesta de todos los requerimientos:', response);
           // El response puede venir como array directo o como {resultado: [...]}
           if (Array.isArray(response)) {
-            this.todosRequerimientos = response;
+            this.todosRequerimientos = this.enriquecerLista(response);
           } else if (
             response &&
             typeof response === 'object' &&
             'resultado' in response
           ) {
-            this.todosRequerimientos = response.resultado || [];
+            this.todosRequerimientos = this.enriquecerLista(response.resultado || []);
           } else {
             this.todosRequerimientos = [];
           }
@@ -2565,6 +2614,7 @@ export class AprobacionesAreaComponent implements OnInit {
           detalles: detallesCombinados,
         };
       }
+      this.prepararEdicionCantidadesDetalle();
     } catch (error) {
       console.error('Error cargando detalle de pendientes:', error);
     } finally {
@@ -2598,6 +2648,7 @@ export class AprobacionesAreaComponent implements OnInit {
     this.detallePendientesTab = esServicio ? 'servicios' : 'items';
     this.detallesPendientesSeleccionados = new Set<number>();
     this.detallesPendientesAprobados = new Set<number>();
+    this.prepararEdicionCantidadesDetalle();
     // Seleccionar todos por defecto
     const dets = this.getDetallesPendientes();
     dets.forEach((_, i) => this.detallesPendientesSeleccionados.add(i));
@@ -2752,6 +2803,117 @@ export class AprobacionesAreaComponent implements OnInit {
     else this.detallesPendientesSeleccionados.clear();
   }
 
+  // =============================================
+  // EDICIÓN DE CANTIDAD DEL DETALLE (solo rol APLOGIST)
+  // =============================================
+
+  get puedeEditarCantidadDetalle(): boolean {
+    const estados = (this.requerimientoDetallePendientes?.estados || '')
+      .toString()
+      .toUpperCase();
+    const pendiente = !estados || ['PENDIENTE', 'EN APROBACION'].includes(estados);
+    return this.usuario?.idrol?.includes('APLOGIST') === true && pendiente;
+  }
+
+  // Captura la cantidad original y crea el buffer de edición (cantidadEdit)
+  // de cada línea. det.cantidad solo cambia tras un UPDATE exitoso en BD,
+  // así la aprobación y la migración a SPRING nunca usan valores sin guardar.
+  private prepararEdicionCantidadesDetalle() {
+    (this.getDetallesPendientes() || []).forEach((d: any) => {
+      if (d && d.cantidadOriginal === undefined) {
+        d.cantidadOriginal = d.cantidad;
+        d.cantidadEdit = d.cantidad;
+      }
+    });
+  }
+
+  cantidadDetalleModificada(det: any): boolean {
+    if (!det) return false;
+    if (det.cantidadOriginal === undefined) {
+      det.cantidadOriginal = det.cantidad;
+      det.cantidadEdit = det.cantidad;
+    }
+    const actual = Number(det.cantidadEdit);
+    return Number.isFinite(actual) && actual !== Number(det.cantidadOriginal);
+  }
+
+  async guardarCantidadDetalle(det: any) {
+    if (!this.puedeEditarCantidadDetalle || !det || det._guardandoCantidad) return;
+
+    const revertir = () => { det.cantidadEdit = det.cantidadOriginal; };
+
+    const nueva = Number(det.cantidadEdit);
+    if (!Number.isFinite(nueva) || nueva <= 0) {
+      Swal.fire('Advertencia', 'La cantidad debe ser un número mayor a 0', 'warning');
+      revertir();
+      return;
+    }
+
+    const anterior = Number(det.cantidadOriginal);
+    if (nueva === anterior) return;
+
+    const confirmacion = await Swal.fire({
+      icon: 'question',
+      title: 'Confirmar cambio de cantidad',
+      html: `Ítem <b>${det.codigo || ''}</b>: ${anterior} &rarr; <b>${nueva}</b>`,
+      showCancelButton: true,
+      confirmButtonText: 'Guardar',
+      cancelButtonText: 'Cancelar',
+    });
+    if (!confirmacion.isConfirmed) {
+      revertir();
+      return;
+    }
+
+    det._guardandoCantidad = true;
+    try {
+      const response = await this.aprobacionesAreaService
+        .actualizarCantidadDetalleRequerimiento({
+          idrequerimiento: String(
+            this.requerimientoDetallePendientes?.idrequerimiento ??
+            this.requerimientoDetallePendientes?.idRequerimiento ?? '',
+          ),
+          iddetalle: det.id ?? null,
+          codigo: det.codigo ?? '',
+          cantidad: nueva,
+          documentoidentidad: this.usuario.documentoidentidad,
+          ruc: this.usuario.ruc,
+        })
+        .toPromise();
+
+      const item = Array.isArray(response) ? response[0] : response;
+      if (item && (item.success === true || item.success === 1 || this.esRespuestaExito(item))) {
+        det.cantidad = nueva;
+        det.cantidadOriginal = nueva;
+        det.cantidadEdit = nueva;
+        await this.syncService.actualizarCantidadDetalleLocal(
+          String(this.requerimientoDetallePendientes?.idrequerimiento ?? ''),
+          det,
+          nueva,
+        );
+        Swal.fire({
+          icon: 'success',
+          title: 'Cantidad actualizada',
+          text: item.mensaje || 'La cantidad del ítem se actualizó correctamente',
+          timer: 1800,
+          showConfirmButton: false,
+        });
+      } else {
+        revertir();
+        Swal.fire('Error', item?.mensaje || 'No se pudo actualizar la cantidad', 'error');
+      }
+    } catch (error: any) {
+      revertir();
+      Swal.fire(
+        'Error',
+        error?.error?.mensaje || 'Error al actualizar la cantidad del ítem',
+        'error',
+      );
+    } finally {
+      det._guardandoCantidad = false;
+    }
+  }
+
   aprobarDetallePendienteIndividual(index: number) {
     this.detallesPendientesAprobados.add(index);
     this.detallesPendientesSeleccionados.add(index);
@@ -2779,6 +2941,16 @@ export class AprobacionesAreaComponent implements OnInit {
     const esRolGlobalAprob2 = rolesGlobalesAprob2.some(r => this.usuario.idrol?.includes(r));
     if (!esRolGlobalAprob2 && this.requerimientoDetallePendientes.dniregistra === this.usuario.documentoidentidad) {
       Swal.fire('No permitido', 'No puede aprobar su propio requerimiento', 'warning');
+      return;
+    }
+
+    // No aprobar mientras haya cantidades editadas sin guardar en BD
+    if (this.getDetallesPendientes().some((d: any) => this.cantidadDetalleModificada(d))) {
+      Swal.fire(
+        'Advertencia',
+        'Hay cantidades editadas sin guardar. Guarde el cambio (ícono de disquete) o restaure el valor antes de aprobar.',
+        'warning',
+      );
       return;
     }
 
@@ -3190,7 +3362,7 @@ export class AprobacionesAreaComponent implements OnInit {
       next: (response: any) => {
         // El response puede venir como array directo o como {resultado: [...]}
         const resultado = Array.isArray(response) ? response : response?.resultado;
-        this.requerimientosAnulados = Array.isArray(resultado) ? resultado : [];
+        this.requerimientosAnulados = this.enriquecerLista(Array.isArray(resultado) ? resultado : []);
         this.loadingAnulados = false;
       },
       error: (error: any) => {

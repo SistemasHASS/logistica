@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
+import { MultiSelectModule } from 'primeng/multiselect';
 import * as XLSX from 'xlsx-js-style';
 import FileSaver from 'file-saver';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
@@ -18,7 +20,7 @@ const ETAPA_CLS: Record<string, string> = {
 
 @Component({
   selector: 'app-seguimiento-consumos',
-  imports: [CommonModule, FormsModule, TableModule],
+  imports: [CommonModule, FormsModule, TableModule, InputTextModule, MultiSelectModule],
   templateUrl: './seguimiento-consumos.component.html',
   styleUrl: './seguimiento-consumos.component.scss'
 })
@@ -27,6 +29,7 @@ export class SeguimientoConsumosComponent implements OnInit {
   readonly etapas = ETAPAS;
   readonly etapaLbl = ETAPA_LBL;
   readonly etapaCls = ETAPA_CLS;
+  readonly etapaOpciones = ETAPAS.map((e, i) => ({ label: ETAPA_LBL[e], value: i }));
 
   // filtros
   fdesde = '';
@@ -89,7 +92,13 @@ export class SeguimientoConsumosComponent implements OnInit {
     }];
     this.logisticaService.reporteSeguimientoConsumos(payload).subscribe({
       next: (res: any) => {
-        this.data = Array.isArray(res) ? res : [];
+        const rows = Array.isArray(res) ? res : [];
+        this.data = rows.map((r: any) => ({
+          ...r,
+          numeroFiltro: [r.id, r.spr].filter(Boolean).join(' '),
+          fundoArea: [r.fundo, r.area].filter(Boolean).join(' '),
+          nssTexto: (r.nss || []).map((n: any) => [n.n, n.usr].filter(Boolean).join(' ')).join(' '),
+        }));
         this.cargando = false;
       },
       error: () => {

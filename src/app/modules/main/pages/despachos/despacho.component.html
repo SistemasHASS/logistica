@@ -140,15 +140,106 @@
           <tr>
             <th style="width:50px"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
             <th style="width:50px">#</th>
-            <th style="min-width:120px" pSortableColumn="RequisicionNumero">N° Requisición</th>
-            <th style="min-width:120px" pSortableColumn="fechaAprobacion">Fecha Despacho</th>
-            <th style="min-width:90px">Almacén</th>
-            <th style="min-width:140px">Usuario</th>
-            <th style="min-width:120px">Área</th>
+            <th style="min-width:120px" pSortableColumn="RequisicionNumero">
+              <div class="th-filtro">
+                <span>N° Requisición</span>
+                <p-columnFilter field="RequisicionNumero" matchMode="contains" display="menu" filterOn="input"
+                                [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <input type="text" pInputText class="w-100" placeholder="Buscar número..."
+                           [ngModel]="value" (ngModelChange)="filter($event)">
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            </th>
+            <th style="min-width:120px" pSortableColumn="fechaAprobacion">
+              <div class="th-filtro">
+                <span>Fecha Despacho</span>
+                <p-columnFilter field="fechaTexto" matchMode="contains" display="menu" filterOn="input"
+                                [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <input type="text" pInputText class="w-100" placeholder="dd/mm/aaaa"
+                           [ngModel]="value" (ngModelChange)="filter($event)">
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            </th>
+            <th style="min-width:90px">
+              <div class="th-filtro">
+                <span>Almacén</span>
+                <p-columnFilter field="idalmacen" matchMode="in" display="menu" filterOn="input"
+                                [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-multiSelect [ngModel]="value" (ngModelChange)="filter($event)"
+                                   [options]="almacenOpciones" optionLabel="label" optionValue="value"
+                                   [filter]="true" filterPlaceholder="Buscar" [showToggleAll]="true"
+                                   placeholder="Seleccionar" styleClass="w-100" appendTo="body"></p-multiSelect>
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            </th>
+            <th style="min-width:140px">
+              <div class="th-filtro">
+                <span>Usuario</span>
+                <p-columnFilter field="usuarioFiltro" matchMode="contains" display="menu" filterOn="input"
+                                [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <input type="text" pInputText class="w-100" placeholder="Buscar usuario..."
+                           [ngModel]="value" (ngModelChange)="filter($event)">
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            </th>
+            <th style="min-width:120px">
+              <div class="th-filtro">
+                <span>Área</span>
+                <p-columnFilter field="areaTexto" matchMode="contains" display="menu" filterOn="input"
+                                [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <input type="text" pInputText class="w-100" placeholder="Buscar área..."
+                           [ngModel]="value" (ngModelChange)="filter($event)">
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            </th>
             <!-- <th style="min-width:200px" *ngIf="activeTabDespachos === 'COMMODITY'">Servicio</th> -->
-            <th style="min-width:200px">Producto</th>
-            <th style="min-width:110px">Estado</th>
-            <th style="min-width:150px">Acciones</th>
+            <th style="min-width:200px">
+              <div class="th-filtro">
+                <span>Producto</span>
+                <p-columnFilter field="familiaTexto" matchMode="contains" display="menu" filterOn="input"
+                                [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <input type="text" pInputText class="w-100" placeholder="Buscar producto..."
+                           [ngModel]="value" (ngModelChange)="filter($event)">
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            </th>
+            <th style="min-width:110px">
+              <div class="th-filtro">
+                <span>Estado</span>
+                <p-columnFilter field="estadoFiltro" matchMode="in" display="menu" filterOn="input"
+                                [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-multiSelect [ngModel]="value" (ngModelChange)="filter($event)"
+                                   [options]="estadoOpciones" optionLabel="label" optionValue="value"
+                                   [filter]="false" [showToggleAll]="true"
+                                   placeholder="Seleccionar" styleClass="w-100" appendTo="body"></p-multiSelect>
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            </th>
+            <th style="min-width:150px">
+              <div class="d-flex align-items-center justify-content-center gap-1">
+                <span>Acciones</span>
+                @if (dt.hasFilter()) {
+                  <button class="btn btn-outline-secondary btn-sm" (click)="dt.clear()"
+                          title="Limpiar filtros">
+                    <i class="bx bx-x"></i>
+                  </button>
+                }
+              </div>
+            </th>
           </tr>
         </ng-template>
 

@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
+import { MultiSelectModule } from 'primeng/multiselect';
 import * as XLSX from 'xlsx-js-style';
 import FileSaver from 'file-saver';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
@@ -21,11 +23,13 @@ interface DetRow {
   req: any;      // referencia a cabecera
   det: any;      // línea
   reqNum: string; // N° requerimiento mostrado (spr o id interno)
+  cecoProyPartida?: string;
+  ocSec?: string;
 }
 
 @Component({
   selector: 'app-analisis-req-compra',
-  imports: [CommonModule, FormsModule, TableModule],
+  imports: [CommonModule, FormsModule, TableModule, InputTextModule, MultiSelectModule],
   templateUrl: './analisis-req-compra.component.html',
   styleUrl: './analisis-req-compra.component.scss'
 })
@@ -34,6 +38,13 @@ export class AnalisisReqCompraComponent implements OnInit {
   readonly etapas = ETAPAS;
   readonly etapaLbl = ETAPA_LBL;
   readonly etapaCls = ETAPA_CLS;
+  readonly etapaOpciones = ETAPAS.map((e, i) => ({ label: ETAPA_LBL[e], value: i }));
+  readonly etapaDetOpciones = ETAPAS.map(e => ({ label: ETAPA_LBL[e], value: e }));
+  readonly priOpciones = [
+    { label: 'Alta', value: 'A' },
+    { label: 'Normal', value: 'B' },
+    { label: 'Baja', value: 'C' },
+  ];
 
   fdesde = '';
   fhasta = '';
@@ -99,7 +110,21 @@ export class AnalisisReqCompraComponent implements OnInit {
           this.mensajeAcceso = res.mensaje || 'Reporte de acceso restringido.';
           this.data = [];
         } else {
-          this.data = Array.isArray(res) ? res : [];
+          const rows = Array.isArray(res) ? res : [];
+          this.data = rows.map((r: any) => {
+            const ocs = r.ocs || [];
+            const provs = [...new Set(ocs.map((o: any) => o.prov).filter(Boolean))];
+            return {
+              ...r,
+              numeroFiltro: [r.id, r.spr].filter(Boolean).join(' '),
+              solFiltro: [r.sol, r.dni].filter(Boolean).join(' '),
+              fundoArea: [r.fundo, r.area].filter(Boolean).join(' '),
+              ocsTexto: ocs.map((o: any) => [o.n, o.spr, o.est, o.prov].filter(Boolean).join(' ')).join(' '),
+              provTexto: provs.join(' '),
+              montoFiltro: ocs.length ? (+ocs[0].monto || null) : null,
+              leadFiltro: (r.dApOc != null && r.dOcIng != null) ? r.dApOc + r.dOcIng : null,
+            };
+          });
         }
         this.cargando = false;
       },
@@ -117,9 +142,29 @@ export class AnalisisReqCompraComponent implements OnInit {
   get flatDet(): DetRow[] {
     const out: DetRow[] = [];
     for (const r of this.dataFiltrada) {
-      for (const d of (r.det || [])) out.push({ req: r, det: d, reqNum: r.spr || r.id });
+      for (const d of (r.det || [])) {
+        out.push({
+          req: r,
+          det: d,
+          reqNum: r.spr || r.id,
+          cecoProyPartida: [d.ceco, d.proy, d.partida].filter(Boolean).join(' / '),
+          ocSec: d.oc ? [d.oc, d.sec].filter(Boolean).join(' / ') : '',
+        });
+      }
     }
     return out;
+  }
+
+  get umOpciones(): { label: string; value: string }[] {
+    const set = new Set<string>();
+    for (const r of this.data) for (const d of (r.det || [])) if (d.um) set.add(d.um);
+    return [...set].sort().map(v => ({ label: v, value: v }));
+  }
+
+  get ocEstOpciones(): { label: string; value: string }[] {
+    const set = new Set<string>();
+    for (const r of this.data) for (const d of (r.det || [])) if (d.ocEst) set.add(d.ocEst);
+    return [...set].sort().map(v => ({ label: v, value: v }));
   }
 
   private matchBusqueda(r: any): boolean {

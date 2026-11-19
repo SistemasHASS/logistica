@@ -166,6 +166,48 @@ export class RequerimientosSyncService implements OnDestroy {
   }
 
   /**
+   * Actualiza la cantidad de un item del detalle en las tablas locales de Dexie,
+   * tras una edición hecha por el aprobador (rol APLOGIST) desde la bandeja de
+   * aprobaciones. Así la copia local del creador no queda con datos obsoletos.
+   */
+  async actualizarCantidadDetalleLocal(
+    idrequerimiento: string | undefined | null,
+    detalle: { id?: any; codigo?: any },
+    cantidad: number,
+  ): Promise<void> {
+    if (!idrequerimiento || !detalle) return;
+    const iddetalle = detalle.id != null ? String(detalle.id) : null;
+    const codigo = detalle.codigo != null ? String(detalle.codigo) : null;
+    const tablas: any[] = [
+      this.dexieService.requerimientos,
+      this.dexieService.requerimientosCommodity,
+      this.dexieService.requerimientosActivoFijo,
+      this.dexieService.requerimientosActivoFijoMenor,
+    ];
+
+    for (const tabla of tablas) {
+      try {
+        const registros = await tabla.where('idrequerimiento').equals(idrequerimiento).toArray();
+        for (const local of registros) {
+          const dets: any[] = local.detalles || local.detalle || local.items || [];
+          let modificado = false;
+          for (const d of dets) {
+            const mismoId = iddetalle != null && d?.id != null && String(d.id) === iddetalle;
+            const mismoCodigo = codigo != null && d?.codigo != null && String(d.codigo) === codigo;
+            if (mismoId || mismoCodigo) {
+              d.cantidad = cantidad;
+              modificado = true;
+            }
+          }
+          if (modificado) await tabla.update(local.id!, local);
+        }
+      } catch (error) {
+        console.error(`❌ Error actualizando cantidad local en tabla ${tabla.name}:`, error);
+      }
+    }
+  }
+
+  /**
    * Aplica los estados recibidos del servidor a los registros locales de Dexie.
    * Solo actualiza requerimientos que ya fueron enviados (estado === 1) para no
    * sobrescribir cambios pendientes de sincronización (estado === 0).

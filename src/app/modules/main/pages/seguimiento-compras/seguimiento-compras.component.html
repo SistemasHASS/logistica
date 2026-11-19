@@ -64,7 +64,7 @@
 
   <!-- TABLA -->
   <div class="card" *ngIf="!cargando && !error">
-    <p-table
+    <p-table #dtSeg
       [value]="dataFiltrada"
       [paginator]="true"
       [rows]="10"
@@ -77,15 +77,112 @@
 
       <ng-template pTemplate="header">
         <tr>
-          <th style="width:26px"></th>
-          <th pSortableColumn="id">Requerimiento <p-sortIcon field="id" /></th>
-          <th pSortableColumn="sol">Solicitante <p-sortIcon field="sol" /></th>
-          <th pSortableColumn="fundo">Fundo / Área <p-sortIcon field="fundo" /></th>
-          <th>F. Registro</th>
-          <th>F. Aprob. N2</th>
-          <th>OC / Proveedor</th>
-          <th pSortableColumn="etapaNum">Estado workflow <p-sortIcon field="etapaNum" /></th>
-          <th pSortableColumn="dias">Días <p-sortIcon field="dias" /></th>
+          <th style="width:26px">
+            @if (dtSeg.hasFilter()) {
+              <button class="btn btn-outline-secondary btn-sm" (click)="dtSeg.clear(); $event.stopPropagation()"
+                      title="Limpiar filtros">
+                <i class="bx bx-x"></i>
+              </button>
+            }
+          </th>
+          <th pSortableColumn="id">
+            <div class="th-filtro">
+              <span>Requerimiento</span> <p-sortIcon field="id" />
+              <p-columnFilter field="reqFiltro" matchMode="contains" display="menu" filterOn="input"
+                              [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                  <input type="text" pInputText class="w-100" placeholder="N° req / REQ..."
+                         [ngModel]="value" (ngModelChange)="filter($event)">
+                </ng-template>
+              </p-columnFilter>
+            </div>
+          </th>
+          <th pSortableColumn="sol">
+            <div class="th-filtro">
+              <span>Solicitante</span> <p-sortIcon field="sol" />
+              <p-columnFilter field="sol" matchMode="contains" display="menu" filterOn="input"
+                              [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                  <input type="text" pInputText class="w-100" placeholder="Buscar solicitante..."
+                         [ngModel]="value" (ngModelChange)="filter($event)">
+                </ng-template>
+              </p-columnFilter>
+            </div>
+          </th>
+          <th pSortableColumn="fundo">
+            <div class="th-filtro">
+              <span>Fundo / Área</span> <p-sortIcon field="fundo" />
+              <p-columnFilter field="fundoArea" matchMode="contains" display="menu" filterOn="input"
+                              [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                  <input type="text" pInputText class="w-100" placeholder="Buscar fundo o área..."
+                         [ngModel]="value" (ngModelChange)="filter($event)">
+                </ng-template>
+              </p-columnFilter>
+            </div>
+          </th>
+          <th>
+            <div class="th-filtro">
+              <span>F. Registro</span>
+              <p-columnFilter field="freg" matchMode="contains" display="menu" filterOn="input"
+                              [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                  <input type="text" pInputText class="w-100" placeholder="dd/mm/aaaa"
+                         [ngModel]="value" (ngModelChange)="filter($event)">
+                </ng-template>
+              </p-columnFilter>
+            </div>
+          </th>
+          <th>
+            <div class="th-filtro">
+              <span>F. Aprob. N2</span>
+              <p-columnFilter field="fap" matchMode="contains" display="menu" filterOn="input"
+                              [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                  <input type="text" pInputText class="w-100" placeholder="dd/mm/aaaa"
+                         [ngModel]="value" (ngModelChange)="filter($event)">
+                </ng-template>
+              </p-columnFilter>
+            </div>
+          </th>
+          <th>
+            <div class="th-filtro">
+              <span>OC / Proveedor</span>
+              <p-columnFilter field="ocFiltro" matchMode="contains" display="menu" filterOn="input"
+                              [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                  <input type="text" pInputText class="w-100" placeholder="N° OC / proveedor / SPR..."
+                         [ngModel]="value" (ngModelChange)="filter($event)">
+                </ng-template>
+              </p-columnFilter>
+            </div>
+          </th>
+          <th pSortableColumn="etapaNum">
+            <div class="th-filtro">
+              <span>Estado workflow</span> <p-sortIcon field="etapaNum" />
+              <p-columnFilter field="etapaFiltro" matchMode="in" display="menu" filterOn="input"
+                              [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                  <p-multiSelect [ngModel]="value" (ngModelChange)="filter($event)"
+                                 [options]="etapaOpciones" optionLabel="label" optionValue="value"
+                                 [filter]="false" [showToggleAll]="true" placeholder="Seleccionar"
+                                 styleClass="w-100" appendTo="body"></p-multiSelect>
+                </ng-template>
+              </p-columnFilter>
+            </div>
+          </th>
+          <th pSortableColumn="dias">
+            <div class="th-filtro">
+              <span>Días</span> <p-sortIcon field="dias" />
+              <p-columnFilter field="dias" matchMode="gte" display="menu" filterOn="input"
+                              [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                  <input type="number" pInputText class="w-100" placeholder="Días ≥"
+                         [ngModel]="value" (ngModelChange)="filter($event === '' || $event == null ? null : +$event)">
+                </ng-template>
+              </p-columnFilter>
+            </div>
+          </th>
         </tr>
       </ng-template>
 

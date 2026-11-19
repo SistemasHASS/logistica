@@ -162,6 +162,21 @@ export class AprobacionesAreaService {
   }
 
   /**
+   * Actualiza la cantidad de un item del detalle de un requerimiento
+   * pendiente (solo usuarios con rol APLOGIST).
+   */
+  actualizarCantidadDetalleRequerimiento(data: {
+    idrequerimiento: string;
+    iddetalle?: number | string | null;
+    codigo?: string;
+    cantidad: number;
+    documentoidentidad: string;
+    ruc?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/logistica/actualizar-cantidad-detalle-requerimiento`, data);
+  }
+
+  /**
    * Aprueba o rechaza un requerimiento en el flujo por área
    */
   aprobarRequerimientoArea(data: {

@@ -259,6 +259,7 @@
   .table-responsive { overflow-x: auto; }
   .stock-detalle-resumen { padding: 0.75rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; }
   .stock-detalle-columna { min-width: 115px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .cantidad-detalle-input { width: 90px; font-variant-numeric: tabular-nums; }
   .nav-tabs .nav-link { font-size: 0.9rem; }
   @media (max-width: 640px) {
     .p-dialog-content { padding: 0.75rem; }
@@ -266,3 +267,22 @@
   }
 }
 
+
+// Cabeceras con filtro de menú (estilo Excel)
+:host ::ng-deep {
+  .th-filtro {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+
+    > span { flex: 1; }
+    .p-column-filter-menu-button { margin-left: auto; }
+  }
+
+  .p-column-filter-overlay-menu {
+    .p-column-filter-operator { display: none; }
+    .p-multiselect { width: 100%; }
+    .p-inputtext { width: 100%; }
+  }
+}

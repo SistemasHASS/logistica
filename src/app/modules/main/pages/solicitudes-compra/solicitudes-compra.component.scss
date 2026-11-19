@@ -1269,3 +1269,17 @@
     font-size: 14px;
   }
 }
+
+// Cabeceras con filtro tipo Excel
+.th-filtro {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  > span:first-child { flex: 1; min-width: 0; }
+}
+
+:host ::ng-deep .p-column-filter-overlay-menu {
+  min-width: 220px;
+  font-size: 0.85rem;
+}

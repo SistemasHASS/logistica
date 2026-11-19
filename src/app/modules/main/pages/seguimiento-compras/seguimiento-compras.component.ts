@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
+import { MultiSelectModule } from 'primeng/multiselect';
 import * as XLSX from 'xlsx-js-style';
 import FileSaver from 'file-saver';
 import { DexieService } from '@/app/shared/dixiedb/dexie-db.service';
@@ -18,7 +20,7 @@ const ETAPA_CLS: Record<string, string> = {
 
 @Component({
   selector: 'app-seguimiento-compras',
-  imports: [CommonModule, FormsModule, TableModule],
+  imports: [CommonModule, FormsModule, TableModule, InputTextModule, MultiSelectModule],
   templateUrl: './seguimiento-compras.component.html',
   styleUrl: './seguimiento-compras.component.scss'
 })
@@ -89,7 +91,7 @@ export class SeguimientoComprasComponent implements OnInit {
     }];
     this.logisticaService.reporteSeguimientoCompras(payload).subscribe({
       next: (res: any) => {
-        this.data = Array.isArray(res) ? res : [];
+        this.data = (Array.isArray(res) ? res : []).map(r => this.enriquecerFila(r));
         this.cargando = false;
       },
       error: () => {
@@ -104,6 +106,22 @@ export class SeguimientoComprasComponent implements OnInit {
 
   /* ---------- derivados ---------- */
   etapaReq(r: any): string { return ETAPAS[r.etapaNum ?? 1] ?? 'APROBADO'; }
+
+  /** Campos auxiliares para los filtros de columna (menú estilo Excel). */
+  readonly etapaOpciones = ETAPAS.map(e => ({ label: ETAPA_LBL[e], value: e }));
+
+  private enriquecerFila(r: any): any {
+    r.reqFiltro = [r.id, r.spr]
+      .filter(v => v != null && String(v).trim() !== '')
+      .map(String)
+      .join(' ');
+    r.fundoArea = [r.fundo, r.area].filter(Boolean).join(' ');
+    r.ocFiltro = (r.ocs || [])
+      .map((o: any) => [o.n, o.spr, o.prov, o.est].filter(Boolean).join(' '))
+      .join(' ');
+    r.etapaFiltro = this.etapaReq(r);
+    return r;
+  }
 
   avance(r: any) { return { at: r.linAtend ?? 0, tot: r.totLin ?? 0 }; }
 
