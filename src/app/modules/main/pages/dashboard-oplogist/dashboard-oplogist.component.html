@@ -251,50 +251,86 @@
     </div>
     <div class="card-body p-0">
 
-      <!-- Filtros en vivo -->
-      <div class="p-3 border-bottom bg-light">
-        <div class="d-flex align-items-end gap-2 flex-wrap">
-          <div class="flex-grow-1" style="min-width: 180px;">
-            <label class="form-label small text-muted mb-1">N° Requerimiento</label>
-            <span class="p-input-icon-left w-100">
-              <i class="bx bx-search"></i>
-              <input type="text" pInputText class="p-inputtext-sm w-100" placeholder="Buscar número..."
-                     [(ngModel)]="filtroNumeroReq" (input)="aplicarFiltro()">
-            </span>
-          </div>
-          <div style="min-width: 160px;">
-            <label class="form-label small text-muted mb-1">Fecha Creación</label>
-            <p-datePicker [(ngModel)]="filtroFechaCreacion" (ngModelChange)="aplicarFiltro()"
-                          dateFormat="dd/mm/yy" showIcon iconDisplay="input"
-                          placeholder="dd/mm/aaaa" styleClass="p-datepicker-sm w-100"></p-datePicker>
-          </div>
-          <div style="min-width: 160px;">
-            <label class="form-label small text-muted mb-1">Fecha Aprobación</label>
-            <p-datePicker [(ngModel)]="filtroFechaAprobacion" (ngModelChange)="aplicarFiltro()"
-                          dateFormat="dd/mm/yy" showIcon iconDisplay="input"
-                          placeholder="dd/mm/aaaa" styleClass="p-datepicker-sm w-100"></p-datePicker>
-          </div>
-          <button class="btn btn-outline-secondary btn-sm" (click)="limpiarFiltrosEnVivo()"
-                  pTooltip="Limpiar filtros" tooltipPosition="top">
-            <i class="bx bx-x"></i>
-          </button>
-        </div>
-      </div>
-
-      <p-table [value]="requerimientosFiltrados" [paginator]="true" [rows]="10"
+      <p-table #dt [value]="requerimientosFiltrados" [paginator]="true" [rows]="10"
                [loading]="loading" styleClass="p-datatable-sm"
                [rowsPerPageOptions]="[10, 25, 50]" [showCurrentPageReport]="true"
                currentPageReportTemplate="Mostrando {first} - {last} de {totalRecords}">
         <ng-template pTemplate="header">
           <tr>
             <th style="width:50px">#</th>
-            <th>N° Req.</th>
-            <th>Fecha Creación</th>
-            <th>Fecha Aprobación</th>
+            <th>
+              <div class="d-flex align-items-center justify-content-between gap-1">
+                <span>N° Req.</span>
+                <p-columnFilter field="numeroFiltro" matchMode="contains" display="menu" filterOn="input"
+                                [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <input type="text" pInputText class="w-100" placeholder="Buscar número..."
+                           [ngModel]="value" (ngModelChange)="filter($event)">
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            </th>
+            <th>
+              <div class="d-flex align-items-center justify-content-between gap-1">
+                <span>Fecha Creación</span>
+                <p-columnFilter field="fechaCreacion" type="date" matchMode="dateIs" display="menu"
+                                [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-datePicker [ngModel]="value" (ngModelChange)="filter($event)"
+                                  dateFormat="dd/mm/yy" showIcon iconDisplay="input"
+                                  placeholder="dd/mm/aaaa" styleClass="w-100"></p-datePicker>
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            </th>
+            <th>
+              <div class="d-flex align-items-center justify-content-between gap-1">
+                <span>Fecha Aprobación</span>
+                <p-columnFilter field="fechaAprob" type="date" matchMode="dateIs" display="menu"
+                                [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-datePicker [ngModel]="value" (ngModelChange)="filter($event)"
+                                  dateFormat="dd/mm/yy" showIcon iconDisplay="input"
+                                  placeholder="dd/mm/aaaa" styleClass="w-100"></p-datePicker>
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            </th>
             <th class="d-none d-md-table-cell">Tipo</th>
-            <th>Glosa</th>
-            <th class="d-none d-md-table-cell">Estado</th>
-            <th class="text-center">Acciones</th>
+            <th>
+              <div class="d-flex align-items-center justify-content-between gap-1">
+                <span>Glosa</span>
+                <p-columnFilter field="glosa" matchMode="contains" display="menu" filterOn="input"
+                                [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <input type="text" pInputText class="w-100" placeholder="Buscar glosa..."
+                           [ngModel]="value" (ngModelChange)="filter($event)">
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            </th>
+            <th class="d-none d-md-table-cell">
+              <div class="d-flex align-items-center justify-content-between gap-1">
+                <span>Estado</span>
+                <p-columnFilter field="estadoTexto" matchMode="in" display="menu" filterOn="input"
+                                [showOperator]="false" [showMatchModes]="false" [showAddButton]="false" [maxConstraints]="1">
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-multiSelect [ngModel]="value" (ngModelChange)="filter($event)"
+                                   [options]="estadosOpciones" [filter]="true" filterPlaceholder="Buscar"
+                                   [showToggleAll]="true" placeholder="Seleccionar"
+                                   styleClass="w-100" appendTo="body"></p-multiSelect>
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            </th>
+            <th class="text-center">
+              @if (dt.hasFilter()) {
+                <button class="btn btn-outline-secondary btn-sm" (click)="dt.clear()"
+                        pTooltip="Limpiar filtros" tooltipPosition="top">
+                  <i class="bx bx-x"></i>
+                </button>
+              }
+            </th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-req let-rowIndex="rowIndex">
@@ -329,7 +365,9 @@
           <tr>
             <td colspan="8" class="text-center py-4 text-muted">
               <i class="bx bx-inbox fs-3 d-block mb-2"></i>
-              @if (filtroSubEstado || filtroEstado) {
+              @if (dt.hasFilter()) {
+                No se encontraron requerimientos con los filtros aplicados
+              } @else if (filtroSubEstado || filtroEstado) {
                 No hay requerimientos en estado "{{ obtenerTextoEstado(filtroSubEstado || filtroEstado) }}"
               } @else {
                 No tienes requerimientos registrados

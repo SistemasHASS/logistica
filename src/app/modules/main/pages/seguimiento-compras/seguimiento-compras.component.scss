@@ -118,3 +118,22 @@ tr.detail-row td { background: #f8fafc; padding: 0; }
   .st .lbl { display: none; }
   .seg { margin-bottom: 2px; }
 }
+
+// Cabeceras con filtro de menú (estilo Excel)
+:host ::ng-deep {
+  .th-filtro {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+
+    > span { flex: 1; }
+    .p-column-filter-menu-button { margin-left: auto; }
+  }
+
+  .p-column-filter-overlay-menu {
+    .p-column-filter-operator { display: none; }
+    .p-multiselect { width: 100%; }
+    .p-inputtext { width: 100%; }
+  }
+}

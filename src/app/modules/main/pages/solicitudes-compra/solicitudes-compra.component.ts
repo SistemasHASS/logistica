@@ -24,6 +24,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { TooltipModule } from 'primeng/tooltip';
 import { BadgeModule } from 'primeng/badge';
 import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
@@ -42,6 +43,7 @@ import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento
     SelectModule,
     TooltipModule,
     BadgeModule,
+    MultiSelectModule,
     AdjuntosModalComponent
   ],
   templateUrl: './solicitudes-compra.component.html',
@@ -284,8 +286,52 @@ export class SolicitudesCompraComponent implements OnInit {
     return formasPago[codigo] || codigo;
   }
 
+  // Opciones para los filtros de columna (menú estilo Excel)
+  get almacenOpciones(): { label: string; value: string }[] {
+    return this.opcionesUnicas('almacenTexto');
+  }
+
+  get monedaOpciones(): { label: string; value: string }[] {
+    return this.opcionesUnicas('monedaTexto');
+  }
+
+  get estadoOpciones(): { label: string; value: string }[] {
+    const set = new Set<string>();
+    for (const s of this.solicitudesProcesadas) if (s.idestado) set.add(s.idestado);
+    return [...set].sort().map(v => ({ label: v, value: v }));
+  }
+
+  private opcionesUnicas(campo: string): { label: string; value: string }[] {
+    const set = new Set<string>();
+    for (const s of this.solicitudesProcesadas) if (s[campo]) set.add(s[campo]);
+    return [...set].sort().map(v => ({ label: v, value: v }));
+  }
+
+  private opcionesUnicasLocal(campo: string): { label: string; value: string }[] {
+    const set = new Set<string>();
+    for (const s of this.solicitudesCompra as any[]) {
+      const v = s?.[campo];
+      if (v != null && String(v).trim() !== '') set.add(String(v));
+    }
+    return [...set].sort().map(v => ({ label: v, value: v }));
+  }
+
+  get tipoLocalOpciones() { return this.opcionesUnicasLocal('tipo'); }
+  get almacenLocalOpciones() { return this.opcionesUnicasLocal('almacenTexto'); }
+  get estadoLocalOpciones() { return this.opcionesUnicasLocal('estado'); }
+  get prioridadLocalOpciones() { return this.opcionesUnicasLocal('prioridadFiltro'); }
+
+  private enriquecerSolicitudLocal(s: any): any {
+    s.fechaTexto = this.formatearFecha(s.fecha);
+    s.almacenTexto = this.getNombreAlmacen(s.almacen) || '';
+    s.itemsCount = (s.detalle || []).length || 0;
+    s.prioridadFiltro = s.prioridad || 'NORMAL';
+    return s;
+  }
+
   async cargarSolicitudesLocales() {
-    this.solicitudesCompra = await this.dexieService.showSolicitudesCompra();
+    const lista = await this.dexieService.showSolicitudesCompra();
+    this.solicitudesCompra = (lista || []).map((s: any) => this.enriquecerSolicitudLocal(s));
     this.actualizarContadoresLocales();
   }
 
@@ -306,7 +352,14 @@ export class SolicitudesCompraComponent implements OnInit {
       
       // El backend devuelve directamente el array de solicitudes
       if (response && Array.isArray(response)) {
-        this.solicitudesProcesadas = response;
+        this.solicitudesProcesadas = response.map((s: any) => ({
+          ...s,
+          almacenTexto: this.getNombreAlmacen(s.idalmacen) || '',
+          monedaTexto: this.getNombreMoneda(s.idmoneda) || '',
+          proyectoTexto: this.getNombreProyecto(s.idproyecto) || '',
+          laborTexto: this.getNombreLabor(s.idlabor) || '',
+          cecoTexto: this.getNombreCeco(s.idcentrocosto) || '',
+        }));
         console.log('✅ Solicitudes procesadas cargadas:', this.solicitudesProcesadas.length);
         console.log('📊 Primera solicitud:', this.solicitudesProcesadas[0]);
         console.log('🎯 Tab activo:', this.tabActivo);
@@ -670,10 +723,9 @@ export class SolicitudesCompraComponent implements OnInit {
     return `SC-${año}${mes}${dia}-${hora}${min}${seg}`;
   }
 
-  editarSolicitud(index: number) {
-    const solicitud = this.solicitudesFiltradas()[index];
+  editarSolicitud(solicitud: SolicitudCompra) {
     if (!solicitud) return;
-  
+
     // Debug: Verificar el valor del almacén
     console.log('Almacen en solicitud:', solicitud.almacen);
     console.log('Almacenes disponibles:', this.almacenes.map(a => a.almacen));
@@ -683,7 +735,7 @@ export class SolicitudesCompraComponent implements OnInit {
     this.solicitud = { ...solicitud };
     this.detalleSolicitud = [...(solicitud.detalle || [])];
     this.modoEdicion = true;
-    this.editIndex = index;
+    this.editIndex = this.solicitudesCompra.indexOf(solicitud);
     this.mostrarFormulario = true;
 
     // Forzar detección de cambios después de un breve momento
@@ -692,8 +744,7 @@ export class SolicitudesCompraComponent implements OnInit {
     }, 100);
   }
 
-  async eliminarSolicitud(index: number) {
-    const solicitud = this.solicitudesFiltradas()[index];
+  async eliminarSolicitud(solicitud: SolicitudCompra) {
     if (!solicitud) return;
 
     const confirmacion = await this.alertService.showConfirm(

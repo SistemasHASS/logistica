@@ -14,6 +14,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { DatePickerModule } from 'primeng/datepicker';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { NumeroRequerimientoPipe } from '@/app/shared/pipes/numero-requerimiento.pipe';
 
 interface ResumenRequerimiento {
@@ -34,7 +35,7 @@ interface ResumenRequerimiento {
   selector: 'app-dashboard-oplogist',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, CardModule, TableModule, TagModule, ButtonModule, TooltipModule, DialogModule, InputTextModule, DatePickerModule, NumeroRequerimientoPipe],
+  imports: [CommonModule, FormsModule, CardModule, TableModule, TagModule, ButtonModule, TooltipModule, DialogModule, InputTextModule, DatePickerModule, MultiSelectModule, NumeroRequerimientoPipe],
   templateUrl: './dashboard-oplogist.component.html',
   styleUrls: ['./dashboard-oplogist.component.scss']
 })
@@ -54,10 +55,14 @@ export class DashboardOplogistComponent implements OnInit {
   tabTipo: 'CONSUMO' | 'COMPRA' = 'CONSUMO';
   filtroSubEstado = '';
 
-  // Filtros en vivo
-  filtroNumeroReq = '';
-  filtroFechaCreacion: Date | null = null;
-  filtroFechaAprobacion: Date | null = null;
+  // Opciones del filtro de columna Estado (menu estilo Excel)
+  get estadosOpciones(): string[] {
+    const set = new Set<string>();
+    for (const r of this.requerimientos) {
+      if (r.itemtipo === this.tabTipo && r.estadoTexto) set.add(r.estadoTexto);
+    }
+    return [...set].sort();
+  }
 
   // Propiedades computadas para contadores
   get contadorConsumo(): number {
@@ -164,7 +169,7 @@ export class DashboardOplogistComponent implements OnInit {
         todos = dexieData.filter((r: any) => r.nrodocumento === this.usuario?.documentoidentidad);
       }
 
-      this.requerimientos = todos.sort((a: any, b: any) =>
+      this.requerimientos = this.enriquecerFilas(todos).sort((a: any, b: any) =>
         new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
       );
 
@@ -175,7 +180,7 @@ export class DashboardOplogistComponent implements OnInit {
       console.error('Error al cargar desde backend, usando Dexie:', e);
       try {
         const todos = await this.dexieService.showRequerimiento();
-        this.requerimientos = todos
+        this.requerimientos = this.enriquecerFilas(todos)
           .filter((r: any) => r.nrodocumento === this.usuario?.documentoidentidad)
           .sort((a: any, b: any) =>
             new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
@@ -222,44 +227,27 @@ export class DashboardOplogistComponent implements OnInit {
       filtrados = filtrados.filter((r: any) => r.estados === this.filtroEstado);
     }
 
-    if (this.filtroNumeroReq?.trim()) {
-      const termino = this.filtroNumeroReq.trim().toLowerCase();
-      filtrados = filtrados.filter((r: any) => {
-        const numero = String(r.idrequerimiento ?? '').toLowerCase();
-        const requisicion = String(r.RequisicionNumero ?? '').toLowerCase();
-        return numero.includes(termino) || requisicion.includes(termino);
-      });
-    }
-
-    if (this.filtroFechaCreacion) {
-      const fechaFiltro = this.sinHora(this.filtroFechaCreacion);
-      filtrados = filtrados.filter((r: any) => {
-        if (!r.fecha) return false;
-        return this.sinHora(new Date(r.fecha)).getTime() === fechaFiltro.getTime();
-      });
-    }
-
-    if (this.filtroFechaAprobacion) {
-      const fechaFiltro = this.sinHora(this.filtroFechaAprobacion);
-      filtrados = filtrados.filter((r: any) => {
-        if (!r.fechaAprobacion) return false;
-        return this.sinHora(new Date(r.fechaAprobacion)).getTime() === fechaFiltro.getTime();
-      });
-    }
-
     this.requerimientosFiltrados = filtrados;
     this.cdr.markForCheck();
   }
 
-  private sinHora(fecha: Date): Date {
-    return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+  private enriquecerFilas(lista: any[]): any[] {
+    return lista.map((r: any) => ({
+      ...r,
+      numeroFiltro: [r.RequisicionNumero, r.idrequerimiento]
+        .filter(v => v != null && String(v).trim() !== '')
+        .map(String)
+        .join(' '),
+      fechaCreacion: this.parseFecha(r.fecha),
+      fechaAprob: this.parseFecha(r.fechaAprobacion),
+      estadoTexto: this.obtenerTextoEstado(this.obtenerEstadoVisualFila(r)),
+    }));
   }
 
-  limpiarFiltrosEnVivo() {
-    this.filtroNumeroReq = '';
-    this.filtroFechaCreacion = null;
-    this.filtroFechaAprobacion = null;
-    this.aplicarFiltro();
+  private parseFecha(v: any): Date | null {
+    if (!v) return null;
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? null : d;
   }
 
   seleccionarTabTipo(tipo: 'CONSUMO' | 'COMPRA') {

@@ -306,6 +306,18 @@
   .oc-step-count  { font-size: 0.85rem; }
 }
 
+// Menús de filtro en cabecera de tabla (estilo Excel)
+:host ::ng-deep {
+  .p-datatable .p-datatable-thead > tr > th {
+    .d-flex > span { flex: 1; min-width: 0; }
+  }
+
+  .p-column-filter-overlay-menu {
+    min-width: 220px;
+    font-size: 0.85rem;
+  }
+}
+
 // Detalle modal
 .detalle-req {
   label { display: block; }

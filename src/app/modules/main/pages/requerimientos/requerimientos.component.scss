@@ -643,6 +643,20 @@ textarea {
     }
   }
 
+  .buttons {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    overflow-x: auto;
+    padding: 4px 2px;
+    scrollbar-width: none;
+
+    button {
+      flex: 0 0 auto;
+      margin: 0;
+    }
+  }
+
   td {
     font-size: 10px;
   }
@@ -784,11 +798,11 @@ textarea {
   }
 
   .buttons {
-    gap: 10px;
+    gap: 12px;
 
     button {
       font-size: 10px;
-      padding: 5px 8px;
+      padding: 6px 10px;
     }
   }
 }
