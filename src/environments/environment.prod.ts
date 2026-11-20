@@ -3,7 +3,7 @@ export const environment = {
   // Ambiente de despliegue que este build representa en AppDeployments.
   // Cambiar a 'production' cuando baseUrl apunte a apilogistica.agroapps.net.
   deployEnvironment: 'qas', // 'development' | 'qas' | 'production'
-  // appVersion: '7.0.1', // se reemplaza automáticamente  appVersion: '7.0.1',
+  // appVersion: '7.0.3', // se reemplaza automáticamente  appVersion: '7.0.3',
 
   updateMode: 'AUTO',      // 'AUTO' | 'MANUAL' | 'DISABLED'
   showUpdateModal: true,   // true | false

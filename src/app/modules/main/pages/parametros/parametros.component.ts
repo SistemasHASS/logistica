@@ -318,6 +318,18 @@ export class ParametrosComponent implements OnInit {
       this.configurarTipoItemPorRol();
       console.log('🔍 Tipo Item después de configurarPorRol:', this.configuracion.idTipoItem);
       
+      // Restaurar el subtipo COMPRA/SERVICIO guardado y saneear localStorage
+      // obsoleto para que Requerimientos no use un tipo de una config anterior.
+      const tipoLS = localStorage.getItem('tipoRequerimientoConfig');
+      if (this.configuracion.idTipoItem === 'COMPRA') {
+        if (tipoLS === 'COMPRA' || tipoLS === 'SERVICIO') {
+          this.tipoRequerimientoCompras = tipoLS;
+          this.mostrarSeleccionTipo = false;
+        }
+      } else if (this.configuracion.idTipoItem) {
+        localStorage.setItem('tipoRequerimientoConfig', this.configuracion.idTipoItem);
+      }
+
       // 🔥 Cargar datos dependientes según la configuración guardada
       if (this.configuracion.idcultivo) {
         await this.darTurnoCecosProyectos(false); // Cargar turnos, CECOs y proyectos según cultivo
@@ -1765,6 +1777,14 @@ export class ParametrosComponent implements OnInit {
 
     // Validaciones específicas según tipo
     if (this.configuracion.idTipoItem === 'COMPRA') {
+      if (!this.tipoRequerimientoCompras) {
+        this.alertService.showAlert(
+          'Advertencia!',
+          'Debe seleccionar el tipo de requerimiento: COMPRA o SERVICIO',
+          'warning'
+        );
+        return;
+      }
       if (!this.configuracion.idceco || !this.configuracion.idlabor || !this.configuracion.idproyecto) {
         this.alertService.showAlert(
           'Advertencia!',
@@ -1834,6 +1854,15 @@ export class ParametrosComponent implements OnInit {
     });
 
     await this.dexieService.saveConfiguracion(this.configuracion);
+
+    // Mantener sincronizado el tipo que lee Requerimientos desde localStorage
+    // para que no quede un valor obsoleto de una configuración anterior.
+    const tipoActivo =
+      this.configuracion.idTipoItem === 'COMPRA'
+        ? this.tipoRequerimientoCompras ?? 'COMPRA'
+        : this.configuracion.idTipoItem;
+    localStorage.setItem('tipoRequerimientoConfig', tipoActivo);
+
     this.alertService.showAlert(
       '¡Éxito!',
       'La configuración se guardó correctamente',

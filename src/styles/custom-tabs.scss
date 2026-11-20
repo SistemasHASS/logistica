@@ -63,6 +63,31 @@
   }
 }
 
+/* En móvil: una sola fila con scroll horizontal para que
+   todos los botones de tabs sean visibles/accesibles */
+@media (max-width: 768px) {
+  .nav.custom-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-item {
+      flex: 0 0 auto;
+    }
+
+    .nav-link {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+  }
+}
+
 /* Badge dentro de tab */
 .custom-tabs .nav-link .tab-badge,
 .custom-tabs .nav-link .badge {
